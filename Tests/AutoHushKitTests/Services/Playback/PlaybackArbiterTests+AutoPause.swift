@@ -144,6 +144,44 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 1)
     }
 
+    @Test("music the user plays again after an app's start called off the wait to re-measure isn't paused once that wait is over")
+    func userPlaysAfterRemeasureCalledOff() async {
+        let player = MockMusicPlayer(state: .playing)
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(
+            player: player, configuration: .testing, debounceScheduler: scheduler, autoPauseEnabled: false
+        )
+
+        await arbiter.sourceChanged("us.zoom.xos", playing: true)
+        await arbiter.setAutoPauseEnabled(true)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await player.pauseCallCount == 1)
+        await player.overrideState(.playing)
+        await arbiter.handlePlayerStateChange(.playing) // the user plays it again
+
+        await scheduler.completeNext() // the wait VLC's start called off
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 1)
+    }
+
+    @Test("waiting until idle returns while a pause still waits for the apps to be measured again")
+    func idleWhileRemeasureWaits() async {
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(
+            player: MockMusicPlayer(state: .playing), configuration: .testing, debounceScheduler: scheduler,
+            autoPauseEnabled: false
+        )
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.setAutoPauseEnabled(true) // waits for VLC to be measured again
+
+        let idle = Locked(false)
+        let waiting = Task { await arbiter.waitUntilIdle(); idle.value = true }
+        await TestWait.until { idle.value }
+        await scheduler.completeNext() // ends the wait, so a wrong waitUntilIdle ends too
+        await waiting.value
+        await arbiter.waitUntilIdle()
+    }
+
     @Test("turning auto-pause back on with nothing playing does nothing")
     func turningOnIdleDoesNothing() async {
         let player = MockMusicPlayer(state: .playing)

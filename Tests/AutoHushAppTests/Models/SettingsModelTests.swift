@@ -78,12 +78,17 @@ struct SettingsModelTests {
         #expect(DetectionSettingsView.unavailableNote("Muted") == "AutoHush can only mute Muted, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
     }
 
-    @Test("the chosen player's traits come from its option, followed: checked again to be muted (the same app), AntiDot mode's switch is off at once; its fades too")
-    func chosenPlayerTraitsFollowed() {
+    @Test("the chosen player's traits come from its option")
+    func chosenPlayerTraits() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.state.status.choosePlayer(named: "Radio")
         #expect(model.antiDotUnavailableFor == nil && model.playerCanFade && !model.state.status.playerMutes)
+    }
 
+    @Test("the chosen player checked again to be muted (the same app) has AntiDot mode's switch off at once")
+    func chosenPlayerTraitsFollowed() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Radio")
         let antiDot = Locked(0) // how many times what it follows changed (`withObservationTracking`)
         withObservationTracking { _ = model.antiDotUnavailableFor } onChange: { antiDot.increment() }
         model.state.status.playerOptions[0].needsAudioLevels = true
@@ -91,7 +96,12 @@ struct SettingsModelTests {
         model.state.status.playerOptions[0].pausesByMuting = true
         #expect(model.antiDotUnavailableFor == "Radio")
         #expect(model.state.status.playerMutes && model.state.status.playerNeedsLevels)
+    }
 
+    @Test("the chosen player's fades follow its option")
+    func chosenPlayerFadesFollowed() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Radio")
         let fades = Locked(0)
         withObservationTracking { _ = model.playerCanFade } onChange: { fades.increment() }
         model.state.status.playerOptions[0].canFade = false
@@ -219,29 +229,58 @@ struct SettingsModelTests {
         #expect(!model.offersUnmute)
     }
 
-    @Test("a window follows only the parts it shows: the music's state leaves the apps alone, the apps leave the status line alone; the apps are ordered again as their order changes")
-    func followsPartByPart() {
+    private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+    private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
+
+    /// Settings' model with VLC among the apps, the player ready, and the
+    /// music paused for Chrome if `paused`.
+    private func showingVLC(paused: Bool) -> SettingsModel {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
         show(model, seen: [vlc], ignored: [])
         model.state.status.setHealth(.ready)
+        if paused {
+            model.state.status.playback = .pausedByMonitor
+            model.state.status.setActiveSources([chrome])
+        }
+        return model
+    }
 
+    @Test("a window showing the apps isn't told of the music's state")
+    func followsPartByPart() {
+        let model = showingVLC(paused: false)
         let apps = Locked(0)
         withObservationTracking { _ = model.appList.apps } onChange: { apps.increment() }
         model.state.status.playback = .pausedByMonitor
         model.state.status.setActiveSources([chrome])
         #expect(apps.value == 0)
+    }
 
+    @Test("a window showing the status line isn't told of the apps, only of the music's state")
+    func statusLineLeavesTheApps() {
+        let model = showingVLC(paused: true)
         let line = Locked(0)
         withObservationTracking { _ = model.statusLine } onChange: { line.increment() }
         show(model, seen: [vlc, chrome], ignored: [vlc])
         #expect(line.value == 0)
-        #expect(apps.value == 1)
-        #expect(model.appList.apps.map(\.id) == [vlc.id, chrome.id])
         model.state.status.playback = .musicPlaying
         #expect(line.value == 1)
+    }
 
+    @Test("a window showing the apps is told as they change")
+    func appsFollowed() {
+        let model = showingVLC(paused: true)
+        let apps = Locked(0)
+        withObservationTracking { _ = model.appList.apps } onChange: { apps.increment() }
+        show(model, seen: [vlc, chrome], ignored: [vlc])
+        #expect(apps.value == 1)
+        #expect(model.appList.apps.map(\.id) == [vlc.id, chrome.id])
+    }
+
+    @Test("the apps are ordered again as their order changes")
+    func appsOrderedAgain() {
+        let model = showingVLC(paused: true)
+        show(model, seen: [vlc, chrome], ignored: [vlc])
+        model.state.status.playback = .musicPlaying
         let order = Locked(0)
         withObservationTracking { _ = model.appList.apps } onChange: { order.increment() }
         model.appList.setOrder(AppListOrder(criterion: .name))
@@ -339,8 +378,10 @@ struct SettingsModelTests {
         #expect(model.lastCheckedNote(now: now) == "Last checked \(when)")
     }
 
-    @Test("the update rows read the updates themselves, and follow them as they change (notifications turned off, a check's status and when it ran, the settings), with no one passing them on; the install note as at launch")
-    func updateRowsFollowTheUpdates() async {
+    /// Settings' model on real updates, which find v0.3.0 and can't install
+    /// it (AutoHush's folder is read-only).
+    private func updateRows() -> (model: SettingsModel, updates: UpdateController, notifier: MockUpdateNotifier,
+                                  preferences: Preferences, folder: TemporaryFolder) {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let notifier = MockUpdateNotifier()
         let folder = TemporaryFolder("SettingsModelTests", create: false)
@@ -351,25 +392,51 @@ struct SettingsModelTests {
         )
         let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
                                   launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
-        #expect(model.currentVersion == "0.2.0" && model.updateStatus == nil && model.lastUpdateCheck == nil)
-        #expect(model.updateInstallNote == UpdateInstallUnavailability.readOnlyLocation.explanation)
+        return (model, updates, notifier, preferences, folder)
+    }
 
-        /// Whether what `read` reads is told of `change`, as a view drawn from it is.
-        func follows(_ read: () -> Void, after change: () async -> Void) async -> Bool {
-            let changed = Locked(false)
-            withObservationTracking(read) { changed.value = true }
-            await change()
-            return changed.value
-        }
-        notifier.currentPermission = .off
-        #expect(await follows({ _ = model.notificationsOff }, after: { await updates.followNotificationPermission() }))
-        #expect(model.notificationsOff)
-        #expect(await follows({ _ = model.updateStatus }, after: { await updates.check(userInitiated: false) }))
-        #expect(model.updateStatus == "Version 0.3.0 is available." && model.lastUpdateCheck == preferences.lastUpdateCheck)
-        #expect(await follows({ _ = model.automaticUpdates }, after: { updates.setMode(.notify) }))
-        #expect(model.automaticUpdates == .notify)
-        #expect(await follows({ _ = model.checksForUpdatesAutomatically }, after: { updates.setChecksAutomatically(false) }))
-        #expect(!model.checksForUpdatesAutomatically)
+    /// Whether what `read` reads is told of `change`, as a view drawn from it is.
+    private func follows(_ read: () -> Void, after change: () async -> Void) async -> Bool {
+        let changed = Locked(false)
+        withObservationTracking(read) { changed.value = true }
+        await change()
+        return changed.value
+    }
+
+    @Test("the update rows read the updates themselves, with no one passing them on: the version, and no check yet")
+    func updateRowsReadTheUpdates() {
+        let bench = updateRows()
+        #expect(bench.model.currentVersion == "0.2.0" && bench.model.updateStatus == nil && bench.model.lastUpdateCheck == nil)
+    }
+
+    @Test("the update rows' install note is as at launch")
+    func updateRowsInstallNote() {
+        let bench = updateRows()
+        #expect(bench.model.updateInstallNote == UpdateInstallUnavailability.readOnlyLocation.explanation)
+    }
+
+    @Test("the update rows follow notifications turned off")
+    func updateRowsFollowNotifications() async {
+        let bench = updateRows()
+        bench.notifier.currentPermission = .off
+        #expect(await follows({ _ = bench.model.notificationsOff }, after: { await bench.updates.followNotificationPermission() }))
+        #expect(bench.model.notificationsOff)
+    }
+
+    @Test("the update rows follow a check's status and when it ran")
+    func updateRowsFollowTheCheck() async {
+        let bench = updateRows()
+        #expect(await follows({ _ = bench.model.updateStatus }, after: { await bench.updates.check(userInitiated: false) }))
+        #expect(bench.model.updateStatus == "Version 0.3.0 is available." && bench.model.lastUpdateCheck == bench.preferences.lastUpdateCheck)
+    }
+
+    @Test("the update rows follow the update settings")
+    func updateRowsFollowTheSettings() async {
+        let bench = updateRows()
+        #expect(await follows({ _ = bench.model.automaticUpdates }, after: { bench.updates.setMode(.notify) }))
+        #expect(bench.model.automaticUpdates == .notify)
+        #expect(await follows({ _ = bench.model.checksForUpdatesAutomatically }, after: { bench.updates.setChecksAutomatically(false) }))
+        #expect(!bench.model.checksForUpdatesAutomatically)
     }
 
     @Test("the menu says why a switch can't be changed as a fragment, without a period; nothing while it can")

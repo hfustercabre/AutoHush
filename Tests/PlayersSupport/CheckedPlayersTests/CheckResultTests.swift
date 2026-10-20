@@ -59,7 +59,7 @@ struct CheckResultTests {
         #expect(players.current().isEmpty)
     }
 
-    @Test("an app's traits come from its bundle: Electron's needs its launch option; CEF is Chromium; Flutter; a browser's web app names its browser; a dictionary means scripting")
+    @Test("an app's traits come from its bundle: its framework (Electron's with its launch option), a web app's browser, a dictionary")
     func traits() throws {
         let folder = FileManager.default.temporaryDirectory.appendingPathComponent("CheckResultTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }

@@ -145,7 +145,7 @@ struct UpdateControllerTests {
         #expect(h.notifier.permissionRequests == 1)
     }
 
-    @Test("a check asked for while one is under way doesn't start another, and shows the result (Check for Updates… during an automatic check); one asked for just as a check ends starts afresh, and shows its own")
+    @Test("a check asked for while one is under way doesn't start another, and shows the result (Check for Updates… during an automatic check)")
     func overlappingChecks() async {
         // The fetches, counted, each held until the gate opens.
         let fetches = Locked(0), held = Gate()
@@ -166,7 +166,12 @@ struct UpdateControllerTests {
         #expect(h.statuses == ["Checking…", "AutoHush 0.2.0 is up to date."])
         #expect(h.alerts.map(\.messageText) == ["AutoHush Is Up to Date"])
         #expect(h.menuClosings == 1)
+    }
 
+    @Test("a check asked for just as an automatic check ends starts afresh, and shows its own result")
+    func checkAskedForAsOneEnds() async {
+        let fetches = Locked(0)
+        let h = Harness(checker: .latestRelease({ "v0.2.0" }, onFetch: { fetches.increment() }))
         // Asked for once an automatic check has read that nobody asked, before its caller is back:
         // as its result replaces "Checking…".
         h.asStatusChanges = { replaced in
@@ -175,10 +180,10 @@ struct UpdateControllerTests {
             Task { await h.controller.checkNow() }
         }
         await h.controller.check(userInitiated: false)
-        await TestWait.until { h.alerts.count == 2 }
-        #expect(fetches.value == 3)
-        #expect(h.alerts.map(\.messageText) == ["AutoHush Is Up to Date", "AutoHush Is Up to Date"])
-        #expect(h.menuClosings == 2)
+        await TestWait.until { h.alerts.count == 1 }
+        #expect(fetches.value == 2)
+        #expect(h.alerts.map(\.messageText) == ["AutoHush Is Up to Date"])
+        #expect(h.menuClosings == 1)
     }
 
     @Test("a check that finds a newer release offers it and remembers when it ran")
@@ -608,30 +613,46 @@ struct UpdateControllerTests {
 
     // MARK: - Alerts
 
-    @Test("a check asked for offers the update with its notes: Later (Escape) leaves it in the menu, which shows it again; Open Release Page opens its page; Download and Install (Return) installs it at once")
-    func offerChoices() async throws {
+    /// A check asked for that found 0.3.0, with its notes, at no quiet
+    /// moment; its alert answered Later.
+    private func updateOffered() async -> Harness {
         let h = Harness(checker: .latestRelease("v0.3.0", notes: "Fixes."), quiet: Locked(false))
         h.answer = .alertSecondButtonReturn
         await h.controller.check(userInitiated: true)
+        return h
+    }
+
+    @Test("a check asked for offers the update with its notes; Later (Escape) leaves it in the menu")
+    func offerChoices() async throws {
+        let h = await updateOffered()
         let alert = try #require(h.alerts.first)
         #expect(alert.messageText == "AutoHush 0.3.0 Is Available")
         #expect(alert.buttons.map(\.title) == ["Download and Install", "Later", "Open Release Page"])
         #expect(alert.buttons.map(\.keyEquivalent) == ["\r", "\u{1b}", ""])
         #expect(alert.accessoryView is NSScrollView) // its notes, in a scrolling box
         #expect(h.offer?.state == .available)
+    }
 
+    @Test("an update offered again from the menu opens its release page with Open Release Page")
+    func offerOpensReleasePage() async {
+        let h = await updateOffered()
         h.answer = .alertThirdButtonReturn
         h.controller.presentAvailableUpdate() // the menu's "Install AutoHush 0.3.0…"
         #expect(h.opened == [URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v0.3.0")!])
+    }
 
+    @Test("an update offered again from the menu installs at once with Download and Install (Return)")
+    func offerInstallsAtOnce() async {
+        let h = await updateOffered()
         h.answer = .alertFirstButtonReturn
-        h.controller.presentAvailableUpdate()
+        h.controller.presentAvailableUpdate() // the menu's "Install AutoHush 0.3.0…"
         await TestWait.until { h.quits == 1 }
-        #expect(h.alerts.count == 3)
+        #expect(h.alerts.count == 2)
         #expect(h.installer.calls == ["prepare 0.3.0", "install 0.3.0"]) // not waiting for a quiet moment
+    }
 
-        // Long notes get a box 180 points tall, where they scroll; a few lines one as tall as they
-        // need; a single line the smallest, 48.
+    @Test("an update's notes get a box as tall as they need, from 48 points for one line to 180, where long ones scroll")
+    func offerNotesHeight() {
         let heights = ["Fixes.", String(repeating: "- A fix\n", count: 5), String(repeating: "- A fix\n", count: 40)]
             .map { UpdateController.notesView($0).frame.height }
         #expect(heights[0] == 48)
@@ -639,7 +660,7 @@ struct UpdateControllerTests {
         #expect(heights[2] == 180)
     }
 
-    @Test("a check asked for says what it found otherwise: up to date, no releases yet, or why it couldn't tell; here each is asked for by a click on a notification that no longer applies")
+    @Test("a check asked for by a click on a notification that no longer applies says what it found: up to date, no releases yet, or why it couldn't tell")
     func checkResults() async {
         let answering = { (status: Int, body: String) in
             UpdateChecker { (Data(body.utf8), HTTPURLResponse(url: $0.url!, statusCode: status, httpVersion: nil, headerFields: nil)!) }

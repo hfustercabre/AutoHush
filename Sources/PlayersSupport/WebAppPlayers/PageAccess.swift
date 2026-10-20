@@ -39,7 +39,7 @@ package struct PageAccess: Codable, Equatable, Sendable {
     }
 
     /// A Safari web app's, or any WebKit page's.
-    package static let webKit = PageAccess(interface: .webKit, switchAttribute: nil)
+    static let webKit = PageAccess(interface: .webKit, switchAttribute: nil)
     /// Electron's own switch (documented on electronjs.org).
     package static let electronSwitch = "AXManualAccessibility"
     /// The switch VoiceOver sets, which CEF, Flutter and Chromium listen to.

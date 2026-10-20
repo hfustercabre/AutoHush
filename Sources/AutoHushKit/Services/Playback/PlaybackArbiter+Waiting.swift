@@ -10,7 +10,7 @@ extension PlaybackArbiter {
     /// Waits until no resume is under way, the music fading back in
     /// included. A held pause's monitoring stops only then: stopping
     /// sooner would cut the fade-in short.
-    package func waitForResume() async {
+    func waitForResume() async {
         while let resumeTask { await resumeTask.value }
     }
 

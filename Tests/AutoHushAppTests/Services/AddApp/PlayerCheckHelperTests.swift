@@ -43,12 +43,16 @@ struct PlayerCheckHelperTests {
         #expect(await !missing.reopenWithLaunchOption(player))
     }
 
+    /// The log the stand-in helper of `finishedCheck` writes.
+    private static let checkLog = "2026-10-19 10.00.00.000 Player check.log"
+
+    /// A check of Player by a stand-in helper, in a scratch folder (the
+    /// caller removes it), that writes three lines, the last the result it
+    /// leaves (`found`), and its log; the check started, not waited for.
     @MainActor
-    @Test("a check's lines come as the helper writes them, all before its end; it ends with the result it left, which goes, its log the newest; Stop ends it once it has put things back")
-    func check() async throws {
+    private func finishedCheck() throws
+        -> (folder: URL, found: CheckResult, helper: PlayerCheckHelper, run: PlayerCheckRun, report: Report) {
         let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
-        let log = "2026-10-19 10.00.00.000 Player check.log"
         let found = CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .works)], setup: nil)
         let finishing = try PlayerCheckHelper.standIn(#"""
             for argument in "$@"; do
@@ -58,19 +62,56 @@ struct PlayerCheckHelperTests {
             echo "Press Test"
             echo "  checking $1, $last"
             cp "\#(folder.path)/found.json" "$result" && echo "$result"
-            echo "its log" > "$logs/\#(log)"
+            echo "its log" > "$logs/\#(Self.checkLog)"
             """#, in: folder)
         try JSONEncoder().encode(found).write(to: folder.appending(path: "found.json"))
-        let player = URL(filePath: "/Applications/Player.app")
         let report = Report()
-        let run = try finishing.check(player, taps: false) { report.lines.append($0) }
-        #expect(await run.waitForEnd() == .finished(found))
-        #expect(report.lines.count == 3 && report.lines.prefix(2) == ["Press Test", "  checking /Applications/Player.app, --no-taps"])
-        #expect(report.lines.last.map { !FileManager.default.fileExists(atPath: $0) } == true) // read, then removed
-        #expect(PlayerCheckHelper.newestLog(in: finishing.logs)?.lastPathComponent == log) // shown after a check that couldn't finish
-        run.stop() // ended: nothing to stop
-        #expect(await run.waitForEnd() == .finished(found))
+        let run = try finishing.check(URL(filePath: "/Applications/Player.app"), taps: false) { report.lines.append($0) }
+        return (folder, found, finishing, run, report)
+    }
 
+    @MainActor
+    @Test("a check's lines come as the helper writes them, all before its end")
+    func check() async throws {
+        let bench = try finishedCheck()
+        defer { try? FileManager.default.removeItem(at: bench.folder) }
+        _ = await bench.run.waitForEnd()
+        #expect(bench.report.lines.count == 3 && bench.report.lines.prefix(2) == ["Press Test", "  checking /Applications/Player.app, --no-taps"])
+    }
+
+    @MainActor
+    @Test("a check ends with the result the helper left, which goes once read")
+    func checkResult() async throws {
+        let bench = try finishedCheck()
+        defer { try? FileManager.default.removeItem(at: bench.folder) }
+        #expect(await bench.run.waitForEnd() == .finished(bench.found))
+        #expect(bench.report.lines.last.map { !FileManager.default.fileExists(atPath: $0) } == true) // read, then removed
+    }
+
+    @MainActor
+    @Test("a check's log is the newest the helper wrote")
+    func checkLogIsNewest() async throws {
+        let bench = try finishedCheck()
+        defer { try? FileManager.default.removeItem(at: bench.folder) }
+        _ = await bench.run.waitForEnd()
+        #expect(PlayerCheckHelper.newestLog(in: bench.helper.logs)?.lastPathComponent == Self.checkLog) // shown after a check that couldn't finish
+    }
+
+    @MainActor
+    @Test("Stop after a check ended changes nothing")
+    func stopAfterTheEnd() async throws {
+        let bench = try finishedCheck()
+        defer { try? FileManager.default.removeItem(at: bench.folder) }
+        _ = await bench.run.waitForEnd()
+        bench.run.stop() // ended: nothing to stop
+        #expect(await bench.run.waitForEnd() == .finished(bench.found))
+    }
+
+    @MainActor
+    @Test("Stop ends a check once the helper has put things back")
+    func stopEndsTheCheck() async throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
         let waiting = try PlayerCheckHelper.standIn(#"""
             trap 'kill $! 2>/dev/null; echo "  put back"; exit 143' TERM
             echo "Press Test"
@@ -78,7 +119,7 @@ struct PlayerCheckHelperTests {
             wait
             """#, in: folder.appending(path: "waiting"))
         let stopped = Report()
-        let stopping = try waiting.check(player, taps: true) { stopped.lines.append($0) }
+        let stopping = try waiting.check(URL(filePath: "/Applications/Player.app"), taps: true) { stopped.lines.append($0) }
         await TestWait.until { stopped.lines == ["Press Test"] }
         stopping.stop()
         #expect(await stopping.waitForEnd() == .stopped)

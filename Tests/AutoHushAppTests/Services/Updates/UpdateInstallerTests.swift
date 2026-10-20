@@ -134,13 +134,16 @@ struct UpdateInstallerTests {
         try await expectPrepared(openingWith: [.hdiutil])
     }
 
-    @Test("diskutil is tried first from macOS 27, hdiutil alone before; a tool that's missing or fails makes way for the next one, also one that can't close the image", .slow)
-    func fallsBackToNextTool() async throws {
+    @Test("diskutil is tried first from macOS 27, hdiutil alone before")
+    func diskImageToolOrder() {
         // From macOS 27, which deprecates hdiutil's attach and detach. On 14.4, `diskutil image`
         // opened images whose files this process couldn't read, and its eject didn't know `force`.
         let order = isMacOS27OrLater ? ["/usr/sbin/diskutil", "/usr/bin/hdiutil"] : ["/usr/bin/hdiutil"]
         #expect(DiskImageTool.inOrderOfPreference.map(\.path) == order)
+    }
 
+    @Test("a disk image tool that's missing or fails makes way for the next one, also one that can't close the image", .slow)
+    func fallsBackToNextTool() async throws {
         let missing = DiskImageTool(path: "/nonexistent/diskutil", attachArguments: { _, _ in [] }, detachArguments: { _ in [] })
         let failing = DiskImageTool(path: "/usr/bin/false", attachArguments: { _, _ in [] }, detachArguments: { _ in [] })
         // Opens it, then fails to close it, as 14.4's diskutil did.
@@ -184,10 +187,10 @@ struct UpdateInstallerTests {
         #expect(scratch.mounts.stagingIsGone)
     }
 
-    @Test("a disk image tool that hangs is stopped once its time is up, and the download refused as damaged: an install never waits for good; its staging folder goes")
-    func hungToolTimesOut() async throws {
-        let scratch = try Scratch()
-        // It ignores the request to stop, as one stuck in the kernel would.
+    /// Prepares an update with a disk image tool that hangs, ignoring the
+    /// request to stop as one stuck in the kernel would, given 0.3 s:
+    /// refused as damaged. Returns how long it took.
+    private func preparedWithHungTool(_ scratch: Scratch) async -> TimeInterval {
         let hung = DiskImageTool(path: "/bin/sh", attachArguments: { _, _ in ["-c", "trap '' TERM; sleep 5"] },
                                  detachArguments: { _ in [] })
         let started = Date()
@@ -195,8 +198,24 @@ struct UpdateInstallerTests {
             try await installer(scratch, diskImageTools: [hung], diskImageTimeout: 0.3)
                 .prepare(release(), image: nil, allowsConstrainedNetwork: true)
         }
-        #expect(Date().timeIntervalSince(started) < 4) // not waited for
+        return Date().timeIntervalSince(started)
+    }
+
+    @Test("a disk image tool that hangs is stopped once its time is up, and the download refused as damaged: an install never waits for good")
+    func hungToolTimesOut() async throws {
+        let scratch = try Scratch()
+        #expect(await preparedWithHungTool(scratch) < 4) // not waited for
+    }
+
+    @Test("a disk image tool that hangs, once stopped, leaves no staging folder")
+    func hungToolLeavesNothing() async throws {
+        let scratch = try Scratch()
+        _ = await preparedWithHungTool(scratch)
         #expect(scratch.mounts.stagingIsGone)
+    }
+
+    @Test("a disk image tool has two minutes to open or close an image")
+    func diskImageToolTimeout() {
         #expect(UpdateInstaller.diskImageToolTimeout == 120)
     }
 
@@ -219,7 +238,7 @@ struct UpdateInstallerTests {
         #expect(scratch.mounts.stagingIsGone)
     }
 
-    @Test("a disk image is refused when its app isn't the version announced or needs a newer macOS than this Mac's, or when AutoHush.app is a link; nothing is left behind",
+    @Test("a disk image is refused, leaving nothing behind, when its app isn't the version announced or needs a newer macOS, or AutoHush.app is a link",
           .slow, arguments: [
             (ImagedApp.needing(macOS: "14.4"), "9.9.9", UpdateInstallError.wrongVersion),
             (.needing(macOS: "99.0"), Fixture.version, .needsNewerMacOS("99.0")),
@@ -283,8 +302,10 @@ struct UpdateInstallerTests {
         #expect(requests.value.map(\.allowsConstrainedNetworkAccess) == [allowed])
     }
 
-    @Test("an update is prepared from a kept image without downloading, and the image stays; the copy isn't marked as downloaded, and changed after signing it would fail the signature check", .slow)
-    func preparesFromKeptImage() async throws {
+    /// The fixture's update prepared from a copy of its disk image kept in
+    /// the scratch folder, marked as a browser marks a download.
+    private func preparedFromKeptImage() async throws
+        -> (fixture: Fixture, scratch: Scratch, kept: URL, requests: Locked<[URLRequest]>, sut: UpdateInstaller, update: PreparedUpdate) {
         let fixture = try Fixture.shared.get()
         let scratch = try Scratch()
         let kept = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
@@ -293,26 +314,41 @@ struct UpdateInstallerTests {
         #expect(setxattr(kept.path, "com.apple.quarantine", mark, mark.utf8.count, 0, XATTR_NOFOLLOW) == 0)
         let requests = Locked<[URLRequest]>([]) // the download requests made
         let sut = installer(scratch, requirement: fixture.requirement, requests: requests)
-
         let update = try await sut.prepare(release(sha256: fixture.sha256), image: KeptImage(file: kept, sha256: fixture.sha256),
-                                         allowsConstrainedNetwork: true)
+                                           allowsConstrainedNetwork: true)
+        return (fixture, scratch, kept, requests, sut, update)
+    }
 
-        #expect(UpdateInstaller.isSigned(update.app, satisfying: fixture.requirement))
-        #expect(requests.value.isEmpty)
-        #expect(FileManager.default.fileExists(atPath: kept.path))
-        #expect(!scratch.mounts.noted.isEmpty && scratch.mounts.stillMounted.isEmpty)
-        let files = FileManager.default.enumerator(at: update.app, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []
-        for url in [update.app] + files {
+    @Test("an update is prepared from a kept image without downloading, and the image stays", .slow)
+    func preparesFromKeptImage() async throws {
+        let bench = try await preparedFromKeptImage()
+        defer { bench.sut.discard(bench.update) }
+        #expect(UpdateInstaller.isSigned(bench.update.app, satisfying: bench.fixture.requirement))
+        #expect(bench.requests.value.isEmpty)
+        #expect(FileManager.default.fileExists(atPath: bench.kept.path))
+        #expect(!bench.scratch.mounts.noted.isEmpty && bench.scratch.mounts.stillMounted.isEmpty)
+    }
+
+    @Test("an update prepared from a kept image isn't marked as downloaded", .slow)
+    func keptImageCopyNotMarked() async throws {
+        let bench = try await preparedFromKeptImage()
+        defer { bench.sut.discard(bench.update) }
+        let files = FileManager.default.enumerator(at: bench.update.app, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []
+        for url in [bench.update.app] + files {
             #expect(getxattr(url.path, "com.apple.quarantine", nil, 0, 0, XATTR_NOFOLLOW) == -1, "\(url.lastPathComponent)")
         }
+    }
 
+    @Test("an update prepared from a kept image, changed after signing, fails the signature check", .slow)
+    func keptImageCopyChanged() async throws {
+        let bench = try await preparedFromKeptImage()
+        defer { bench.sut.discard(bench.update) }
         // Its Info.plist, which the signature covers, changed: no longer what was signed.
-        let info = update.app.appending(path: "Contents/Info.plist")
+        let info = bench.update.app.appending(path: "Contents/Info.plist")
         let changed = try #require(NSMutableDictionary(contentsOf: info))
         changed["CFBundleShortVersionString"] = "9.9.9"
         try changed.write(to: info)
-        #expect(!UpdateInstaller.isSigned(update.app, satisfying: fixture.requirement))
-        sut.discard(update)
+        #expect(!UpdateInstaller.isSigned(bench.update.app, satisfying: bench.fixture.requirement))
     }
 
     @Test("a kept image that changed since it was downloaded is refused")

@@ -16,20 +16,34 @@ struct ResumeLevelTests {
         return level
     }
 
-    @Test("the music's loudness is its loudest second before the pause, the fade-out aside; the apps' is their average during the pause; the volume goes down to theirs, 10 dB at most, and only when they were 2 dB quieter or more")
+    @Test("the music's loudness is its loudest second before the pause, the fade-out aside")
+    func reference() throws {
+        let level = paused()
+        #expect(abs(try #require(level.reference) - 0.1) < 0.0001)
+    }
+
+    @Test("with no app heard during the pause, the volume stays as it is")
+    func noAppsHeard() {
+        #expect(paused().offsetDB(maxCut: 10, minCut: 2) == nil)
+    }
+
+    @Test("the apps' loudness is their average during the pause, and the volume goes down to it")
     func offset() throws {
         var level = paused()
-        #expect(abs(try #require(level.reference) - 0.1) < 0.0001)
-        #expect(level.offsetDB(maxCut: 10, minCut: 2) == nil) // no app heard yet
-
         level.noteApps(rms: 0.05)
         level.noteApps(rms: 0.05)
         #expect(abs(try #require(level.offsetDB(maxCut: 10, minCut: 2)) + 6.02) < 0.01)
+    }
 
+    @Test("the volume goes down 10 dB at most")
+    func atMost() {
         var quieter = paused()
         quieter.noteApps(rms: 0.01) // 20 dB quieter
         #expect(quieter.offsetDB(maxCut: 10, minCut: 2) == -10)
+    }
 
+    @Test("the volume goes down only when the apps were 2 dB quieter or more, and never up")
+    func onlyWhenQuieter() {
         var close = paused()
         close.noteApps(rms: 0.09) // 1 dB quieter
         #expect(close.offsetDB(maxCut: 10, minCut: 2) == nil)

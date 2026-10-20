@@ -187,7 +187,7 @@ let package = Package(
         // The helper itself, run as a read-only check of an app on the Mac.
         .testTarget(
             name: "PlayerCheckTests",
-            dependencies: ["PlayerCheck", "PlayerCheckKit", "CheckedPlayers", "WebAppPlayers", "AutoHushKit", "AutoHushTestSupport"],
+            dependencies: ["PlayerCheck", "PlayerCheckKit", "CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushTestSupport"],
             path: "Tests/PlayerCheckTests"
         ),
         // AutoHushPlayers only for the supported players' names, which no

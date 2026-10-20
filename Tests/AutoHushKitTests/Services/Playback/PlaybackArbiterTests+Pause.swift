@@ -95,6 +95,20 @@ extension PlaybackArbiterTests {
         #expect(await player.commandLog.isEmpty)
     }
 
+    @Test("a muting player that doesn't answer, or isn't running, is never asked to mute", arguments: [PlayerState.unknown, .notRunning])
+    func doesNotMuteWithoutPausedState(_ found: PlayerState) async {
+        let player = MockMusicPlayer(state: found == .unknown ? .paused : found)
+        await player.setPlaysAnyway(true) // heard: asked, it would mute
+        if found == .unknown { await player.setUnansweredStateQueries(1) }
+        let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
+                                      debounceScheduler: ManualDebounceScheduler())
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+
+        #expect(await player.muteIfPlayingAnywayCount == 0)
+        #expect(await player.commandLog.isEmpty)
+    }
+
     @Test("does not issue duplicate pause calls for repeated start events from the same source")
     func doesNotDuplicatePauseCalls() async {
         let player = MockMusicPlayer()
@@ -144,6 +158,26 @@ extension PlaybackArbiterTests {
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await TestWait.until { states.value.last == .musicPlaying }
         #expect(failures.value == [.playerCommandFailed(.buttonDisabled), nil])
+    }
+
+    @Test("a pause that fails after the last app stopped during it says nothing: there's nothing to pause for any more")
+    func failedPauseAfterLastAppStopped() async {
+        let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.buttonDisabled))
+        await player.setVolumeLevel(60)
+        let failures = Locked<[MusicPlayerError?]>([])
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in }, onPauseFailure: { failures.append($0) })
+        await player.setBeforeStateAnswer { [arbiter, player] in
+            // The fade-out's check, after the arbiter's: the app stops just before the press.
+            guard await player.stateQueryCount == 2 else { return }
+            await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        }
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitUntilIdle()
+
+        #expect(await player.pauseCallCount == 1)
+        #expect(failures.value.isEmpty)
     }
 
     /// What ends a failed pause, for `failedPauseOver`.

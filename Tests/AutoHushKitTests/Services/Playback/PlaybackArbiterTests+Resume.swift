@@ -23,44 +23,57 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 1)
     }
 
-    @Test("with Stay paused after calls, a call during the pause (or the one it began for) keeps the music paused once the apps stop; with no call, or the setting off, it resumes")
-    func staysPausedAfterCalls() async {
-        func run(staysPaused: Bool, call: String?, callFirst: Bool = false) async -> Int {
-            var configuration = AppConfiguration.testing
-            configuration.staysPausedAfterCalls = staysPaused
-            let player = MockMusicPlayer()
-            let arbiter = makeArbiter(player: player, configuration: configuration)
-            if callFirst, let call {
-                await arbiter.handleCallChange(sourceID: call, inCall: true) // the pause begins for it
-                await arbiter.sourceChanged(call, playing: true)
-            } else {
-                await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-                if let call {
-                    await arbiter.handleCallChange(sourceID: call, inCall: true)
-                    await arbiter.sourceChanged(call, playing: true)
-                }
-            }
+    /// How many times the music is played once the apps stop, with Stay
+    /// paused after calls `staysPaused`: after a pause for VLC that `call`
+    /// joins, or one that began for the call (`callFirst`).
+    private func playsAfterPause(staysPaused: Bool, call: String?, callFirst: Bool = false) async -> Int {
+        var configuration = AppConfiguration.testing
+        configuration.staysPausedAfterCalls = staysPaused
+        let player = MockMusicPlayer()
+        let arbiter = makeArbiter(player: player, configuration: configuration)
+        if callFirst, let call {
+            await arbiter.handleCallChange(sourceID: call, inCall: true) // the pause begins for it
+            await arbiter.sourceChanged(call, playing: true)
+        } else {
+            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
             if let call {
-                await arbiter.handleCallChange(sourceID: call, inCall: false) // ended before the apps stop
-                await arbiter.sourceChanged(call, playing: false)
+                await arbiter.handleCallChange(sourceID: call, inCall: true)
+                await arbiter.sourceChanged(call, playing: true)
             }
-            if !callFirst { await arbiter.sourceChanged("org.videolan.vlc", playing: false) }
-            if !(staysPaused && call != nil) { await TestWait.until { await player.playCallCount == 1 } }
-            await arbiter.waitUntilIdle()
-            return await player.playCallCount
         }
-        #expect(await run(staysPaused: true, call: "us.zoom.xos") == 0)
-        #expect(await run(staysPaused: true, call: "us.zoom.xos", callFirst: true) == 0)
-        #expect(await run(staysPaused: true, call: nil) == 1)
-        #expect(await run(staysPaused: false, call: "us.zoom.xos") == 1)
+        if let call {
+            await arbiter.handleCallChange(sourceID: call, inCall: false) // ended before the apps stop
+            await arbiter.sourceChanged(call, playing: false)
+        }
+        if !callFirst { await arbiter.sourceChanged("org.videolan.vlc", playing: false) }
+        if !(staysPaused && call != nil) { await TestWait.until { await player.playCallCount == 1 } }
+        await arbiter.waitUntilIdle()
+        return await player.playCallCount
     }
 
-    /// How a pause attempt ends with nothing paused, for `callForgottenWithoutPause`.
+    @Test("with Stay paused after calls, a call during the pause, or the one it began for, keeps the music paused once the apps stop",
+          arguments: [false, true])
+    func staysPausedAfterCalls(callFirst: Bool) async {
+        #expect(await playsAfterPause(staysPaused: true, call: "us.zoom.xos", callFirst: callFirst) == 0)
+    }
+
+    @Test("with Stay paused after calls, a pause with no call resumes once the apps stop")
+    func resumesAfterPauseWithoutCall() async {
+        #expect(await playsAfterPause(staysPaused: true, call: nil) == 1)
+    }
+
+    @Test("with Stay paused after calls off, a call during the pause doesn't keep the music paused")
+    func resumesAfterCallWithSettingOff() async {
+        #expect(await playsAfterPause(staysPaused: false, call: "us.zoom.xos") == 1)
+    }
+
+    /// How a pause attempt ends with nothing paused, for `callForgottenWithoutPause`:
+    /// its fade-out called off, the pause failed, or the player's controls still learned.
     enum NoPause: CaseIterable, Sendable {
         case fadeCalledOff, pauseFailed, stillLearning
     }
 
-    @Test("with Stay paused after calls, a call during a pause attempt that paused nothing (its fade-out called off, the pause failed, the player's controls still learned) is forgotten: a later pause with no call resumes",
+    @Test("with Stay paused after calls, a call during a pause attempt that paused nothing is forgotten: a later pause with no call resumes",
           arguments: NoPause.allCases)
     func callForgottenWithoutPause(_ noPause: NoPause) async {
         var configuration = AppConfiguration.testing
@@ -137,7 +150,7 @@ extension PlaybackArbiterTests {
         #expect(await player.commandLog.contains("forgetPause") == (pause == .muted))
     }
 
-    @Test("with Stay paused after calls, an app already playing that starts a call during the pause (a browser tab joining one) keeps the music paused once it stops")
+    @Test("with Stay paused after calls, a call started during the pause by an app already playing (a browser tab joining one) keeps the music paused")
     func callFromAppAlreadyPlaying() async {
         var configuration = AppConfiguration.testing
         configuration.staysPausedAfterCalls = true
@@ -176,25 +189,39 @@ extension PlaybackArbiterTests {
         await TestWait.until { await player.playCallCount == 1 }
     }
 
-    @Test("with Stay paused after calls, the music kept paused is no longer ours: levels aren't needed, it shows idle, and once the setting is off another app's start and stop doesn't play it")
-    func keptPausedIsNoLongerOurs() async {
-        var configuration = AppConfiguration.testing
-        configuration.staysPausedAfterCalls = true
-        let player = MockMusicPlayer()
-        let states = Locked<[PlaybackState]>([])
-        let needs = Locked<[Bool]>([])
-        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) },
-                                      onAudioLevelsNeededChange: { needs.append($0) })
+    /// A call's app pauses the music, and stops once its call is over: with
+    /// Stay paused after calls, the music is kept paused.
+    private func keepPausedAfterCall(_ arbiter: PlaybackArbiter) async {
         let call = "us.zoom.xos"
-
         await arbiter.handleCallChange(sourceID: call, inCall: true)
         await arbiter.sourceChanged(call, playing: true)
         await arbiter.handleCallChange(sourceID: call, inCall: false)
         await arbiter.sourceChanged(call, playing: false)
         await arbiter.waitUntilIdle()
+    }
+
+    @Test("with Stay paused after calls, the music kept paused is no longer ours: levels aren't needed, and it shows idle")
+    func keptPausedIsNoLongerOurs() async {
+        var configuration = AppConfiguration.testing
+        configuration.staysPausedAfterCalls = true
+        let states = Locked<[PlaybackState]>([])
+        let needs = Locked<[Bool]>([])
+        let arbiter = PlaybackArbiter(player: MockMusicPlayer(), configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      onPlaybackStateChange: { states.append($0) },
+                                      onAudioLevelsNeededChange: { needs.append($0) })
+
+        await keepPausedAfterCall(arbiter)
         #expect(needs.value == [true, false])
         #expect(states.value.last == .musicIdle)
+    }
+
+    @Test("with Stay paused after calls, the music kept paused isn't played by another app's start and stop once the setting is off")
+    func keptPausedStaysPausedWithSettingOff() async {
+        var configuration = AppConfiguration.testing
+        configuration.staysPausedAfterCalls = true
+        let player = MockMusicPlayer()
+        let arbiter = makeArbiter(player: player, configuration: configuration)
+        await keepPausedAfterCall(arbiter)
 
         configuration.staysPausedAfterCalls = false
         await arbiter.setConfiguration(configuration)
@@ -222,39 +249,59 @@ extension PlaybackArbiterTests {
         #expect(told.value == [true, false])
     }
 
-    @Test("with Level the volume on, the Mac's volume is lowered by the monitor's offset before the music resumes, and put back as it fades out for an app; off, never lowered; turning it off puts back whatever is lowered, stopping only what it lowered")
-    func levelsMusic() async {
-        func run(levels: Bool, offset: Float?, turnsOff: Bool = false) async -> (log: [String], plays: Int) {
-            var configuration = AppConfiguration.testing
-            configuration.levelsMusic = levels
-            let player = MockMusicPlayer()
-            let leveler = RecordingVolumeLeveler()
-            let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
-                                          fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { offset })
-            for plays in 1...2 {
-                await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-                await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-                await TestWait.until { await player.playCallCount == plays }
-                await arbiter.waitUntilIdle()
-            }
-            if turnsOff {
-                var off = configuration
-                off.levelsMusic = false
-                await arbiter.setConfiguration(off)
-            }
-            await arbiter.shutdown()
-            return (leveler.log, await player.playCallCount)
+    /// What the volume leveler is asked through two pauses for VLC and their
+    /// resumes, then monitoring's stop, with Level the volume `levels` (turned
+    /// off before the stop when `turnsOff`) and the monitor's `offset`; and
+    /// how many times the music was played.
+    private func levelingLog(levels: Bool, offset: Float?, turnsOff: Bool = false) async -> (log: [String], plays: Int) {
+        var configuration = AppConfiguration.testing
+        configuration.levelsMusic = levels
+        let player = MockMusicPlayer()
+        let leveler = RecordingVolumeLeveler()
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { offset })
+        for plays in 1...2 {
+            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            await TestWait.until { await player.playCallCount == plays }
+            await arbiter.waitUntilIdle()
         }
-        let fadeOut = AppConfiguration.testing.fadeOutDuration
-        let cycle = ["lower -6.0", "restore over \(fadeOut)", "lower -6.0"]
-        let stops = await run(levels: true, offset: -6)
-        #expect(stops.log == cycle + ["restore now"] && stops.plays == 2)
-        let turnedOff = await run(levels: true, offset: -6, turnsOff: true)
-        #expect(turnedOff.log == cycle + ["restore now (any)"] && turnedOff.plays == 2) // nothing left for the stop
-        let quieter = await run(levels: true, offset: nil) // the apps weren't quieter
-        #expect(quieter.log.isEmpty && quieter.plays == 2)
-        let off = await run(levels: false, offset: -6)
-        #expect(off.log.isEmpty && off.plays == 2)
+        if turnsOff {
+            var off = configuration
+            off.levelsMusic = false
+            await arbiter.setConfiguration(off)
+        }
+        await arbiter.shutdown()
+        return (leveler.log, await player.playCallCount)
+    }
+
+    /// Lowered before each resume, and put back as the music fades out for the next app.
+    private static var levelingCycle: [String] {
+        ["lower -6.0", "restore over \(AppConfiguration.testing.fadeOutDuration)", "lower -6.0"]
+    }
+
+    @Test("with Level the volume on, the volume is lowered by the monitor's offset before each resume, put back as the music fades out and as monitoring stops")
+    func levelsMusic() async {
+        let run = await levelingLog(levels: true, offset: -6)
+        #expect(run.log == Self.levelingCycle + ["restore now"] && run.plays == 2)
+    }
+
+    @Test("turning Level the volume off puts back whatever is lowered, leaving monitoring's stop nothing of its own to put back")
+    func levelingTurnedOff() async {
+        let run = await levelingLog(levels: true, offset: -6, turnsOff: true)
+        #expect(run.log == Self.levelingCycle + ["restore now (any)"] && run.plays == 2)
+    }
+
+    @Test("with Level the volume on, the Mac's volume isn't lowered when the apps weren't quieter than the music")
+    func levelingWithoutOffset() async {
+        let run = await levelingLog(levels: true, offset: nil)
+        #expect(run.log.isEmpty && run.plays == 2)
+    }
+
+    @Test("with Level the volume off, the Mac's volume is never lowered")
+    func levelingOff() async {
+        let run = await levelingLog(levels: false, offset: -6)
+        #expect(run.log.isEmpty && run.plays == 2)
     }
 
     @Test("the volume lowered by another monitoring (the app's one leveler) is never put back by this one's pause or stop")
@@ -353,7 +400,16 @@ extension PlaybackArbiterTests {
 
     // MARK: - Resume edge cases
 
-    @Test("a resume that finds the player stopped or quit (no report said so) is skipped, and the pause is no longer ours: once the user opens it paused, another app's start and stop doesn't play it",
+    /// The music is paused for VLC, and the user stops or quits the player
+    /// (`found`) with no report saying so: VLC's stop finds it so.
+    private func skipResume(_ arbiter: PlaybackArbiter, player: MockMusicPlayer, found: PlayerState) async {
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await player.overrideState(found) // the user, and no report says so
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.waitUntilIdle()
+    }
+
+    @Test("a resume that finds the player stopped or quit, with no report saying so, is skipped, and the music shows idle",
           arguments: [PlayerState.stopped, .notRunning])
     func resumeSkippedWhenFoundStopped(_ found: PlayerState) async {
         let player = MockMusicPlayer(state: .playing)
@@ -361,12 +417,17 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onPlaybackStateChange: { states.append($0) })
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await player.overrideState(found) // the user, and no report says so
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await arbiter.waitUntilIdle()
+        await skipResume(arbiter, player: player, found: found)
         #expect(await player.playCallCount == 0)
         #expect(states.value.last == .musicIdle)
+    }
+
+    @Test("a resume skipped for a player found stopped or quit ends our pause: opened paused, another app's start and stop doesn't play it",
+          arguments: [PlayerState.stopped, .notRunning])
+    func skippedResumeEndsPause(_ found: PlayerState) async {
+        let player = MockMusicPlayer(state: .playing)
+        let arbiter = makeArbiter(player: player)
+        await skipResume(arbiter, player: player, found: found)
 
         await player.overrideState(.paused)
         await arbiter.handlePlayerStateChange(.paused) // the user opens it paused: a report that keeps a pause of ours

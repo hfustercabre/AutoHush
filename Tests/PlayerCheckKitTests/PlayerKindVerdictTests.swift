@@ -104,7 +104,7 @@ struct PlayerKindVerdictTests {
         ]
     }
 
-    @Test("with nothing for a developer to build on (no kind, a page only, not running, a browser's web app, a menu that didn't work or wasn't tried), the verdict is the same with --developer")
+    @Test("with nothing for a developer to build on (no kind, a page only, a browser's web app, a menu…), the verdict is the same with --developer")
     func noKind() {
         for (facts, first) in Self.withoutDeveloperLines {
             let lines = PlayerKindVerdict.lines(facts, developer: false)

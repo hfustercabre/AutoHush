@@ -10,7 +10,7 @@ struct AppHealthStateTests {
         AppHealthState(startupError: error, playerName: "Jukebox")
     }
 
-    @Test("a startup error sets the health: a permission denied is needed, a player not running is degraded, one not responding or a failed command is retried, anything else fails; the line says AutoHush can't control it, the menu tells why",
+    @Test("a startup error sets the health: a denied permission is needed, a closed player degraded, one not responding or a failed command retried, others fail",
           arguments: [
             (MusicPlayerError.automationPermissionDenied as any Error, AppHealthState.needsPermission(.automation(player: "Jukebox"))),
             (MusicPlayerError.accessibilityPermissionDenied, .needsPermission(.accessibility(player: "Jukebox"))),

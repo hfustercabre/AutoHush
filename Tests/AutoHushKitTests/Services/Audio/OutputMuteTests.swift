@@ -114,15 +114,19 @@ final class OutputMuteTests {
         mute.restore()
     }
 
-    @Test("while muted, the output is listened to: unmuted by the user, even muted again since, it's theirs and left as they set it; its own mute heard late changes nothing")
-    func userChangeWins() {
+    @Test("while muted, the output is listened to, and its own mute heard late changes nothing")
+    func ownMuteHeardLate() {
         let mute = outputMute()
         mute.mute()
         #expect(outputs.listenerCount(7) == 1)
         outputs.notify(7) // its own mute, heard late
         mute.restore()
         #expect(outputs.mutes[7] == false && outputs.listenerCount(7) == 0)
+    }
 
+    @Test("an output the user unmuted while it was muted, even muted again since, is theirs and left as they set it")
+    func userChangeWins() {
+        let mute = outputMute()
         mute.mute()
         outputs.user(muted: false, 7) // the mute key: unmuted, then muted again
         outputs.user(muted: true, 7)

@@ -442,7 +442,7 @@ struct SafariWebAppPlayerTests {
         #expect(await setup.player.playerState() == .playing)
     }
 
-    @Test("a press the page doesn't follow is an error when the web app can't be muted either; one that can't be made mutes it too (playing unmutes it, pressing nothing), else is an error")
+    @Test("a press the page doesn't follow is an error when the web app can't be muted either")
     func ignoredPress() async throws {
         let setup = Setup(recipe: Self.learned)
         setup.showPage("Pause")
@@ -450,7 +450,10 @@ struct SafariWebAppPlayerTests {
         setup.muter.canMute = false
         await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) { try await setup.player.pause() }
         #expect(setup.page.presses == [1])
+    }
 
+    @Test("a press that can't be made mutes it instead; playing unmutes it, pressing nothing")
+    func failedPressMutes() async throws {
         let failing = Setup(recipe: Self.learned)
         failing.showPage("Pause")
         failing.page.pressFails = true
@@ -459,9 +462,16 @@ struct SafariWebAppPlayerTests {
         #expect(await failing.player.playerState() == .paused)
         try await failing.player.play()
         #expect(failing.muter.log == ["mute 4242", "unmute 4242"])
+    }
+
+    @Test("a press that can't be made is an error when the web app can't be muted either")
+    func failedPressUnmutable() async {
+        let failing = Setup(recipe: Self.learned)
+        failing.showPage("Pause")
+        failing.page.pressFails = true
         failing.muter.canMute = false
         await #expect(throws: MusicPlayerError.playerCommandFailed(.pressFailed)) { try await failing.player.pause() }
-        #expect(failing.muter.log == ["mute 4242", "unmute 4242"])
+        #expect(failing.muter.log.isEmpty)
     }
 
     @Test("another app's page (Electron's, CEF's): it's an app, controlled the same way")

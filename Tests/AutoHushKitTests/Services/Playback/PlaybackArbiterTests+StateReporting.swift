@@ -128,6 +128,20 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
     }
 
+    @Test("when the player doesn't answer, its report that it plays stands: the music shows as playing")
+    func unansweredReportStands() async {
+        let player = MockMusicPlayer(state: .playing)
+        let stateStream = StateStream()
+        let arbiter = makeArbiterWithStream(player: player, stream: stateStream)
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        _ = await nextState(from: stateStream.stream) // drain .pausedByMonitor
+        await player.setUnansweredStateQueries(1)
+        await arbiter.handlePlayerStateChange(.playing)
+
+        #expect(await nextState(from: stateStream.stream) == .musicPlaying)
+    }
+
     @Test("an unknown player state is ignored and the resume still happens")
     func unknownStateIsIgnored() async {
         let player = MockMusicPlayer(state: .playing)

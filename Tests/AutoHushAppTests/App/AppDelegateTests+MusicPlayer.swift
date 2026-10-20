@@ -252,7 +252,7 @@ extension AppDelegateTests {
     }
 
     @MainActor
-    @Test("while Settings is open, the window watch follows what its page shows: launch at login and the permissions on each, Diagnostics on its own, and the players while none is chosen")
+    @Test("while Settings is open, the window watch follows launch at login and the permissions, Diagnostics on its page, and the players while none is chosen")
     func settingsNeedsByPage() {
         #expect(AppDelegate.settingsNeeds(page: .general, hasPlayer: true) == [.notifications, .launchAtLogin, .permissions])
         #expect(AppDelegate.settingsNeeds(page: .diagnostics, hasPlayer: false)
@@ -296,9 +296,11 @@ extension AppDelegateTests {
         #expect(await scratch.first.verifyCallCount == 1)
     }
 
+    /// First can't be controlled at its start: Play/Pause isn't in its
+    /// menus. AutoHush's alerts are noted with their texts and buttons, and
+    /// answered OK (System Settings stays closed).
     @MainActor
-    @Test("why the player session can't control the player shows in the menu and Settings; its info button's alert says what failed and why, with OK only, or with the pane that shows Now Playing; it goes once the player is controlled")
-    func controlErrorShown() async {
+    private func controlFailed() async -> (scratch: Scratch, sut: AppDelegate, alerts: CallLog) {
         let scratch = Scratch()
         await scratch.first.setFailVerify(MusicPlayerError.playerCommandFailed(.menuItemNotFound))
         let (sut, _) = makeSUT(scratch)
@@ -309,19 +311,41 @@ extension AppDelegateTests {
         }
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
         await TestWait.until { sut.status.health != .starting }
+        return (scratch, sut, alerts)
+    }
+
+    @MainActor
+    @Test("why the player session can't control the player shows in the menu and Settings")
+    func controlErrorShown() async {
+        let (_, sut, _) = await controlFailed()
         #expect(sut.status.statusLine == "Can’t control First right now")
         #expect(sut.settingsModel.statusLine == "Can’t control First right now")
         #expect(sut.status.controlError?.text == "AutoHush can’t find Play/Pause in First’s menus.")
-        // The info button after the card's line: what failed, then why, with OK only.
-        sut.showControlError()
+    }
+
+    @MainActor
+    @Test("the info button after why the player can't be controlled has an alert say what failed, then why, with OK only")
+    func controlErrorAlert() async {
+        let (_, sut, alerts) = await controlFailed()
+        sut.showControlError() // the info button after the card's line
         #expect(alerts.calls.count == 1)
         #expect(alerts.calls.first?.hasPrefix("Can’t Control First | AutoHush can’t find Play/Pause in First’s menus.\n\n") == true)
         #expect(alerts.calls.first?.contains(ControlFailure.openMenuBarSettings) == false)
-        // Now Playing hidden in the menu bar: it offers the pane that shows it.
+    }
+
+    @MainActor
+    @Test("why the player can't be controlled, Now Playing hidden in the menu bar, has its alert offer the pane that shows it")
+    func controlErrorAlertOffersPane() async {
+        let (_, sut, alerts) = await controlFailed()
         sut.status.controlError = ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "First")
         sut.showControlError()
         #expect(alerts.calls.last?.hasSuffix(" | \(ControlFailure.openMenuBarSettings) | OK") == true)
+    }
 
+    @MainActor
+    @Test("why the player session can't control the player goes once the player is controlled")
+    func controlErrorGoes() async {
+        let (scratch, sut, _) = await controlFailed()
         await scratch.first.setFailVerify(nil)
         await TestWait.until { sut.status.health == .ready }
         #expect(sut.status.controlError == nil)

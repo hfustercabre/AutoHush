@@ -72,27 +72,41 @@ struct PlayerOptionTests {
         #expect(deezer.isClickable)
     }
 
-    @Test("in AntiDot mode, an app only its sound tells (muted only, or a Now Playing row that doesn’t follow it) can’t be chosen; other players and other modes are left alone")
-    func antiDotMode() {
+    /// A player, an app that can only be muted, one paused another way, a
+    /// suggested web app, and one controlled through a Now Playing row that
+    /// doesn't follow it (Qobuz's): only its sound tells.
+    private func antiDotOptions() -> (all: [PlayerOption], muted: PlayerOption, soundOnly: PlayerOption) {
         var muted = option("Muted", installed: true)
         muted.kind = .checkedApp
         muted.pausesByMuting = true
         muted.needsAudioLevels = true
         var paused = option("Paused", installed: true)
         paused.kind = .checkedApp
-        // Controlled through a Now Playing row that doesn't follow it (Qobuz's): only its sound tells.
         var soundOnly = option("Qobuz", installed: true)
         soundOnly.kind = .checkedApp
         soundOnly.needsAudioLevels = true
         let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))
-        let options = [option("A", installed: true), muted, paused, suggestion, soundOnly]
+        return ([option("A", installed: true), muted, paused, suggestion, soundOnly], muted, soundOnly)
+    }
 
-        let antiDot = options.inAntiDotMode(true)
+    @Test("in AntiDot mode, an app only its sound tells (muted only, or a Now Playing row that doesn’t follow it) can’t be chosen; other players can")
+    func antiDotMode() {
+        let antiDot = antiDotOptions().all.inAntiDotMode(true)
         #expect(antiDot.map(\.isUnavailableInAntiDotMode) == [false, true, false, false, true])
         #expect(antiDot.map(\.isClickable) == [true, false, true, true, false])
         #expect(antiDot[1].isInstalled) // still installed, and shown as chosen
-        #expect(antiDot.inAntiDotMode(false) == options)
+    }
+
+    @Test("out of AntiDot mode, the apps only their sound tells can be chosen")
+    func antiDotModeOff() {
+        let options = antiDotOptions().all
+        #expect(options.inAntiDotMode(true).inAntiDotMode(false) == options)
         #expect(options.inAntiDotMode(false).map(\.isClickable) == [true, true, true, true, true])
+    }
+
+    @Test("an app that can't be chosen in AntiDot mode says so, and why")
+    func antiDotModeReasons() {
+        let (_, muted, soundOnly) = antiDotOptions()
         #expect(PlayerOption.antiDotModeLabel == "Not in AntiDot mode")
         #expect(PlayerOption.antiDotModeTileLabel == "Not in AntiDot")
         #expect(muted.antiDotModeReason

@@ -71,44 +71,65 @@ extension AppDelegateTests {
         #expect(sut.settingsModel.permissions.control == .automation(player: "Second"))
     }
 
+    /// AutoHush with Automation and Audio Recording turned down, First closed.
     @MainActor
-    @Test("a missing permission's button opens the player, asks macOS, or opens System Settings, as it stands; only Audio Recording allowed there offers to reopen AutoHush")
-    func permissionRequests() async {
+    private func permissionsTurnedDown() -> (scratch: Scratch, sut: AppDelegate) {
         let scratch = Scratch()
         scratch.automationStatus = OSStatus(errAEEventNotPermitted)
         scratch.audio = .denied
         let (sut, _) = makeSUT(scratch)
+        return (scratch, sut)
+    }
 
-        // Automation with the player closed: the button opens it.
+    @MainActor
+    @Test("a missing permission's button, for Automation with the player closed, opens the player")
+    func permissionRequestOpensPlayer() async {
+        let (scratch, sut) = permissionsTurnedDown()
         sut.requestPermission(.automation(player: "First"))
         await TestWait.until { !scratch.opened.isEmpty }
         #expect(scratch.opened.map(\.lastPathComponent) == ["\(Players.first).app"])
+    }
 
-        // Automation turned down, the player running: System Settings, and no reopen is offered.
+    @MainActor
+    @Test("a missing permission's button, for Automation turned down with the player running, opens System Settings and offers no reopen")
+    func permissionRequestOpensAutomationPane() async {
+        let (scratch, sut) = permissionsTurnedDown()
         scratch.running = [Players.first]
         sut.requestPermission(.automation(player: "First"))
         await TestWait.until { !scratch.asked.isEmpty }
         #expect(scratch.asked == ["open Privacy_Automation"])
         #expect(!sut.status.awaitsReopenForAudioRecording)
+    }
 
-        // Accessibility (Add a Web App's Allow…): macOS's prompt, then System Settings.
+    @MainActor
+    @Test("Add a Web App's Allow… for Accessibility shows macOS's prompt, then System Settings")
+    func permissionRequestAsksAccessibility() async {
+        let (scratch, sut) = permissionsTurnedDown()
         scratch.trusted = false
         sut.addWebAppModel.openAccessibilitySettings()
-        await TestWait.until { scratch.asked.count == 3 }
+        await TestWait.until { scratch.asked.count == 2 }
         #expect(scratch.asked.suffix(2) == ["prompt accessibility", "open Privacy_Accessibility"])
+    }
 
-        // Audio Recording turned down: System Settings, then AutoHush is to be reopened.
+    @MainActor
+    @Test("a missing permission's button, for Audio Recording turned down, opens System Settings, then offers to reopen AutoHush")
+    func permissionRequestOffersReopen() async {
+        let (scratch, sut) = permissionsTurnedDown()
         sut.requestPermission(.systemAudioRecording)
-        await TestWait.until { scratch.asked.count == 4 }
+        await TestWait.until { scratch.asked.count == 1 }
         #expect(scratch.asked.last == "open Privacy_AudioCapture")
         #expect(sut.status.awaitsReopenForAudioRecording)
         await sut.refreshPermissions()
         #expect(sut.settingsModel.permissions.audio == .needsReopen)
+    }
 
-        // Never asked: macOS's own prompt.
+    @MainActor
+    @Test("a missing permission's button, for Audio Recording never asked, shows macOS's own prompt")
+    func permissionRequestAsksAudioRecording() async {
+        let (scratch, sut) = permissionsTurnedDown()
         scratch.audio = .notDetermined
         sut.requestPermission(.systemAudioRecording)
-        await TestWait.until { scratch.asked.count == 5 }
+        await TestWait.until { scratch.asked.count == 1 }
         #expect(scratch.asked.last == "ask audio")
     }
 
@@ -189,30 +210,56 @@ extension AppDelegateTests {
 
     // MARK: - The window watch
 
+    /// The welcome window shown with no player chosen, `installed` (First
+    /// alone unless given) and Audio Recording turned down; the window watch
+    /// asleep until stepped.
     @MainActor
-    @Test("while the welcome window shows with no player chosen, the players installed and the permissions are followed; closed while it asked for them, it's done")
-    func watchFollowsWelcome() async {
+    private func welcomeWatched(installed: Set<String> = [Players.first]) async -> (scratch: Scratch, clock: ManualSleep, sut: AppDelegate) {
         let scratch = Scratch()
-        scratch.installed = [Players.first]
+        scratch.installed = installed
         scratch.audio = .denied
         let clock = ManualSleep()
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil, windowWatchSleep: clock.sleep)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
         await TestWait.until { clock.sleeping == 1 }
-        #expect(sut.settingsModel.permissions.audio == .denied)
+        return (scratch, clock, sut)
+    }
 
+    @MainActor
+    @Test("while the welcome window shows with no player chosen, the permissions are followed")
+    func watchFollowsWelcome() async {
+        let (_, _, sut) = await welcomeWatched()
+        #expect(sut.settingsModel.permissions.audio == .denied)
+    }
+
+    @MainActor
+    @Test("while the welcome window shows with no player chosen, the players installed are followed")
+    func watchFollowsWelcomePlayers() async {
+        let (scratch, clock, sut) = await welcomeWatched()
         scratch.installed.insert(Players.second) // installed meanwhile
         clock.step()
         await TestWait.until { sut.status.playerOptions.allSatisfy(\.isInstalled) }
+    }
 
+    @MainActor
+    @Test("once a player is chosen in the welcome window, the window watch no longer follows the players: the folder watch does")
+    func watchLeavesPlayersOnceChosen() async {
+        let (scratch, clock, sut) = await welcomeWatched(installed: [Players.first, Players.second])
         sut.chooseMusicPlayer(Players.second) // it goes on to the permissions
-        #expect(sut.settingsModel.welcomeAsksPermissions)
-        // A player is chosen: the folder watch follows the players, the window watch no longer.
         await TestWait.until { clock.sleeping == 1 }
         scratch.installed.remove(Players.first)
         clock.step()
         await TestWait.until { clock.sleeping == 1 }
         #expect(sut.status.playerOptions.first { $0.bundleID == Players.first }?.isInstalled == true)
+    }
+
+    @MainActor
+    @Test("the welcome window closed while it asked for the permissions is done")
+    func welcomeClosedWhileAsking() async {
+        let (scratch, clock, sut) = await welcomeWatched(installed: [Players.first, Players.second])
+        sut.chooseMusicPlayer(Players.second) // it goes on to the permissions
+        #expect(sut.settingsModel.welcomeAsksPermissions)
+        await TestWait.until { clock.sleeping == 1 }
         scratch.chooser.close() // closed instead of Done: the same
         clock.step()
         await TestWait.until { !sut.settingsModel.welcomeAsksPermissions }

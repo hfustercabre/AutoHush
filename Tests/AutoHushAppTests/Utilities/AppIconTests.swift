@@ -60,22 +60,30 @@ struct AppIconTests {
         #expect(max(tile.redComponent, tile.greenComponent, tile.blueComponent) < 0.2)
     }
 
-    @Test("a Safari web app's icon carries Safari's at its lower right, so it isn't taken for an app of the same name; a Chromium browser's web app's carries its browser's")
-    func webAppBadge() throws {
-        let path = "/System/Applications/Calculator.app"
-        let plain = render(AppIcon.image(bundlePath: path, size: 100))
-        let webApp = render(AppIcon.webAppImage(bundlePath: path, size: 100))
+    /// An app every Mac has, standing in for a web app's own icon.
+    private let calculator = "/System/Applications/Calculator.app"
+
+    @Test("a Safari web app's icon carries Safari's at its lower right, so it isn't taken for an app of the same name")
+    func webAppBadge() {
+        let plain = render(AppIcon.image(bundlePath: calculator, size: 100))
+        let webApp = render(AppIcon.webAppImage(bundlePath: calculator, size: 100))
         #expect(color(webApp, at: 20, 20) == color(plain, at: 20, 20)) // the web app's own icon
         #expect(color(webApp, at: 78, 78) != color(plain, at: 78, 78)) // Safari's over it
+    }
 
-        let url = URL(fileURLWithPath: path)
+    @Test("a Safari web app's option shows its icon with Safari's, another app's option its own")
+    func webAppOptionIcon() {
+        let url = URL(fileURLWithPath: calculator)
         #expect(PlayerOption(bundleID: "com.example.web", name: "Calculator", appURL: url, kind: .safariWebApp)
-            .icon(size: 100) === AppIcon.webAppImage(bundlePath: path, size: 100))
+            .icon(size: 100) === AppIcon.webAppImage(bundlePath: calculator, size: 100))
         #expect(PlayerOption(bundleID: "com.example.app", name: "Calculator", appURL: url)
-            .icon(size: 100) === AppIcon.image(bundlePath: path, size: 100))
+            .icon(size: 100) === AppIcon.image(bundlePath: calculator, size: 100))
+    }
 
+    @Test("a Chromium browser's web app's icon carries its browser's; any other app shows its own")
+    func browserAppBadge() throws {
         // A Chromium browser's web app, added with Add an App (its browser
-        // here Safari, which every Mac has); any other app shows its own.
+        // here Safari, which every Mac has).
         let folder = FileManager.default.temporaryDirectory.appending(path: "AppIconTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
         let browserApp = try TestAppBundle.make(in: folder, name: "SoundCloud", info: [
@@ -86,7 +94,7 @@ struct AppIconTests {
         let badged = render(AppIcon.appImage(bundlePath: browserApp.path, size: 100))
         #expect(color(badged, at: 20, 20) == color(own, at: 20, 20))
         #expect(color(badged, at: 78, 78) != color(own, at: 78, 78)) // its browser's over it
-        #expect(AppIcon.appImage(bundlePath: path, size: 100) === AppIcon.image(bundlePath: path, size: 100))
+        #expect(AppIcon.appImage(bundlePath: calculator, size: 100) === AppIcon.image(bundlePath: calculator, size: 100))
     }
 
     @Test("icons are dark when the style says so, or follows a dark appearance")

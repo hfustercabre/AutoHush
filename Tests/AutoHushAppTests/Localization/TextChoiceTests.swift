@@ -253,35 +253,52 @@ struct TextChoiceTests {
         #expect(shared.isEmpty, "these cases say the same: \(shared)")
     }
 
-    @Test("the cases whose words matter say them: AppleScript that only toggles, a permission missing, Now Playing hidden, AntiDot, the countdown; no permission button once it's allowed; a symbol macOS has for each window state")
+    /// What Add an App's last step says of a way the check tried.
+    private func wayNote(_ kind: CheckResult.WayKind, _ mark: CheckResult.Mark, failed: [CheckResult.WindowState] = []) -> String {
+        AddAppText.wayNote(.init(kind: kind, mark: mark, failedStates: failed), app: Self.app)
+    }
+
+    @Test("the check's notes say when AppleScript only toggles, a permission is missing, Now Playing is hidden, or which window states failed")
     func wordsThatMatter() {
-        let app = Self.app
-        func note(_ kind: CheckResult.WayKind, _ mark: CheckResult.Mark, failed: [CheckResult.WindowState] = []) -> String {
-            AddAppText.wayNote(.init(kind: kind, mark: mark, failedStates: failed), app: app)
-        }
-        #expect(note(.script, .toggleOnly) == "Only toggles: AutoHush can’t tell when to send it")
-        #expect(note(.script, .noAutomation) == "Not checked: Automation isn’t allowed")
-        #expect(note(.menu, .noAccessibility) == "Not checked: Accessibility isn’t allowed")
-        #expect(note(.panel, .menuBarHidden)
+        #expect(wayNote(.script, .toggleOnly) == "Only toggles: AutoHush can’t tell when to send it")
+        #expect(wayNote(.script, .noAutomation) == "Not checked: Automation isn’t allowed")
+        #expect(wayNote(.menu, .noAccessibility) == "Not checked: Accessibility isn’t allowed")
+        #expect(wayNote(.panel, .menuBarHidden)
             == "Not tried: hidden in the menu bar; show it in \(ControlFailure.nowPlayingSettings), then check again")
-        #expect(note(.page, .some, failed: [.covered, .otherDesktop]) == "Not with its window covered or on another desktop")
-        // Nothing the check can go without is missing: no warning at all.
-        #expect(AddAppText.withoutWarning([], app: app) == "")
-        #expect(AddAppText.withoutWarning([.accessibility], app: app) == "")
-        #expect(AddAppText.chosen(app, traits: nil) == app)
-        #expect(AddAppText.chosen(app, traits: traits(.browserWebApp(browserID: "com.brave.Browser")), browser: "Brave Browser")
+        #expect(wayNote(.page, .some, failed: [.covered, .otherDesktop]) == "Not with its window covered or on another desktop")
+    }
+
+    @Test("with nothing missing that the check can go without, Add an App warns of nothing")
+    func noWarning() {
+        #expect(AddAppText.withoutWarning([], app: Self.app) == "")
+        #expect(AddAppText.withoutWarning([.accessibility], app: Self.app) == "")
+    }
+
+    @Test("Add an App names the app chosen, and a browser's web app as its browser's")
+    func chosenApp() {
+        #expect(AddAppText.chosen(Self.app, traits: nil) == Self.app)
+        #expect(AddAppText.chosen(Self.app, traits: traits(.browserWebApp(browserID: "com.brave.Browser")), browser: "Brave Browser")
             == "Jukebox, a web app of Brave Browser")
-        // In AntiDot mode Audio Recording is neither allowed nor gone without.
+    }
+
+    @Test("the permissions' summary says what the check goes on without; in AntiDot mode Audio Recording is neither allowed nor gone without")
+    func permissionsSummary() {
         #expect(summary(audio: .denied, antiDot: true) == "Accessibility allowed")
         #expect(summary(audio: .denied) == "Accessibility allowed; the check goes on without Audio Recording")
         #expect(summary(audio: .allowed, automation: .denied)
             == "Accessibility and Audio Recording allowed; the check goes on without Automation")
-        // The countdown rounds up, and never goes below zero.
+    }
+
+    @Test("Add an App's countdown rounds up, and never goes below zero")
+    func countdown() {
         #expect(AddAppText.timeLeft(104.2, for: .play(minutes: 2)) == "You have 1:45 to start it playing.")
         #expect(AddAppText.timeLeft(-3, for: .pause(minutes: 2)) == "You have 0:00 to pause it.")
-        // Allowed, or not needed: no button at all.
+    }
+
+    @Test("a permission allowed, or not needed, has no button, as titled and as drawn")
+    func noPermissionButtonOnceAllowed() {
         for access: PermissionAccess in [.allowed, .notNeeded] {
-            #expect(PermissionButton.title(for: access, permission: .automation(player: app), long: true, player: app) == nil)
+            #expect(PermissionButton.title(for: access, permission: .automation(player: Self.app), long: true, player: Self.app) == nil)
         }
         // As drawn: a button with its words, none once allowed.
         let model = SettingsModel(settings: .inMemory(), updates: FakeUpdateCommands(), actions: FakeAppActions(),
@@ -290,7 +307,11 @@ struct TextChoiceTests {
             NSHostingView(rootView: PermissionButton(model: model, permission: .systemAudioRecording, access: access)).fittingSize.width
         }
         #expect(drawnWidth(.denied) > 0 && drawnWidth(.allowed) == 0)
-        // The check's warning shows each window state's symbol: one this macOS lacks draws nothing.
+    }
+
+    @Test("the check's warning shows a symbol this macOS has for each window state")
+    func windowStateSymbols() {
+        // One this macOS lacks would draw nothing.
         for state in CheckResult.WindowState.allCases {
             #expect(NSImage(systemSymbolName: CheckWarningView.symbol(state), accessibilityDescription: nil) != nil, "\(state)")
         }

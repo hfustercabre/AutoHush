@@ -19,7 +19,7 @@ import Foundation
 /// `pendingResumeTask`), so events keep arriving while the music fades: a
 /// source that stops during the fade-out brings the music back up, and one
 /// that starts during a fade-in fades it out again.
-package actor PlaybackArbiter: PlaybackArbiting {
+actor PlaybackArbiter: PlaybackArbiting {
     let player: any MusicPlayer
     /// Fades the player out before pausing and back in after playing.
     let fader: VolumeFader
@@ -137,7 +137,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// it made (`takeOverPauseOfStartingApp`).
     static let startCheckWindow: TimeInterval = 2
 
-    package init(
+    init(
         player: any MusicPlayer,
         configuration: AppConfiguration,
         debounceScheduler: PlaybackArbiterDebounceScheduling = TaskSleepDebounceScheduler(),
@@ -174,7 +174,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
     /// Records that a source started or stopped. Returns without waiting for
     /// the pause it may start (`waitForPause()` does).
-    package func handleSourceChange(sourceID: String, isPlaying: Bool, heardSince: Date? = nil) async {
+    func handleSourceChange(sourceID: String, isPlaying: Bool, heardSince: Date? = nil) async {
         guard !isShutDown, configuration.isMediaSource(sourceID) else { return }
 
         if isPlaying {
@@ -209,7 +209,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         }
     }
 
-    package func handleCallChange(sourceID: String, inCall: Bool) async {
+    func handleCallChange(sourceID: String, inCall: Bool) async {
         guard !isShutDown else { return }
         if inCall { callSources.insert(sourceID) } else { callSources.remove(sourceID) }
         logger.info("[arbiter] \(sourceID, privacy: .public) \(inCall ? "is in a call (its microphone is on)" : "is no longer in a call", privacy: .public)")
@@ -225,7 +225,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     }
 
     /// Applies new settings.
-    package func setConfiguration(_ configuration: AppConfiguration) async {
+    func setConfiguration(_ configuration: AppConfiguration) async {
         self.configuration = configuration
         if !configuration.levelsMusic {
             volumeLeveler?.restoreNow() // whoever lowered it: the setting is off for all
@@ -244,7 +244,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// without audio levels (the monitor captures nothing then), so an app
     /// that only has its output open, such as a muted call, counts as
     /// playing; the monitor drops it within its stop grace.
-    package func setAutoPauseEnabled(_ enabled: Bool) async {
+    func setAutoPauseEnabled(_ enabled: Bool) async {
         guard !isShutDown, enabled != autoPauseEnabled else { return }
         autoPauseEnabled = enabled
         logger.info("[arbiter] Auto-Pause \(enabled ? "on" : "off", privacy: .public)")
@@ -273,7 +273,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// `change` numbers the changes as they happened, when they can arrive
     /// by more than one way: one older than the latest applied comes late,
     /// and is ignored.
-    package func setAsleep(_ asleep: Bool, change: Int? = nil) async {
+    func setAsleep(_ asleep: Bool, change: Int? = nil) async {
         if let change {
             guard change > sleepChange else { return }
             sleepChange = change
@@ -305,7 +305,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// pauses when an app starts; a player we didn't pause is never touched.
     /// Released, music we paused resumes as it would have: at once when no
     /// other app plays (or Auto-Pause is off), otherwise once they stop.
-    package func holdResumes(_ held: Bool) {
+    func holdResumes(_ held: Bool) {
         guard !isShutDown, held != resumesHeld else { return }
         resumesHeld = held
         logger.debug("[arbiter] resumes \(held ? "held" : "no longer held", privacy: .public)")
@@ -326,7 +326,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// plus `takeOverMargin`. `false` when there was no pause to take over:
     /// the player isn't paused.
     @discardableResult
-    package func takeOverPause() async -> Bool {
+    func takeOverPause() async -> Bool {
         // Handed over while the Mac sleeps: forgotten, as any pause then.
         guard !isShutDown, !isAsleep else { return false }
         let state = await livePlayerState()
@@ -343,7 +343,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// The monitor says how long an app must play, at most, before it
     /// counts. A pause taken over before it said (it starts after the
     /// takeover) waits that long for apps still playing.
-    package func handleStartConfirmationChange(_ longest: TimeInterval) {
+    func handleStartConfirmationChange(_ longest: TimeInterval) {
         guard !isShutDown else { return }
         let known = startConfirmation
         longestStartConfirmation = longest
@@ -362,7 +362,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// player first, and ignored while it's still paused.
     ///
     /// `.unknown` carries no information and is ignored.
-    package func handlePlayerStateChange(_ state: PlayerState) async {
+    func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
         noteStoppedPlaying(state)
         if state != .playing { pauseFailure = nil } // the user paused or stopped it
@@ -385,7 +385,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
         publishPlaybackState()
     }
 
-    package func handleLocalPlaybackChange(_ isLocal: Bool) {
+    func handleLocalPlaybackChange(_ isLocal: Bool) {
         guard !isShutDown, isLocal != playsLocally else { return }
         playsLocally = isLocal
         if !isLocal { pauseFailure = nil } // it isn't heard here any more
@@ -395,7 +395,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
     /// Queries the player's live state, caches it and publishes the resulting
     /// playback state. Used once as monitoring starts, to seed the cache.
     @discardableResult
-    package func refreshPlaybackState() async -> PlayerState {
+    func refreshPlaybackState() async -> PlayerState {
         let state = await livePlayerState()
         publishPlaybackState()
         return state
@@ -403,7 +403,7 @@ package actor PlaybackArbiter: PlaybackArbiting {
 
     /// Stops all future actions, including an already scheduled resume.
     /// Called as its monitoring stops: a new start replaces it, or AutoHush quits.
-    package func shutdown() async {
+    func shutdown() async {
         isShutDown = true
         cancelPendingPause()
         cancelPendingResume()

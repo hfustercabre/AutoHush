@@ -48,7 +48,7 @@ struct MainMenuTests {
         #expect(target.validateMenuItem(find))
     }
 
-    @Test("Find… goes to Settings → Sound Sources' search while it lists apps, the welcome window's over many players, the logs' or Add an App's list of apps; nowhere else; it puts the keyboard in the window's first field one can type into")
+    @Test("Find… goes to Sound Sources' search while it lists apps, the welcome window's over many players, the logs' or Add an App's list of apps; nowhere else")
     func findTargets() {
         func target(_ window: FindTarget.Window, page: SettingsWindowController.Page? = nil, hasApps: Bool = true,
                     showsPlayers: Bool = true, searchable: Bool = true) -> FindTarget? {
@@ -64,7 +64,10 @@ struct MainMenuTests {
         #expect(target(.logs) == .logsSearch)
         #expect(target(.appChooser) == .appChooserSearch)
         #expect(target(.other) == nil) // Add a Web App's address isn't a search; learning has none
+    }
 
+    @Test("Find… puts the keyboard in the window's first field one can type into")
+    func findField() {
         // A label first, then the search, deeper down.
         let content = NSView()
         let label = NSTextField(labelWithString: "Apps")

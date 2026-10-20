@@ -49,6 +49,19 @@ extension PlaybackArbiterTests {
         #expect(await player.state == .playing)
     }
 
+    @Test("resumes held while a pause taken over waits for apps show the music paused by AutoHush at once, though no app plays")
+    func holdShowsTakenOverPause() async {
+        let states = Locked<[PlaybackState]>([])
+        let arbiter = PlaybackArbiter(player: MockMusicPlayer(state: .paused), configuration: .testing,
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      onPlaybackStateChange: { states.append($0) })
+
+        #expect(await arbiter.takeOverPause())
+        #expect(states.value.last == .musicIdle) // no app plays, and its resume waits
+        await arbiter.holdResumes(true)
+        #expect(states.value.last == .pausedByMonitor)
+    }
+
     @Test("fades the music out before pausing and back in after resuming: played from near silence, then up in steps")
     func fadesAroundPauseAndResume() async throws {
         let player = MockMusicPlayer()

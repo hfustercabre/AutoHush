@@ -177,14 +177,24 @@ struct PreferencesTests {
         #expect(Preferences(store: store).timings.fadeInDuration == 0)
     }
 
-    @Test("fades turned off persist with their durations, as Settings → Advanced's switches do, and timings stored before the switches keep fades on and the others off")
+    @Test("fades turned off persist with their durations")
     func fadesSwitchPersists() {
         let store = InMemoryPreferenceStore()
         Preferences(store: store).timings = TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false)
         #expect(Preferences(store: store).timings == TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false))
+    }
+
+    @Test("Settings → Advanced's switches persist")
+    func advancedSwitchesPersist() {
+        let store = InMemoryPreferenceStore()
         let advanced = TimingSettings(levelsMusic: true, staysPausedAfterCalls: true)
         Preferences(store: store).timings = advanced
         #expect(Preferences(store: store).timings == advanced)
+    }
+
+    @Test("timings stored before the switches keep fades on and the others off")
+    func timingsFromBeforeTheSwitches() {
+        let store = InMemoryPreferenceStore()
         store.set(["fadeOutDuration": 1.5], forKey: "timings") // as 0.7.0 stored them
         #expect(Preferences(store: store).timings == TimingSettings(fadeOutDuration: 1.5))
     }

@@ -80,28 +80,46 @@ struct ScriptSetupTests {
         #expect(setup.state == .documents(documentClass: "docu", playing: "splg"))
     }
 
-    @Test("an app's dictionary is read from its bundle: the .sdef its Info.plist names, else the first in its resources that has one; not running, it's never asked for one")
+    /// A folder of its own for a test's apps; the test removes it.
+    private func appsFolder() -> URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("ScriptSetupTests-\(UUID().uuidString)")
+    }
+
+    /// An app in `folder` holding `files` (name: text) in its resources, its Info.plist naming `named`.
+    private func app(_ name: String, in folder: URL, named: String? = nil, files: [String: String]) throws -> URL {
+        let info = ["CFBundleIdentifier": "com.example.\(name.lowercased())", "OSAScriptingDefinition": named].compactMapValues { $0 }
+        return try TestAppBundle.make(in: folder, name: name, info: info, resources: files)
+    }
+
+    @Test("an app's dictionary is read from its bundle: the .sdef its Info.plist names")
     func readFromBundle() throws {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("ScriptSetupTests-\(UUID().uuidString)")
+        let folder = appsFolder()
         defer { try? FileManager.default.removeItem(at: folder) }
-        /// An app holding `files` (name: text) in its resources, its Info.plist naming `named`.
-        func app(_ name: String, named: String? = nil, files: [String: String]) throws -> URL {
-            let info = ["CFBundleIdentifier": "com.example.\(name.lowercased())", "OSAScriptingDefinition": named].compactMapValues { $0 }
-            return try TestAppBundle.make(in: folder, name: name, info: info, resources: files)
-        }
         // Named without its extension, as many apps name it; the other .sdef isn't read.
-        let named = try ScriptingDictionary.read(appAt: app("Spotify", named: "Spotify", files: ["Spotify.sdef": spotify, "Other.sdef": vlc]),
-                                                 isRunning: false)
+        let spotifyApp = try app("Spotify", in: folder, named: "Spotify", files: ["Spotify.sdef": spotify, "Other.sdef": vlc])
+        let named = ScriptingDictionary.read(appAt: spotifyApp, isRunning: false)
         #expect(named?.suite == "spfy")
         #expect(named.map { $0.hasState && $0.namesItsSong } == true)
-        // Not named: the first that holds a dictionary.
+    }
+
+    @Test("an app's dictionary, none named, is the first in its resources that has one")
+    func firstInResources() throws {
+        let folder = appsFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
         let itemNamed = vlc.replacingOccurrences(of: "</class-extension>", with: "<property name=\"name of current item\" code=\"nmci\"/></class-extension>")
-        let found = try ScriptingDictionary.read(appAt: app("VLC", files: ["A.sdef": "<dictionary/>", "B.sdef": itemNamed]), isRunning: false)
+        let vlcApp = try app("VLC", in: folder, files: ["A.sdef": "<dictionary/>", "B.sdef": itemNamed])
+        let found = ScriptingDictionary.read(appAt: vlcApp, isRunning: false)
         #expect(found?.hasPlayingFlag == true && found?.hasState == true)
         #expect(found?.currentItemName == "nmci" && found?.namesItsSong == true)
-        // Only old .scriptSuite files: only the running app could say, so nothing is read;
-        // running, `sdef` is asked, and finds nothing either (there's no program to ask).
-        let old = try app("Old", files: ["Old.scriptSuite": "{}"])
+    }
+
+    @Test("an app with only old .scriptSuite files is asked for its dictionary only while it runs")
+    func oldScriptSuites() throws {
+        let folder = appsFolder()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        // Only the running app could say, so nothing is read; running, `sdef`
+        // is asked, and finds nothing either (there's no program to ask).
+        let old = try app("Old", in: folder, files: ["Old.scriptSuite": "{}"])
         #expect(ScriptingDictionary.isInBundle(at: old))
         #expect(ScriptingDictionary.read(appAt: old, isRunning: false) == nil)
         #expect(ScriptingDictionary.read(appAt: old, isRunning: true) == nil)

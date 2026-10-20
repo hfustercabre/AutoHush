@@ -34,10 +34,11 @@ struct CheckableAppsTests {
         #expect(apps.first { $0.bundleID == "com.apple.TV" }?.url.path == tv.resolvingSymlinksInPath().path)
     }
 
-    @Test("the list: the apps the helper says can be in Now Playing, those in its list first, the playing one first; all of them without a helper, none when it fails")
-    func find() async throws {
+    /// Music, TV and Notes in the Applications folder of a scratch folder
+    /// (the caller removes it), and a helper that says Music and TV can be
+    /// in Now Playing, and lists TV, paused, then Music, playing.
+    private func appsAndHelper() throws -> (folder: URL, applications: URL, helper: PlayerCheckHelper) {
         let folder = FileManager.default.temporaryDirectory.appending(path: "CheckableAppsTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
         let applications = folder.appending(path: "Applications")
         try FileManager.default.createDirectory(at: applications, withIntermediateDirectories: true)
         for (name, id) in [("Music", "com.apple.Music"), ("TV", "com.apple.TV"), ("Notes", "com.apple.Notes")] {
@@ -49,12 +50,36 @@ struct CheckableAppsTests {
             --now-playing-list) printf 'com.apple.TV\t300\tPaused\t0\tTV\ncom.apple.Music\t412\tPlaying\t1\tMusic\n#active\t412\n' ;;
             esac
             """#, in: folder.appending(path: "Helper"))
+        return (folder, applications, helper)
+    }
 
+    @Test("the list: the apps the helper says can be in Now Playing, those in its list first, the playing one first")
+    func find() async throws {
+        let (folder, applications, helper) = try appsAndHelper()
+        defer { try? FileManager.default.removeItem(at: folder) }
         let found = await CheckableApps.find(helper: helper, excluding: [], in: [applications])
         #expect(found.map(\.name) == ["Music", "TV"])
         #expect(found.map(\.nowPlaying) == [true, false])
+    }
+
+    @Test("the list leaves out the apps excluded")
+    func findExcluding() async throws {
+        let (folder, applications, helper) = try appsAndHelper()
+        defer { try? FileManager.default.removeItem(at: folder) }
         #expect(await CheckableApps.find(helper: helper, excluding: ["com.apple.TV"], in: [applications]).map(\.name) == ["Music"])
+    }
+
+    @Test("the list without a helper has all the apps")
+    func findWithoutHelper() async throws {
+        let (folder, applications, _) = try appsAndHelper()
+        defer { try? FileManager.default.removeItem(at: folder) }
         #expect(await CheckableApps.find(helper: nil, excluding: [], in: [applications]).map(\.name) == ["Music", "Notes", "TV"])
+    }
+
+    @Test("the list is empty when the helper fails")
+    func findWhenHelperFails() async throws {
+        let (folder, applications, _) = try appsAndHelper()
+        defer { try? FileManager.default.removeItem(at: folder) }
         let failing = try PlayerCheckHelper.standIn("exit 1", in: folder.appending(path: "Failing"))
         #expect(await CheckableApps.find(helper: failing, excluding: [], in: [applications]).isEmpty)
     }

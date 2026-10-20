@@ -146,11 +146,15 @@ extension AppDelegateTests {
     }
 
     @MainActor
-    @Test("with nothing monitored, quitting doesn't wait; while a player is, the quit goes on once its volume is back, once only; a stop that never ends lets it go on after the wait")
-    func quitting() async {
+    @Test("with nothing monitored, quitting doesn't wait")
+    func quittingIdle() {
         let (idle, _) = makeSUT()
         #expect(idle.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
+    }
 
+    @MainActor
+    @Test("while a player is monitored, the quit goes on once its volume is back")
+    func quitting() async {
         let (sut, monitorings) = makeSUT()
         await start(sut)
         let replies = CallLog()
@@ -158,8 +162,12 @@ extension AppDelegateTests {
                 == .terminateLater)
         await sut.quitting?.value
         #expect(replies.calls == ["after 1 stop"]) // the volume back first
+    }
 
-        // An added app that doesn't let go of what it turned on in its app.
+    /// An added app chosen that doesn't let go of what it turned on in its
+    /// app, and a quit that waits 0.05 s for it: gone on after the wait.
+    @MainActor
+    private func quitPastAStuckStop() async -> (added: MockMusicPlayer, sut: AppDelegate, replies: CallLog) {
         let scratch = Scratch()
         let added = MockMusicPlayer(bundleID: "com.example.added", name: "Added", canFade: false, kind: .checkedApp, releasesOnQuit: true)
         await added.holdReleases()
@@ -169,7 +177,20 @@ extension AppDelegateTests {
         let stuckReplies = CallLog()
         #expect(stuck.shouldTerminate(wait: 0.05) { stuckReplies.calls.append("reply") } == .terminateLater)
         await TestWait.until { stuckReplies.calls.count == 1 } // after the wait
+        return (added, stuck, stuckReplies)
+    }
+
+    @MainActor
+    @Test("a stop that never ends lets the quit go on after the wait")
+    func quittingPastAStuckStop() async {
+        let (added, _, _) = await quitPastAStuckStop()
         #expect(await added.releases == 0)
+    }
+
+    @MainActor
+    @Test("a stop that ends after the quit went on without it doesn't let the quit go on a second time")
+    func quittingOnceOnly() async {
+        let (added, stuck, stuckReplies) = await quitPastAStuckStop()
         await added.letGo()
         await stuck.quitting?.value
         #expect(stuckReplies.calls.count == 1) // not twice

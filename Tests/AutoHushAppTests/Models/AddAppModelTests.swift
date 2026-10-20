@@ -250,17 +250,39 @@ struct AddAppModelTests {
         #expect(model.stage == .choosing && !model.changeAppForgetsCheck)
     }
 
-    @Test("what the check mutes: the app with Audio Recording outside AntiDot mode, else the Mac's output, else nothing; whether the Mac can mute is read with the permissions and as the warning opens, not at every drawing")
+    @Test("the check mutes the app, with Audio Recording allowed outside AntiDot mode")
     func checkMuting() async {
         let world = World()
         let model = await ready(world)
         #expect(model.checkMuting == .app)
+    }
+
+    @Test("the check mutes the Mac's output in AntiDot mode, as read with the permissions")
+    func checkMutingInAntiDot() async {
+        let world = World()
+        let model = await ready(world)
         world.antiDot = true
         #expect(model.checkMuting == .mac) // as read with the permissions
+    }
+
+    @Test("whether the Mac can mute isn't read again each time what the check mutes is drawn")
+    func checkMutingNotReadAtDrawing() async {
+        let world = World()
+        let model = await ready(world)
+        world.antiDot = true
         let reads = world.macCanMuteReads
         world.macCanMute = false // another output chosen meanwhile
         #expect(model.checkMuting == .mac && model.checkMuting == .mac) // drawn again: as read
         #expect(world.macCanMuteReads == reads)
+    }
+
+    @Test("whether the Mac can mute is read again as the warning opens; if it can't, the check mutes nothing")
+    func checkMutingReadAsTheWarningOpens() async {
+        let world = World()
+        let model = await ready(world)
+        world.antiDot = true
+        let reads = world.macCanMuteReads
+        world.macCanMute = false // another output chosen meanwhile
         model.continueToCheck() // the warning opens: read again, for it and the check
         #expect(model.checkMuting == .none && world.macCanMuteReads == reads + 1)
     }
@@ -494,8 +516,8 @@ struct AddAppModelTests {
         #expect(world.asksToReopen == [false])
     }
 
-    @Test("AntiDot mode: Audio Recording isn't asked for or missed, the check taps nothing, and neither muting nor a panel only its sound tells can be used, until it's turned off from there")
-    func antiDot() async {
+    /// In AntiDot mode, Audio Recording turned down: the app playing, ready to check.
+    private func readyInAntiDot() async -> (world: World, model: AddAppModel) {
         let world = World()
         world.antiDot = true
         world.permissions = CheckPermissions(accessibility: true, audio: .denied)
@@ -503,20 +525,49 @@ struct AddAppModelTests {
         let model = await model(world)
         model.continueWithApp()
         await TestWait.until { model.stage == .ready } // all it uses is allowed
-        #expect(model.permissions.missingOptional(antiDot: true).isEmpty)
+        return (world, model)
+    }
+
+    /// In AntiDot mode, a check run that found only a panel its sound tells
+    /// (its row stale), Audio Recording allowed meanwhile.
+    private func checkedInAntiDot() async -> (world: World, model: AddAppModel) {
+        let (world, model) = await readyInAntiDot()
         model.startCheck()
         await TestWait.until { world.panel == ["shown"] }
-        #expect(world.taps == [false])
         world.permissions.audio = .allowed
         world.run.finish(.finished(CheckResult(
             ways: [CheckResult.WayResult(kind: .menu, mark: .notThere), CheckResult.WayResult(kind: .panel, mark: .works)],
             setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                                ways: [.panel(rememberedRow: nil)], panelRowIsStale: true))))
         await TestWait.until { model.result != nil }
+        return (world, model)
+    }
+
+    @Test("in AntiDot mode, Audio Recording isn't asked for or missed")
+    func antiDot() async {
+        let (_, model) = await readyInAntiDot()
+        #expect(model.permissions.missingOptional(antiDot: true).isEmpty)
+    }
+
+    @Test("in AntiDot mode, the check taps nothing")
+    func antiDotTapsNothing() async {
+        let (world, model) = await readyInAntiDot()
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        #expect(world.taps == [false])
+    }
+
+    @Test("in AntiDot mode, neither muting nor a panel only its sound tells can be used")
+    func antiDotLeavesNoWay() async {
+        let (world, model) = await checkedInAntiDot()
         #expect(!model.canMute && model.choosableWays.isEmpty && model.mark(of: .use) == .failed && model.offersCheckAgain)
         model.use()
         #expect(world.used.isEmpty)
+    }
 
+    @Test("AntiDot mode turned off from Add an App lets a panel only its sound tells be used")
+    func antiDotTurnedOff() async {
+        let (world, model) = await checkedInAntiDot()
         model.turnOffAntiDot()
         #expect(!world.antiDot && model.choosableWays == [.panel] && model.mark(of: .use) != .failed)
     }

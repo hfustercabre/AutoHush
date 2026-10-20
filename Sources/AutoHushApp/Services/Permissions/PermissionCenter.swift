@@ -30,9 +30,8 @@ final class PermissionCenter {
     private let system: System
     /// Reading and asking for Automation block: it's done here.
     nonisolated static let queue = DispatchQueue(label: "AutoHush.Permissions", qos: .userInitiated)
-    /// What AutoHush needs for the chosen player, as last read (`refresh`);
-    /// the private harness sets it to draw a given state.
-    var chosen = PermissionsState()
+    /// What AutoHush needs for the chosen player, as last read (`refresh`).
+    private(set) var chosen = PermissionsState()
 
     init(system: System = System()) {
         self.system = system

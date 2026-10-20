@@ -208,13 +208,16 @@ extension AppDelegateTests {
 
     /// What the user does while the add window says the web app made isn't found.
     enum WhileNotFound: CaseIterable, Sendable {
-        case nothing, addressChanged, windowClosed
+        case addressChanged, windowClosed
     }
 
+    /// Qobuz made as a web app from the add window, which macOS doesn't list
+    /// yet: looked for a few times, then said to be missing. `listNow` has
+    /// macOS list it, making it again finds it there, and AutoHush looks
+    /// again, as the window watch does each second meanwhile.
     @MainActor
-    @Test("a web app made but not listed yet is looked for a few times; still missing, the add window says so and Continue tries again; once listed, it's added by itself, unless the address was changed or the window closed meanwhile",
-          arguments: WhileNotFound.allCases)
-    func addedWebAppNotFound(meanwhile: WhileNotFound) async {
+    private func webAppNotListed() async
+        -> (scratch: Scratch, sut: AppDelegate, webApp: MockLearningPlayer, listNow: @MainActor () -> Void) {
         let scratch = Scratch()
         let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz", status: .learning(hasPlayed: false))
         let found = Locked<[any MusicPlayer]>([]) // macOS doesn't list it
@@ -230,32 +233,49 @@ extension AppDelegateTests {
         await TestWait.until { sut.addWebAppModel.phase == .readyToAdd(site: "play.qobuz.com") }
         sut.addWebAppModel.addTapped()
         await TestWait.until { sut.addWebAppModel.problem != nil }
+        return (scratch, sut, webApp, {
+            found.value = [webApp]
+            scratch.maker.result = .success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: true))
+            sut.refreshPlayerOptions()
+        })
+    }
+
+    @MainActor
+    @Test("a web app made but not listed yet is looked for a few times; still missing, the add window says so and Continue tries again")
+    func addedWebAppNotFound() async {
+        let (scratch, sut, webApp, _) = await webAppNotListed()
         #expect(sut.addWebAppModel.problem == .notFound(name: "Qobuz"))
         #expect(sut.addWebAppModel.phase == .entering)
         #expect(sut.addWebAppModel.address == "play.qobuz.com") // Continue tries again
         #expect(sut.status.chosenPlayerID != webApp.bundleID)
         #expect(scratch.addWindow.isOpen)
+    }
 
-        switch meanwhile {
-        case .nothing: break
-        case .addressChanged: sut.addWebAppModel.address = "deezer.com"
-        case .windowClosed: scratch.addWindow.close()
-        }
-        // Once macOS lists it, it's added again by itself, which finds it there and chooses it.
-        found.value = [webApp]
-        scratch.maker.result = .success(MadeWebApp(bundleID: webApp.bundleID, name: "Qobuz", url: appURL, alreadyThere: true))
-        sut.refreshPlayerOptions() // as the window watch does each second meanwhile
-        guard meanwhile == .nothing else {
-            #expect(sut.webAppAwaitingListing == nil) // no longer looked for
-            sut.refreshPlayerOptions()
-            await sut.session.waitUntilIdle()
-            #expect(sut.status.chosenPlayerID == Players.first)
-            #expect(sut.addWebAppModel.problem == .notFound(name: "Qobuz"))
-            return
-        }
+    @MainActor
+    @Test("a web app made but said to be missing is added by itself once listed, which finds it there and chooses it")
+    func addedWebAppFoundLater() async {
+        let (_, sut, webApp, listNow) = await webAppNotListed()
+        listNow()
         await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID }
         #expect(sut.addWebAppModel.problem == nil)
         #expect(sut.addWebAppModel.phase == .learning(name: "Qobuz", alreadyThere: true))
+    }
+
+    @MainActor
+    @Test("a web app made but said to be missing is no longer looked for once the address is changed or the window closed",
+          arguments: WhileNotFound.allCases)
+    func addedWebAppNoLongerLookedFor(meanwhile: WhileNotFound) async {
+        let (scratch, sut, _, listNow) = await webAppNotListed()
+        switch meanwhile {
+        case .addressChanged: sut.addWebAppModel.address = "deezer.com"
+        case .windowClosed: scratch.addWindow.close()
+        }
+        listNow()
+        #expect(sut.webAppAwaitingListing == nil) // no longer looked for
+        sut.refreshPlayerOptions()
+        await sut.session.waitUntilIdle()
+        #expect(sut.status.chosenPlayerID == Players.first)
+        #expect(sut.addWebAppModel.problem == .notFound(name: "Qobuz"))
     }
 
     @MainActor

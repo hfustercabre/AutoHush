@@ -23,6 +23,24 @@ extension PlaybackArbiterTests {
         #expect(await player.state == .paused)
     }
 
+    @Test("the Mac going to sleep during our pause says at once that the pause is no longer ours")
+    func sleepPublishesForgottenPause() async {
+        let states = Locked<[PlaybackState]>([])
+        let told = Locked<[Bool]>([])
+        let needs = Locked<[Bool]>([])
+        let arbiter = PlaybackArbiter(player: MockMusicPlayer(), configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      onPlaybackStateChange: { states.append($0) },
+                                      onAudioLevelsNeededChange: { needs.append($0) },
+                                      onPausedByUsChange: { told.append($0) })
+
+        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true)
+        #expect(states.value.last == .pausedByMonitor)
+        await arbiter.setAsleep(true)
+        #expect(told.value == [true, false])
+        #expect(needs.value == [true, false])
+        #expect(states.value.last == .musicIdle)
+    }
+
     @Test("a sleep that arrives after a later wake is ignored")
     func lateSleepIgnored() async {
         let player = MockMusicPlayer()
@@ -32,6 +50,19 @@ extension PlaybackArbiterTests {
         await arbiter.setAsleep(true, change: 1)  // the sleep, told first, arrives late
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         #expect(await player.pauseCallCount == 1) // awake: it pauses
+    }
+
+    @Test("numbered sleeps and wakes that arrive in order apply: nothing pauses during the sleep, and an app pauses the music once awake")
+    func numberedSleepAndWakeApply() async {
+        let player = MockMusicPlayer()
+        let arbiter = makeArbiter(player: player)
+
+        await arbiter.setAsleep(true, change: 1)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await player.pauseCallCount == 0) // asleep
+        await arbiter.setAsleep(false, change: 2)
+        await arbiter.waitForPause()
+        #expect(await player.pauseCallCount == 1)
     }
 
     @Test("a pause handed over while the Mac sleeps is forgotten too")
@@ -178,6 +209,24 @@ extension PlaybackArbiterTests {
         await arbiter.waitUntilIdle() // the resume it called off
 
         #expect(await player.playCallCount == 0)
+    }
+
+    @Test("a pause waiting for the apps to be measured again neither checks on the player nor mutes it once the arbiter is shut down")
+    func shutdownCancelsPendingPause() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setPlaysAnyway(true) // heard while it says it's paused: a check would mute it
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
+                                      debounceScheduler: scheduler, autoPauseEnabled: false)
+
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.setAutoPauseEnabled(true) // waits for VLC to be measured again
+        await arbiter.shutdown()
+        await scheduler.completeNext() // that wait ends
+        await arbiter.waitUntilIdle()
+
+        #expect(await player.stateQueryCount == 0)
+        #expect(await player.commandLog.isEmpty)
     }
 
     @Test("a shut-down arbiter ignores new sources")

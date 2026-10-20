@@ -84,7 +84,8 @@ struct PlayerCheckTests {
         #expect(wordSays("Pause") == .playing && wordSays("Play") == .paused && wordSays("Shuffle") == nil)
     }
 
-    @Test("the run's log: named by the app and what the run does, every line said, the home folder written ~, the oldest beyond 50 to the Trash, other logs left alone")
+    /// One test, not one per clause: each run started writes a log of its own and trims the folder again.
+    @Test("the run's log: named by the app and the run, every line with the home folder as ~, its oldest beyond 50 to the Trash, no other")
     func logFile() throws {
         // Noted instead of moved to the Trash: the test's folder goes at the end, the Trash wouldn't.
         let discarded = OSAllocatedUnfairLock(initialState: [String]())

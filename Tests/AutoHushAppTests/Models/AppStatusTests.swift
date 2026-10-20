@@ -114,7 +114,7 @@ struct AppStatusTests {
         #expect(status.statusLine == "Paused — another app is playing")
     }
 
-    @Test("an app that stops playing is listed as recently played for 30 minutes, the most recent first, until it plays again; so is one playing when monitoring stops")
+    @Test("an app that stops playing is listed as recently played, the most recent first")
     func recentlyPlayed() {
         var status = ready()
         let start = Date()
@@ -123,12 +123,41 @@ struct AppStatusTests {
         status.setActiveSources([chrome], now: start + 10)
         status.setActiveSources([], now: start + 20)
         #expect(status.recentSources(at: start + 30) == [chrome, vlc])
-        status.setActiveSources([vlc], now: start + 40) // playing again: under Playing Now only
-        #expect(status.recentSources(at: start + 50) == [chrome])
+    }
+
+    /// VLC and Chrome played from `start`; VLC stopped 10 s later, Chrome
+    /// 20 s later, and VLC plays again at 40 s.
+    private func vlcPlaysAgain(from start: Date) -> AppStatus {
+        var status = ready()
+        status.setActiveSources([vlc, chrome], now: start)
+        status.setActiveSources([chrome], now: start + 10)
+        status.setActiveSources([], now: start + 20)
+        status.setActiveSources([vlc], now: start + 40)
+        return status
+    }
+
+    @Test("an app recently played is no longer listed so once it plays again")
+    func recentlyPlayedUntilPlayingAgain() {
+        let start = Date()
+        let status = vlcPlaysAgain(from: start)
+        #expect(status.recentSources(at: start + 50) == [chrome]) // playing again: under Playing Now only
+    }
+
+    @Test("an app playing when monitoring stops is listed as recently played too")
+    func recentlyPlayedAsMonitoringStops() {
+        let start = Date()
+        var status = vlcPlaysAgain(from: start)
         // Another player chosen: nothing is monitored until it starts.
         status.setHealth(.starting, now: start + 60)
         #expect(status.activeSources.isEmpty)
         #expect(status.recentSources(at: start + 70) == [vlc, chrome])
+    }
+
+    @Test("an app stays listed as recently played for 30 minutes")
+    func recentlyPlayedFor30Minutes() {
+        let start = Date()
+        var status = vlcPlaysAgain(from: start)
+        status.setHealth(.starting, now: start + 60) // VLC stops too
         #expect(status.recentSources(at: start + 60 + 29 * 60) == [vlc, chrome])
         #expect(status.recentSources(at: start + 60 + 30 * 60).isEmpty)
     }

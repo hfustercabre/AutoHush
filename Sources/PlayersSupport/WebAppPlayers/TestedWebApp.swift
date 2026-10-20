@@ -6,7 +6,7 @@ import AutoHushKit
 /// download symbol). Any other web app is offered after them, marked
 /// untested.
 package struct TestedWebApp: Equatable, Sendable {
-    package let name: String
+    let name: String
     /// Its address, e.g. "music.youtube.com".
     let address: String
     /// The other hosts its web app may open, e.g. the service's sites for

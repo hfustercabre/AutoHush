@@ -77,18 +77,35 @@ struct MenuPlayerTests {
         #expect(MenuPlayer.state(of: MenuToggle(title: title, isEnabled: true), words: ambiguous) == .unknown)
     }
 
-    @Test("a menu player is named and identified by its profile, needs Accessibility, has no volume to fade, and is read about once a second; without its words, its state is unknown")
-    func identity() async throws {
+    @Test("a menu player is named and identified by its profile")
+    func identity() {
         let jukebox = player(FakeMenu())
         #expect(jukebox.name == "Jukebox")
         #expect(jukebox.bundleID == "com.example.jukebox")
-        #expect(jukebox.controlPermission == .accessibility(player: "Jukebox"))
+    }
+
+    @Test("a menu player needs Accessibility")
+    func needsAccessibility() {
+        #expect(player(FakeMenu()).controlPermission == .accessibility(player: "Jukebox"))
+    }
+
+    @Test("a menu player has no volume to fade")
+    func noVolume() async throws {
+        let jukebox = player(FakeMenu())
         #expect(jukebox.volumeCurve == .linear)
         #expect(!jukebox.canFade)
         #expect(await jukebox.volume() == nil)
         try await jukebox.setVolume(30) // nothing to set
-        #expect(jukebox.stateReportDelay == PolledStateObserver.reportDelay) // a change is seen up to a read later
-        #expect(jukebox.ownWordsRead == true)
+    }
+
+    @Test("a menu player is read about once a second")
+    func readOnceASecond() {
+        #expect(player(FakeMenu()).stateReportDelay == PolledStateObserver.reportDelay) // a change is seen up to a read later
+    }
+
+    @Test("without its own words, a menu player's state is unknown, and Diagnostics says so")
+    func withoutItsWords() async {
+        #expect(player(FakeMenu()).ownWordsRead == true)
         let wordless = MenuPlayer(profile: Self.profile, menu: FakeMenu(), processIdentifier: { 4242 }, words: { nil })
         #expect(wordless.ownWordsRead == false) // Diagnostics says so
         #expect(await wordless.playerState() == .unknown)

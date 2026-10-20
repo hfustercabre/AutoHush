@@ -14,7 +14,7 @@ struct ChecklistStepTests {
         #expect(StepState.failed.voiceOverValue == "Failed")
     }
 
-    @Test("learning: play is the step to do with It's Playing; paused by hand, It's Paused with the countdown; locked, neither, VoiceOver hearing the permission and why")
+    @Test("learning: play is the step to do, with It's Playing")
     func learning() {
         let fresh = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false)
         #expect(fresh.map(\.state) == [.current, .todo])
@@ -23,7 +23,10 @@ struct ChecklistStepTests {
         #expect(fresh.map(\.button) == [.itsPlaying, nil])
         #expect(fresh.currentAnnouncement == "Play something in YT Music")
         #expect(fresh.currentTitle == "Play something in YT Music") // where VoiceOver's cursor goes
+    }
 
+    @Test("learning, to be paused by hand: It's Paused is the step to do, with the countdown")
+    func learningPausedByHand() {
         let played = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: false, locked: false, remaining: 44.2,
                                          pauseMode: .byHand)
         #expect(played.map(\.state) == [.done, .failed, .current])
@@ -32,19 +35,28 @@ struct ChecklistStepTests {
         #expect(played.map(\.button) == [nil, nil, .itsPaused])
         #expect(played.currentAnnouncement == "Pause it yourself")
         #expect(played.currentTitle == played[2].title) // the one to do, not the one that failed
+    }
 
+    @Test("learning, once learned: every step is done, with no button")
+    func learningDone() {
         let learned = LearningSteps.steps(name: "YT Music", hasPlayed: true, hasPaused: true, locked: false)
         #expect(learned.map(\.state) == [.done, .done])
         #expect(learned.allSatisfy { $0.button == nil })
         #expect(learned.currentAnnouncement == nil)
+    }
 
+    @Test("learning, locked: no step to do, VoiceOver hearing the permission and why")
+    func learningLocked() {
         let locked = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: true)
         #expect(locked.map(\.state) == [.todo, .todo])
         #expect(locked.allSatisfy { $0.notes.isEmpty && $0.button == nil })
         #expect(locked.currentAnnouncement == nil)
         #expect(LearningPermissionStep.announcement(.accessibility(player: "YT Music"), name: "YT Music")
             == "Allow Accessibility access to control YT Music\nAutoHush needs it to see YT Music’s buttons. The steps below unlock once it’s allowed.")
-        // The permission's step is the one to do now, its button its own.
+    }
+
+    @Test("learning, locked: the permission's step is the one to do now, with its own button, and says what VoiceOver hears")
+    func learningPermissionStep() {
         let permission = LearningPermissionStep.step(.accessibility(player: "YT Music"), name: "YT Music")
         #expect(permission.state == .current && permission.button == nil)
         #expect(([permission.title] + permission.notes).joined(separator: "\n")

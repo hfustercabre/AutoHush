@@ -104,7 +104,7 @@ package struct ScriptingDictionary: Equatable, Sendable {
 
     /// The commands, properties and enumerators of a dictionary's XML; `nil`
     /// with neither commands nor properties.
-    package static func parse(_ document: XMLDocument) -> ScriptingDictionary? {
+    static func parse(_ document: XMLDocument) -> ScriptingDictionary? {
         var dictionary = ScriptingDictionary()
         func attributes(_ xpath: String) -> [(code: String, name: String)] {
             ((try? document.nodes(forXPath: xpath)) ?? []).compactMap { node in

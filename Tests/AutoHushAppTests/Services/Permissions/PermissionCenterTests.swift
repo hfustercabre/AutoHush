@@ -78,21 +78,38 @@ struct PermissionCenterTests {
         #expect(!unscripted.accessibility && unscripted.audio == .notAsked)
     }
 
-    @Test("the chosen player's permissions are kept as last read, which Settings shows and follows; a read for a player no longer chosen once it's done is dropped")
-    func keepsTheChosenPlayers() async {
+    /// Jukebox and Radio, neither running, and Settings reading the
+    /// permissions from the center.
+    private func chosenPlayersBench() -> (jukebox: MockMusicPlayer, radio: MockMusicPlayer, sut: PermissionCenter, model: SettingsModel) {
         let jukebox = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
         let radio = MockMusicPlayer(bundleID: "com.example.radio", name: "Radio")
         let sut = center(running: false)
         let model = SettingsModel(settings: .inMemory(), updates: FakeUpdateCommands(), permissionCenter: sut, actions: nil,
                                   launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
+        return (jukebox, radio, sut, model)
+    }
+
+    @Test("the chosen player's permissions are kept as last read")
+    func keepsTheChosenPlayers() async {
+        let (jukebox, _, sut, _) = chosenPlayersBench()
+        await sut.refresh(chosenPlayer: { jukebox }, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
+        #expect(sut.chosen.player == "com.example.jukebox" && sut.chosen.controlAccess == .playerNotRunning)
+    }
+
+    @Test("Settings shows the chosen player's permissions as last read, and follows them")
+    func settingsFollowsTheChosenPlayers() async {
+        let (jukebox, _, sut, model) = chosenPlayersBench()
         #expect(model.permissions == PermissionsState())
         let changed = Locked(false)
         withObservationTracking { _ = model.permissions } onChange: { changed.value = true }
-
         await sut.refresh(chosenPlayer: { jukebox }, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
-        #expect(sut.chosen.player == "com.example.jukebox" && sut.chosen.controlAccess == .playerNotRunning)
         #expect(model.permissions == sut.chosen && changed.value)
+    }
 
+    @Test("a read of the permissions for a player no longer chosen once it's done is dropped")
+    func dropsAReadForAnotherPlayer() async {
+        let (jukebox, radio, sut, _) = chosenPlayersBench()
+        await sut.refresh(chosenPlayer: { jukebox }, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
         // Jukebox chosen again while Radio's read ran: Radio's is dropped.
         var asked = 0
         await sut.refresh(chosenPlayer: {

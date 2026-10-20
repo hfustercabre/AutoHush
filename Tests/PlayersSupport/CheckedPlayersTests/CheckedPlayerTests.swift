@@ -88,27 +88,54 @@ struct CheckedPlayerTests {
         #expect(await CheckedPlayer(setup: page, reports: nil, store: MemorySetupStore()).reopen() == false)
     }
 
-    @Test("it's an app, controlled as its first way needs, faded and announced by its script; its signs are its script with a state, its page, its menu, in that order")
+    @Test("it's an app, controlled as its first way needs")
     func basics() {
         let scripted = CheckedPlayer(setup: setup([.script(script), .menu(menuName: "Controls")]), reports: nil, store: MemorySetupStore())
         #expect(scripted.kind == .checkedApp)
         #expect(scripted.controlPermission == .automation(player: "Jukebox"))
-        #expect(scripted.canFade)
         let menu = CheckedPlayer(setup: setup([.menu(menuName: "Controls")]), reports: nil, store: MemorySetupStore())
         #expect(menu.controlPermission == .accessibility(player: "Jukebox"))
-        #expect(!menu.canFade)
+    }
 
-        // A script that only toggles, with no state, isn't a sign: it asks the others.
+    @Test("it's faded by its script, and not by a menu")
+    func fadedByItsScript() {
+        #expect(CheckedPlayer(setup: setup([.script(script), .menu(menuName: "Controls")]), reports: nil, store: MemorySetupStore()).canFade)
+        #expect(!CheckedPlayer(setup: setup([.menu(menuName: "Controls")]), reports: nil, store: MemorySetupStore()).canFade)
+    }
+
+    /// The parts of a setup whose script only toggles, with no state, then
+    /// has a page and a menu.
+    private var toggleParts: CheckedPlayer.Parts {
         let toggle = ScriptSetup(commands: .toggle("jukeTogl"), state: nil, hasVolume: false)
-        let parts = CheckedPlayer.parts(for: setup([.script(toggle), .page(.webKit), .menu(menuName: "Controls")]), store: MemorySetupStore())
-        #expect(parts.ways.count == 3)
-        #expect(parts.signs.map { "\(type(of: $0))" } == ["SafariWebAppPlayer", "MenuPlayer"])
-        #expect(parts.toggleState != nil && parts.page != nil)
-        #expect(parts.volume == nil && parts.announcing == nil && parts.hearing == nil)
+        return CheckedPlayer.parts(for: setup([.script(toggle), .page(.webKit), .menu(menuName: "Controls")]), store: MemorySetupStore())
+    }
+
+    /// The parts of a setup whose script has a state, and a notification announcing it.
+    private var announcedParts: CheckedPlayer.Parts {
         var announced = setup([.script(script)])
         announced.stateNotification = "com.example.jukebox.playerInfo"
-        let own = CheckedPlayer.parts(for: announced, store: MemorySetupStore())
-        #expect(own.signs.map { "\(type(of: $0))" } == ["ScriptedAppPlayer"])
+        return CheckedPlayer.parts(for: announced, store: MemorySetupStore())
+    }
+
+    @Test("its signs are its script with a state, its page, its menu, in that order")
+    func signs() {
+        // A script that only toggles, with no state, isn't a sign: it asks the others.
+        let parts = toggleParts
+        #expect(parts.ways.count == 3)
+        #expect(parts.signs.map { "\(type(of: $0))" } == ["SafariWebAppPlayer", "MenuPlayer"])
+        #expect(announcedParts.signs.map { "\(type(of: $0))" } == ["ScriptedAppPlayer"])
+    }
+
+    @Test("a script that only toggles, with no state, goes by the other signs, and neither fades nor announces")
+    func toggleByOtherSigns() {
+        let parts = toggleParts
+        #expect(parts.toggleState != nil && parts.page != nil)
+        #expect(parts.volume == nil && parts.announcing == nil && parts.hearing == nil)
+    }
+
+    @Test("a script with a state and a notification fades it and announces its state")
+    func announcedByItsScript() {
+        let own = announcedParts
         #expect(own.volume is ScriptedAppPlayer && own.announcing is ScriptedAppPlayer && own.toggleState == nil)
     }
 
@@ -227,17 +254,25 @@ struct CheckedPlayerTests {
         #expect(heard.listens == 1)
     }
 
-    @Test("its assertions tell by AntiDot mode's rule: one keeping only the display awake doesn't, unless it kept the Mac awake under the same name while its sound was on (a video)")
-    func assertionsByAntiDotRule() async {
+    /// One with a stale panel row, told between decisions by the assertions `held`.
+    private func asserting(_ held: Locked<Set<PowerAssertion>>) -> CheckedPlayer {
         var stale = setup([.panel(rememberedRow: nil)])
         stale.panelRowIsStale = true
-        let held = Locked<Set<PowerAssertion>>([])
-        let player = CheckedPlayer(setup: stale, parts: CheckedPlayer.parts(for: stale, store: MemorySetupStore()), reports: nil,
-                                   processIdentifier: { 4242 }, levelProbe: FakeLevelProbe(audible: false), soundOn: { _ in true },
-                                   assertionsHeld: { _ in held.value })
-        held.value = [PowerAssertion(.display, "Showing a picture")]
-        #expect(await player.polledState() == .unknown) // the display only: nothing told
-        held.value = [PowerAssertion(.system, "Video")] // its video hidden keeps the Mac awake
+        return CheckedPlayer(setup: stale, parts: CheckedPlayer.parts(for: stale, store: MemorySetupStore()), reports: nil,
+                             processIdentifier: { 4242 }, levelProbe: FakeLevelProbe(audible: false), soundOn: { _ in true },
+                             assertionsHeld: { _ in held.value })
+    }
+
+    @Test("its assertions tell by AntiDot mode's rule: one keeping only the display awake tells nothing")
+    func displayAssertionTellsNothing() async {
+        let held = Locked<Set<PowerAssertion>>([PowerAssertion(.display, "Showing a picture")])
+        #expect(await asserting(held).polledState() == .unknown) // the display only: nothing told
+    }
+
+    @Test("one keeping only the display awake tells it plays when it kept the Mac awake under the same name while its sound was on (a video)")
+    func videoAssertionTells() async {
+        let held = Locked<Set<PowerAssertion>>([PowerAssertion(.system, "Video")]) // its video hidden keeps the Mac awake
+        let player = asserting(held)
         #expect(await player.polledState() == .playing)
         held.value = [PowerAssertion(.display, "Video")] // shown, the same one keeps only the display awake
         #expect(await player.polledState() == .playing)
@@ -264,25 +299,46 @@ struct CheckedPlayerTests {
         #expect(panelAsked.value)
     }
 
-    @MainActor
-    @Test("its volume is its script's; it's watched by its script's notification, else read about once a second, and stopping that lifts its page's mute: the app is never left silent")
-    func volumeAndObserver() async throws {
+    /// One with its script for its volume and its announcing.
+    private func scriptedPlayer(_ script: MockMusicPlayer) -> CheckedPlayer {
+        CheckedPlayer(setup: setup([.script(self.script)]), parts: .init(ways: [script], signs: [script], volume: script, announcing: script),
+                      reports: nil, processIdentifier: { 4242 })
+    }
+
+    /// One with its page only, which `muter` mutes.
+    private func pagedPlayer(muter: FakeMuter) -> CheckedPlayer {
+        let page = StubPage().player(muter: muter)
+        return CheckedPlayer(setup: setup([.page(.webKit)]), parts: .init(ways: [page], signs: [page], page: page),
+                             reports: nil, processIdentifier: { 4242 })
+    }
+
+    @Test("its volume is its script's")
+    func volume() async throws {
         let script = MockMusicPlayer()
         await script.setVolumeLevel(40)
-        let scripted = CheckedPlayer(setup: setup([.script(self.script)]),
-                                     parts: .init(ways: [script], signs: [script], volume: script, announcing: script),
-                                     reports: nil, processIdentifier: { 4242 })
+        let scripted = scriptedPlayer(script)
         #expect(await scripted.volume() == 40)
         try await scripted.setVolume(25)
         #expect(await script.volumeHistory == [25])
+    }
+
+    @MainActor
+    @Test("it's watched by its script's notification")
+    func watchedByItsScript() {
+        let scripted = scriptedPlayer(MockMusicPlayer())
         #expect(scripted.makeStateObserver { _ in } is MockStateObserver) // its script's own
         #expect(scripted.stateReportDelay == 0)
+    }
 
-        let page = StubPage(), muter = FakeMuter()
-        let pagePlayer = page.player(muter: muter)
-        let paged = CheckedPlayer(setup: setup([.page(.webKit)]), parts: .init(ways: [pagePlayer], signs: [pagePlayer], page: pagePlayer),
-                                  reports: nil, processIdentifier: { 4242 })
-        #expect(await paged.volume() == nil) // no fades
+    @Test("with no script, it has no volume")
+    func noVolume() async {
+        #expect(await pagedPlayer(muter: FakeMuter()).volume() == nil) // no fades
+    }
+
+    @MainActor
+    @Test("with no script, it's read about once a second, by its page")
+    func readOnceASecond() async {
+        let paged = pagedPlayer(muter: FakeMuter())
         #expect(paged.stateReportDelay == PolledStateObserver.reportDelay)
         #expect(await paged.muteIfPlayingAnyway()) // its button says Play while it's heard (an ad): muted instead
         var states: [PlayerState] = []
@@ -290,6 +346,19 @@ struct CheckedPlayerTests {
         observer.start()
         await TestWait.until { !states.isEmpty }
         #expect(states == [.paused]) // read by its page: muted in place of a pause
+        observer.stop()
+    }
+
+    @MainActor
+    @Test("stopping its reading lifts its page's mute: the app is never left silent")
+    func stoppingLiftsTheMute() async {
+        let muter = FakeMuter()
+        let paged = pagedPlayer(muter: muter)
+        #expect(await paged.muteIfPlayingAnyway())
+        var states: [PlayerState] = []
+        let observer = paged.makeStateObserver { states.append($0) }
+        observer.start()
+        await TestWait.until { !states.isEmpty }
         observer.stop()
         await TestWait.until { !muter.isMuted }
     }

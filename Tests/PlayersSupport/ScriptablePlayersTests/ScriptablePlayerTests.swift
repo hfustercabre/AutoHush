@@ -228,13 +228,19 @@ struct ScriptablePlayerTests {
         #expect(profile.readVolume(42) == 42) // read as reported unless the profile says otherwise
     }
 
-    @Test("running, the app is asked its state and volume and sent its suite's pause and play; not running, it isn't asked, and its commands and access check say so")
+    /// The Jukebox's player, through `app` (by default, Apple events to the
+    /// app, which isn't running), its volume read as `readVolume` says.
+    private func jukeboxPlayer(_ app: FakeScriptedApp? = nil, readVolume: @escaping @Sendable (Int) -> Int = { $0 }) -> ScriptablePlayer {
+        ScriptablePlayer(profile: ScriptablePlayerProfile(
+            bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
+            stateNotification: Notification.Name("com.example.jukebox.state"), readVolume: readVolume
+        ), channel: app)
+    }
+
+    @Test("running, the app is asked its state and volume, and sent its suite's pause and play")
     func sends() async throws {
         let app = FakeScriptedApp()
-        let jukebox = ScriptablePlayer(profile: ScriptablePlayerProfile(
-            bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
-            stateNotification: Notification.Name("com.example.jukebox.state"), readVolume: { $0 + 1 }
-        ), channel: app)
+        let jukebox = jukeboxPlayer(app, readVolume: { $0 + 1 })
         try await jukebox.verifyControlAccess()
         #expect(await jukebox.playerState() == .playing)
         try await jukebox.pause()
@@ -242,15 +248,18 @@ struct ScriptablePlayerTests {
         #expect(await jukebox.volume() == 51) // read as the profile says
         try await jukebox.setVolume(150)
         #expect(app.sent == ["ask", "get pPlS", "get pPlS", "jboxPaus", "jboxPlay", "get pVol", "set pVol 100"])
-        // An app that doesn't answer: its state unknown, no volume.
-        app.state.withLock { $0.fails = true }
+    }
+
+    @Test("an app that doesn't answer has its state unknown, and no volume")
+    func unanswered() async {
+        let jukebox = jukeboxPlayer(FakeScriptedApp { $0.fails = true })
         #expect(await jukebox.playerState() == .unknown)
         #expect(await jukebox.volume() == nil)
+    }
 
-        let player = ScriptablePlayer(profile: ScriptablePlayerProfile(
-            bundleID: "com.example.jukebox", name: "Jukebox", suite: fourCharCode("jbox"),
-            stateNotification: Notification.Name("com.example.jukebox.state")
-        ))
+    @Test("not running, the app isn't asked, and its commands and access check say so")
+    func notRunning() async {
+        let player = jukeboxPlayer()
         #expect(await player.playerState() == .notRunning)
         #expect(await player.volume() == nil)
         await #expect(throws: MusicPlayerError.playerNotRunning) { try await player.verifyControlAccess() }

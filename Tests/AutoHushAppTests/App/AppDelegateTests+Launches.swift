@@ -54,51 +54,96 @@ extension AppDelegateTests {
         #expect(monitorings.made[0].ignored == [betterDisplay.id]) // the monitoring ignores it
     }
 
+    /// macOS's notices come on NSWorkspace's own center, which every
+    /// AppDelegate that registered its observers hears: these tests run one
+    /// at a time, each AppDelegate quitting at its end, so only the test's
+    /// own observes them.
     @MainActor
-    @Test("macOS's notices reach AutoHush: the chosen player opening starts it again, an app that plays only the volume sound opening is ignored, the Mac sleeping and waking (or only its screens) reach the session; once AutoHush quits, a launch does nothing")
-    func workspaceNotices() async throws {
-        let scratch = Scratch()
-        await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning)
-        let (sut, monitorings) = makeSUT(scratch)
-        sut.session.launch()
-        await TestWait.until { sut.status.health == .degraded("First isn’t running") }
-        sut.registerPlayerLaunchObserver()
-        let observer = sut.playerLaunchObserver
-        sut.registerPlayerLaunchObserver() // once only
-        #expect(observer != nil && sut.playerLaunchObserver === observer)
-        sut.registerSleepObservers()
-        let center = NSWorkspace.shared.notificationCenter
-        func launch(_ app: FakeRunningApplication) {
+    @Suite("macOS's notices", .serialized)
+    struct WorkspaceNotices {
+        private let tests = AppDelegateTests()
+        private let center = NSWorkspace.shared.notificationCenter
+
+        /// AutoHush launched with First chosen, running or not, following
+        /// macOS's notices.
+        private func observing(_ scratch: Scratch = Scratch(), running: Bool) async -> (AppDelegate, FakeMonitorings) {
+            if !running { await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning) }
+            let (sut, monitorings) = tests.makeSUT(scratch)
+            sut.session.launch()
+            let health: AppHealthState = running ? .ready : .degraded("First isn’t running")
+            await TestWait.until { sut.status.health == health }
+            sut.registerPlayerLaunchObserver()
+            sut.registerSleepObservers()
+            return (sut, monitorings)
+        }
+
+        private func launch(_ app: FakeRunningApplication) {
             center.post(name: NSWorkspace.didLaunchApplicationNotification, object: nil,
                         userInfo: [NSWorkspace.applicationUserInfoKey: app])
         }
 
-        await scratch.first.setFailVerify(nil)
-        launch(FakeRunningApplication(bundleID: Players.first))
-        await TestWait.until { sut.status.health == .ready }
-        #expect(monitorings.made.count == 2) // the one listing the apps while it was closed, then its own
-
-        // BetterDisplay opened (an app on the disk: a running app's bundle names it).
-        let folder = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
-        let betterDisplay = try TestAppBundle.make(in: folder, name: "BetterDisplay", info: ["CFBundleIdentifier": "pro.betterdisplay.BetterDisplay"])
-        launch(FakeRunningApplication(bundleID: "pro.betterdisplay.BetterDisplay", bundleURL: betterDisplay))
-        await TestWait.until { !sut.userSettings.state.ignoredApps.isEmpty }
-        #expect(sut.userSettings.state.ignoredApps.map(\.id) == ["pro.betterdisplay.BetterDisplay"])
-
-        for (notice, asleep) in [(NSWorkspace.willSleepNotification, true), (NSWorkspace.didWakeNotification, false),
-                                 (NSWorkspace.willSleepNotification, true), (NSWorkspace.screensDidWakeNotification, false)] {
-            center.post(name: notice, object: nil)
-            await TestWait.until { sut.session.isAsleep == asleep }
+        private func quit(_ sut: AppDelegate) {
+            sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
         }
-        #expect(monitorings.made.last?.asleep == [true, false, true, false])
 
-        sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
-        #expect(sut.playerLaunchObserver == nil && sut.sleepObservers.isEmpty)
-        launch(FakeRunningApplication(bundleID: Players.first))
-        await Task.yield() // what a notice still observed would start
-        await sut.session.waitUntilIdle()
-        #expect(monitorings.made.count == 2) // not started again
+        @Test("AutoHush follows the apps that open with one observer, however often it's asked to")
+        func launchObserverOnce() {
+            let (sut, _) = tests.makeSUT()
+            defer { quit(sut) }
+            sut.registerPlayerLaunchObserver()
+            let observer = sut.playerLaunchObserver
+            sut.registerPlayerLaunchObserver() // once only
+            #expect(observer != nil && sut.playerLaunchObserver === observer)
+        }
+
+        @Test("macOS telling the chosen player opened starts it again")
+        func playerOpened() async {
+            let scratch = Scratch()
+            let (sut, monitorings) = await observing(scratch, running: false)
+            defer { quit(sut) }
+            await scratch.first.setFailVerify(nil)
+            launch(FakeRunningApplication(bundleID: Players.first))
+            await TestWait.until { sut.status.health == .ready }
+            #expect(monitorings.made.count == 2) // the one listing the apps while it was closed, then its own
+        }
+
+        @Test("macOS telling an app that plays only the volume sound opened has it ignored")
+        func volumeSoundAppOpened() async throws {
+            let (sut, _) = await observing(running: true)
+            defer { quit(sut) }
+            // BetterDisplay opened (an app on the disk: a running app's bundle names it).
+            let folder = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
+            defer { try? FileManager.default.removeItem(at: folder) }
+            let betterDisplay = try TestAppBundle.make(in: folder, name: "BetterDisplay", info: ["CFBundleIdentifier": "pro.betterdisplay.BetterDisplay"])
+            launch(FakeRunningApplication(bundleID: "pro.betterdisplay.BetterDisplay", bundleURL: betterDisplay))
+            await TestWait.until { !sut.userSettings.state.ignoredApps.isEmpty }
+            #expect(sut.userSettings.state.ignoredApps.map(\.id) == ["pro.betterdisplay.BetterDisplay"])
+        }
+
+        @Test("macOS telling the Mac sleeps and wakes, or only its screens wake, reaches the session")
+        func sleepAndWake() async {
+            let (sut, monitorings) = await observing(running: true)
+            defer { quit(sut) }
+            for (notice, asleep) in [(NSWorkspace.willSleepNotification, true), (NSWorkspace.didWakeNotification, false),
+                                     (NSWorkspace.willSleepNotification, true), (NSWorkspace.screensDidWakeNotification, false)] {
+                center.post(name: notice, object: nil)
+                await TestWait.until { sut.session.isAsleep == asleep }
+            }
+            #expect(monitorings.made.last?.asleep == [true, false, true, false])
+        }
+
+        @Test("once AutoHush quits, it no longer follows macOS's notices: the chosen player opening does nothing")
+        func quitStopsFollowing() async {
+            let scratch = Scratch()
+            let (sut, monitorings) = await observing(scratch, running: false)
+            await scratch.first.setFailVerify(nil)
+            quit(sut)
+            #expect(sut.playerLaunchObserver == nil && sut.sleepObservers.isEmpty)
+            launch(FakeRunningApplication(bundleID: Players.first))
+            await Task.yield() // what a notice still observed would start
+            await sut.session.waitUntilIdle()
+            #expect(monitorings.made.count == 1) // not started again
+        }
     }
 
     // MARK: - A player opened without what it needs
@@ -149,16 +194,29 @@ extension AppDelegateTests {
         #expect(await tunes.reopenCount == 1)
     }
 
+    /// Tunes, chosen and reopened at once, then found without its option
+    /// again within a minute of being reopened: given up on this time.
     @MainActor
-    @Test("a player to reopen always, found without its option again within a minute of being reopened, isn't reopened over and over: only the card says so; over a minute later, it's reopened by itself again")
-    func reopenedOnlyOnceAMinute() async {
+    private func tunesGivenUpOn() async -> (scratch: Scratch, tunes: MockMusicPlayer, sut: AppDelegate) {
         let (scratch, tunes, _, sut) = await reopenBench(chosen: "com.example.tunes")
         await TestWait.until { sut.status.playerNeedsReopen } // reopened at once
         sut.handleApplicationDidLaunch(bundleIdentifier: tunes.bundleID)
         await TestWait.until { sut.lastReopens[tunes.bundleID]?.gaveUp == true } // given up this time
+        return (scratch, tunes, sut)
+    }
+
+    @MainActor
+    @Test("a player to reopen always, found without its option again within a minute of being reopened, isn't reopened again: only the card says so")
+    func reopenedOnlyOnceAMinute() async {
+        let (_, tunes, sut) = await tunesGivenUpOn()
         #expect(await tunes.reopenCount == 1)
         #expect(sut.status.playerNeedsReopen)
-        // Found so again over a minute later, it's reopened by itself again.
+    }
+
+    @MainActor
+    @Test("a player to reopen always, given up on within a minute of being reopened, is reopened by itself again when found so over a minute later")
+    func reopenedAgainAfterAMinute() async {
+        let (scratch, tunes, sut) = await tunesGivenUpOn()
         scratch.clock.advance(by: 61)
         sut.handleApplicationDidLaunch(bundleIdentifier: tunes.bundleID)
         await TestWait.until { await tunes.reopenCount == 2 }

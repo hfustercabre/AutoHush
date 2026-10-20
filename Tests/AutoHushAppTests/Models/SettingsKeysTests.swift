@@ -79,13 +79,19 @@ struct SettingsKeysTests {
         #expect(keys.sidebar.highlighted == nil)
     }
 
-    @Test("Tab leaves the keys to the keyboard's focus; a control with the focus keeps Return, Space, ← and → even while the pointer highlights another, as in the menu")
+    @Test("Tab leaves the keys to the keyboard's focus")
     func focus() {
         let log = Log()
-        let (keys, _, controls) = makeKeys(log: log)
+        let (keys, _, _) = makeKeys(log: log)
         keys.handle(.down)
         #expect(!keys.handle(.tab))
         #expect(keys.page.highlighted == nil && keys.sidebar.highlighted == nil)
+    }
+
+    @Test("a control with the focus keeps Return, Space, ← and → even while the pointer highlights another, as in the menu")
+    func focusKeepsKeys() {
+        let log = Log()
+        let (keys, _, controls) = makeKeys(log: log)
         keys.page.hover(controls[0], true) // the pointer rests on the switch row
         for key: HighlightKey in [.left, .right, .returnKey, .space] {
             #expect(!keys.handle(key, controlHasFocus: true), "\(key)")

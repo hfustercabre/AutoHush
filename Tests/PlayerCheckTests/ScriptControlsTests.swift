@@ -1,6 +1,7 @@
 import AppKit
 import Testing
 @testable import PlayerCheck
+@testable import ScriptablePlayers
 
 /// The check's AppleScript, chosen as AutoHush chooses it (`ScriptSetup`).
 @Suite("playercheck: its AppleScript")

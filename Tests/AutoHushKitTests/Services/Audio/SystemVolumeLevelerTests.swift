@@ -98,7 +98,7 @@ final class SystemVolumeLevelerTests {
         #expect(volume.sets.isEmpty)
     }
 
-    @Test("one leveler for every monitoring: only the lowering's own token puts it back; a put-back for all (a quit, the setting off) puts back whatever is lowered")
+    @Test("one leveler for every monitoring: only the lowering's own token puts it back, once")
     func onlyItsOwnToken() throws {
         let volume = MockSystemVolume([0: -10])
         let leveler = leveler(volume)
@@ -111,7 +111,12 @@ final class SystemVolumeLevelerTests {
         #expect(volume.decibels == [0: -10] && !isKept)
         leveler.restoreNow(lowered: token) // put back already: nothing more
         #expect(volume.sets.count == 2)
+    }
 
+    @Test("a put-back for all (a quit, the setting off) puts back whatever is lowered")
+    func putBackForAll() throws {
+        let volume = MockSystemVolume([0: -10])
+        let leveler = leveler(volume)
         _ = try #require(leveler.lower(by: -8))
         leveler.restoreNow()
         #expect(volume.decibels == [0: -10] && !isKept)
@@ -135,18 +140,27 @@ final class SystemVolumeLevelerTests {
         #expect(!isKept) // forgotten
     }
 
-    @Test("at launch, only a volume lowered within the hour is put back; one lowered longer ago is the user's, and forgotten; a record from before it was dated is put back")
-    func onlyRecentAtLaunch() throws {
+    @Test("at launch, a volume lowered within the hour is put back")
+    func recentPutBackAtLaunch() {
         let volume = MockSystemVolume([0: -10])
         let start = Date(timeIntervalSince1970: 1_000_000)
         leveler(volume, now: { start }).lower(by: -8)
         leveler(volume, now: { start + SystemVolumeLeveler.maxAge - 60 }).restoreIfLeft()
         #expect(volume.decibels == [0: -10])
+    }
 
+    @Test("at launch, a volume lowered longer than an hour ago is the user's, and forgotten")
+    func olderForgottenAtLaunch() {
+        let volume = MockSystemVolume([0: -10])
+        let start = Date(timeIntervalSince1970: 1_000_000)
         leveler(volume, now: { start }).lower(by: -8)
         leveler(volume, now: { start + SystemVolumeLeveler.maxAge + 60 }).restoreIfLeft()
         #expect(volume.decibels == [0: -18] && !isKept)
+    }
 
+    @Test("at launch, a volume kept before it was dated is put back")
+    func undatedPutBackAtLaunch() throws {
+        let volume = MockSystemVolume([0: -18]) // lowered by an AutoHush of before
         // As the leveler kept it before 2026-10-18: no token, no date.
         struct Undated: Codable {
             let uid: String
@@ -210,8 +224,8 @@ final class SystemVolumeLevelerTests {
         #expect(volume.sets == [[0: -18], [0: -16]])
     }
 
-    @Test("with sound moved to another output meanwhile, the output it lowered is put back, found by its UID, at once or over the fade-out; the other is left alone")
-    func putsBackTheOutputItLowered() async throws {
+    @Test("with sound moved to another output meanwhile, the output it lowered is put back at once, found by its UID; the other is left alone")
+    func putsBackTheOutputItLoweredAtOnce() throws {
         let outputs = TwoOutputs()
         let leveler = leveler(outputs)
         let token = try #require(leveler.lower(by: -6))
@@ -219,14 +233,21 @@ final class SystemVolumeLevelerTests {
         outputs.current = 43 // headphones plugged in
         leveler.restoreNow(lowered: token)
         #expect(outputs.decibels == [42: [0: -10], 43: [0: -20]])
+        #expect(outputs.sets.map(\.device) == [42, 42])
+    }
 
-        let again = try #require(leveler.lower(by: -6)) // the headphones, now
+    @Test("with sound moved to another output meanwhile, the output it lowered is put back over the fade-out; the other is left alone")
+    func putsBackTheOutputItLoweredOverTheFadeOut() async throws {
+        let outputs = TwoOutputs()
+        outputs.current = 43 // headphones plugged in
+        let leveler = leveler(outputs)
+        let token = try #require(leveler.lower(by: -6))
         #expect(outputs.decibels[43] == [0: -26])
         outputs.current = 42 // unplugged
-        leveler.restore(over: 0.2, lowered: again)
+        leveler.restore(over: 0.2, lowered: token)
         await TestWait.until { !self.isKept }
         #expect(outputs.decibels == [42: [0: -10], 43: [0: -20]])
-        #expect(outputs.sets.map(\.device) == [42, 42, 43, 43, 43, 43, 43])
+        #expect(outputs.sets.map(\.device) == [43, 43, 43, 43, 43])
     }
 }
 

@@ -14,7 +14,7 @@ import VLCSupport
 
 @Suite("SupportedPlayers")
 struct SupportedPlayersTests {
-    @Test("Spotify, Apple Music, VLC, Apple Podcasts, TIDAL and QuickTime Player are offered, the most used first; one added with Add an App is still the built-in one")
+    @Test("Spotify, Apple Music, VLC, Apple Podcasts, TIDAL and QuickTime Player are offered, the most used first")
     func players() {
         let catalog = SupportedPlayers.catalog
         #expect(catalog.players.map(\.bundleID) == [
@@ -22,6 +22,11 @@ struct SupportedPlayersTests {
             "com.apple.QuickTimePlayerX",
         ])
         #expect(catalog.players.map(\.name) == ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL", "QuickTime Player"])
+    }
+
+    @Test("each built-in player is controlled its own way, is tested, and is found by macOS from its bundle ID")
+    func builtInKinds() {
+        let catalog = SupportedPlayers.catalog
         // The built-in players only: `player(bundleID:)` would also look for
         // the Safari web apps in this Mac's Applications folders.
         let player = { (id: String) in catalog.players.first { $0.bundleID == id } }
@@ -31,8 +36,11 @@ struct SupportedPlayersTests {
         #expect(player("org.videolan.vlc") is VLCPlayer)
         #expect(player("com.apple.QuickTimePlayerX") is ScriptedAppPlayer)
         #expect(catalog.players.allSatisfy { !$0.isUntested && $0.installedURL == nil })
+    }
 
-        // QuickTime Player, added with Add an App before it was built in: offered once, as the built-in player.
+    @Test("QuickTime Player added with Add an App before it was built in is offered once, as the built-in player")
+    func addedBuiltInPlayer() {
+        let catalog = SupportedPlayers.catalog
         let store = DefaultsPlayerSetupStore() // where the catalog's added apps are kept
         store.save(PlayerSetup(bundleID: QuickTime.bundleID, name: QuickTime.name,
                                appURL: URL(fileURLWithPath: "/System/Applications/QuickTime Player.app"), ways: [.script(QuickTime.setup)]))

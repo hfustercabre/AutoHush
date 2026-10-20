@@ -95,39 +95,54 @@ struct PanelWayTests {
         await #expect(throws: MusicPlayerError.playerCommandFailed(.nowPlayingHidden)) { try await way(hidden, store: store).pause() }
     }
 
-    @Test("a row that doesn't follow the app: its sound tells; pressed as a toggle only when it isn't as wanted yet, checked by its sound and never pressed twice; unheard, it says why")
-    func staleRow() async throws {
+    /// Its row always shows paused, as Qobuz's does.
+    private let shownPaused = [PanelRow(text: "Jukebox,  – ", playing: false), PanelRow(text: "Other Song, Someone – Else", playing: true)]
+
+    /// The way of a setup whose row doesn't follow the app: heard as
+    /// `heard`, until a press toggles it (unless it ignores presses).
+    private func staleWay(_ panel: FakePanel, heard: Bool?, ignores: Bool = false) -> PanelWay {
         var stale = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"),
                                 ways: [.panel(rememberedRow: nil)])
         stale.panelRowIsStale = true
-        // Its row always shows paused, as Qobuz's does.
-        let shownPaused = [PanelRow(text: "Jukebox,  – ", playing: false), PanelRow(text: "Other Song, Someone – Else", playing: true)]
-        /// Heard as `heard`, until a press toggles it (unless it ignores presses).
-        func way(_ panel: FakePanel, heard: Bool?, ignores: Bool = false) -> PanelWay {
-            let hearing = LateHearing()
-            hearing.set { _ in heard.map { !ignores && panel.pressed.count % 2 == 1 ? !$0 : $0 } }
-            return PanelWay(setup: stale, remembered: nil, store: MemorySetupStore(), panel: panel, processIdentifier: { 4242 },
-                            shown: { _ in PanelWay.Shown(titles: [], otherApps: ["Finder"], holdsNowPlaying: false) }, hearing: hearing,
-                            sleep: { _ in })
-        }
+        let hearing = LateHearing()
+        hearing.set { _ in heard.map { !ignores && panel.pressed.count % 2 == 1 ? !$0 : $0 } }
+        return PanelWay(setup: stale, remembered: nil, store: MemorySetupStore(), panel: panel, processIdentifier: { 4242 },
+                        shown: { _ in PanelWay.Shown(titles: [], otherApps: ["Finder"], holdsNowPlaying: false) }, hearing: hearing,
+                        sleep: { _ in })
+    }
+
+    @Test("a row that doesn't follow the app: its presses are checked by its sound")
+    func staleRowChecked() {
+        #expect(staleWay(FakePanel(shownPaused), heard: true).checksItsPresses)
+    }
+
+    @Test("a row that doesn't follow the app is pressed as a toggle only when its sound says it isn't as wanted yet")
+    func staleRow() async throws {
         let playing = FakePanel(shownPaused)
-        #expect(way(playing, heard: true).checksItsPresses)
-        try await way(playing, heard: true).pause()
+        try await staleWay(playing, heard: true).pause()
         #expect(playing.pressed == ["Jukebox,  – "])
         let paused = FakePanel(shownPaused)
-        try await way(paused, heard: false).pause()
+        try await staleWay(paused, heard: false).pause()
         #expect(paused.pressed.isEmpty)
-        try await way(paused, heard: false).play()
+        try await staleWay(paused, heard: false).play()
         #expect(paused.pressed == ["Jukebox,  – "])
         let playingAlready = FakePanel(shownPaused)
-        try await way(playingAlready, heard: true).play()
+        try await staleWay(playingAlready, heard: true).play()
         #expect(playingAlready.pressed.isEmpty)
+    }
+
+    @Test("a row that doesn't follow the app is never pressed twice: a press its sound doesn't follow is an error")
+    func staleRowNotPressedTwice() async {
         // Never heard to pause: a second press would undo a late first one.
         let ignored = FakePanel(shownPaused)
-        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) { try await way(ignored, heard: true, ignores: true).pause() }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) { try await staleWay(ignored, heard: true, ignores: true).pause() }
         #expect(ignored.pressed.count == 1)
+    }
+
+    @Test("a row that doesn't follow the app, unheard, says why it isn't pressed")
+    func staleRowUnheard() async {
         await #expect(throws: MusicPlayerError.playerCommandFailed(.hearingUnavailable)) {
-            try await way(FakePanel(shownPaused), heard: nil).pause()
+            try await staleWay(FakePanel(shownPaused), heard: nil).pause()
         }
     }
 

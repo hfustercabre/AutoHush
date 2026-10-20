@@ -182,65 +182,121 @@ struct WindowTitleTests {
         }
     }
 
-    @Test("the logs window keeps its place and size under its name, opens centered, resizable but never full screen; shown again, its search stays; closed, it no longer follows new lines")
-    func logsWindow() async throws {
-        let log = LogsModelTests.FakeLog()
-        UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(LogsWindowController.frameName)") // never opened before
-        let logs = LogsWindowController(model: LogsModel(source: log))
+    @Test("the logs window keeps its place and size under its name")
+    func logsWindow() {
+        let logs = LogsWindowController(model: LogsModel(source: LogsModelTests.FakeLog()))
         // Its place and size kept between launches: the controller gives its
         // window its name (on macOS 14 and 15 it would clear one set before).
         #expect(logs.windowFrameAutosaveName == LogsWindowController.frameName)
         #expect(logs.window?.frameAutosaveName == LogsWindowController.frameName)
+    }
+
+    @Test("the logs window, never opened before, opens centered, at least its smallest size")
+    func logsWindowCentered() throws {
+        UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(LogsWindowController.frameName)") // never opened before
+        let logs = LogsWindowController(model: LogsModel(source: LogsModelTests.FakeLog()))
+        defer { logs.close() }
         logs.show()
-        #expect(logs.window?.isOpen == true && log.handlers.count == 1) // new lines follow
         let logsArea = try #require(logs.window?.screen?.visibleFrame)
         #expect(abs((logs.window?.frame.midX ?? 0) - logsArea.midX) <= 1)
         let size = try #require(logs.window.map { $0.contentRect(forFrameRect: $0.frame).size })
         #expect(size.width >= LogsWindowController.minimumSize.width && size.height >= LogsWindowController.minimumSize.height)
+    }
+
+    @Test("the logs window can be resized, but never goes full screen")
+    func logsWindowResizable() {
+        let logs = LogsWindowController(model: LogsModel(source: LogsModelTests.FakeLog()))
         #expect(logs.window?.styleMask.contains(.resizable) == true)
         #expect(logs.window?.collectionBehavior.contains(.fullScreenNone) == true) // never full screen
+    }
+
+    @Test("the logs window shown again while open keeps its search")
+    func logsWindowKeepsSearch() {
+        let log = LogsModelTests.FakeLog()
+        let logs = LogsWindowController(model: LogsModel(source: log))
+        defer { logs.close() }
+        logs.show()
         logs.model.search = "fade"
         logs.show() // shown again while open: the search stays
         #expect(logs.model.search == "fade" && log.handlers.count == 1)
+    }
+
+    @Test("the logs window follows new lines while it's open, and no longer once closed")
+    func logsWindowFollowsLines() async {
+        let log = LogsModelTests.FakeLog()
+        let logs = LogsWindowController(model: LogsModel(source: log))
+        logs.show()
+        #expect(logs.window?.isOpen == true && log.handlers.count == 1) // new lines follow
         logs.close()
         await TestWait.until { logs.window?.isOpen != true }
         #expect(log.handlers.isEmpty)
     }
 
-    @Test("the check's panel is on every desktop and never takes the keyboard; while the check blocks input, a shade under it dims each screen; hidden, they all go")
-    func checkPanel() async throws {
-        let world = World()
-        world.playing = true
-        let model = AddAppModel(world)
-        model.reset()
-        await model.loadApps()
-        model.continueWithApp()
-        await TestWait.until { model.stage == .ready }
-        model.startCheck()
-        await TestWait.until { world.report != nil }
-        let sut = CheckPanelController()
-        let before = Set(NSApp.windows.map(ObjectIdentifier.init))
-        sut.show(world.apps[0], model: model)
-        let panel = try #require(NSApp.windows.first { !before.contains(ObjectIdentifier($0)) } as? NSPanel)
-        let shades = { NSApp.windows.filter { $0.level == CheckPanelController.shadeLevel && $0.isVisible } }
-        #expect(panel.isVisible && panel.styleMask.contains(.nonactivatingPanel) && !panel.canBecomeKey)
-        #expect(panel.collectionBehavior.contains(.canJoinAllSpaces) && panel.level == .floating)
-        let corner = NSScreen.screens.first?.visibleFrame ?? .zero // the main display's, above the Dock
-        #expect(abs(panel.frame.maxX - (corner.maxX - 16)) <= 1 && abs(panel.frame.minY - (corner.minY + 16)) <= 1)
-        #expect(shades().isEmpty)
+    /// The check's panel and its shades are windows of the whole process,
+    /// as `NSApp.windows` lists them: these tests run one at a time, so each
+    /// sees only its own.
+    @MainActor
+    @Suite("The check's panel", .serialized)
+    struct CheckPanelWindows {
+        /// The shades shown now.
+        private var shades: [NSWindow] { NSApp.windows.filter { $0.level == CheckPanelController.shadeLevel && $0.isVisible } }
 
-        world.report?(CheckReportLine.blocked)
-        await TestWait.until { panel.level == CheckPanelController.panelLevel && shades().count == NSScreen.screens.count }
-        #expect(shades().allSatisfy { shade in NSScreen.screens.contains { $0.frame == shade.frame } })
-        #expect(shades().allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
-        world.report?(CheckReportLine.free)
-        await TestWait.until { panel.level == .floating && shades().isEmpty }
+        /// A check running on the stand-ins, its panel shown.
+        private func panelShown() async throws -> (world: World, sut: CheckPanelController, panel: NSPanel) {
+            let world = World()
+            world.playing = true
+            let model = AddAppModel(world)
+            model.reset()
+            await model.loadApps()
+            model.continueWithApp()
+            await TestWait.until { model.stage == .ready }
+            model.startCheck()
+            await TestWait.until { world.report != nil }
+            let sut = CheckPanelController()
+            let before = Set(NSApp.windows.map(ObjectIdentifier.init))
+            sut.show(world.apps[0], model: model)
+            let panel = try #require(NSApp.windows.first { !before.contains(ObjectIdentifier($0)) } as? NSPanel)
+            return (world, sut, panel)
+        }
 
-        world.report?(CheckReportLine.blocked)
-        await TestWait.until { !shades().isEmpty }
-        sut.hide()
-        #expect(!panel.isVisible && shades().isEmpty)
-        world.run.finish(.stopped)
+        @Test("the check's panel is on every desktop, in the screen's corner, and never takes the keyboard")
+        func checkPanel() async throws {
+            let (world, sut, panel) = try await panelShown()
+            defer {
+                sut.hide()
+                world.run.finish(.stopped)
+            }
+            #expect(panel.isVisible && panel.styleMask.contains(.nonactivatingPanel) && !panel.canBecomeKey)
+            #expect(panel.collectionBehavior.contains(.canJoinAllSpaces) && panel.level == .floating)
+            let corner = NSScreen.screens.first?.visibleFrame ?? .zero // the main display's, above the Dock
+            #expect(abs(panel.frame.maxX - (corner.maxX - 16)) <= 1 && abs(panel.frame.minY - (corner.minY + 16)) <= 1)
+        }
+
+        @Test("only while the check blocks input does a shade under its panel dim each screen")
+        func checkPanelShades() async throws {
+            let (world, sut, panel) = try await panelShown()
+            defer {
+                sut.hide()
+                world.run.finish(.stopped)
+            }
+            #expect(shades.isEmpty)
+            world.report?(CheckReportLine.blocked)
+            await TestWait.until { panel.level == CheckPanelController.panelLevel && shades.count == NSScreen.screens.count }
+            #expect(shades.allSatisfy { shade in NSScreen.screens.contains { $0.frame == shade.frame } })
+            #expect(shades.allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
+            world.report?(CheckReportLine.free)
+            await TestWait.until { panel.level == .floating && shades.isEmpty }
+        }
+
+        @Test("the check's panel hidden, it and its shades all go")
+        func checkPanelHidden() async throws {
+            let (world, sut, panel) = try await panelShown()
+            world.report?(CheckReportLine.blocked)
+            await TestWait.until { !shades.isEmpty }
+            sut.hide()
+            #expect(!panel.isVisible && shades.isEmpty)
+            world.run.finish(.stopped)
+        }
     }
 
     @Test("AutoHush stays in the Dock for its own windows only: titled ones, not panels or borderless ones")

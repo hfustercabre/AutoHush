@@ -5,7 +5,7 @@ import AutoHushKit
 
 // Stand-ins for what AudioMonitor reads from macOS: the audio processes, their
 // levels, the power assertions and the System Audio Recording permission.
-// Shared by the engine's tests and the app's (MonitoringPipeline).
+// Shared by the engine's tests and the app's (the player session's pipelines).
 
 package final class MockAudioProcessSnapshotProvider: AudioProcessSnapshotProviding, @unchecked Sendable {
     package init() {}

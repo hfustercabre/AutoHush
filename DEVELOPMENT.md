@@ -62,8 +62,9 @@ AppDelegate ── lifecycle, choosing the player, the windows, wiring features 
   └── PlayerSession ── the chosen player from its start until AutoHush quits: starts it (at launch, by
         │   itself after a failed start, when it opens), checks access again, keeps the held pauses and
         │   the hand-over
-        └── MonitoringPipeline ── one per start, started and torn down as a unit; one a new player choice
-                  leaves mid-pause runs on in HeldPauses until it resumes its player
+        └── MonitoringPipeline ── the engine's front door (AutoHushKit): one per start, started and torn down
+                  as a unit; one a new player choice leaves mid-pause runs on in HeldPauses until it resumes
+                  its player
               PlayerStateObserving ── the player's state (distributed notification, quit) ─┐
               AudioMonitor                                                                 │
                 ├── HALAudioProcessSnapshotProvider: process list + is-running listeners   │
@@ -99,7 +100,7 @@ AutoHush (executable: the entry point only)
        ├─ CheckedPlayers    also used directly: a check's result, the report's lines and the progress they show
        ├─ PlayerCheckKit    the helper's command line, exit statuses and answers, to run it
        ├─ CheckPanel        a check's panel and shade (Sources/CheckPanel), shown while it runs
-       └─ AutoHushKit       the engine: no user interface, no specific player
+       └─ AutoHushKit       the engine, reached through MonitoringPipeline: no user interface, no specific player
 measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
 listen-to-fades (developer tool, in Tools/): records a loopback device, measures fades
 PlayerCheckApp (Player Check, in Tools/) → PlayerCheckKit, CheckedPlayers, CheckPanel, AutoHushKit: playercheck
@@ -141,9 +142,9 @@ Sources/
     Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
                          followed once a second; OtherInstances, quits the copies opened before it;
                          DockPresence, in the Dock while a window is open), Playback/ (PlayerSession,
-                         the chosen player from its start until AutoHush quits; MonitoringPipeline, the
-                         engine for each start; HeldPauses), Settings/ (UserSettings, LaunchAtLoginController,
-                         ReopenChoices: the players reopened without asking),
+                         the chosen player from its start until AutoHush quits; HeldPauses), Settings/
+                         (UserSettings, LaunchAtLoginController, ReopenChoices: the players reopened without
+                         asking),
                          Permissions/ (PermissionCenter, for the chosen player and Add an App's app alike;
                          the chosen player's as last read, which the windows show),
                          Updates/ (UpdateController, observable for Settings; UpdateChecker,
@@ -202,7 +203,9 @@ Sources/
                          muted for a check; CoreAudio/: process list, taps, levels, SystemVolume and
                          CoreAudioOutputMute (both find the output sound plays through, and outputs by their
                          lasting IDs, through OutputDevices), CoreAudioProperty: reading and setting properties),
-                         Playback/ (PlaybackArbiter, VolumeFader, PauseHandover, PressCheck),
+                         Playback/ (MonitoringPipeline: the engine for each start, which the app makes and
+                         drives, so AudioMonitor and PlaybackArbiter stay internal; PlaybackArbiter,
+                         VolumeFader, PauseHandover, PressCheck),
                          NowPlaying/ (NowPlayingReports: what apps report to Now Playing, from macOS's log,
                          administrators only, an extra sign)
     Players/             MusicPlayer (the interface), MusicPlayerError (why a player couldn't be
@@ -267,7 +270,7 @@ Resources/               Info.plist, entitlements, AutoHush.icon (the app icon),
 
 **Where things go:**
 
-- **`AutoHushKit`** has no user interface (no windows or views; AppKit only for `NSRunningApplication`, the shared `running(_:)` helper) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that.
+- **`AutoHushKit`** has no user interface (no windows or views; AppKit only for `NSRunningApplication`, the shared `running(_:)` helper) and knows no player by name; the app tells it which player was chosen. It can't import the app or a player module, and the compiler enforces that. The app reaches its monitoring only through `MonitoringPipeline`; `AudioMonitor` and `PlaybackArbiter` are internal to it.
 - **`AutoHushApp`** is sorted by kind of code first, then by area: `App/` starts things and wires them together; `Models/` holds the app-wide state (`AppState`, holding the `AppStatus` that the menu and the windows show; `SettingsModel` for what only the windows show); `Services/` does the work; `Controllers/` are AppKit's window and menu controllers; `Views/` are SwiftUI's, with what several places show in `Views/Components/`; `Utilities/` are small helpers. A file holds one kind of code and is named after its main type; a large type is split by topic into `Type+Topic.swift` files beside it (`PlaybackArbiter+Pausing.swift`, `AppDelegate+Player.swift`).
 - **A player module** (`<App>Support`, in `PlayersSupport/`) holds everything specific to one media app. Apps scripted with Apple events share `ScriptablePlayers`, so their module is just a `ScriptablePlayerProfile`; apps controlled through their playback menu share `MenuPlayers`, so theirs is a `MenuPlayerProfile` and a way to read their words for Play and Pause.
 - **`Utilities/PrivateAPI/`** (in the engine) holds the undocumented macOS functions AutoHush calls. The only other undocumented parts of macOS it relies on: Control Center's `NowPlaying` preference and its flags (`NowPlayingSetting`, written), MenuBarAgent's windows for each menu bar item and `com.apple.menuextra.now-playing` (`AccessibilityNowPlayingPanel`), and the helper's SkyLight calls (`Desktops`) and `_AXUIElementGetWindow` (`WindowStates`). It also relies on one deprecated call, `NSApplication.activate(ignoringOtherApps:)` (deprecated since macOS 14): `becomeActive()` uses it to bring a window opened from the menu's panel forward, since macOS ignores `activate()` from a menu bar app that isn't active. Check all of them after every major macOS release.

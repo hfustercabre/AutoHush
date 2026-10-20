@@ -50,7 +50,7 @@ import os
 /// Processes are grouped by the app that owns them (`AudioSourceIdentifying`),
 /// so all of Chrome's helpers form one "Google Chrome" source. Sources the user
 /// ignores are still tracked and published, but never reach the arbiter.
-package final class AudioMonitor: @unchecked Sendable {
+final class AudioMonitor: @unchecked Sendable {
     /// What the monitor tells the arbiter, in order.
     enum ArbiterEvent: Sendable {
         /// `heardSince`: for a start, when the app was first heard, if known.
@@ -150,7 +150,7 @@ package final class AudioMonitor: @unchecked Sendable {
     /// during it (Settings → Advanced).
     var resumeLevel = ResumeLevel()
 
-    package init(
+    init(
         configuration: AppConfiguration,
         arbiter: any PlaybackArbiting,
         snapshotProvider: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider(),
@@ -212,26 +212,26 @@ package final class AudioMonitor: @unchecked Sendable {
         forwardingTask.cancel()
     }
 
-    package func start() {
+    func start() {
         queue.async { self.startOnQueue() }
     }
 
     /// Asynchronous so a pending System Audio Recording prompt (which blocks
     /// tap creation on the monitor queue) can never stall the caller.
-    package func stop() {
+    func stop() {
         queue.async { self.stopOnQueue() }
     }
 
     /// Tells the monitor whether the media player is playing, so it can conclude
     /// that level detection is unavailable when the player's tap stays silent.
-    package func setPlayerPlaying(_ isPlaying: Bool) {
+    func setPlayerPlaying(_ isPlaying: Bool) {
         queue.async {
             self.playerPlayingSince = isPlaying ? (self.playerPlayingSince ?? self.clock()) : nil
         }
     }
 
     /// Applies new timings and thresholds without restarting monitoring.
-    package func setConfiguration(_ configuration: AppConfiguration) {
+    func setConfiguration(_ configuration: AppConfiguration) {
         queue.async {
             self.configuration = configuration
             self.tracker.updateTimings(from: configuration)
@@ -240,7 +240,7 @@ package final class AudioMonitor: @unchecked Sendable {
 
     /// Switches the detection method. Only `.audioLevels` captures audio and
     /// checks or requests the System Audio Recording permission.
-    package func setDetectionMethod(_ method: DetectionMethod) {
+    func setDetectionMethod(_ method: DetectionMethod) {
         queue.async {
             guard method != self.detectionMethod else { return }
             self.detectionMethod = method
@@ -260,7 +260,7 @@ package final class AudioMonitor: @unchecked Sendable {
 
     /// Whether audio levels can currently change a decision. While not
     /// needed, nothing is captured, so macOS shows no recording indicator.
-    package func setAudioLevelsNeeded(_ needed: Bool) {
+    func setAudioLevelsNeeded(_ needed: Bool) {
         queue.async { [weak self] in
             guard let self else { return }
             self.audioLevelsRelease?.cancel()
@@ -284,7 +284,7 @@ package final class AudioMonitor: @unchecked Sendable {
 
     /// Whether the music is paused by AutoHush: its loudness just before
     /// is noted, and the apps' during the pause (with `levelsMusic`).
-    package func setMusicPaused(_ paused: Bool) {
+    func setMusicPaused(_ paused: Bool) {
         queue.async {
             if !paused, let apps = self.resumeLevel.appsLevel {
                 self.logger.info("[level] the apps’ loudness during the pause: \(Self.dBFS(apps), privacy: .public) dBFS")
@@ -299,7 +299,7 @@ package final class AudioMonitor: @unchecked Sendable {
     /// How far (dB, below 0) to lower the Mac's volume as the music
     /// resumes: `nil` unless the apps it was paused for were quieter, or
     /// with `levelsMusic` off or levels unmeasured (AntiDot mode).
-    package func resumeOffsetDB() async -> Float? {
+    func resumeOffsetDB() async -> Float? {
         await queue.run {
             guard self.configuration.levelsMusic, self.detectionMode == .audioLevel else { return nil }
             return self.resumeLevel.offsetDB(maxCut: self.configuration.levelingMaxCutDB, minCut: self.configuration.levelingMinCutDB)
@@ -314,7 +314,7 @@ package final class AudioMonitor: @unchecked Sendable {
     /// that become ignored stop for the arbiter at once, and vice versa. One
     /// no longer ignored starts without saying when it was first heard: it
     /// was playing all along, so nothing that happened meanwhile is its doing.
-    package func setIgnoredSources(_ ids: Set<String>) {
+    func setIgnoredSources(_ ids: Set<String>) {
         queue.async {
             let previous = self.ignoredSourceIDs
             self.ignoredSourceIDs = ids
@@ -327,14 +327,14 @@ package final class AudioMonitor: @unchecked Sendable {
     /// Returns once every event the monitor has sent so far, and any its
     /// queued work sends, has reached the arbiter. Tests use it to see that
     /// none came.
-    package func eventsDelivered() async {
+    func eventsDelivered() async {
         await withCheckedContinuation { continuation in
             queue.async { self.events.yield(.delivered { continuation.resume() }) }
         }
     }
 
     /// How each app with its sound on is judged, for Diagnostics (thread-safe).
-    package func activeAudioReport() -> [ActiveAudioReport.Entry] {
+    func activeAudioReport() -> [ActiveAudioReport.Entry] {
         latestReport.withLock { $0 }?.entries ?? []
     }
 }

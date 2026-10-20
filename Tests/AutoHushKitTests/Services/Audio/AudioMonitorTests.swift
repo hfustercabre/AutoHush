@@ -207,33 +207,56 @@ struct AudioMonitorTests {
         #expect(h.meter.lastMetered == [2])
     }
 
-    @Test("with Level the volume on, the player is measured while another app is; its loudness before the pause and the apps' during it, calls aside, say how far to lower the volume at the resume; an app using its microphone is reported in a call")
-    func levelsMusic() async throws {
-        var configuration = Self.config()
+    /// The music player's process and Safari's, for the tests of Level the volume.
+    private static let musicProcess = process(1, TestPlayer.bundleID)
+    private static let safariProcess = process(2, "com.apple.Safari")
+
+    /// A started monitor with Level the volume on and the permission granted,
+    /// hearing the music alone.
+    private static func levelingHarness() -> Harness {
+        var configuration = config()
         configuration.levelsMusic = true
         let h = Harness(configuration: configuration, permission: MockAudioCapturePermission(.granted))
         h.start()
-        let player = Self.process(1, TestPlayer.bundleID), safari = Self.process(2, "com.apple.Safari")
-        h.step([player], peaks: [1: 0.1])
+        h.step([musicProcess], peaks: [1: 0.1])
+        return h
+    }
+
+    @Test("with Level the volume on, the player is measured too, but only while another app is")
+    func levelsMusicMeasuresPlayer() {
+        let h = Self.levelingHarness()
         #expect(h.meter.lastMetered == []) // the music alone: no tap
-        h.step(after: 0.25, [player, safari], peaks: [1: 0.1, 2: 0])
+        h.step(after: 0.25, [Self.musicProcess, Self.safariProcess], peaks: [1: 0.1, 2: 0])
         #expect(h.meter.lastMetered == [1, 2])
+    }
+
+    @Test("with Level the volume on, the music's loudness before the pause and the apps' during it, calls aside, say how far to lower the volume at the resume")
+    func levelsMusic() async throws {
+        let h = Self.levelingHarness()
+        h.step(after: 0.25, [Self.musicProcess, Self.safariProcess], peaks: [1: 0.1, 2: 0])
         for _ in 0..<4 { h.step(after: 0.25) }
         #expect(await h.monitor.resumeOffsetDB() == nil) // not paused
 
         h.monitor.setMusicPaused(true)
         h.provider.flush()
         let call = AudioProcessInfo(objectID: 3, bundleID: "us.zoom.xos", pid: 1003, isRunningInput: true)
-        h.step(after: 0.25, [player, safari, call], peaks: [1: 0, 2: 0.05, 3: 0.5]) // the call's loud voice doesn't count
+        h.step(after: 0.25, [Self.musicProcess, Self.safariProcess, call], peaks: [1: 0, 2: 0.05, 3: 0.5]) // the call's loud voice doesn't count
         for _ in 0..<4 { h.step(after: 0.25) }
         let offset = try #require(await h.monitor.resumeOffsetDB())
         #expect(abs(offset + 6.02) < 0.05) // Safari was 6 dB quieter than the music
 
-        h.step(after: 0.25, [player, safari])
-        await h.monitor.eventsDelivered()
-        #expect(await h.recorder.log.filter { $0.contains("call") } == ["call us.zoom.xos", "no call us.zoom.xos"])
         h.monitor.setMusicPaused(false)
         #expect(await h.monitor.resumeOffsetDB() == nil) // resumed: forgotten
+    }
+
+    @Test("an app using its microphone is reported in a call, and no longer once its process is gone")
+    func callReported() async {
+        let h = Harness(permission: MockAudioCapturePermission(.granted))
+        h.start()
+        h.step([Self.safariProcess, AudioProcessInfo(objectID: 3, bundleID: "us.zoom.xos", pid: 1003, isRunningInput: true)])
+        h.step(after: 0.25, [Self.safariProcess])
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.log.filter { $0.contains("call") } == ["call us.zoom.xos", "no call us.zoom.xos"])
     }
 
     @Test("with the permission granted, the player itself is never tapped")
@@ -244,12 +267,25 @@ struct AudioMonitorTests {
         #expect(h.meter.lastMetered == [2])
     }
 
-    @Test("a source silent for 10 s loses its tap and doesn't count as playing; its output opening again taps it again, and with nothing measured its open stream counts")
+    /// An app that keeps its output open while paused.
+    private static let radio = process(2, "com.example.radio")
+
+    /// A started monitor with the permission granted, whose radio was
+    /// measured silent for 10 s: its tap released.
+    private static func releasedRadioHarness() -> Harness {
+        let h = Harness(permission: MockAudioCapturePermission(.granted))
+        h.start()
+        h.step([radio], peaks: [2: 0])
+        h.step(after: 10.1)
+        #expect(h.meter.lastMetered == [])
+        return h
+    }
+
+    @Test("a source silent for 10 s loses its tap and doesn't count as playing")
     func silentSourceReleased() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.start()
-        let radio = Self.process(2, "com.example.radio") // keeps its output open while paused
-        h.step([radio], peaks: [2: 0])
+        h.step([Self.radio], peaks: [2: 0])
         #expect(h.meter.lastMetered == [2])
         h.step(after: 5)
         #expect(h.meter.lastMetered == [2])
@@ -258,38 +294,56 @@ struct AudioMonitorTests {
         h.step(after: 3) // no tap, no level: still not counted as playing
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
+    }
 
+    @Test("a source released for its silence is tapped again once its output closes and opens, and released again after 10 s more")
+    func releasedSourceTappedWhenOutputReopens() {
+        let h = Self.releasedRadioHarness()
         h.step(after: 1, [])
-        h.step(after: 1, [radio])
+        h.step(after: 1, [Self.radio])
         #expect(h.meter.lastMetered == [2])
-
-        // Released again, then levels aren't measured any more (AntiDot
-        // mode): the release is forgotten, and its open stream counts.
         h.step(after: 10.1)
         #expect(h.meter.lastMetered == [])
-        h.monitor.setDetectionMethod(.openStreams)
+    }
+
+    @Test("a source released for its silence counts by its open stream once levels aren't measured (AntiDot mode)")
+    func releasedSourceCountsWithoutLevels() async {
+        let h = Self.releasedRadioHarness()
+        h.monitor.setDetectionMethod(.openStreams) // the release is forgotten
         h.provider.flush()
         h.step(after: 1)
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.example.radio", isPlaying: true)])
     }
 
-    @Test("a source silent for 10 s is released, and tapped again once it tells macOS it plays; one that says so all along stays measured (a call's quiet stretch), so its talk is heard")
-    func releasedSourceAnnounces() async {
-        let assertions = MockPowerAssertions()
+    /// A started monitor with the permission granted, that measured a radio
+    /// (pid 1002) and a call saying it plays all along (pid 1003) silent for
+    /// 10 s: the radio's tap released, the call's kept.
+    private static func silentRadioAndCallHarness(_ assertions: MockPowerAssertions) -> Harness {
         let h = Harness(permission: MockAudioCapturePermission(.granted), assertions: assertions)
         h.start()
         assertions.held = [1003: MockPowerAssertions.playing] // the call says it plays all along
-        h.step([Self.process(2, "com.example.radio"), Self.process(3, "com.example.call")], peaks: [2: 0, 3: 0]) // pids 1002, 1003
+        h.step([radio, process(3, "com.example.call")], peaks: [2: 0, 3: 0])
         h.step(after: 10.1)
         #expect(h.meter.lastMetered == [3])
+        return h
+    }
+
+    @Test("a source that tells macOS it plays keeps its tap through 10 s of silence (a call's quiet stretch), so its talk is heard")
+    func announcingSourceKeepsTap() async {
+        let h = Self.silentRadioAndCallHarness(MockPowerAssertions())
         h.step(after: 1)
         #expect(h.meter.lastMetered == [3])
         h.step(after: 0.25, peaks: [2: 0, 3: 0.4]) // the call's talk again
         h.step(after: 1.1)
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.example.call", isPlaying: true)])
+    }
 
+    @Test("a source released for its silence is tapped again once it tells macOS it plays")
+    func releasedSourceAnnounces() {
+        let assertions = MockPowerAssertions()
+        let h = Self.silentRadioAndCallHarness(assertions)
         assertions.held = [1002: MockPowerAssertions.playing, 1003: MockPowerAssertions.playing]
         h.step(after: 0.25)
         #expect(h.meter.lastMetered == [2, 3])
@@ -582,10 +636,11 @@ struct AudioMonitorTests {
         #expect(await h.recorder.startConfirmations == [3]) // what a pause taken over waits for
     }
 
-    @Test("measured levels use the usual start; with nothing measured (Audio Recording denied, being asked, or unreadable before a first sample), AntiDot mode's longer ones",
-          arguments: [AudioCapturePermission.granted, .denied, .notDetermined, nil])
-    func usualStartWithLevels(permission: AudioCapturePermission?) async {
-        var configuration = Self.config(startConfirmation: 0.5)
+    /// A started monitor with the `permission`, a 0.5 s start and AntiDot
+    /// mode's longer ones (3 s, 2 s by an open stream), that heard two apps
+    /// for half a second.
+    private static func startConfirmationHarness(permission: AudioCapturePermission?) -> Harness {
+        var configuration = config(startConfirmation: 0.5)
         configuration.minimumStartWithoutVideo = 3
         configuration.minimumStartWithOpenStreams = 2
         let assertions = MockPowerAssertions()
@@ -593,16 +648,24 @@ struct AudioMonitorTests {
         h.start()
         // The chat app says it plays (Chromium does for 2.5 s after a short sound); the other says nothing.
         assertions.held = [1002: MockPowerAssertions.playing]
-        let measured = permission == .granted
-        h.step([Self.process(1, "com.example.audio"), Self.process(2, "com.example.chat")],
-               peaks: measured ? [1: 0.3, 2: 0.3] : [:]) // unreadable: its taps silent so far
+        h.step([process(1, "com.example.audio"), process(2, "com.example.chat")],
+               peaks: permission == .granted ? [1: 0.3, 2: 0.3] : [:]) // unreadable: its taps silent so far
         h.step(after: 0.5)
-        guard !measured else {
-            await h.recorder.waitForEvents(count: 2)
-            #expect(await h.recorder.events.map(\.bundleID) == ["com.example.audio", "com.example.chat"])
-            #expect(await h.recorder.startConfirmations == [0.5])
-            return
-        }
+        return h
+    }
+
+    @Test("measured levels use the usual start confirmation")
+    func usualStartWithLevels() async {
+        let h = Self.startConfirmationHarness(permission: .granted)
+        await h.recorder.waitForEvents(count: 2)
+        #expect(await h.recorder.events.map(\.bundleID) == ["com.example.audio", "com.example.chat"])
+        #expect(await h.recorder.startConfirmations == [0.5])
+    }
+
+    @Test("with nothing measured (Audio Recording denied, being asked, or unreadable before a first sample), AntiDot mode's longer starts apply",
+          arguments: [AudioCapturePermission.denied, .notDetermined, nil])
+    func longerStartsWithoutLevels(permission: AudioCapturePermission?) async {
+        let h = Self.startConfirmationHarness(permission: permission)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty) // a chat tone pauses nothing
 
@@ -656,6 +719,24 @@ struct AudioMonitorTests {
         h.provider.flush()
         #expect(permission.requestCount == 1)
         #expect(h.modes.value == [.disabled, .pending])
+    }
+
+    @Test("with the permission unreadable, back to measuring from AntiDot mode, detection is pending, then unavailable once the player's tap stays silent",
+          arguments: [DetectionMethod.playbackSignals, .openStreams])
+    func backToMeasuringIsPending(from method: DetectionMethod) {
+        let h = Harness()
+        h.monitor.setPlayerPlaying(true)
+        h.monitor.setDetectionMethod(method)
+        h.start()
+        h.step([Self.process(1, TestPlayer.bundleID)], peaks: [1: 0])
+        let away: DetectionMode = method == .playbackSignals ? .playbackSignals : .disabled
+        #expect(h.modes.value == [away])
+
+        h.monitor.setDetectionMethod(.audioLevels)
+        h.provider.flush()
+        #expect(h.modes.value == [away, .pending])
+        h.step(after: AudioMonitor.verificationWindow)
+        #expect(h.modes.value == [away, .pending, .unavailable])
     }
 
     @Test("the player playing with a silent tap marks level detection unavailable after the verification window; real samples revise that")
@@ -722,6 +803,20 @@ struct AudioMonitorTests {
         permission.complete(granted: true)
         h.provider.flush()
         #expect(h.modes.value == [.audioLevel])
+        #expect(h.meter.lastMetered == [1])
+    }
+
+    @Test("a permission granted a while after the last HAL change starts the taps at once")
+    func grantedPermissionTapsAtOnce() {
+        let permission = MockAudioCapturePermission(.notDetermined)
+        let h = Harness(permission: permission)
+        h.start()
+        h.step([Self.process(1, "org.videolan.vlc")])
+        #expect(h.meter.lastMetered.isEmpty)
+
+        h.clock.advance(by: 2) // the process list is no longer re-read at once
+        permission.complete(granted: true)
+        h.provider.flush()
         #expect(h.meter.lastMetered == [1])
     }
 
@@ -849,6 +944,23 @@ struct AudioMonitorTests {
         h.step(after: 0.25, [Self.process(2, "com.google.Chrome.helper")])
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.count == 1)
+    }
+
+    @Test("an app whose process is gone keeps its name through its stop grace, and is forgotten once it stops")
+    func nameKeptThroughStopGrace() async {
+        let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
+        let identifier = StubSourceIdentifier(["com.google.Chrome.helper": chrome])
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, identifier: identifier)
+        h.start()
+        h.step([Self.process(1, "com.google.Chrome.helper")])
+        await h.recorder.waitForEvents(count: 1)
+
+        h.step(after: 0.25, []) // its process is gone: the stop grace runs
+        #expect(h.activeSources.value.last == [chrome])
+        h.step(after: 2)
+        await h.recorder.waitForEvents(count: 2)
+        #expect(h.activeSources.value.last == [])
+        #expect(h.monitor.queue.sync { h.monitor.knownSources }.isEmpty)
     }
 
     @Test("a process owned by an excluded app (the player's helper) is never a source")
@@ -1007,6 +1119,18 @@ struct AudioMonitorTests {
         tick()
         #expect(lastRead() == reread) // after it: not
         #expect(interval() == configuration.idleSampleInterval)
+    }
+
+    @Test("switching the detection method re-reads the process list at once, without a HAL change")
+    func detectionMethodSwitchRereads() async {
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
+        h.start()
+        h.provider.processes = [Self.process(1, "org.videolan.vlc")] // no HAL change says so
+        h.clock.advance(by: 2)
+        h.monitor.setDetectionMethod(.openStreams)
+        h.provider.flush()
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
     }
 
     // MARK: - Publication and lifecycle

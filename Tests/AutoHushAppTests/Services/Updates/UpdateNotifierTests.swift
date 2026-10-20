@@ -74,7 +74,7 @@ struct UpdateNotifierTests {
         #expect(fake.removals == 1)
     }
 
-    @Test("with notifications off nothing shows; a notice that can't be shown is logged and the next one shows; the permission is asked for only while undetermined, and read as not asked, off or allowed")
+    @Test("with notifications off nothing shows, and the permission isn't asked for again")
     func offAndFailed() async {
         let fake = FakeCenter()
         let notifier = SystemUpdateNotifier(center: fake.center)
@@ -84,13 +84,34 @@ struct UpdateNotifierTests {
         notifier.announce(.downloaded(v030))
         await TestWait.until { fake.statusReads == 4 } // the permission, the request's look, the notice's two
         #expect(fake.shown.isEmpty && fake.requests == 1) // only the notice's own ask, which macOS answers by itself
+    }
 
+    @Test("the permission to notify is read as not asked, off or allowed")
+    func permissionRead() async {
+        let fake = FakeCenter()
+        let notifier = SystemUpdateNotifier(center: fake.center)
         fake.status = .notDetermined
         #expect(await notifier.permission() == .notAsked)
-        notifier.requestPermission()
-        await TestWait.until { fake.requests == 2 }
+        fake.status = .denied
+        #expect(await notifier.permission() == .off)
         fake.status = .authorized
         #expect(await notifier.permission() == .allowed)
+    }
+
+    @Test("the permission to notify is asked for while it's undetermined")
+    func permissionAskedWhileUndetermined() async {
+        let fake = FakeCenter()
+        let notifier = SystemUpdateNotifier(center: fake.center)
+        fake.status = .notDetermined
+        notifier.requestPermission()
+        await TestWait.until { fake.requests == 1 }
+    }
+
+    @Test("a notice that can't be shown is logged, and the next one shows")
+    func failedNoticeThenNext() async {
+        let fake = FakeCenter()
+        let notifier = SystemUpdateNotifier(center: fake.center)
+        fake.status = .authorized
         fake.addFails = true
         notifier.announce(.downloaded(v030))
         await TestWait.until { fake.adds == 1 }

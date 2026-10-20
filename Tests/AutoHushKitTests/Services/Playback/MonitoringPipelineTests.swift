@@ -1,7 +1,6 @@
 import CoreAudio
 import Foundation
 import Testing
-@testable import AutoHushApp
 @testable import AutoHushKit
 import AutoHushTestSupport
 
@@ -14,28 +13,6 @@ struct MonitoringPipelineTests {
     /// Process IDs no process can have, so the real owner lookup finds none.
     private nonisolated static let playerProcess = AudioProcessInfo(objectID: 1, bundleID: TestPlayer.bundleID, pid: 999_998)
     private nonisolated static let otherApp = AudioProcessInfo(objectID: 2, bundleID: "org.videolan.vlc", pid: 999_999)
-
-    @MainActor
-    private final class Updates {
-        var all: [MonitoringPipeline.StatusUpdate] = []
-        var activeSources: [[AudioSource]] {
-            all.compactMap { if case .activeSources(let sources) = $0 { sources } else { nil } }
-        }
-        var playback: [PlaybackState] {
-            all.compactMap { if case .playback(let state) = $0 { state } else { nil } }
-        }
-        var detection: [DetectionMode] {
-            all.compactMap { if case .detection(let mode) = $0 { mode } else { nil } }
-        }
-        /// Why the music couldn't be paused (the updates saying it's over left out).
-        var pauseFailures: [MusicPlayerError] {
-            all.compactMap { if case .pauseFailure(let error?) = $0 { error } else { nil } }
-        }
-        /// What AntiDot learned, the latest for each app.
-        var learned: [String: AnnouncedAssertions] {
-            all.reduce(into: [:]) { if case .learnedAssertions(let id, let assertions) = $1 { $0[id] = assertions } }
-        }
-    }
 
     /// The engine's configuration here: an app counts as playing at once, the
     /// music pauses and plays without fading, and the monitor looks only when
@@ -52,7 +29,7 @@ struct MonitoringPipelineTests {
     private struct Setup {
         let processes = MockAudioProcessSnapshotProvider()
         let meter = MockLevelMeter()
-        let updates = Updates()
+        let updates = PipelineUpdates()
         let configuration: AppConfiguration
         let pipeline: MonitoringPipeline
 
@@ -154,60 +131,6 @@ struct MonitoringPipelineTests {
         setup.pipeline.stop()
     }
 
-    @Test("the session's monitorings are pipelines made with its setup: Auto-Pause, held resumes, ignored apps, detection, learned signals, hosted apps")
-    func madeForSession() async {
-        // As the app makes them, reading macOS; never started.
-        let muting = MockMutingMusicPlayer(MockMusicPlayer())
-        func setup(_ settings: MonitoringSettings, learned: [String: AnnouncedAssertions] = [:],
-                   resumesHeld: Bool = false) -> PlayerSession.MonitoringSetup {
-            PlayerSession.MonitoringSetup(configuration: Self.configuration(), settings: settings,
-                                          learnedAssertions: learned, resumesHeld: resumesHeld)
-        }
-        let antiDot = MonitoringSettings(autoPause: true, ignored: [], timings: .defaults, detection: .playbackSignals)
-        let live = PlayerSession.pipelines(hostedApp: { _ in nil })(muting, setup(antiDot), { _ in })
-        #expect(live is MonitoringPipeline)
-        #expect(!muting.tapsAreAllowed) // AntiDot mode: no taps
-        live.stop()
-
-        // With stand-ins, started: a web app's page plays, loud, telling macOS
-        // so; another app, ignored, has its output open.
-        let page = AudioProcessInfo(objectID: 2, bundleID: "com.apple.WebKit.WebContent", pid: 999_999)
-        let ignored = AudioProcessInfo(objectID: 3, bundleID: "com.example.ignored", pid: 999_997)
-        let site = AudioSource(id: "com.example.site", name: "Site")
-        let processes = MockAudioProcessSnapshotProvider()
-        processes.processes = [Self.playerProcess, page, ignored]
-        let meter = MockLevelMeter()
-        meter.peaks = [page.objectID: 0.5]
-        let assertions = MockPowerAssertions()
-        assertions.held = [page.pid: MockPowerAssertions.playing]
-        let readers = MonitoringPipeline.Readers(processes: processes, levelMeter: meter,
-                                                 audioCapturePermission: MockAudioCapturePermission(.granted),
-                                                 powerAssertions: assertions)
-        let player = MockMusicPlayer(state: .playing)
-        let updates = Updates()
-        let levels = MonitoringSettings(autoPause: true, ignored: [ignored.bundleID], timings: .defaults, detection: .audioLevels)
-        let monitoring = PlayerSession.pipelines(hostedApp: { $0 == page.pid ? site : nil }, readers: { readers })(
-            player, setup(levels, learned: [site.id: AnnouncedAssertions(system: ["Earlier"])], resumesHeld: true),
-            { updates.all.append($0) }
-        )
-        await monitoring.start(takingOverPause: false, asleep: false)
-        await TestWait.until { processes.isObserving }
-        processes.triggerChange()
-        await TestWait.until { updates.playback.last == .pausedByMonitor }
-        #expect(await player.pauseCallCount == 1)
-        #expect(updates.activeSources.last == [site]) // the page named by its app
-        #expect(updates.detection.last == .audioLevel)
-        #expect(updates.learned == [site.id: AnnouncedAssertions(system: ["Earlier", "Playing"])])
-        #expect(monitoring.activeAudioReport().map(\.isIgnored) == [true, false]) // the ignored app, then the site
-
-        // The site stops counting: its pause stays, resumes being held.
-        let told = updates.playback.count
-        monitoring.setIgnoredSources([ignored.bundleID, site.id])
-        await TestWait.until { await player.playCallCount > 0 || updates.playback.count > told }
-        #expect(await player.playCallCount == 0)
-        await monitoring.stopAndRestoreVolume()
-    }
-
     @Test("started while the Mac sleeps, nothing is paused")
     func startedAsleep() async {
         let player = MockMusicPlayer(state: .playing)
@@ -275,40 +198,4 @@ struct MonitoringPipelineTests {
         #expect(!player.tapsAreAllowed) // AntiDot mode promises no taps, whichever way it detects
         setup.pipeline.stop()
     }
-
-    @Test("the session's monitorings all share the app's one volume leveler: Level the volume turned off reaches it from each, and a stop puts back only what that monitoring lowered")
-    func sharedLeveler() async {
-        let leveler = CountingLeveler()
-        let make = PlayerSession.pipelines(hostedApp: { _ in nil }, volumeLeveler: leveler, readers: {
-            MonitoringPipeline.Readers(processes: MockAudioProcessSnapshotProvider(), levelMeter: MockLevelMeter(),
-                                       audioCapturePermission: MockAudioCapturePermission(.granted),
-                                       powerAssertions: MockPowerAssertions())
-        })
-        let settings = MonitoringSettings(autoPause: true, ignored: [], timings: .defaults, detection: .audioLevels)
-        let setup = PlayerSession.MonitoringSetup(configuration: Self.configuration(), settings: settings,
-                                                  learnedAssertions: [:], resumesHeld: false)
-        // A pause held for the player chosen before, and the new one's.
-        let held = make(MockMusicPlayer(), setup, { _ in })
-        let current = make(MockMusicPlayer(), setup, { _ in })
-        var off = Self.configuration()
-        off.levelsMusic = false
-        held.setConfiguration(off)
-        current.setConfiguration(off)
-        await TestWait.until { leveler.restores == 2 }
-        await held.stopAndRestoreVolume()
-        await current.stopAndRestoreVolume()
-        #expect(leveler.restores == 2) // neither lowered it: nothing more to put back
-    }
-}
-
-/// Counts the volume leveler's put-backs at once, whatever was lowered or
-/// not (it lowers nothing).
-private final class CountingLeveler: ResumeLeveling {
-    private let count = Locked(0)
-    var restores: Int { count.value }
-
-    func lower(by decibels: Float) -> UUID? { nil }
-    func restore(over duration: TimeInterval, lowered token: UUID) {}
-    func restoreNow(lowered token: UUID) { count.increment() }
-    func restoreNow() { count.increment() }
 }

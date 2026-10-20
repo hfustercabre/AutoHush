@@ -46,22 +46,38 @@ struct PlayPauseWordsTests {
         }
     }
 
-    @Test("an app's own words: every language of a table whose English is Play or Pause (folders, a .loctable, an Electron app's app.asar), with where they came from",
-          arguments: Translations.allCases)
-    func found(_ translations: Translations) throws {
+    /// An app of its own whose resources hold `translations`; the caller removes it.
+    private func makeApp(with translations: Translations) throws -> URL {
         let app = FileManager.default.temporaryDirectory.appendingPathComponent("Words-\(UUID().uuidString).app")
-        defer { try? FileManager.default.removeItem(at: app) }
         let resources = app.appendingPathComponent("Contents/Resources")
         try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
         try translations.write(in: resources)
+        return app
+    }
+
+    @Test("an app's own words: every language of a table whose English is Play or Pause (folders, .loctable, app.asar), and where from",
+          arguments: Translations.allCases)
+    func found(_ translations: Translations) throws {
+        let app = try makeApp(with: translations)
+        defer { try? FileManager.default.removeItem(at: app) }
         let found = try #require(PlayPauseWords.found(inAppAt: app))
         #expect(found.words.play == ["Play", "Reprodueix"])
         #expect(found.words.pause == ["Pause", "Posa en pausa"])
         #expect(found.source == translations.rawValue)
+    }
 
+    @Test("an app's own words add to the common ones", arguments: Translations.allCases)
+    func merged(_ translations: Translations) throws {
+        let app = try makeApp(with: translations)
+        defer { try? FileManager.default.removeItem(at: app) }
+        let found = try #require(PlayPauseWords.found(inAppAt: app))
         let merged = PlayPauseWords.common.merged(with: found.words)
         #expect(merged.play.contains("Reprodueix") && merged.play.contains("lecture"))
-        #expect(PlayPauseWords.found(inAppAt: app.appendingPathComponent("missing")) == nil)
+    }
+
+    @Test("an app that isn't there has no words of its own")
+    func missing() {
+        #expect(PlayPauseWords.found(inAppAt: URL(fileURLWithPath: "/nonexistent/Words.app")) == nil)
     }
 
     @Test("an app added through a check reads its words with the common ones")

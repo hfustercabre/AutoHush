@@ -56,6 +56,17 @@ struct PlayerSessionTests {
             return session
         }
 
+        /// A session with the second player chosen, found not running as it
+        /// launched, done starting.
+        func secondNotRunning() async -> PlayerSession {
+            await second.setFailVerify(MusicPlayerError.playerNotRunning)
+            let session = makeSession(second)
+            session.launch()
+            await TestWait.until { session.state.health != .starting }
+            await session.waitUntilIdle()
+            return session
+        }
+
         /// The first player chosen, monitored and paused by AutoHush, then
         /// the second chosen: the first's pause is held.
         func holdingFirst() async -> PlayerSession {
@@ -153,48 +164,64 @@ struct PlayerSessionTests {
     }
 
     @MainActor
-    @Test("a player that isn't running isn't asked again until it opens; another app opening does nothing; just opened and not ready, it's asked again a moment later, unless a newer start took over")
+    @Test("a player that isn't running isn't asked again until it opens, then it's started")
     func noRetryWhilePlayerNotRunning() async {
         let bench = Bench()
-        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
-        let session = bench.makeSession(bench.second)
-        session.launch()
-        await TestWait.until { session.state.health != .starting }
-        await session.waitUntilIdle()
+        let session = await bench.secondNotRunning()
         #expect(await bench.second.verifyCallCount == 1)
         #expect(session.state.health == .degraded("Second isn’t running"))
         #expect(session.retryTimer == nil) // started on as it opens, not before
-
-        session.playerLaunched(Players.first)
-        session.playerLaunched("org.videolan.vlc")
-        #expect(session.state.health == .degraded("Second isn’t running"))
 
         await bench.second.setFailVerify(nil)
         session.playerLaunched(Players.second)
         #expect(session.state.health == .starting)
         await TestWait.until { session.state.health == .ready }
         #expect(await bench.second.verifyCallCount == 2)
+        #expect(bench.monitorings.made.count == 2) // the first lists the apps while it's closed
+    }
 
-        // Opened again, it isn't ready for the first check: asked again after a moment.
-        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
-        session.playerLaunched(Players.second)
+    @MainActor
+    @Test("while the player isn't running, another app opening does nothing")
+    func otherAppOpeningDoesNothing() async {
+        let bench = Bench()
+        let session = await bench.secondNotRunning()
+        session.playerLaunched(Players.first)
+        session.playerLaunched("org.videolan.vlc")
+        await session.waitUntilIdle()
+        #expect(session.state.health == .degraded("Second isn’t running"))
+        #expect(await bench.second.verifyCallCount == 1) // not asked again
+    }
+
+    @MainActor
+    @Test("a player just opened and not ready for the first check is asked again a moment later")
+    func askedAgainWhenJustOpened() async {
+        let bench = Bench()
+        let session = await bench.started()
+        await bench.first.setFailVerify(MusicPlayerError.playerNotRunning)
+        session.playerLaunched(Players.first)
         await TestWait.until { bench.startupWaits.sleeping == 1 }
-        await bench.second.setFailVerify(nil)
+        await bench.first.setFailVerify(nil)
         bench.startupWaits.step()
         await TestWait.until { session.state.health == .ready }
-        #expect(await bench.second.verifyCallCount == 4)
+        #expect(await bench.first.verifyCallCount == 3) // at launch, as it opened, and a moment later
+        #expect(bench.monitorings.made.count == 2) // at launch, and once it answered
+    }
 
-        // Again, and Retry is clicked during that moment: its start takes over, the one waiting gives up.
-        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
-        session.playerLaunched(Players.second)
+    @MainActor
+    @Test("Retry clicked while a player just opened waits to be asked again takes over: the start waiting gives up")
+    func retryTakesOverFromWaitingStart() async {
+        let bench = Bench()
+        let session = await bench.started()
+        await bench.first.setFailVerify(MusicPlayerError.playerNotRunning)
+        session.playerLaunched(Players.first)
         await TestWait.until { bench.startupWaits.sleeping == 1 }
-        await bench.second.setFailVerify(nil)
+        await bench.first.setFailVerify(nil)
         session.retry()
         await TestWait.until { session.state.health == .ready }
         bench.startupWaits.step()
         await session.waitUntilIdle()
-        #expect(await bench.second.verifyCallCount == 6)
-        #expect(bench.monitorings.made.count == 4) // the first lists the apps while it's closed
+        #expect(await bench.first.verifyCallCount == 3) // at launch, as it opened, and Retry's
+        #expect(bench.monitorings.made.count == 2) // at launch, and Retry's
         #expect(bench.monitorings.made.last?.isStopped == false)
     }
 
@@ -218,21 +245,25 @@ struct PlayerSessionTests {
     }
 
     @MainActor
-    @Test("while the player isn't running and Auto-Pause is on, its monitoring runs to list the apps playing, the line still saying it isn't running; Auto-Pause off stops it until it's on again; the player opening starts it as usual")
+    @Test("while the player isn't running and Auto-Pause is on, a monitoring lists the apps playing, the line still saying it isn't running")
     func listsAppsWhilePlayerIsClosed() async {
         let bench = Bench()
-        await bench.second.setFailVerify(MusicPlayerError.playerNotRunning)
-        let session = bench.makeSession(bench.second)
-        session.launch()
-        await TestWait.until { session.state.health != .starting }
-        await session.waitUntilIdle()
+        let session = await bench.secondNotRunning()
         #expect(session.state.health == .degraded("Second isn’t running"))
         let listening = bench.monitorings.of(Players.second)
         #expect(listening.count == 1 && listening[0].starts.map(\.takingOverPause) == [false])
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-        listening[0].send(.activeSources([vlc]))
-        #expect(session.state.activeSources == [vlc]) // listed
+        listening[0].send(.activeSources([Self.vlc]))
+        #expect(session.state.activeSources == [Self.vlc]) // listed
         #expect(session.state.health == .degraded("Second isn’t running")) // still says so
+    }
+
+    @MainActor
+    @Test("while the player isn't running, Auto-Pause off stops listing the apps until it's on again")
+    func autoPauseOffStopsListing() async {
+        let bench = Bench()
+        let session = await bench.secondNotRunning()
+        let listening = bench.monitorings.of(Players.second)
+        listening[0].send(.activeSources([Self.vlc]))
 
         var off = session.settings
         off.autoPause = false
@@ -245,14 +276,22 @@ struct PlayerSessionTests {
         await session.waitUntilIdle()
         #expect(bench.monitorings.of(Players.second).count == 2)
         #expect(bench.monitorings.of(Players.second)[1].isStopped == false)
+    }
 
+    @MainActor
+    @Test("the player opening replaces the monitoring listing the apps with one started as usual, which Auto-Pause off keeps running")
+    func openingStartsMonitoringAsUsual() async {
+        let bench = Bench()
+        let session = await bench.secondNotRunning()
         await bench.second.setFailVerify(nil)
         session.playerLaunched(Players.second) // it opens: started as usual
         await TestWait.until { session.state.health == .ready }
-        #expect(bench.monitorings.of(Players.second)[1].isStopped)
-        #expect(bench.monitorings.of(Players.second).count == 3)
+        #expect(bench.monitorings.of(Players.second)[0].isStopped)
+        #expect(bench.monitorings.of(Players.second).count == 2)
+        var off = session.settings
+        off.autoPause = false
         session.settings = off
-        #expect(bench.monitorings.of(Players.second)[2].isStopped == false) // running: Auto-Pause off keeps it
+        #expect(bench.monitorings.of(Players.second)[1].isStopped == false) // running: Auto-Pause off keeps it
     }
 
     @MainActor

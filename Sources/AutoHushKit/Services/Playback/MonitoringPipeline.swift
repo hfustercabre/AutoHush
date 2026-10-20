@@ -1,16 +1,18 @@
 import Foundation
-import AutoHushKit
 
 /// Everything one start creates (see GLOSSARY.md) — arbiter, audio monitor
 /// and player observer — wired together, started and torn down as a unit.
+/// The engine's front door: the app makes its monitoring only through it,
+/// so `AudioMonitor` and `PlaybackArbiter` stay internal (X19, the full
+/// check, 2026-10-20).
 ///
 /// Commands to the arbiter (player state changes, auto-pause on/off) and
 /// status updates for the menu each travel through a single ordered stream,
 /// so neither side can see them out of order.
 @MainActor
-final class MonitoringPipeline {
+package final class MonitoringPipeline {
     /// What the engine reports for the menu and Settings.
-    enum StatusUpdate: Sendable {
+    package enum StatusUpdate: Sendable {
         case playback(PlaybackState)
         case activeSources([AudioSource])
         case detection(DetectionMode)
@@ -46,11 +48,23 @@ final class MonitoringPipeline {
     private var isStopped: Bool { shutdown != nil }
 
     /// What the audio monitor reads from macOS; tests stand in for it.
-    struct Readers {
-        var processes: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider()
-        var levelMeter: (any AudioLevelMetering)? = ProcessTapLevelMeter()
-        var audioCapturePermission: any AudioCapturePermissionChecking = TCCAudioCapturePermission()
-        var powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader()
+    package struct Readers {
+        let processes: any AudioProcessSnapshotProviding
+        let levelMeter: (any AudioLevelMetering)?
+        let audioCapturePermission: any AudioCapturePermissionChecking
+        let powerAssertions: any PowerAssertionReading
+
+        package init(
+            processes: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider(),
+            levelMeter: (any AudioLevelMetering)? = ProcessTapLevelMeter(),
+            audioCapturePermission: any AudioCapturePermissionChecking = TCCAudioCapturePermission(),
+            powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader()
+        ) {
+            self.processes = processes
+            self.levelMeter = levelMeter
+            self.audioCapturePermission = audioCapturePermission
+            self.powerAssertions = powerAssertions
+        }
     }
 
     /// `hostedApp` names a process's app when its program doesn't (see
@@ -58,7 +72,7 @@ final class MonitoringPipeline {
     /// resumes held (see `holdResumes`). `volumeLeveler` lowers the Mac's
     /// volume as the music resumes after quieter apps (Settings → Advanced):
     /// the app's one, which every monitoring shares.
-    init(
+    package init(
         player: any MusicPlayer,
         hostedApp: @escaping @Sendable (pid_t) -> AudioSource? = { _ in nil },
         configuration: AppConfiguration,
@@ -144,7 +158,7 @@ final class MonitoringPipeline {
     /// before any app reaches it; a wake told meanwhile wins, though it may
     /// reach the arbiter first (the changes are numbered).
     @discardableResult
-    func start(takingOverPause: Bool = false, asleep: Bool = false) async -> Bool {
+    package func start(takingOverPause: Bool = false, asleep: Bool = false) async -> Bool {
         if asleep {
             sleepChanges += 1
             await arbiter.setAsleep(true, change: sleepChanges)
@@ -161,7 +175,7 @@ final class MonitoringPipeline {
         return tookOver
     }
 
-    func stop() {
+    package func stop() {
         guard !isStopped else { return }
         playerObserver.stop()
         monitor.stop()
@@ -173,40 +187,40 @@ final class MonitoringPipeline {
     }
 
     /// Stops, and waits until a faded-down player has its volume back.
-    func stopAndRestoreVolume() async {
+    package func stopAndRestoreVolume() async {
         stop()
         await shutdown?.value
     }
 
     /// Returns once no resume is under way, the music fading back in
     /// included (see `PlaybackArbiter.waitForResume`).
-    func waitForResume() async {
+    package func waitForResume() async {
         await arbiter.waitForResume()
     }
 
-    func setAutoPauseEnabled(_ enabled: Bool) {
+    package func setAutoPauseEnabled(_ enabled: Bool) {
         arbiterCommands.yield(.autoPause(enabled))
     }
 
     /// The Mac goes to sleep, or woke up: see `PlaybackArbiter.setAsleep`.
-    func setAsleep(_ asleep: Bool) {
+    package func setAsleep(_ asleep: Bool) {
         sleepChanges += 1
         arbiterCommands.yield(.asleep(asleep, change: sleepChanges))
     }
 
     /// Holds resumes, or lets them happen again: see
     /// `PlaybackArbiter.holdResumes`.
-    func holdResumes(_ held: Bool) {
+    package func holdResumes(_ held: Bool) {
         arbiterCommands.yield(.resumesHeld(held))
     }
 
     /// Applies new timings and thresholds live.
-    func setConfiguration(_ configuration: AppConfiguration) {
+    package func setConfiguration(_ configuration: AppConfiguration) {
         monitor.setConfiguration(configuration)
         arbiterCommands.yield(.configuration(configuration))
     }
 
-    func setDetectionMethod(_ method: DetectionMethod) {
+    package func setDetectionMethod(_ method: DetectionMethod) {
         monitor.setDetectionMethod(method)
         Self.allowTaps(for: mutingPlayer, in: method)
     }
@@ -221,11 +235,11 @@ final class MonitoringPipeline {
     /// Only while audio levels are measured: AntiDot mode is off.
     static func allowsTaps(_ method: DetectionMethod) -> Bool { !method.isAntiDot }
 
-    func setIgnoredSources(_ ids: Set<String>) {
+    package func setIgnoredSources(_ ids: Set<String>) {
         monitor.setIgnoredSources(ids)
     }
 
-    func activeAudioReport() -> [ActiveAudioReport.Entry] {
+    package func activeAudioReport() -> [ActiveAudioReport.Entry] {
         monitor.activeAudioReport()
     }
 
