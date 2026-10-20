@@ -61,7 +61,7 @@ extension PlayerSession {
     }
 
     /// Starts over at once, with the waits between automatic tries back to
-    /// the shortest: Retry on the menu's card, or the player installed again.
+    /// the shortest: Try Again on the menu's card, or the player installed again.
     func retry() {
         failedStarts = 0
         setHealth(.starting)

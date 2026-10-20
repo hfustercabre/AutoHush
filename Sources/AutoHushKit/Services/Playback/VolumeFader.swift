@@ -130,6 +130,14 @@ package actor VolumeFader {
             try await presses.press(to: .playing)
             return
         }
+        // `abandon()` came while the volume was read, before there was one
+        // to set back: it plays at once at the user's volume, without a fade
+        // (the user, 2026-10-20), rather than from 50 dB down.
+        guard !isAbandoned else {
+            await restoreUserVolume()
+            try await presses.press(to: .playing)
+            return
+        }
         let top = level(of: target)
         let bottom = top - Self.fadeRange
         logger.debug("[fade] in to \(target, privacy: .public)")

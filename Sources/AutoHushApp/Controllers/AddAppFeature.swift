@@ -1,7 +1,6 @@
 import AppKit
 import AutoHushKit
 import CheckPanel
-import CheckedPlayers
 
 /// Add an App… as a feature of its own: its model (made when first opened),
 /// its windows (the window, the list of apps, the warning before a check),

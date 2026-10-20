@@ -48,7 +48,8 @@ struct AddAppView: View {
             .windowMargins()
             BottomBar {
                 // While a check runs, Escape is its Stop (in the check's step).
-                Button { close() } label: { Text(verbatim: AddAppText.cancel) }
+                // Once the check is done, closing cancels nothing: it's kept.
+                Button { close() } label: { Text(verbatim: isDone ? AddAppText.later : AddAppText.cancel) }
                     .buttonStyle(.chip)
                     .keyboardShortcut(model.stage == .checking ? nil : .cancelAction)
                 Spacer()
@@ -73,6 +74,11 @@ struct AddAppView: View {
     }
 
     private var appName: String? { model.chosen?.name }
+
+    /// The check is done: its result is kept, whatever closes the window.
+    private var isDone: Bool {
+        if case .done = model.stage { true } else { false }
+    }
 
     private var isWaitingToPlay: Bool {
         if case .waitingToPlay = model.stage { true } else { false }

@@ -44,7 +44,7 @@ enum IgnoreAppsPicker {
     /// AutoHush tells apps' sound apart: they can't be ignored. One alert
     /// for all of them (the full check, 2026-10-18); `nil` for none.
     static func unidentifiedAppsAlert(urls: [URL]) -> (title: String, message: String)? {
-        let names = urls.map { (FileManager.default.displayName(atPath: $0.path) as NSString).deletingPathExtension }
+        let names = urls.map(AppName.of(appAt:))
         switch names.count {
         case 0:
             return nil

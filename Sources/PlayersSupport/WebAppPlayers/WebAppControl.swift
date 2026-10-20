@@ -75,7 +75,8 @@ final class WebAppControl: @unchecked Sendable {
     let status: LearningStatusBroadcast
     let muter: any AudioMuting
     private let levelProbe: any AudioLevelProbing
-    /// Whether muting may stand in for a pause now (not in AntiDot mode).
+    /// Whether muting may stand in for a pause now (not in AntiDot mode, and
+    /// with Audio Recording).
     let mayMute: @Sendable () -> Bool
     /// Presses the keyboard's Play/Pause key (`PlayPauseKey`).
     let pressKey: @Sendable () -> Void

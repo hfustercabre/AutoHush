@@ -34,7 +34,8 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
     /// The download doesn't match GitHub's checksum, can't be opened, or
     /// holds no AutoHush.app.
     case damaged
-    /// The app in the download isn't signed with the running app's certificate.
+    /// The app in the download isn't signed by the running app's developer
+    /// (its bundle ID and team: a renewed certificate is fine).
     case notGenuine
     /// The app in the download isn't the version the release announced.
     case wrongVersion
@@ -57,7 +58,7 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
         case .damaged:
             return String(localized: "The download is damaged.", comment: "Update install error")
         case .notGenuine:
-            return String(localized: "The download isn’t signed with the same certificate as AutoHush, so it wasn’t installed.",
+            return String(localized: "The download isn’t signed by AutoHush’s developer, so it wasn’t installed.",
                           comment: "Update install error")
         case .wrongVersion:
             return String(localized: "The download doesn’t contain the version GitHub announced.", comment: "Update install error")
@@ -77,7 +78,7 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
         case .noDiskImage: "The release has no disk image to install from."
         case .badResponse(let status): "GitHub answered with HTTP status \(status)."
         case .damaged: "The download is damaged."
-        case .notGenuine: "The download isn't signed with the same certificate as AutoHush."
+        case .notGenuine: "The download isn't signed by AutoHush's developer."
         case .wrongVersion: "The download doesn't contain the version GitHub announced."
         case .needsNewerMacOS(let minimum): "The download needs macOS \(minimum) or later."
         case .notReplaced(_, let reason): "AutoHush couldn't replace itself: \(reason)"
@@ -219,6 +220,11 @@ struct UpdateInstaller: UpdateInstalling {
             Self.removeQuarantine(from: app)
             return PreparedUpdate(version: release.version, app: app, folder: folder)
         } catch {
+            // Never a folder removed with an image still mounted in it (one
+            // that mounted after its tool gave up): the removal would fail
+            // and the volume stay hidden there.
+            let mountPoint = folder.appending(path: "Volume", directoryHint: .isDirectory)
+            if Self.isMounted(at: Self.resolvedPath(mountPoint)) { await detach(mountPoint, openedWith: 0) }
             try? FileManager.default.removeItem(at: folder)
             throw error
         }
@@ -270,6 +276,9 @@ struct UpdateInstaller: UpdateInstalling {
     private func attach(_ imageFile: URL, at mountPoint: URL) async throws -> Int {
         for (index, tool) in diskImageTools.enumerated() {
             if await run(tool.path, tool.attachArguments(imageFile.path, Self.resolvedPath(mountPoint))) { return index }
+            // One stopped at its timeout may have mounted it all the same:
+            // closed before the next tool tries the same place.
+            if Self.isMounted(at: Self.resolvedPath(mountPoint)) { await detach(mountPoint, openedWith: index) }
         }
         throw UpdateInstallError.damaged
     }

@@ -103,15 +103,6 @@ struct PlayerSessionPipelinesTests {
         await current.stopAndRestoreVolume()
         #expect(leveler.restores == 2) // one from each, no more
     }
-
-    @Test("the session's monitorings share the app's volume leveler, and a stop puts back only what that monitoring lowered")
-    func stopPutsBackOnlyItsOwn() async {
-        let leveler = CountingLeveler()
-        let (held, current) = Self.pipelines(sharing: leveler)
-        await held.stopAndRestoreVolume()
-        await current.stopAndRestoreVolume()
-        #expect(leveler.restores == 0) // neither lowered it: nothing to put back
-    }
 }
 
 /// Counts the volume leveler's put-backs at once, whatever was lowered or

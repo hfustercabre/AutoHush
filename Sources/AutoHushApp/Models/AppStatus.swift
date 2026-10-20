@@ -263,7 +263,7 @@ struct AppStatus: Equatable {
         warning == .systemAudioRecording && awaitsReopenForAudioRecording
     }
 
-    /// Whether the menu offers Retry: only after a failed start that nothing
+    /// Whether the menu offers Try Again: only after a failed start that nothing
     /// announces the end of. AutoHush tries again by itself then too, but
     /// waits up to a minute between tries.
     var canRetry: Bool {

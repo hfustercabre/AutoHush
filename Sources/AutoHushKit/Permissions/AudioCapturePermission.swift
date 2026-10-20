@@ -6,6 +6,16 @@ package enum AudioCapturePermission: Equatable, Sendable {
     case granted
     case denied
     case notDetermined
+
+    /// Whether a tap hears an app now, and so can mute it: Audio Recording
+    /// isn't refused or undecided (a tap gives silence then, and mutes
+    /// nothing). True when TCC can't be asked, as before it was.
+    package static var allowsTaps: Bool {
+        switch TCCAudioCapturePermission().status() {
+        case .denied?, .notDetermined?: false
+        case .granted?, nil: true
+        }
+    }
 }
 
 /// Reads and requests the System Audio Recording permission.

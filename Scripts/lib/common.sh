@@ -160,6 +160,16 @@ sign_app() {
         # codesign reads text after "=" as the requirement itself, not a file.
         args+=("-r=$requirement")
     fi
+    # In a virtual machine, the keychain's prompt to let codesign use the key
+    # can wait with nobody at its screen: codesign gets 2 minutes there, then
+    # the build stops and says why (perl's alarm ends it with 142).
+    if [[ "$(sysctl -n kern.hv_vmm_present 2>/dev/null)" == 1 ]]; then
+        local status=0
+        # shellcheck disable=SC2046
+        perl -e 'alarm 120; exec @ARGV' codesign "${args[@]}" $(keychain_args) "$target" || status=$?
+        [[ $status == 142 ]] && fail "codesign waited 2 minutes, most likely on the keychain asking to let it sign: answer that prompt in the VM (Always Allow), then build again"
+        return $status
+    fi
     # shellcheck disable=SC2046
     codesign "${args[@]}" $(keychain_args) "$target"
 }

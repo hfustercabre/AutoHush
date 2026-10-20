@@ -173,10 +173,13 @@ final class OutputMuteTests {
 /// run on it.
 @Suite("Core Audio's outputs, read")
 struct CoreAudioOutputsReadTests {
-    @Test("the output sound plays through is found again by its lasting ID, and its mute reads a value or none")
+    /// Shown as skipped on a Mac with no output at all (a runner), not
+    /// passed having read nothing (the full check, 2026-10-20).
+    @Test("the output sound plays through is found again by its lasting ID, and its mute reads a value or none",
+          .enabled(if: CoreAudioOutputMute().defaultOutput() != nil, "no sound output here"))
     func defaultOutputReads() throws {
         let outputs = CoreAudioOutputMute(), volume = CoreAudioSystemVolume()
-        guard let device = outputs.defaultOutput() else { return } // no output at all: nothing to read
+        let device = try #require(outputs.defaultOutput())
         let uid = try #require(outputs.uid(of: device))
         #expect(outputs.device(withUID: uid) == device)
         #expect(volume.device(withUID: uid) == device && volume.defaultOutput() == device)

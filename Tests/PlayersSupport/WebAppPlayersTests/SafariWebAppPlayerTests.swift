@@ -30,8 +30,7 @@ struct SafariWebAppPlayerTests {
                 clock: { [clock] in clock.now },
                 sleep: { [clock] in clock.advance(by: $0) },
                 pressKey: { [key] in key.press() },
-                nowPlaying: { [nowPlaying] in nowPlaying.answer }
-            )
+                nowPlaying: { [nowPlaying] in nowPlaying.answer }, audioRecordingAllowed: { true })
         }
 
         /// A page with its player bar at the bottom, a playlist's own Play

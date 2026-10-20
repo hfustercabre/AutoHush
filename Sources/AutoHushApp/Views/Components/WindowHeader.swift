@@ -1,7 +1,8 @@
 import AppKit
 import SwiftUI
 
-/// The top of a window AutoHush opens (welcome, Add a Web App, learning):
+/// The top of a window AutoHush opens (welcome and its permissions page, Add
+/// a Web App, learning, Add an App, its list of apps and its warning):
 /// an icon, then what the window is for. The window's title is in its title
 /// bar, as a Settings page's name is (`HostedWindowController`).
 struct WindowHeader: View {

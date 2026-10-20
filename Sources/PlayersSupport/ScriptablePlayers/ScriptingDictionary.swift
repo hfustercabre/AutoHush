@@ -66,6 +66,9 @@ package struct ScriptingDictionary: Equatable, Sendable {
 
     // MARK: - Reading it
 
+    /// How long `sdef` may take to ask a running app for its dictionary.
+    static let sdefTimeout: TimeInterval = 10
+
     /// The dictionary of the app at `url`: the .sdef its Info.plist names,
     /// else one in its resources, read as it is; else, while the app runs
     /// (`sdef` would open it to ask it, and AutoHush never launches an app),
@@ -87,7 +90,9 @@ package struct ScriptingDictionary: Equatable, Sendable {
             }
         }
         guard isRunning else { return nil }
-        let sdef = ToolRun(URL(fileURLWithPath: "/usr/bin/sdef"), [url.path]).runBlocking()
+        // Asked of the running app, which may be busy: at most `sdefTimeout`,
+        // then it reads as having no dictionary.
+        let sdef = ToolRun(URL(fileURLWithPath: "/usr/bin/sdef"), [url.path], timeout: Self.sdefTimeout).runBlocking()
         guard sdef.succeeded,
               let document = try? XMLDocument(data: sdef.output, options: [.nodeLoadExternalEntitiesNever]) else { return nil }
         return parse(document)

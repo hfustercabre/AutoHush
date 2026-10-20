@@ -9,16 +9,21 @@ struct AccessibilityWebPageTests {
     /// No process has this number: nothing of it answers.
     private let nobody: pid_t = .max - 1
 
-    @Test("a switch is set on the app itself, or on a Chromium web app's browser while that runs")
+    @Test("a switch is set on the app itself, also for a Chromium web app whose browser isn't running")
     func switchTarget() {
         #expect(AccessibilityWebPage.switchTarget(4242, access: .webKit) == 4242)
         let notRunning = PageAccess(interface: .chromiumWebApp(browserID: "com.example.no-such-browser"), switchAttribute: nil)
         #expect(AccessibilityWebPage.switchTarget(4242, access: notRunning) == 4242)
+    }
+
+    /// Shown as skipped where no Finder runs (a runner without a desktop),
+    /// not passed having checked nothing (the full check, 2026-10-20).
+    @Test("a Chromium web app's switch goes to its browser while that runs", .enabled(if: NSRunningApplication.running("com.apple.finder") != nil, "no Finder running here"))
+    func switchTargetOfRunningBrowser() throws {
         // Finder stands in for a browser that runs.
-        if let finder = NSRunningApplication.running("com.apple.finder") {
-            let running = PageAccess(interface: .chromiumWebApp(browserID: "com.apple.finder"), switchAttribute: nil)
-            #expect(AccessibilityWebPage.switchTarget(4242, access: running) == finder.processIdentifier)
-        }
+        let finder = try #require(NSRunningApplication.running("com.apple.finder"))
+        let running = PageAccess(interface: .chromiumWebApp(browserID: "com.apple.finder"), switchAttribute: nil)
+        #expect(AccessibilityWebPage.switchTarget(4242, access: running) == finder.processIdentifier)
     }
 
     @Test("an app's windows on this desktop, else those found elsewhere, said to be elsewhere")

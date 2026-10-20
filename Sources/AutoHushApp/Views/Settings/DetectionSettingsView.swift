@@ -79,12 +79,12 @@ struct DetectionSettingsView: View {
 
     /// Over the timings, here and in the menu's Detection.
     static var timingTitle: Text {
-        Text("Timing", comment: "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes")
+        Text("Timing", comment: "Settings → Detection and the menu's Detection: heading of how long other apps must play or be quiet before your player pauses or resumes")
     }
 
     /// The title over AntiDot mode's ways, which VoiceOver hears with them (the menu's too).
     static var detectByTitle: String {
-        String(localized: "Detect playing apps by", comment: "Settings → Detection, AntiDot mode: lead-in to the ways of detecting playing apps")
+        String(localized: "Detect playing apps by", comment: "Settings → Detection and the menu, AntiDot mode: lead-in to the ways of detecting playing apps")
     }
 
     /// Under the AntiDot mode switch while it's off and dimmed: as the menu

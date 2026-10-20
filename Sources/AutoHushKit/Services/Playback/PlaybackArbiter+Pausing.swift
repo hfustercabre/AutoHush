@@ -118,6 +118,14 @@ extension PlaybackArbiter {
     private func muteIfPlayingAnyway(saying state: PlayerState) async -> Bool {
         guard state == .paused || state == .stopped, let muting = player as? any MutingMusicPlayer,
               await muting.muteIfPlayingAnyway() else { return false }
+        // Its monitoring stopped while it was measured: a pause would be kept
+        // (the user plays it again), but a mute nothing will ever lift is
+        // lifted now (the user, 2026-10-20).
+        guard !isShutDown else {
+            await muting.releaseMute()
+            return true
+        }
+        heldByMute = true
         pauseFailure = nil
         playerState = .paused
         logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted, because these apps play: \(self.playingApps, privacy: .public)")

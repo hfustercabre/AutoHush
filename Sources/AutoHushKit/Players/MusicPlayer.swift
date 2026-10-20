@@ -224,6 +224,9 @@ package protocol MutingMusicPlayer: MusicPlayer {
     /// slept): the player is paused for real as soon as it can be, and the
     /// mute lifted then, or once it's silent. It isn't played again.
     func forgetPause() async
+    /// Lifts a mute `muteIfPlayingAnyway` left, without playing anything:
+    /// once AutoHush no longer watches it (its monitoring stopped).
+    func releaseMute() async
 }
 
 /// How far a `LearningMusicPlayer` has come.

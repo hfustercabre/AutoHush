@@ -2,8 +2,10 @@ import Foundation
 import os
 import Testing
 @testable import AutoHushKit
+import AutoHushTestSupport
 
-@Suite("ToolRun")
+/// Bounded: a broken run would otherwise hang the whole test run unnamed.
+@Suite("ToolRun", .timeLimit(.minutes(1)))
 struct ToolRunTests {
     private static let shell = URL(fileURLWithPath: "/bin/sh")
 
@@ -64,11 +66,8 @@ struct ToolRunTests {
         }
 
         func waitForEnd() async -> (lines: Int, result: ToolRun.Result)? {
-            for _ in 0..<500 {
-                if let ended = ended.withLock({ $0 }) { return ended }
-                try? await Task.sleep(for: .milliseconds(10))
-            }
-            return nil
+            await TestWait.until { ended.withLock { $0 } != nil }
+            return ended.withLock { $0 }
         }
     }
 
@@ -86,7 +85,7 @@ struct ToolRunTests {
     func stop() async throws {
         let plain = Lines()
         let running = try plain.start(shell("echo started; exec sleep 10"))
-        while plain.lines.withLock({ $0.isEmpty }) { try await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until { !plain.lines.withLock { $0.isEmpty } }
         #expect(running.isRunning)
         running.stop()
         let stopped = try #require(await plain.waitForEnd())
@@ -95,7 +94,7 @@ struct ToolRunTests {
         // One that puts things back first, then exits as it says.
         let tidy = Lines()
         let handling = try tidy.start(shell("trap 'echo tidied; exit 5' TERM; echo started; sleep 10 >/dev/null & wait"))
-        while tidy.lines.withLock({ $0.isEmpty }) { try await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until { !tidy.lines.withLock { $0.isEmpty } }
         handling.stop()
         let ended = try #require(await tidy.waitForEnd())
         #expect(ended.result == ToolRun.Result(status: 5))

@@ -114,7 +114,7 @@ actor MockLearningPlayer: LearningMusicPlayer, FadelessMusicPlayer, PolledMusicP
     /// How many times learning started over (the pause didn't come in time).
     nonisolated var restartCount: Int { state.withLock { $0.restartCount } }
 
-    /// How many times It's Playing (or Pause It Manually) looked at it.
+    /// How many times It's Playing (or Pause It Yourself) looked at it.
     nonisolated var markPlayingCount: Int { state.withLock { $0.markPlayingCount } }
 
     func markPlaying() async -> LearningMark {

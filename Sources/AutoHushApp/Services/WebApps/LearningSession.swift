@@ -16,7 +16,7 @@ struct LearningPause: Equatable {
 
 /// Learning the chosen web app's controls with the user (see GLOSSARY.md).
 /// It follows the player's learning status, takes the user's steps (It's
-/// Playing, Try Again, Pause It Manually, It's Paused), and counts down the
+/// Playing, Try Again, Pause It Yourself, It's Paused), and counts down the
 /// minute the user has to pause it, with a note when a step can't be taken.
 /// The windows that show the steps are AppDelegate's; they show its state.
 @MainActor
@@ -97,7 +97,7 @@ final class LearningSession {
 
     /// The user's clicks while AutoHush learns the chosen player: It's
     /// Playing, then, if AutoHush couldn't pause it itself, Try Again or
-    /// Pause It Manually, and It's Paused. A click that can't be taken
+    /// Pause It Yourself, and It's Paused. A click that can't be taken
     /// leaves a note under its step saying why.
     func step(_ button: StepButton) {
         guard let learner else { return }
@@ -128,9 +128,9 @@ final class LearningSession {
 
     /// It plays (It's Playing, or Try Again): a fresh look at its page, then
     /// AutoHush pauses it itself and learns. When that doesn't take, its
-    /// step is marked failed, offering Try Again and Pause It Manually; when
+    /// step is marked failed, offering Try Again and Pause It Yourself; when
     /// another app would get the Play/Pause key, the user pauses it at once,
-    /// as with Pause It Manually.
+    /// as with Pause It Yourself.
     private func pauseByItself(_ learner: any LearningMusicPlayer) {
         setPause(deadline: nil, note: nil, mode: .trying)
         Task { [weak self] in
@@ -151,7 +151,7 @@ final class LearningSession {
         }
     }
 
-    /// Pause It Manually: a fresh look at its page while it plays, then the
+    /// Pause It Yourself: a fresh look at its page while it plays, then the
     /// user has `pauseWait` to pause it and say so (It's Paused).
     private func pauseByHand(_ learner: any LearningMusicPlayer) {
         Task { [weak self] in
@@ -208,7 +208,7 @@ final class LearningSession {
     // MARK: - Its state
 
     /// Learning as the player reports it. Once it plays, AutoHush pauses it,
-    /// or the user does (their minute starts at Pause It Manually). Back at
+    /// or the user does (their minute starts at Pause It Yourself). Back at
     /// the first step, the note that says why stays (set by whatever sent it
     /// back); learned, the steps show how it was paused; with nothing to
     /// learn, nothing shows.

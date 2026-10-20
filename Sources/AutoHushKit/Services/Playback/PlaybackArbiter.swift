@@ -57,6 +57,8 @@ actor PlaybackArbiter: PlaybackArbiting {
     let logger = AutoHushLogger(category: "PlaybackArbiter")
 
     var pausedByUs = false
+    /// The pause held is a mute (`muteIfPlayingAnyway`), lifted by `shutdown`.
+    var heldByMute = false
     /// When the player was seen to stop playing here, as far as the arbiter
     /// knows: it went from playing on this Mac to paused. `nil` while it plays.
     var stoppedPlayingAt: Date?
@@ -408,6 +410,9 @@ actor PlaybackArbiter: PlaybackArbiting {
         cancelPendingPause()
         cancelPendingResume()
         await fader.abandon() // never leave the music faded down
+        // Nor muted: a mute, unlike a pause, can't be undone by the user.
+        if heldByMute, let muting = player as? any MutingMusicPlayer { await muting.releaseMute() }
+        heldByMute = false
         // Nor the Mac's volume lowered, unless another monitoring lowered it.
         if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
         levelLowered = nil

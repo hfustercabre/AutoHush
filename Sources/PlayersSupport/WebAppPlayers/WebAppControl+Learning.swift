@@ -155,7 +155,7 @@ extension WebAppControl {
     }
 
     /// The pause didn't come in time, or the look while it plays couldn't be
-    /// taken again (Try Again, Pause It Manually): back to waiting for the
+    /// taken again (Try Again, Pause It Yourself): back to waiting for the
     /// user to say it plays. `false` when it wasn't waiting for the pause.
     func restartLearning() -> Bool {
         guard var learner, learner.hasPlayed else { return false }

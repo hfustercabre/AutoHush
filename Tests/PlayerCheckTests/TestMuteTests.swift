@@ -1,6 +1,7 @@
 import AutoHushKit
 import Foundation
 import Testing
+import AutoHushTestSupport
 @testable import PlayerCheck
 
 /// Stands in for the muter: whether a mute works, and how many were asked.
@@ -48,9 +49,7 @@ struct TestMuteTests {
         #expect(refused.isRetrying)
         muter.letMute()
         // Tried again half a second after the refusal.
-        let deadline = Date().addingTimeInterval(5)
-        while refused.isRetrying, Date() < deadline { try await Task.sleep(for: .milliseconds(50)) }
-        #expect(!refused.isRetrying)
+        await TestWait.until { !refused.isRetrying }
         #expect(muter.mutes >= 2)
         #expect(refused.stop()) // a mute failed meanwhile
     }

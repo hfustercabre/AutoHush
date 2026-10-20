@@ -51,7 +51,7 @@ actions).
 **Learning session** (`LearningSession`): learning the chosen web app's
 controls with the user, from choosing it until it's learned, and again
 when asked. It follows the player's learning status, takes the user's
-steps (It's Playing, Try Again, Pause It Manually, It's Paused), and counts
+steps (It's Playing, Try Again, Pause It Yourself, It's Paused), and counts
 down the minute the user has to pause it, with a note when a step can't be
 taken. The windows that show the steps read it from the app state.
 _Avoid_: learner (that's the player's own part, which reads the page).

@@ -17,7 +17,7 @@ final class PlayerCheckRun {
         // end never comes before the last line.
         running = try ToolRun(executable, arguments, readsErrors: true).start(
             onLine: { line in DispatchQueue.main.async { MainActor.assumeIsolated { onLine(line) } } },
-            onEnd: { [weak self] ended in DispatchQueue.main.async { MainActor.assumeIsolated { self?.finish(ended.status) } } }
+            onEnd: { [weak self] ended in DispatchQueue.main.async { MainActor.assumeIsolated { self?.finish(ended) } } }
         )
     }
 
@@ -35,8 +35,9 @@ final class PlayerCheckRun {
         return await withCheckedContinuation { waiting.append($0) }
     }
 
-    private func finish(_ status: Int32) {
-        let end = PlayerCheckEnd.of(status: status, stopped: stopped, result: try? Data(contentsOf: resultFile))
+    private func finish(_ ended: ToolRun.Result) {
+        let end = PlayerCheckEnd.of(status: ended.status, bySignal: ended.bySignal, stopped: stopped,
+                                    result: try? Data(contentsOf: resultFile))
         try? FileManager.default.removeItem(at: resultFile)
         self.end = end
         waiting.forEach { $0.resume(returning: end) }

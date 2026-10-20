@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import CheckedPlayers
 
 /// An app Add an App… offers to check: one that can play, and that
@@ -25,14 +26,11 @@ struct CheckableApp: Identifiable, Equatable, Codable, Sendable {
     }
 
     /// The app at `url` as Add an App names it, the same way wherever it's
-    /// found (the list, Other App…): its bundle's display name, else its
-    /// name, else its file's; `nil` when it isn't an app with a bundle ID.
+    /// found (the list, Other App…): as Finder does (`AppName`); `nil` when
+    /// it isn't an app with a bundle ID.
     static func at(_ url: URL) -> CheckableApp? {
         guard url.pathExtension == "app", let bundle = Bundle(url: url), let id = bundle.bundleIdentifier else { return nil }
-        let info = bundle.localizedInfoDictionary ?? bundle.infoDictionary ?? [:]
-        let name = (info["CFBundleDisplayName"] as? String) ?? (info["CFBundleName"] as? String)
-            ?? url.deletingPathExtension().lastPathComponent
-        return CheckableApp(bundleID: id, name: name, url: url, browserName: browserName(ofAppAt: url))
+        return CheckableApp(bundleID: id, name: AppName.of(appAt: url), url: url, browserName: browserName(ofAppAt: url))
     }
 
     /// The name of the browser that made the app at `url`, if it's a
@@ -40,6 +38,6 @@ struct CheckableApp: Identifiable, Equatable, Codable, Sendable {
     static func browserName(ofAppAt url: URL) -> String? {
         guard let browser = CheckedAppTraits.browser(ofAppAt: url),
               let browserURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browser) else { return nil }
-        return FileManager.default.displayName(atPath: browserURL.path).replacingOccurrences(of: ".app", with: "")
+        return AppName.of(appAt: browserURL)
     }
 }

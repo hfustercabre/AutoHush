@@ -26,9 +26,14 @@ enum PlayerCheckEnd: Equatable {
 
     /// How the helper's exit `status` (`CheckExitStatus`) ends a check:
     /// `stopped` when AutoHush asked it to stop; the result file's contents
-    /// for a check that went through.
-    static func of(status: Int32, stopped: Bool, result: Data?) -> PlayerCheckEnd {
-        switch status {
+    /// for a check that went through. `bySignal`: a signal ended it, and
+    /// `status` is that signal's number, never read as an exit status
+    /// (SIGQUIT's 3 isn't a missing permission).
+    static func of(status: Int32, bySignal: Bool = false, stopped: Bool, result: Data?) -> PlayerCheckEnd {
+        if bySignal {
+            return stopped || status == SIGTERM || status == SIGINT ? .stopped : .failed(CheckExitStatus.stopped(by: status))
+        }
+        return switch status {
         case CheckExitStatus.done: .finished(result.flatMap { try? JSONDecoder().decode(CheckResult.self, from: $0) })
         case CheckExitStatus.permissionMissing: .permissionMissing
         default: stopped || CheckExitStatus.isStop(status) ? .stopped : .failed(status)

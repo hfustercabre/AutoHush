@@ -247,8 +247,11 @@ struct WindowTitleTests {
     @MainActor
     @Suite("The check's panel", .serialized)
     struct CheckPanelWindows {
-        /// The shades shown now.
-        private var shades: [NSWindow] { NSApp.windows.filter { $0.level == CheckPanelController.shadeLevel && $0.isVisible } }
+        /// The shades shown now, made since `before`: another suite's, in the
+        /// same test process, may still be fading out (CheckPanelControllerTests).
+        private func shades(since before: Set<ObjectIdentifier>) -> [NSWindow] {
+            NSApp.windows.filter { !before.contains(ObjectIdentifier($0)) && $0.level == CheckPanelController.shadeLevel && $0.isVisible }
+        }
 
         /// A check running on the stand-ins, its panel shown.
         private func panelShown() async throws -> (world: World, sut: CheckPanelController, panel: NSPanel) {
@@ -283,27 +286,29 @@ struct WindowTitleTests {
 
         @Test("only while the check blocks input does a shade under its panel dim each screen")
         func checkPanelShades() async throws {
+            let before = Set(NSApp.windows.map(ObjectIdentifier.init))
             let (world, sut, panel) = try await panelShown()
             defer {
                 sut.hide()
                 world.run.finish(.stopped)
             }
-            #expect(shades.isEmpty)
+            #expect(shades(since: before).isEmpty)
             world.report?(CheckReportLine.blocked)
-            await TestWait.until { panel.level == CheckPanelController.panelLevel && shades.count == NSScreen.screens.count }
-            #expect(shades.allSatisfy { shade in NSScreen.screens.contains { $0.frame == shade.frame } })
-            #expect(shades.allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
+            await TestWait.until { panel.level == CheckPanelController.panelLevel && shades(since: before).count == NSScreen.screens.count }
+            #expect(shades(since: before).allSatisfy { shade in NSScreen.screens.contains { $0.frame == shade.frame } })
+            #expect(shades(since: before).allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
             world.report?(CheckReportLine.free)
-            await TestWait.until { panel.level == .floating && shades.isEmpty }
+            await TestWait.until { panel.level == .floating && shades(since: before).isEmpty }
         }
 
         @Test("the check's panel hidden, it and its shades all go")
         func checkPanelHidden() async throws {
+            let before = Set(NSApp.windows.map(ObjectIdentifier.init))
             let (world, sut, panel) = try await panelShown()
             world.report?(CheckReportLine.blocked)
-            await TestWait.until { !shades.isEmpty }
+            await TestWait.until { !shades(since: before).isEmpty }
             sut.hide()
-            #expect(!panel.isVisible && shades.isEmpty)
+            #expect(!panel.isVisible && shades(since: before).isEmpty)
             world.run.finish(.stopped)
         }
     }

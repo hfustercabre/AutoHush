@@ -68,7 +68,7 @@ extension PlaybackState {
             return StatePresentation(
                 icon: .playing,
                 label: String(localized: "AutoHush: your player is playing", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
+                line: String(localized: "Playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
             )
         case .pausedByMonitor:
             return StatePresentation(
@@ -81,7 +81,7 @@ extension PlaybackState {
             return StatePresentation(
                 icon: .noMusic,
                 label: String(localized: "AutoHush: nothing is playing", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Not playing", comment: "At the top of the menu, under the media player: nothing plays")
+                line: String(localized: "Not playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: nothing plays")
             )
         case .playingElsewhere:
             return StatePresentation(

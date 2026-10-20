@@ -88,7 +88,7 @@ flowchart TD
   CONT["Continue:<br/>it’s the media player"]
   PERM["Allow AutoHush to Work:<br/>only what this player needs"]
   CTRL{"How is it<br/>controlled?"}
-  AUT["Automation: Spotify, Apple<br/>Music, VLC, an added app’s<br/>AppleScript. Open Spotify<br/>first, then macOS asks"]
+  AUT["Automation: Spotify, Apple<br/>Music, VLC, QuickTime Player,<br/>an added app’s AppleScript.<br/>Open Spotify first, then<br/>macOS asks"]
   ACC["Accessibility: TIDAL,<br/>Apple Podcasts, web apps,<br/>added apps that are pressed.<br/>Allow… opens System Settings"]
   AUD{"Audio<br/>Recording"}
   ALW["Allow…: macOS asks,<br/>or System Settings,<br/>then Reopen AutoHush"]
@@ -390,7 +390,7 @@ flowchart TD
   NP{"Is the web app<br/>Now Playing?"}
   KEY["Let AutoHush pause it:<br/>the keyboard’s<br/>Play/Pause key"]
   CHG{"A button<br/>changed?"}
-  FAILK["Pressed again to undo it:<br/>Try Again, or<br/>Pause It Manually"]
+  FAILK["Pressed again to undo it:<br/>Try Again, or<br/>Pause It Yourself"]
   MAN["Pause it yourself, then<br/>It’s Paused (within a minute,<br/>else it starts over)"]
   DONE["Learned: the button’s two<br/>words and place; played<br/>again, the window closes"]
   LATER["Later: the Controls row says<br/>not learned, with Learn<br/>Controls…; nothing is pressed"]
@@ -414,7 +414,7 @@ flowchart TD
   CHG -->|"yes"| DONE
   CHG -->|"no"| FAILK
   FAILK -->|"Try Again"| KEY
-  FAILK -->|"Pause It Manually"| MAN --> DONE
+  FAILK -->|"Pause It Yourself"| MAN --> DONE
   LW -.->|"Later"| LATER
   LATER -.->|"Learn Controls…"| LW
   KN -->|"yes"| PRESS

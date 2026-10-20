@@ -30,7 +30,7 @@ extension AddedAppPlayer {
 /// on; one keeping only the display awake doesn't tell, unless it's one of
 /// its video names): playing while it announces, paused once it has
 /// before; `.unknown` until it has.
-struct PlaybackAssertions {
+struct PlaybackAssertions: Sendable {
     /// What the app's own processes hold now.
     static let read: @Sendable (pid_t) -> Set<PowerAssertion> = { IOKitPowerAssertionReader().assertions(ownedBy: $0) }
 

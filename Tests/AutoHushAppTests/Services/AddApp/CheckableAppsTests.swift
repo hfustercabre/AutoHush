@@ -12,7 +12,7 @@ struct CheckableAppsTests {
         return try TestAppBundle.make(in: folder, name: name, info: info)
     }
 
-    @Test("every app in the folders and one level down, by its bundle's name, but those excluded, AutoHush and Safari web apps; links followed, hidden ones too")
+    @Test("every app in the folders and one level down, by the name Finder shows, but those excluded, AutoHush and Safari web apps; links followed, hidden ones too")
     func installed() throws {
         let folder = FileManager.default.temporaryDirectory.appending(path: "CheckableAppsTests-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: folder) }
@@ -30,7 +30,8 @@ struct CheckableAppsTests {
 
         let apps = CheckableApps.installedApps(in: [folder], excluding: ["com.spotify.client"])
         #expect(Set(apps.map(\.bundleID)) == ["com.deezer.deezer-desktop", "com.apple.TV"])
-        #expect(apps.first { $0.bundleID == "com.deezer.deezer-desktop" }?.name == "Deezer Music")
+        // Finder's name, not the bundle's own (the user, 2026-10-20: one name everywhere).
+        #expect(apps.first { $0.bundleID == "com.deezer.deezer-desktop" }?.name == "Deezer")
         #expect(apps.first { $0.bundleID == "com.apple.TV" }?.url.path == tv.resolvingSymlinksInPath().path)
     }
 
@@ -102,7 +103,7 @@ struct CheckableAppsTests {
         let spotify = try app("Spotify", id: "com.spotify.client", in: folder)
         let autoHush = try app("AutoHush Test", id: "com.autohush.Test", in: folder)
         let supported = [PlayerOption(bundleID: "com.spotify.client", name: "Spotify", appURL: spotify)]
-        #expect(try AppReader.checkableApp(at: qobuz, supported: supported).get().name == "Qobuz")
+        #expect(try AppReader.checkableApp(at: qobuz, supported: supported).get().name == "Qobuz.app Player") // as Finder shows it
         #expect(AppReader.checkableApp(at: spotify, supported: supported) == .failure(.supported("Spotify")))
         #expect(AppReader.checkableApp(at: autoHush, supported: supported) == .failure(.autoHush))
         #expect(AppReader.checkableApp(at: folder, supported: supported) == .failure(.notAnApp))

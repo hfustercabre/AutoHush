@@ -51,8 +51,9 @@ struct UserSettingsTests {
         #expect(settings.state.autoPause == .on)
         #expect(preferences.autoPause.snoozedUntil == nil)
 
-        // Turned off for five minutes, a moment before the end of them.
-        settings.snooze(.fiveMinutes, now: Date().addingTimeInterval(-AutoPauseSnooze.fiveMinutes.duration + 0.05))
+        // Turned off for five minutes, a second before the end of them (a
+        // moment that a loaded runner can't outlast between two lines).
+        settings.snooze(.fiveMinutes, now: Date().addingTimeInterval(-AutoPauseSnooze.fiveMinutes.duration + 1))
         #expect(!settings.isAutoPauseActive)
         await TestWait.until { settings.isAutoPauseActive }
         #expect(settings.state.autoPause == .on)

@@ -12,7 +12,7 @@ enum AppHealthState: Equatable, Sendable {
     case degraded(String)
     /// The player didn't answer, or answered with an error, and nothing
     /// announces when it's fixed: AutoHush tries again by itself, and the
-    /// menu offers Retry.
+    /// menu offers Try Again.
     case retrying(String)
     /// AutoHush may not control the player: the user has to grant it.
     case needsPermission(Permission)

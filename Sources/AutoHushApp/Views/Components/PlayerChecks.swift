@@ -14,11 +14,11 @@ struct PlayerChecks: View {
                     check(Self.allowedTitle(control), done: true)
                 }
                 if !model.playerCanFade {
-                    check(String(localized: "No fades", comment: "Settings → General, under the media player: AutoHush can't fade this player (TIDAL, Apple Podcasts, web apps)"), done: false)
+                    check(String(localized: "No fades", comment: "Settings → General and the foot of the menu's card, under the media player: AutoHush can't fade this player (TIDAL, Apple Podcasts, web apps)"), done: false)
                 } else if model.timings.fadesEnabled {
                     check(SettingsWindowController.Page.fades.title, done: true)
                 } else {
-                    check(String(localized: "Fades off", comment: "Settings → General, under the media player: fades are turned off on the Fades page"), done: false)
+                    check(String(localized: "Fades off", comment: "Settings → General and the foot of the menu's card, under the media player: fades are turned off on the Fades page"), done: false)
                 }
             }
         }
@@ -38,9 +38,9 @@ struct PlayerChecks: View {
     private static func allowedTitle(_ permission: Permission) -> String {
         switch permission {
         case .automation:
-            String(localized: "Automation allowed", comment: "Settings → General, under the media player, with a check: AutoHush may control it through Automation")
+            String(localized: "Automation allowed", comment: "Settings → General and the foot of the menu's card, under the media player, with a check: AutoHush may control it through Automation")
         default:
-            String(localized: "Accessibility allowed", comment: "Settings → General, under the media player, with a check: AutoHush may control it through Accessibility")
+            String(localized: "Accessibility allowed", comment: "Settings → General and the foot of the menu's card, under the media player, with a check: AutoHush may control it through Accessibility")
         }
     }
 }

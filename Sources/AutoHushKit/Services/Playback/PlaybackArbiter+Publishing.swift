@@ -12,7 +12,7 @@ extension PlaybackArbiter {
         }
         if pausedByUs != publishedPausedByUs {
             publishedPausedByUs = pausedByUs
-            if !pausedByUs { callDuringPause = false } // that pause is over
+            if !pausedByUs { callDuringPause = false; heldByMute = false } // that pause is over
             onPausedByUsChange(pausedByUs)
         }
     }

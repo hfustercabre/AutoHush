@@ -13,7 +13,7 @@ struct LearningSessionTests {
         MockLearningPlayer(bundleID: id, name: name, status: status)
     }
 
-    @Test("It's Playing, Pause It Manually and It's Paused go to the player; a click it can't take says why under its step")
+    @Test("It's Playing, Pause It Yourself and It's Paused go to the player; a click it can't take says why under its step")
     func clicks() async {
         let player = webApp()
         let session = LearningSession(pauseWait: .seconds(60))
@@ -32,7 +32,7 @@ struct LearningSessionTests {
         #expect(session.state.pause.note == nil)
         #expect(session.state.pause.deadline == nil)
 
-        // Pause It Manually: the user has a minute to pause it.
+        // Pause It Yourself: the user has a minute to pause it.
         let asked = Date()
         session.step(.pauseManually)
         await TestWait.until { session.state.pause.deadline != nil }
@@ -63,7 +63,7 @@ struct LearningSessionTests {
         #expect(session.state.pause.mode == .byHand) // the steps show the user paused it
     }
 
-    @Test("once AutoHush couldn't pause it: Try Again tries once more; Pause It Manually while it's silent goes back to the first step")
+    @Test("once AutoHush couldn't pause it: Try Again tries once more; Pause It Yourself while it's silent goes back to the first step")
     func afterAFailedPause() async {
         let player = webApp()
         let session = LearningSession()
@@ -147,7 +147,7 @@ struct LearningSessionTests {
         session.follow(player)
         session.step(.itsPlaying)
         await TestWait.until { session.state.pause.mode == .failed }
-        #expect(session.countdown == nil) // no minute counts until Pause It Manually
+        #expect(session.countdown == nil) // no minute counts until Pause It Yourself
         #expect(session.state.status == .learning(hasPlayed: true))
         session.step(.pauseManually)
         await TestWait.until { clock.durations == [.seconds(42)] } // its minute counts

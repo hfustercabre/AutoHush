@@ -29,7 +29,7 @@ enum LaunchOption {
     /// forward by itself once its window shows (some do) goes behind the
     /// app that was in front again. Says how it went (`tell`).
     @MainActor static func relaunch(_ app: NSRunningApplication?, url: URL, with option: String, tell: (String) -> Void) -> Bool {
-        let name = FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+        let name = AppName.of(appAt: url)
         let front = WindowStates.frontPID().flatMap { NSRunningApplication(processIdentifier: $0) }
         if let app {
             _ = app.terminate()
@@ -99,7 +99,7 @@ typealias AppQuery = CommandLineOptions.AppQuery
     case .relaunch:
         // It quits and opens the app, so it's logged as checks and presses
         // are (in --logs' folder); the two questions aren't (they're asked often).
-        runLog.start(app: FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: ""), doing: RunLogName.relaunch)
+        runLog.start(app: AppName.of(appAt: url), doing: RunLogName.relaunch)
         let tell = { (line: String) in
             log(line)
             print(line)

@@ -7,7 +7,6 @@ import Testing
 @testable import AutoHushApp
 import AutoHushKit
 import AutoHushTestSupport
-import PlayersTestSupport
 
 extension AppDelegateTests {
     // MARK: - Music player
@@ -31,7 +30,7 @@ extension AppDelegateTests {
         scratch.installed = []
         let (sut, monitorings) = makeSUT(scratch, chosenPlayer: nil)
         #expect(sut.status.health == .needsPlayer("Choose a media player"))
-        #expect(sut.status.playerOptions.allSatisfy { !$0.isInstalled })
+        #expect(!sut.status.playerOptions.isEmpty && sut.status.playerOptions.allSatisfy { !$0.isInstalled })
 
         sut.chooseMusicPlayer(Players.first)
         #expect(sut.player == nil)

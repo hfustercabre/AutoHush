@@ -50,6 +50,8 @@ struct PlayerTiles: View {
     @State private var webAppsTop: CGFloat = 0
     @State private var contentHeight: CGFloat = 0
     @State private var heldHeight: CGFloat?
+    /// How far down the welcome window's tiles show (`MoreBelow`).
+    @State private var reach: ScrollReach?
 
     private var apps: [PlayerOption] { options.filter { $0.kind == .app } }
     private var checkedApps: [PlayerOption] { options.filter { $0.kind == .checkedApp } }
@@ -85,10 +87,20 @@ struct PlayerTiles: View {
     private var card: some View {
         Card {
             if let maxVisibleRows {
+                // Past its rows, the last ones fade over a chevron while more
+                // is below, as in the menu (U4, the user, 2026-10-20).
+                let moreBelow = reach?.moreBelow == true
                 ScrollView {
                     groups.coordinateSpace(.named(Self.space))
                         .onGeometryChange(for: CGFloat.self, of: \.size.height) { contentHeight = $0 }
+                        .background { MoreBelowReader.contentFrame }
+                        .mask(alignment: .top) { MoreBelow.mask(reach, moreBelow: moreBelow) }
                 }
+                .modifier(MoreBelowReader(reach: $reach))
+                .overlay(alignment: .bottom) {
+                    if moreBelow { MoreBelow.chevron.transition(.opacity) }
+                }
+                .animation(.easeOut(duration: 0.15), value: moreBelow)
                 .frame(height: heldHeight ?? visibleHeight(rows: maxVisibleRows))
                 .onChange(of: holdsHeight) { _, holds in
                     heldHeight = holds ? visibleHeight(rows: maxVisibleRows) : nil

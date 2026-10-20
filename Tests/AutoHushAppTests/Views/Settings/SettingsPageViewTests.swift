@@ -2,8 +2,6 @@ import AppKit
 import SwiftUI
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
-import AutoHushTestSupport
 
 /// Settings' pages no other test shows, drawn as their window draws them.
 @Suite("Settings' pages, drawn")

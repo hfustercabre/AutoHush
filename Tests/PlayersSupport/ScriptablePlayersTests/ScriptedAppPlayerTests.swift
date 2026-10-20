@@ -158,7 +158,8 @@ struct ScriptedAppPlayerTests {
         #expect(await quickTime.volume() == nil)
         try await quickTime.setVolume(50)
         #expect(app.state.withLock { $0.documentVolumes } == ["Song A": 0.6, "Song B": 0.8])
-        #expect(app.sent.dropFirst(sent).allSatisfy { $0.hasSuffix("of docu") }) // only the documents were read
+        #expect(app.sent.count > sent) // the documents were read…
+        #expect(app.sent.dropFirst(sent).allSatisfy { $0.hasSuffix("of docu") }) // …and only them
     }
 
     /// A player told by its documents (of class "docu", playing by "jPly"),

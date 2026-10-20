@@ -1,5 +1,4 @@
 @testable import AutoHushApp
-import AutoHushTestSupport
 
 extension SettingsModel {
     /// A model on settings in memory, with launch at login off, that asks

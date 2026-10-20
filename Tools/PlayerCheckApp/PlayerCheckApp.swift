@@ -131,9 +131,7 @@ struct InstalledApp: Identifiable, Hashable {
                     }.joined(separator: " › ")
                 }
                 let bundleID = Bundle(url: url)?.bundleIdentifier
-                var name = FileManager.default.displayName(atPath: url.path)
-                if name.hasSuffix(".app") { name = String(name.dropLast(4)) }
-                found.append((url, name, bundleID, root, subfolder))
+                found.append((url, AppName.of(appAt: url), bundleID, root, subfolder))
             }
         }
         return found

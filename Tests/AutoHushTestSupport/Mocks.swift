@@ -247,6 +247,9 @@ package actor MockMutingMusicPlayer: MutingMusicPlayer {
         return await mock.muteIfPlayingAnyway()
     }
     package func forgetPause() async { await mock.forgetPause() }
+    /// How many times a mute was lifted for good (`releaseMute`).
+    package private(set) var releasedMutes = 0
+    package func releaseMute() async { releasedMutes += 1 }
     package func verifyControlAccess() async throws { try await mock.verifyControlAccess() }
     package func playerState() async -> PlayerState { await mock.playerState() }
     package func pause() async throws { try await mock.pause() }

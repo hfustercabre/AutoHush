@@ -10,13 +10,13 @@ enum SettingsSwitch: CaseIterable {
     var title: Text {
         switch self {
         case .antiDot:
-            Text("AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator")
+            Text("AntiDot mode", comment: "Settings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator")
         case .fades:
-            Text("Fade playback", comment: "Settings → Fades: the switch that turns the fades on or off")
+            Text("Fade playback", comment: "Settings → Fades and the menu: the switch that turns the fades on or off")
         case .levelsMusic:
-            Text("Level the volume", comment: "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
+            Text("Level the volume", comment: "Settings → Advanced, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
         case .staysPausedAfterCalls:
-            Text("Stay paused after calls", comment: "Settings → Advanced and Diagnostics: the switch that keeps your player paused after a call")
+            Text("Stay paused after calls", comment: "Settings → Advanced, Diagnostics and the menu: the switch that keeps your player paused after a call")
         }
     }
 
@@ -142,15 +142,15 @@ enum SettingsTiming {
     var title: Text {
         switch self {
         case .pauseAfter:
-            Text("Pause playback after", comment: "Settings → Detection and Diagnostics: how long another app must play before your player pauses")
+            Text("Pause playback after", comment: "Settings → Detection, Diagnostics and the menu: how long another app must play before your player pauses")
         case .resumeAfter:
-            Text("Resume playback after", comment: "Settings → Detection and Diagnostics: how long other apps must be quiet before your player resumes")
+            Text("Resume playback after", comment: "Settings → Detection, Diagnostics and the menu: how long other apps must be quiet before your player resumes")
         case .silenceThreshold:
-            Text("Silence threshold", comment: "Settings → Detection and Diagnostics: the sound level below which an app counts as silent")
+            Text("Silence threshold", comment: "Settings → Detection, Diagnostics and the menu: the sound level below which an app counts as silent")
         case .fadeOut:
-            Text("Fade out before pausing", comment: "Settings → Fades: slider for how long playback fades out before it pauses")
+            Text("Fade out before pausing", comment: "Settings → Fades and the menu: slider for how long playback fades out before it pauses")
         case .fadeIn:
-            Text("Fade in when resuming", comment: "Settings → Fades: slider for how long playback fades back in when it resumes")
+            Text("Fade in when resuming", comment: "Settings → Fades and the menu: slider for how long playback fades back in when it resumes")
         }
     }
 

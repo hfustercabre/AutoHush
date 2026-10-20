@@ -78,6 +78,8 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// Whether one told by its level plays, read once a second (`polledState`).
     private var assertions: PlaybackAssertions
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
+    /// Whether Audio Recording lets a tap hear it (`AudioCapturePermission.allowsTaps`).
+    private let audioRecordingAllowed: @Sendable () -> Bool
     /// Its Now Playing report said it wasn't playing while it was heard: an
     /// app may report only while it's the Now Playing app (Qobuz's said
     /// "Paused" for half an hour while it played, Player Check, 2026-10-15),
@@ -97,7 +99,8 @@ package actor CheckedPlayer: AddedAppPlayer {
          levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
          soundOn: (@Sendable (pid_t) -> Bool)? = nil,
          assertionsHeld: @escaping @Sendable (pid_t) -> Set<PowerAssertion> = PlaybackAssertions.read,
-         pressSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
+         pressSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
+         audioRecordingAllowed: @escaping @Sendable () -> Bool = { AudioCapturePermission.allowsTaps }) {
         self.setup = setup
         self.parts = parts
         self.reports = reports?.isAvailable == true ? reports : nil
@@ -110,6 +113,7 @@ package actor CheckedPlayer: AddedAppPlayer {
         self.soundOn = soundOn ?? { sound.isPlayingSound(appPID: $0) }
         self.assertions = PlaybackAssertions(read: assertionsHeld)
         self.pressSleep = pressSleep
+        self.audioRecordingAllowed = audioRecordingAllowed
         parts.toggleState?.set { [weak self] in await self?.sureState() ?? .unknown }
         parts.hearing?.set { [weak self] pid in await self?.heardNow(pid) }
     }
@@ -197,8 +201,16 @@ package actor CheckedPlayer: AddedAppPlayer {
         if sure != .unknown { return sure }
         // Told by its level, which isn't listened to now: an open output
         // tells nothing (Qobuz keeps its own open while paused).
-        if polled, parts.hearing != nil { return soundOn(pid) ? .unknown : .paused }
-        return soundOn(pid) ? .playing : .paused
+        let soundIsOn = await soundOnNow(pid)
+        if polled, parts.hearing != nil { return soundIsOn ? .unknown : .paused }
+        return soundIsOn ? .playing : .paused
+    }
+
+    /// Whether its sound output is on, read on the probe's queue, never on
+    /// Swift's shared threads (DEVELOPMENT.md).
+    private func soundOnNow(_ pid: pid_t) async -> Bool {
+        let soundOn = soundOn
+        return await Self.probeQueue.run { soundOn(pid) }
     }
 
     /// What its sure signs say: its ways' own (its script's state, its
@@ -230,8 +242,14 @@ package actor CheckedPlayer: AddedAppPlayer {
         // tells, and between decisions its keep-awake assertion.
         if parts.hearing != nil {
             if polled {
-                let soundOn = soundOn
-                return assertions.state(of: pid, soundOn: { soundOn(pid) })
+                let soundOn = soundOn, current = assertions
+                let (state, read) = await Self.probeQueue.run { () -> (PlayerState, PlaybackAssertions) in
+                    var assertions = current
+                    let state = assertions.state(of: pid, soundOn: { soundOn(pid) })
+                    return (state, assertions)
+                }
+                assertions = read
+                return state
             }
             return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
         }
@@ -243,8 +261,8 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// one with no sound output open isn't; `nil` without Audio Recording
     /// or in AntiDot mode, which taps no sound.
     func heardNow(_ pid: pid_t) async -> Bool? {
-        guard soundOn(pid) else { return false }
-        guard tapsAllowed.withLock({ $0 }) else { return nil }
+        guard await soundOnNow(pid) else { return false }
+        guard tapsAllowed.withLock({ $0 }), audioRecordingAllowed() else { return nil }
         let probe = levelProbe
         return await Self.probeQueue.run { probe.isAudible(appPID: pid) }
     }
@@ -256,8 +274,8 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// isn't `polled`.
     private func reported(pid: pid_t, polled: Bool) async -> PlayerState? {
         guard !reportIsStale, let client = reports?.latest(of: bundleID), let state = client.state else { return nil }
-        guard !polled, state != .playing, client.changed != reportHeardAt, tapsAllowed.withLock({ $0 }),
-              soundOn(pid) else { return state }
+        guard !polled, state != .playing, client.changed != reportHeardAt, tapsAllowed.withLock({ $0 }) else { return state }
+        guard await soundOnNow(pid) else { return state }
         reportHeardAt = client.changed
         let probe = levelProbe
         guard await Self.probeQueue.run({ probe.isAudible(appPID: pid) }) else { return state }
@@ -326,6 +344,10 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// without playing anything: as AutoHush quits, or once another player
     /// is chosen and AutoHush holds no pause in it. Chosen again, its page's
     /// switch goes back on at its next look.
+    package func releaseMute() async {
+        await parts.page?.releaseMute()
+    }
+
     package func release() async {
         await parts.page?.releaseMute()
         await parts.page?.releasePage()

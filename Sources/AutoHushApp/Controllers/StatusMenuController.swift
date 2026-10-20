@@ -76,7 +76,7 @@ final class StatusMenuController: NSObject {
     /// set (tests, which show no window).
     var windowFrames: (@MainActor () -> (menu: CGRect, side: CGRect)?)?
 
-    /// What the menu's controls change: the user's settings, Retry, the
+    /// What the menu's controls change: the user's settings, Try Again, the
     /// updates, and what only AppDelegate does.
     private let settings: UserSettings
     private let session: PlayerSession

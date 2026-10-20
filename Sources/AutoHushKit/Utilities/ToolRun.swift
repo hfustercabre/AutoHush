@@ -9,7 +9,7 @@ import os
 /// stall the tool), and its end is waited for without holding one of
 /// Swift's shared threads. At the timeout it's stopped, and the run ends
 /// then, whether the tool does or not: one stuck in the kernel can't hold
-/// its caller.
+/// its caller. One that doesn't end within `killGrace` after is killed.
 package struct ToolRun: Sendable {
     let executable: URL
     let arguments: [String]
@@ -92,7 +92,7 @@ package struct ToolRun: Sendable {
                        onEnd: @escaping @Sendable (Result) -> Void) throws -> Running {
         try launch(read: { handle in
             var pending = Data()
-            while case let data = handle.availableData, !data.isEmpty {
+            while case let data = Self.nextBytes(handle), !data.isEmpty {
                 pending.append(data)
                 while let newline = pending.firstIndex(of: UInt8(ascii: "\n")) {
                     onLine(String(decoding: pending[..<newline], as: UTF8.self))
@@ -107,11 +107,28 @@ package struct ToolRun: Sendable {
     /// What `handle` gives until its end, up to `maxOutput`.
     private static func readAll(_ handle: FileHandle) -> Data {
         var output = Data()
-        while case let data = handle.availableData, !data.isEmpty {
+        while case let data = nextBytes(handle), !data.isEmpty {
             if output.count < maxOutput { output.append(data.prefix(maxOutput - output.count)) }
         }
         return output
     }
+
+    /// The next bytes `handle` gives, as they come; empty at its end, or on
+    /// a read error. `read(2)`, not `FileHandle.availableData`, which raises
+    /// an Objective-C exception on an error: a crash Swift can't catch.
+    private static func nextBytes(_ handle: FileHandle) -> Data {
+        var buffer = [UInt8](repeating: 0, count: 1 << 16)
+        while true {
+            let count = read(handle.fileDescriptor, &buffer, buffer.count)
+            if count > 0 { return Data(buffer[..<count]) }
+            if count < 0, errno == EINTR { continue }
+            return Data()
+        }
+    }
+
+    /// How long a tool stopped at its timeout gets to end (SIGTERM) before
+    /// it's killed (SIGKILL), so a stuck one doesn't stay with its reader.
+    static let killGrace: TimeInterval = 5
 
     /// A run under way.
     package final class Running: Sendable {
@@ -179,6 +196,9 @@ package struct ToolRun: Sendable {
                 guard running.tellsEnd() else { return }
                 running.stop()
                 onEnd(Result(status: -1, timedOut: true))
+                telling.asyncAfter(deadline: .now() + Self.killGrace) {
+                    if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+                }
             }
         }
         return running

@@ -276,8 +276,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   error's number is kept now.
 - **An ignored app installed later shows its icon** without reopening
   AutoHush.
-- **Settings and the logs window keep their size and place on macOS 14
-  and 15.** They opened at their first size and place at every launch.
+- **Settings keeps its size and place on macOS 15.** It opened at its
+  first size and place at every launch.
 - **After an update, a paused player no longer comes back too early in
   AntiDot mode.** The new copy resumed it after 2 seconds, before AntiDot
   mode counts sound without video as playing (3 seconds), so the music

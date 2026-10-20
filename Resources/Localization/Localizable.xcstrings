@@ -1722,7 +1722,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ demana alguna cosa abans de mostrar %2$@ (galetes, iniciar la sessió…). AutoHush continua quan es mostri."
+            "value" : "%1$@ demana alguna cosa abans de mostrar %2$@ (galetes, iniciar la sessió…). L’AutoHush continua quan es mostri."
           }
         },
         "cs" : {
@@ -15983,7 +15983,7 @@
       }
     },
     "Accessibility allowed" : {
-      "comment" : "Settings → General, under the media player, with a check: AutoHush may control it through Accessibility",
+      "comment" : "Settings → General and the foot of the menu's card, under the media player, with a check: AutoHush may control it through Accessibility",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -23716,7 +23716,7 @@
       }
     },
     "AntiDot mode" : {
-      "comment" : "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator",
+      "comment" : "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator\nSettings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -30822,7 +30822,7 @@
       }
     },
     "AutoHush couldn’t pause %@." : {
-      "comment" : "Under the step “Let AutoHush pause it”, marked failed, when AutoHush couldn't pause the web app itself; “Try Again” and “Pause It Manually” follow; %@ is the web app",
+      "comment" : "Under the step “Let AutoHush pause it”, marked failed, when AutoHush couldn't pause the web app itself; “Try Again” and “Pause It Yourself” follow; %@ is the web app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37516,7 +37516,7 @@
       }
     },
     "Automation allowed" : {
-      "comment" : "Settings → General, under the media player, with a check: AutoHush may control it through Automation",
+      "comment" : "Settings → General and the foot of the menu's card, under the media player, with a check: AutoHush may control it through Automation",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -52362,7 +52362,7 @@
       }
     },
     "Detect playing apps by" : {
-      "comment" : "Settings → Detection, AntiDot mode: lead-in to the ways of detecting playing apps",
+      "comment" : "Settings → Detection and the menu, AntiDot mode: lead-in to the ways of detecting playing apps",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -55497,7 +55497,7 @@
       }
     },
     "Fade in when resuming" : {
-      "comment" : "Settings → Fades: slider for how long playback fades back in when it resumes",
+      "comment" : "Settings → Fades and the menu: slider for how long playback fades back in when it resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -55706,7 +55706,7 @@
       }
     },
     "Fade out before pausing" : {
-      "comment" : "Settings → Fades: slider for how long playback fades out before it pauses",
+      "comment" : "Settings → Fades and the menu: slider for how long playback fades out before it pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -55915,7 +55915,7 @@
       }
     },
     "Fade playback" : {
-      "comment" : "Settings → Fades: the switch that turns the fades on or off",
+      "comment" : "Settings → Fades and the menu: the switch that turns the fades on or off",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -56124,7 +56124,7 @@
       }
     },
     "Fades" : {
-      "comment" : "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General, and a Diagnostics row: whether AutoHush can fade the media player",
+      "comment" : "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -56333,7 +56333,7 @@
       }
     },
     "Fades off" : {
-      "comment" : "Settings → General, under the media player: fades are turned off on the Fades page",
+      "comment" : "Settings → General and the foot of the menu's card, under the media player: fades are turned off on the Fades page",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -68455,7 +68455,7 @@
       }
     },
     "Later" : {
-      "comment" : "Button that closes it for now: an update alert, or a window that learns a web app's controls (the learning window, the Add a Web App window)",
+      "comment" : "Button that closes it for now: an update alert, a window that learns a web app's controls (the learning window, the Add a Web App window), or the Add an App window once its check is done (the check is kept)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -70336,7 +70336,7 @@
       }
     },
     "Level the volume" : {
-      "comment" : "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them",
+      "comment" : "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them\nSettings → Advanced, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -77860,7 +77860,7 @@
       }
     },
     "No fades" : {
-      "comment" : "Settings → General, under the media player: AutoHush can't fade this player (TIDAL, Apple Podcasts, web apps)",
+      "comment" : "Settings → General and the foot of the menu's card, under the media player: AutoHush can't fade this player (TIDAL, Apple Podcasts, web apps)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -82876,7 +82876,7 @@
       }
     },
     "Not playing" : {
-      "comment" : "At the top of the menu, under the media player: nothing plays",
+      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: nothing plays\nAt the top of the menu, under the media player: nothing plays",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -91862,55 +91862,55 @@
         }
       }
     },
-    "Pause It Manually" : {
+    "Pause It Yourself" : {
       "comment" : "Button under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself: the user pauses it instead (a step “Pause it yourself” follows)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "إيقاف مؤقت يدويًا"
+            "value" : "إيقاف مؤقت بنفسك"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Posar en pausa manualment"
+            "value" : "Posar-la en pausa tu"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pozastavit ručně"
+            "value" : "Pozastavit vlastnoručně"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sæt på pause manuelt"
+            "value" : "Sæt selv på pause"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Manuell pausieren"
+            "value" : "Selbst pausieren"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Χειροκίνητη παύση"
+            "value" : "Παύση από εσάς"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pausar manualmente"
+            "value" : "Pausar por tu cuenta"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pausar manualmente"
+            "value" : "Pausar por tu cuenta"
           }
         },
         "fi" : {
@@ -91922,157 +91922,157 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mettre en pause manuellement"
+            "value" : "Mettre en pause vous-même"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mettre en pause manuellement"
+            "value" : "Mettre en pause vous-même"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "मैन्युअल रूप से पॉज़ करें"
+            "value" : "खुद पॉज़ करें"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pauziraj ručno"
+            "value" : "Pauziraj samostalno"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kézi szüneteltetés"
+            "value" : "Szüneteltetés saját kezűleg"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Jeda Secara Manual"
+            "value" : "Jeda Sendiri"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Metti in pausa manualmente"
+            "value" : "Mettilo in pausa tu"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "手動で一時停止"
+            "value" : "自分で一時停止"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "수동으로 일시 정지"
+            "value" : "직접 일시 정지"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sett på pause manuelt"
+            "value" : "Sett på pause selv"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pauzeer handmatig"
+            "value" : "Pauzeer zelf"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wstrzymaj ręcznie"
+            "value" : "Wstrzymaj samodzielnie"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pausar Manualmente"
+            "value" : "Pausar Você Mesmo"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pôr em pausa manualmente"
+            "value" : "Pôr em pausa por si"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Puneți pe pauză manual"
+            "value" : "Puneți dvs. pe pauză"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Поставить на паузу вручную"
+            "value" : "Поставить на паузу самостоятельно"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pozastaviť ručne"
+            "value" : "Pozastaviť vlastnoručne"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zaustavi ročno"
+            "value" : "Zaustavi samostojno"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pausa manuellt"
+            "value" : "Pausa själv"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elle Duraklat"
+            "value" : "Kendiniz Duraklatın"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Призупинити вручну"
+            "value" : "Призупинити самостійно"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tạm dừng thủ công"
+            "value" : "Tự tạm dừng"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "手動暫停"
+            "value" : "自行暫停"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "手动暂停"
+            "value" : "自行暂停"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "手動暫停"
+            "value" : "自行暫停"
           }
         }
       }
     },
     "Pause it yourself" : {
-      "comment" : "The step after “Let AutoHush pause it” failed and the user chose “Pause It Manually”, while AutoHush learns a web app's controls: the user pauses the web app",
+      "comment" : "The step after “Let AutoHush pause it” failed and the user chose “Pause It Yourself”, while AutoHush learns a web app's controls: the user pauses the web app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -92281,7 +92281,7 @@
       }
     },
     "Pause playback after" : {
-      "comment" : "Settings → Detection and Diagnostics: how long another app must play before your player pauses",
+      "comment" : "Settings → Detection and Diagnostics: how long another app must play before your player pauses\nSettings → Detection, Diagnostics and the menu: how long another app must play before your player pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -95625,7 +95625,7 @@
       }
     },
     "Playing" : {
-      "comment" : "At the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list",
+      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list\nAt the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -102947,7 +102947,7 @@
       }
     },
     "Resume playback after" : {
-      "comment" : "Settings → Detection and Diagnostics: how long other apps must be quiet before your player resumes",
+      "comment" : "Settings → Detection and Diagnostics: how long other apps must be quiet before your player resumes\nSettings → Detection, Diagnostics and the menu: how long other apps must be quiet before your player resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -107127,7 +107127,7 @@
       }
     },
     "Silence threshold" : {
-      "comment" : "Settings → Detection and Diagnostics: the sound level below which an app counts as silent",
+      "comment" : "Settings → Detection and Diagnostics: the sound level below which an app counts as silent\nSettings → Detection, Diagnostics and the menu: the sound level below which an app counts as silent",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -109635,7 +109635,7 @@
       }
     },
     "Stay paused after calls" : {
-      "comment" : "Settings → Advanced and Diagnostics: the switch that keeps your player paused after a call",
+      "comment" : "Settings → Advanced and Diagnostics: the switch that keeps your player paused after a call\nSettings → Advanced, Diagnostics and the menu: the switch that keeps your player paused after a call",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -114656,211 +114656,211 @@
         }
       }
     },
-    "The download isn’t signed with the same certificate as AutoHush, so it wasn’t installed." : {
+    "The download isn’t signed by AutoHush’s developer, so it wasn’t installed." : {
       "comment" : "Update install error",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "التنزيل غير موقّع بنفس شهادة AutoHush، لذلك لم يُثبَّت."
+            "value" : "التنزيل غير موقّع من مطوّر AutoHush، لذلك لم يُثبَّت."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La baixada no està signada amb el mateix certificat que l’AutoHush, així que no s’ha instal·lat."
+            "value" : "La baixada no està signada pel desenvolupador de l’AutoHush, així que no s’ha instal·lat."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stažený soubor není podepsán stejným certifikátem jako AutoHush, a proto nebyl nainstalován."
+            "value" : "Stažený soubor není podepsán vývojářem aplikace AutoHush, a proto nebyl nainstalován."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Overførslen er ikke signeret med det samme certifikat som AutoHush, så den blev ikke installeret."
+            "value" : "Overførslen er ikke signeret af AutoHushs udvikler, så den blev ikke installeret."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der Download ist nicht mit demselben Zertifikat wie AutoHush signiert und wurde daher nicht installiert."
+            "value" : "Der Download ist nicht vom Entwickler von AutoHush signiert und wurde daher nicht installiert."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Η λήψη δεν έχει υπογραφεί με το ίδιο πιστοποιητικό με το AutoHush, οπότε δεν εγκαταστάθηκε."
+            "value" : "Η λήψη δεν έχει υπογραφεί από τον προγραμματιστή του AutoHush, οπότε δεν εγκαταστάθηκε."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La descarga no está firmada con el mismo certificado que AutoHush, así que no se ha instalado."
+            "value" : "La descarga no está firmada por el desarrollador de AutoHush, así que no se ha instalado."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La descarga no está firmada con el mismo certificado que AutoHush, así que no se instaló."
+            "value" : "La descarga no está firmada por el desarrollador de AutoHush, así que no se instaló."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Latausta ei ole allekirjoitettu samalla varmenteella kuin AutoHush, joten sitä ei asennettu."
+            "value" : "Latausta ei ole allekirjoittanut AutoHushin kehittäjä, joten sitä ei asennettu."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le téléchargement n’est pas signé avec le même certificat qu’AutoHush, il n’a donc pas été installé."
+            "value" : "Le téléchargement n’est pas signé par le développeur d’AutoHush, il n’a donc pas été installé."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Le téléchargement n’est pas signé avec le même certificat qu’AutoHush, il n’a donc pas été installé."
+            "value" : "Le téléchargement n’est pas signé par le développeur d’AutoHush, il n’a donc pas été installé."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "डाउनलोड AutoHush वाले प्रमाणपत्र से साइन नहीं है, इसलिए उसे इंस्टॉल नहीं किया गया।"
+            "value" : "डाउनलोड AutoHush के डेवलपर द्वारा साइन नहीं है, इसलिए उसे इंस्टॉल नहीं किया गया।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Preuzimanje nije potpisano istim certifikatom kao AutoHush pa nije instalirano."
+            "value" : "Preuzimanje nije potpisao razvojni programer AutoHusha pa nije instalirano."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A letöltés nincs ugyanazzal a tanúsítvánnyal aláírva, mint az AutoHush, ezért nem lett telepítve."
+            "value" : "A letöltést nem az AutoHush fejlesztője írta alá, ezért nem lett telepítve."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Unduhan tidak ditandatangani dengan sertifikat yang sama dengan AutoHush, sehingga tidak diinstal."
+            "value" : "Unduhan tidak ditandatangani oleh pengembang AutoHush, sehingga tidak diinstal."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Il download non è firmato con lo stesso certificato di AutoHush, quindi non è stato installato."
+            "value" : "Il download non è firmato dallo sviluppatore di AutoHush, quindi non è stato installato."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ダウンロードしたファイルはAutoHushと同じ証明書で署名されていないため、インストールされませんでした。"
+            "value" : "ダウンロードしたファイルはAutoHushの開発元によって署名されていないため、インストールされませんでした。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "다운로드한 파일이 AutoHush와 같은 인증서로 서명되지 않았으므로 설치하지 않았습니다."
+            "value" : "다운로드한 파일이 AutoHush 개발자의 서명을 받지 않았으므로 설치하지 않았습니다."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nedlastingen er ikke signert med samme sertifikat som AutoHush, så den ble ikke installert."
+            "value" : "Nedlastingen er ikke signert av utvikleren av AutoHush, så den ble ikke installert."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "De download is niet ondertekend met hetzelfde certificaat als AutoHush, dus hij is niet geïnstalleerd."
+            "value" : "De download is niet ondertekend door de ontwikkelaar van AutoHush, dus hij is niet geïnstalleerd."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pobrany plik nie jest podpisany tym samym certyfikatem co AutoHush, więc nie został zainstalowany."
+            "value" : "Pobrany plik nie jest podpisany przez twórcę AutoHush, więc nie został zainstalowany."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O download não está assinado com o mesmo certificado do AutoHush, então não foi instalado."
+            "value" : "O download não está assinado pelo desenvolvedor do AutoHush, então não foi instalado."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O ficheiro descarregado não está assinado com o mesmo certificado do AutoHush, por isso não foi instalado."
+            "value" : "O ficheiro descarregado não está assinado pelo programador do AutoHush, por isso não foi instalado."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Descărcarea nu este semnată cu același certificat ca AutoHush, așa că nu a fost instalată."
+            "value" : "Descărcarea nu este semnată de dezvoltatorul AutoHush, așa că nu a fost instalată."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Загрузка не подписана тем же сертификатом, что и AutoHush, поэтому она не установлена."
+            "value" : "Загрузка не подписана разработчиком AutoHush, поэтому она не установлена."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stiahnutý súbor nie je podpísaný rovnakým certifikátom ako AutoHush, preto nebol nainštalovaný."
+            "value" : "Stiahnutý súbor nie je podpísaný vývojárom aplikácie AutoHush, preto nebol nainštalovaný."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prenos ni podpisan z istim potrdilom kot AutoHush, zato ni bil nameščen."
+            "value" : "Prenosa ni podpisal razvijalec aplikacije AutoHush, zato ni bil nameščen."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hämtningen är inte signerad med samma certifikat som AutoHush, så den installerades inte."
+            "value" : "Hämtningen är inte signerad av AutoHushs utvecklare, så den installerades inte."
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "İndirilen dosya AutoHush ile aynı sertifikayla imzalanmadığı için yüklenmedi."
+            "value" : "İndirilen dosya AutoHush’ın geliştiricisi tarafından imzalanmadığı için yüklenmedi."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Завантажений файл не підписано тим самим сертифікатом, що й AutoHush, тому його не встановлено."
+            "value" : "Завантажений файл не підписано розробником AutoHush, тому його не встановлено."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bản tải về không được ký bằng cùng chứng chỉ với AutoHush nên không được cài đặt."
+            "value" : "Bản tải về không được nhà phát triển AutoHush ký nên không được cài đặt."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下載的檔案未使用與 AutoHush 相同的憑證簽署，因此未安裝。"
+            "value" : "下載的檔案未經 AutoHush 開發者簽署，因此未安裝。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下载的文件未使用与 AutoHush 相同的证书签名，因此未安装。"
+            "value" : "下载的文件未经 AutoHush 开发者签名，因此未安装。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下載的檔案未使用與 AutoHush 相同的憑證簽署，因此未安裝。"
+            "value" : "下載的檔案未經 AutoHush 開發者簽署，因此未安裝。"
           }
         }
       }
@@ -115504,7 +115504,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Després fes clic a «Està en pausa». AutoHush veu quin botó ha canviat."
+            "value" : "Després fes clic a «Està en pausa». L’AutoHush veu quin botó ha canviat."
           }
         },
         "cs" : {
@@ -117792,7 +117792,7 @@
       }
     },
     "Timing" : {
-      "comment" : "Settings → Detection: heading of how long other apps must play or be quiet before your player pauses or resumes",
+      "comment" : "Settings → Detection and the menu's Detection: heading of how long other apps must play or be quiet before your player pauses or resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

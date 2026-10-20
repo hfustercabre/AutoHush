@@ -6,7 +6,7 @@ enum LearningPauseMode: Equatable, Sendable {
     case automatic
     /// AutoHush is pausing it now.
     case trying
-    /// AutoHush couldn't: the user picks Try Again or Pause It Manually.
+    /// AutoHush couldn't: the user picks Try Again or Pause It Yourself.
     case failed
     /// The user pauses it and says so, within the minute.
     case byHand

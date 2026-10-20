@@ -13,7 +13,6 @@ import AutoHushKit
 /// between the heading and the buttons.
 struct SoundSourcesSettingsView: View {
     let model: SettingsModel
-    @State private var confirmingReset = false
 
     /// The list's rows, order, search, selection and removals.
     private var list: AppListModel { model.appList }
@@ -64,7 +63,7 @@ struct SoundSourcesSettingsView: View {
                     .fixedSize()
                     .disabled(list.selectedApps.isEmpty)
                 Spacer(minLength: 0)
-                Button(role: .destructive) { confirmingReset = true } label: {
+                Button(role: .destructive) { confirmReset() } label: {
                     Text("Reset List…", comment: "Settings → Sound Sources: button that asks to forget every app in the list")
                 }
                     .buttonStyle(.chip)
@@ -74,22 +73,27 @@ struct SoundSourcesSettingsView: View {
             // The arrow keys reach them after the list, however it's scrolled.
             .environment(\.highlightBand, .bottom)
         }
-        .confirmationDialog(Text("Reset the list of apps?", comment: "Settings → Sound Sources: title of the confirmation for Reset List"),
-                            isPresented: $confirmingReset) {
-            Button(role: .destructive) { model.settings.forgetAll() } label: {
-                Text("Reset List", comment: "Settings → Sound Sources: confirms forgetting every app in the list")
-            }
-        } message: {
-            Text("Every app is removed, and apps you turned off will pause your player again. Apps reappear as they play audio.",
-                 comment: "Settings → Sound Sources: what Reset List does, in its confirmation")
+        // Asked as every removal is (`PlayerAlerts.confirm`): its button
+        // blue, not red (the user, 2026-10-20).
+        .onChange(of: list.appsAwaitingRemoval) { _, rows in
+            guard !rows.isEmpty else { return }
+            Task { @MainActor in confirmRemoval(rows) }
         }
-        .confirmationDialog(Text(verbatim: Self.removalTitle(names: list.removalNames)),
-                            isPresented: Binding(get: { !list.appsAwaitingRemoval.isEmpty }, set: { if !$0 { list.cancelRemoval() } }),
-                            presenting: list.appsAwaitingRemoval.isEmpty ? nil : list.appsAwaitingRemoval) { _ in
-            Button(role: .destructive) { list.confirmRemoval() } label: { Text(verbatim: PlayerAlerts.removeTitle) }
-        } message: { rows in
-            Text(verbatim: Self.removalMessage(rows))
-        }
+    }
+
+    private func confirmReset() {
+        let alert = PlayerAlerts.confirm(
+            title: String(localized: "Reset the list of apps?", comment: "Settings → Sound Sources: title of the confirmation for Reset List"),
+            message: String(localized: "Every app is removed, and apps you turned off will pause your player again. Apps reappear as they play audio.",
+                            comment: "Settings → Sound Sources: what Reset List does, in its confirmation"),
+            button: String(localized: "Reset List", comment: "Settings → Sound Sources: confirms forgetting every app in the list"))
+        if InfoAlert.runInFront(alert) == .alertFirstButtonReturn { model.settings.forgetAll() }
+    }
+
+    private func confirmRemoval(_ rows: [AppListModel.Row]) {
+        let alert = PlayerAlerts.confirm(title: Self.removalTitle(names: list.removalNames), message: Self.removalMessage(rows),
+                                         button: PlayerAlerts.removeTitle)
+        if InfoAlert.runInFront(alert) == .alertFirstButtonReturn { list.confirmRemoval() } else { list.cancelRemoval() }
     }
 
     /// The removal's confirmation's message: the app turned off by its name

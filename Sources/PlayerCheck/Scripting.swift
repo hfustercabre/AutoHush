@@ -125,8 +125,8 @@ func propertySpecifier(_ code: String) -> NSAppleEventDescriptor {
 /// (`AutomationPermission`): a send waits only 5 s, too short for someone
 /// reading macOS's prompt. Allowed or denied, it's said once and kept
 /// (`automationAnswer`; a test's Permissions ask it first); any other answer
-/// (the app still starting: -600) is asked again before the next event. Nil
-/// when allowed; else the error the event gets instead.
+/// (-600: the app quit) is asked again before the next event. Nil when
+/// allowed; else the error the event gets instead.
 @MainActor func automationRefusal(pid: pid_t) -> NSError? {
     switch automationAnswer {
     case .allowed?: return nil

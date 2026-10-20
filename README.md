@@ -101,7 +101,7 @@ AutoHush lives in the menu bar; it shows in the Dock only while one of its windo
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/images/welcome-dark.png">
-    <img src=".github/images/welcome-light.png" alt="The welcome window, Choose Your Media Player: a search, then Spotify picked among the Supported Apps (Spotify, Apple Music, VLC, Apple Podcasts, TIDAL and QuickTime Player); below them Other Apps, with Add…; then the Safari Web Apps, marked Experimental: SoundCloud and YouTube Music added, Spotify, Amazon Music and Deezer to add, Apple Music untested, and more below; then Continue" width="540">
+    <img src=".github/images/welcome-light.png" alt="The welcome window, Choose Your Media Player: a search, then Spotify picked among the Supported Apps (Spotify, Apple Music, VLC, Apple Podcasts, TIDAL and QuickTime Player); below them Other Apps, with Add…; then the Safari Web Apps, marked Experimental: SoundCloud and YouTube Music added, Spotify, Amazon Music and Deezer to add, Apple Music untested; then Continue" width="540">
   </picture>
 </p>
 
@@ -168,7 +168,7 @@ Web apps can't be scripted and have no playback menu, so AutoHush presses the si
 
 1. When you choose a web app, a window asks you to **play something in it** and click **It's Playing**. Log in to the site first if it asks (a site that needs an account plays nothing until you do), and click It's Playing only once what you chose plays: during an ad, the site's own button may say it's paused.
 2. AutoHush then pauses it itself with the keyboard's Play/Pause key (**Let AutoHush pause it**), sees which button changed, and plays it again. That's all; it closes by itself.
-3. macOS sends that key to the app it counts as playing, "Now Playing": the last one that started to play. If that's another app (one that started after the web app, say), AutoHush doesn't press the key at all, and goes straight to the step where you pause it yourself (below). If the key doesn't take (the site may ignore it), it presses it again to undo it and marks the step failed, with **Try Again** and **Pause It Manually**. The latter adds a step: **pause it yourself** and click **It's Paused**; the button that changed between the two is the one. Paused by hand, you have a minute to pause it and click It's Paused (a line under the step counts down); then it starts over.
+3. macOS sends that key to the app it counts as playing, "Now Playing": the last one that started to play. If that's another app (one that started after the web app, say), AutoHush doesn't press the key at all, and goes straight to the step where you pause it yourself (below). If the key doesn't take (the site may ignore it), it presses it again to undo it and marks the step failed, with **Try Again** and **Pause It Yourself**. The latter adds a step: **pause it yourself** and click **It's Paused**; the button that changed between the two is the one. Paused by hand, you have a minute to pause it and click It's Paused (a line under the step counts down); then it starts over.
 
 If Accessibility isn't allowed yet, its first step asks for it, and the others unlock once it is. A click AutoHush can't take says why under its step: It's Playing while it can't hear the web app, or can't read its page (it isn't open, has no window, or shows its buttons without their names, as a window macOS reopens at login can: open its window, or close it and open it again), or It's Paused while no button has changed.
 
@@ -285,7 +285,7 @@ AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (r
 - **Your player keeps playing during a video.** Check that the app isn't ignored (menu → Ignored Apps) and that Auto-Pause is on.
 - **Your player stays paused after a video ends.** Some apps keep their sound switched on after playback. Allow audio recording, or in AntiDot mode close the app or tab.
 - **Something looks off?** **Settings → Diagnostics** shows what AutoHush sees (hold **⌥ Option** and click **Settings** in the menu to go straight there), and **Copy Report** copies it for a bug report. **Show Logs…**, beside it, shows what AutoHush did and what went wrong.
-- **"Spotify isn't running", a permission warning, or "isn't responding".** Fix the cause and AutoHush starts by itself: when the player opens, a few seconds after you allow access (audio recording: once you reopen AutoHush), or once the player answers again (it keeps trying, up to once a minute). **Retry** on the card tries again at once.
+- **"Spotify isn't running", a permission warning, or "isn't responding".** Fix the cause and AutoHush starts by itself: when the player opens, a few seconds after you allow access (audio recording: once you reopen AutoHush), or once the player answers again (it keeps trying, up to once a minute). **Try Again** on the card tries again at once.
 - **A permission AutoHush asks for is already switched on in System Settings?** That can happen once, after you replace AutoHush 0.12.1 or earlier with 1.0.0 or later by hand: from 1.0.0 AutoHush is signed with another certificate, and the switch belongs to the old copy. In **System Settings → Privacy & Security**, open that permission's list (Accessibility, say), select AutoHush, remove it with **−**, then allow AutoHush again.
 
 ## Privacy

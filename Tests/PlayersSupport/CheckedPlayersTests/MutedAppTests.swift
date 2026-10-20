@@ -19,7 +19,7 @@ struct MutedAppTests {
         let held = Locked(false)
         let clock = ManualClock()
         let player = MutedApp(setup: muted, processIdentifier: { 4242 }, muter: muter,
-                              assertionsHeld: { _ in held.value ? playing : [] }, clock: { clock.now })
+                              assertionsHeld: { _ in held.value ? playing : [] }, clock: { clock.now }, audioRecordingAllowed: { true })
         return (player, muter, held, clock)
     }
 
@@ -90,7 +90,7 @@ struct MutedAppTests {
     func mutedThenQuit() async throws {
         let muter = FakeMuter()
         let running = Locked<pid_t?>(4242)
-        let player = MutedApp(setup: muted, processIdentifier: { running.value }, muter: muter, assertionsHeld: { _ in playing })
+        let player = MutedApp(setup: muted, processIdentifier: { running.value }, muter: muter, assertionsHeld: { _ in playing }, audioRecordingAllowed: { true })
         try await player.pause()
         #expect(muter.isMuted)
         running.value = nil
@@ -110,7 +110,7 @@ struct MutedAppTests {
     func releaseAndAccess() async throws {
         let muter = FakeMuter()
         let running = Locked<pid_t?>(4242)
-        let player = MutedApp(setup: muted, processIdentifier: { running.value }, muter: muter, assertionsHeld: { _ in playing })
+        let player = MutedApp(setup: muted, processIdentifier: { running.value }, muter: muter, assertionsHeld: { _ in playing }, audioRecordingAllowed: { true })
         try await player.verifyControlAccess()
         try await player.pause()
         #expect(player.releasesOnQuit)

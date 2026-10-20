@@ -810,6 +810,7 @@ struct StatusMenuControllerTests {
         defer { sut.remove() }
         sut.perform(.hoverSideRow(.players, true))
         await sut.sideOpenTask?.value
+        #expect(sut.model.openSide == .players) // it opened, first
         sut.perform(.pointerEntered(.settings))
         await sut.sideCloseTask?.value
         #expect(sut.model.openSide == nil)

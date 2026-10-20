@@ -203,8 +203,8 @@ fi
 # A release ships without its local symbols, less than half the size (the
 # App Intents step above has read them already). They're kept for reading
 # crash logs: each build's dSYMs go to a folder of their own in
-# dist/dSYMs/ (version, build and the app's UUID, which a crash log names),
-# never overwritten; dist/ is git-ignored, so they stay on this Mac.
+# dist/dSYMs/, one per version, build and the app's UUID (which a crash log
+# names); dist/ is git-ignored, so they stay on this Mac.
 if [[ "$BUILD_CONFIG" == release ]]; then
     step "Keeping the symbols, then stripping them"
     APP_UUID="$(xcrun dwarfdump --uuid "$APP_BUNDLE/Contents/MacOS/$APP_NAME" | awk '/arm64/ {print $2; exit}')"

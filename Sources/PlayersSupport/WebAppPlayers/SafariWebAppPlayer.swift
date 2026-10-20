@@ -64,7 +64,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         clock: @escaping @Sendable () -> Date = { Date() },
         sleep: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) },
         pressKey: @escaping @Sendable () -> Void = { DispatchQueue.main.async { PlayPauseKey.press() } },
-        nowPlaying: @escaping @Sendable () -> NowPlayingApp.Answer = { NowPlayingApp.current() }
+        nowPlaying: @escaping @Sendable () -> NowPlayingApp.Answer = { NowPlayingApp.current() },
+        audioRecordingAllowed: @escaping @Sendable () -> Bool = { AudioCapturePermission.allowsTaps }
     ) {
         self.app = app
         self.kind = kind
@@ -77,7 +78,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         control = WebAppControl(name: app.name, bundleID: app.bundleID, page: page, store: store, status: status,
                                 muter: muter, levelProbe: levelProbe,
                                 // A Chromium web app plays through its browser: muting it would mute every tab.
-                                mayMute: { [tapsAllowed] in canMute && tapsAllowed.withLock { $0 } },
+                                // Without Audio Recording a tap mutes nothing (the user, 2026-10-20).
+                                mayMute: { [tapsAllowed] in canMute && tapsAllowed.withLock { $0 } && audioRecordingAllowed() },
                                 pressKey: pressKey, clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
         self.nowPlaying = nowPlaying

@@ -100,7 +100,10 @@ final class AppListModel {
         } else if command {
             toggleSelection(of: id)
         } else if selectedApps.map(\.id) == [id] {
-            clearSelection()
+            // Only that app: those the search hides stay selected.
+            selectedAppIDs.remove(id)
+            selectionAnchor = nil
+            selectionBesidesRange = selectedAppIDs
         } else {
             selectedAppIDs = [id]
             selectionAnchor = id

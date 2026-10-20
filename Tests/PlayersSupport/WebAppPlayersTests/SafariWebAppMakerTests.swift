@@ -94,7 +94,7 @@ struct SafariWebAppMakerTests {
             if case .ready = state { port.withLock { $0 = listener.port?.rawValue } }
         }
         listener.start(queue: queue)
-        for _ in 0..<500 where port.value == nil { try await Task.sleep(for: .milliseconds(10)) }
+        await TestWait.until { port.value != nil }
         let listening = try #require(port.value)
         let site = URL(string: "http://localhost:\(listening)/")!
         #expect(await WebAddress.connects(to: site, timeout: 5))

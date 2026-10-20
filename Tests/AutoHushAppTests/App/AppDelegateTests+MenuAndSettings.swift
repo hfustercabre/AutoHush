@@ -1,5 +1,4 @@
 import AppKit
-import CheckedPlayers
 import Foundation
 import os
 import SwiftUI
@@ -7,7 +6,6 @@ import Testing
 @testable import AutoHushApp
 @testable import AutoHushKit
 import AutoHushTestSupport
-import PlayersTestSupport
 
 extension AppDelegateTests {
     // MARK: - The menu

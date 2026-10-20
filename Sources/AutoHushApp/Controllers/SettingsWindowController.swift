@@ -25,7 +25,7 @@ final class SettingsWindowController: NSWindowController {
             case .detection:
                 String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped")
             case .fades:
-                String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General, and a Diagnostics row: whether AutoHush can fade the media player")
+                String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
             case .advanced:
                 String(localized: "Advanced", comment: "Settings: a page in the sidebar: leveling the music, and staying paused after calls")
             case .diagnostics:

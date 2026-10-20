@@ -3,7 +3,7 @@ import SwiftUI
 // A player AutoHush must first learn to control (a Safari web app: which of
 // its buttons plays and pauses it) asks the user to play it and say so
 // (It's Playing). AutoHush then pauses it itself. When that doesn't take, the
-// step is marked failed, with Try Again and Pause It Manually; the latter
+// step is marked failed, with Try Again and Pause It Yourself; the latter
 // adds a step where the user pauses it and says so (It's Paused), within a
 // minute.
 // The steps show only in a window: the learning window, which asks when the
@@ -29,7 +29,7 @@ enum LearningText {
     /// The step the user does when AutoHush couldn't pause it.
     static var handPauseStep: String {
         String(localized: "Pause it yourself",
-               comment: "The step after “Let AutoHush pause it” failed and the user chose “Pause It Manually”, while AutoHush learns a web app's controls: the user pauses the web app")
+               comment: "The step after “Let AutoHush pause it” failed and the user chose “Pause It Yourself”, while AutoHush learns a web app's controls: the user pauses the web app")
     }
 
     /// Under the play step until it's done: a site that needs an account
@@ -49,7 +49,7 @@ enum LearningText {
     /// Under AutoHush's pause step once it couldn't pause the player.
     static func autoPauseFailed(_ name: String) -> String {
         String(localized: "AutoHush couldn’t pause \(name).",
-               comment: "Under the step “Let AutoHush pause it”, marked failed, when AutoHush couldn't pause the web app itself; “Try Again” and “Pause It Manually” follow; %@ is the web app")
+               comment: "Under the step “Let AutoHush pause it”, marked failed, when AutoHush couldn't pause the web app itself; “Try Again” and “Pause It Yourself” follow; %@ is the web app")
     }
 
     /// Under AutoHush's pause step when it didn't press the key: another app
@@ -174,7 +174,7 @@ struct LearningSteps: View {
     /// Play, then AutoHush pauses it: the one to do now has its tip, its
     /// button, and the note about the last click. While AutoHush pauses it,
     /// its step spins; when it couldn't, the step is marked failed, with Try
-    /// Again and Pause It Manually, and the latter adds the user's pause
+    /// Again and Pause It Yourself, and the latter adds the user's pause
     /// step, which counts down. When the key would have reached another app,
     /// the user's pause step comes at once, saying so. Locked, none is to
     /// do yet.

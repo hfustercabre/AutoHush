@@ -105,8 +105,7 @@ struct CheckedApp: Sendable {
             fail("no app found for \(target)")
         }
         let info = bundle.infoDictionary ?? [:]
-        return CheckedApp(url: url, bundleID: id,
-                          name: (info["CFBundleDisplayName"] ?? info["CFBundleName"]) as? String ?? url.deletingPathExtension().lastPathComponent,
+        return CheckedApp(url: url, bundleID: id, name: AppName.of(appAt: url),
                           version: info["CFBundleShortVersionString"] as? String ?? "?")
     }()
 }

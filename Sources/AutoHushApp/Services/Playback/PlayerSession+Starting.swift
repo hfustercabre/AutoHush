@@ -49,7 +49,7 @@ extension PlayerSession {
             if retriesLeft > 0, Self.isTransientStartupError(error) {
                 logger.debug("\(player.name, privacy: .public) is not ready yet (\(error)) — retrying")
                 await retries.startupWait(.seconds(Self.startupRetryDelay))
-                guard generation == startGeneration else { return } // Retry or another launch took over
+                guard generation == startGeneration else { return } // Try Again or another launch took over
                 await start(retriesLeft: retriesLeft - 1)
                 return
             }
@@ -75,7 +75,7 @@ extension PlayerSession {
             }
             return
         }
-        // A newer start (Retry, player relaunch) began while we awaited.
+        // A newer start (Try Again, player relaunch) began while we awaited.
         guard generation == startGeneration else { return }
 
         let token = UUID()

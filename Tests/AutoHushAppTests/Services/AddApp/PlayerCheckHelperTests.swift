@@ -205,6 +205,9 @@ struct PlayerCheckHelperTests {
         #expect(PlayerCheckEnd.of(status: 143, stopped: false, result: nil) == .stopped)
         #expect(PlayerCheckEnd.of(status: 130, stopped: false, result: nil) == .stopped)
         #expect(PlayerCheckEnd.of(status: 1, stopped: true, result: nil) == .stopped)
+        // Ended by a signal: its number isn't an exit status.
+        #expect(PlayerCheckEnd.of(status: SIGQUIT, bySignal: true, stopped: false, result: nil) == .failed(128 + SIGQUIT))
+        #expect(PlayerCheckEnd.of(status: SIGTERM, bySignal: true, stopped: false, result: nil) == .stopped)
         #expect(PlayerCheckEnd.of(status: 1, stopped: false, result: nil) == .failed(1))
     }
 }

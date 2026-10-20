@@ -80,7 +80,7 @@ struct ChecklistStepTests {
         #expect(nothing[2].warning == LearningNote.nothingChanged.text("YT Music"))
     }
 
-    @Test("AutoHush's pause: a spinner while it tries; failed, Try Again and Pause It Manually; learned, ticked")
+    @Test("AutoHush's pause: a spinner while it tries; failed, Try Again and Pause It Yourself; learned, ticked")
     func learningAutoPause() {
         // Right after It's Playing, before the player says it plays.
         let trying = LearningSteps.steps(name: "YT Music", hasPlayed: false, hasPaused: false, locked: false, remaining: 59,

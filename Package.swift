@@ -146,7 +146,7 @@ let package = Package(
         ),
         .testTarget(
             name: "AppleMusicSupportTests",
-            dependencies: ["AppleMusicSupport", "ScriptablePlayers", "AutoHushKit"],
+            dependencies: ["AppleMusicSupport", "ScriptablePlayers"],
             path: "Tests/PlayersSupport/AppleMusicSupportTests"
         ),
         .testTarget(
@@ -190,8 +190,6 @@ let package = Package(
             dependencies: ["PlayerCheck", "PlayerCheckKit", "CheckedPlayers", "ScriptablePlayers", "WebAppPlayers", "AutoHushKit", "AutoHushTestSupport"],
             path: "Tests/PlayerCheckTests"
         ),
-        // AutoHushPlayers only for the supported players' names, which no
-        // file of Sources/PlayerCheck may hold.
         .testTarget(
             name: "PlayerCheckKitTests",
             dependencies: [
@@ -203,7 +201,7 @@ let package = Package(
         .testTarget(
             name: "AutoHushAppTests",
             dependencies: [
-                "AutoHushApp", "AutoHushKit", "CheckedPlayers", "WebAppPlayers", "PlayerCheckKit", "CheckPanel",
+                "AutoHushApp", "AutoHushKit", "CheckedPlayers", "WebAppPlayers", "CheckPanel",
                 "AutoHushTestSupport", "PlayersTestSupport",
             ]
         ),
@@ -212,7 +210,7 @@ let package = Package(
             name: "AutoHushPlayersTests",
             dependencies: [
                 "AutoHushPlayers", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "CheckedPlayers",
-                "SpotifySupport", "AppleMusicSupport", "TidalSupport", "PodcastsSupport", "VLCSupport", "QuickTimeSupport",
+                "SpotifySupport", "AppleMusicSupport", "VLCSupport", "QuickTimeSupport",
                 "AutoHushKit",
             ]
         ),

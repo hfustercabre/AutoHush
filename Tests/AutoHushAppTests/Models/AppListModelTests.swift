@@ -334,4 +334,16 @@ struct AppListModelTests {
         model.clearSelection()
         #expect(model.selectedApps.isEmpty)
     }
+
+    @Test("a click on the only selected app the search shows unselects that app alone, not the ones it hides")
+    func clickKeepsHiddenSelection() {
+        let model = listing().model, ids = Self.ids
+        model.click(on: ids[0])
+        model.click(on: ids[1], command: true)
+        model.search = "arc"
+        model.click(on: ids[0])
+        #expect(model.selectedApps.isEmpty)
+        model.search = nil
+        #expect(selected(model) == [ids[1]])
+    }
 }

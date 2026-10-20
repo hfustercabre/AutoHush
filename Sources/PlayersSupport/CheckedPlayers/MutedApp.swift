@@ -29,15 +29,22 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     /// What a stop is timed by (`MuteState.stopTime`).
     private let clock: @Sendable () -> Date
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
+    /// Whether Audio Recording lets a tap mute it (`AudioCapturePermission.allowsTaps`).
+    private let audioRecordingAllowed: @Sendable () -> Bool
     private let logger = AutoHushLogger(category: "MutedApp")
+    /// Its taps, process lists and keep-awake assertions are read and made
+    /// here, never on Swift's shared threads (DEVELOPMENT.md).
+    private let queue = DispatchQueue(label: "AutoHush.MutedApp", qos: .userInitiated)
 
     init(setup: PlayerSetup,
          processIdentifier: (@Sendable () -> pid_t?)? = nil,
          muter: any AudioMuting = ProcessTapMuter(),
          soundOn: (@Sendable (pid_t) -> Bool)? = nil,
          assertionsHeld: @escaping @Sendable (pid_t) -> Set<PowerAssertion> = PlaybackAssertions.read,
-         clock: @escaping @Sendable () -> Date = { Date() }) {
+         clock: @escaping @Sendable () -> Date = { Date() },
+         audioRecordingAllowed: @escaping @Sendable () -> Bool = { AudioCapturePermission.allowsTaps }) {
         self.setup = setup
+        self.audioRecordingAllowed = audioRecordingAllowed
         self.processIdentifier = processIdentifier ?? { [bundleID = setup.bundleID] in
             NSRunningApplication.running(bundleID)?.processIdentifier
         }
@@ -55,14 +62,15 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     func playerState() async -> PlayerState {
         guard let pid = processIdentifier() else {
             // Quit while muted: what the mute stood for goes with it.
-            endMute()
+            await endMute()
             return .notRunning
         }
         // Opened again since it was muted: that mute was the old process's.
-        if let mutedPID, mutedPID != pid { endMute() }
-        let (state, unmute) = hush.read(playing: playsNow(pid), at: clock())
+        if let mutedPID, mutedPID != pid { await endMute() }
+        let playing = await playsNow(pid)
+        let (state, unmute) = hush.read(playing: playing, at: clock())
         if unmute {
-            liftMute()
+            await liftMute()
             logger.notice("\(self.name, privacy: .public): unmuted, as it was played again (or stopped after a sleep)")
         }
         return state
@@ -70,7 +78,10 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
 
     func pause() async throws {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        guard tapsAllowed.withLock({ $0 }), muter.mute(appPID: pid) else {
+        // Without Audio Recording a tap mutes nothing: the mute fails, as
+        // in AntiDot mode, rather than reading as taken (the user, 2026-10-20).
+        let muter = muter
+        guard tapsAllowed.withLock({ $0 }), audioRecordingAllowed(), await queue.run({ muter.mute(appPID: pid) }) else {
             throw MusicPlayerError.playerCommandFailed(.muteUnavailable)
         }
         mutedPID = pid
@@ -78,36 +89,48 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     }
 
     func play() async throws {
-        endMute()
+        await endMute()
     }
 
     /// Whether it plays now: its keep-awake assertion once it has held one,
     /// else its sound output (open while it plays, and for some apps paused too).
-    private func playsNow(_ pid: pid_t) -> Bool {
-        let soundOn = soundOn
-        switch assertions.state(of: pid, soundOn: { soundOn(pid) }) {
-        case .playing: return true
-        case .paused: return false
-        default: return soundOn(pid)
+    private func playsNow(_ pid: pid_t) async -> Bool {
+        let soundOn = soundOn, current = assertions
+        let (playing, read) = await queue.run { () -> (Bool, PlaybackAssertions) in
+            var assertions = current
+            let playing = switch assertions.state(of: pid, soundOn: { soundOn(pid) }) {
+            case .playing: true
+            case .paused: false
+            default: soundOn(pid)
+            }
+            return (playing, assertions)
         }
+        assertions = read
+        return playing
     }
 
-    private func liftMute() {
-        if let mutedPID { muter.unmute(appPID: mutedPID) }
+    private func liftMute() async {
+        guard let pid = mutedPID else { return }
         mutedPID = nil
+        let muter = muter
+        await queue.run { muter.unmute(appPID: pid) }
     }
 
     /// Unmuted, and nothing left of what the mute stood for.
-    private func endMute() {
-        liftMute()
+    private func endMute() async {
+        await liftMute()
         hush.unmute()
     }
 
     /// Lifts its mute without playing anything: as AutoHush quits, or once
     /// another player is chosen and AutoHush holds no pause in it.
     func release() async {
-        endMute()
+        await endMute()
     }
+
+    /// Its mute stands for a pause (`pause()`), never for `muteIfPlayingAnyway`,
+    /// which mutes nothing more: nothing to lift here.
+    func releaseMute() async {}
 
     /// Not in AntiDot mode, which taps no sound: then it can't be muted,
     /// and a mute under way is lifted.
