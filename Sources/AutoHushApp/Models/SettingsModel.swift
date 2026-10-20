@@ -169,12 +169,12 @@ final class SettingsModel {
     @ObservationIgnored let learningSession: LearningSession
     /// What only AppDelegate does: choosing a player, its windows, the
     /// permissions.
-    @ObservationIgnored weak var actions: (any AppActions)?
+    @ObservationIgnored weak var actions: any AppActions?
     @ObservationIgnored private let launchAtLoginController: any LaunchAtLoginControlling
 
     init(state: AppState = AppState(), settings: UserSettings, updates: any UpdateCommands,
          permissionCenter: PermissionCenter = PermissionCenter(),
-         learningSession: LearningSession = LearningSession(), actions: (any AppActions)?,
+         learningSession: LearningSession = LearningSession(), actions: any AppActions?,
          launchAtLoginController: any LaunchAtLoginControlling) {
         self.state = state
         self.settings = settings

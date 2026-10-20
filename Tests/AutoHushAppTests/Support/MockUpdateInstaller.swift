@@ -6,8 +6,8 @@ import Foundation
 final class MockUpdateInstaller: UpdateInstalling, @unchecked Sendable {
     private let lock = NSLock()
     private var _unavailability: UpdateInstallUnavailability?
-    private var _prepareError: (any Error)?
-    private var _downloadError: (any Error)?
+    private var _prepareError: any Error?
+    private var _downloadError: any Error?
     private var _calls: [String] = []
     private var _lowDataModeAllowed: [Bool] = []
     /// Runs while an update is prepared, e.g. to make AutoHush busy meanwhile.
@@ -15,8 +15,8 @@ final class MockUpdateInstaller: UpdateInstalling, @unchecked Sendable {
 
     init(
         unavailability: UpdateInstallUnavailability? = nil,
-        prepareError: (any Error)? = nil,
-        downloadError: (any Error)? = nil,
+        prepareError: any Error? = nil,
+        downloadError: any Error? = nil,
         onPrepare: @escaping @Sendable () async -> Void = {}
     ) {
         _unavailability = unavailability
@@ -35,7 +35,7 @@ final class MockUpdateInstaller: UpdateInstalling, @unchecked Sendable {
 
     var unavailability: UpdateInstallUnavailability? { lock.withLock { _unavailability } }
 
-    var downloadError: (any Error)? {
+    var downloadError: any Error? {
         get { lock.withLock { _downloadError } }
         set { lock.withLock { _downloadError = newValue } }
     }

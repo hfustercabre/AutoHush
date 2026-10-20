@@ -150,7 +150,7 @@ extension AppDelegate {
     /// `player` is the chosen one now (`nil`: none, and the status line asks
     /// for one): it's stored, and the player session and the learning
     /// session are told together, so they always follow the same player.
-    func setChosenPlayer(_ player: (any MusicPlayer)?) {
+    func setChosenPlayer(_ player: any MusicPlayer?) {
         preferences.musicPlayer = player?.bundleID
         session.choose(player)
         showChosenPlayer()

@@ -24,8 +24,6 @@ struct ResumeLevel {
     private var appsPower: Double = 0
     private var appsLooks = 0
 
-    init() {}
-
     /// Notes the music's level, while it's measured and heard.
     mutating func noteMusic(rms: Float, at now: Date) {
         music.append((now, rms))

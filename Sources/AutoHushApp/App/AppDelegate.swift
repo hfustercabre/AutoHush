@@ -47,20 +47,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let checkedPlayers: CheckedPlayers
     let locateApp: PlayerOption.Locate
     /// The media player AutoHush pauses and resumes; `nil` until one is chosen.
-    var player: (any MusicPlayer)? { session.player }
+    var player: any MusicPlayer? { session.player }
     /// Asks for the media player while none is chosen; made when first needed.
-    var playerChooser: (any PlayerChooserPresenting)?
+    var playerChooser: any PlayerChooserPresenting?
     let makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting
     /// Learning the chosen player's controls with the user, when it's one
     /// AutoHush must learn (a Safari web app).
     let learning = LearningSession()
     /// Asks to play and pause a player AutoHush must learn, once it's chosen.
-    var learningWindow: (any LearningWindowPresenting)?
+    var learningWindow: any LearningWindowPresenting?
     let makeLearningWindow: @MainActor (SettingsModel) -> any LearningWindowPresenting
     /// Makes a Safari web app from an address ("Add a Web App…").
     let webAppMaker: any WebAppMaking
     let addWebAppModel = AddWebAppModel()
-    var addWebAppWindow: (any AddWebAppPresenting)?
+    var addWebAppWindow: any AddWebAppPresenting?
     let makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting
     var addingWebApp: Task<Void, Never>?
     /// Checks an app and adds it ("Add an App…"): its model, its windows,
@@ -85,14 +85,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
-    var playerLaunchObserver: (any NSObjectProtocol)?
+    var playerLaunchObserver: any NSObjectProtocol?
     /// The Mac going to sleep and waking up.
     var sleepObservers: [any NSObjectProtocol] = []
     let logger = AutoHushLogger(category: "AppDelegate")
     /// Copies of AutoHush opened before this one, which quit when it opens.
     let otherInstances: OtherInstances
     /// Turns SIGTERM into a normal quit.
-    var terminationSignal: (any DispatchSourceSignal)?
+    var terminationSignal: any DispatchSourceSignal?
     /// Reads the permissions AutoHush needs, and asks for them.
     let permissionCenter: PermissionCenter
     /// The player chosen in the welcome window is to be learned: the learning

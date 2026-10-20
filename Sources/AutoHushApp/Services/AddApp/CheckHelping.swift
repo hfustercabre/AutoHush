@@ -10,5 +10,5 @@ protocol CheckHelping {
     func reopenWithLaunchOption(_ app: CheckableApp) async -> Bool
     /// Starts the check, each line of its report to `onLine`; `taps` false
     /// in AntiDot mode. `nil` when it couldn't start.
-    func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> (any CheckRunning)?
+    func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> any CheckRunning?
 }

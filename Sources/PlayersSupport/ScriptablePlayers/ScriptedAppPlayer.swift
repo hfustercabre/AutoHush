@@ -41,7 +41,7 @@ package actor ScriptedAppPlayer: MusicPlayer {
     /// tests stand in for them.
     package init(bundleID: String, name: String, setup: ScriptSetup, iconPlaceholder: PlayerIconPlaceholder? = nil,
                  stateNotification: Notification.Name? = nil,
-                 toggleState: @escaping @Sendable () async -> PlayerState = { .unknown }, channel: (any AppleEventSending)? = nil,
+                 toggleState: @escaping @Sendable () async -> PlayerState = { .unknown }, channel: any AppleEventSending? = nil,
                  sleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) }) {
         self.bundleID = bundleID
         self.name = name

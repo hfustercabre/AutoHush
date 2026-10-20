@@ -16,7 +16,7 @@ extension PlayerSession {
     /// for it (`heldPauses`), and a player held paused that is chosen again
     /// is taken back by its new monitoring. `nil`: no player is chosen any
     /// more (it was deleted), and nothing runs.
-    func choose(_ newPlayer: (any MusicPlayer)?) {
+    func choose(_ newPlayer: any MusicPlayer?) {
         guard let newPlayer else {
             player = nil
             startGeneration += 1 // a start under way gives up
@@ -40,7 +40,7 @@ extension PlayerSession {
     /// is over (`HeldPauses.onEnded`). Chosen again meanwhile, it keeps them.
     /// The same player object (any player AutoHush has is an actor or a
     /// class); a value is the same by its app.
-    static func isSame(_ player: any MusicPlayer, _ other: (any MusicPlayer)?) -> Bool {
+    static func isSame(_ player: any MusicPlayer, _ other: any MusicPlayer?) -> Bool {
         guard let other else { return false }
         guard type(of: player as Any) is AnyClass, type(of: other as Any) is AnyClass else {
             return player.bundleID == other.bundleID

@@ -88,7 +88,7 @@ final class PlayerSession {
         didSet { follow(settings, from: oldValue) }
     }
     /// The media player AutoHush pauses and resumes; `nil` until one is chosen.
-    var player: (any MusicPlayer)?
+    var player: any MusicPlayer?
 
     let players: MusicPlayerCatalog
     let preferences: Preferences
@@ -98,7 +98,7 @@ final class PlayerSession {
     let logger = AutoHushLogger(category: "PlayerSession")
 
     /// The chosen player's monitoring, while it runs.
-    var monitoring: (any SessionMonitoring)?
+    var monitoring: any SessionMonitoring?
     /// Which monitoring an update comes from: the current one has this, and
     /// none once it's torn down.
     var monitoringToken = UUID()
@@ -138,7 +138,7 @@ final class PlayerSession {
     var waitsForPlayerToOpen = false
 
     init(
-        player: (any MusicPlayer)?,
+        player: any MusicPlayer?,
         players: MusicPlayerCatalog,
         preferences: Preferences,
         settings: MonitoringSettings,
@@ -167,7 +167,7 @@ final class PlayerSession {
     /// player is chosen never lowers the Mac's volume over the new one's.
     static func pipelines(
         hostedApp: @escaping @Sendable (pid_t) -> AudioSource?,
-        volumeLeveler: (any ResumeLeveling)? = nil,
+        volumeLeveler: any ResumeLeveling? = nil,
         readers: @escaping @MainActor () -> MonitoringPipeline.Readers = { MonitoringPipeline.Readers() }
     ) -> MakeMonitoring {
         { player, setup, onUpdate in

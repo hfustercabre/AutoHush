@@ -293,7 +293,7 @@ Defaults that aren't in Settings, such as tick rates, the gap tolerance and the 
 
 ## Build and test
 
-Developing AutoHush needs macOS 26 or later and Xcode 26 or later (the package's Swift tools are 6.2); AutoHush itself runs on macOS 14.4 and later. Any warning fails a build (`Package.swift`).
+Developing AutoHush needs Xcode 27 or later, which runs on macOS 26.6 or later (the package's Swift tools are 6.4); AutoHush itself runs on macOS 14.4 and later. Any warning fails a build (`Package.swift`).
 
 ```bash
 swift build      # build every module and the tools
@@ -304,7 +304,7 @@ bash Scripts/build-app.sh release   # build and sign AutoHush.app
 
 The tests use mock CoreAudio, level meter, power assertion and player implementations, so they never create real taps, script a real player or trigger permission prompts. A suite's tests run at once unless it says why they can't (`.serialized`), and a suite whose tests wait at a gate has a time limit, so a change that breaks one fails instead of hanging.
 
-The package builds in Swift 6's language mode with two of Swift 6.2's isolation rules on (`Package.swift`, ahead of Swift 7's mode): an async function that isn't isolated runs on its caller's actor, the main actor when the app calls it, and a main-actor type's conformances are main-actor ones. So work that blocks (Accessibility, Apple events, Core Audio, the disk) goes through a queue of its own (`DispatchQueue.run`), the players are actors, and `@concurrent` marks only a function that blocks between its awaits (making a web app, preparing an update, listing the apps to check) or one a framework calls through Objective-C.
+The package builds in Swift 6's language mode with three of Swift 7's rules on ahead of it (`Package.swift`): an async function that isn't isolated runs on its caller's actor, the main actor when the app calls it; a main-actor type's conformances are main-actor ones; and a `weak` capture can't be reassigned. So work that blocks (Accessibility, Apple events, Core Audio, the disk) goes through a queue of its own (`DispatchQueue.run`), the players are actors, and `@concurrent` marks only a function that blocks between its awaits (making a web app, preparing an update, listing the apps to check) or one a framework calls through Objective-C.
 
 The app icon is `Resources/AutoHush.icon`, an Icon Composer document (Icon Composer comes with Xcode): one layer, `Assets/bars.svg`, on a background that changes with the light and dark appearance. `build-app.sh` compiles it with Xcode's `actool`; without Xcode the app builds with the generic icon. To preview a change without building, use Icon Composer's `ictool` (`Icon Composer.app/Contents/Executables/ictool AutoHush.icon --export-image …`).
 

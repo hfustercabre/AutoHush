@@ -155,7 +155,7 @@ extension PlayerCheckHelper: CheckHelping {
     }
 
     @MainActor
-    func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> (any CheckRunning)? {
+    func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> any CheckRunning? {
         Self.logger.notice("Add an App: checking \(app.name, privacy: .public)\(taps ? "" : " (AntiDot mode: no audio taps)", privacy: .public)")
         return try? check(app.url, taps: taps, onLine: onLine)
     }

@@ -34,7 +34,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     let onPausedByUsChange: @Sendable (Bool) -> Void
     /// Lowers the Mac's volume as the music resumes after quieter apps, by
     /// `resumeOffset` (Settings → Advanced, `levelsMusic`).
-    let volumeLeveler: (any ResumeLeveling)?
+    let volumeLeveler: any ResumeLeveling?
     let resumeOffset: @Sendable () async -> Float?
     /// The token of the volume this arbiter lowered for its music
     /// (`ResumeLeveling.lower`), until it's put back: as the music pauses
@@ -148,7 +148,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
         onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in },
         onPausedByUsChange: @escaping @Sendable (Bool) -> Void = { _ in },
-        volumeLeveler: (any ResumeLeveling)? = nil,
+        volumeLeveler: any ResumeLeveling? = nil,
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
         onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in }
     ) {

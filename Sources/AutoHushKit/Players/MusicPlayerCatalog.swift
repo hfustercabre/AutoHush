@@ -44,7 +44,7 @@ package struct MusicPlayerCatalog: Sendable {
     package var webAppSuggestions: [WebAppSuggestion] { suggested() }
 
     /// The player with this bundle ID; `nil` for one not in the catalog.
-    package func player(bundleID: String?) -> (any MusicPlayer)? {
+    package func player(bundleID: String?) -> any MusicPlayer? {
         guard let bundleID else { return nil }
         return all.first { $0.bundleID == bundleID }
     }

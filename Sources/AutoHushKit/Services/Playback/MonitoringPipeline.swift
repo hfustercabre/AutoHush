@@ -35,7 +35,7 @@ package final class MonitoringPipeline {
     private let arbiter: PlaybackArbiter
     private let monitor: AudioMonitor
     /// Told whether it may tap its sound, when it can (see `allowTaps`).
-    private let mutingPlayer: (any MutingMusicPlayer)?
+    private let mutingPlayer: any MutingMusicPlayer?
     private let playerObserver: any PlayerStateObserving
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
     private let statusUpdates: AsyncStream<StatusUpdate>.Continuation
@@ -50,13 +50,13 @@ package final class MonitoringPipeline {
     /// What the audio monitor reads from macOS; tests stand in for it.
     package struct Readers {
         let processes: any AudioProcessSnapshotProviding
-        let levelMeter: (any AudioLevelMetering)?
+        let levelMeter: any AudioLevelMetering?
         let audioCapturePermission: any AudioCapturePermissionChecking
         let powerAssertions: any PowerAssertionReading
 
         package init(
             processes: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider(),
-            levelMeter: (any AudioLevelMetering)? = ProcessTapLevelMeter(),
+            levelMeter: any AudioLevelMetering? = ProcessTapLevelMeter(),
             audioCapturePermission: any AudioCapturePermissionChecking = TCCAudioCapturePermission(),
             powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader()
         ) {
@@ -81,7 +81,7 @@ package final class MonitoringPipeline {
         ignoredSourceIDs: Set<String>,
         detectionMethod: DetectionMethod,
         learnedAssertions: [String: AnnouncedAssertions],
-        volumeLeveler: (any ResumeLeveling)? = nil,
+        volumeLeveler: any ResumeLeveling? = nil,
         readers: Readers = Readers(),
         onStatusUpdate: @escaping @MainActor (StatusUpdate) -> Void
     ) {
@@ -228,7 +228,7 @@ package final class MonitoringPipeline {
     /// AntiDot mode promises no audio taps, with either of its ways of
     /// detecting: a player that mutes itself through one (a web app that
     /// refuses to pause) doesn't then, nor listens to itself first.
-    private static func allowTaps(for player: (any MutingMusicPlayer)?, in method: DetectionMethod) {
+    private static func allowTaps(for player: any MutingMusicPlayer?, in method: DetectionMethod) {
         player?.allowTaps(Self.allowsTaps(method))
     }
 

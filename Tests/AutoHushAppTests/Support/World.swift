@@ -128,7 +128,7 @@ extension World: CheckHelping {
         return reopens
     }
 
-    func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> (any CheckRunning)? {
+    func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> any CheckRunning? {
         guard startsCheck else { return nil }
         self.taps.append(taps)
         runs += 1

@@ -17,7 +17,7 @@ package final class PlayerStateObserver: NSObject, PlayerStateObserving {
     private let onChange: @MainActor (PlayerState) -> Void
     private let distributedCenter: DistributedNotificationCenter
     private let workspaceCenter: NotificationCenter
-    private var terminationObserver: (any NSObjectProtocol)?
+    private var terminationObserver: any NSObjectProtocol?
     private var isObserving = false
     private let logger = AutoHushLogger(category: "PlayerStateObserver")
 

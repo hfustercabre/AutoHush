@@ -25,20 +25,6 @@ struct SourceActivityTracker {
 
     private var entries: [String: Entry] = [:]
 
-    init(startConfirmation: TimeInterval, gapTolerance: TimeInterval, stopGrace: TimeInterval) {
-        self.startConfirmation = startConfirmation
-        self.gapTolerance = gapTolerance
-        self.stopGrace = stopGrace
-    }
-
-    init(configuration: AppConfiguration) {
-        self.init(
-            startConfirmation: configuration.sourceStartConfirmation,
-            gapTolerance: configuration.audibleGapTolerance,
-            stopGrace: configuration.sourceStopGrace
-        )
-    }
-
     /// Applies new timings; tracked sources keep their state.
     mutating func updateTimings(from configuration: AppConfiguration) {
         startConfirmation = configuration.sourceStartConfirmation
@@ -100,5 +86,18 @@ struct SourceActivityTracker {
 
     mutating func reset() {
         entries.removeAll()
+    }
+}
+
+// In an extension, so the struct keeps its memberwise initializer
+// (`init(startConfirmation:gapTolerance:stopGrace:)`; `entries` has a value
+// and is private, so it's left out of it).
+extension SourceActivityTracker {
+    init(configuration: AppConfiguration) {
+        self.init(
+            startConfirmation: configuration.sourceStartConfirmation,
+            gapTolerance: configuration.audibleGapTolerance,
+            stopGrace: configuration.sourceStopGrace
+        )
     }
 }

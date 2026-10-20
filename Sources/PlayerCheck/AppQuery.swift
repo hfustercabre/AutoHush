@@ -44,7 +44,7 @@ enum LaunchOption {
         configuration.activates = false
         // What `openApplication` answers, from the queue it answers on; read
         // under the lock also when the wait gives up as it answers.
-        let opened = OSAllocatedUnfairLock<(app: NSRunningApplication?, error: (any Error)?)>(initialState: (nil, nil))
+        let opened = OSAllocatedUnfairLock<(app: NSRunningApplication?, error: any Error?)>(initialState: (nil, nil))
         let done = DispatchSemaphore(value: 0)
         NSWorkspace.shared.openApplication(at: url, configuration: configuration) { @Sendable app, error in // on another thread
             opened.withLock { $0 = (app, error) }

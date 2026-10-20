@@ -26,7 +26,7 @@ extension PlayerSession {
     /// the apps playing (`listenUntilPlayerOpens`), it looks at the idle
     /// rate: it can pause nothing, so the menu's lists may come up to a
     /// second late (S16, the full check, 2026-10-19).
-    func configuration(for player: (any MusicPlayer)?) -> AppConfiguration {
+    func configuration(for player: any MusicPlayer?) -> AppConfiguration {
         var configuration = AppConfiguration(timings: settings.timings)
         configuration.musicPlayerBundleID = player?.bundleID
         if waitsForPlayerToOpen { configuration.activeSampleInterval = configuration.idleSampleInterval }

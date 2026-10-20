@@ -58,7 +58,7 @@ package actor ScriptablePlayer: MusicPlayer {
     private let channel: any AppleEventSending
 
     /// `channel`: its Apple events; tests stand in for them.
-    package init(profile: ScriptablePlayerProfile, channel: (any AppleEventSending)? = nil) {
+    package init(profile: ScriptablePlayerProfile, channel: any AppleEventSending? = nil) {
         self.profile = profile
         self.channel = channel ?? AppleEventChannel(bundleID: profile.bundleID, label: profile.name)
     }

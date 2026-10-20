@@ -11,7 +11,7 @@ struct AppReader: AppReading {
     /// AutoHush's own playercheck; `nil` when it's missing from the app.
     let helper: PlayerCheckHelper?
     /// The players AutoHush supports, and whether AntiDot mode is on.
-    weak var host: (any AddAppHost)?
+    weak var host: any AddAppHost?
 
     func listApps() async -> [CheckableApp] {
         // The supported players aren't offered (their support is AutoHush's

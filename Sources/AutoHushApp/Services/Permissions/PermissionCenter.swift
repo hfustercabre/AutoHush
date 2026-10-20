@@ -42,7 +42,7 @@ final class PermissionCenter {
     /// one for a player that's no longer `chosenPlayer()` when it's done is
     /// dropped, so a slow read never leaves the previous player's
     /// permissions shown.
-    func refresh(chosenPlayer: @MainActor () -> (any MusicPlayer)?, detectionMethod: DetectionMethod,
+    func refresh(chosenPlayer: @MainActor () -> any MusicPlayer?, detectionMethod: DetectionMethod,
                  detection: DetectionMode, awaitsReopen: Bool) async {
         let player = chosenPlayer()
         let state = await state(player: player, detectionMethod: detectionMethod, detection: detection, awaitsReopen: awaitsReopen)
@@ -54,7 +54,7 @@ final class PermissionCenter {
     /// AutoHush's monitoring uses now, for when macOS can't tell about Audio
     /// Recording; `awaitsReopen`: the user went to allow it in System
     /// Settings during this launch.
-    func state(player: (any MusicPlayer)?, detectionMethod: DetectionMethod, detection: DetectionMode,
+    func state(player: any MusicPlayer?, detectionMethod: DetectionMethod, detection: DetectionMode,
                awaitsReopen: Bool) async -> PermissionsState {
         // One muted instead of paused needs only Audio Recording, its own row.
         let control = player?.controlPermission == .systemAudioRecording ? nil : player?.controlPermission

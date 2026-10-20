@@ -33,7 +33,7 @@ struct PlayerSessionTests {
             session.didChange = { [weak self] in self?.changes.append($0) }
         }
 
-        func makeSession(_ chosen: (any MusicPlayer)?) -> PlayerSession {
+        func makeSession(_ chosen: any MusicPlayer?) -> PlayerSession {
             PlayerSession(
                 player: chosen,
                 players: players,

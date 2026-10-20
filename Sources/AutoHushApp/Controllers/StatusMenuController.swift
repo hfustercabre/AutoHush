@@ -81,7 +81,7 @@ final class StatusMenuController: NSObject {
     private let settings: UserSettings
     private let session: PlayerSession
     private let updates: any UpdateCommands
-    private(set) weak var actions: (any AppActions)?
+    private(set) weak var actions: any AppActions?
     /// Detection's, Fades' and Advanced's settings, as Settings changes them.
     private let settingsModel: SettingsModel?
     /// What closes the menu (clicks elsewhere, another desktop) and what it
@@ -96,7 +96,7 @@ final class StatusMenuController: NSObject {
     private var followsContent = false
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
-         updates: any UpdateCommands, actions: (any AppActions)?, settingsModel: SettingsModel? = nil) {
+         updates: any UpdateCommands, actions: any AppActions?, settingsModel: SettingsModel? = nil) {
         self.status = status
         self.settings = settings
         self.settingsModel = settingsModel

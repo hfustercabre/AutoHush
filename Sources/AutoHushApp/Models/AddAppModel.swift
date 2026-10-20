@@ -81,26 +81,26 @@ final class AddAppModel {
     /// The apps on the Mac, and the check's helper (`nil`: missing from
     /// the app, so nothing can be checked).
     @ObservationIgnored private let reader: any AppReading
-    @ObservationIgnored private let helper: (any CheckHelping)?
+    @ObservationIgnored private let helper: any CheckHelping?
     /// What it needs from the rest of AutoHush, and what it shows through
     /// the feature that owns it (weak: they own it).
-    @ObservationIgnored private weak var host: (any AddAppHost)?
-    @ObservationIgnored private weak var presenter: (any AddAppPresenting)?
+    @ObservationIgnored private weak var host: any AddAppHost?
+    @ObservationIgnored private weak var presenter: any AddAppPresenting?
     /// Where a finished check's result is kept until it's used or replaced
     /// (a reopen of AutoHush, or the window closed, doesn't lose it).
     @ObservationIgnored private let keptChecks: KeptCheckStore
     @ObservationIgnored private let now: @MainActor () -> Date
     @ObservationIgnored private let sleep: @MainActor (Duration) async -> Void
-    @ObservationIgnored private var run: (any CheckRunning)?
+    @ObservationIgnored private var run: any CheckRunning?
     /// A stopped check still putting things back.
-    @ObservationIgnored private var endingRun: (any CheckRunning)?
+    @ObservationIgnored private var endingRun: any CheckRunning?
     /// Watching the permissions, or waiting for the app to play.
     @ObservationIgnored private var work: Task<Void, Never>?
     /// The window is open: closed, nothing more starts (a warning's Start
     /// after the window closed, say).
     @ObservationIgnored private var windowIsOpen = false
 
-    init(reader: any AppReading, helper: (any CheckHelping)?, host: (any AddAppHost)?, presenter: any AddAppPresenting,
+    init(reader: any AppReading, helper: any CheckHelping?, host: any AddAppHost?, presenter: any AddAppPresenting,
          keptChecks: KeptCheckStore = KeptCheckStore(), now: @escaping @MainActor () -> Date = { Date() },
          sleep: @escaping @MainActor (Duration) async -> Void = { try? await Task.sleep(for: $0) }) {
         self.reader = reader

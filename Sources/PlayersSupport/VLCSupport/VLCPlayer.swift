@@ -42,7 +42,7 @@ package actor VLCPlayer: PolledMusicPlayer {
     private var lastFailure: String?
 
     /// `channel`: VLC's Apple events; tests stand in for it.
-    package init(channel: (any AppleEventSending)? = nil) {
+    package init(channel: any AppleEventSending? = nil) {
         self.channel = channel ?? AppleEventChannel(bundleID: Self.appBundleID, label: "VLC")
     }
 

@@ -43,7 +43,7 @@ struct AudioMonitorTests {
             configuration: AppConfiguration = AudioMonitorTests.config(),
             meter useMeter: Bool = true,
             permission: MockAudioCapturePermission? = nil,
-            identifier: (any AudioSourceIdentifying)? = nil,
+            identifier: any AudioSourceIdentifying? = nil,
             ignored: Set<String> = [],
             levelsNeeded: Bool = true,
             releaseDelay: TimeInterval = 0.05,

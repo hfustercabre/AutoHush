@@ -85,13 +85,13 @@ struct PlaybackSignals {
         var learned: [String: AnnouncedAssertions] = [:]
     }
 
-    private let powerAssertions: (any PowerAssertionReading)?
+    private let powerAssertions: any PowerAssertionReading?
     /// What each app was seen holding while its sound was on.
     private(set) var learned: [String: AnnouncedAssertions]
     /// When each app last announced playback since its sound came on.
     private var lastAnnounced: [String: Date] = [:]
 
-    init(powerAssertions: (any PowerAssertionReading)?, learned: [String: AnnouncedAssertions]) {
+    init(powerAssertions: any PowerAssertionReading?, learned: [String: AnnouncedAssertions]) {
         self.powerAssertions = powerAssertions
         self.learned = learned
     }

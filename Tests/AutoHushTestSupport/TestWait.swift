@@ -14,7 +14,7 @@ package enum TestWait {
     /// has passed, the test fails at the caller's line, so a wait checks its
     /// condition even when nothing after it does.
     package static func until(
-        isolation: isolated (any Actor)? = #isolation,
+        isolation: isolated any Actor? = #isolation,
         sourceLocation: SourceLocation = #_sourceLocation,
         _ condition: () async -> Bool
     ) async {

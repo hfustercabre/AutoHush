@@ -7,21 +7,9 @@ extension NSApplication {
     /// window opened from the menu showed without the focus, which stayed
     /// with the app in front (14.4, 2026-10-16), and from the menu's panel
     /// on every version (macOS 27, 2026-10-17: Settings stayed behind, or on
-    /// its desktop). The older call, which macOS still honors, is used.
+    /// its desktop). The older call, which macOS still honors, is used: the
+    /// SDK marks it only as to be deprecated, so it brings no warning.
     func becomeActive() {
-        (self as LegacyActivation).activateIgnoringOtherApps()
-    }
-}
-
-/// Reaches the call macOS 14 deprecated without its warning (builds treat
-/// warnings as errors).
-@MainActor private protocol LegacyActivation {
-    func activateIgnoringOtherApps()
-}
-
-extension NSApplication: LegacyActivation {
-    @available(macOS, deprecated: 14.0)
-    fileprivate func activateIgnoringOtherApps() {
         activate(ignoringOtherApps: true)
     }
 }

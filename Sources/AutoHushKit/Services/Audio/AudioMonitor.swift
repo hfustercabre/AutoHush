@@ -84,9 +84,9 @@ final class AudioMonitor: @unchecked Sendable {
     /// Queue-confined; replaced live by `setConfiguration(_:)`.
     var configuration: AppConfiguration
     let snapshotProvider: any AudioProcessSnapshotProviding
-    let levelMeter: (any AudioLevelMetering)?
-    let permission: (any AudioCapturePermissionChecking)?
-    let sourceIdentifier: (any AudioSourceIdentifying)?
+    let levelMeter: any AudioLevelMetering?
+    let permission: any AudioCapturePermissionChecking?
+    let sourceIdentifier: any AudioSourceIdentifying?
     let onAssertionsLearned: @Sendable (String, AnnouncedAssertions) -> Void
     let clock: @Sendable () -> Date
     let onActiveSourcesChange: @Sendable ([AudioSource]) -> Void
@@ -154,11 +154,11 @@ final class AudioMonitor: @unchecked Sendable {
         configuration: AppConfiguration,
         arbiter: any PlaybackArbiting,
         snapshotProvider: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider(),
-        levelMeter: (any AudioLevelMetering)? = ProcessTapLevelMeter(),
-        audioCapturePermission: (any AudioCapturePermissionChecking)? = nil,
-        sourceIdentifier: (any AudioSourceIdentifying)? = nil,
+        levelMeter: any AudioLevelMetering? = ProcessTapLevelMeter(),
+        audioCapturePermission: any AudioCapturePermissionChecking? = nil,
+        sourceIdentifier: any AudioSourceIdentifying? = nil,
         ignoredSourceIDs: Set<String> = [],
-        powerAssertions: (any PowerAssertionReading)? = nil,
+        powerAssertions: any PowerAssertionReading? = nil,
         learnedAssertions: [String: AnnouncedAssertions] = [:],
         onAssertionsLearned: @escaping @Sendable (String, AnnouncedAssertions) -> Void = { _, _ in },
         detectionMethod: DetectionMethod = .audioLevels,

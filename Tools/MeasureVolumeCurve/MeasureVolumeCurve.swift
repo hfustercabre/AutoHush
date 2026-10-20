@@ -31,7 +31,7 @@ enum MeasureVolumeCurve {
         let requested = arguments.dropFirst().compactMap(Int.init)
         let volumes = requested.isEmpty ? defaultVolumes : requested
 
-        let player: (any MusicPlayer)?
+        let player: any MusicPlayer?
         if let bundleID = arguments.first {
             player = catalog.player(bundleID: bundleID)
         } else {

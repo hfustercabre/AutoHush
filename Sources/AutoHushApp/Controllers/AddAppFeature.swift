@@ -21,7 +21,7 @@ final class AddAppFeature {
         var standIns: (reader: any AppReading, helper: any CheckHelping)?
     }
 
-    private weak var host: (any AddAppHost)?
+    private weak var host: any AddAppHost?
     private let system: System
     private let keptChecks: KeptCheckStore
     /// Checks an app and adds it; made when first opened.

@@ -35,7 +35,7 @@ final class LearningSession {
     var didChange: @MainActor (State) -> Void = { _ in }
 
     /// The chosen player, while it's one that learns.
-    private var learner: (any LearningMusicPlayer)?
+    private var learner: any LearningMusicPlayer?
     /// Follows how learning the chosen player goes.
     private var watch: Task<Void, Never>?
     /// Runs while the user has said the player plays: once `pauseWait` is
@@ -59,7 +59,7 @@ final class LearningSession {
     /// `player` is the chosen one now: its learning is followed as it goes,
     /// and nothing the last one was told carries over. A player that learns
     /// nothing (or none) leaves nothing to learn.
-    func follow(_ player: (any MusicPlayer)?) {
+    func follow(_ player: any MusicPlayer?) {
         watch?.cancel()
         watch = nil
         countdown?.cancel()

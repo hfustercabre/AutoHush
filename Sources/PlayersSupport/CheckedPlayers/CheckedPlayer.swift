@@ -49,9 +49,9 @@ package actor CheckedPlayer: AddedAppPlayer {
         /// a state), its page, its menu.
         var signs: [any MusicPlayer]
         /// Its script, when it has a volume (fades).
-        var volume: (any MusicPlayer)?
+        var volume: any MusicPlayer?
         /// Its script, when it announces each change (its notification).
-        var announcing: (any MusicPlayer)?
+        var announcing: any MusicPlayer?
         /// Its page's player, whose switch is released with it.
         var page: SafariWebAppPlayer?
         /// The page its panel way reads its player bar through
@@ -165,7 +165,7 @@ package actor CheckedPlayer: AddedAppPlayer {
     }
 
     package func verifyControlAccess() async throws {
-        var firstError: (any Error)?
+        var firstError: any Error?
         for way in parts.ways where !(way is PanelWay) {
             do {
                 try await way.verifyControlAccess()
@@ -279,7 +279,7 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// own; with no sure sign at all, not checked): a way that fails, or
     /// whose press doesn't take, hands it to the next, the panel last.
     private func press(to target: PlayerState) async throws {
-        var firstError: (any Error)?
+        var firstError: any Error?
         let checkable = !parts.signs.isEmpty || reports != nil
         for way in parts.ways {
             do {

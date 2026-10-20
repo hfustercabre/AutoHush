@@ -51,7 +51,7 @@ final class LogsModel {
 
     /// When this copy of AutoHush opened.
     @ObservationIgnored let launch: Date
-    @ObservationIgnored private let source: (any LogSource)?
+    @ObservationIgnored private let source: any LogSource?
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private var observation: UUID?
     /// Counts the reads, so only the last one started is shown.
@@ -59,7 +59,7 @@ final class LogsModel {
     /// Lines heard while the log is read: kept, unless the read has them.
     @ObservationIgnored private var heardMeanwhile: [LogEntry] = []
 
-    init(source: (any LogSource)? = LogFile.shared, launch: Date = LogsModel.launchDate, now: @escaping () -> Date = { Date() }) {
+    init(source: any LogSource? = LogFile.shared, launch: Date = LogsModel.launchDate, now: @escaping () -> Date = { Date() }) {
         self.source = source
         self.launch = launch
         self.now = now
