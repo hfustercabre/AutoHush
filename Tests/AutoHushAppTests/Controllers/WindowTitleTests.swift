@@ -97,6 +97,15 @@ struct WindowTitleTests {
         }
     }
 
+    @Test("a window's content starts below its title bar, not under it: there, on macOS 14 and 15, its layout looped as it resized")
+    func contentBelowTitleBar() throws {
+        for sut in centeredWindows().windows {
+            let window = try #require(sut.window)
+            #expect(!window.styleMask.contains(.fullSizeContentView))
+            #expect(window.contentView?.frame.height == window.contentLayoutRect.height)
+        }
+    }
+
     @Test("a window shown again stays where the user moved it")
     func shownAgainStaysPut() throws {
         for sut in centeredWindows().windows {

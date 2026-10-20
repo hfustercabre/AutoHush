@@ -27,10 +27,14 @@ class HostedWindowController: NSWindowController {
         super.init(window: window)
     }
 
-    /// Settings' title bar: the content runs under it, without its band or
-    /// line, and an empty toolbar shows the title in bold.
+    /// Settings' title bar: without its band or line, over the window's own
+    /// background, and an empty toolbar shows the title in bold. The content
+    /// starts below it, not under it: with it under the title bar, SwiftUI
+    /// follows the title bar's inset, and on macOS 14 and 15 each resize to
+    /// the content changed that inset and asked for layout again, until
+    /// AppKit threw (Add an App's window as its check started, 2026-10-20).
     private static func styleTitleBar(of window: NSWindow) {
-        window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
+        window.styleMask = [.titled, .closable, .miniaturizable]
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
         let toolbar = NSToolbar(identifier: "AutoHushWindow")
