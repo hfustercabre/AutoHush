@@ -213,7 +213,7 @@ func assertions(of pid: pid_t) -> Set<PowerAssertion> {
 final class TestMute: @unchecked Sendable {
     private let pid: pid_t
     private let queue = DispatchQueue(label: "playercheck.mute")
-    private var timer: DispatchSourceTimer?
+    private var timer: any DispatchSourceTimer?
     private let muter: any AudioMuting
     /// Whether the app has an audio process now; tests stand in for it and the muter.
     private let hasSound: @Sendable (pid_t) -> Bool

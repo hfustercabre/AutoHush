@@ -10,7 +10,7 @@ protocol LaunchAtLoginControlling: AnyObject {
     /// On, but macOS waits for the user to allow it in Login Items.
     var needsApproval: Bool { get }
     @discardableResult
-    func setEnabled(_ enabled: Bool) -> Result<Void, Error>
+    func setEnabled(_ enabled: Bool) -> Result<Void, any Error>
     func openSystemSettings()
 }
 
@@ -40,7 +40,7 @@ final class LaunchAtLoginController: LaunchAtLoginControlling {
     var needsApproval: Bool { statusProvider() == .requiresApproval }
 
     @discardableResult
-    func setEnabled(_ enabled: Bool) -> Result<Void, Error> {
+    func setEnabled(_ enabled: Bool) -> Result<Void, any Error> {
         do {
             if enabled { try registerAction() } else { try unregisterAction() }
             AutoHushLogger.settings.info("Launch at login: \(enabled ? "on" : "off", privacy: .public)")

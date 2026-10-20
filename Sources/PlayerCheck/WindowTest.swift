@@ -1,5 +1,7 @@
 import AppKit
 import AutoHushKit
+import CheckedPlayers
+import PlayerCheckKit
 
 // MARK: - A test's trip through the window states
 

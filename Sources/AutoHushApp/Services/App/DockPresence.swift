@@ -9,7 +9,7 @@ import AppKit
 /// would fall behind them, though it was in front when the user left.
 @MainActor
 enum DockPresence {
-    private static var closeObserver: NSObjectProtocol?
+    private static var closeObserver: any NSObjectProtocol?
     /// The windows shown (`windowWillShow`) and not closed since.
     private static let shown = NSHashTable<NSWindow>.weakObjects()
 

@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import SwiftUI
 
 /// The media player's part, first under the menu's card (V5, the user's

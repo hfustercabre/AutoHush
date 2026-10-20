@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import SwiftUI
 
 /// Settings → About: the app's icon, name and version, what it does and the

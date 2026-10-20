@@ -1,4 +1,5 @@
 import Foundation
+import ScriptablePlayers
 import Testing
 import AutoHushTestSupport
 @testable import CheckedPlayers

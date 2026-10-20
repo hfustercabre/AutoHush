@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import CheckedPlayers
 import PlayerCheckKit
 import ScriptablePlayers

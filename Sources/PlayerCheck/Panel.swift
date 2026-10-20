@@ -2,6 +2,7 @@ import AppKit
 import AutoHushKit
 import CheckedPlayers
 import PlayerCheckKit
+import ScriptablePlayers
 import WebAppPlayers
 
 // MARK: - The menu bar's Now Playing panel, as AutoHush reads and presses it

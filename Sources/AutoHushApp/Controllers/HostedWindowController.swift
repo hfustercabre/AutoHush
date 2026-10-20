@@ -85,7 +85,7 @@ class HostedWindowController: NSWindowController {
 
     /// The top edge kept while it floats; the user moving it moves it.
     private var pinnedTop: CGFloat?
-    private var edgeObservers: [NSObjectProtocol] = []
+    private var edgeObservers: [any NSObjectProtocol] = []
     static let cornerMargin: CGFloat = 16
     /// The screen it floats on: the one the user is on, with the pointer
     /// (tests pick one).

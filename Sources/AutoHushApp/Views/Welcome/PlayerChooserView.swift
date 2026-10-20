@@ -1,4 +1,5 @@
 import AppKit
+import AutoHushKit
 import SwiftUI
 
 /// The media players as tiles, as in Settings → General (`PlayerTiles`): the

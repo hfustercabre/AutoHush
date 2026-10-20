@@ -1,4 +1,5 @@
 import CheckPanel
+import SwiftUI
 
 extension CheckPanelController {
     /// Add an App…'s check of `app`: how far it has got, what it asks, its Stop.

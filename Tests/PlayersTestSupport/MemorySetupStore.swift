@@ -1,5 +1,6 @@
 import AutoHushTestSupport
 import CheckedPlayers
+import Foundation
 
 /// The setups of the apps added with Add an App, kept in memory as the
 /// preferences keep them: by bundle ID, read by name.

@@ -1,6 +1,7 @@
 import AppKit
 import AutoHushKit
 import CheckedPlayers
+import MenuPlayers
 import PlayerCheckKit
 
 // MARK: - Whether it plays

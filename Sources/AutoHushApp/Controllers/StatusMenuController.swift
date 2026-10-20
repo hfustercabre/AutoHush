@@ -87,9 +87,9 @@ final class StatusMenuController: NSObject {
     /// What closes the menu (clicks elsewhere, another desktop) and what it
     /// follows while open (Option, for an added app's Remove).
     private var monitors: [Any] = []
-    private var spaceObserver: NSObjectProtocol?
+    private var spaceObserver: any NSObjectProtocol?
     /// Another window becoming key while the menu is open.
-    private var keyWindowObserver: NSObjectProtocol?
+    private var keyWindowObserver: any NSObjectProtocol?
     /// The content's height, as last measured.
     private var contentHeight: CGFloat = 0
     /// The panel follows the content's height at the end of this pass.

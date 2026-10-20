@@ -58,7 +58,7 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// The log couldn't be opened: it isn't asked again.
     private var failed = false
     private var lastAsked = Date.distantPast
-    private var idleTimer: DispatchSourceTimer?
+    private var idleTimer: any DispatchSourceTimer?
     private let lookBack: TimeInterval
     private let idle: TimeInterval?
     /// `log stream`'s command, then the past since a date as a store opened
@@ -156,7 +156,7 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     /// Ends the `log stream`, if it runs, and forgets what it read.
     package func stop() {
-        let (process, timer) = lock.withLock { () -> (Process?, DispatchSourceTimer?) in
+        let (process, timer) = lock.withLock { () -> (Process?, any DispatchSourceTimer?) in
             defer {
                 stream = nil
                 streamID = nil
@@ -253,7 +253,7 @@ package final class NowPlayingReports: @unchecked Sendable {
             guard let self, lock.withLock({ Date().timeIntervalSince(lastAsked) > idle }) else { return }
             stop()
         }
-        let old = lock.withLock { () -> DispatchSourceTimer? in
+        let old = lock.withLock { () -> any DispatchSourceTimer? in
             defer { idleTimer = timer }
             return idleTimer
         }

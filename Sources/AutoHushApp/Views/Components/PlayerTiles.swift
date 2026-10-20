@@ -1,3 +1,4 @@
+import AutoHushKit
 import SwiftUI
 
 /// The media players as tiles, three a row, in one card: the apps under

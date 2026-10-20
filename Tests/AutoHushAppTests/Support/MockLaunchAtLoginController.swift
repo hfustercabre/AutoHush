@@ -9,14 +9,14 @@ final class MockLaunchAtLoginController: LaunchAtLoginControlling {
     var setEnabledCalls: [Bool] = []
     /// Override per-test to control what `setEnabled(_:)` returns.
     /// Defaults to `.success(())` so tests that don't set it get a passing result.
-    var setEnabledResult: Result<Void, Error> = .success(())
+    var setEnabledResult: Result<Void, any Error> = .success(())
     var openSystemSettingsCallCount = 0
 
     init(isEnabled: Bool) {
         self.isEnabled = isEnabled
     }
 
-    func setEnabled(_ enabled: Bool) -> Result<Void, Error> {
+    func setEnabled(_ enabled: Bool) -> Result<Void, any Error> {
         setEnabledCalls.append(enabled)
         switch setEnabledResult {
         case .success:

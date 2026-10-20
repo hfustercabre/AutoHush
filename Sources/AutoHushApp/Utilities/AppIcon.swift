@@ -3,6 +3,7 @@ import AutoHushPlayers
 import CheckedPlayers
 import SwiftUI
 import AutoHushKit
+import UniformTypeIdentifiers
 
 /// App icons for menus and Settings, cached by bundle path.
 @MainActor

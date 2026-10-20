@@ -1,5 +1,6 @@
 import AppKit
 import AutoHushKit
+import CheckedPlayers
 import PlayerCheckKit
 
 // MARK: - Play or pause (--play, --pause)

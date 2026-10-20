@@ -101,7 +101,7 @@ final class AudioMonitor: @unchecked Sendable {
 
     // Queue-confined state.
     var isStarted = false
-    var timer: DispatchSourceTimer?
+    var timer: any DispatchSourceTimer?
     var timerInterval: TimeInterval?
     var candidates: [AudioProcessInfo] = []
     /// The candidates that play the media player's audio: its own processes

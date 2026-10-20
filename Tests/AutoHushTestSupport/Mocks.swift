@@ -24,9 +24,9 @@ package actor MockMusicPlayer: MusicPlayer {
     package var playCallCount = 0
     package var verifyCallCount = 0
     package var stateQueryCount = 0
-    package var failPauseWith: Error?
-    package var failPlayWith: Error?
-    package var failVerifyWith: Error?
+    package var failPauseWith: any Error?
+    package var failPlayWith: any Error?
+    package var failVerifyWith: any Error?
     /// The next this many state queries answer `.unknown`, as when the player
     /// is busy and doesn't answer in time.
     package var unansweredStateQueries = 0
@@ -49,9 +49,9 @@ package actor MockMusicPlayer: MusicPlayer {
         releasesOnQuit: Bool = false,
         checksItsPresses: Bool = false,
         needsReopening: Bool = false,
-        failPauseWith: Error? = nil,
-        failPlayWith: Error? = nil,
-        failVerifyWith: Error? = nil
+        failPauseWith: any Error? = nil,
+        failPlayWith: any Error? = nil,
+        failVerifyWith: any Error? = nil
     ) {
         self.bundleID = bundleID
         self.name = name
@@ -86,9 +86,9 @@ package actor MockMusicPlayer: MusicPlayer {
     }
 
     package func setUnansweredStateQueries(_ count: Int) { unansweredStateQueries = count }
-    package func setFailPlay(_ error: Error?) { failPlayWith = error }
-    package func setFailPause(_ error: Error?) { failPauseWith = error }
-    package func setFailVerify(_ error: Error?) { failVerifyWith = error }
+    package func setFailPlay(_ error: any Error?) { failPlayWith = error }
+    package func setFailPause(_ error: any Error?) { failPauseWith = error }
+    package func setFailVerify(_ error: any Error?) { failVerifyWith = error }
 
     package func setBeforeStateAnswer(_ hook: (@Sendable () async -> Void)?) { beforeStateAnswer = hook }
     package func setBeforeVerify(_ hook: (@Sendable () async -> Void)?) { beforeVerify = hook }

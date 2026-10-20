@@ -26,7 +26,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// True while the music fades out ahead of a pause.
     var isFadingOut = false
     var configuration: AppConfiguration
-    let debounceScheduler: PlaybackArbiterDebounceScheduling
+    let debounceScheduler: any PlaybackArbiterDebounceScheduling
     let onPlaybackStateChange: @Sendable (PlaybackState) -> Void
     let onAudioLevelsNeededChange: @Sendable (Bool) -> Void
     /// Whether the music is paused by us now, for its loudness and the
@@ -140,7 +140,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     init(
         player: any MusicPlayer,
         configuration: AppConfiguration,
-        debounceScheduler: PlaybackArbiterDebounceScheduling = TaskSleepDebounceScheduler(),
+        debounceScheduler: any PlaybackArbiterDebounceScheduling = TaskSleepDebounceScheduler(),
         fadeSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
         clock: @escaping @Sendable () -> Date = { Date() },
         autoPauseEnabled: Bool = true,

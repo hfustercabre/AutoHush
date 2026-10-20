@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import PlayersTestSupport
 import Testing
 @testable import ScriptablePlayers
 import AutoHushKit

@@ -1,6 +1,8 @@
 import AppKit
 import CheckedPlayers
 import PlayerCheckKit
+import ScriptablePlayers
+import WebAppPlayers
 
 // MARK: - Ways to control it
 

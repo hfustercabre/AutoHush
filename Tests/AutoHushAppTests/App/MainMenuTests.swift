@@ -42,7 +42,7 @@ struct MainMenuTests {
         let search = Search()
         let bar = MainMenu.make(about: {}, settings: {}, canFind: { search.shows })
         let find = try #require(bar.items[1].submenu?.items.first { $0.title == "Find…" })
-        let target = try #require(find.target as? NSMenuItemValidation)
+        let target = try #require(find.target as? any NSMenuItemValidation)
         #expect(!target.validateMenuItem(find))
         search.shows = true
         #expect(target.validateMenuItem(find))

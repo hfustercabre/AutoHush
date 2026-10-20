@@ -1,5 +1,6 @@
 import AppKit
 import AutoHushKit
+import UniformTypeIdentifiers
 
 /// The panel that picks apps to ignore, several at once (the user,
 /// 2026-10-18): Settings → Sound Sources' Ignore Another App… and the

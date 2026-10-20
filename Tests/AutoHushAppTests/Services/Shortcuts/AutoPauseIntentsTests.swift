@@ -1,3 +1,4 @@
+import AppIntents
 import Foundation
 import Testing
 @testable import AutoHushApp

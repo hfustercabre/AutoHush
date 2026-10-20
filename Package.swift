@@ -224,13 +224,17 @@ let package = Package(
 // rules of the Swift 7 language mode, ahead of it: an async function that
 // isn't isolated runs on its caller's actor, unless it's marked
 // `@concurrent` (SE-0461); a main-actor type's conformances are main-actor
-// ones, unless they're marked `nonisolated` (SE-0470); and a `weak` capture
-// can't be reassigned (SE-0481).
+// ones, unless they're marked `nonisolated` (SE-0470); a `weak` capture
+// can't be reassigned (SE-0481); a protocol used as a type is written
+// `any P` (SE-0335); and a file sees only the members of the modules it
+// imports itself (SE-0444).
 for target in package.targets {
     target.swiftSettings = (target.swiftSettings ?? []) + [
         .treatAllWarnings(as: .error),
         .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
         .enableUpcomingFeature("InferIsolatedConformances"),
         .enableUpcomingFeature("ImmutableWeakCaptures"),
+        .enableUpcomingFeature("ExistentialAny"),
+        .enableUpcomingFeature("MemberImportVisibility"),
     ]
 }

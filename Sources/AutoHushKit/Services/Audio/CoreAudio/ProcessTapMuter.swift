@@ -41,7 +41,7 @@ package final class ProcessTapMuter: AudioMuting {
     private let ioQueue = DispatchQueue(label: "AutoHush.Muter.io", qos: .userInitiated)
     private let recheckQueue = DispatchQueue(label: "AutoHush.Muter.recheck", qos: .utility)
     private let recheck: TimeInterval
-    private let timer = OSAllocatedUnfairLock<DispatchSourceTimer?>(initialState: nil)
+    private let timer = OSAllocatedUnfairLock<any DispatchSourceTimer?>(initialState: nil)
     private let failures = OSAllocatedUnfairLock(initialState: false)
     private let logger = AutoHushLogger(category: "AudioMonitor")
 

@@ -1,6 +1,7 @@
 /// What the update popup says about a release, and the buttons it offers:
 /// which version is running, which one is available or downloaded, and
 /// whether installing it downloads it first.
+import Foundation
 struct UpdatePrompt: Equatable {
     enum Choice: Equatable {
         case install, later, openReleasePage

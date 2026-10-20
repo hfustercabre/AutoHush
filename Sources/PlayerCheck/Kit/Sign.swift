@@ -1,5 +1,6 @@
 /// Whether a press took, judged by the surest sign the app showed before
 /// it (`Look.surest`); with none, by its menu's word changing or its sound.
+import AutoHushKit
 package struct Sign: Sendable {
     let before: Look
     let kind: SignKind?

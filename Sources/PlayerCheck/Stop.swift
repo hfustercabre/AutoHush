@@ -116,7 +116,7 @@ func stopNow(_ code: Int32) -> Never {
 }
 
 /// Kept for as long as the tool runs.
-@MainActor var stopWatches: [DispatchSourceProtocol] = []
+@MainActor var stopWatches: [any DispatchSourceProtocol] = []
 
 /// A stop: Ctrl-C, Stop (AutoHush's panel, the Player Check app), or whoever
 /// ran it ending without a word (its window closed, or it quit by force or
