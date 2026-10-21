@@ -2,8 +2,9 @@ import SwiftUI
 import AutoHushKit
 
 /// Settings → Fades, a grouped form: a switch, and the fades'
-/// lengths while it's on; dimmed for a player AutoHush can't fade. Restore
-/// Defaults sets the fades back.
+/// lengths while it's on (the fade-in's greyed out while nothing resumes);
+/// dimmed for a player AutoHush can't fade. Restore Defaults sets the fades
+/// back.
 struct FadesSettingsView: View {
     let model: SettingsModel
 
@@ -19,10 +20,14 @@ struct FadesSettingsView: View {
                         TimingSliderRow(model: model, timing: .fadeOut)
                         CardDivider()
                         TimingSliderRow(model: model, timing: .fadeIn)
+                            .unavailable(fadeInUnused)
                     }
                     .unavailable(!model.timings.fadesEnabled && model.playerCanFade)
                 }
                 .unavailable(!model.playerCanFade)
+                if fadeInUnused {
+                    NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
+                }
                 if !model.playerCanFade, let player = model.chosenPlayerName {
                     NoteLabel(String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
                                      comment: "Settings → Fades, under the dimmed fade settings; %@ is the media player, e.g. TIDAL"),
@@ -32,5 +37,11 @@ struct FadesSettingsView: View {
                 RestoreDefaultsButton(isDefault: model.fadesAreDefaults) { model.restoreDefaultFades() }
             }
         }
+    }
+
+    /// The fade-in, greyed out on its own while nothing resumes (Resume
+    /// playback off), when the rest isn't already.
+    private var fadeInUnused: Bool {
+        !model.timings.resumesPlayback && model.timings.fadesEnabled && model.playerCanFade
     }
 }

@@ -250,6 +250,7 @@ final class UserSettings: AutoPauseControlling {
         if old.pausesOnOutputDisconnect != new.pausesOnOutputDisconnect {
             lines.append("Pause on disconnect: \(new.pausesOnOutputDisconnect ? "on" : "off")")
         }
+        if old.resumesPlayback != new.resumesPlayback { lines.append("Resume playback: \(new.resumesPlayback ? "on" : "off")") }
         if old.levelsMusic != new.levelsMusic { lines.append("Level the volume: \(new.levelsMusic ? "on" : "off")") }
         if old.pausesForMicrophone != new.pausesForMicrophone {
             lines.append("Pause for the microphone: \(new.pausesForMicrophone ? "on" : "off")")

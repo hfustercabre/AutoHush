@@ -4,7 +4,8 @@ import AutoHushKit
 /// Settings → Advanced, a grouped form: under Volume, leveling the music, with how far it
 /// lowers the volume at most and how much quieter the apps must have been
 /// (greyed out while it's off; all of it off in AntiDot mode, which measures
-/// no sound). Restore Defaults sets them back.
+/// no sound, and while Resume playback is off). Restore Defaults sets them
+/// back.
 struct AdvancedSettingsView: View {
     let model: SettingsModel
 
@@ -18,9 +19,9 @@ struct AdvancedSettingsView: View {
                     CardDivider()
                     TimingSliderRow(model: model, timing: .levelingMinCut)
                 }
-                .unavailable(!model.timings.levelsMusic || model.isAntiDotMode)
-                if model.isAntiDotMode {
-                    NoteLabel(AntiDotText.featureOff, kind: .info)
+                .unavailable(!model.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(model))
+                if let reason = SettingsSwitch.levelsMusic.unavailableReason(model) {
+                    NoteLabel(reason, kind: .info)
                 }
             } footer: {
                 RestoreDefaultsButton(isDefault: model.advancedAreDefaults) { model.restoreDefaultAdvanced() }

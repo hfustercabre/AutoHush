@@ -178,6 +178,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   without a fade, instead of moving to the speakers, and stays paused
   until you play it. Choosing another output yourself doesn't count.
   Some players already do this themselves.
+- **Resume playback** (Settings → Detection, under Playback, and the
+  menu; on by default): turned off, AutoHush only pauses your player, and
+  it stays paused until you play it. What only matters when resuming is
+  greyed out then: Resume playback after, the fade-in, Level the volume
+  and Stay paused after calls.
 - **Hebrew, Malay and Thai.** AutoHush speaks 38 languages, every one
   macOS comes in; in Hebrew, as in Arabic, it reads right to left.
 - **Pause for the microphone** (Settings → Calls, a page of its own, and

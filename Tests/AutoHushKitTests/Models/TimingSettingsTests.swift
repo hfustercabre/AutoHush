@@ -47,6 +47,15 @@ struct TimingSettingsTests {
         #expect(configuration.levelsMusic && configuration.pausesForMicrophone && configuration.staysPausedAfterCalls)
     }
 
+    @Test("Resume playback is on by default, and reaches the configuration")
+    func resumePlaybackSwitch() {
+        #expect(TimingSettings.defaults.resumesPlayback)
+        let off = TimingSettings(resumesPlayback: false)
+        #expect(off.clamped == off)
+        #expect(!AppConfiguration(timings: off).resumesPlayback)
+        #expect(AppConfiguration().resumesPlayback)
+    }
+
     @Test("an app counts as stopped after at least a second of silence")
     func stopGraceMinimum() {
         #expect(TimingSettings(stopGrace: 0).clamped.stopGrace == 1)

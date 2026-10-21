@@ -67,6 +67,7 @@ struct DiagnosticsReportTests {
             Ignored apps: VLC
             Level the volume: Off
             Pause on disconnect: Off
+            Resume playback: On
             Pause for the microphone: Off
             Stay paused after calls: Off
             Launch at login: On
@@ -179,8 +180,9 @@ struct DiagnosticsReportTests {
 
     /// The report while nothing plays, no player is chosen and nothing is
     /// ignored, with no update checks, leveling on and staying paused after
-    /// calls, `detection` detected by `method`.
-    private func quietReport(_ detection: DetectionMode, _ method: DetectionMethod) -> DiagnosticsSnapshot {
+    /// calls, `detection` detected by `method`; resuming as `resumes` says.
+    private func quietReport(_ detection: DetectionMode, _ method: DetectionMethod,
+                             resumes: Bool = true) -> DiagnosticsSnapshot {
         var status = AppStatus()
         status.setHealth(.ready)
         status.detection = detection
@@ -191,7 +193,15 @@ struct DiagnosticsReportTests {
             $0.lastUpdateCheck = nil
             $0.timings.levelsMusic = true
             $0.timings.staysPausedAfterCalls = true
+            $0.timings.resumesPlayback = resumes
         })
+    }
+
+    @Test("says leveling is off while nothing resumes, whatever its switch, and Stay paused after calls as set",
+          arguments: [true, false])
+    func saysResumePlayback(resumes: Bool) {
+        let text = quietReport(.audioLevel, .audioLevels, resumes: resumes).text
+        #expect(text.contains("Level the volume: \(resumes ? "On" : "Off")\nPause on disconnect: Off\nResume playback: \(resumes ? "On" : "Off")\nPause for the microphone: Off\nStay paused after calls: On"))
     }
 
     @Test("says when nothing plays")
@@ -221,7 +231,7 @@ struct DiagnosticsReportTests {
         let snapshot = quietReport(.playbackSignals, .playbackSignals)
         #expect(snapshot.text.contains("Detecting by: What apps tell macOS\nAntiDot mode: On"))
         #expect(!snapshot.text.contains("Silence threshold")) // not used in AntiDot mode
-        #expect(snapshot.text.contains("Level the volume: Off\nPause on disconnect: Off\nPause for the microphone: Off\nStay paused after calls: On")) // AntiDot mode measures no sound
+        #expect(snapshot.text.contains("Level the volume: Off\nPause on disconnect: Off\nResume playback: On\nPause for the microphone: Off\nStay paused after calls: On")) // AntiDot mode measures no sound
     }
 
     @Test("in AntiDot mode, says its longer start for apps without video")

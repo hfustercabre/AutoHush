@@ -184,10 +184,10 @@ struct PreferencesTests {
         #expect(Preferences(store: store).timings == TimingSettings(fadeOutDuration: 2.5, fadesEnabled: false))
     }
 
-    @Test("Settings → Advanced's switches persist")
+    @Test("Settings → Advanced's switches persist, and Resume playback turned off")
     func advancedSwitchesPersist() {
         let store = InMemoryPreferenceStore()
-        let advanced = TimingSettings(levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
+        let advanced = TimingSettings(resumesPlayback: false, levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
                                       pausesForMicrophone: true, staysPausedAfterCalls: true)
         Preferences(store: store).timings = advanced
         #expect(Preferences(store: store).timings == advanced)

@@ -65,11 +65,18 @@ struct MenuSettingsView: View {
                 switchRow(.pausesOnDisconnect)
             }
             if isOpen(.detection) {
+                innerTitle(DetectionSettingsView.playbackTitle)
+                    .opacity(fading(.detection))
+            }
+            part {
+                switchRow(.resumesPlayback)
+            }
+            if isOpen(.detection) {
                 innerTitle(DetectionSettingsView.timingTitle)
                     .opacity(fading(.detection))
                 part {
                     slider(.pauseAfter)
-                    slider(.resumeAfter)
+                    slider(.resumeAfter).unavailable(!settings.timings.resumesPlayback)
                     slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
                 }
                 .disabled(isFolding(.detection))
@@ -83,7 +90,9 @@ struct MenuSettingsView: View {
                 if isOpen(.fades) {
                     Group {
                         slider(.fadeOut)
+                        // Greyed out on its own while nothing resumes, when the rest isn't.
                         slider(.fadeIn)
+                            .unavailable(!settings.timings.resumesPlayback && settings.playerCanFade && settings.timings.fadesEnabled)
                     }
                     .unavailable(!settings.playerCanFade || !settings.timings.fadesEnabled)
                     .disabled(isFolding(.fades))
@@ -109,7 +118,7 @@ struct MenuSettingsView: View {
                         slider(.levelingMaxCut)
                         slider(.levelingMinCut)
                     }
-                    .unavailable(!settings.timings.levelsMusic || settings.isAntiDotMode)
+                    .unavailable(!settings.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(settings))
                     .disabled(isFolding(.advanced))
                     .opacity(fading(.advanced))
                 }

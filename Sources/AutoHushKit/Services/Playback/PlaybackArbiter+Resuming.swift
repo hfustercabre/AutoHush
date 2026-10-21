@@ -62,17 +62,27 @@ extension PlaybackArbiter {
             publishPlaybackState()
             return
         }
+        guard configuration.resumesPlayback else {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) stays paused: Resume playback is off")
+            await keepPaused()
+            return
+        }
         guard !(configuration.staysPausedAfterCalls && callDuringPause) else {
             logger.info("[arbiter] \(self.player.name, privacy: .public) stays paused: a call came during the pause (Stay paused after calls)")
-            pausedByUs = false
-            putBackResumeLevel()
-            // A mute standing in for the pause: the player is paused for real
-            // and the mute lifted, as when the Mac slept (`forgetPause`).
-            if let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
-            publishPlaybackState()
+            await keepPaused()
             return
         }
         await resumeNow(id: id, retriesLeft: retriesLeft)
+    }
+
+    /// Our pause, kept instead of resumed, becomes the user's.
+    private func keepPaused() async {
+        pausedByUs = false
+        putBackResumeLevel()
+        // A mute standing in for the pause: the player is paused for real
+        // and the mute lifted, as when the Mac slept (`forgetPause`).
+        if let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
+        publishPlaybackState()
     }
 
     /// Resumes the player after re-checking its live state: if the user manually

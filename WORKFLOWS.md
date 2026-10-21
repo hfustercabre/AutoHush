@@ -37,7 +37,7 @@ flowchart TD
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
-  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>detection, timings, fades,<br/>Calls (Pause for the microphone,<br/>Stay paused after calls),<br/>Advanced (Level the volume),<br/>Diagnostics"]
+  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>detection (Pause on disconnect,<br/>Resume playback), timings, fades,<br/>Calls (Pause for the microphone,<br/>Stay paused after calls),<br/>Advanced (Level the volume),<br/>Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])
@@ -156,6 +156,7 @@ flowchart TD
   PA["Paused by AutoHush"]
   Q{"Every app quiet<br/>for 2 s?"}
   MORE["More apps start or<br/>play on: it stays paused"]
+  RES{"Resume playback<br/>on?"}
   CHK{"Still paused as<br/>AutoHush left it?"}
   USER["Not resumed: you played,<br/>paused or quit it yourself"]
   RETRY["No answer: tried twice<br/>more, a second apart"]
@@ -184,7 +185,9 @@ flowchart TD
   FAIL -.->|"the apps stop"| LEFT
   PA --> Q
   Q -->|"no"| MORE --> Q
-  Q -->|"yes"| CHK
+  Q -->|"yes"| RES
+  RES -->|"off"| STAY
+  RES -->|"on"| CHK
   CHK -->|"no"| USER
   CHK -->|"no answer"| RETRY --> CHK
   CHK -->|"yes"| CALL
@@ -198,7 +201,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, the fades Settings → Fades’, Pause for the microphone and Stay paused after calls Settings → Calls’, and Level the volume Settings → Advanced’s (all off by default); a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
+What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, the fades Settings → Fades’, Pause for the microphone and Stay paused after calls Settings → Calls’, and Level the volume Settings → Advanced’s (all off by default), Resume playback Settings → Detection’s (on by default); a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
 
 ## Monitoring: what else changes it
 
@@ -227,7 +230,7 @@ flowchart LR
   R1["Your choice stands: never<br/>resumed or overridden"]
   R2["Left alone: Playing<br/>on another device"]
   R3["A held pause: resumed when<br/>the apps stop, unless you play<br/>or quit it first; chosen again,<br/>it’s taken back"]
-  R4["What AutoHush paused comes<br/>back at once; nothing new<br/>is paused"]
+  R4["What AutoHush paused comes<br/>back at once (stays paused<br/>with Resume playback off);<br/>nothing new is paused"]
   R5["Back on by itself: apps still<br/>playing pause the player once<br/>measured again"]
   R6["Auto-Pause follows the Focus,<br/>then goes back as it was,<br/>unless you changed it"]
   R7["The pause is forgotten: the<br/>player stays paused after<br/>waking; nothing is paused or<br/>resumed while asleep"]

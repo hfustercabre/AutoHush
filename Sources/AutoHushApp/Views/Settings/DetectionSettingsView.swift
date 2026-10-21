@@ -3,9 +3,10 @@ import AutoHushKit
 
 /// Settings → Detection, a grouped form: AntiDot mode (with the
 /// way of detecting while it's on, or the Audio Recording it needs while
-/// it's off), then Output (pausing on a disconnect), then the timings: when another app counts as playing or
-/// stopped, and the silence threshold while AntiDot mode is off. Restore
-/// Defaults sets these timings back.
+/// it's off), then Output (pausing on a disconnect), then Playback (resuming
+/// at all), then the timings: when another app counts as playing or
+/// stopped (greyed out while nothing resumes), and the silence threshold
+/// while AntiDot mode is off. Restore Defaults sets these timings back.
 struct DetectionSettingsView: View {
     let model: SettingsModel
 
@@ -52,10 +53,18 @@ struct DetectionSettingsView: View {
                 SettingsSwitchRow(model: model, kind: .pausesOnDisconnect)
             }
 
+            Card(Self.playbackTitle) {
+                SettingsSwitchRow(model: model, kind: .resumesPlayback)
+            }
+
             Card(Self.timingTitle) {
                 TimingSliderRow(model: model, timing: .pauseAfter)
                 CardDivider()
                 TimingSliderRow(model: model, timing: .resumeAfter)
+                    .unavailable(!model.timings.resumesPlayback)
+                if !model.timings.resumesPlayback {
+                    NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
+                }
                 // Only measuring audio levels has a threshold: greyed out in AntiDot mode.
                 CardDivider()
                 TimingSliderRow(model: model, timing: .silenceThreshold)
@@ -79,6 +88,11 @@ struct DetectionSettingsView: View {
     /// Over Pause on disconnect, here and in the menu's Detection.
     static var outputTitle: Text {
         Text("Output", comment: "Settings → Detection and the menu's Detection: heading over Pause on disconnect (the output is where sound plays: headphones, speakers), as System Settings → Sound → Output")
+    }
+
+    /// Over Resume playback, here and in the menu's Detection.
+    static var playbackTitle: Text {
+        Text("Playback", comment: "Settings → Detection and the menu's Detection: heading over Resume playback (whether your player resumes once other apps go quiet)")
     }
 
     /// Over AntiDot mode, here and in the menu's Detection.

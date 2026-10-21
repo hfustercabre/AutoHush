@@ -28,6 +28,9 @@ package struct TimingSettings: Equatable, Sendable {
     /// Whether the music pauses, at once and for good, when the output it
     /// plays through goes away (headphones unplugged or out of range).
     package var pausesOnOutputDisconnect: Bool
+    /// Whether the music resumes once the apps it was paused for stop; off,
+    /// AutoHush only pauses it, and the user plays it again.
+    package var resumesPlayback: Bool
     /// Whether an app turning on its microphone pauses the music, before it
     /// plays any sound (a call starting silent).
     package var pausesForMicrophone: Bool
@@ -43,6 +46,7 @@ package struct TimingSettings: Equatable, Sendable {
         fadeInDuration: TimeInterval = 2,
         fadesEnabled: Bool = true,
         pausesOnOutputDisconnect: Bool = false,
+        resumesPlayback: Bool = true,
         levelsMusic: Bool = false,
         levelingMaxCutDB: Double = 10,
         levelingMinCutDB: Double = 2,
@@ -56,6 +60,7 @@ package struct TimingSettings: Equatable, Sendable {
         self.fadeInDuration = fadeInDuration
         self.fadesEnabled = fadesEnabled
         self.pausesOnOutputDisconnect = pausesOnOutputDisconnect
+        self.resumesPlayback = resumesPlayback
         self.levelsMusic = levelsMusic
         self.levelingMaxCutDB = levelingMaxCutDB
         self.levelingMinCutDB = levelingMinCutDB
@@ -85,6 +90,7 @@ package struct TimingSettings: Equatable, Sendable {
             fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange),
             fadesEnabled: fadesEnabled,
             pausesOnOutputDisconnect: pausesOnOutputDisconnect,
+            resumesPlayback: resumesPlayback,
             levelsMusic: levelsMusic,
             levelingMaxCutDB: levelingMaxCutDB.clamped(to: Self.levelingMaxCutRange),
             levelingMinCutDB: levelingMinCutDB.clamped(to: Self.levelingMinCutRange),

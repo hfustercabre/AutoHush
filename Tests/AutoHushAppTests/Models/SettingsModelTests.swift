@@ -140,6 +140,24 @@ struct SettingsModelTests {
         #expect(SettingsSwitch.fades.isOn(model) && SettingsSwitch.levelsMusic.isOn(model))
     }
 
+    @Test("with Resume playback off, leveling and Stay paused after calls are dimmed, saying why; the latter still shows its own value")
+    func resumeOffDimsResumeSettings() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.setTimings(TimingSettings(resumesPlayback: false, levelsMusic: true, staysPausedAfterCalls: true))
+        #expect(SettingsSwitch.levelsMusic.isUnavailable(model) && !SettingsSwitch.levelsMusic.isOn(model))
+        #expect(SettingsSwitch.levelsMusic.unavailableReason(model) == SettingsSwitch.resumeOffNote)
+        #expect(SettingsSwitch.staysPausedAfterCalls.isUnavailable(model) && SettingsSwitch.staysPausedAfterCalls.isOn(model))
+        #expect(SettingsSwitch.staysPausedAfterCalls.unavailableReason(model) == SettingsSwitch.resumeOffNote)
+        #expect(!SettingsSwitch.resumesPlayback.isOn(model) && !SettingsSwitch.resumesPlayback.isUnavailable(model))
+        model.setAntiDotMode(true) // AntiDot mode's reason first
+        #expect(SettingsSwitch.levelsMusic.unavailableReason(model) == AntiDotText.featureOff)
+        model.setAntiDotMode(false)
+        SettingsSwitch.resumesPlayback.set(true, in: model)
+        #expect(model.timings.resumesPlayback && SettingsSwitch.levelsMusic.isOn(model))
+        #expect(!SettingsSwitch.staysPausedAfterCalls.isUnavailable(model))
+        #expect(SettingsSwitch.staysPausedAfterCalls.unavailableReason(model) == nil)
+    }
+
     @Test("reflects the login item's state")
     func reflectsLaunchAtLogin() {
         #expect(makeModel(MockLaunchAtLoginController(isEnabled: true)).launchAtLoginEnabled)
