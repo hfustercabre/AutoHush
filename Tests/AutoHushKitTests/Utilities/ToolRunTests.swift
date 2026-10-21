@@ -5,7 +5,7 @@ import Testing
 import AutoHushTestSupport
 
 /// Bounded: a broken run would otherwise hang the whole test run unnamed.
-@Suite("ToolRun", .timeLimit(.minutes(1)))
+@Suite("ToolRun", .waitsTimeLimit)
 struct ToolRunTests {
     private static let shell = URL(fileURLWithPath: "/bin/sh")
 

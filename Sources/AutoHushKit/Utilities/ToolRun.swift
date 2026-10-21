@@ -92,7 +92,8 @@ package struct ToolRun: Sendable {
                        onEnd: @escaping @Sendable (Result) -> Void) throws -> Running {
         try launch(read: { handle in
             var pending = Data()
-            while case let data = Self.nextBytes(handle), !data.isEmpty {
+            var buffer = Self.readBuffer()
+            while case let data = Self.nextBytes(handle, into: &buffer), !data.isEmpty {
                 pending.append(data)
                 while let newline = pending.firstIndex(of: UInt8(ascii: "\n")) {
                     onLine(String(decoding: pending[..<newline], as: UTF8.self))
@@ -107,7 +108,8 @@ package struct ToolRun: Sendable {
     /// What `handle` gives until its end, up to `maxOutput`.
     private static func readAll(_ handle: FileHandle) -> Data {
         var output = Data()
-        while case let data = nextBytes(handle), !data.isEmpty {
+        var buffer = readBuffer()
+        while case let data = nextBytes(handle, into: &buffer), !data.isEmpty {
             if output.count < maxOutput { output.append(data.prefix(maxOutput - output.count)) }
         }
         return output
@@ -116,8 +118,8 @@ package struct ToolRun: Sendable {
     /// The next bytes `handle` gives, as they come; empty at its end, or on
     /// a read error. `read(2)`, not `FileHandle.availableData`, which raises
     /// an Objective-C exception on an error: a crash Swift can't catch.
-    private static func nextBytes(_ handle: FileHandle) -> Data {
-        var buffer = [UInt8](repeating: 0, count: 1 << 16)
+    /// `buffer` is the reader's own, for every read (`readBuffer()`).
+    private static func nextBytes(_ handle: FileHandle, into buffer: inout [UInt8]) -> Data {
         while true {
             let count = read(handle.fileDescriptor, &buffer, buffer.count)
             if count > 0 { return Data(buffer[..<count]) }
@@ -125,6 +127,9 @@ package struct ToolRun: Sendable {
             return Data()
         }
     }
+
+    /// Room for one read of `nextBytes`.
+    private static func readBuffer() -> [UInt8] { [UInt8](repeating: 0, count: 1 << 16) }
 
     /// How long a tool stopped at its timeout gets to end (SIGTERM) before
     /// it's killed (SIGKILL), so a stuck one doesn't stay with its reader.

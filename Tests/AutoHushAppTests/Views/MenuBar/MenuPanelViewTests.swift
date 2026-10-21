@@ -4,10 +4,11 @@ import SwiftUI
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
+import AutoHushTestSupport
 
 /// The menu and its side windows drawn as their windows draw them, in the
 /// states the menu shows most: no test opens them on screen.
-@Suite("The menu, drawn", .timeLimit(.minutes(1)))
+@Suite("The menu, drawn", .waitsTimeLimit)
 @MainActor
 struct MenuPanelViewTests {
     private let actions = FakeAppActions()

@@ -35,9 +35,12 @@ jobs:
       - name: Build everything, warnings as errors (Package.swift)
         run: swift build
       - name: Test
-        # Without the slow disk image tests; a release runs them all.
+        # Without the slow disk image tests; a release runs them all. The
+        # runner is several times slower than a Mac: the tests' waits get
+        # 90 s instead of 30 s (TestWait).
         env:
           AUTOHUSH_QUICK_TESTS: "1"
+          AUTOHUSH_TEST_WAIT: "90"
         run: swift test
       - name: Build the app
         # A debug build signed ad hoc (there's no signing identity here), to

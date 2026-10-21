@@ -9,7 +9,7 @@ import AutoHushKit
 import AutoHushTestSupport
 import PlayersTestSupport
 
-@Suite("AppDelegate", .timeLimit(.minutes(1)))
+@Suite("AppDelegate", .waitsTimeLimit)
 struct AppDelegateTests {
     /// In-memory preferences, the choices kept beside them in a suite of its
     /// own, the apps added with Add an App in memory, and a downloads folder

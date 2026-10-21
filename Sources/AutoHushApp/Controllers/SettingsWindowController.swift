@@ -59,7 +59,7 @@ final class SettingsWindowController: NSWindowController {
     /// respect the content"); tall enough for the whole sidebar, foot
     /// included.
     /// At least 600 pt tall, so the sidebar shows About above its foot (S1, the user, 2026-10-18;
-    /// 650 while Calls was a page, 2026-10-21, back to 600 with Behavior).
+    /// 650 while Calls was a page, 2026-10-21, back to 600 with Behavior; it opens 620 tall).
     static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 600) }
     static var maximumSize: NSSize { NSSize(width: sidebarWidth + max(640, leastPageWidth), height: 900) }
 
@@ -70,7 +70,7 @@ final class SettingsWindowController: NSWindowController {
                        DetectionMethod.antiDotWays.map(\.title)]
         return max(480, (choices.map { ChoiceChips<Never>.fittingWidth($0) }.max() ?? 0) + 2 * (20 + 10))
     }()
-    static let initialSize = NSSize(width: 760, height: 650)
+    static let initialSize = NSSize(width: 760, height: 620)
     /// Where macOS keeps the window's place and size between launches.
     static let frameName = "Settings"
 
@@ -122,7 +122,7 @@ final class SettingsWindowController: NSWindowController {
         window.setContentSize(Self.initialSize)
         isPlaced = window.setFrameUsingName(frameName)
         // A size kept from before a choice needed more room, another language,
-        // or the sidebar more height (600 from 2026-10-18, 650 from 2026-10-21).
+        // or the sidebar more height (600 from 2026-10-18).
         if let content = window.contentView?.frame.size,
            content.width < Self.minimumSize.width || content.height < Self.minimumSize.height {
             window.setContentSize(NSSize(width: max(content.width, Self.minimumSize.width),

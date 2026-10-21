@@ -6,7 +6,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("UpdateController", .timeLimit(.minutes(1)))
+@Suite("UpdateController", .waitsTimeLimit)
 @MainActor
 struct UpdateControllerTests {
     /// Records what the controller reports and the alerts it shows (at once,

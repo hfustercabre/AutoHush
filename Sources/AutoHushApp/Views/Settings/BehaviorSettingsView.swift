@@ -74,7 +74,7 @@ struct BehaviorSettingsView: View {
                     CardDivider()
                     TimingSliderRow(model: model, timing: .levelingMinCut)
                 }
-                .unavailable(!model.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(model))
+                .unavailable(SettingsTiming.levelingLimitsUnavailable(model))
                 if let reason = SettingsSwitch.levelsMusic.unavailableReason(model) {
                     NoteLabel(reason, kind: .info)
                 }
@@ -86,9 +86,7 @@ struct BehaviorSettingsView: View {
 
     /// The fade-in, greyed out on its own while nothing resumes (Resume
     /// playback off), when the rest isn't already.
-    private var fadeInUnused: Bool {
-        !model.timings.resumesPlayback && model.timings.fadesEnabled && model.playerCanFade
-    }
+    private var fadeInUnused: Bool { SettingsTiming.fadeInUnused(model) }
 
     /// Over how long another app must play and what else pauses your
     /// player, here and in the menu's settings.

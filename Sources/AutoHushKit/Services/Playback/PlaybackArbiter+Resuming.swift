@@ -75,8 +75,9 @@ extension PlaybackArbiter {
         await resumeNow(id: id, retriesLeft: retriesLeft)
     }
 
-    /// Our pause, kept instead of resumed, becomes the user's.
-    private func keepPaused() async {
+    /// Our pause, kept instead of resumed (or as the output went away),
+    /// becomes the user's.
+    func keepPaused() async {
         pausedByUs = false
         putBackResumeLevel()
         // A mute standing in for the pause: the player is paused for real

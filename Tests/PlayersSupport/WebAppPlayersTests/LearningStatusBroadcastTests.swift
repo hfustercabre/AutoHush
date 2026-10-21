@@ -2,8 +2,9 @@ import Foundation
 import Testing
 import AutoHushKit
 @testable import WebAppPlayers
+import AutoHushTestSupport
 
-@Suite("LearningStatusBroadcast", .timeLimit(.minutes(1)))
+@Suite("LearningStatusBroadcast", .waitsTimeLimit)
 struct LearningStatusBroadcastTests {
     @Test("a listener added while the status changes is left with the current status, never an older one")
     func newListenerEndsOnCurrentStatus() async {

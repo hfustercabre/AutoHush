@@ -2,7 +2,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("Copied feedback", .timeLimit(.minutes(1)))
+@Suite("Copied feedback", .waitsTimeLimit)
 @MainActor
 struct CopiedFeedbackTests {
     @Test("Copied shows for its moment after a click; a click meanwhile starts the moment over, so the first one's end doesn't cut it short")

@@ -4,7 +4,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("PlayerSession", .timeLimit(.minutes(1)))
+@Suite("PlayerSession", .waitsTimeLimit)
 struct PlayerSessionTests {
     private typealias Players = TestPlayers
 

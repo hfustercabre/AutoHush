@@ -7,7 +7,7 @@ import AutoHushTestSupport
 /// The monitorings the player session makes: the engine's pipelines, with
 /// the session's setup (the pipeline itself is tested with the engine).
 @MainActor
-@Suite("PlayerSession: its pipelines", .timeLimit(.minutes(1)))
+@Suite("PlayerSession: its pipelines", .waitsTimeLimit)
 struct PlayerSessionPipelinesTests {
     /// A process ID no process can have, so the real owner lookup finds none.
     private nonisolated static let playerProcess = AudioProcessInfo(objectID: 1, bundleID: TestPlayer.bundleID, pid: 999_998)

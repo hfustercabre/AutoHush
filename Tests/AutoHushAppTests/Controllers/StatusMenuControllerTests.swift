@@ -6,7 +6,7 @@ import AutoHushTestSupport
 
 /// Each test has its own menu bar item and notification centers (another
 /// desktop, another window becoming key): they run at once.
-@Suite("StatusMenuController", .timeLimit(.minutes(1)))
+@Suite("StatusMenuController", .waitsTimeLimit)
 @MainActor
 struct StatusMenuControllerTests {
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")

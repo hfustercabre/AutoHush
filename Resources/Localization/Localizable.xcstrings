@@ -25284,7 +25284,7 @@
       }
     },
     "AntiDot mode" : {
-      "comment" : "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator\nSettings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator",
+      "comment" : "Settings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60482,7 +60482,7 @@
       }
     },
     "Fade in when resuming" : {
-      "comment" : "Settings → Behavior and the menu: slider for how long playback fades back in when it resumes\nSettings → Behavior, Diagnostics and the menu: how long playback fades back in when it resumes",
+      "comment" : "Settings → Behavior, Diagnostics and the menu: slider for how long playback fades back in when it resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60709,7 +60709,7 @@
       }
     },
     "Fade out before pausing" : {
-      "comment" : "Settings → Behavior and the menu: slider for how long playback fades out before it pauses\nSettings → Behavior, Diagnostics and the menu: how long playback fades out before it pauses",
+      "comment" : "Settings → Behavior, Diagnostics and the menu: slider for how long playback fades out before it pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -77280,7 +77280,7 @@
       }
     },
     "Level the volume" : {
-      "comment" : "Settings → Behavior and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them\nSettings → Behavior, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them",
+      "comment" : "Settings → Behavior, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -78188,7 +78188,7 @@
       }
     },
     "Lower by at most" : {
-      "comment" : "Settings → Behavior and the menu, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)\nSettings → Behavior, Diagnostics and the menu, under Level the volume: the most the Mac’s volume is lowered as your player resumes (in decibels)",
+      "comment" : "Settings → Behavior, Diagnostics and the menu, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -96802,7 +96802,7 @@
       }
     },
     "Only when quieter by" : {
-      "comment" : "Settings → Behavior and the menu, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)\nSettings → Behavior, Diagnostics and the menu, under Level the volume: how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)",
+      "comment" : "Settings → Behavior, Diagnostics and the menu, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -102477,7 +102477,7 @@
       }
     },
     "Pause playback after" : {
-      "comment" : "Settings → Behavior and Diagnostics: how long another app must play before your player pauses\nSettings → Behavior, Diagnostics and the menu: how long another app must play before your player pauses",
+      "comment" : "Settings → Behavior, Diagnostics and the menu: how long another app must play before your player pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -115202,7 +115202,7 @@
       }
     },
     "Resume playback after" : {
-      "comment" : "Settings → Behavior and Diagnostics: how long other apps must be quiet before your player resumes\nSettings → Behavior, Diagnostics and the menu: how long other apps must be quiet before your player resumes",
+      "comment" : "Settings → Behavior, Diagnostics and the menu: how long other apps must be quiet before your player resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -120196,7 +120196,7 @@
       }
     },
     "Silence threshold" : {
-      "comment" : "Settings → Detection and Diagnostics: the sound level below which an app counts as silent\nSettings → Detection, Diagnostics and the menu: the sound level below which an app counts as silent",
+      "comment" : "Settings → Detection, Diagnostics and the menu: the sound level below which an app counts as silent",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -123147,7 +123147,7 @@
       }
     },
     "Stay paused after calls" : {
-      "comment" : "Settings → Behavior and Diagnostics: the switch that keeps your player paused after a call\nSettings → Behavior, Diagnostics and the menu: the switch that keeps your player paused after a call",
+      "comment" : "Settings → Behavior, Diagnostics and the menu: the switch that keeps your player paused after a call",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

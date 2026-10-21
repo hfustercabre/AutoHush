@@ -48,7 +48,7 @@ struct MenuSettingsView: View {
                             slider(.fadeOut)
                             // Greyed out on its own while nothing resumes, when the rest isn't.
                             slider(.fadeIn)
-                                .unavailable(!settings.timings.resumesPlayback && settings.playerCanFade && settings.timings.fadesEnabled)
+                                .unavailable(SettingsTiming.fadeInUnused(settings))
                         }
                         .unavailable(!settings.playerCanFade || !settings.timings.fadesEnabled)
                     }
@@ -64,7 +64,7 @@ struct MenuSettingsView: View {
                             slider(.levelingMaxCut)
                             slider(.levelingMinCut)
                         }
-                        .unavailable(!settings.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(settings))
+                        .unavailable(SettingsTiming.levelingLimitsUnavailable(settings))
                     }
                 }
             }

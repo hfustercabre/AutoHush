@@ -238,17 +238,16 @@ actor PlaybackArbiter: PlaybackArbiting {
         guard !isShutDown, configuration.pausesOnOutputDisconnect, autoPauseEnabled, !isAsleep else { return }
         // A resume still pending finds the pause no longer ours, and gives up.
         if pausedByUs {
-            pausedByUs = false
             callDuringPause = false
-            // A mute standing in for the pause: the player is paused for
-            // real and the mute lifted.
-            if let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
             logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) stays paused")
-            publishPlaybackState()
+            await keepPaused()
             return
         }
+        // A fade-out under way pauses where it got to, rather than fading
+        // on through the next output (the user, 2026-10-21), and isn't held.
         if isFadingOut {
             outputGoneDuringPause = true
+            await fader.cutFadeOutShort()
             return
         }
         guard playsLocally else { return }

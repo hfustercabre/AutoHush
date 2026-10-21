@@ -152,8 +152,7 @@ enum DiagnosticsReport {
         let levels = timings.levelsMusic && !antiDot && timings.resumesPlayback
         let fades = timings.fadesEnabled && facts.playerCanFade
         var rows = [
-            Row(label: String(localized: "Pause playback after", comment: "Settings → Behavior and Diagnostics: how long another app must play before your player pauses"),
-                value: pauseAfter),
+            Row(label: SettingsTiming.pauseAfter.name, value: pauseAfter),
         ]
         if facts.detectionMethod == .playbackSignals || unmeasured {
             rows.append(Row(label: String(localized: "Pause playback after, without video",
@@ -161,35 +160,24 @@ enum DiagnosticsReport {
                             value: AppConfiguration(timings: timings).startConfirmationWithoutVideo.secondsText))
         }
         rows += [
-            Row(label: String(localized: "Pause for the microphone", comment: "Settings → Behavior, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone"),
-                value: timings.pausesForMicrophone ? on : off),
-            Row(label: String(localized: "Pause on disconnect", comment: "Settings → Behavior (under “Pausing”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range"),
-                value: timings.pausesOnOutputDisconnect ? on : off),
-            Row(label: String(localized: "Resume playback", comment: "Settings → Behavior (under “Resuming”), Diagnostics and the menu: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it"),
-                value: timings.resumesPlayback ? on : off),
+            Row(label: SettingsSwitch.pausesForMicrophone.name, value: timings.pausesForMicrophone ? on : off),
+            Row(label: SettingsSwitch.pausesOnDisconnect.name, value: timings.pausesOnOutputDisconnect ? on : off),
+            Row(label: SettingsSwitch.resumesPlayback.name, value: timings.resumesPlayback ? on : off),
         ]
         if timings.resumesPlayback {
-            rows.append(Row(label: String(localized: "Resume playback after", comment: "Settings → Behavior and Diagnostics: how long other apps must be quiet before your player resumes"),
-                            value: timings.stopGrace.secondsText))
+            rows.append(Row(label: SettingsTiming.resumeAfter.name, value: timings.stopGrace.secondsText))
         }
-        rows.append(Row(label: String(localized: "Stay paused after calls", comment: "Settings → Behavior and Diagnostics: the switch that keeps your player paused after a call"),
-                        value: timings.staysPausedAfterCalls ? on : off))
+        rows.append(Row(label: SettingsSwitch.staysPausedAfterCalls.name, value: timings.staysPausedAfterCalls ? on : off))
         if fades {
-            rows.append(Row(label: String(localized: "Fade out before pausing", comment: "Settings → Behavior, Diagnostics and the menu: how long playback fades out before it pauses"),
-                            value: timings.fadeOutDuration.secondsText))
+            rows.append(Row(label: SettingsTiming.fadeOut.name, value: timings.fadeOutDuration.secondsText))
             if timings.resumesPlayback {
-                rows.append(Row(label: String(localized: "Fade in when resuming", comment: "Settings → Behavior, Diagnostics and the menu: how long playback fades back in when it resumes"),
-                                value: timings.fadeInDuration.secondsText))
+                rows.append(Row(label: SettingsTiming.fadeIn.name, value: timings.fadeInDuration.secondsText))
             }
         }
-        rows.append(Row(label: String(localized: "Level the volume", comment: "Settings → Behavior and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them"),
-                        value: levels ? on : off))
+        rows.append(Row(label: SettingsSwitch.levelsMusic.name, value: levels ? on : off))
         if levels {
-            let decibels = { (value: Double) in String(localized: "\(Int(value)) dB", comment: "A sound level in decibels") }
-            rows.append(Row(label: String(localized: "Lower by at most", comment: "Settings → Behavior, Diagnostics and the menu, under Level the volume: the most the Mac’s volume is lowered as your player resumes (in decibels)"),
-                            value: decibels(timings.levelingMaxCutDB)))
-            rows.append(Row(label: String(localized: "Only when quieter by", comment: "Settings → Behavior, Diagnostics and the menu, under Level the volume: how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)"),
-                            value: decibels(timings.levelingMinCutDB)))
+            rows.append(Row(label: SettingsTiming.levelingMaxCut.name, value: SettingsTiming.decibels(timings.levelingMaxCutDB)))
+            rows.append(Row(label: SettingsTiming.levelingMinCut.name, value: SettingsTiming.decibels(timings.levelingMinCutDB)))
         }
         let summary = timings.resumesPlayback
             ? String(localized: "Pauses after \(pauseAfter), resumes after \(timings.stopGrace.secondsText)",
@@ -204,11 +192,10 @@ enum DiagnosticsReport {
         let antiDot = facts.detectionMethod.isAntiDot
         var rows = [
             Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
-            Row(label: String(localized: "AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
+            Row(label: SettingsSwitch.antiDot.name, value: antiDot ? on : off),
         ]
         if !antiDot {
-            rows.append(Row(label: String(localized: "Silence threshold", comment: "Settings → Detection and Diagnostics: the sound level below which an app counts as silent"),
-                            value: String(localized: "\(Int(facts.timings.silenceThresholdDB)) dB", comment: "A sound level in decibels")))
+            rows.append(Row(label: SettingsTiming.silenceThreshold.name, value: SettingsTiming.decibels(facts.timings.silenceThresholdDB)))
         }
         return .init(kind: .detection, title: SettingsWindowController.Page.detection.title, summary: method, rows: rows)
     }

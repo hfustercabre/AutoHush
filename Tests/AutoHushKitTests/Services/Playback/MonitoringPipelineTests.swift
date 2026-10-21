@@ -8,7 +8,7 @@ import AutoHushTestSupport
 /// from macOS: an app starting to play reaches the arbiter, which pauses the
 /// player.
 @MainActor
-@Suite("MonitoringPipeline", .timeLimit(.minutes(1)))
+@Suite("MonitoringPipeline", .waitsTimeLimit)
 struct MonitoringPipelineTests {
     /// Process IDs no process can have, so the real owner lookup finds none.
     private nonisolated static let playerProcess = AudioProcessInfo(objectID: 1, bundleID: TestPlayer.bundleID, pid: 999_998)

@@ -7,24 +7,28 @@ import AutoHushKit
 enum SettingsSwitch: CaseIterable {
     case antiDot, pausesOnDisconnect, resumesPlayback, fades, levelsMusic, pausesForMicrophone, staysPausedAfterCalls
 
-    var title: Text {
+    /// Its name: the switch's and Diagnostics' row's.
+    var name: String {
         switch self {
         case .antiDot:
-            Text("AntiDot mode", comment: "Settings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator")
+            String(localized: "AntiDot mode", comment: "Settings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator")
         case .pausesOnDisconnect:
-            Text("Pause on disconnect", comment: "Settings → Behavior (under “Pausing”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range")
+            String(localized: "Pause on disconnect", comment: "Settings → Behavior (under “Pausing”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range")
         case .resumesPlayback:
-            Text("Resume playback", comment: "Settings → Behavior (under “Resuming”), Diagnostics and the menu: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it")
+            String(localized: "Resume playback", comment: "Settings → Behavior (under “Resuming”), Diagnostics and the menu: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it")
         case .fades:
-            Text("Fade playback", comment: "Settings → Behavior and the menu: the switch that turns the fades on or off")
+            String(localized: "Fade playback", comment: "Settings → Behavior and the menu: the switch that turns the fades on or off")
         case .levelsMusic:
-            Text("Level the volume", comment: "Settings → Behavior, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
+            String(localized: "Level the volume", comment: "Settings → Behavior, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
         case .pausesForMicrophone:
-            Text("Pause for the microphone", comment: "Settings → Behavior, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone")
+            String(localized: "Pause for the microphone", comment: "Settings → Behavior, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone")
         case .staysPausedAfterCalls:
-            Text("Stay paused after calls", comment: "Settings → Behavior, Diagnostics and the menu: the switch that keeps your player paused after a call")
+            String(localized: "Stay paused after calls", comment: "Settings → Behavior, Diagnostics and the menu: the switch that keeps your player paused after a call")
         }
     }
+
+    /// `name` as a view's text.
+    var title: Text { Text(verbatim: name) }
 
     /// What it does, under it in Settings (the menu leaves it out).
     var subtitle: Text {
@@ -183,24 +187,28 @@ struct SettingsSwitchRow: View {
 enum SettingsTiming {
     case pauseAfter, resumeAfter, silenceThreshold, fadeOut, fadeIn, levelingMaxCut, levelingMinCut
 
-    var title: Text {
+    /// Its name: the slider's and Diagnostics' row's.
+    var name: String {
         switch self {
         case .pauseAfter:
-            Text("Pause playback after", comment: "Settings → Behavior, Diagnostics and the menu: how long another app must play before your player pauses")
+            String(localized: "Pause playback after", comment: "Settings → Behavior, Diagnostics and the menu: how long another app must play before your player pauses")
         case .resumeAfter:
-            Text("Resume playback after", comment: "Settings → Behavior, Diagnostics and the menu: how long other apps must be quiet before your player resumes")
+            String(localized: "Resume playback after", comment: "Settings → Behavior, Diagnostics and the menu: how long other apps must be quiet before your player resumes")
         case .silenceThreshold:
-            Text("Silence threshold", comment: "Settings → Detection, Diagnostics and the menu: the sound level below which an app counts as silent")
+            String(localized: "Silence threshold", comment: "Settings → Detection, Diagnostics and the menu: the sound level below which an app counts as silent")
         case .fadeOut:
-            Text("Fade out before pausing", comment: "Settings → Behavior and the menu: slider for how long playback fades out before it pauses")
+            String(localized: "Fade out before pausing", comment: "Settings → Behavior, Diagnostics and the menu: slider for how long playback fades out before it pauses")
         case .fadeIn:
-            Text("Fade in when resuming", comment: "Settings → Behavior and the menu: slider for how long playback fades back in when it resumes")
+            String(localized: "Fade in when resuming", comment: "Settings → Behavior, Diagnostics and the menu: slider for how long playback fades back in when it resumes")
         case .levelingMaxCut:
-            Text("Lower by at most", comment: "Settings → Behavior and the menu, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)")
+            String(localized: "Lower by at most", comment: "Settings → Behavior, Diagnostics and the menu, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)")
         case .levelingMinCut:
-            Text("Only when quieter by", comment: "Settings → Behavior and the menu, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)")
+            String(localized: "Only when quieter by", comment: "Settings → Behavior, Diagnostics and the menu, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)")
         }
     }
+
+    /// `name` as a view's text.
+    var title: Text { Text(verbatim: name) }
 
     /// What it does, under it in Settings (the menu leaves it out).
     var help: Text {
@@ -263,8 +271,25 @@ enum SettingsTiming {
 
     func format(_ value: Double) -> String {
         switch self {
-        case .silenceThreshold, .levelingMaxCut, .levelingMinCut: String(localized: "\(Int(value)) dB", comment: "A sound level in decibels")
+        case .silenceThreshold, .levelingMaxCut, .levelingMinCut: Self.decibels(value)
         default: value.secondsText
         }
+    }
+
+    /// A sound level, as "-60 dB": here, and in Diagnostics.
+    static func decibels(_ value: Double) -> String {
+        String(localized: "\(Int(value)) dB", comment: "A sound level in decibels")
+    }
+
+    /// The fade-in greyed out on its own, in Settings and the menu: nothing
+    /// resumes, while the fades otherwise apply.
+    @MainActor static func fadeInUnused(_ model: SettingsModel) -> Bool {
+        !model.timings.resumesPlayback && model.timings.fadesEnabled && model.playerCanFade
+    }
+
+    /// Level the volume's limits greyed out, in Settings and the menu: it's
+    /// off, or can't be on.
+    @MainActor static func levelingLimitsUnavailable(_ model: SettingsModel) -> Bool {
+        !model.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(model)
     }
 }

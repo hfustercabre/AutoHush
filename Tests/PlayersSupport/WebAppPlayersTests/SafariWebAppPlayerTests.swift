@@ -5,7 +5,7 @@ import AutoHushKit
 import AutoHushTestSupport
 import PlayersTestSupport
 
-@Suite("SafariWebAppPlayer", .timeLimit(.minutes(1)))
+@Suite("SafariWebAppPlayer", .waitsTimeLimit)
 struct SafariWebAppPlayerTests {
     static let app = SafariWebApp(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
                                   url: URL(fileURLWithPath: "/Users/test/Applications/YT Music.app"))

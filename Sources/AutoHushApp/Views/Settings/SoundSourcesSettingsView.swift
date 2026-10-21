@@ -74,10 +74,14 @@ struct SoundSourcesSettingsView: View {
             .environment(\.highlightBand, .bottom)
         }
         // Asked as every removal is (`PlayerAlerts.confirm`): its button
-        // blue, not red (the user, 2026-10-20).
+        // blue, not red (the user, 2026-10-20). From the run loop, after
+        // this update: run from a main-actor task, the alert's modal loop
+        // would hold up every other main-actor job until it closes.
         .onChange(of: list.appsAwaitingRemoval) { _, rows in
             guard !rows.isEmpty else { return }
-            Task { @MainActor in confirmRemoval(rows) }
+            RunLoop.main.perform(inModes: [.common]) {
+                MainActor.assumeIsolated { confirmRemoval(rows) }
+            }
         }
     }
 

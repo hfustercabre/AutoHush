@@ -21,12 +21,6 @@ enum AddAppText {
         String(localized: "Cancel", comment: "Button that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player or to remove an app added with Add an App")
     }
 
-    /// Closes the window once its check is done: the check is kept, so
-    /// closing cancels nothing (the style guide's Later).
-    static var later: String {
-        String(localized: "Later", comment: "Button that closes it for now: an update alert, a window that learns a web app's controls (the learning window, the Add a Web App window), or the Add an App window once its check is done (the check is kept)")
-    }
-
     // MARK: Step 1: the app
 
     static var chooseTitle: String {

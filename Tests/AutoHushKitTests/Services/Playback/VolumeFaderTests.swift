@@ -24,7 +24,7 @@ private actor FadeBox {
     func value() async throws -> Bool { try await task?.value ?? true }
 }
 
-@Suite("VolumeFader", .timeLimit(.minutes(1)))
+@Suite("VolumeFader", .waitsTimeLimit)
 struct VolumeFaderTests {
     private func makeFader(
         _ player: MockMusicPlayer, fadeOut: TimeInterval = 2, fadeIn: TimeInterval = 3, gate: StepGate = StepGate()

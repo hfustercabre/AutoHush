@@ -52,19 +52,13 @@ struct LearningWindowView: View {
             .windowMargins()
             BottomBar {
                 Spacer()
-                Button { later() } label: { Text(verbatim: Self.laterTitle) }
+                Button { later() } label: { Text(verbatim: LaterText.title) }
                     .buttonStyle(.chip)
                     .keyboardShortcut(.cancelAction)
             }
         }
         .frame(width: AddWebAppView.width) // a guiding window's, as Add a Web App's
         .font(.appBody)
-    }
-
-    /// Closes it for now; here and in the Add a Web App window once its web
-    /// app is made (learning can wait for the Controls row).
-    static var laterTitle: String {
-        String(localized: "Later", comment: "Button that closes it for now: an update alert, a window that learns a web app's controls (the learning window, the Add a Web App window), or the Add an App window once its check is done (the check is kept)")
     }
 }
 

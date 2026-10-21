@@ -17,8 +17,8 @@ package protocol OutputDisconnectWatching: AnyObject, Sendable {
 /// it leaves the list of devices (Bluetooth, USB, AirPods; on Apple silicon
 /// the headphone jack's own "External Headphones" too), or when its jack says
 /// nothing is plugged in any more (the headphone jack of older Macs). Two
-/// signs of one disconnect (the device leaving, then the output in use
-/// changing) count once.
+/// signs of one disconnect (the device leaving and the output in use
+/// changing, in either order: `OutputLoss`) count once.
 ///
 /// `@unchecked Sendable`: its state is only read and changed on `queue`,
 /// where every listener runs; `start` and `stop` hop onto it.
@@ -36,6 +36,8 @@ package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, 
     private var output: AudioObjectID?
     private var jackConnected: Bool?
     private var lastDisconnect: Date?
+    /// The output in use and the one just left (`check`).
+    private var loss = OutputLoss()
     private var systemListener: AudioObjectPropertyListenerBlock?
     private var jackListener: AudioObjectPropertyListenerBlock?
 
@@ -68,15 +70,18 @@ package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, 
             }
             systemListener = nil
             follow(nil)
+            loss = OutputLoss()
             onDisconnect = nil
         }
     }
 
     /// The devices or the output in use changed: the one in use is gone
-    /// if it left the list.
+    /// if it left the list, or the one just left (`OutputLoss`).
     private func check() {
-        if let output, !Self.devices().contains(output) { disconnected(because: "it left the devices") }
         let current = Self.defaultOutput()
+        if let reason = loss.update(output: output, current: current, devices: Self.devices(), now: Date()) {
+            disconnected(because: reason)
+        }
         if current != output { follow(current) }
     }
 
@@ -125,5 +130,31 @@ package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, 
     private static func jackIsConnected(_ device: AudioObjectID) -> Bool {
         CoreAudioProperty.value(kAudioDevicePropertyJackIsConnected, of: device, scope: kAudioDevicePropertyScopeOutput,
                                 initial: UInt32(0)) == 1
+    }
+}
+
+/// Whether the output in use went away, from what Core Audio says as the
+/// devices or the output in use change. macOS may announce the next output
+/// before the old one leaves the devices: the output just left is watched
+/// for `CoreAudioOutputDisconnectWatcher.sameDisconnect` too, so its leaving
+/// still counts. One that stays was chosen by the user: no disconnect.
+struct OutputLoss {
+    /// The output in use before the last change, and when it changed.
+    private var left: (device: AudioObjectID, at: Date)?
+
+    /// `output`: the one followed until now; `current`: the one in use now.
+    /// Why the output in use went away, or `nil` when it didn't.
+    mutating func update(output: AudioObjectID?, current: AudioObjectID?, devices: [AudioObjectID], now: Date) -> String? {
+        if let left, now.timeIntervalSince(left.at) >= CoreAudioOutputDisconnectWatcher.sameDisconnect { self.left = nil }
+        if let output, !devices.contains(output) {
+            left = nil
+            return "it left the devices"
+        }
+        if let gone = left?.device, !devices.contains(gone) {
+            left = nil
+            return "it left the devices after the output in use changed"
+        }
+        if let output, current != output { left = (output, now) }
+        return nil
     }
 }

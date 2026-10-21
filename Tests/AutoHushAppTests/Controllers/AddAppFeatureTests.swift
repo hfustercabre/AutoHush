@@ -5,7 +5,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("AddAppFeature", .timeLimit(.minutes(1)))
+@Suite("AddAppFeature", .waitsTimeLimit)
 @MainActor
 struct AddAppFeatureTests {
     /// The host, the apps on the Mac and the check's helper (`World`), the

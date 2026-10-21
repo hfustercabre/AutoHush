@@ -4,7 +4,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("LearningSession", .timeLimit(.minutes(1)))
+@Suite("LearningSession", .waitsTimeLimit)
 @MainActor
 struct LearningSessionTests {
     /// A web app AutoHush must learn, whose learning the test moves along.

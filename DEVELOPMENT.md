@@ -306,10 +306,11 @@ Developing AutoHush needs Xcode 27 or later, which runs on macOS 26.6 or later (
 swift build      # build every module and the tools
 swift test       # run the tests of every module
 AUTOHUSH_QUICK_TESTS=1 swift test   # the same without the slow ones (real disk images)
+AUTOHUSH_TEST_WAIT=90 swift test    # on a slow machine: each wait 90 s instead of 30 s (CI sets it)
 bash Scripts/build-app.sh release   # build and sign AutoHush.app
 ```
 
-The tests use mock CoreAudio, level meter, power assertion and player implementations, so they never create real taps, script a real player or trigger permission prompts. A suite's tests run at once unless it says why they can't (`.serialized`), and a suite whose tests wait at a gate has a time limit, so a change that breaks one fails instead of hanging.
+The tests use mock CoreAudio, level meter, power assertion and player implementations, so they never create real taps, script a real player or trigger permission prompts. A suite's tests run at once unless it says why they can't (`.serialized`), and a suite whose tests wait at a gate has a time limit, as long as two waits, so a change that breaks one fails instead of hanging.
 
 The package builds in Swift 6's language mode with five of Swift 7's rules on ahead of it (`Package.swift`): an async function that isn't isolated runs on its caller's actor, the main actor when the app calls it; a main-actor type's conformances are main-actor ones; a `weak` capture can't be reassigned; a protocol used as a type is written `any P`; and a file sees only the members of the modules it imports itself. So work that blocks (Accessibility, Apple events, Core Audio, the disk) goes through a queue of its own (`DispatchQueue.run`), the players are actors, and `@concurrent` marks only a function that blocks between its awaits (making a web app, preparing an update, listing the apps to check) or one a framework calls through Objective-C.
 

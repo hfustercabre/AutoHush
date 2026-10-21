@@ -2,9 +2,10 @@ import AutoHushKit
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
 @MainActor
-@Suite("AddWebAppModel", .timeLimit(.minutes(1)))
+@Suite("AddWebAppModel", .waitsTimeLimit)
 struct AddWebAppModelTests {
     /// A model showing `site` ready to add, for the add numbered `attempt`.
     private func readyModel(attempt: Int) -> AddWebAppModel {

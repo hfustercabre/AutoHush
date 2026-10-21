@@ -7,8 +7,18 @@ import Testing
 /// what usually takes milliseconds. The main actor is the busiest: the
 /// whole quick suite keeps it at work for about ten seconds, and a wait for
 /// main-actor work queues behind the rest (2026-10-19: 10 s was too short).
+/// `AUTOHUSH_TEST_WAIT` (seconds) makes it longer: CI's runner, several
+/// times slower than the VMs, sets 90 (2026-10-21: waits of 30 s ran out
+/// there).
 package enum TestWait {
-    package static let limit: Duration = .seconds(30)
+    package static let limit: Duration = .seconds(seconds)
+
+    /// 30, or `AUTOHUSH_TEST_WAIT` when it's longer.
+    private static let seconds = max(30, ProcessInfo.processInfo.environment["AUTOHUSH_TEST_WAIT"].flatMap(Int.init) ?? 0)
+
+    /// The suites' limit on each test: a minute, room for two waits; longer
+    /// with longer waits.
+    package static let testMinutes = (2 * seconds + 59) / 60
 
     /// Polls `condition` on the caller's actor until it holds. Once `limit`
     /// has passed, the test fails at the caller's line, so a wait checks its
@@ -41,4 +51,9 @@ package enum TestWait {
     package static func timedOut(at sourceLocation: SourceLocation) {
         Issue.record("Waited \(limit) and the condition never held", sourceLocation: sourceLocation)
     }
+}
+
+extension Trait where Self == TimeLimitTrait {
+    /// Each test's time limit, as long as two of its waits (`TestWait`).
+    package static var waitsTimeLimit: Self { .timeLimit(.minutes(TestWait.testMinutes)) }
 }

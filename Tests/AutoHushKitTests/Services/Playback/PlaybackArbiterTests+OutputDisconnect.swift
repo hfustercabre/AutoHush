@@ -51,17 +51,18 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 1)
     }
 
-    @Test("a pause fading out as the output goes away is forgotten once it's done: the music stays paused")
+    @Test("a pause fading out as the output goes away pauses where it got to, not fading on, and is forgotten: the music stays paused")
     func disconnectDuringFadeOut() async {
         let player = MockMusicPlayer(state: .playing)
         let steps = FadeSteps(holdingAt: 2)
         let arbiter = await disconnectArbiter(player, steps: steps)
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true) // its pause runs on its own
-        await TestWait.until { await steps.count == 2 } // fading out
+        await TestWait.until { await steps.count == 2 } // fading out: 10 steps of 0.1 s in all
         await arbiter.handleOutputDisconnected()
         await steps.letGo(2)
         await arbiter.waitUntilIdle()
         #expect(await player.pauseCallCount == 1)
+        #expect(await steps.count < 10) // the fade's other 8 steps never came
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)

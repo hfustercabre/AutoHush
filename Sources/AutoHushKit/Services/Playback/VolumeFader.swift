@@ -49,6 +49,10 @@ package actor VolumeFader {
     private var comingBack: Int?
     /// Set by `abandon()`: fades stop where they are, without coming back.
     private var isAbandoned = false
+    /// The `generation` of the fade-out ramping down now, and of the one
+    /// `cutFadeOutShort()` ended, which pauses where it got to.
+    private var fadingOut: Int?
+    private var cutShort: Int?
 
     init(
         player: any MusicPlayer,
@@ -82,7 +86,12 @@ package actor VolumeFader {
         let bottom = top - Self.fadeRange
         logger.debug("[fade] out from \(current, privacy: .public) (user volume \(target, privacy: .public))")
 
-        guard await ramp(from: level(of: current, floor: bottom), to: bottom, fullTime: fadeOut, fade: fade) else {
+        fadingOut = fade
+        let faded = await ramp(from: level(of: current, floor: bottom), to: bottom, fullTime: fadeOut, fade: fade)
+        fadingOut = nil
+        let isCutShort = cutShort == fade
+        if isCutShort { cutShort = nil }
+        guard faded || isCutShort else {
             guard !isAbandoned else { return false } // `abandon()` set the volume back
             // Cancelled: bring the music back up from wherever the fade got to.
             // It comes back from before the volume is read, so an app that
@@ -129,6 +138,15 @@ package actor VolumeFader {
         try await presses.press(to: .paused)
         await sleep(Self.restoreDelay)
         if latestFade == fade { await restoreUserVolume() }
+    }
+
+    /// Ends the fade-out ramping down now at once: it pauses where it got
+    /// to, without fading further (the output went away, and the rest would
+    /// play on the next one). Nothing while none is.
+    func cutFadeOutShort() {
+        guard let fadingOut, fadingOut == generation else { return }
+        cutShort = fadingOut
+        generation += 1
     }
 
     /// Plays from near silence, then fades the music in to the user's volume.

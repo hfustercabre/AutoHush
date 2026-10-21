@@ -115,8 +115,7 @@ package final class ProcessAudioSourceIdentifier: AudioSourceIdentifying, Sendab
 
     package static func source(forBundleAt url: URL) -> AudioSource? {
         guard let identifier = Bundle(url: url)?.bundleIdentifier else { return nil }
-        let name = AppName.of(appAt: url)
-        return AudioSource(id: identifier, name: name.isEmpty ? identifier : name, bundlePath: url.path)
+        return AudioSource(id: identifier, name: AppName.of(appAt: url), bundlePath: url.path)
     }
 }
 

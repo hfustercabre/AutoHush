@@ -82,7 +82,7 @@ struct AddWebAppView: View {
                     if case .learning = model.phase {
                         // The web app is added: its controls can be learned
                         // later, from the menu's or Settings' Controls row.
-                        Text(verbatim: LearningWindowView.laterTitle)
+                        Text(verbatim: LaterText.title)
                     } else {
                         Text(verbatim: AddAppText.cancel)
                     }

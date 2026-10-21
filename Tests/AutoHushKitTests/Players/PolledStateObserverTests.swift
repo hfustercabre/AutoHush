@@ -24,7 +24,7 @@ private final class FakeState: Sendable {
 }
 
 @MainActor
-@Suite("PolledStateObserver", .timeLimit(.minutes(1)))
+@Suite("PolledStateObserver", .waitsTimeLimit)
 struct PolledStateObserverTests {
     @Test("reports each change once, says nothing for unknown states, and nothing after stop; changes are declared up to 1.5 s late")
     func changes() async throws {

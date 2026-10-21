@@ -50,7 +50,7 @@ struct AddAppView: View {
             BottomBar {
                 // While a check runs, Escape is its Stop (in the check's step).
                 // Once the check is done, closing cancels nothing: it's kept.
-                Button { close() } label: { Text(verbatim: isDone ? AddAppText.later : AddAppText.cancel) }
+                Button { close() } label: { Text(verbatim: isDone ? LaterText.title : AddAppText.cancel) }
                     .buttonStyle(.chip)
                     .keyboardShortcut(model.stage == .checking ? nil : .cancelAction)
                 Spacer()

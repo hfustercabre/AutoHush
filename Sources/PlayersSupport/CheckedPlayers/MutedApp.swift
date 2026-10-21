@@ -80,11 +80,16 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         // Without Audio Recording a tap mutes nothing: the mute fails, as
         // in AntiDot mode, rather than reading as taken (the user, 2026-10-20).
-        let muter = muter
-        guard tapsAllowed.withLock({ $0 }), audioRecordingAllowed(), await queue.run({ muter.mute(appPID: pid) }) else {
+        guard tapsAllowed.withLock({ $0 }) else { throw MusicPlayerError.playerCommandFailed(.muteUnavailable) }
+        // Noted before the mute is made: a release meanwhile lifts it, after
+        // it, as the queue keeps their order, and the pause is off.
+        mutedPID = pid
+        let muter = muter, allowed = audioRecordingAllowed
+        let muted = await queue.run { allowed() && muter.mute(appPID: pid) }
+        guard muted, mutedPID == pid else {
+            if mutedPID == pid { mutedPID = nil }
             throw MusicPlayerError.playerCommandFailed(.muteUnavailable)
         }
-        mutedPID = pid
         hush.mute()
     }
 

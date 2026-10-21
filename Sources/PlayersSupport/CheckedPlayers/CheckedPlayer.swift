@@ -266,9 +266,10 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// or in AntiDot mode, which taps no sound.
     func heardNow(_ pid: pid_t) async -> Bool? {
         guard await soundOnNow(pid) else { return false }
-        guard tapsAllowed.withLock({ $0 }), audioRecordingAllowed() else { return nil }
-        let probe = levelProbe
-        return await Self.probeQueue.run { probe.isAudible(appPID: pid) }
+        guard tapsAllowed.withLock({ $0 }) else { return nil }
+        // Audio Recording asked on the probe's queue too: TCC answers by IPC.
+        let probe = levelProbe, allowed = audioRecordingAllowed
+        return await Self.probeQueue.run { allowed() ? probe.isAudible(appPID: pid) : nil }
     }
 
     /// What it last reported to Now Playing, unless that's stale (see

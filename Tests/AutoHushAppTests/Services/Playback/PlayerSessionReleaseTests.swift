@@ -5,7 +5,7 @@ import Testing
 import AutoHushTestSupport
 
 @MainActor
-@Suite("PlayerSession: a player no longer chosen", .timeLimit(.minutes(1)))
+@Suite("PlayerSession: a player no longer chosen", .waitsTimeLimit)
 struct PlayerSessionReleaseTests {
     /// A player that turns something on in its app to be controlled (an
     /// added app's page switch, a mute), counting the times it's turned back off.

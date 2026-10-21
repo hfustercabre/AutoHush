@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("PlaybackArbiter", .timeLimit(.minutes(1)))
+@Suite("PlaybackArbiter", .waitsTimeLimit)
 struct PlaybackArbiterTests {
 
     // MARK: - Helpers

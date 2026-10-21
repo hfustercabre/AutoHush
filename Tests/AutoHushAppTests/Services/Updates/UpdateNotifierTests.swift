@@ -4,7 +4,7 @@ import UserNotifications
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("SystemUpdateNotifier", .timeLimit(.minutes(1)))
+@Suite("SystemUpdateNotifier", .waitsTimeLimit)
 @MainActor
 struct UpdateNotifierTests {
     /// Stands in for the Notification Center: AutoHush isn't allowed or

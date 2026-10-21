@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("WindowWatch", .timeLimit(.minutes(1)))
+@Suite("WindowWatch", .waitsTimeLimit)
 @MainActor
 struct WindowWatchTests {
     /// A window the watch follows, opened or closed by the test.

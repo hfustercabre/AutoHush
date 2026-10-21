@@ -7,7 +7,7 @@ import WebAppPlayers
 import PlayerCheckKit
 
 @MainActor
-@Suite("AddAppModel", .timeLimit(.minutes(1)))
+@Suite("AddAppModel", .waitsTimeLimit)
 struct AddAppModelTests {
     private let result = CheckResult(
         ways: [CheckResult.WayResult(kind: .menu, mark: .none), CheckResult.WayResult(kind: .panel, mark: .works)],
