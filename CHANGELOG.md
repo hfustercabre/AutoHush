@@ -162,9 +162,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Shorter texts.** The 30 longest say the same in fewer words, in every
   language: Settings' Detection and Sound Sources, Add an App's steps and
   check, adding and learning web apps, and choosing a player.
-- **The menu's Detection and Fades titles have a bigger chevron, in the
-  middle of their line,** as big as the one on rows that open a side
-  window.
+- **Settings: Behavior and Detection.** When your player pauses and
+  resumes, the fades and the volume are on one page, **Behavior**, in four
+  cards (Pausing, Resuming, Fades, Volume), each with its own Restore
+  Defaults; **Detection** keeps AntiDot mode and the silence threshold.
+  The menu's settings follow: Behavior, then Detection. The Settings
+  window can be 600 pt tall again.
+- **The menu's folding titles have a bigger chevron, in the middle of
+  their line,** as big as the one on rows that open a side window.
 - **What Add an App's check asks of you is blue.** Start it playing, pause
   it with its own Pause, allow Accessibility: the panel's request is in the
   accent color, so it stands apart from the orange warning that clicks and
@@ -172,20 +177,20 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Pause on disconnect** (Settings → Detection, under Output, and the
+- **Pause on disconnect** (Settings → Behavior, under Pausing, and the
   menu; off by default): when the headphones or another output your player
   plays through are unplugged or go out of range, it pauses at once,
   without a fade, instead of moving to the speakers, and stays paused
   until you play it. Choosing another output yourself doesn't count.
   Some players already do this themselves.
-- **Resume playback** (Settings → Detection, under Playback, and the
+- **Resume playback** (Settings → Behavior, under Resuming, and the
   menu; on by default): turned off, AutoHush only pauses your player, and
   it stays paused until you play it. What only matters when resuming is
   greyed out then: Resume playback after, the fade-in, Level the volume
   and Stay paused after calls.
 - **Hebrew, Malay and Thai.** AutoHush speaks 38 languages, every one
   macOS comes in; in Hebrew, as in Arabic, it reads right to left.
-- **Pause for the microphone** (Settings → Calls, a page of its own, and
+- **Pause for the microphone** (Settings → Behavior, under Pausing, and
   the menu; off by default): an app that turns on its microphone pauses your
   player after a second, before it plays any sound, as a call that starts
   muted or in a waiting room does. The card says "Paused — zoom.us is
@@ -193,24 +198,27 @@ This project follows [Semantic Versioning](https://semver.org/).
   once no app uses the microphone. AutoHush only reads whether an app's
   microphone is on, which needs no permission, so it works in AntiDot mode
   too.
-- **More settings in the menu.** Under Ignored Apps, Detection's, Fades',
-  Calls' and Advanced's switches, each under its section's name, with a few words
-  on what it does and its symbol in the accent color while it's on. Click
-  Detection's title to unfold its ways and timings, and Fades' for its
-  lengths. Folded at first, each stays as you left it while AutoHush
+- **More settings in the menu.** Under Ignored Apps, Behavior's and
+  Detection's switches, each part under its page's name and its switches
+  under Settings' card titles (Pausing, Resuming, Fades, Volume; Modes),
+  with a few words on what each does and its symbol in the accent color
+  while it's on.
+  Click Behavior's title to unfold its timings, the fade lengths and Level
+  the volume's limits, and Detection's for its ways and the silence
+  threshold. Folded at first, each stays as you left it while AutoHush
   runs. Settings → Detection has a "Modes" heading over AntiDot mode, as
   the menu does.
-- **Level the volume** (Settings → Advanced, off by default). When the apps
-  your player was paused for were quieter than it (by 2 dB or more:
-  **Only when quieter by**, 1 to 10 dB), it resumes with the Mac's volume
-  lowered to match (10 dB at most: **Lower by at most**, 2 to 20 dB; the
-  menu's Advanced unfolds both too), until the next pause, when
-  the volume goes back up as it fades out. Calls don't count, and a volume
+- **Level the volume** (Settings → Behavior, under Volume, off by
+  default). When the apps your player was paused for were quieter than it
+  (by 2 dB or more: **Only when quieter by**, 1 to 10 dB), it resumes with
+  the Mac's volume lowered to match (10 dB at most: **Lower by at most**,
+  2 to 20 dB; the menu's Behavior unfolds both too), until the next pause,
+  when the volume goes back up as it fades out. Calls don't count, and a volume
   you change meanwhile stays yours. It needs an output with a volume
   control, and isn't available in AntiDot mode.
-- **Stay paused after calls** (Settings → Calls, off by default): your
-  player isn't resumed when a call (an app using the microphone) came
-  while it was paused.
+- **Stay paused after calls** (Settings → Behavior, under Resuming, off by
+  default): your player isn't resumed when a call (an app using the
+  microphone) came while it was paused.
 - **Recently Played in the menu.** Under Playing Now, the apps that
   played in the last 30 minutes (the last four), each with its switch, so
   one that stopped before you could switch it off is still there. Both

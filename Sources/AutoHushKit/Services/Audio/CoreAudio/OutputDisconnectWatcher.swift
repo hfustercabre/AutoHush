@@ -4,7 +4,7 @@ import Foundation
 /// Tells when the output sound plays through goes away: unplugged, out of
 /// range, or taken by another device (AirPods moving to an iPhone). macOS then
 /// plays on another output, often the speakers (Pause on disconnect,
-/// Settings → Detection). Choosing another output yourself isn't
+/// Settings → Behavior). Choosing another output yourself isn’t
 /// that: the one left is still there.
 package protocol OutputDisconnectWatching: AnyObject, Sendable {
     /// Calls `onDisconnect` each time the output in use goes away, until `stop()`.

@@ -76,7 +76,7 @@ package final class MonitoringPipeline {
     /// `hostedApp` names a process's app when its program doesn't (see
     /// `ProcessAudioSourceIdentifier`). `resumesHeld`: it starts with
     /// resumes held (see `holdResumes`). `volumeLeveler` lowers the Mac's
-    /// volume as the music resumes after quieter apps (Settings → Advanced):
+    /// volume as the music resumes after quieter apps (Settings → Behavior):
     /// the app's one, which every monitoring shares.
     package init(
         player: any MusicPlayer,

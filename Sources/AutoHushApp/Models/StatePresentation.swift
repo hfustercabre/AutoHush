@@ -114,7 +114,7 @@ extension PlaybackState {
             return String(localized: "another app is playing", comment: "Completes “Paused — %@”")
         case 1 where microphone:
             return String(localized: "\(names[0]) is using the microphone",
-                          comment: "Completes “Paused — %@”, when an app with its microphone on (a call) paused your player before playing any sound (Settings → Calls → Pause for the microphone); %@ is the app")
+                          comment: "Completes “Paused — %@”, when an app with its microphone on (a call) paused your player before playing any sound (Settings → Behavior → Pause for the microphone); %@ is the app")
         case 1:
             return String(localized: "\(names[0]) is playing", comment: "Completes “Paused — %@”; %@ is an app")
         case 2:

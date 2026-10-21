@@ -31,7 +31,7 @@ final class SettingsWindowControllerTests {
         #expect(split.splitViewItems.count == 2)
         #expect(split.splitViewItems.first?.behavior == .sidebar)
         #expect(SettingsWindowController.Page.groups.map { $0.map(\.title) }
-                == [["General", "Sound Sources"], ["Detection", "Fades", "Calls", "Advanced"], ["Diagnostics", "Updates", "About"]])
+                == [["General", "Sound Sources"], ["Behavior", "Detection"], ["Diagnostics", "Updates", "About"]])
         #expect(Set(SettingsWindowController.Page.groups.joined()) == Set(SettingsWindowController.Page.allCases))
         #expect(sut.shownPage == nil) // not on screen
 
@@ -54,7 +54,7 @@ final class SettingsWindowControllerTests {
         #expect(window.styleMask.contains(.resizable))
         // At least 715 × 560, wider when a choice needs it in the app's language.
         #expect(window.contentMinSize == SettingsWindowController.minimumSize)
-        #expect(window.contentMinSize.width >= 715 && window.contentMinSize.height == 650)
+        #expect(window.contentMinSize.width >= 715 && window.contentMinSize.height == 600)
         #expect(window.contentMaxSize == SettingsWindowController.maximumSize)
         #expect(window.contentMaxSize.width >= 875 && window.contentMaxSize.height == 900)
         let sidebar = try #require((window.contentViewController as? NSSplitViewController)?.splitViewItems.first)

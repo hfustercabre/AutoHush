@@ -108,7 +108,7 @@ extension PlaybackArbiter {
         }
 
         // After quieter apps, the Mac's volume lowered to their level first,
-        // while nothing plays (Settings → Advanced). A try again finds it
+        // while nothing plays (Settings → Behavior). A try again finds it
         // lowered already, by the try before.
         if configuration.levelsMusic, let volumeLeveler, let offset = await resumeOffset() {
             guard !isShutDown, pendingResumeID == id else { return }

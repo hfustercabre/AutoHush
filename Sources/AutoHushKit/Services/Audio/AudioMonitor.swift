@@ -153,7 +153,7 @@ final class AudioMonitor: @unchecked Sendable {
     /// count only for their microphone.
     var soundedSourceIDs: Set<String> = []
     /// How loud the music was before AutoHush's pause, and the apps
-    /// during it (Settings → Advanced).
+    /// during it (Settings → Behavior).
     var resumeLevel = ResumeLevel()
 
     init(

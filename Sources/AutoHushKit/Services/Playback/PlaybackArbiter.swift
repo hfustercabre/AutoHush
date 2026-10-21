@@ -33,7 +33,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// apps' (`AudioMonitor.setMusicPaused`).
     let onPausedByUsChange: @Sendable (Bool) -> Void
     /// Lowers the Mac's volume as the music resumes after quieter apps, by
-    /// `resumeOffset` (Settings → Advanced, `levelsMusic`).
+    /// `resumeOffset` (Settings → Behavior, `levelsMusic`).
     let volumeLeveler: any ResumeLeveling?
     let resumeOffset: @Sendable () async -> Float?
     /// The token of the volume this arbiter lowered for its music
@@ -231,7 +231,7 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     /// The output the sound played through went away (headphones unplugged
     /// or out of range, AirPods moved to another device): with Pause on
-    /// disconnect (Settings → Detection) and Auto-Pause on, the music pauses at once, without a fade, rather than moving to the next
+    /// disconnect (Settings → Behavior) and Auto-Pause on, the music pauses at once, without a fade, rather than moving to the next
     /// output, and stays paused: a pause of ours, or one fading out, is the
     /// user's from then on, as after a sleep (the user, 2026-10-21).
     func handleOutputDisconnected() async {

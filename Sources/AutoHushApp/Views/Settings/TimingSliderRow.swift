@@ -1,7 +1,7 @@
 import SwiftUI
 import AutoHushKit
 
-/// One of the timings as Settings → Detection and → Fades show it: its title
+/// One of the timings as Settings → Behavior and → Detection show it: its title
 /// and value, the slider, and what it does; `compact` (the menu's More
 /// Settings), smaller and without what it does. It's changed as it's dragged.
 struct TimingSliderRow: View {
@@ -72,7 +72,7 @@ struct RestoreDefaultsButton: View {
         HStack {
             Spacer()
             Button(action: action) {
-                Text("Restore Defaults", comment: "Settings → Detection, → Fades and → Advanced: button that sets the page's settings back to their defaults")
+                Text("Restore Defaults", comment: "Settings → Behavior's cards and → Detection: button that sets the card's settings back to their defaults")
             }
                 .buttonStyle(.chip)
                 .disabled(isDefault)

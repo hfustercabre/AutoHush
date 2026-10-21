@@ -3,16 +3,15 @@ import SwiftUI
 import AutoHushKit
 
 /// The menu's settings, below Ignored Apps, each part between lines (the
-/// user, 2026-10-17: no cards) under its page's title (2026-10-18):
-/// Detection's, Fades', Calls' and Advanced's switches, each with its symbol (in
-/// the accent color while it's on) and what it does in a few words. A part
-/// with more than its switches has a title that unfolds the rest in its
-/// place, a chevron in the middle of its line (T1, 2026-10-18; centered
-/// 2026-10-21): AntiDot mode's ways under it ("Modes") and Detection's
-/// timings ("Timing"); the
-/// fades' lengths under Fade playback; Level the volume's limits under it,
-/// under "Volume".
-/// Calls has nothing more. As in
+/// user, 2026-10-17: no cards) under its page's title (2026-10-18), as
+/// Settings has them (B, the user's pick, 2026-10-21): Behavior's switches,
+/// then Detection's, each with its symbol (in the accent color while it's
+/// on) and what it does in a few words, under Settings' card titles, folded
+/// or not (the user, 2026-10-21): Pausing, Resuming, Fades and Volume;
+/// Modes. Each part's title unfolds the rest in its place, a chevron in the
+/// middle of its line (T1, 2026-10-18; centered 2026-10-21): Behavior's
+/// sliders, Detection's ways under AntiDot mode and the silence threshold
+/// under "Measuring" (only then: folded, nothing is under it). As in
 /// Settings, what doesn't apply is greyed out, never hidden, saying why.
 struct MenuSettingsView: View {
     let model: StatusMenuModel
@@ -28,11 +27,52 @@ struct MenuSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            pageName(.detection, folding: .detection)
-            if isOpen(.detection) {
-                innerTitle(DetectionSettingsView.modesTitle)
-                    .opacity(fading(.detection))
+            pageName(.behavior, folding: .behavior)
+            innerTitle(BehaviorSettingsView.pausingTitle)
+            part {
+                if isOpen(.behavior) { behaviorRows { slider(.pauseAfter) } }
+                switchRow(.pausesForMicrophone)
+                switchRow(.pausesOnDisconnect)
             }
+            innerTitle(BehaviorSettingsView.resumingTitle)
+            part {
+                switchRow(.resumesPlayback)
+                if isOpen(.behavior) {
+                    behaviorRows { slider(.resumeAfter).unavailable(!settings.timings.resumesPlayback) }
+                }
+                switchRow(.staysPausedAfterCalls)
+            }
+            innerTitle(Text(verbatim: BehaviorSettingsView.fadesTitle))
+            part {
+                switchRow(.fades)
+                if isOpen(.behavior) {
+                    behaviorRows {
+                        Group {
+                            slider(.fadeOut)
+                            // Greyed out on its own while nothing resumes, when the rest isn't.
+                            slider(.fadeIn)
+                                .unavailable(!settings.timings.resumesPlayback && settings.playerCanFade && settings.timings.fadesEnabled)
+                        }
+                        .unavailable(!settings.playerCanFade || !settings.timings.fadesEnabled)
+                    }
+                }
+            }
+            innerTitle(BehaviorSettingsView.volumeTitle)
+            part {
+                switchRow(.levelsMusic)
+                if isOpen(.behavior) {
+                    behaviorRows {
+                        Group {
+                            slider(.levelingMaxCut)
+                            slider(.levelingMinCut)
+                        }
+                        .unavailable(!settings.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(settings))
+                    }
+                }
+            }
+            line
+            pageName(.detection, folding: .detection)
+            innerTitle(DetectionSettingsView.modesTitle)
             part {
                 switchRow(.antiDot)
                 if isOpen(.detection) {
@@ -58,73 +98,25 @@ struct MenuSettingsView: View {
                 }
             }
             if isOpen(.detection) {
-                innerTitle(DetectionSettingsView.outputTitle)
-                    .opacity(fading(.detection))
-            }
-            part {
-                switchRow(.pausesOnDisconnect)
-            }
-            if isOpen(.detection) {
-                innerTitle(DetectionSettingsView.playbackTitle)
-                    .opacity(fading(.detection))
-            }
-            part {
-                switchRow(.resumesPlayback)
-            }
-            if isOpen(.detection) {
-                innerTitle(DetectionSettingsView.timingTitle)
+                innerTitle(DetectionSettingsView.measuringTitle)
                     .opacity(fading(.detection))
                 part {
-                    slider(.pauseAfter)
-                    slider(.resumeAfter).unavailable(!settings.timings.resumesPlayback)
                     slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
                 }
                 .disabled(isFolding(.detection))
                 .opacity(fading(.detection))
                 .transition(Self.unfolding) // the part comes in whole, not its rows
             }
-            line
-            pageName(.fades, folding: .fades)
-            part {
-                switchRow(.fades)
-                if isOpen(.fades) {
-                    Group {
-                        slider(.fadeOut)
-                        // Greyed out on its own while nothing resumes, when the rest isn't.
-                        slider(.fadeIn)
-                            .unavailable(!settings.timings.resumesPlayback && settings.playerCanFade && settings.timings.fadesEnabled)
-                    }
-                    .unavailable(!settings.playerCanFade || !settings.timings.fadesEnabled)
-                    .disabled(isFolding(.fades))
-                    .opacity(fading(.fades))
-                }
-            }
-            line
-            pageName(.calls)
-            part {
-                switchRow(.pausesForMicrophone)
-                switchRow(.staysPausedAfterCalls)
-            }
-            line
-            pageName(.advanced, folding: .advanced)
-            if isOpen(.advanced) {
-                innerTitle(AdvancedSettingsView.volumeTitle)
-                    .opacity(fading(.advanced))
-            }
-            part {
-                switchRow(.levelsMusic)
-                if isOpen(.advanced) {
-                    Group {
-                        slider(.levelingMaxCut)
-                        slider(.levelingMinCut)
-                    }
-                    .unavailable(!settings.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(settings))
-                    .disabled(isFolding(.advanced))
-                    .opacity(fading(.advanced))
-                }
-            }
         }
         .frame(width: menuContentWidth)
+    }
+
+    /// Rows Behavior unfolds: skipped by the keys and the pointer, and faded
+    /// out, while it folds.
+    private func behaviorRows<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .disabled(isFolding(.behavior))
+            .opacity(fading(.behavior))
     }
 
     /// A part's rows, inset as the menu's other rows.
@@ -214,7 +206,7 @@ struct MenuSettingsView: View {
         .accessibilityAddTraits(.isHeader)
     }
 
-    /// A title inside a page's part ("Modes", "Timing"): a description's size, grey.
+    /// A title inside a page's part ("Pausing", "Modes"): a description's size, grey.
     private func innerTitle(_ title: Text) -> some View {
         MenuInnerTitle(title)
             .padding(.horizontal, 14)
@@ -234,11 +226,11 @@ struct MenuSettingsView: View {
     }
 
     static var showTitle: String {
-        String(localized: "Show More Settings", comment: "Menu: the tooltip of Detection’s or Fades’ title, which shows the rest of that part’s settings")
+        String(localized: "Show More Settings", comment: "Menu: the tooltip of Behavior’s or Detection’s title, which shows the rest of that part’s settings")
     }
 
     static var hideTitle: String {
-        String(localized: "Hide More Settings", comment: "Menu: the tooltip of Detection’s or Fades’ title, which folds the rest of that part’s settings away again")
+        String(localized: "Hide More Settings", comment: "Menu: the tooltip of Behavior’s or Detection’s title, which folds the rest of that part’s settings away again")
     }
 }
 

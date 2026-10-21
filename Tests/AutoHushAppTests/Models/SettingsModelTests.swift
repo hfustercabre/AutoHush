@@ -352,53 +352,65 @@ struct SettingsModelTests {
         #expect(DetectionMethod.openStreams.summary.contains("stay open \(Int(configuration.minimumStartWithOpenStreams)) seconds"))
     }
 
-    @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, the fades, Calls' switches or Advanced's")
+    @Test("each card's Restore Defaults restores the settings it shows only: Pausing's, Resuming's, the fades, Volume's or the silence threshold")
     func restoreDefaults() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                      fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+                                     pausesOnOutputDisconnect: true, resumesPlayback: false,
                                      levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
                                      pausesForMicrophone: true, staysPausedAfterCalls: true)
         model.setTimings(changed)
-        #expect(!model.detectionTimingsAreDefaults && !model.fadesAreDefaults && !model.callsAreDefaults && !model.advancedAreDefaults)
+        #expect(!model.pausingAreDefaults && !model.resumingAreDefaults && !model.fadesAreDefaults
+                    && !model.volumeAreDefaults && !model.silenceThresholdIsDefault)
 
-        model.restoreDefaultDetectionTimings()
-        #expect(model.detectionTimingsAreDefaults)
-        #expect(!model.fadesAreDefaults) // the other pages keep their own
-        #expect(model.timings == TimingSettings(fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+        model.restoreDefaultPausing()
+        #expect(model.pausingAreDefaults && !model.resumingAreDefaults) // the other cards keep their own
+        #expect(model.timings == TimingSettings(stopGrace: 7, silenceThresholdDB: -40,
+                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+                                                resumesPlayback: false,
                                                 levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
-                                                pausesForMicrophone: true, staysPausedAfterCalls: true))
+                                                staysPausedAfterCalls: true))
+
+        model.setTimings(changed)
+        model.restoreDefaultResuming()
+        #expect(model.resumingAreDefaults && !model.pausingAreDefaults)
+        #expect(model.timings == TimingSettings(startConfirmation: 2, silenceThresholdDB: -40,
+                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+                                                pausesOnOutputDisconnect: true,
+                                                levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
+                                                pausesForMicrophone: true))
 
         model.setTimings(changed)
         model.restoreDefaultFades()
-        #expect(model.fadesAreDefaults)
-        #expect(!model.detectionTimingsAreDefaults)
+        #expect(model.fadesAreDefaults && !model.volumeAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
+                                                pausesOnOutputDisconnect: true, resumesPlayback: false,
                                                 levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
                                                 pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
-        model.restoreDefaultCalls()
-        #expect(model.callsAreDefaults && !model.advancedAreDefaults)
+        model.restoreDefaultVolume()
+        #expect(model.volumeAreDefaults && !model.fadesAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                                 fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5))
+                                                pausesOnOutputDisconnect: true, resumesPlayback: false,
+                                                pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
-        model.restoreDefaultAdvanced()
-        #expect(model.advancedAreDefaults && !model.callsAreDefaults)
-        #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                pausesForMicrophone: true, staysPausedAfterCalls: true))
+        model.restoreDefaultSilenceThreshold()
+        #expect(model.silenceThresholdIsDefault && !model.pausingAreDefaults)
+        var threshold = changed
+        threshold.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+        #expect(model.timings == threshold)
 
         // In AntiDot mode the silence threshold is greyed out: it neither lights
         // Restore Defaults nor is restored.
         model.setTimings(TimingSettings(silenceThresholdDB: -40))
-        #expect(!model.detectionTimingsAreDefaults)
+        #expect(!model.silenceThresholdIsDefault)
         model.setAntiDotMode(true)
-        #expect(model.detectionTimingsAreDefaults)
-        model.setTimings(TimingSettings(startConfirmation: 2, silenceThresholdDB: -40))
-        model.restoreDefaultDetectionTimings()
+        #expect(model.silenceThresholdIsDefault)
+        model.restoreDefaultSilenceThreshold()
         #expect(model.timings == TimingSettings(silenceThresholdDB: -40))
     }
 

@@ -1,12 +1,11 @@
 import SwiftUI
 import AutoHushKit
 
-/// Settings → Detection, a grouped form: AntiDot mode (with the
+/// Settings → Detection, a grouped form: Modes, AntiDot mode (with the
 /// way of detecting while it's on, or the Audio Recording it needs while
-/// it's off), then Output (pausing on a disconnect), then Playback (resuming
-/// at all), then the timings: when another app counts as playing or
-/// stopped (greyed out while nothing resumes), and the silence threshold
-/// while AntiDot mode is off. Restore Defaults sets these timings back.
+/// it's off), then Measuring, the silence threshold (greyed out in AntiDot
+/// mode), which its Restore Defaults sets back. When to pause and resume is
+/// Settings → Behavior's (B, the user's pick, 2026-10-21).
 struct DetectionSettingsView: View {
     let model: SettingsModel
 
@@ -49,28 +48,12 @@ struct DetectionSettingsView: View {
                 }
             }
 
-            Card(Self.outputTitle) {
-                SettingsSwitchRow(model: model, kind: .pausesOnDisconnect)
-            }
-
-            Card(Self.playbackTitle) {
-                SettingsSwitchRow(model: model, kind: .resumesPlayback)
-            }
-
-            Card(Self.timingTitle) {
-                TimingSliderRow(model: model, timing: .pauseAfter)
-                CardDivider()
-                TimingSliderRow(model: model, timing: .resumeAfter)
-                    .unavailable(!model.timings.resumesPlayback)
-                if !model.timings.resumesPlayback {
-                    NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
-                }
-                // Only measuring audio levels has a threshold: greyed out in AntiDot mode.
-                CardDivider()
+            // Only measuring audio levels has a threshold: greyed out in AntiDot mode.
+            Card(Self.measuringTitle) {
                 TimingSliderRow(model: model, timing: .silenceThreshold)
                     .unavailable(model.isAntiDotMode)
             } footer: {
-                RestoreDefaultsButton(isDefault: model.detectionTimingsAreDefaults) { model.restoreDefaultDetectionTimings() }
+                RestoreDefaultsButton(isDefault: model.silenceThresholdIsDefault) { model.restoreDefaultSilenceThreshold() }
             }
         }
     }
@@ -85,24 +68,14 @@ struct DetectionSettingsView: View {
         }
     }
 
-    /// Over Pause on disconnect, here and in the menu's Detection.
-    static var outputTitle: Text {
-        Text("Output", comment: "Settings → Detection and the menu's Detection: heading over Pause on disconnect (the output is where sound plays: headphones, speakers), as System Settings → Sound → Output")
-    }
-
-    /// Over Resume playback, here and in the menu's Detection.
-    static var playbackTitle: Text {
-        Text("Playback", comment: "Settings → Detection and the menu's Detection: heading over Resume playback (whether your player resumes once other apps go quiet)")
-    }
-
     /// Over AntiDot mode, here and in the menu's Detection.
     static var modesTitle: Text {
         Text("Modes", comment: "Settings → Detection and the menu: heading over AntiDot mode")
     }
 
-    /// Over the timings, here and in the menu's Detection.
-    static var timingTitle: Text {
-        Text("Timing", comment: "Settings → Detection and the menu's Detection: heading of how long other apps must play or be quiet before your player pauses or resumes")
+    /// Over the silence threshold, here and in the menu's Detection.
+    static var measuringTitle: Text {
+        Text("Measuring", comment: "Settings → Detection and the menu's Detection: heading over the silence threshold (AutoHush measures other apps' sound to tell whether they play)")
     }
 
     /// The title over AntiDot mode's ways, which VoiceOver hears with them (the menu's too).

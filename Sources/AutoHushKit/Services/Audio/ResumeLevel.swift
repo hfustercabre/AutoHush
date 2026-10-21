@@ -1,7 +1,7 @@
 import Foundation
 
 /// How much quieter the apps the music was paused for were than the music
-/// (Settings → Advanced, "levelsMusic"): the music then resumes with the
+/// (Settings → Behavior, "levelsMusic"): the music then resumes with the
 /// Mac's volume lowered by as much (`SystemVolumeLeveler`).
 ///
 /// The music's loudness is its level just before AutoHush paused it: the

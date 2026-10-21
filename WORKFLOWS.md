@@ -37,7 +37,7 @@ flowchart TD
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
-  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>detection (Pause on disconnect,<br/>Resume playback), timings, fades,<br/>Calls (Pause for the microphone,<br/>Stay paused after calls),<br/>Advanced (Level the volume),<br/>Diagnostics"]
+  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>Behavior (pausing, resuming,<br/>fades, volume), Detection<br/>(AntiDot mode, silence),<br/>Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])
@@ -201,7 +201,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, the fades Settings → Fades’, Pause for the microphone and Stay paused after calls Settings → Calls’, and Level the volume Settings → Advanced’s (all off by default), Resume playback Settings → Detection’s (on by default); a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
+What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s, the fades, Pause for the microphone, Stay paused after calls and Level the volume (all off by default) and Resume playback (on by default) are Settings → Behavior’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
 
 ## Monitoring: what else changes it
 

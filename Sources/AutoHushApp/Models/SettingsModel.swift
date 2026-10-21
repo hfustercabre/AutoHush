@@ -125,17 +125,20 @@ final class SettingsModel {
     /// time Settings opens.
     var foldedDiagnostics: Set<DiagnosticsSnapshot.Part> = []
 
-    // Detection and Fades
-    /// Detection's timings shown (pause after, resume after, and the
-    /// silence threshold while AntiDot mode is off) are their defaults, so
-    /// its Restore Defaults has nothing to do.
-    var detectionTimingsAreDefaults: Bool { timings.withDefaultDetection(threshold: !isAntiDotMode) == timings }
+    // Behavior and Detection: each card's Restore Defaults has nothing to do
+    /// Pausing's: 0.5 s, and the microphone and an output going away off.
+    var pausingAreDefaults: Bool { timings.withDefaultPausing == timings }
+    /// Resuming's: Resume playback on, 2 s, Stay paused after calls off.
+    var resumingAreDefaults: Bool { timings.withDefaultResuming == timings }
     /// The fades (the switch and both lengths) are their defaults.
     var fadesAreDefaults: Bool { timings.withDefaultFades == timings }
-    /// Advanced's switch and limits are their defaults (off, 10 and 2 dB).
-    var advancedAreDefaults: Bool { timings.withDefaultAdvanced == timings }
-    /// Calls' switches are their defaults (both off).
-    var callsAreDefaults: Bool { timings.withDefaultCalls == timings }
+    /// Volume's switch and limits are their defaults (off, 10 and 2 dB).
+    var volumeAreDefaults: Bool { timings.withDefaultVolume == timings }
+    /// Detection's silence threshold is −60 dB, or greyed out in AntiDot
+    /// mode, which never restores it.
+    var silenceThresholdIsDefault: Bool {
+        isAntiDotMode || timings.silenceThresholdDB == TimingSettings.defaults.silenceThresholdDB
+    }
 
     /// The row with Check Now: what the last check found ("AutoHush 0.3.11
     /// is up to date.", "Checking…"), or this version before any check.
@@ -257,35 +260,49 @@ final class SettingsModel {
         setDetectionMethod(on ? settings.antiDotMethod : .audioLevels)
     }
 
-    /// Settings → Detection's Restore Defaults: the timings it shows only,
-    /// not the silence threshold hidden in AntiDot mode, nor the fades on
-    /// the other page.
-    func restoreDefaultDetectionTimings() {
-        setTimings(timings.withDefaultDetection(threshold: !isAntiDotMode))
+    /// Settings → Behavior's cards' Restore Defaults: each its own settings only.
+    func restoreDefaultPausing() {
+        setTimings(timings.withDefaultPausing)
     }
 
-    /// Settings → Fades' Restore Defaults: the fades only.
+    func restoreDefaultResuming() {
+        setTimings(timings.withDefaultResuming)
+    }
+
     func restoreDefaultFades() {
         setTimings(timings.withDefaultFades)
     }
 
-    func restoreDefaultAdvanced() {
-        setTimings(timings.withDefaultAdvanced)
+    func restoreDefaultVolume() {
+        setTimings(timings.withDefaultVolume)
     }
 
-    func restoreDefaultCalls() {
-        setTimings(timings.withDefaultCalls)
+    /// Settings → Detection's Restore Defaults: the silence threshold, not
+    /// while it's greyed out in AntiDot mode.
+    func restoreDefaultSilenceThreshold() {
+        guard !isAntiDotMode else { return }
+        var restored = timings
+        restored.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+        setTimings(restored)
     }
 }
 
 private extension TimingSettings {
-    /// These timings with Detection's back to their defaults, the silence
-    /// threshold too when `threshold`.
-    func withDefaultDetection(threshold: Bool) -> TimingSettings {
+    /// These timings with Pausing's back to their defaults.
+    var withDefaultPausing: TimingSettings {
         var timings = self
         timings.startConfirmation = TimingSettings.defaults.startConfirmation
+        timings.pausesForMicrophone = TimingSettings.defaults.pausesForMicrophone
+        timings.pausesOnOutputDisconnect = TimingSettings.defaults.pausesOnOutputDisconnect
+        return timings
+    }
+
+    /// These timings with Resuming's back to their defaults.
+    var withDefaultResuming: TimingSettings {
+        var timings = self
+        timings.resumesPlayback = TimingSettings.defaults.resumesPlayback
         timings.stopGrace = TimingSettings.defaults.stopGrace
-        if threshold { timings.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB }
+        timings.staysPausedAfterCalls = TimingSettings.defaults.staysPausedAfterCalls
         return timings
     }
 
@@ -298,20 +315,12 @@ private extension TimingSettings {
         return timings
     }
 
-    /// These timings with Advanced's switch and limits back to their defaults.
-    var withDefaultAdvanced: TimingSettings {
+    /// These timings with Volume's switch and limits back to their defaults.
+    var withDefaultVolume: TimingSettings {
         var timings = self
         timings.levelsMusic = TimingSettings.defaults.levelsMusic
         timings.levelingMaxCutDB = TimingSettings.defaults.levelingMaxCutDB
         timings.levelingMinCutDB = TimingSettings.defaults.levelingMinCutDB
-        return timings
-    }
-
-    /// These timings with Calls' switches back to their defaults.
-    var withDefaultCalls: TimingSettings {
-        var timings = self
-        timings.pausesForMicrophone = TimingSettings.defaults.pausesForMicrophone
-        timings.staysPausedAfterCalls = TimingSettings.defaults.staysPausedAfterCalls
         return timings
     }
 }

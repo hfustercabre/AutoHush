@@ -10,8 +10,8 @@ import AutoHushKit
 struct SettingsPageViewTests {
     private let actions = FakeAppActions()
 
-    @Test("About, Fades, Calls, Advanced, Updates and Diagnostics draw, Diagnostics with every part unfolded",
-          arguments: [SettingsWindowController.Page.about, .fades, .calls, .advanced, .updates, .diagnostics])
+    @Test("About, Behavior, Updates and Diagnostics draw, Diagnostics with every part unfolded",
+          arguments: [SettingsWindowController.Page.about, .behavior, .updates, .diagnostics])
     func page(_ page: SettingsWindowController.Page) {
         let updates = FakeUpdateCommands()
         updates.currentVersion = AppVersion("0.2.0")

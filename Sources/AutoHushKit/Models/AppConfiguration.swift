@@ -46,26 +46,26 @@ package struct AppConfiguration: Sendable {
     }
 
     /// Whether the music pauses at once, without a fade, and stays paused when
-    /// the output it plays through goes away (Settings → Detection).
+    /// the output it plays through goes away (Settings → Behavior).
     var pausesOnOutputDisconnect: Bool
     /// Whether the music resumes once the apps it was paused for stop
-    /// (Settings → Detection's Resume playback); off, it stays paused.
+    /// (Settings → Behavior's Resume playback); off, it stays paused.
     var resumesPlayback: Bool
     /// Whether the music resumes with the Mac's volume lowered to the
-    /// quieter apps' level (Settings → Advanced; `ResumeLevel`).
+    /// quieter apps' level (Settings → Behavior; `ResumeLevel`).
     var levelsMusic: Bool
     /// The most the volume is lowered, in dB, and the least worth doing
-    /// (Settings → Advanced's sliders).
+    /// (Settings → Behavior's sliders).
     var levelingMaxCutDB: Float
     var levelingMinCutDB: Float
     /// Whether an app turning on its microphone pauses the music, sound or
-    /// not (Settings → Calls): it counts as playing once its microphone
+    /// not (Settings → Behavior): it counts as playing once its microphone
     /// has been on for `microphoneStartConfirmation`, which apps that only
     /// touch it as they open (or test it) don't reach, and as in a call.
     var pausesForMicrophone: Bool
     var microphoneStartConfirmation: TimeInterval = 1
     /// Whether the music stays paused after a call during AutoHush's pause
-    /// (Settings → Calls).
+    /// (Settings → Behavior).
     var staysPausedAfterCalls: Bool
 
     /// Inaudible gaps shorter than this do not restart the start confirmation.

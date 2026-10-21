@@ -21,10 +21,10 @@ enum AntiDotText {
     }
 
     /// Under a switch that needs sound measured (Level the volume), dimmed:
-    /// the menu and Settings → Advanced.
+    /// the menu and Settings → Behavior.
     static var featureOff: String {
         String(localized: "Off in AntiDot mode",
-               comment: "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): the menu and Settings → Advanced")
+               comment: "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): the menu and Settings → Behavior")
     }
 
     /// Audio Recording, which it doesn't use: Diagnostics' row, the welcome

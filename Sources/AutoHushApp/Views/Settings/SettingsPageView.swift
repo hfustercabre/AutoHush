@@ -11,10 +11,8 @@ struct SettingsPageView: View {
             switch navigation.page {
             case .general: GeneralSettingsView(model: model)
             case .soundSources: SoundSourcesSettingsView(model: model)
+            case .behavior: BehaviorSettingsView(model: model)
             case .detection: DetectionSettingsView(model: model)
-            case .fades: FadesSettingsView(model: model)
-            case .calls: CallsSettingsView(model: model)
-            case .advanced: AdvancedSettingsView(model: model)
             case .diagnostics: DiagnosticsSettingsView(model: model)
             case .updates: UpdatesSettingsView(model: model)
             case .about: AboutSettingsView(model: model)

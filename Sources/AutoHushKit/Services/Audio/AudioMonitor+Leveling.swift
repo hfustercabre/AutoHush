@@ -2,7 +2,7 @@ import CoreAudio
 import Foundation
 
 // AudioMonitor: how loud the music was before AutoHush's pause, and the
-// apps during it (Settings → Advanced; `ResumeLevel`).
+// apps during it (Settings → Behavior; `ResumeLevel`).
 extension AudioMonitor {
     /// Feeds this look's levels to `resumeLevel`: the music's own, while
     /// it's heard, and the other apps' together while any is heard (the

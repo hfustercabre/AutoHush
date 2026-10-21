@@ -983,8 +983,8 @@ struct StatusMenuControllerTests {
         let sut = menuWithSettings()
         defer { sut.remove() }
         sut.perform(.toggleSettings(.detection))
-        sut.perform(.toggleSettings(.fades))
-        #expect(sut.model.unfoldedSettings == [.detection, .fades])
+        sut.perform(.toggleSettings(.behavior))
+        #expect(sut.model.unfoldedSettings == [.detection, .behavior])
         #expect(log.calls.allSatisfy { $0 == "menuWillOpen" })
     }
 
@@ -1002,11 +1002,11 @@ struct StatusMenuControllerTests {
         let sut = menuWithSettings()
         defer { sut.remove() }
         sut.perform(.toggleSettings(.detection))
-        sut.perform(.toggleSettings(.fades))
+        sut.perform(.toggleSettings(.behavior))
         sut.perform(.toggleSettings(.detection))
         #expect(sut.model.foldingSettings == [.detection]) // fading out, still there
         await sut.foldTasks[.detection]?.value
-        #expect(sut.model.unfoldedSettings == [.fades] && sut.model.foldingSettings.isEmpty && sut.isMenuOpen)
+        #expect(sut.model.unfoldedSettings == [.behavior] && sut.model.foldingSettings.isEmpty && sut.isMenuOpen)
     }
 
     @Test("a click on a part's title while its other settings fade out keeps them")
@@ -1014,11 +1014,11 @@ struct StatusMenuControllerTests {
         let sut = menuWithSettings()
         defer { sut.remove() }
         sut.perform(.toggleSettings(.detection))
-        sut.perform(.toggleSettings(.fades))
+        sut.perform(.toggleSettings(.behavior))
         sut.perform(.toggleSettings(.detection)) // fading out
         sut.perform(.toggleSettings(.detection)) // clicked again meanwhile: it stays
         #expect(sut.foldTasks[.detection] == nil)
-        #expect(sut.model.unfoldedSettings == [.detection, .fades] && sut.model.foldingSettings.isEmpty)
+        #expect(sut.model.unfoldedSettings == [.detection, .behavior] && sut.model.foldingSettings.isEmpty)
     }
 
     @Test("settings kept by a click while fading out fade out whole as they fold again")
@@ -1026,13 +1026,13 @@ struct StatusMenuControllerTests {
         let sut = menuWithSettings()
         defer { sut.remove() }
         sut.perform(.toggleSettings(.detection))
-        sut.perform(.toggleSettings(.fades))
+        sut.perform(.toggleSettings(.behavior))
         sut.perform(.toggleSettings(.detection))
         sut.perform(.toggleSettings(.detection)) // kept
         sut.perform(.toggleSettings(.detection)) // folding again: its own fade, whole
         #expect(sut.model.foldingSettings == [.detection] && sut.model.unfoldedSettings.contains(.detection))
         await sut.foldTasks[.detection]?.value
-        #expect(sut.model.unfoldedSettings == [.fades] && sut.model.foldingSettings.isEmpty)
+        #expect(sut.model.unfoldedSettings == [.behavior] && sut.model.foldingSettings.isEmpty)
     }
 
     @Test("with Reduce Motion, a part's other settings fold at once, without fading out")
@@ -1040,9 +1040,9 @@ struct StatusMenuControllerTests {
         let sut = menuWithSettings()
         defer { sut.remove() }
         sut.reducesMotion = { true }
-        sut.perform(.toggleSettings(.fades))
-        #expect(sut.model.unfoldedSettings == [.fades])
-        sut.perform(.toggleSettings(.fades))
+        sut.perform(.toggleSettings(.behavior))
+        #expect(sut.model.unfoldedSettings == [.behavior])
+        sut.perform(.toggleSettings(.behavior))
         #expect(sut.model.unfoldedSettings.isEmpty && sut.model.foldingSettings.isEmpty)
     }
 

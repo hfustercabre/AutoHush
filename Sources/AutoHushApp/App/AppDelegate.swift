@@ -64,7 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// the check's panel and the Mac's output muted during a check.
     private(set) var addApp: AddAppFeature!
     /// Lowers the Mac's volume as the music resumes after quieter apps
-    /// (Settings → Advanced): one for every monitoring.
+    /// (Settings → Behavior): one for every monitoring.
     let volumeLeveler: SystemVolumeLeveler
     /// Where Now Playing shown for a press is kept until it's hidden again,
     /// and the setting itself (`NowPlayingSetting.restoreIfLeft`).

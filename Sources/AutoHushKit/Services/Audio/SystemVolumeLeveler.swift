@@ -2,7 +2,7 @@ import CoreAudio
 import Foundation
 
 /// Lowers the Mac's volume as the music resumes, and puts it back at the
-/// music's next pause (Settings → Advanced; `ResumeLevel` says how far).
+/// music's next pause (Settings → Behavior; `ResumeLevel` says how far).
 /// One for the whole app: each lowering has a token of its own, so only
 /// the monitoring that lowered it puts it back.
 package protocol ResumeLeveling: AnyObject, Sendable {

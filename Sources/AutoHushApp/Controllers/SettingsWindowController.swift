@@ -11,10 +11,12 @@ import AutoHushKit
 final class SettingsWindowController: NSWindowController {
     /// The window's pages, in the sidebar's order.
     enum Page: CaseIterable, Hashable {
-        case general, soundSources, detection, fades, calls, advanced, diagnostics, updates, about
+        case general, soundSources, behavior, detection, diagnostics, updates, about
 
-        /// The sidebar's groups of pages, a gap between each.
-        static let groups: [[Page]] = [[.general, .soundSources], [.detection, .fades, .calls, .advanced], [.diagnostics, .updates, .about]]
+        /// The sidebar's groups of pages, a gap between each (B, the user's
+        /// pick, 2026-10-21: Behavior took Fades', Calls' and Advanced's
+        /// pages and Detection's pausing and resuming; memory `settings-layout`).
+        static let groups: [[Page]] = [[.general, .soundSources], [.behavior, .detection], [.diagnostics, .updates, .about]]
 
         var title: String {
             switch self {
@@ -22,14 +24,10 @@ final class SettingsWindowController: NSWindowController {
                 String(localized: "General", comment: "Settings: a page in the sidebar")
             case .soundSources:
                 String(localized: "Sound Sources", comment: "Settings: a page in the sidebar: the apps heard playing sound, each switched to pause your player or be ignored (keep it short, about 16 characters)")
+            case .behavior:
+                String(localized: "Behavior", comment: "Settings: a page in the sidebar, and its part of the menu's settings: when your player pauses and resumes, the fades and the volume (keep it short, about 16 characters)")
             case .detection:
-                String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped")
-            case .fades:
-                String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
-            case .calls:
-                String(localized: "Calls", comment: "Settings: a page in the sidebar, and its part of the menu's settings: pausing for the microphone, and staying paused after calls")
-            case .advanced:
-                String(localized: "Advanced", comment: "Settings: a page in the sidebar: leveling the music")
+                String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of how AutoHush tells that other apps play: AntiDot mode and the silence threshold")
             case .diagnostics:
                 String(localized: "Diagnostics", comment: "Settings: a page in the sidebar: what AutoHush sees right now")
             case .updates:
@@ -45,10 +43,8 @@ final class SettingsWindowController: NSWindowController {
             switch self {
             case .general: "gearshape.fill"
             case .soundSources: "square.grid.2x2.fill"
+            case .behavior: "playpause.fill"
             case .detection: "waveform"
-            case .fades: "speaker.wave.2.fill"
-            case .calls: "phone.fill"
-            case .advanced: "slider.horizontal.3"
             case .diagnostics: "stethoscope"
             case .updates: "arrow.down.circle.fill"
             case .about: "info.circle.fill"
@@ -62,9 +58,9 @@ final class SettingsWindowController: NSWindowController {
     /// in the app's language (the user, 2026-10-17: "make the minimum width
     /// respect the content"); tall enough for the whole sidebar, foot
     /// included.
-    /// At least 650 pt tall, so the sidebar shows About above its foot (S1, the user, 2026-10-18;
-    /// 600 until Calls became a page, 2026-10-21).
-    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 650) }
+    /// At least 600 pt tall, so the sidebar shows About above its foot (S1, the user, 2026-10-18;
+    /// 650 while Calls was a page, 2026-10-21, back to 600 with Behavior).
+    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 600) }
     static var maximumSize: NSSize { NSSize(width: sidebarWidth + max(640, leastPageWidth), height: 900) }
 
     /// The page's least width: 480, or the widest choice (`ChoiceChips`)
