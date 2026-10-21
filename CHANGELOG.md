@@ -172,6 +172,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Hebrew, Malay and Thai.** AutoHush speaks 38 languages, every one
+  macOS comes in; in Hebrew, as in Arabic, it reads right to left.
 - **Pause for the microphone** (Settings → Calls, a page of its own, and
   the menu; off by default): an app that turns on its microphone pauses your
   player after a second, before it plays any sound, as a call that starts

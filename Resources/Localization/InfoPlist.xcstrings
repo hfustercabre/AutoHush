@@ -77,6 +77,12 @@
             "value" : "AutoHush met votre lecteur multimédia en pause et relance la lecture."
           }
         },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush משהה ומחדש את נגן המדיה שלך."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush가 미디어 플레이어를 일시 정지하고 다시 재생합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush menjeda dan menyambung semula pemain media anda."
           }
         },
         "nb" : {
@@ -177,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush pausar och återupptar din mediaspelare."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush จะหยุดพักและเล่นตัวเล่นสื่อของคุณต่อ"
           }
         },
         "tr" : {
@@ -293,6 +311,12 @@
             "value" : "AutoHush mesure le volume des autres apps afin de ne mettre votre lecteur en pause que pour un son audible. L’audio n’est jamais enregistré, conservé ni envoyé où que ce soit."
           }
         },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush מודד את עוצמת הקול של אפליקציות אחרות, כדי להשהות את הנגן שלך רק כשיש צליל נשמע. השמע אף פעם לא מוקלט, נשמר או נשלח לשום מקום."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -333,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush는 다른 앱의 소리 크기를 측정하여 실제로 소리가 들릴 때만 플레이어를 일시 정지합니다. 오디오는 녹음되거나 저장되거나 어디로도 전송되지 않습니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mengukur kekuatan bunyi app lain, supaya ia hanya menjeda pemain anda untuk bunyi yang kedengaran. Audio tidak pernah dirakam, disimpan atau dihantar ke mana-mana."
           }
         },
         "nb" : {
@@ -393,6 +423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush mäter hur höga andra appar är, så att den bara pausar din spelare vid hörbart ljud. Ljud spelas aldrig in, sparas eller skickas någonstans."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush จะวัดความดังของแอปอื่น เพื่อหยุดพักตัวเล่นของคุณเฉพาะเมื่อมีเสียงที่ได้ยินเท่านั้น เสียงจะไม่ถูกบันทึก จัดเก็บ หรือส่งไปที่ใดเลย"
           }
         },
         "tr" : {
@@ -509,6 +545,12 @@
             "value" : "Copyright © 2026 Hector Fuster Cabre. Licence MIT."
           }
         },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copyright © 2026 Hector Fuster Cabre. רישיון MIT."
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -549,6 +591,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copyright © 2026 Hector Fuster Cabre. MIT 라이선스."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hak Cipta © 2026 Hector Fuster Cabre. Lesen MIT."
           }
         },
         "nb" : {
@@ -609,6 +657,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Copyright © 2026 Hector Fuster Cabre. MIT-licens."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ลิขสิทธิ์ © 2026 Hector Fuster Cabre สัญญาอนุญาต MIT"
           }
         },
         "tr" : {

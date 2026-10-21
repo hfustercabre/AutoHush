@@ -77,6 +77,12 @@
             "value" : "Désactiver la pause automatique dans ${applicationName}"
           }
         },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "כיבוי השהיה אוטומטית ב-${applicationName}"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -117,6 +123,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "${applicationName}에서 자동 일시 정지 끄기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyahaktifkan Jeda Auto dalam ${applicationName}"
           }
         },
         "nb" : {
@@ -177,6 +189,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stäng av Autopaus i ${applicationName}"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิดหยุดพักอัตโนมัติใน ${applicationName}"
           }
         },
         "tr" : {
@@ -293,6 +311,12 @@
             "value" : "Activer la pause automatique dans ${applicationName}"
           }
         },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "הפעלת השהיה אוטומטית ב-${applicationName}"
+          }
+        },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
@@ -333,6 +357,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "${applicationName}에서 자동 일시 정지 켜기"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktifkan Jeda Auto dalam ${applicationName}"
           }
         },
         "nb" : {
@@ -393,6 +423,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Slå på Autopaus i ${applicationName}"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดหยุดพักอัตโนมัติใน ${applicationName}"
           }
         },
         "tr" : {

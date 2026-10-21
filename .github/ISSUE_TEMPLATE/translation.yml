@@ -24,12 +24,14 @@ body:
         - French (Canada)
         - German
         - Greek
+        - Hebrew
         - Hindi
         - Hungarian
         - Indonesian
         - Italian
         - Japanese
         - Korean
+        - Malay
         - Norwegian Bokmål
         - Polish
         - Portuguese (Brazil)
@@ -41,6 +43,7 @@ body:
         - Spanish (Latin America)
         - Spanish (Spain)
         - Swedish
+        - Thai
         - Turkish
         - Ukrainian
         - Vietnamese

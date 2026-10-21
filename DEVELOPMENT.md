@@ -324,7 +324,7 @@ Shortcuts and System Settings' Focus filters find AutoHush's actions, App Shortc
 
 ## Translations
 
-English is the source language and the fallback; [Language](README.md#language) lists the translations and how macOS picks one. They are every European language and the most spoken other languages that macOS itself is translated into. Norwegian is `nb` (Bokmål), which macOS also offers to Nynorsk users. Four languages come in variants, and macOS picks the closest one for each country:
+English is the source language and the fallback; [Language](README.md#language) lists the translations and how macOS picks one. They are every language macOS itself is translated into. Norwegian is `nb` (Bokmål), which macOS also offers to Nynorsk users. Four languages come in variants, and macOS picks the closest one for each country:
 
 | Language | Variants |
 |---|---|
