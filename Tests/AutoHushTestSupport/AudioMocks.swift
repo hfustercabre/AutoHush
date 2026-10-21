@@ -157,3 +157,16 @@ package final class MockAudioCapturePermission: AudioCapturePermissionChecking, 
         completion?(granted)
     }
 }
+
+/// Stands in for the outputs' watcher: `disconnect()` is the output in use going away.
+package final class MockOutputDisconnects: OutputDisconnectWatching, @unchecked Sendable {
+    package init() {}
+
+    private let lock = NSLock()
+    private var handler: (@Sendable () -> Void)?
+
+    package var isWatching: Bool { lock.withLock { handler != nil } }
+    package func start(onDisconnect: @escaping @Sendable () -> Void) { lock.withLock { handler = onDisconnect } }
+    package func stop() { lock.withLock { handler = nil } }
+    package func disconnect() { lock.withLock { handler }?() }
+}

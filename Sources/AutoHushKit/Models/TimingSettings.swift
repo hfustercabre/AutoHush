@@ -25,6 +25,9 @@ package struct TimingSettings: Equatable, Sendable {
     /// apps must have been for it to be.
     package var levelingMaxCutDB: Double
     package var levelingMinCutDB: Double
+    /// Whether the music pauses, at once and for good, when the output it
+    /// plays through goes away (headphones unplugged or out of range).
+    package var pausesOnOutputDisconnect: Bool
     /// Whether an app turning on its microphone pauses the music, before it
     /// plays any sound (a call starting silent).
     package var pausesForMicrophone: Bool
@@ -39,6 +42,7 @@ package struct TimingSettings: Equatable, Sendable {
         fadeOutDuration: TimeInterval = 1,
         fadeInDuration: TimeInterval = 2,
         fadesEnabled: Bool = true,
+        pausesOnOutputDisconnect: Bool = false,
         levelsMusic: Bool = false,
         levelingMaxCutDB: Double = 10,
         levelingMinCutDB: Double = 2,
@@ -51,6 +55,7 @@ package struct TimingSettings: Equatable, Sendable {
         self.fadeOutDuration = fadeOutDuration
         self.fadeInDuration = fadeInDuration
         self.fadesEnabled = fadesEnabled
+        self.pausesOnOutputDisconnect = pausesOnOutputDisconnect
         self.levelsMusic = levelsMusic
         self.levelingMaxCutDB = levelingMaxCutDB
         self.levelingMinCutDB = levelingMinCutDB
@@ -79,6 +84,7 @@ package struct TimingSettings: Equatable, Sendable {
             fadeOutDuration: fadeOutDuration.clamped(to: Self.fadeDurationRange),
             fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange),
             fadesEnabled: fadesEnabled,
+            pausesOnOutputDisconnect: pausesOnOutputDisconnect,
             levelsMusic: levelsMusic,
             levelingMaxCutDB: levelingMaxCutDB.clamped(to: Self.levelingMaxCutRange),
             levelingMinCutDB: levelingMinCutDB.clamped(to: Self.levelingMinCutRange),

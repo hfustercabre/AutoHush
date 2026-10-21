@@ -1298,13 +1298,13 @@
                   "value" : "%1$@ ועוד %2$lld אפליקציה מנגנים"
                 }
               },
-              "two" : {
+              "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%1$@ ועוד %2$lld אפליקציות מנגנים"
                 }
               },
-              "other" : {
+              "two" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%1$@ ועוד %2$lld אפליקציות מנגנים"
@@ -54029,13 +54029,13 @@
                   "value" : "לא ניתן היה להחריג %lld אפליקציה"
                 }
               },
-              "two" : {
+              "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "לא ניתן היה להחריג %lld אפליקציות"
                 }
               },
-              "other" : {
+              "two" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "לא ניתן היה להחריג %lld אפליקציות"
@@ -63882,6 +63882,460 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "無法讀取 GitHub 的發佈資訊。"
+          }
+        }
+      }
+    },
+    "Headphones and other outputs" : {
+      "comment" : "The menu, under Pause on disconnect: what it applies to, in a few words (headphones or another output unplugged or out of range)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سماعات الرأس ومخارج أخرى"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auriculars i altres sortides"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sluchátka a jiné výstupy"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hovedtelefoner og andre output"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopfhörer und andere Ausgaben"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακουστικά και άλλες έξοδοι"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auriculares y otras salidas"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audífonos y otras salidas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kuulokkeet ja muut lähdöt"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écouteurs et autres sorties"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écouteurs et autres sorties"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "אוזניות ופלטים אחרים"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हेडफ़ोन और अन्य आउटपुट"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slušalice i drugi izlazi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fejhallgató és más kimenetek"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Headphone dan output lain"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuffie e altre uscite"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヘッドフォンとほかの出力"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "헤드폰 및 기타 출력"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fon kepala dan output lain"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hodetelefoner og andre utganger"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koptelefoon en andere uitvoer"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Słuchawki i inne wyjścia"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fones e outras saídas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auscultadores e outras saídas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căști și alte ieșiri"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Наушники и другие выходы"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slúchadlá a iné výstupy"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slušalke in drugi izhodi"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hörlurar och andra utgångar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หูฟังและเอาต์พุตอื่น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kulaklık ve diğer çıkışlar"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Навушники та інші виходи"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tai nghe và đầu ra khác"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "耳筒和其他輸出裝置"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "耳机和其他输出设备"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "耳機和其他輸出裝置"
+          }
+        }
+      }
+    },
+    "Headphones and other outputs: your player stays paused instead of moving to the speakers. Some players already do this themselves." : {
+      "comment" : "Settings → Detection, under “Pause on disconnect”: when headphones or another output (Bluetooth or USB speakers) are unplugged or go out of range; AutoHush doesn’t resume it. Some media players already pause on their own when that happens",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سماعات الرأس ومخارج أخرى: يبقى مشغّلك متوقفًا مؤقتًا بدلاً من الانتقال إلى مكبرات الصوت. بعض المشغّلات تفعل ذلك بنفسها."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auriculars i altres sortides: el reproductor es queda en pausa en lloc de passar als altaveus. Alguns reproductors ja ho fan per si mateixos."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sluchátka a jiné výstupy: váš přehrávač zůstane pozastavený, místo aby přešel na reproduktory. Některé přehrávače to už dělají samy."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hovedtelefoner og andre output: Din afspiller forbliver sat på pause i stedet for at skifte til højttalerne. Nogle afspillere gør det allerede selv."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopfhörer und andere Ausgaben: Dein Player bleibt pausiert, statt auf die Lautsprecher zu wechseln. Manche Player machen das bereits selbst."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ακουστικά και άλλες έξοδοι: η εφαρμογή αναπαραγωγής σας μένει σε παύση αντί να περάσει στα ηχεία. Ορισμένες εφαρμογές αναπαραγωγής το κάνουν ήδη μόνες τους."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auriculares y otras salidas: tu reproductor se queda en pausa en lugar de pasar a los altavoces. Algunos reproductores ya lo hacen por sí solos."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audífonos y otras salidas: tu reproductor se queda en pausa en lugar de pasar a las bocinas. Algunos reproductores ya lo hacen por sí solos."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kuulokkeet ja muut lähdöt: soittimesi pysyy tauolla eikä siirry kaiuttimiin. Jotkin soittimet tekevät tämän jo itse."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écouteurs et autres sorties : votre lecteur reste en pause au lieu de passer aux haut-parleurs. Certains lecteurs le font déjà d’eux-mêmes."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Écouteurs et autres sorties : votre lecteur reste en pause au lieu de passer aux haut-parleurs. Certains lecteurs le font déjà d’eux-mêmes."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "אוזניות ופלטים אחרים: הנגן שלך נשאר מושהה במקום לעבור לרמקולים. חלק מהנגנים כבר עושים זאת בעצמם."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हेडफ़ोन और अन्य आउटपुट: आपका प्लेयर स्पीकर पर जाने के बजाय पॉज़ रहता है। कुछ प्लेयर पहले से ही ऐसा खुद करते हैं।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slušalice i drugi izlazi: vaš reproduktor ostaje pauziran umjesto da prijeđe na zvučnike. Neki reproduktori to već rade sami."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fejhallgató és más kimenetek: a lejátszója szünetel, ahelyett hogy a hangszórókra váltana. Egyes lejátszók ezt már maguktól is megteszik."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Headphone dan output lain: pemutar Anda tetap dijeda alih-alih pindah ke speaker. Beberapa pemutar sudah melakukannya sendiri."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuffie e altre uscite: il lettore resta in pausa invece di passare agli altoparlanti. Alcuni lettori lo fanno già da soli."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ヘッドフォンやほかの出力：プレーヤーはスピーカーに切り替わらず、一時停止したままになります。一部のプレーヤーは、すでにこれを自動で行います。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "헤드폰 및 기타 출력: 플레이어가 스피커로 전환되지 않고 일시 정지된 상태로 유지됩니다. 일부 플레이어는 이미 자체적으로 이렇게 합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fon kepala dan output lain: pemain anda kekal dijeda dan tidak beralih ke pembesar suara. Sesetengah pemain sudah melakukannya sendiri."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hodetelefoner og andre utganger: Spilleren din forblir satt på pause i stedet for å bytte til høyttalerne. Noen spillere gjør dette allerede selv."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Koptelefoon en andere uitvoer: je speler blijft gepauzeerd in plaats van naar de luidsprekers te gaan. Sommige spelers doen dit al zelf."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Słuchawki i inne wyjścia: odtwarzacz pozostaje wstrzymany zamiast przejść na głośniki. Niektóre odtwarzacze robią to już same."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fones e outras saídas: seu player fica pausado em vez de passar para os alto-falantes. Alguns players já fazem isso por conta própria."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auscultadores e outras saídas: o seu leitor fica em pausa em vez de passar para os altifalantes. Alguns leitores já o fazem por si próprios."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Căști și alte ieșiri: playerul dvs. rămâne pe pauză în loc să treacă la difuzoare. Unele playere fac deja acest lucru singure."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Наушники и другие выходы: плеер остаётся на паузе, а не переключается на динамики. Некоторые плееры уже делают это сами."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slúchadlá a iné výstupy: váš prehrávač zostane pozastavený namiesto toho, aby prešiel na reproduktory. Niektoré prehrávače to už robia samy."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slušalke in drugi izhodi: vaš predvajalnik ostane zaustavljen, namesto da preklopi na zvočnike. Nekateri predvajalniki to že naredijo sami."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hörlurar och andra utgångar: din spelare förblir pausad i stället för att byta till högtalarna. Vissa spelare gör redan detta själva."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หูฟังและเอาต์พุตอื่น: ตัวเล่นของคุณจะหยุดพักอยู่แทนที่จะเปลี่ยนไปใช้ลำโพง ตัวเล่นบางตัวทำเช่นนี้เองอยู่แล้ว"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kulaklık ve diğer çıkışlar: oynatıcınız hoparlörlere geçmek yerine duraklatılmış kalır. Bazı oynatıcılar bunu zaten kendileri yapar."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Навушники та інші виходи: ваш програвач залишається на паузі, а не перемикається на динаміки. Деякі програвачі вже роблять це самі."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tai nghe và đầu ra khác: trình phát của bạn vẫn tạm dừng thay vì chuyển sang loa. Một số trình phát đã tự làm điều này."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "耳筒和其他輸出裝置：你的播放器會保持暫停，而不是切換到揚聲器。有些播放器本身已會這樣做。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "耳机和其他输出设备：你的播放器会保持暂停，而不是切换到扬声器。有些播放器本身就会这样做。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "耳機和其他輸出裝置：你的播放器會保持暫停，而不是切換到揚聲器。有些播放器本身就會這樣做。"
           }
         }
       }
@@ -99979,6 +100433,233 @@
         }
       }
     },
+    "Output" : {
+      "comment" : "Settings → Detection and the menu's Detection: heading over Pause on disconnect (the output is where sound plays: headphones, speakers), as System Settings → Sound → Output",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الخرج"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortida"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Výstup"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgabe"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έξοδος"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salida"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salida"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lähtö"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortie"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sortie"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "פלט"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आउटपुट"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izlaz"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kimenet"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uscita"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "出力"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "출력"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utgang"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uitvoer"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wyjście"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saída"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saída"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ieșire"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выход"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Výstup"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izhod"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utgång"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เอาต์พุต"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çıkış"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вихід"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đầu ra"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸出"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "输出"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輸出"
+          }
+        }
+      }
+    },
     "Paste" : {
       "comment" : "The menu bar's Edit menu (⌘V); macOS's own word",
       "localizations" : {
@@ -101337,6 +102018,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "自行暫停播放"
+          }
+        }
+      }
+    },
+    "Pause on disconnect" : {
+      "comment" : "Settings → Detection (under “Output”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإيقاف المؤقت عند قطع الاتصال"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa en desconnectar"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastavit při odpojení"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause ved afbrydelse"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Trennung pausieren"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παύση κατά την αποσύνδεση"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar al desconectar"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar al desconectar"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tauko yhteyden katketessa"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause à la déconnexion"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause à la déconnexion"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "השהיה בניתוק"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डिस्कनेक्ट होने पर पॉज़ करें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauziraj pri odspajanju"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szüneteltetés leválasztáskor"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeda saat terputus"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa alla disconnessione"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続解除時に一時停止"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "연결 해제 시 일시 정지"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeda apabila diputuskan"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause ved frakobling"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauzeren bij loskoppelen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstrzymuj po rozłączeniu"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar ao desconectar"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar ao desligar"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Puneți pauză la deconectare"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза при отключении"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastaviť pri odpojení"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaustavi ob prekinitvi povezave"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa vid frånkoppling"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หยุดพักเมื่อตัดการเชื่อมต่อ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bağlantı kesilince duraklat"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза при від’єднанні"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạm dừng khi ngắt kết nối"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中斷連線時暫停"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "断开连接时暂停"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中斷連線時暫停"
           }
         }
       }
@@ -110105,13 +111013,13 @@
                   "value" : "להסיר %lld אפליקציה מהרשימה?"
                 }
               },
-              "two" : {
+              "other" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "להסיר %lld אפליקציות מהרשימה?"
                 }
               },
-              "other" : {
+              "two" : {
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "להסיר %lld אפליקציות מהרשימה?"

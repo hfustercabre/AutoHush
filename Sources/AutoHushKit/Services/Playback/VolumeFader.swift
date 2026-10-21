@@ -121,6 +121,16 @@ package actor VolumeFader {
         return true
     }
 
+    /// Pauses at once, without a fade, stopping one under way: the output
+    /// went away, and a fade would play on the next one. The user's volume
+    /// is set back after the pause, as after a fade-out.
+    func pauseNow() async throws {
+        let fade = startFade()
+        try await presses.press(to: .paused)
+        await sleep(Self.restoreDelay)
+        if latestFade == fade { await restoreUserVolume() }
+    }
+
     /// Plays from near silence, then fades the music in to the user's volume.
     func playAndFadeIn() async throws {
         let fade = startFade()

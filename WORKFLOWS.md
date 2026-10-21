@@ -222,6 +222,7 @@ flowchart LR
     E8["The Mac wakes up"]
     E9["AutoHush quits holding a<br/>pause: an update, another<br/>copy, a reopen"]
     E10["Add an App’s check runs"]
+    E11["The headphones or the output<br/>in use go away (Pause on<br/>disconnect on)"]
   end
   R1["Your choice stands: never<br/>resumed or overridden"]
   R2["Left alone: Playing<br/>on another device"]
@@ -233,6 +234,7 @@ flowchart LR
   R8["Apps playing pause<br/>the player as usual"]
   R9["The hand-over: the next<br/>AutoHush, opened within<br/>a minute, takes it over"]
   R10["Paused while a check runs:<br/>nothing is resumed until<br/>it ends"]
+  R11["Paused at once, no fade, and<br/>left paused: a pause AutoHush<br/>held becomes yours (with<br/>Auto-Pause on)"]
 
   E1 --> R1
   E2 --> R2
@@ -245,6 +247,7 @@ flowchart LR
   E8 --> R8
   E9 --> R9
   E10 --> R10
+  E11 --> R11
 ```
 
 The events, besides other apps’ sound, that change what AutoHush does. Shortcuts’ **Get Auto-Pause** only reads the switch, and **Set Auto-Pause** On also ends a Turn off for. A Focus or a Shortcuts action works even when AutoHush isn’t running: macOS opens it, and a Focus that started or ended meanwhile is followed at launch.

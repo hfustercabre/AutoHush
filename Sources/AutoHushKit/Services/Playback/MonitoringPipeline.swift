@@ -30,6 +30,7 @@ package final class MonitoringPipeline {
         /// With its number (see `PlaybackArbiter.setAsleep`).
         case asleep(Bool, change: Int)
         case resumesHeld(Bool)
+        case outputDisconnected
     }
 
     private let arbiter: PlaybackArbiter
@@ -37,6 +38,7 @@ package final class MonitoringPipeline {
     /// Told whether it may tap its sound, when it can (see `allowTaps`).
     private let mutingPlayer: any MutingMusicPlayer?
     private let playerObserver: any PlayerStateObserving
+    private let outputDisconnects: any OutputDisconnectWatching
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
     private let statusUpdates: AsyncStream<StatusUpdate>.Continuation
     private let forwarders: [Task<Void, Never>]
@@ -53,17 +55,21 @@ package final class MonitoringPipeline {
         let levelMeter: any AudioLevelMetering?
         let audioCapturePermission: any AudioCapturePermissionChecking
         let powerAssertions: any PowerAssertionReading
+        /// When the output in use goes away (Pause on disconnect).
+        let outputDisconnects: any OutputDisconnectWatching
 
         package init(
             processes: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider(),
             levelMeter: any AudioLevelMetering? = ProcessTapLevelMeter(),
             audioCapturePermission: any AudioCapturePermissionChecking = TCCAudioCapturePermission(),
-            powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader()
+            powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader(),
+            outputDisconnects: any OutputDisconnectWatching = CoreAudioOutputDisconnectWatcher()
         ) {
             self.processes = processes
             self.levelMeter = levelMeter
             self.audioCapturePermission = audioCapturePermission
             self.powerAssertions = powerAssertions
+            self.outputDisconnects = outputDisconnects
         }
     }
 
@@ -128,6 +134,7 @@ package final class MonitoringPipeline {
         }
         self.arbiter = arbiter
         self.monitor = monitor
+        self.outputDisconnects = readers.outputDisconnects
         self.arbiterCommands = arbiterCommands
         self.statusUpdates = statusUpdates
         self.forwarders = [
@@ -139,6 +146,7 @@ package final class MonitoringPipeline {
                     case .configuration(let configuration): await arbiter.setConfiguration(configuration)
                     case .asleep(let asleep, let change): await arbiter.setAsleep(asleep, change: change)
                     case .resumesHeld(let held): await arbiter.holdResumes(held)
+                    case .outputDisconnected: await arbiter.handleOutputDisconnected()
                     }
                 }
             },
@@ -172,6 +180,8 @@ package final class MonitoringPipeline {
         guard !isStopped else { return tookOver }
         monitor.setPlayerPlaying(initialState == .playing)
         monitor.start()
+        let commands = arbiterCommands
+        outputDisconnects.start { commands.yield(.outputDisconnected) }
         return tookOver
     }
 
@@ -179,6 +189,7 @@ package final class MonitoringPipeline {
         guard !isStopped else { return }
         playerObserver.stop()
         monitor.stop()
+        outputDisconnects.stop()
         arbiterCommands.finish()
         statusUpdates.finish()
         forwarders.forEach { $0.cancel() }

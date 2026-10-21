@@ -45,6 +45,9 @@ package struct AppConfiguration: Sendable {
         max(sourceStartConfirmation, minimumStartWithOpenStreams)
     }
 
+    /// Whether the music pauses at once, without a fade, and stays paused when
+    /// the output it plays through goes away (Settings → Detection).
+    var pausesOnOutputDisconnect: Bool
     /// Whether the music resumes with the Mac's volume lowered to the
     /// quieter apps' level (Settings → Advanced; `ResumeLevel`).
     var levelsMusic: Bool
@@ -108,6 +111,7 @@ package struct AppConfiguration: Sendable {
         audibleThreshold = Float(pow(10, timings.silenceThresholdDB / 20))
         fadeOutDuration = timings.fadesEnabled ? timings.fadeOutDuration : 0
         fadeInDuration = timings.fadesEnabled ? timings.fadeInDuration : 0
+        pausesOnOutputDisconnect = timings.pausesOnOutputDisconnect
         levelsMusic = timings.levelsMusic
         levelingMaxCutDB = Float(timings.levelingMaxCutDB)
         levelingMinCutDB = Float(timings.levelingMinCutDB)

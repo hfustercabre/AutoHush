@@ -30,14 +30,16 @@ struct MonitoringPipelineTests {
         let processes = MockAudioProcessSnapshotProvider()
         let meter = MockLevelMeter()
         let updates = PipelineUpdates()
+        let outputs = MockOutputDisconnects()
         let configuration: AppConfiguration
         let pipeline: MonitoringPipeline
 
         /// `stopGrace`: how long a playing app must be quiet to count as stopped.
         @MainActor
         init(player: any MusicPlayer, detectionMethod: DetectionMethod = .audioLevels,
-             stopGrace: TimeInterval = TimingSettings.defaults.stopGrace) {
-            let configuration = MonitoringPipelineTests.configuration(stopGrace: stopGrace)
+             stopGrace: TimeInterval = TimingSettings.defaults.stopGrace, pausesOnOutputDisconnect: Bool = false) {
+            var configuration = MonitoringPipelineTests.configuration(stopGrace: stopGrace)
+            configuration.pausesOnOutputDisconnect = pausesOnOutputDisconnect
             self.configuration = configuration
             processes.processes = [MonitoringPipelineTests.playerProcess, MonitoringPipelineTests.otherApp]
             let updates = updates
@@ -50,7 +52,7 @@ struct MonitoringPipelineTests {
                 learnedAssertions: [:],
                 readers: .init(processes: processes, levelMeter: meter,
                                audioCapturePermission: MockAudioCapturePermission(.granted),
-                               powerAssertions: MockPowerAssertions()),
+                               powerAssertions: MockPowerAssertions(), outputDisconnects: outputs),
                 onStatusUpdate: { updates.all.append($0) }
             )
         }
@@ -61,6 +63,18 @@ struct MonitoringPipelineTests {
             await TestWait.until { processes.isObserving }
             processes.triggerChange()
         }
+    }
+
+    @Test("with Pause on disconnect, the output going away reaches the arbiter, which pauses the player; stopped, the pipeline stops watching")
+    func outputDisconnectPausesPlayer() async {
+        let player = MockMusicPlayer(state: .playing)
+        let setup = Setup(player: player, pausesOnOutputDisconnect: true)
+        await setup.pipeline.start()
+        #expect(setup.outputs.isWatching)
+        setup.outputs.disconnect()
+        await TestWait.until { await player.pauseCallCount == 1 }
+        setup.pipeline.stop()
+        #expect(!setup.outputs.isWatching)
     }
 
     @Test("once started, another app playing pauses the player, and the menu and Diagnostics hear of it; ignored, the music comes back")

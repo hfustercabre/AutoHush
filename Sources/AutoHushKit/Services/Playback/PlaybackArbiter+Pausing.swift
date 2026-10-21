@@ -12,6 +12,7 @@ extension PlaybackArbiter {
             // No pause came of it (the fade-out called off, the pause failed,
             // the player still learning): a call during its fade-out is forgotten.
             if !pausedByUs { callDuringPause = false }
+            outputGoneDuringPause = false
             publishPlaybackState()
         }
     }
@@ -171,6 +172,11 @@ extension PlaybackArbiter {
     /// long), the pause is forgotten at once, as any pause held then (see
     /// `setAsleep`): `false`.
     private func holdPause() -> Bool {
+        if outputGoneDuringPause {
+            outputGoneDuringPause = false
+            logger.info("[arbiter] paused as the output went away: \(self.player.name, privacy: .public) stays paused")
+            return false
+        }
         guard isAsleep else {
             pausedByUs = true
             // A call already playing counts too: a pause taken over, or a

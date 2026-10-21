@@ -233,6 +233,8 @@ enum DiagnosticsReport {
                         // Off in AntiDot mode, which measures no sound, whatever the switch.
                         Row(label: String(localized: "Level the volume", comment: "Settings → Advanced and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them"),
                             value: facts.timings.levelsMusic && !facts.detectionMethod.isAntiDot ? on : off),
+                        Row(label: String(localized: "Pause on disconnect", comment: "Settings → Detection (under “Output”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range"),
+                            value: facts.timings.pausesOnOutputDisconnect ? on : off),
                         Row(label: String(localized: "Pause for the microphone", comment: "Settings → Calls, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone"),
                             value: facts.timings.pausesForMicrophone ? on : off),
                         Row(label: String(localized: "Stay paused after calls", comment: "Settings → Calls and Diagnostics: the switch that keeps your player paused after a call"),

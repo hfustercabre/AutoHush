@@ -172,6 +172,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Pause on disconnect** (Settings → Detection, under Output, and the
+  menu; off by default): when the headphones or another output your player
+  plays through are unplugged or go out of range, it pauses at once,
+  without a fade, instead of moving to the speakers, and stays paused
+  until you play it. Choosing another output yourself doesn't count.
+  Some players already do this themselves.
 - **Hebrew, Malay and Thai.** AutoHush speaks 38 languages, every one
   macOS comes in; in Hebrew, as in Arabic, it reads right to left.
 - **Pause for the microphone** (Settings → Calls, a page of its own, and

@@ -247,6 +247,9 @@ final class UserSettings: AutoPauseControlling {
         ]
         var lines = rows.filter { $0.1 != $0.2 }.map { "\($0.0): \($0.3($0.1)) → \($0.3($0.2))" }
         if old.fadesEnabled != new.fadesEnabled { lines.append("Fade the music: \(new.fadesEnabled ? "on" : "off")") }
+        if old.pausesOnOutputDisconnect != new.pausesOnOutputDisconnect {
+            lines.append("Pause on disconnect: \(new.pausesOnOutputDisconnect ? "on" : "off")")
+        }
         if old.levelsMusic != new.levelsMusic { lines.append("Level the volume: \(new.levelsMusic ? "on" : "off")") }
         if old.pausesForMicrophone != new.pausesForMicrophone {
             lines.append("Pause for the microphone: \(new.pausesForMicrophone ? "on" : "off")")

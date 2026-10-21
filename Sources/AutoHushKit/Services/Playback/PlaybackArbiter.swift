@@ -83,6 +83,9 @@ actor PlaybackArbiter: PlaybackArbiting {
     var activeSources: Set<String> = []
     /// The apps playing with their microphone on (calls).
     var callSources: Set<String> = []
+    /// The output went away while a pause was fading out: once it's held,
+    /// it's forgotten (`handleOutputDisconnected`).
+    var outputGoneDuringPause = false
     /// A call came during our pause (or the fade-out before it): with
     /// `AppConfiguration.staysPausedAfterCalls`, the music isn't resumed.
     var callDuringPause = false
@@ -224,6 +227,45 @@ actor PlaybackArbiter: PlaybackArbiting {
         guard pausedByUs || isFadingOut, !callDuringPause, !callSources.isDisjoint(with: activeSources) else { return }
         callDuringPause = true
         logger.info("[arbiter] a call came during the pause")
+    }
+
+    /// The output the sound played through went away (headphones unplugged
+    /// or out of range, AirPods moved to another device): with Pause on
+    /// disconnect (Settings → Detection) and Auto-Pause on, the music pauses at once, without a fade, rather than moving to the next
+    /// output, and stays paused: a pause of ours, or one fading out, is the
+    /// user's from then on, as after a sleep (the user, 2026-10-21).
+    func handleOutputDisconnected() async {
+        guard !isShutDown, configuration.pausesOnOutputDisconnect, autoPauseEnabled, !isAsleep else { return }
+        // A resume still pending finds the pause no longer ours, and gives up.
+        if pausedByUs {
+            pausedByUs = false
+            callDuringPause = false
+            // A mute standing in for the pause: the player is paused for
+            // real and the mute lifted.
+            if let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
+            logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) stays paused")
+            publishPlaybackState()
+            return
+        }
+        if isFadingOut {
+            outputGoneDuringPause = true
+            return
+        }
+        guard playsLocally else { return }
+        let state = await livePlayerState()
+        guard !isShutDown, autoPauseEnabled, state == .playing else { return }
+        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
+        levelLowered = nil
+        do {
+            try await fader.pauseNow()
+        } catch {
+            logger.error("[arbiter] pausing \(self.player.name, privacy: .public) as the output went away failed: \(error)")
+            return
+        }
+        playerState = .paused
+        latestStart = nil // no app's doing, to be taken over and resumed
+        logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) paused at once, and stays paused")
+        publishPlaybackState()
     }
 
     /// Applies new settings.

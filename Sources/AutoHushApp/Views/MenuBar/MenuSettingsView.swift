@@ -58,6 +58,13 @@ struct MenuSettingsView: View {
                 }
             }
             if isOpen(.detection) {
+                innerTitle(DetectionSettingsView.outputTitle)
+                    .opacity(fading(.detection))
+            }
+            part {
+                switchRow(.pausesOnDisconnect)
+            }
+            if isOpen(.detection) {
                 innerTitle(DetectionSettingsView.timingTitle)
                     .opacity(fading(.detection))
                 part {

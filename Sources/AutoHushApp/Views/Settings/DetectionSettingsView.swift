@@ -3,7 +3,7 @@ import AutoHushKit
 
 /// Settings → Detection, a grouped form: AntiDot mode (with the
 /// way of detecting while it's on, or the Audio Recording it needs while
-/// it's off), then the timings: when another app counts as playing or
+/// it's off), then Output (pausing on a disconnect), then the timings: when another app counts as playing or
 /// stopped, and the silence threshold while AntiDot mode is off. Restore
 /// Defaults sets these timings back.
 struct DetectionSettingsView: View {
@@ -48,6 +48,10 @@ struct DetectionSettingsView: View {
                 }
             }
 
+            Card(Self.outputTitle) {
+                SettingsSwitchRow(model: model, kind: .pausesOnDisconnect)
+            }
+
             Card(Self.timingTitle) {
                 TimingSliderRow(model: model, timing: .pauseAfter)
                 CardDivider()
@@ -70,6 +74,11 @@ struct DetectionSettingsView: View {
                 .buttonStyle(.chip)
                 .fixedSize()
         }
+    }
+
+    /// Over Pause on disconnect, here and in the menu's Detection.
+    static var outputTitle: Text {
+        Text("Output", comment: "Settings → Detection and the menu's Detection: heading over Pause on disconnect (the output is where sound plays: headphones, speakers), as System Settings → Sound → Output")
     }
 
     /// Over AntiDot mode, here and in the menu's Detection.

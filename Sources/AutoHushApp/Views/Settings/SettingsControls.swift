@@ -5,12 +5,14 @@ import AutoHushKit
 /// menu's More Settings: the same words, and the same rules for when one
 /// can't be changed.
 enum SettingsSwitch: CaseIterable {
-    case antiDot, fades, levelsMusic, pausesForMicrophone, staysPausedAfterCalls
+    case antiDot, pausesOnDisconnect, fades, levelsMusic, pausesForMicrophone, staysPausedAfterCalls
 
     var title: Text {
         switch self {
         case .antiDot:
             Text("AntiDot mode", comment: "Settings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator")
+        case .pausesOnDisconnect:
+            Text("Pause on disconnect", comment: "Settings → Detection (under “Output”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range")
         case .fades:
             Text("Fade playback", comment: "Settings → Fades and the menu: the switch that turns the fades on or off")
         case .levelsMusic:
@@ -28,6 +30,9 @@ enum SettingsSwitch: CaseIterable {
         case .antiDot:
             Text("Hides the purple recording indicator. Detection is less precise.",
                  comment: "Settings, under AntiDot mode")
+        case .pausesOnDisconnect:
+            Text("Headphones and other outputs: your player stays paused instead of moving to the speakers. Some players already do this themselves.",
+                 comment: "Settings → Detection, under “Pause on disconnect”: when headphones or another output (Bluetooth or USB speakers) are unplugged or go out of range; AutoHush doesn’t resume it. Some media players already pause on their own when that happens")
         case .fades:
             Text("Out before pausing, and back in when resuming.",
                  comment: "Settings → Fades, under “Fade playback”")
@@ -49,6 +54,8 @@ enum SettingsSwitch: CaseIterable {
         switch self {
         case .antiDot:
             Text("No purple dot, less precise", comment: "The menu, under AntiDot mode: what it does, in a few words")
+        case .pausesOnDisconnect:
+            Text("Headphones and other outputs", comment: "The menu, under Pause on disconnect: what it applies to, in a few words (headphones or another output unplugged or out of range)")
         case .fades:
             Text("Fades out and back in", comment: "The menu, under Fade playback: what it does, in a few words")
         case .levelsMusic:
@@ -64,6 +71,7 @@ enum SettingsSwitch: CaseIterable {
     var symbol: String {
         switch self {
         case .antiDot: "eye.slash"
+        case .pausesOnDisconnect: "headphones"
         case .fades: "wave.3.right"
         case .levelsMusic: "slider.horizontal.below.rectangle"
         case .pausesForMicrophone: "mic"
@@ -88,7 +96,7 @@ enum SettingsSwitch: CaseIterable {
                           comment: "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL")
         case .levelsMusic:
             return AntiDotText.featureOff
-        case .pausesForMicrophone, .staysPausedAfterCalls:
+        case .pausesOnDisconnect, .pausesForMicrophone, .staysPausedAfterCalls:
             return nil
         }
     }
@@ -101,7 +109,7 @@ enum SettingsSwitch: CaseIterable {
         case .antiDot: !model.isAntiDotMode && model.antiDotUnavailableFor != nil
         case .fades: !model.playerCanFade
         case .levelsMusic: model.isAntiDotMode
-        case .pausesForMicrophone, .staysPausedAfterCalls: false
+        case .pausesOnDisconnect, .pausesForMicrophone, .staysPausedAfterCalls: false
         }
     }
 
@@ -111,6 +119,7 @@ enum SettingsSwitch: CaseIterable {
         guard !isUnavailable(model) else { return false }
         return switch self {
         case .antiDot: model.isAntiDotMode
+        case .pausesOnDisconnect: model.timings.pausesOnOutputDisconnect
         case .fades: model.timings.fadesEnabled
         case .levelsMusic: model.timings.levelsMusic
         case .pausesForMicrophone: model.timings.pausesForMicrophone
@@ -122,6 +131,7 @@ enum SettingsSwitch: CaseIterable {
         var timings = model.timings
         switch self {
         case .antiDot: return model.setAntiDotMode(isOn)
+        case .pausesOnDisconnect: timings.pausesOnOutputDisconnect = isOn
         case .fades: timings.fadesEnabled = isOn
         case .levelsMusic: timings.levelsMusic = isOn
         case .pausesForMicrophone: timings.pausesForMicrophone = isOn
