@@ -188,8 +188,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   runs. Settings → Detection has a "Modes" heading over AntiDot mode, as
   the menu does.
 - **Level the volume** (Settings → Advanced, off by default). When the apps
-  your player was paused for were quieter than it, it resumes with the
-  Mac's volume lowered to match (10 dB at most), until the next pause, when
+  your player was paused for were quieter than it (by 2 dB or more:
+  **Only when quieter by**, 1 to 10 dB), it resumes with the Mac's volume
+  lowered to match (10 dB at most: **Lower by at most**, 2 to 20 dB; the
+  menu's Advanced unfolds both too), until the next pause, when
   the volume goes back up as it fades out. Calls don't count, and a volume
   you change meanwhile stays yours. It needs an output with a volume
   control, and isn't available in AntiDot mode.

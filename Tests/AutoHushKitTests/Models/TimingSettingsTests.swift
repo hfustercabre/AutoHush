@@ -28,6 +28,15 @@ struct TimingSettingsTests {
         #expect(on.fadeOutDuration == 3 && on.fadeInDuration == 4)
     }
 
+    @Test("Level the volume's limits are 10 and 2 dB by default, kept within 2–20 and 1–10 dB, and reach the configuration")
+    func levelingLimits() {
+        #expect(TimingSettings.defaults.levelingMaxCutDB == 10 && TimingSettings.defaults.levelingMinCutDB == 2)
+        let wide = TimingSettings(levelingMaxCutDB: 40, levelingMinCutDB: 0).clamped
+        #expect(wide.levelingMaxCutDB == 20 && wide.levelingMinCutDB == 1)
+        let configuration = AppConfiguration(timings: TimingSettings(levelingMaxCutDB: 6, levelingMinCutDB: 4))
+        #expect(configuration.levelingMaxCutDB == 6 && configuration.levelingMinCutDB == 4)
+    }
+
     @Test("Level the volume, Pause for the microphone and Stay paused after calls are off by default, and reach the configuration")
     func advancedSwitches() {
         let defaults = TimingSettings.defaults

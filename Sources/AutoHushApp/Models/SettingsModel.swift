@@ -132,7 +132,7 @@ final class SettingsModel {
     var detectionTimingsAreDefaults: Bool { timings.withDefaultDetection(threshold: !isAntiDotMode) == timings }
     /// The fades (the switch and both lengths) are their defaults.
     var fadesAreDefaults: Bool { timings.withDefaultFades == timings }
-    /// Advanced's switch is its default (off).
+    /// Advanced's switch and limits are their defaults (off, 10 and 2 dB).
     var advancedAreDefaults: Bool { timings.withDefaultAdvanced == timings }
     /// Calls' switches are their defaults (both off).
     var callsAreDefaults: Bool { timings.withDefaultCalls == timings }
@@ -298,10 +298,12 @@ private extension TimingSettings {
         return timings
     }
 
-    /// These timings with Advanced's switch back to its default.
+    /// These timings with Advanced's switch and limits back to their defaults.
     var withDefaultAdvanced: TimingSettings {
         var timings = self
         timings.levelsMusic = TimingSettings.defaults.levelsMusic
+        timings.levelingMaxCutDB = TimingSettings.defaults.levelingMaxCutDB
+        timings.levelingMinCutDB = TimingSettings.defaults.levelingMinCutDB
         return timings
     }
 

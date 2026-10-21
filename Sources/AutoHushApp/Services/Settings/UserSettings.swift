@@ -242,6 +242,8 @@ final class UserSettings: AutoPauseControlling {
             ("Silence threshold", old.silenceThresholdDB, new.silenceThresholdDB, { "\(Int($0.rounded())) dBFS" }),
             ("Fade out before pausing", old.fadeOutDuration, new.fadeOutDuration, seconds),
             ("Fade in when resuming", old.fadeInDuration, new.fadeInDuration, seconds),
+            ("Lower by at most", old.levelingMaxCutDB, new.levelingMaxCutDB, { "\(Int($0.rounded())) dB" }),
+            ("Only when quieter by", old.levelingMinCutDB, new.levelingMinCutDB, { "\(Int($0.rounded())) dB" }),
         ]
         var lines = rows.filter { $0.1 != $0.2 }.map { "\($0.0): \($0.3($0.1)) → \($0.3($0.2))" }
         if old.fadesEnabled != new.fadesEnabled { lines.append("Fade the music: \(new.fadesEnabled ? "on" : "off")") }

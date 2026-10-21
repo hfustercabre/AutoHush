@@ -161,7 +161,7 @@ flowchart TD
   RETRY["No answer: tried twice<br/>more, a second apart"]
   CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
   STAY["Stays paused: you<br/>play it when ready"]
-  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most), back up at the next<br/>fade-out unless you changed it<br/>(no resume after all: at once;<br/>after a crash: at the next<br/>launch, within the hour)"]
+  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most, 2 dB at least, by<br/>default), back up at the next<br/>fade-out unless you changed it<br/>(no resume after all: at once;<br/>after a crash: at the next<br/>launch, within the hour)"]
   FI(["Played and faded in<br/>over 2 s, to your volume"])
 
   S --> F

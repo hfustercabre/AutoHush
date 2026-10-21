@@ -339,7 +339,8 @@ struct SettingsModelTests {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                      fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                     levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true)
+                                     levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
+                                     pausesForMicrophone: true, staysPausedAfterCalls: true)
         model.setTimings(changed)
         #expect(!model.detectionTimingsAreDefaults && !model.fadesAreDefaults && !model.callsAreDefaults && !model.advancedAreDefaults)
 
@@ -347,21 +348,23 @@ struct SettingsModelTests {
         #expect(model.detectionTimingsAreDefaults)
         #expect(!model.fadesAreDefaults) // the other pages keep their own
         #expect(model.timings == TimingSettings(fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true))
+                                                levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
+                                                pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
         model.restoreDefaultFades()
         #expect(model.fadesAreDefaults)
         #expect(!model.detectionTimingsAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                                levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true))
+                                                levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
+                                                pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
         model.restoreDefaultCalls()
         #expect(model.callsAreDefaults && !model.advancedAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                                 fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                levelsMusic: true))
+                                                levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5))
 
         model.setTimings(changed)
         model.restoreDefaultAdvanced()

@@ -114,7 +114,7 @@ enum MenuSection: Equatable {
 /// away under it (F3, the user's pick, 2026-10-18): Detection's ways and
 /// timings, Fades' lengths. Advanced has nothing more.
 enum MenuSettingsPart: Hashable, Sendable {
-    case detection, fades
+    case detection, fades, advanced
 }
 
 /// What the menu shows. Unlike the status, the apps listed are fixed while

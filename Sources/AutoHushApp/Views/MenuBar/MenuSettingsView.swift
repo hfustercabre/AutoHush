@@ -10,8 +10,9 @@ import AutoHushKit
 /// place, a chevron in the middle of its line (T1, 2026-10-18; centered
 /// 2026-10-21): AntiDot mode's ways under it ("Modes") and Detection's
 /// timings ("Timing"); the
-/// fades' lengths under Fade playback. Calls and Advanced have nothing
-/// more. As in
+/// fades' lengths under Fade playback; Level the volume's limits under it,
+/// under "Volume".
+/// Calls has nothing more. As in
 /// Settings, what doesn't apply is greyed out, never hidden, saying why.
 struct MenuSettingsView: View {
     let model: StatusMenuModel
@@ -89,9 +90,22 @@ struct MenuSettingsView: View {
                 switchRow(.staysPausedAfterCalls)
             }
             line
-            pageName(.advanced)
+            pageName(.advanced, folding: .advanced)
+            if isOpen(.advanced) {
+                innerTitle(AdvancedSettingsView.volumeTitle)
+                    .opacity(fading(.advanced))
+            }
             part {
                 switchRow(.levelsMusic)
+                if isOpen(.advanced) {
+                    Group {
+                        slider(.levelingMaxCut)
+                        slider(.levelingMinCut)
+                    }
+                    .unavailable(!settings.timings.levelsMusic || settings.isAntiDotMode)
+                    .disabled(isFolding(.advanced))
+                    .opacity(fading(.advanced))
+                }
             }
         }
         .frame(width: menuContentWidth)

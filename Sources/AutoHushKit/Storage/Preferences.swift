@@ -109,6 +109,8 @@ package final class Preferences {
         ("silenceThresholdDB", \.silenceThresholdDB),
         ("fadeOutDuration", \.fadeOutDuration),
         ("fadeInDuration", \.fadeInDuration),
+        ("levelingMaxCutDB", \.levelingMaxCutDB),
+        ("levelingMinCutDB", \.levelingMinCutDB),
     ]
     private static let switchKeys: [(key: String, value: WritableKeyPath<TimingSettings, Bool>)] = [
         ("fadesEnabled", \.fadesEnabled),

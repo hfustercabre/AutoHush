@@ -21,6 +21,10 @@ package struct TimingSettings: Equatable, Sendable {
     /// of the quieter apps it was paused for (calls aside), until its next
     /// pause.
     package var levelsMusic: Bool
+    /// The most (dB) the volume is lowered, and how much quieter (dB) the
+    /// apps must have been for it to be.
+    package var levelingMaxCutDB: Double
+    package var levelingMinCutDB: Double
     /// Whether an app turning on its microphone pauses the music, before it
     /// plays any sound (a call starting silent).
     package var pausesForMicrophone: Bool
@@ -36,6 +40,8 @@ package struct TimingSettings: Equatable, Sendable {
         fadeInDuration: TimeInterval = 2,
         fadesEnabled: Bool = true,
         levelsMusic: Bool = false,
+        levelingMaxCutDB: Double = 10,
+        levelingMinCutDB: Double = 2,
         pausesForMicrophone: Bool = false,
         staysPausedAfterCalls: Bool = false
     ) {
@@ -46,6 +52,8 @@ package struct TimingSettings: Equatable, Sendable {
         self.fadeInDuration = fadeInDuration
         self.fadesEnabled = fadesEnabled
         self.levelsMusic = levelsMusic
+        self.levelingMaxCutDB = levelingMaxCutDB
+        self.levelingMinCutDB = levelingMinCutDB
         self.pausesForMicrophone = pausesForMicrophone
         self.staysPausedAfterCalls = staysPausedAfterCalls
     }
@@ -58,6 +66,9 @@ package struct TimingSettings: Equatable, Sendable {
     package static let stopGraceRange: ClosedRange<TimeInterval> = 1...10
     package static let silenceThresholdRange: ClosedRange<Double> = -90 ... -30
     package static let fadeDurationRange: ClosedRange<TimeInterval> = 0...5
+    /// Level the volume's limits (the user, 2026-10-21).
+    package static let levelingMaxCutRange: ClosedRange<Double> = 2...20
+    package static let levelingMinCutRange: ClosedRange<Double> = 1...10
 
     /// The same settings with every value clamped to its allowed range.
     package var clamped: TimingSettings {
@@ -69,6 +80,8 @@ package struct TimingSettings: Equatable, Sendable {
             fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange),
             fadesEnabled: fadesEnabled,
             levelsMusic: levelsMusic,
+            levelingMaxCutDB: levelingMaxCutDB.clamped(to: Self.levelingMaxCutRange),
+            levelingMinCutDB: levelingMinCutDB.clamped(to: Self.levelingMinCutRange),
             pausesForMicrophone: pausesForMicrophone,
             staysPausedAfterCalls: staysPausedAfterCalls
         )

@@ -48,9 +48,10 @@ package struct AppConfiguration: Sendable {
     /// Whether the music resumes with the Mac's volume lowered to the
     /// quieter apps' level (Settings → Advanced; `ResumeLevel`).
     var levelsMusic: Bool
-    /// The most the volume is lowered, in dB, and the least worth doing.
-    var levelingMaxCutDB: Float = 10
-    var levelingMinCutDB: Float = 2
+    /// The most the volume is lowered, in dB, and the least worth doing
+    /// (Settings → Advanced's sliders).
+    var levelingMaxCutDB: Float
+    var levelingMinCutDB: Float
     /// Whether an app turning on its microphone pauses the music, sound or
     /// not (Settings → Calls): it counts as playing once its microphone
     /// has been on for `microphoneStartConfirmation`, which apps that only
@@ -108,6 +109,8 @@ package struct AppConfiguration: Sendable {
         fadeOutDuration = timings.fadesEnabled ? timings.fadeOutDuration : 0
         fadeInDuration = timings.fadesEnabled ? timings.fadeInDuration : 0
         levelsMusic = timings.levelsMusic
+        levelingMaxCutDB = Float(timings.levelingMaxCutDB)
+        levelingMinCutDB = Float(timings.levelingMinCutDB)
         pausesForMicrophone = timings.pausesForMicrophone
         staysPausedAfterCalls = timings.staysPausedAfterCalls
     }
