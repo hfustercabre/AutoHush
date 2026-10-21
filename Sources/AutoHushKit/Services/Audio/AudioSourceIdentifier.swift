@@ -10,6 +10,9 @@ package struct AudioSource: Hashable, Sendable {
     package let name: String
     /// Path of the owning bundle, for its icon.
     package let bundlePath: String?
+    /// It counts as playing only for its microphone (Pause for the
+    /// microphone): it hasn't made a sound since it started.
+    package var isMicrophoneOnly = false
 
     package init(id: String, name: String, bundlePath: String? = nil) {
         self.id = id

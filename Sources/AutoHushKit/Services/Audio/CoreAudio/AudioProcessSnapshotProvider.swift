@@ -1,27 +1,32 @@
 import CoreAudio
 import Foundation
 
-/// A CoreAudio client process with its audio output running.
+/// A CoreAudio client process with its audio output running, or only its
+/// input (the microphone), when asked for those too.
 package struct AudioProcessInfo: Equatable, Sendable {
     package let objectID: AudioObjectID
     package let bundleID: String
     package let pid: pid_t
-    /// Whether its input runs too (the microphone, as in a call).
+    /// Whether its input runs (the microphone, as in a call).
     let isRunningInput: Bool
+    /// Whether its output runs; `false` for one that only has its microphone on.
+    package let isRunningOutput: Bool
 
-    init(objectID: AudioObjectID, bundleID: String, pid: pid_t, isRunningInput: Bool = false) {
+    init(objectID: AudioObjectID, bundleID: String, pid: pid_t, isRunningInput: Bool = false, isRunningOutput: Bool = true) {
         self.objectID = objectID
         self.bundleID = bundleID
         self.pid = pid
         self.isRunningInput = isRunningInput
+        self.isRunningOutput = isRunningOutput
     }
 }
 
 /// Source of CoreAudio process information. All methods are called on the
 /// monitor's serial queue.
 package protocol AudioProcessSnapshotProviding: AnyObject, Sendable {
-    /// Processes that currently have audio output running.
-    func activeProcesses() -> [AudioProcessInfo]
+    /// Processes that currently have audio output running, and, with
+    /// `includingInputOnly`, those with only their input (the microphone) on.
+    func activeProcesses(includingInputOnly: Bool) -> [AudioProcessInfo]
     /// Calls `onChange` on `queue` whenever the process list or any process's
     /// running state changes.
     func startObserving(on queue: DispatchQueue, onChange: @escaping @Sendable () -> Void)
@@ -55,16 +60,17 @@ package final class HALAudioProcessSnapshotProvider: AudioProcessSnapshotProvidi
         return true
     }()
 
-    package func activeProcesses() -> [AudioProcessInfo] {
+    package func activeProcesses(includingInputOnly: Bool) -> [AudioProcessInfo] {
         let objectIDs = processListListener == nil || Self.listenersMissStarts ? processObjectIDs() : runningObjects
         return objectIDs.compactMap { objectID in
-            // Read the cheap output flag first; only playing processes need more lookups.
-            guard CoreAudioProperty.value(kAudioProcessPropertyIsRunningOutput, of: objectID, initial: UInt32(0)) == 1,
-                  let bundleID = CoreAudioProperty.string(kAudioProcessPropertyBundleID, of: objectID)
+            // Read the cheap running flags first; only running processes need more lookups.
+            let output = CoreAudioProperty.value(kAudioProcessPropertyIsRunningOutput, of: objectID, initial: UInt32(0)) == 1
+            guard output || includingInputOnly else { return nil }
+            let input = CoreAudioProperty.value(kAudioProcessPropertyIsRunningInput, of: objectID, initial: UInt32(0)) == 1
+            guard output || input, let bundleID = CoreAudioProperty.string(kAudioProcessPropertyBundleID, of: objectID)
             else { return nil }
             let pid = CoreAudioProperty.value(kAudioProcessPropertyPID, of: objectID, initial: pid_t(0)) ?? 0
-            let input = CoreAudioProperty.value(kAudioProcessPropertyIsRunningInput, of: objectID, initial: UInt32(0)) == 1
-            return AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid, isRunningInput: input)
+            return AudioProcessInfo(objectID: objectID, bundleID: bundleID, pid: pid, isRunningInput: input, isRunningOutput: output)
         }
     }
 

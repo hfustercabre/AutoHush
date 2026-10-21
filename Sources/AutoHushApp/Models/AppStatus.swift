@@ -163,9 +163,14 @@ struct AppStatus: Equatable {
     /// The health's look until ready, the playback state's once ready.
     private var presentation: StatePresentation {
         health.presentation ?? (playerNeedsReopen ? .needingAttention(Self.needsReopenLine(playerName))
-            : playerMutes && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name))
+            : playerMutes && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name), microphone: onlyMicrophone)
             : playerHeldForCheck && playback == .pausedByMonitor ? .heldForCheck
-            : playback.presentation(playing: pausingSources.map(\.name)))
+            : playback.presentation(playing: pausingSources.map(\.name), microphone: onlyMicrophone))
+    }
+
+    /// The one app that pauses the music counts only for its microphone.
+    private var onlyMicrophone: Bool {
+        pausingSources.count == 1 && pausingSources[0].isMicrophoneOnly
     }
 
     /// The card offers Unmute: the player is muted for other apps.

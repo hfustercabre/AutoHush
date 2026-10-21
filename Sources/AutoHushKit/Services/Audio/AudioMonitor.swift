@@ -146,6 +146,12 @@ final class AudioMonitor: @unchecked Sendable {
     var publishedStartConfirmation: TimeInterval?
     /// The apps playing with their microphone on (calls), as last told.
     var callSourceIDs: Set<String> = []
+    /// The apps with their microphone on, playing or not (only playing ones
+    /// while Pause for the microphone is off: the others aren't read then).
+    var microphoneSourceIDs: Set<String> = []
+    /// The playing apps that made a sound since they started: the others
+    /// count only for their microphone.
+    var soundedSourceIDs: Set<String> = []
     /// How loud the music was before AutoHush's pause, and the apps
     /// during it (Settings → Advanced).
     var resumeLevel = ResumeLevel()
@@ -233,6 +239,8 @@ final class AudioMonitor: @unchecked Sendable {
     /// Applies new timings and thresholds without restarting monitoring.
     func setConfiguration(_ configuration: AppConfiguration) {
         queue.async {
+            // Apps with only their microphone on are read while it's on.
+            if configuration.pausesForMicrophone != self.configuration.pausesForMicrophone { self.needsRefresh = true }
             self.configuration = configuration
             self.tracker.updateTimings(from: configuration)
         }

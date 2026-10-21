@@ -23,11 +23,11 @@ extension StatePresentation {
     }
 
     /// A player that's muted instead of paused, while `playing` play.
-    static func muted(playing: [String]) -> StatePresentation {
+    static func muted(playing: [String], microphone: Bool = false) -> StatePresentation {
         StatePresentation(
             icon: .pausedForApp,
             label: String(localized: "AutoHush: your player is muted", comment: "VoiceOver label of the menu bar icon, while the media player (one that can only be muted) is muted for another app"),
-            line: String(localized: "Muted — \(PlaybackState.describePlaying(playing))",
+            line: String(localized: "Muted — \(PlaybackState.describePlaying(playing, microphone: microphone))",
                          comment: "At the top of the menu, under the media player (an app added with Add an App that can only be muted); %@ says which apps play, e.g. “Safari is playing”")
         )
     }
@@ -67,7 +67,8 @@ extension StatePresentation {
 extension PlaybackState {
     /// `playing`: the apps that paused the music. The line goes under the
     /// media player's name, so it doesn't repeat it.
-    func presentation(playing: [String] = []) -> StatePresentation {
+    /// `microphone`: the one app playing counts only for its microphone.
+    func presentation(playing: [String] = [], microphone: Bool = false) -> StatePresentation {
         switch self {
         case .unknown: // the player's state is not known yet: as when starting up
             return .starting
@@ -81,7 +82,7 @@ extension PlaybackState {
             return StatePresentation(
                 icon: .pausedForApp,
                 label: String(localized: "AutoHush: playback paused", comment: "VoiceOver label of the menu bar icon"),
-                line: String(localized: "Paused — \(Self.describePlaying(playing))",
+                line: String(localized: "Paused — \(Self.describePlaying(playing, microphone: microphone))",
                              comment: "At the top of the menu, under the media player; %@ says which apps play, e.g. “Safari is playing”")
             )
         case .musicIdle:
@@ -99,16 +100,21 @@ extension PlaybackState {
                              comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
             )
         case .pauseFailed:
-            return .needingAttention(String(localized: "Couldn’t pause — \(Self.describePlaying(playing))",
+            return .needingAttention(String(localized: "Couldn’t pause — \(Self.describePlaying(playing, microphone: microphone))",
                                             comment: "At the top of the menu, under the media player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”"))
         }
     }
 
-    /// "VLC is playing", "VLC and Safari are playing", "VLC and 2 other apps are playing".
-    static func describePlaying(_ names: [String]) -> String {
+    /// "VLC is playing", "VLC and Safari are playing", "VLC and 2 other apps are playing";
+    /// "Zoom is using the microphone" for one app that counts only for its
+    /// microphone (`microphone`: Pause for the microphone, before it makes a sound).
+    static func describePlaying(_ names: [String], microphone: Bool = false) -> String {
         switch names.count {
         case 0:
             return String(localized: "another app is playing", comment: "Completes “Paused — %@”")
+        case 1 where microphone:
+            return String(localized: "\(names[0]) is using the microphone",
+                          comment: "Completes “Paused — %@”, when an app with its microphone on (a call) paused your player before playing any sound (Settings → Advanced → Pause for the microphone); %@ is the app")
         case 1:
             return String(localized: "\(names[0]) is playing", comment: "Completes “Paused — %@”; %@ is an app")
         case 2:

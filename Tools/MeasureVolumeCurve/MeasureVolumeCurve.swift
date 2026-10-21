@@ -78,7 +78,7 @@ enum MeasureVolumeCurve {
     private static func startMetering(_ player: any MusicPlayer) async throws -> ProcessTapLevelMeter {
         try await player.play()
         try await Task.sleep(for: .seconds(1))
-        let processes = HALAudioProcessSnapshotProvider().activeProcesses()
+        let processes = HALAudioProcessSnapshotProvider().activeProcesses(includingInputOnly: false)
             .filter { $0.bundleID == player.bundleID || $0.bundleID.hasPrefix(player.bundleID + ".") }
         guard !processes.isEmpty else { throw Failure("no audio output from \(player.name); is it playing on this Mac?") }
         let meter = ProcessTapLevelMeter()

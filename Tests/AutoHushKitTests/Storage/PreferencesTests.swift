@@ -187,7 +187,7 @@ struct PreferencesTests {
     @Test("Settings → Advanced's switches persist")
     func advancedSwitchesPersist() {
         let store = InMemoryPreferenceStore()
-        let advanced = TimingSettings(levelsMusic: true, staysPausedAfterCalls: true)
+        let advanced = TimingSettings(levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true)
         Preferences(store: store).timings = advanced
         #expect(Preferences(store: store).timings == advanced)
     }

@@ -37,7 +37,7 @@ flowchart TD
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
-  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>detection, timings, fades,<br/>Advanced (Level the volume,<br/>Stay paused after calls),<br/>Diagnostics"]
+  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>detection, timings, fades,<br/>Advanced (Level the volume,<br/>Pause for the microphone,<br/>Stay paused after calls),<br/>Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])
@@ -142,6 +142,7 @@ flowchart TD
   DM{"Detection"}
   NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays (one that<br/>keeps saying so stays measured)"]
   ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s (any<br/>sound 2 s, with open streams)"]
+  MIC["Pause for the microphone<br/>on: its microphone on<br/>for 1 s counts, sound or<br/>not (the card: “is using<br/>the microphone”)"]
   T{"Playing<br/>for 0.5 s?"}
   TONE["Too short: a notification<br/>or chat tone, ignored"]
   AP{"Auto-Pause on,<br/>the player playing<br/>on this Mac?"}
@@ -169,6 +170,7 @@ flowchart TD
   F -->|"yes"| DM
   DM -->|"normal"| NORM --> T
   DM -->|"AntiDot mode"| ANTI --> T
+  F -.->|"its microphone on"| MIC --> AP
   T -->|"no"| TONE
   T -->|"yes"| AP
   AP -->|"no"| LEFT
@@ -196,7 +198,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, the fades Settings → Fades’, and Stay paused after calls and Level the volume (both off by default) Settings → Advanced’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
+What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s are Settings → Detection’s timings, the fades Settings → Fades’, and Pause for the microphone, Stay paused after calls and Level the volume (all off by default) Settings → Advanced’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. A player on another device (Spotify Connect) is never paused.
 
 ## Monitoring: what else changes it
 

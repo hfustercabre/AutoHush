@@ -24,7 +24,9 @@ extension AudioMonitor {
         needsRefresh = false
         lastRefresh = now
         let ownPID = getpid()
-        candidates = snapshotProvider.activeProcesses().filter { $0.pid != ownPID }
+        let processes = snapshotProvider.activeProcesses(includingInputOnly: configuration.pausesForMicrophone)
+            .filter { $0.pid != ownPID }
+        candidates = processes.filter(\.isRunningOutput)
         playerProcesses = Set(candidates.filter { configuration.isMusicPlayer($0.bundleID) }.map(\.objectID))
         sourceOfProcess = [:]
         // A process without a bundle ID (a command-line player such as afplay
@@ -40,6 +42,7 @@ extension AudioMonitor {
             knownSources[source.id] = source
         }
         presentSourceIDs = Set(sourceOfProcess.values.map(\.id))
+        updateMicrophoneSources(among: processes)
         // A released process whose output closed is tapped again when it opens.
         let present = Set(candidates.map(\.objectID))
         quietProcesses = quietProcesses.filter { present.contains($0) }
@@ -47,10 +50,29 @@ extension AudioMonitor {
         updateMeteredProcesses(at: now)
     }
 
-    /// Tells the arbiter which apps play with their microphone on (calls).
+    /// The apps with their microphone on, among `processes` (the media
+    /// player's aside), as their sound's owner is found.
+    private func updateMicrophoneSources(among processes: [AudioProcessInfo]) {
+        microphoneSourceIDs = []
+        for process in processes where process.isRunningInput {
+            let source: AudioSource
+            if let playing = sourceOfProcess[process.objectID] {
+                source = playing
+            } else {
+                // Only its microphone on: its owner, found as for a playing one.
+                guard process.bundleID.isEmpty || configuration.isMediaSource(process.bundleID) else { continue }
+                source = sourceIdentifier?.source(for: process) ?? AudioSource(id: process.bundleID, name: process.bundleID)
+            }
+            guard configuration.isMediaSource(source.id) else { continue }
+            microphoneSourceIDs.insert(source.id)
+            knownSources[source.id] = source
+        }
+    }
+
+    /// Tells the arbiter which apps have their microphone on (calls): only
+    /// playing ones while Pause for the microphone is off.
     private func updateCalls() {
-        let calls = Set(candidates.filter(\.isRunningInput).compactMap { sourceOfProcess[$0.objectID]?.id })
-            .subtracting(ignoredSourceIDs)
+        let calls = microphoneSourceIDs.subtracting(ignoredSourceIDs)
         for id in calls.subtracting(callSourceIDs).sorted() { events.yield(.call(id: id, inCall: true)) }
         for id in callSourceIDs.subtracting(calls).sorted() { events.yield(.call(id: id, inCall: false)) }
         callSourceIDs = calls
@@ -189,7 +211,7 @@ extension AudioMonitor {
         // each app waits AntiDot mode's minimum for what judged it: what it
         // tells macOS (the verdicts that decided; none for video), else its
         // open stream.
-        let slowStarts: [String: TimeInterval] = switch detectionMethod {
+        var slowStarts: [String: TimeInterval] = switch detectionMethod {
         case .audioLevels where detectionMode == .audioLevel: [:]
         case .audioLevels: Dictionary(uniqueKeysWithValues: audible.compactMap { id -> (String, TimeInterval)? in
             guard verdicts[id] != nil else { return (id, configuration.startConfirmationWithOpenStreams) }
@@ -202,7 +224,20 @@ extension AudioMonitor {
         } ?? [:]
         case .openStreams: Dictionary(uniqueKeysWithValues: audible.map { ($0, configuration.startConfirmationWithOpenStreams) })
         }
+        // Pause for the microphone (Settings → Advanced): an app with its
+        // microphone on counts as playing, sound or not, once it's been on a
+        // second (sooner if its sound counts sooner).
+        let bySound = audible
+        if configuration.pausesForMicrophone {
+            for id in microphoneSourceIDs {
+                let bySound = audible.contains(id) ? slowStarts[id] ?? configuration.sourceStartConfirmation : .infinity
+                slowStarts[id] = min(bySound, configuration.microphoneStartConfirmation)
+                audible.insert(id)
+            }
+        }
         let (started, stopped) = tracker.update(audible: audible, at: now, startConfirmations: slowStarts)
+        let active = tracker.activeSources
+        soundedSourceIDs = soundedSourceIDs.union(bySound).intersection(active)
         if !started.isEmpty || !stopped.isEmpty {
             logger.debug("[monitor] +[\(started.sorted().joined(separator: ","), privacy: .public)] -[\(stopped.sorted().joined(separator: ","), privacy: .public)]")
         }
@@ -294,12 +329,13 @@ extension AudioMonitor {
     /// counts, as apps are judged now (see `evaluate`'s slow starts): a pause
     /// it takes over waits that long for apps still playing.
     private func updateStartConfirmation() {
-        let longest = switch detectionMethod {
+        let judged = switch detectionMethod {
         case .audioLevels where detectionMode == .audioLevel: configuration.sourceStartConfirmation
         case .audioLevels: max(configuration.startConfirmationWithoutVideo, configuration.startConfirmationWithOpenStreams)
         case .playbackSignals: configuration.startConfirmationWithoutVideo
         case .openStreams: configuration.startConfirmationWithOpenStreams
         }
+        let longest = configuration.pausesForMicrophone ? max(judged, configuration.microphoneStartConfirmation) : judged
         guard longest != publishedStartConfirmation else { return }
         publishedStartConfirmation = longest
         events.yield(.startConfirmation(longest))

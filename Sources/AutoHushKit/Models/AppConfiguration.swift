@@ -51,6 +51,12 @@ package struct AppConfiguration: Sendable {
     /// The most the volume is lowered, in dB, and the least worth doing.
     var levelingMaxCutDB: Float = 10
     var levelingMinCutDB: Float = 2
+    /// Whether an app turning on its microphone pauses the music, sound or
+    /// not (Settings → Advanced): it counts as playing once its microphone
+    /// has been on for `microphoneStartConfirmation`, which apps that only
+    /// touch it as they open (or test it) don't reach, and as in a call.
+    var pausesForMicrophone: Bool
+    var microphoneStartConfirmation: TimeInterval = 1
     /// Whether the music stays paused after a call during AutoHush's pause
     /// (Settings → Advanced).
     var staysPausedAfterCalls: Bool
@@ -102,6 +108,7 @@ package struct AppConfiguration: Sendable {
         fadeOutDuration = timings.fadesEnabled ? timings.fadeOutDuration : 0
         fadeInDuration = timings.fadesEnabled ? timings.fadeInDuration : 0
         levelsMusic = timings.levelsMusic
+        pausesForMicrophone = timings.pausesForMicrophone
         staysPausedAfterCalls = timings.staysPausedAfterCalls
     }
 

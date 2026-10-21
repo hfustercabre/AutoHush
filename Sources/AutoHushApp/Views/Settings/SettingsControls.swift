@@ -5,7 +5,7 @@ import AutoHushKit
 /// menu's More Settings: the same words, and the same rules for when one
 /// can't be changed.
 enum SettingsSwitch: CaseIterable {
-    case antiDot, fades, levelsMusic, staysPausedAfterCalls
+    case antiDot, fades, levelsMusic, pausesForMicrophone, staysPausedAfterCalls
 
     var title: Text {
         switch self {
@@ -15,6 +15,8 @@ enum SettingsSwitch: CaseIterable {
             Text("Fade playback", comment: "Settings → Fades and the menu: the switch that turns the fades on or off")
         case .levelsMusic:
             Text("Level the volume", comment: "Settings → Advanced, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
+        case .pausesForMicrophone:
+            Text("Pause for the microphone", comment: "Settings → Advanced (under “Calls”), Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone")
         case .staysPausedAfterCalls:
             Text("Stay paused after calls", comment: "Settings → Advanced, Diagnostics and the menu: the switch that keeps your player paused after a call")
         }
@@ -32,6 +34,9 @@ enum SettingsSwitch: CaseIterable {
         case .levelsMusic:
             Text("After quieter apps, your player resumes with the Mac’s volume lowered to match. Calls don’t count.",
                  comment: "Settings → Advanced, under “Level the volume”; a call is an app using the microphone")
+        case .pausesForMicrophone:
+            Text("An app turning on the microphone pauses your player, even before it plays.",
+                 comment: "Settings → Advanced, under “Pause for the microphone”: a call that starts silent pauses your player too")
         case .staysPausedAfterCalls:
             Text("Your player doesn’t resume after a call that came while it was paused.",
                  comment: "Settings → Advanced, under “Stay paused after calls”; a call is an app using the microphone")
@@ -48,6 +53,8 @@ enum SettingsSwitch: CaseIterable {
             Text("Fades out and back in", comment: "The menu, under Fade playback: what it does, in a few words")
         case .levelsMusic:
             Text("Matches quieter apps’ volume", comment: "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)")
+        case .pausesForMicrophone:
+            Text("Pauses when a microphone turns on", comment: "The menu, under Pause for the microphone: what it does, in a few words (an app turning on the microphone pauses your player)")
         case .staysPausedAfterCalls:
             Text("No resume after a call", comment: "The menu, under Stay paused after calls: what it does, in a few words")
         }
@@ -59,6 +66,7 @@ enum SettingsSwitch: CaseIterable {
         case .antiDot: "eye.slash"
         case .fades: "wave.3.right"
         case .levelsMusic: "slider.horizontal.below.rectangle"
+        case .pausesForMicrophone: "mic"
         case .staysPausedAfterCalls: "phone.down"
         }
     }
@@ -80,7 +88,7 @@ enum SettingsSwitch: CaseIterable {
                           comment: "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL")
         case .levelsMusic:
             return AntiDotText.featureOff
-        case .staysPausedAfterCalls:
+        case .pausesForMicrophone, .staysPausedAfterCalls:
             return nil
         }
     }
@@ -93,7 +101,7 @@ enum SettingsSwitch: CaseIterable {
         case .antiDot: !model.isAntiDotMode && model.antiDotUnavailableFor != nil
         case .fades: !model.playerCanFade
         case .levelsMusic: model.isAntiDotMode
-        case .staysPausedAfterCalls: false
+        case .pausesForMicrophone, .staysPausedAfterCalls: false
         }
     }
 
@@ -105,6 +113,7 @@ enum SettingsSwitch: CaseIterable {
         case .antiDot: model.isAntiDotMode
         case .fades: model.timings.fadesEnabled
         case .levelsMusic: model.timings.levelsMusic
+        case .pausesForMicrophone: model.timings.pausesForMicrophone
         case .staysPausedAfterCalls: model.timings.staysPausedAfterCalls
         }
     }
@@ -115,6 +124,7 @@ enum SettingsSwitch: CaseIterable {
         case .antiDot: return model.setAntiDotMode(isOn)
         case .fades: timings.fadesEnabled = isOn
         case .levelsMusic: timings.levelsMusic = isOn
+        case .pausesForMicrophone: timings.pausesForMicrophone = isOn
         case .staysPausedAfterCalls: timings.staysPausedAfterCalls = isOn
         }
         model.setTimings(timings)

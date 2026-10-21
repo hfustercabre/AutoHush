@@ -113,6 +113,7 @@ package final class Preferences {
     private static let switchKeys: [(key: String, value: WritableKeyPath<TimingSettings, Bool>)] = [
         ("fadesEnabled", \.fadesEnabled),
         ("levelsMusic", \.levelsMusic),
+        ("pausesForMicrophone", \.pausesForMicrophone),
         ("staysPausedAfterCalls", \.staysPausedAfterCalls),
     ]
 

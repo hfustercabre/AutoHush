@@ -22,7 +22,9 @@ package final class MockAudioProcessSnapshotProvider: AudioProcessSnapshotProvid
 
     package var isObserving: Bool { lock.withLock { onChange != nil } }
 
-    package func activeProcesses() -> [AudioProcessInfo] { processes }
+    package func activeProcesses(includingInputOnly: Bool) -> [AudioProcessInfo] {
+        processes.filter { includingInputOnly || $0.isRunningOutput }
+    }
 
     package func startObserving(on queue: DispatchQueue, onChange: @escaping @Sendable () -> Void) {
         lock.withLock {

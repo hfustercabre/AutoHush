@@ -162,6 +162,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Shorter texts.** The 30 longest say the same in fewer words, in every
   language: Settings' Detection and Sound Sources, Add an App's steps and
   check, adding and learning web apps, and choosing a player.
+- **The menu's Detection and Fades titles have a bigger chevron, in the
+  middle of their line,** as big as the one on rows that open a side
+  window.
 - **What Add an App's check asks of you is blue.** Start it playing, pause
   it with its own Pause, allow Accessibility: the panel's request is in the
   accent color, so it stands apart from the orange warning that clicks and
@@ -169,6 +172,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Pause for the microphone** (Settings → Advanced, under Calls, and the
+  menu; off by default): an app that turns on its microphone pauses your
+  player after a second, before it plays any sound, as a call that starts
+  muted or in a waiting room does. The card says "Paused — zoom.us is
+  using the microphone" until it makes a sound, and your player resumes
+  once no app uses the microphone. AutoHush only reads whether an app's
+  microphone is on, which needs no permission, so it works in AntiDot mode
+  too.
 - **More settings in the menu.** Under Ignored Apps, Detection's, Fades'
   and Advanced's switches, each under its section's name, with a few words
   on what it does and its symbol in the accent color while it's on. Click

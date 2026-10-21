@@ -7,9 +7,11 @@ import AutoHushKit
 /// Detection's, Fades' and Advanced's switches, each with its symbol (in
 /// the accent color while it's on) and what it does in a few words. A part
 /// with more than its switches has a title that unfolds the rest in its
-/// place, a chevron at its right (T1, the user's pick, 2026-10-18): AntiDot
-/// mode's ways under it ("Modes") and Detection's timings ("Timing"); the
-/// fades' lengths under Fade playback. Advanced has nothing more. As in
+/// place, a chevron in the middle of its line (T1, 2026-10-18; centered
+/// 2026-10-21): AntiDot mode's ways under it ("Modes") and Detection's
+/// timings ("Timing"); the
+/// fades' lengths under Fade playback. Advanced has nothing more, its call
+/// switches under "Calls", as in Settings. As in
 /// Settings, what doesn't apply is greyed out, never hidden, saying why.
 struct MenuSettingsView: View {
     let model: StatusMenuModel
@@ -85,8 +87,9 @@ struct MenuSettingsView: View {
             part {
                 switchRow(.levelsMusic)
             }
-            line
+            innerTitle(AdvancedSettingsView.callsTitle)
             part {
+                switchRow(.pausesForMicrophone)
                 switchRow(.staysPausedAfterCalls)
             }
         }
@@ -135,8 +138,9 @@ struct MenuSettingsView: View {
 
     /// A Settings page's name over its part; for a part with more settings
     /// than its switches (`folding`), the whole line is the button that
-    /// unfolds them, a plain chevron at its right (T1, the user's pick,
-    /// 2026-10-18), tinted as the menu's controls under the pointer.
+    /// unfolds them, a plain chevron in the middle of it (T1, the user's
+    /// pick, 2026-10-18; centered 2026-10-21), tinted as the menu's
+    /// controls under the pointer.
     @ViewBuilder private func pageName(_ page: SettingsWindowController.Page, folding part: MenuSettingsPart? = nil) -> some View {
         if let part {
             foldingTitle(page, part: part)
@@ -147,16 +151,19 @@ struct MenuSettingsView: View {
         }
     }
 
-    /// The folding part's title: down while its other settings are folded,
-    /// up while they show.
+    /// The folding part's title, its chevron in the middle of the line (the
+    /// user, 2026-10-21; the titles never reach it: 15 characters at most,
+    /// in German): down while its other settings are folded, up while they
+    /// show.
     private func foldingTitle(_ page: SettingsWindowController.Page, part: MenuSettingsPart) -> some View {
         let toggle = { model.perform(.toggleSettings(part)) }
         return Button(action: toggle) {
-            HStack(spacing: 5) {
+            ZStack {
                 SectionLabel(Text(verbatim: page.title))
-                Spacer(minLength: 0)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                // As big as the side rows' chevron (C3, the user's pick, 2026-10-21).
                 Image(systemName: showsOpen(part) ? "chevron.up" : "chevron.down")
-                    .font(.caption.weight(.bold))
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(.appSecondary)
                     .accessibilityHidden(true)
             }

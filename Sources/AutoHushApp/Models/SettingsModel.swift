@@ -296,6 +296,7 @@ private extension TimingSettings {
     var withDefaultAdvanced: TimingSettings {
         var timings = self
         timings.levelsMusic = TimingSettings.defaults.levelsMusic
+        timings.pausesForMicrophone = TimingSettings.defaults.pausesForMicrophone
         timings.staysPausedAfterCalls = TimingSettings.defaults.staysPausedAfterCalls
         return timings
     }

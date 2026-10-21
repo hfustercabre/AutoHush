@@ -6,7 +6,11 @@ import os
 extension AudioMonitor {
     func publishActiveSources() {
         let active = tracker.activeSources
-            .map { knownSources[$0] ?? AudioSource(id: $0, name: $0) }
+            .map { id in
+                var source = knownSources[id] ?? AudioSource(id: id, name: id)
+                source.isMicrophoneOnly = configuration.pausesForMicrophone && !soundedSourceIDs.contains(id)
+                return source
+            }
             .sortedByName()
         guard active != publishedActive else { return }
         publishedActive = active

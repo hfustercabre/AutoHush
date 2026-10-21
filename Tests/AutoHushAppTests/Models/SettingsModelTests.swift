@@ -339,7 +339,7 @@ struct SettingsModelTests {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                      fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                     levelsMusic: true, staysPausedAfterCalls: true)
+                                     levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true)
         model.setTimings(changed)
         #expect(!model.detectionTimingsAreDefaults && !model.fadesAreDefaults && !model.advancedAreDefaults)
 
@@ -347,14 +347,14 @@ struct SettingsModelTests {
         #expect(model.detectionTimingsAreDefaults)
         #expect(!model.fadesAreDefaults) // the other pages keep their own
         #expect(model.timings == TimingSettings(fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                levelsMusic: true, staysPausedAfterCalls: true))
+                                                levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
         model.restoreDefaultFades()
         #expect(model.fadesAreDefaults)
         #expect(!model.detectionTimingsAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                                levelsMusic: true, staysPausedAfterCalls: true))
+                                                levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
         model.restoreDefaultAdvanced()

@@ -66,6 +66,7 @@ struct DiagnosticsReportTests {
             Auto-Pause: On
             Ignored apps: VLC
             Level the volume: Off
+            Pause for the microphone: Off
             Stay paused after calls: Off
             Launch at login: On
             Updates: Install it automatically
@@ -219,7 +220,7 @@ struct DiagnosticsReportTests {
         let snapshot = quietReport(.playbackSignals, .playbackSignals)
         #expect(snapshot.text.contains("Detecting by: What apps tell macOS\nAntiDot mode: On"))
         #expect(!snapshot.text.contains("Silence threshold")) // not used in AntiDot mode
-        #expect(snapshot.text.contains("Level the volume: Off\nStay paused after calls: On")) // AntiDot mode measures no sound
+        #expect(snapshot.text.contains("Level the volume: Off\nPause for the microphone: Off\nStay paused after calls: On")) // AntiDot mode measures no sound
     }
 
     @Test("in AntiDot mode, says its longer start for apps without video")

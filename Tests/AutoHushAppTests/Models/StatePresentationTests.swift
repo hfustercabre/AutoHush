@@ -24,6 +24,9 @@ struct StatePresentationTests {
         #expect(PlaybackState.describePlaying(["VLC"]) == "VLC is playing")
         #expect(PlaybackState.describePlaying(["A", "B"]) == "A and B are playing")
         #expect(PlaybackState.describePlaying(["A", "B", "C", "D"]) == "A and 3 other apps are playing")
+        // One app with its microphone on that made no sound yet (Pause for the microphone).
+        #expect(PlaybackState.describePlaying(["Zoom"], microphone: true) == "Zoom is using the microphone")
+        #expect(PlaybackState.describePlaying(["Zoom", "Safari"], microphone: true) == "Zoom and Safari are playing")
     }
 
     @Test("once ready, the menu follows the playback state rather than the health")

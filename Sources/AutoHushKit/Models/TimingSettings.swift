@@ -21,6 +21,9 @@ package struct TimingSettings: Equatable, Sendable {
     /// of the quieter apps it was paused for (calls aside), until its next
     /// pause.
     package var levelsMusic: Bool
+    /// Whether an app turning on its microphone pauses the music, before it
+    /// plays any sound (a call starting silent).
+    package var pausesForMicrophone: Bool
     /// Whether the music stays paused when the apps stop after a call came
     /// during AutoHush's pause.
     package var staysPausedAfterCalls: Bool
@@ -33,6 +36,7 @@ package struct TimingSettings: Equatable, Sendable {
         fadeInDuration: TimeInterval = 2,
         fadesEnabled: Bool = true,
         levelsMusic: Bool = false,
+        pausesForMicrophone: Bool = false,
         staysPausedAfterCalls: Bool = false
     ) {
         self.startConfirmation = startConfirmation
@@ -42,6 +46,7 @@ package struct TimingSettings: Equatable, Sendable {
         self.fadeInDuration = fadeInDuration
         self.fadesEnabled = fadesEnabled
         self.levelsMusic = levelsMusic
+        self.pausesForMicrophone = pausesForMicrophone
         self.staysPausedAfterCalls = staysPausedAfterCalls
     }
 
@@ -64,6 +69,7 @@ package struct TimingSettings: Equatable, Sendable {
             fadeInDuration: fadeInDuration.clamped(to: Self.fadeDurationRange),
             fadesEnabled: fadesEnabled,
             levelsMusic: levelsMusic,
+            pausesForMicrophone: pausesForMicrophone,
             staysPausedAfterCalls: staysPausedAfterCalls
         )
     }
