@@ -253,7 +253,7 @@ flowchart LR
   E11 --> R11
 ```
 
-The events, besides other apps’ sound, that change what AutoHush does. Shortcuts’ **Get Auto-Pause** only reads the switch, and **Set Auto-Pause** On also ends a Turn off for. A Focus or a Shortcuts action works even when AutoHush isn’t running: macOS opens it, and a Focus that started or ended meanwhile is followed at launch.
+The events, besides other apps’ sound, that change what AutoHush does. Pause on disconnect (off by default) is Settings → Behavior’s. Shortcuts’ **Get Auto-Pause** only reads the switch, and **Set Auto-Pause** On also ends a Turn off for. A Focus or a Shortcuts action works even when AutoHush isn’t running: macOS opens it, and a Focus that started or ended meanwhile is followed at launch.
 
 ## The player’s states
 

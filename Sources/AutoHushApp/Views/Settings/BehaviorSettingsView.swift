@@ -91,26 +91,26 @@ struct BehaviorSettingsView: View {
     }
 
     /// Over how long another app must play and what else pauses your
-    /// player, here and in the menu's Behavior.
+    /// player, here and in the menu's settings.
     static var pausingTitle: Text {
-        Text("Pausing", comment: "Settings → Behavior and the menu's Behavior: heading over when your player pauses (how long another app must play, the microphone, an output going away)")
+        Text("Pausing", comment: "Settings → Behavior, and a section title in the menu's settings: heading over when your player pauses (how long another app must play, the microphone, an output going away)")
     }
 
     /// Over Resume playback, its wait and staying paused after calls, here
-    /// and in the menu's Behavior.
+    /// and in the menu's settings.
     static var resumingTitle: Text {
-        Text("Resuming", comment: "Settings → Behavior and the menu's Behavior: heading over whether and when your player resumes once other apps go quiet")
+        Text("Resuming", comment: "Settings → Behavior, and a section title in the menu's settings: heading over whether and when your player resumes once other apps go quiet")
     }
 
-    /// Over the fades, here and in the menu's Behavior; also, with a check,
+    /// Over the fades, here and in the menu's settings; also, with a check,
     /// under the media player in Settings → General and at the foot of the
     /// menu's card, and a Diagnostics row.
     static var fadesTitle: String {
-        String(localized: "Fades", comment: "Settings → Behavior and the menu's Behavior: heading over playback's fade out and fade in; also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
+        String(localized: "Fades", comment: "Settings → Behavior, and a section title in the menu's settings: heading over playback's fade out and fade in; also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
     }
 
-    /// Over Level the volume and its limits, here and in the menu's Behavior.
+    /// Over Level the volume and its limits, here and in the menu's settings.
     static var volumeTitle: Text {
-        Text("Volume", comment: "Settings → Behavior and the menu's Behavior: heading over Level the volume and its limits")
+        Text("Volume", comment: "Settings → Behavior, and a section title in the menu's settings: heading over Level the volume and its limits")
     }
 }

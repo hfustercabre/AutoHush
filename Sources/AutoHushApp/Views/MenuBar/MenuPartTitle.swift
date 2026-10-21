@@ -17,9 +17,9 @@ struct MenuPartTitle: View {
     }
 }
 
-/// A title inside a menu part ("Modes", "Timing", "Supported Apps"): a
-/// description's size, grey; the part's groups have no lines between them
-/// (the user, 2026-10-18).
+/// A section's title inside the menu's settings ("Pausing", "Modes"): a
+/// description's size, grey; a line between the sections (the user,
+/// 2026-10-21).
 struct MenuInnerTitle: View {
     let title: Text
 

@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-// Pause on disconnect (Settings → Detection): the output in use
+// Pause on disconnect (Settings → Behavior): the output in use
 // going away pauses the music at once and for good.
 extension PlaybackArbiterTests {
     /// An arbiter for `player`, at volume 60 so it fades, its fades' waits

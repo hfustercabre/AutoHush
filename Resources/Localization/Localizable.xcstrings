@@ -61163,7 +61163,7 @@
       }
     },
     "Fades" : {
-      "comment" : "Settings → Behavior and the menu's Behavior: heading over playback's fade out and fade in; also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player",
+      "comment" : "Settings → Behavior, and a section title in the menu's settings: heading over playback's fade out and fade in; also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -105434,7 +105434,7 @@
       }
     },
     "Pausing" : {
-      "comment" : "Settings → Behavior and the menu's Behavior: heading over when your player pauses (how long another app must play, the microphone, an output going away)",
+      "comment" : "Settings → Behavior, and a section title in the menu's settings: heading over when your player pauses (how long another app must play, the microphone, an output going away)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -115656,7 +115656,7 @@
       }
     },
     "Resuming" : {
-      "comment" : "Settings → Behavior and the menu's Behavior: heading over whether and when your player resumes once other apps go quiet",
+      "comment" : "Settings → Behavior, and a section title in the menu's settings: heading over whether and when your player resumes once other apps go quiet",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -139043,7 +139043,7 @@
       }
     },
     "Volume" : {
-      "comment" : "Settings → Behavior and the menu's Behavior: heading over Level the volume and its limits",
+      "comment" : "Settings → Behavior, and a section title in the menu's settings: heading over Level the volume and its limits",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

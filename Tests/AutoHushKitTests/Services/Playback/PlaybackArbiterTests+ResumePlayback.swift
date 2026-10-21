@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-// Resume playback (Settings → Detection) turned off: AutoHush only pauses
+// Resume playback (Settings → Behavior) turned off: AutoHush only pauses
 // the music; once the apps stop, the pause is the user's and stays.
 extension PlaybackArbiterTests {
     /// The test configuration with Resume playback off.
