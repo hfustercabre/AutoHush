@@ -159,6 +159,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   starts on once the player opens.
 - **AntiDot mode keeps its way.** Turned off and on again, it uses the way
   you chose last (**Open audio streams only**, say).
+- **Shorter texts.** The 30 longest say the same in fewer words, in every
+  language: Settings' Detection and Sound Sources, Add an App's steps and
+  check, adding and learning web apps, and choosing a player.
 
 ### Added
 
