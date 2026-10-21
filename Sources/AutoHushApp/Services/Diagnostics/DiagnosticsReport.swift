@@ -78,8 +78,9 @@ enum DiagnosticsReport {
 
     private static func sections(status: AppStatus, facts: DiagnosticsFacts,
                                  ways: (String) -> [PlayerSetup.Way]?) -> [DiagnosticsSnapshot.Section] {
-        [player(status: status, facts: facts, ways: ways), detection(status: status, facts: facts),
-         permissions(facts: facts), autoHush(status: status, facts: facts), mac(facts: facts)]
+        [player(status: status, facts: facts, ways: ways), behavior(status: status, facts: facts),
+         detection(status: status, facts: facts), permissions(facts: facts), autoHush(status: status, facts: facts),
+         mac(facts: facts)]
     }
 
     private static func player(status: AppStatus, facts: DiagnosticsFacts,
@@ -134,26 +135,77 @@ enum DiagnosticsReport {
         String(localized: "Player", comment: "Diagnostics: the media player's name and version")
     }
 
-    private static func detection(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
-        let method = describe(status.detection)
+    /// Settings → Behavior's settings, card by card (the user, 2026-10-21): a
+    /// timing or a length only while it's used.
+    private static func behavior(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
+        let timings = facts.timings
         let antiDot = facts.detectionMethod.isAntiDot
         // Nothing measured with AntiDot mode off (no Audio Recording access,
         // or before the first level): apps wait AntiDot mode's minimums.
         let unmeasured = !antiDot && [.pending, .unavailable].contains(status.detection)
+        // With open streams only, every app waits at least 2 s.
+        let pauseAfter = facts.detectionMethod == .openStreams || unmeasured
+            ? AppConfiguration(timings: timings).startConfirmationWithOpenStreams.secondsText
+            : timings.startConfirmation.secondsText
+        // Off in AntiDot mode, which measures no sound, and while nothing
+        // resumes, whatever the switch.
+        let levels = timings.levelsMusic && !antiDot && timings.resumesPlayback
+        let fades = timings.fadesEnabled && facts.playerCanFade
         var rows = [
-            Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
-            Row(label: String(localized: "AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
-            // With open streams only, every app waits at least 2 s.
             Row(label: String(localized: "Pause playback after", comment: "Settings → Behavior and Diagnostics: how long another app must play before your player pauses"),
-                value: facts.detectionMethod == .openStreams || unmeasured ? AppConfiguration(timings: facts.timings).startConfirmationWithOpenStreams.secondsText
-                    : facts.timings.startConfirmation.secondsText),
+                value: pauseAfter),
         ]
         if facts.detectionMethod == .playbackSignals || unmeasured {
             rows.append(Row(label: String(localized: "Pause playback after, without video",
                                           comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before your player pauses"),
-                            value: AppConfiguration(timings: facts.timings).startConfirmationWithoutVideo.secondsText))
+                            value: AppConfiguration(timings: timings).startConfirmationWithoutVideo.secondsText))
         }
-        rows.append(Row(label: String(localized: "Resume playback after", comment: "Settings → Behavior and Diagnostics: how long other apps must be quiet before your player resumes"), value: facts.timings.stopGrace.secondsText))
+        rows += [
+            Row(label: String(localized: "Pause for the microphone", comment: "Settings → Behavior, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone"),
+                value: timings.pausesForMicrophone ? on : off),
+            Row(label: String(localized: "Pause on disconnect", comment: "Settings → Behavior (under “Pausing”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range"),
+                value: timings.pausesOnOutputDisconnect ? on : off),
+            Row(label: String(localized: "Resume playback", comment: "Settings → Behavior (under “Resuming”), Diagnostics and the menu: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it"),
+                value: timings.resumesPlayback ? on : off),
+        ]
+        if timings.resumesPlayback {
+            rows.append(Row(label: String(localized: "Resume playback after", comment: "Settings → Behavior and Diagnostics: how long other apps must be quiet before your player resumes"),
+                            value: timings.stopGrace.secondsText))
+        }
+        rows.append(Row(label: String(localized: "Stay paused after calls", comment: "Settings → Behavior and Diagnostics: the switch that keeps your player paused after a call"),
+                        value: timings.staysPausedAfterCalls ? on : off))
+        if fades {
+            rows.append(Row(label: String(localized: "Fade out before pausing", comment: "Settings → Behavior, Diagnostics and the menu: how long playback fades out before it pauses"),
+                            value: timings.fadeOutDuration.secondsText))
+            if timings.resumesPlayback {
+                rows.append(Row(label: String(localized: "Fade in when resuming", comment: "Settings → Behavior, Diagnostics and the menu: how long playback fades back in when it resumes"),
+                                value: timings.fadeInDuration.secondsText))
+            }
+        }
+        rows.append(Row(label: String(localized: "Level the volume", comment: "Settings → Behavior and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them"),
+                        value: levels ? on : off))
+        if levels {
+            let decibels = { (value: Double) in String(localized: "\(Int(value)) dB", comment: "A sound level in decibels") }
+            rows.append(Row(label: String(localized: "Lower by at most", comment: "Settings → Behavior, Diagnostics and the menu, under Level the volume: the most the Mac’s volume is lowered as your player resumes (in decibels)"),
+                            value: decibels(timings.levelingMaxCutDB)))
+            rows.append(Row(label: String(localized: "Only when quieter by", comment: "Settings → Behavior, Diagnostics and the menu, under Level the volume: how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)"),
+                            value: decibels(timings.levelingMinCutDB)))
+        }
+        let summary = timings.resumesPlayback
+            ? String(localized: "Pauses after \(pauseAfter), resumes after \(timings.stopGrace.secondsText)",
+                     comment: "Diagnostics: the summary beside the Behavior heading; the first %@ is how long another app must play before your player pauses, the second how long other apps must be quiet before it resumes, e.g. “Pauses after 0.5 s, resumes after 2 s”")
+            : String(localized: "Pauses after \(pauseAfter), never resumes",
+                     comment: "Diagnostics: the summary beside the Behavior heading while Resume playback is off; %@ is how long another app must play before your player pauses, e.g. “0.5 s”")
+        return .init(kind: .behavior, title: SettingsWindowController.Page.behavior.title, summary: summary, rows: rows)
+    }
+
+    private static func detection(status: AppStatus, facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
+        let method = describe(status.detection)
+        let antiDot = facts.detectionMethod.isAntiDot
+        var rows = [
+            Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
+            Row(label: String(localized: "AntiDot mode", comment: "Settings → Detection and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator"), value: antiDot ? on : off),
+        ]
         if !antiDot {
             rows.append(Row(label: String(localized: "Silence threshold", comment: "Settings → Detection and Diagnostics: the sound level below which an app counts as silent"),
                             value: String(localized: "\(Int(facts.timings.silenceThresholdDB)) dB", comment: "A sound level in decibels")))
@@ -230,18 +282,6 @@ enum DiagnosticsReport {
                         Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
                         Row(label: AutoPauseText.title, value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
-                        // Off in AntiDot mode, which measures no sound, and while nothing
-                        // resumes, whatever the switch.
-                        Row(label: String(localized: "Level the volume", comment: "Settings → Behavior and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them"),
-                            value: facts.timings.levelsMusic && !facts.detectionMethod.isAntiDot && facts.timings.resumesPlayback ? on : off),
-                        Row(label: String(localized: "Pause on disconnect", comment: "Settings → Behavior (under “Pausing”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range"),
-                            value: facts.timings.pausesOnOutputDisconnect ? on : off),
-                        Row(label: String(localized: "Resume playback", comment: "Settings → Behavior (under “Resuming”), Diagnostics and the menu: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it"),
-                            value: facts.timings.resumesPlayback ? on : off),
-                        Row(label: String(localized: "Pause for the microphone", comment: "Settings → Behavior, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone"),
-                            value: facts.timings.pausesForMicrophone ? on : off),
-                        Row(label: String(localized: "Stay paused after calls", comment: "Settings → Behavior and Diagnostics: the switch that keeps your player paused after a call"),
-                            value: facts.timings.staysPausedAfterCalls ? on : off),
                         Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
                         Row(label: SettingsWindowController.Page.updates.title, value: updates),
                         Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),

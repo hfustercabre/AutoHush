@@ -166,10 +166,13 @@ This project follows [Semantic Versioning](https://semver.org/).
   resumes, the fades and the volume are on one page, **Behavior**, in four
   cards (Pausing, Resuming, Fades, Volume), each with its own Restore
   Defaults; **Detection** keeps AntiDot mode and the silence threshold.
-  The menu's settings follow: Behavior, then Detection. The Settings
-  window can be 600 pt tall again.
-- **The menu's folding titles have a bigger chevron, in the middle of
-  their line,** as big as the one on rows that open a side window.
+  The menu's settings follow, every switch on one line under **Settings**,
+  by section (Pausing, Resuming, Fades, Volume, Modes), the rest unfolding
+  under it, and so does Diagnostics, whose Behavior section shows the fade lengths and Level the
+  volume's limits too. The Settings window can be 600 pt tall again.
+- **The menu's folding title has a bigger chevron, in the middle of
+  its line,** as big as the one on rows that open a side window, and both
+  are in the accent color, easier to see.
 - **What Add an App's check asks of you is blue.** Start it playing, pause
   it with its own Pause, allow Accessibility: the panel's request is in the
   accent color, so it stands apart from the orange warning that clicks and
@@ -198,16 +201,14 @@ This project follows [Semantic Versioning](https://semver.org/).
   once no app uses the microphone. AutoHush only reads whether an app's
   microphone is on, which needs no permission, so it works in AntiDot mode
   too.
-- **More settings in the menu.** Under Ignored Apps, Behavior's and
-  Detection's switches, each part under its page's name and its switches
-  under Settings' card titles (Pausing, Resuming, Fades, Volume; Modes),
-  with a few words on what each does and its symbol in the accent color
-  while it's on.
-  Click Behavior's title to unfold its timings, the fade lengths and Level
-  the volume's limits, and Detection's for its ways and the silence
-  threshold. Folded at first, each stays as you left it while AutoHush
-  runs. Settings → Detection has a "Modes" heading over AntiDot mode, as
-  the menu does.
+- **More settings in the menu.** Under Ignored Apps and a **Settings**
+  title, every switch on one line, under Settings' card titles (Pausing,
+  Resuming, Fades, Volume, Modes) with a line between them, its symbol in
+  the accent color while it's on. Click **Settings** to unfold the
+  timings, the fade lengths, Level the volume's limits, AntiDot mode's ways
+  and the silence threshold. Folded at first, it stays as you left it
+  while AutoHush runs. In the menu, a click anywhere on a row with a
+  switch (a setting, an app) turns it on or off, not only on the switch.
 - **Level the volume** (Settings → Behavior, under Volume, off by
   default). When the apps your player was paused for were quieter than it
   (by 2 dB or more: **Only when quieter by**, 1 to 10 dB), it resumes with

@@ -35,10 +35,11 @@ struct MenuSideRow<Leading: View>: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
-                // Toward the side window, mirrored right to left.
+                // Toward the side window, mirrored right to left; in the
+                // accent color, easy to see (the user, 2026-10-21).
                 Image(systemName: "chevron.forward")
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(.appSecondary)
+                    .foregroundStyle(.tint)
                     .accessibilityHidden(true)
             }
             .padding(.leading, MenuSpacing.row.leading)

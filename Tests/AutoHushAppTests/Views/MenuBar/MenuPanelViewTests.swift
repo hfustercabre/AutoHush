@@ -85,7 +85,7 @@ struct MenuPanelViewTests {
         sut.workspaceCenter = NotificationCenter()
         sut.status = status(state)
         sut.open(showsPanel: false)
-        if state == .moreSettings { sut.model.unfoldedSettings = [.behavior, .detection] }
+        if state == .moreSettings { sut.model.unfoldedSettings = [.settings] }
         try body(sut, settingsModel)
     }
 

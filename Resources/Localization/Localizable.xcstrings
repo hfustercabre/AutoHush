@@ -60482,7 +60482,7 @@
       }
     },
     "Fade in when resuming" : {
-      "comment" : "Settings → Behavior and the menu: slider for how long playback fades back in when it resumes",
+      "comment" : "Settings → Behavior and the menu: slider for how long playback fades back in when it resumes\nSettings → Behavior, Diagnostics and the menu: how long playback fades back in when it resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60709,7 +60709,7 @@
       }
     },
     "Fade out before pausing" : {
-      "comment" : "Settings → Behavior and the menu: slider for how long playback fades out before it pauses",
+      "comment" : "Settings → Behavior and the menu: slider for how long playback fades out before it pauses\nSettings → Behavior, Diagnostics and the menu: how long playback fades out before it pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -64795,7 +64795,7 @@
       }
     },
     "Hide More Settings" : {
-      "comment" : "Menu: the tooltip of Behavior’s or Detection’s title, which folds the rest of that part’s settings away again",
+      "comment" : "Menu: the tooltip of the Settings title over the menu's settings, which folds the rest of them away again",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -78188,7 +78188,7 @@
       }
     },
     "Lower by at most" : {
-      "comment" : "Settings → Behavior and the menu, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)",
+      "comment" : "Settings → Behavior and the menu, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)\nSettings → Behavior, Diagnostics and the menu, under Level the volume: the most the Mac’s volume is lowered as your player resumes (in decibels)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -96802,7 +96802,7 @@
       }
     },
     "Only when quieter by" : {
-      "comment" : "Settings → Behavior and the menu, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)",
+      "comment" : "Settings → Behavior and the menu, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)\nSettings → Behavior, Diagnostics and the menu, under Level the volume: how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -103834,6 +103834,466 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暫停播放"
+          }
+        }
+      }
+    },
+    "Pauses after %@, never resumes" : {
+      "comment" : "Diagnostics: the summary beside the Behavior heading while Resume playback is off; %@ is how long another app must play before your player pauses, e.g. “0.5 s”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف مؤقت بعد %@، بلا استئناف"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa després de %@, mai no reprèn"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastaví po %@, nikdy neobnoví"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sætter på pause efter %@, genoptager aldrig"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausiert nach %@, setzt nie fort"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παύση μετά από %@, χωρίς συνέχιση"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tras %@, nunca reanuda"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tras %@, nunca reanuda"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keskeyttää %@ kuluttua, ei jatka koskaan"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause après %@, jamais de reprise"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause après %@, jamais de reprise"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "השהיה אחרי %@, ללא חידוש"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ बाद पॉज़, फिर कभी शुरू नहीं"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauzira nakon %@, nikad ne nastavlja"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szüneteltet %@ után, soha nem folytat"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menjeda setelah %@, tidak pernah melanjutkan"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa dopo %@, nessuna ripresa"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@後に一時停止、再開しない"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 후 일시 정지, 재개 안 함"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menjeda selepas %@, tidak pernah menyambung semula"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setter på pause etter %@, gjenopptar aldri"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauzeert na %@, hervat nooit"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstrzymuje po %@, nigdy nie wznawia"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa após %@, nunca retoma"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa após %@, nunca retoma"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pune pe pauză după %@, nu reia niciodată"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза через %@, без возобновления"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastaví po %@, nikdy neobnoví"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaustavi po %@, nikoli ne nadaljuje"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar efter %@, återupptar aldrig"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หยุดพักหลังจาก %@ ไม่เล่นต่อ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sonra duraklatır, hiç sürdürmez"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза через %@, без відновлення"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạm dừng sau %@, không bao giờ tiếp tục"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 後暫停，不再繼續播放"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 后暂停，不再继续播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 後暫停，不再繼續播放"
+          }
+        }
+      }
+    },
+    "Pauses after %@, resumes after %@" : {
+      "comment" : "Diagnostics: the summary beside the Behavior heading; the first %@ is how long another app must play before your player pauses, the second how long other apps must be quiet before it resumes, e.g. “Pauses after 0.5 s, resumes after 2 s”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف مؤقت بعد %1$@، استئناف بعد %2$@"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa després de %1$@, reprèn després de %2$@"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastaví po %1$@, obnoví po %2$@"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sætter på pause efter %1$@, genoptager efter %2$@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausiert nach %1$@, setzt nach %2$@ fort"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Παύση μετά από %1$@, συνέχιση μετά από %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pauses after %1$@, resumes after %2$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tras %1$@, reanuda tras %2$@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa tras %1$@, reanuda tras %2$@"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keskeyttää %1$@ kuluttua, jatkaa %2$@ kuluttua"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause après %1$@, reprise après %2$@"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause après %1$@, reprise après %2$@"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "השהיה אחרי %1$@, חידוש אחרי %2$@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ बाद पॉज़, %2$@ बाद फिर से शुरू"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauzira nakon %1$@, nastavlja nakon %2$@"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Szüneteltet %1$@ után, folytat %2$@ után"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menjeda setelah %1$@, melanjutkan setelah %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa dopo %1$@, ripresa dopo %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@後に一時停止、%2$@後に再開"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 후 일시 정지, %2$@ 후 재개"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menjeda selepas %1$@, menyambung semula selepas %2$@"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Setter på pause etter %1$@, gjenopptar etter %2$@"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauzeert na %1$@, hervat na %2$@"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wstrzymuje po %1$@, wznawia po %2$@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa após %1$@, retoma após %2$@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausa após %1$@, retoma após %2$@"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pune pe pauză după %1$@, reia după %2$@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза через %1$@, возобновление через %2$@"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pozastaví po %1$@, obnoví po %2$@"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaustavi po %1$@, nadaljuje po %2$@"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pausar efter %1$@, återupptar efter %2$@"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หยุดพักหลังจาก %1$@ เล่นต่อหลังจาก %2$@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ sonra duraklatır, %2$@ sonra sürdürür"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пауза через %1$@, відновлення через %2$@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tạm dừng sau %1$@, tiếp tục sau %2$@"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 後暫停，%2$@ 後繼續播放"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 后暂停，%2$@ 后继续播放"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ 後暫停，%2$@ 後繼續播放"
           }
         }
       }
@@ -118374,7 +118834,7 @@
       }
     },
     "Settings" : {
-      "comment" : "Menu: button at the bottom; opens Settings",
+      "comment" : "The menu: the button at the bottom that opens Settings, and the title over the menu's settings, which unfolds the rest of them",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -119509,7 +119969,7 @@
       }
     },
     "Show More Settings" : {
-      "comment" : "Menu: the tooltip of Behavior’s or Detection’s title, which shows the rest of that part’s settings",
+      "comment" : "Menu: the tooltip of the Settings title over the menu's settings, which shows the rest of them",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

@@ -2,51 +2,48 @@ import AppKit
 import SwiftUI
 import AutoHushKit
 
-/// The menu's settings, below Ignored Apps, each part between lines (the
-/// user, 2026-10-17: no cards) under its page's title (2026-10-18), as
-/// Settings has them (B, the user's pick, 2026-10-21): Behavior's switches,
-/// then Detection's, each with its symbol (in the accent color while it's
-/// on) and what it does in a few words, under Settings' card titles, folded
-/// or not (the user, 2026-10-21): Pausing, Resuming, Fades and Volume;
-/// Modes. Each part's title unfolds the rest in its place, a chevron in the
-/// middle of its line (T1, 2026-10-18; centered 2026-10-21): Behavior's
-/// sliders, Detection's ways under AntiDot mode and the silence threshold
-/// under "Measuring" (only then: folded, nothing is under it). As in
-/// Settings, what doesn't apply is greyed out, never hidden, saying why.
+/// The menu's settings, below Ignored Apps (the user, 2026-10-17: no
+/// cards): every switch on one line (S6, the user's pick, 2026-10-21),
+/// with its symbol (in the accent color while it's on), under Settings'
+/// card titles, a line between them: Pausing, Resuming, Fades and Volume
+/// (Settings → Behavior's), then Modes (Detection's). One title over them,
+/// "Settings", unfolds the rest in its place, a chevron in the middle of
+/// its line (T1, 2026-10-18; centered 2026-10-21): the sliders, AntiDot
+/// mode's ways and the silence threshold under "Measuring" (only then:
+/// folded, nothing is under it). As in Settings, what doesn't apply is
+/// greyed out, never hidden, saying why.
 struct MenuSettingsView: View {
     let model: StatusMenuModel
     let settings: SettingsModel
 
-    private func isOpen(_ part: MenuSettingsPart) -> Bool { model.unfoldedSettings.contains(part) }
+    private var isOpen: Bool { model.unfoldedSettings.contains(.settings) }
     /// Shown as open: unfolded and not fading out to fold (its chevron turns at once).
-    private func showsOpen(_ part: MenuSettingsPart) -> Bool { isOpen(part) && !model.foldingSettings.contains(part) }
-    /// A part's other settings, faded out while it folds.
-    private func fading(_ part: MenuSettingsPart) -> Double { model.foldingSettings.contains(part) ? 0 : 1 }
-    /// Fading out to fold: the keys and the pointer skip them meanwhile.
-    private func isFolding(_ part: MenuSettingsPart) -> Bool { model.foldingSettings.contains(part) }
+    private var showsOpen: Bool { isOpen && !model.foldingSettings.contains(.settings) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            pageName(.behavior, folding: .behavior)
+            foldingTitle
             innerTitle(BehaviorSettingsView.pausingTitle)
             part {
-                if isOpen(.behavior) { behaviorRows { slider(.pauseAfter) } }
+                if isOpen { unfolded { slider(.pauseAfter) } }
                 switchRow(.pausesForMicrophone)
                 switchRow(.pausesOnDisconnect)
             }
+            line
             innerTitle(BehaviorSettingsView.resumingTitle)
             part {
                 switchRow(.resumesPlayback)
-                if isOpen(.behavior) {
-                    behaviorRows { slider(.resumeAfter).unavailable(!settings.timings.resumesPlayback) }
+                if isOpen {
+                    unfolded { slider(.resumeAfter).unavailable(!settings.timings.resumesPlayback) }
                 }
                 switchRow(.staysPausedAfterCalls)
             }
+            line
             innerTitle(Text(verbatim: BehaviorSettingsView.fadesTitle))
             part {
                 switchRow(.fades)
-                if isOpen(.behavior) {
-                    behaviorRows {
+                if isOpen {
+                    unfolded {
                         Group {
                             slider(.fadeOut)
                             // Greyed out on its own while nothing resumes, when the rest isn't.
@@ -57,11 +54,12 @@ struct MenuSettingsView: View {
                     }
                 }
             }
+            line
             innerTitle(BehaviorSettingsView.volumeTitle)
             part {
                 switchRow(.levelsMusic)
-                if isOpen(.behavior) {
-                    behaviorRows {
+                if isOpen {
+                    unfolded {
                         Group {
                             slider(.levelingMaxCut)
                             slider(.levelingMinCut)
@@ -71,52 +69,53 @@ struct MenuSettingsView: View {
                 }
             }
             line
-            pageName(.detection, folding: .detection)
             innerTitle(DetectionSettingsView.modesTitle)
             part {
                 switchRow(.antiDot)
-                if isOpen(.detection) {
-                    ChoiceChips(
-                        label: DetectionSettingsView.detectByTitle,
-                        options: DetectionMethod.antiDotWays.map { .init(title: $0.title, value: $0) },
-                        selection: settings.detectionMethod,
-                        onSelect: { settings.setDetectionMethod($0) }
-                    )
-                    .controlSize(.small) // C2: both words fit
-                    // ← and → choose, while the arrow keys' highlight is on it.
-                    .modifier(Highlightable(adjust: { step in
-                        if let method = DetectionMethod.antiDotWays.stepping(from: settings.detectionMethod, by: step) {
-                            settings.setDetectionMethod(method)
-                        }
-                    }))
-                    .unavailable(!settings.isAntiDotMode)
-                    .disabled(isFolding(.detection))
-                    .padding(.horizontal, 10)
-                    .padding(.bottom, 6)
-                    .opacity(fading(.detection))
-                    .transition(Self.unfolding)
+                if isOpen {
+                    unfolded {
+                        ChoiceChips(
+                            label: DetectionSettingsView.detectByTitle,
+                            options: DetectionMethod.antiDotWays.map { .init(title: $0.title, value: $0) },
+                            selection: settings.detectionMethod,
+                            onSelect: { settings.setDetectionMethod($0) }
+                        )
+                        .controlSize(.small) // C2: both words fit
+                        // ← and → choose, while the arrow keys' highlight is on it.
+                        .modifier(Highlightable(adjust: { step in
+                            if let method = DetectionMethod.antiDotWays.stepping(from: settings.detectionMethod, by: step) {
+                                settings.setDetectionMethod(method)
+                            }
+                        }))
+                        .unavailable(!settings.isAntiDotMode)
+                        .padding(.horizontal, 10)
+                        .padding(.bottom, 6)
+                        .transition(Self.unfolding)
+                    }
                 }
             }
-            if isOpen(.detection) {
-                innerTitle(DetectionSettingsView.measuringTitle)
-                    .opacity(fading(.detection))
-                part {
-                    slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
+            if isOpen {
+                unfolded {
+                    VStack(alignment: .leading, spacing: 0) {
+                        line
+                        innerTitle(DetectionSettingsView.measuringTitle)
+                        part {
+                            slider(.silenceThreshold).unavailable(settings.isAntiDotMode)
+                        }
+                    }
                 }
-                .disabled(isFolding(.detection))
-                .opacity(fading(.detection))
                 .transition(Self.unfolding) // the part comes in whole, not its rows
             }
         }
         .frame(width: menuContentWidth)
     }
 
-    /// Rows Behavior unfolds: skipped by the keys and the pointer, and faded
-    /// out, while it folds.
-    private func behaviorRows<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+    /// Rows "Settings" unfolds: skipped by the keys and the pointer, and
+    /// faded out, while it folds.
+    private func unfolded<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         content()
-            .disabled(isFolding(.behavior))
-            .opacity(fading(.behavior))
+            .disabled(model.foldingSettings.contains(.settings))
+            .opacity(model.foldingSettings.contains(.settings) ? 0 : 1)
     }
 
     /// A part's rows, inset as the menu's other rows.
@@ -126,12 +125,13 @@ struct MenuSettingsView: View {
             .padding(.vertical, MenuSpacing.partVertical)
     }
 
-    /// The line between the parts, as between the menu's own parts.
+    /// The line between the sections, as between the menu's own parts.
     private var line: some View {
         MenuLine().transition(.opacity)
     }
 
-    /// One of the switches: its symbol, its name and what it does, and the
+    /// One of the switches: its symbol and its name on one line (S6, the
+    /// user's pick, 2026-10-21; what it does is VoiceOver's hint), and the
     /// switch; dimmed while it can't be changed, with why on a line of its
     /// own under it, undimmed (R2, the user's pick, 2026-10-18), and in its
     /// tooltip and VoiceOver hint.
@@ -144,7 +144,7 @@ struct MenuSettingsView: View {
                              outset: CGSize(width: 8, height: MenuSpacing.rowVertical)) {
             MenuRowSymbol(kind.symbol, isOn: kind.isOn(settings))
         } title: {
-            RowTitle(kind.title, subtitle: kind.shortExplanation)
+            RowTitle(kind.title)
         }
         .padding(.leading, MenuSpacing.row.leading - 8) // the part's own 8 pt inside
         .padding(.trailing, 8)
@@ -159,35 +159,22 @@ struct MenuSettingsView: View {
             .transition(Self.unfolding)
     }
 
-    /// A Settings page's name over its part; for a part with more settings
-    /// than its switches (`folding`), the whole line is the button that
-    /// unfolds them, a plain chevron in the middle of it (T1, the user's
-    /// pick, 2026-10-18; centered 2026-10-21), tinted as the menu's
-    /// controls under the pointer.
-    @ViewBuilder private func pageName(_ page: SettingsWindowController.Page, folding part: MenuSettingsPart? = nil) -> some View {
-        if let part {
-            foldingTitle(page, part: part)
-                .transition(.opacity)
-        } else {
-            MenuPartTitle(Text(verbatim: page.title))
-                .transition(.opacity)
-        }
-    }
-
-    /// The folding part's title, its chevron in the middle of the line (the
-    /// user, 2026-10-21; the titles never reach it: 15 characters at most,
-    /// in German): down while its other settings are folded, up while they
-    /// show.
-    private func foldingTitle(_ page: SettingsWindowController.Page, part: MenuSettingsPart) -> some View {
-        let toggle = { model.perform(.toggleSettings(part)) }
+    /// "Settings", over every switch; the whole line is the button that
+    /// unfolds the rest, a plain chevron in the middle of it (T1, the user's
+    /// pick, 2026-10-18; centered 2026-10-21; the title never reaches it),
+    /// tinted as the menu's controls under the pointer: down while folded, up
+    /// while the rest shows.
+    private var foldingTitle: some View {
+        let toggle = { model.perform(.toggleSettings(.settings)) }
         return Button(action: toggle) {
             ZStack {
-                SectionLabel(Text(verbatim: page.title))
+                SectionLabel(Text(verbatim: Self.title))
                     .frame(maxWidth: .infinity, alignment: .leading)
-                // As big as the side rows' chevron (C3, the user's pick, 2026-10-21).
-                Image(systemName: showsOpen(part) ? "chevron.up" : "chevron.down")
+                // As big as the side rows' chevron (C3, the user's pick, 2026-10-21),
+                // in the accent color as it is (the user, 2026-10-21).
+                Image(systemName: showsOpen ? "chevron.up" : "chevron.down")
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(.appSecondary)
+                    .foregroundStyle(.tint)
                     .accessibilityHidden(true)
             }
             .padding(.horizontal, 14)
@@ -200,13 +187,20 @@ struct MenuSettingsView: View {
         // rows under it as close as under the other titles.
         .padding(.top, MenuSpacing.titleTop - 3)
         .padding(.bottom, MenuSpacing.titleBottom - 3)
-        .help(Text(verbatim: showsOpen(part) ? Self.hideTitle : Self.showTitle))
-        .accessibilityLabel(Text(verbatim: page.title))
-        .accessibilityValue(showsOpen(part) ? AccessibilityText.expanded : AccessibilityText.collapsed)
+        .help(Text(verbatim: showsOpen ? Self.hideTitle : Self.showTitle))
+        .accessibilityLabel(Text(verbatim: Self.title))
+        .accessibilityValue(showsOpen ? AccessibilityText.expanded : AccessibilityText.collapsed)
         .accessibilityAddTraits(.isHeader)
+        .transition(.opacity)
     }
 
-    /// A title inside a page's part ("Pausing", "Modes"): a description's size, grey.
+    /// Over the menu's settings; the toolbar's button that opens the window
+    /// has the same name.
+    static var title: String {
+        String(localized: "Settings", comment: "The menu: the button at the bottom that opens Settings, and the title over the menu's settings, which unfolds the rest of them")
+    }
+
+    /// A section's title ("Pausing", "Modes"): a description's size, grey.
     private func innerTitle(_ title: Text) -> some View {
         MenuInnerTitle(title)
             .padding(.horizontal, 14)
@@ -226,11 +220,11 @@ struct MenuSettingsView: View {
     }
 
     static var showTitle: String {
-        String(localized: "Show More Settings", comment: "Menu: the tooltip of Behavior’s or Detection’s title, which shows the rest of that part’s settings")
+        String(localized: "Show More Settings", comment: "Menu: the tooltip of the Settings title over the menu's settings, which shows the rest of them")
     }
 
     static var hideTitle: String {
-        String(localized: "Hide More Settings", comment: "Menu: the tooltip of Behavior’s or Detection’s title, which folds the rest of that part’s settings away again")
+        String(localized: "Hide More Settings", comment: "Menu: the tooltip of the Settings title over the menu's settings, which folds the rest of them away again")
     }
 }
 

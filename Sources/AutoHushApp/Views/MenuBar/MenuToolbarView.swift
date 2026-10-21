@@ -8,7 +8,7 @@ struct MenuToolbarView: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            button(Text("Settings", comment: "Menu: button at the bottom; opens Settings"), symbol: "gearshape") {
+            button(Text(verbatim: MenuSettingsView.title), symbol: "gearshape") {
                 // As the menu used to offer it: ⌥ turns Settings into Diagnostics.
                 NSEvent.modifierFlags.contains(.option) ? .showDiagnostics : .openSettings
             }

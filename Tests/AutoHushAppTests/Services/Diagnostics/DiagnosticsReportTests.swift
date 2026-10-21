@@ -49,11 +49,20 @@ struct DiagnosticsReportTests {
             State: Paused by AutoHush
             Fades: Yes
 
+            Behavior
+            Pause playback after: \(half) s
+            Pause for the microphone: Off
+            Pause on disconnect: Off
+            Resume playback: On
+            Resume playback after: 2 s
+            Stay paused after calls: Off
+            Fade out before pausing: 1 s
+            Fade in when resuming: 2 s
+            Level the volume: Off
+
             Detection
             Detecting by: Audio levels
             AntiDot mode: Off
-            Pause playback after: \(half) s
-            Resume playback after: 2 s
             Silence threshold: -60 dB
 
             Permissions
@@ -65,11 +74,6 @@ struct DiagnosticsReportTests {
             Version: 0.6.1 (19)
             Auto-Pause: On
             Ignored apps: VLC
-            Level the volume: Off
-            Pause on disconnect: Off
-            Resume playback: On
-            Pause for the microphone: Off
-            Stay paused after calls: Off
             Launch at login: On
             Updates: Install it automatically
             Last checked: 1 hour ago
@@ -96,9 +100,11 @@ struct DiagnosticsReportTests {
                   judgement: "Output open, silent, ignored", evidence: nil),
         ])
         #expect(snapshot.appsSummary == "Google Chrome, org.videolan.vlc")
-        #expect(snapshot.sections.map(\.kind) == [.player, .detection, .permissions, .autoHush, .mac])
+        #expect(snapshot.sections.map(\.kind) == [.player, .behavior, .detection, .permissions, .autoHush, .mac])
+        let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
         #expect(snapshot.sections.map(\.summary) == [
-            "Jukebox · Paused by AutoHush", "Audio levels", "All allowed", "Version 0.6.1 (19)", "macOS 27.0.1 (26A434)",
+            "Jukebox · Paused by AutoHush", "Pauses after \(half) s, resumes after 2 s", "Audio levels", "All allowed",
+            "Version 0.6.1 (19)", "macOS 27.0.1 (26A434)",
         ])
     }
 
@@ -197,11 +203,32 @@ struct DiagnosticsReportTests {
         })
     }
 
-    @Test("says leveling is off while nothing resumes, whatever its switch, and Stay paused after calls as set",
+    @Test("Behavior says what resuming uses only while it resumes: its wait, the fade-in, leveling (off whatever its switch) and its limits; Stay paused after calls as set",
           arguments: [true, false])
     func saysResumePlayback(resumes: Bool) {
-        let text = quietReport(.audioLevel, .audioLevels, resumes: resumes).text
-        #expect(text.contains("Level the volume: \(resumes ? "On" : "Off")\nPause on disconnect: Off\nResume playback: \(resumes ? "On" : "Off")\nPause for the microphone: Off\nStay paused after calls: On"))
+        let snapshot = quietReport(.audioLevel, .audioLevels, resumes: resumes)
+        let text = snapshot.text
+        if resumes {
+            #expect(text.contains("Resume playback: On\nResume playback after: 2 s\nStay paused after calls: On\nFade out before pausing: 1 s\nFade in when resuming: 2 s\nLevel the volume: On\nLower by at most: 10 dB\nOnly when quieter by: 2 dB\n"))
+        } else {
+            #expect(text.contains("Resume playback: Off\nStay paused after calls: On\nFade out before pausing: 1 s\nLevel the volume: Off\n\nDetection"))
+            #expect(!text.contains("Resume playback after") && !text.contains("Fade in") && !text.contains("Lower by at most"))
+        }
+        let half = 0.5.formatted(.number.precision(.fractionLength(0...2)))
+        let summary = snapshot.sections.first { $0.kind == .behavior }?.summary
+        #expect(summary == (resumes ? "Pauses after \(half) s, resumes after 2 s" : "Pauses after \(half) s, never resumes"))
+    }
+
+    @Test("Behavior leaves out the fade lengths while the fades are off or the player can't fade", arguments: [true, false])
+    func saysNoFadeLengths(canFade: Bool) {
+        var status = workingStatus()
+        status.playback = .musicIdle
+        let text = DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts {
+            $0.playerCanFade = canFade
+            $0.timings.fadesEnabled = !canFade // off when the player could fade
+        }).text
+        #expect(!text.contains("Fade out before pausing") && !text.contains("Fade in when resuming"))
+        #expect(text.contains("Stay paused after calls: Off\nLevel the volume: Off"))
     }
 
     @Test("says when nothing plays")
@@ -231,27 +258,29 @@ struct DiagnosticsReportTests {
         let snapshot = quietReport(.playbackSignals, .playbackSignals)
         #expect(snapshot.text.contains("Detecting by: What apps tell macOS\nAntiDot mode: On"))
         #expect(!snapshot.text.contains("Silence threshold")) // not used in AntiDot mode
-        #expect(snapshot.text.contains("Level the volume: Off\nPause on disconnect: Off\nResume playback: On\nPause for the microphone: Off\nStay paused after calls: On")) // AntiDot mode measures no sound
+        #expect(snapshot.text.contains("Level the volume: Off\n\nDetection")) // AntiDot mode measures no sound
+        #expect(!snapshot.text.contains("Lower by at most"))
     }
 
     @Test("in AntiDot mode, says its longer start for apps without video")
     func saysAntiDotStarts() {
         let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
         #expect(quietReport(.playbackSignals, .playbackSignals).text.contains(
-            "Pause playback after: \(half) s\nPause playback after, without video: 3 s\nResume playback after: 2 s"))
+            "Pause playback after: \(half) s\nPause playback after, without video: 3 s\nPause for the microphone: Off"))
     }
 
     @Test("with open audio streams only, says every app's start: at least 2 s")
     func saysOpenStreamsStarts() {
-        #expect(quietReport(.disabled, .openStreams).text.contains("AntiDot mode: On\nPause playback after: 2 s\nResume playback after: 2 s"))
+        #expect(quietReport(.disabled, .openStreams).text.contains("Behavior\nPause playback after: 2 s\nPause for the microphone: Off"))
     }
 
     @Test("measuring levels without Audio Recording access, says AntiDot mode's starts with it off; measured, the usual ones")
     func saysUnmeasuredStarts() {
         let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
-        #expect(quietReport(.unavailable, .audioLevels).text.contains(
-            "Detecting by: Open audio streams (no Audio Recording access)\nAntiDot mode: Off\nPause playback after: 2 s\nPause playback after, without video: 3 s\n"))
-        #expect(quietReport(.audioLevel, .audioLevels).text.contains("AntiDot mode: Off\nPause playback after: \(half) s\nResume playback after: 2 s"))
+        let unmeasured = quietReport(.unavailable, .audioLevels).text
+        #expect(unmeasured.contains("Behavior\nPause playback after: 2 s\nPause playback after, without video: 3 s\n"))
+        #expect(unmeasured.contains("Detecting by: Open audio streams (no Audio Recording access)\nAntiDot mode: Off\n"))
+        #expect(quietReport(.audioLevel, .audioLevels).text.contains("Behavior\nPause playback after: \(half) s\nPause for the microphone: Off"))
     }
 
     @Test("a chosen player that isn't installed, or can't fade, says so")

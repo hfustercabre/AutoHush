@@ -31,7 +31,7 @@ struct DiagnosticsSnapshot: Equatable {
 
     /// A section below the apps; folded, it shows `summary`.
     struct Section: Equatable, Identifiable {
-        enum Kind: Hashable { case player, detection, permissions, autoHush, mac }
+        enum Kind: Hashable { case player, behavior, detection, permissions, autoHush, mac }
         let kind: Kind
         let title: String
         let summary: String

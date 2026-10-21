@@ -5,8 +5,9 @@ import SwiftUI
 /// (`MenuSpacing.row`), its title with a few words under it, and macOS's
 /// small switch at its right, named by `label` with `hint` after it, so
 /// VoiceOver makes the row one stop. The arrow keys and the pointer
-/// highlight the row, Return or Space turning it on or off, and its switch
-/// takes the keyboard's focus (F5). While it can't be changed it's greyed
+/// highlight the row, Return or Space turning it on or off, as a click
+/// anywhere on it does (the user, 2026-10-21), and its switch takes the
+/// keyboard's focus (F5). While it can't be changed it's greyed
 /// out, with why on a line of its own under it, not greyed out (R2, the
 /// user's pick, 2026-10-18).
 struct MenuSwitchRow<Picture: View, Title: View>: View {
@@ -63,6 +64,10 @@ struct MenuSwitchRow<Picture: View, Title: View>: View {
                     .accessibilityHidden(true) // the switch's hint says it
             }
         }
+        // A click on its picture, its title or the room between turns it on
+        // or off, as one on the switch, which takes its own clicks.
+        .contentShape(Rectangle())
+        .onTapGesture { if !isUnavailable { isOn.wrappedValue.toggle() } }
         .highlightableRow(isFocused: isFocused, isAvailable: !isUnavailable,
                           horizontal: outset.width, vertical: outset.height,
                           press: { isOn.wrappedValue.toggle() })

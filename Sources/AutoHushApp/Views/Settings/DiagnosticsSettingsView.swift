@@ -158,6 +158,7 @@ struct DiagnosticsSettingsView: View {
     private func symbol(for kind: DiagnosticsSnapshot.Section.Kind) -> String {
         switch kind {
         case .player:      return "music.note"
+        case .behavior:    return "playpause"
         case .detection:   return "waveform"
         case .permissions: return "lock.shield"
         case .autoHush:    return "gearshape"

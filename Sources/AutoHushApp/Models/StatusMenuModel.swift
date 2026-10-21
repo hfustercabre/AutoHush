@@ -102,19 +102,19 @@ enum MenuSection: Equatable {
     case playingNow
     case recentlyPlayed
     case ignoredApps
-    /// Behavior's and Detection's switches, each part's other settings
-    /// folded (`MenuSettingsPart`).
+    /// The settings' switches under their sections' titles, the rest folded
+    /// (`MenuSettingsPart`).
     case settings
     /// The update found, or being installed.
     case update
     case toolbar
 }
 
-/// A settings part of the menu that has more than its switches, folded
-/// away under it (F3, the user's pick, 2026-10-18): Behavior's sliders,
-/// Detection's ways and silence threshold.
+/// What the menu folds away under its switches (F3, the user's pick,
+/// 2026-10-18): since S6 (the user, 2026-10-21) one part, the settings'
+/// sliders, AntiDot mode's ways and the silence threshold.
 enum MenuSettingsPart: Hashable, Sendable {
-    case behavior, detection
+    case settings
 }
 
 /// What the menu shows. Unlike the status, the apps listed are fixed while
