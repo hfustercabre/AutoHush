@@ -132,8 +132,10 @@ final class SettingsModel {
     var detectionTimingsAreDefaults: Bool { timings.withDefaultDetection(threshold: !isAntiDotMode) == timings }
     /// The fades (the switch and both lengths) are their defaults.
     var fadesAreDefaults: Bool { timings.withDefaultFades == timings }
-    /// Advanced's switches are their defaults (both off).
+    /// Advanced's switch is its default (off).
     var advancedAreDefaults: Bool { timings.withDefaultAdvanced == timings }
+    /// Calls' switches are their defaults (both off).
+    var callsAreDefaults: Bool { timings.withDefaultCalls == timings }
 
     /// The row with Check Now: what the last check found ("AutoHush 0.3.11
     /// is up to date.", "Checking…"), or this version before any check.
@@ -270,6 +272,10 @@ final class SettingsModel {
     func restoreDefaultAdvanced() {
         setTimings(timings.withDefaultAdvanced)
     }
+
+    func restoreDefaultCalls() {
+        setTimings(timings.withDefaultCalls)
+    }
 }
 
 private extension TimingSettings {
@@ -292,10 +298,16 @@ private extension TimingSettings {
         return timings
     }
 
-    /// These timings with Advanced's switches back to their defaults.
+    /// These timings with Advanced's switch back to its default.
     var withDefaultAdvanced: TimingSettings {
         var timings = self
         timings.levelsMusic = TimingSettings.defaults.levelsMusic
+        return timings
+    }
+
+    /// These timings with Calls' switches back to their defaults.
+    var withDefaultCalls: TimingSettings {
+        var timings = self
         timings.pausesForMicrophone = TimingSettings.defaults.pausesForMicrophone
         timings.staysPausedAfterCalls = TimingSettings.defaults.staysPausedAfterCalls
         return timings

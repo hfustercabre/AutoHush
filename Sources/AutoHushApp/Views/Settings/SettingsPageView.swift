@@ -13,6 +13,7 @@ struct SettingsPageView: View {
             case .soundSources: SoundSourcesSettingsView(model: model)
             case .detection: DetectionSettingsView(model: model)
             case .fades: FadesSettingsView(model: model)
+            case .calls: CallsSettingsView(model: model)
             case .advanced: AdvancedSettingsView(model: model)
             case .diagnostics: DiagnosticsSettingsView(model: model)
             case .updates: UpdatesSettingsView(model: model)

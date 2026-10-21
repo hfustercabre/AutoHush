@@ -334,14 +334,14 @@ struct SettingsModelTests {
         #expect(DetectionMethod.openStreams.summary.contains("stay open \(Int(configuration.minimumStartWithOpenStreams)) seconds"))
     }
 
-    @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, the fades, or Advanced's switches")
+    @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, the fades, Calls' switches or Advanced's")
     func restoreDefaults() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                      fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
                                      levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true)
         model.setTimings(changed)
-        #expect(!model.detectionTimingsAreDefaults && !model.fadesAreDefaults && !model.advancedAreDefaults)
+        #expect(!model.detectionTimingsAreDefaults && !model.fadesAreDefaults && !model.callsAreDefaults && !model.advancedAreDefaults)
 
         model.restoreDefaultDetectionTimings()
         #expect(model.detectionTimingsAreDefaults)
@@ -357,10 +357,18 @@ struct SettingsModelTests {
                                                 levelsMusic: true, pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
-        model.restoreDefaultAdvanced()
-        #expect(model.advancedAreDefaults)
+        model.restoreDefaultCalls()
+        #expect(model.callsAreDefaults && !model.advancedAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false))
+                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+                                                levelsMusic: true))
+
+        model.setTimings(changed)
+        model.restoreDefaultAdvanced()
+        #expect(model.advancedAreDefaults && !model.callsAreDefaults)
+        #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
+                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+                                                pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         // In AntiDot mode the silence threshold is greyed out: it neither lights
         // Restore Defaults nor is restored.

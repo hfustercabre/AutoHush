@@ -1,7 +1,7 @@
 import Foundation
 
 /// The timings users can tune in Settings → Detection and → Fades, and the
-/// switches of Settings → Advanced.
+/// switches of Settings → Calls and → Advanced.
 package struct TimingSettings: Equatable, Sendable {
     /// Seconds another app must be audible before the music pauses.
     package var startConfirmation: TimeInterval

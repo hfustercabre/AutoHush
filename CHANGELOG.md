@@ -94,7 +94,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   rows fade out over a small arrow until you scroll to the end (the arrow
   alone on macOS 14 and 15), and so do the players in their window beside
   it. It opens with nothing focused, even with keyboard navigation on.
-- **Settings is at least 600 points tall**, so its sidebar shows About
+- **Settings is at least 650 points tall**, so its sidebar shows About
   whole, and a long player name takes two lines on its tile instead of
   being cut.
 - **Without Audio Recording, a chat tone no longer pauses your player.**
@@ -172,16 +172,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Pause for the microphone** (Settings → Advanced, under Calls, and the
-  menu; off by default): an app that turns on its microphone pauses your
+- **Pause for the microphone** (Settings → Calls, a page of its own, and
+  the menu; off by default): an app that turns on its microphone pauses your
   player after a second, before it plays any sound, as a call that starts
   muted or in a waiting room does. The card says "Paused — zoom.us is
   using the microphone" until it makes a sound, and your player resumes
   once no app uses the microphone. AutoHush only reads whether an app's
   microphone is on, which needs no permission, so it works in AntiDot mode
   too.
-- **More settings in the menu.** Under Ignored Apps, Detection's, Fades'
-  and Advanced's switches, each under its section's name, with a few words
+- **More settings in the menu.** Under Ignored Apps, Detection's, Fades',
+  Calls' and Advanced's switches, each under its section's name, with a few words
   on what it does and its symbol in the accent color while it's on. Click
   Detection's title to unfold its ways and timings, and Fades' for its
   lengths. Folded at first, each stays as you left it while AutoHush
@@ -193,7 +193,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   the volume goes back up as it fades out. Calls don't count, and a volume
   you change meanwhile stays yours. It needs an output with a volume
   control, and isn't available in AntiDot mode.
-- **Stay paused after calls** (Settings → Advanced, off by default): your
+- **Stay paused after calls** (Settings → Calls, off by default): your
   player isn't resumed when a call (an app using the microphone) came
   while it was paused.
 - **Recently Played in the menu.** Under Playing Now, the apps that

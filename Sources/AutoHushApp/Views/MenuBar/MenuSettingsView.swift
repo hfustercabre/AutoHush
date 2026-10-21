@@ -4,14 +4,14 @@ import AutoHushKit
 
 /// The menu's settings, below Ignored Apps, each part between lines (the
 /// user, 2026-10-17: no cards) under its page's title (2026-10-18):
-/// Detection's, Fades' and Advanced's switches, each with its symbol (in
+/// Detection's, Fades', Calls' and Advanced's switches, each with its symbol (in
 /// the accent color while it's on) and what it does in a few words. A part
 /// with more than its switches has a title that unfolds the rest in its
 /// place, a chevron in the middle of its line (T1, 2026-10-18; centered
 /// 2026-10-21): AntiDot mode's ways under it ("Modes") and Detection's
 /// timings ("Timing"); the
-/// fades' lengths under Fade playback. Advanced has nothing more, its call
-/// switches under "Calls", as in Settings. As in
+/// fades' lengths under Fade playback. Calls and Advanced have nothing
+/// more. As in
 /// Settings, what doesn't apply is greyed out, never hidden, saying why.
 struct MenuSettingsView: View {
     let model: StatusMenuModel
@@ -83,14 +83,15 @@ struct MenuSettingsView: View {
                 }
             }
             line
-            pageName(.advanced)
-            part {
-                switchRow(.levelsMusic)
-            }
-            innerTitle(AdvancedSettingsView.callsTitle)
+            pageName(.calls)
             part {
                 switchRow(.pausesForMicrophone)
                 switchRow(.staysPausedAfterCalls)
+            }
+            line
+            pageName(.advanced)
+            part {
+                switchRow(.levelsMusic)
             }
         }
         .frame(width: menuContentWidth)

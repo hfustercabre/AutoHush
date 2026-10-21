@@ -224,7 +224,7 @@ extension AudioMonitor {
         } ?? [:]
         case .openStreams: Dictionary(uniqueKeysWithValues: audible.map { ($0, configuration.startConfirmationWithOpenStreams) })
         }
-        // Pause for the microphone (Settings → Advanced): an app with its
+        // Pause for the microphone (Settings → Calls): an app with its
         // microphone on counts as playing, sound or not, once it's been on a
         // second (sooner if its sound counts sooner).
         let bySound = audible

@@ -1,7 +1,7 @@
 import SwiftUI
 import AutoHushKit
 
-/// The switches Settings → Detection, → Fades and → Advanced share with the
+/// The switches Settings → Detection, → Fades, → Calls and → Advanced share with the
 /// menu's More Settings: the same words, and the same rules for when one
 /// can't be changed.
 enum SettingsSwitch: CaseIterable {
@@ -16,9 +16,9 @@ enum SettingsSwitch: CaseIterable {
         case .levelsMusic:
             Text("Level the volume", comment: "Settings → Advanced, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
         case .pausesForMicrophone:
-            Text("Pause for the microphone", comment: "Settings → Advanced (under “Calls”), Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone")
+            Text("Pause for the microphone", comment: "Settings → Calls, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone")
         case .staysPausedAfterCalls:
-            Text("Stay paused after calls", comment: "Settings → Advanced, Diagnostics and the menu: the switch that keeps your player paused after a call")
+            Text("Stay paused after calls", comment: "Settings → Calls, Diagnostics and the menu: the switch that keeps your player paused after a call")
         }
     }
 
@@ -36,10 +36,10 @@ enum SettingsSwitch: CaseIterable {
                  comment: "Settings → Advanced, under “Level the volume”; a call is an app using the microphone")
         case .pausesForMicrophone:
             Text("An app turning on the microphone pauses your player, even before it plays.",
-                 comment: "Settings → Advanced, under “Pause for the microphone”: a call that starts silent pauses your player too")
+                 comment: "Settings → Calls, under “Pause for the microphone”: a call that starts silent pauses your player too")
         case .staysPausedAfterCalls:
             Text("Your player doesn’t resume after a call that came while it was paused.",
-                 comment: "Settings → Advanced, under “Stay paused after calls”; a call is an app using the microphone")
+                 comment: "Settings → Calls, under “Stay paused after calls”; a call is an app using the microphone")
         }
     }
 

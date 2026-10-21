@@ -5688,7 +5688,7 @@
       }
     },
     "%@ is using the microphone" : {
-      "comment" : "Completes “Paused — %@”, when an app with its microphone on (a call) paused your player before playing any sound (Settings → Advanced → Pause for the microphone); %@ is the app",
+      "comment" : "Completes “Paused — %@”, when an app with its microphone on (a call) paused your player before playing any sound (Settings → Calls → Pause for the microphone); %@ is the app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -18479,7 +18479,7 @@
       }
     },
     "Advanced" : {
-      "comment" : "Settings: a page in the sidebar: leveling the music, and staying paused after calls",
+      "comment" : "Settings: a page in the sidebar: leveling the music",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -23077,7 +23077,7 @@
       }
     },
     "An app turning on the microphone pauses your player, even before it plays." : {
-      "comment" : "Settings → Advanced, under “Pause for the microphone”: a call that starts silent pauses your player too",
+      "comment" : "Settings → Calls, under “Pause for the microphone”: a call that starts silent pauses your player too",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -39176,7 +39176,7 @@
       }
     },
     "Calls" : {
-      "comment" : "Settings → Advanced and the menu: the heading over Pause for the microphone and Stay paused after calls",
+      "comment" : "Settings: a page in the sidebar, and its part of the menu's settings: pausing for the microphone, and staying paused after calls",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -92478,7 +92478,7 @@
       }
     },
     "Pause for the microphone" : {
-      "comment" : "Settings → Advanced (under “Calls”), Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone",
+      "comment" : "Settings → Calls, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -110459,7 +110459,7 @@
       }
     },
     "Stay paused after calls" : {
-      "comment" : "Settings → Advanced and Diagnostics: the switch that keeps your player paused after a call\nSettings → Advanced, Diagnostics and the menu: the switch that keeps your player paused after a call",
+      "comment" : "Settings → Calls and Diagnostics: the switch that keeps your player paused after a call\nSettings → Calls, Diagnostics and the menu: the switch that keeps your player paused after a call",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -131992,7 +131992,7 @@
       }
     },
     "Your player doesn’t resume after a call that came while it was paused." : {
-      "comment" : "Settings → Advanced, under “Stay paused after calls”; a call is an app using the microphone",
+      "comment" : "Settings → Calls, under “Stay paused after calls”; a call is an app using the microphone",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

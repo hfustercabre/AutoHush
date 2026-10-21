@@ -11,10 +11,10 @@ import AutoHushKit
 final class SettingsWindowController: NSWindowController {
     /// The window's pages, in the sidebar's order.
     enum Page: CaseIterable, Hashable {
-        case general, soundSources, detection, fades, advanced, diagnostics, updates, about
+        case general, soundSources, detection, fades, calls, advanced, diagnostics, updates, about
 
         /// The sidebar's groups of pages, a gap between each.
-        static let groups: [[Page]] = [[.general, .soundSources], [.detection, .fades, .advanced], [.diagnostics, .updates, .about]]
+        static let groups: [[Page]] = [[.general, .soundSources], [.detection, .fades, .calls, .advanced], [.diagnostics, .updates, .about]]
 
         var title: String {
             switch self {
@@ -26,8 +26,10 @@ final class SettingsWindowController: NSWindowController {
                 String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of when other apps count as playing or stopped")
             case .fades:
                 String(localized: "Fades", comment: "Settings: the page of playback's fade out and fade in (in the sidebar: keep it short, about 16 characters); also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
+            case .calls:
+                String(localized: "Calls", comment: "Settings: a page in the sidebar, and its part of the menu's settings: pausing for the microphone, and staying paused after calls")
             case .advanced:
-                String(localized: "Advanced", comment: "Settings: a page in the sidebar: leveling the music, and staying paused after calls")
+                String(localized: "Advanced", comment: "Settings: a page in the sidebar: leveling the music")
             case .diagnostics:
                 String(localized: "Diagnostics", comment: "Settings: a page in the sidebar: what AutoHush sees right now")
             case .updates:
@@ -45,6 +47,7 @@ final class SettingsWindowController: NSWindowController {
             case .soundSources: "square.grid.2x2.fill"
             case .detection: "waveform"
             case .fades: "speaker.wave.2.fill"
+            case .calls: "phone.fill"
             case .advanced: "slider.horizontal.3"
             case .diagnostics: "stethoscope"
             case .updates: "arrow.down.circle.fill"
@@ -59,8 +62,9 @@ final class SettingsWindowController: NSWindowController {
     /// in the app's language (the user, 2026-10-17: "make the minimum width
     /// respect the content"); tall enough for the whole sidebar, foot
     /// included.
-    /// At least 600 pt tall, so the sidebar shows About above its foot (S1, the user, 2026-10-18).
-    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 600) }
+    /// At least 650 pt tall, so the sidebar shows About above its foot (S1, the user, 2026-10-18;
+    /// 600 until Calls became a page, 2026-10-21).
+    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 650) }
     static var maximumSize: NSSize { NSSize(width: sidebarWidth + max(640, leastPageWidth), height: 900) }
 
     /// The page's least width: 480, or the widest choice (`ChoiceChips`)
@@ -70,7 +74,7 @@ final class SettingsWindowController: NSWindowController {
                        DetectionMethod.antiDotWays.map(\.title)]
         return max(480, (choices.map { ChoiceChips<Never>.fittingWidth($0) }.max() ?? 0) + 2 * (20 + 10))
     }()
-    static let initialSize = NSSize(width: 760, height: 620)
+    static let initialSize = NSSize(width: 760, height: 650)
     /// Where macOS keeps the window's place and size between launches.
     static let frameName = "Settings"
 
@@ -122,7 +126,7 @@ final class SettingsWindowController: NSWindowController {
         window.setContentSize(Self.initialSize)
         isPlaced = window.setFrameUsingName(frameName)
         // A size kept from before a choice needed more room, another language,
-        // or the sidebar's foot more height (600 from 2026-10-18).
+        // or the sidebar more height (600 from 2026-10-18, 650 from 2026-10-21).
         if let content = window.contentView?.frame.size,
            content.width < Self.minimumSize.width || content.height < Self.minimumSize.height {
             window.setContentSize(NSSize(width: max(content.width, Self.minimumSize.width),
