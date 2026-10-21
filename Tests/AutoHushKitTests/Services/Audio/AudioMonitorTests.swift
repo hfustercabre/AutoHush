@@ -1133,6 +1133,59 @@ struct AudioMonitorTests {
         #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
     }
 
+    @Test("a permission undecided again (reset in System Settings) puts level detection back to waiting for it")
+    func permissionUndecidedAgain() {
+        let permission = MockAudioCapturePermission(.granted)
+        let h = Harness(permission: permission)
+        h.start()
+        h.step([Self.process(1, "org.videolan.vlc")], peaks: [1: 0.3])
+        #expect(h.modes.value == [.audioLevel])
+
+        permission.current = .notDetermined
+        h.step(after: 5.0) // the next re-check
+        #expect(h.modes.value == [.audioLevel, .pending])
+    }
+
+    @Test("switching the detection method forgets when apps last announced playing: a video-only app's assertion withdrawn meanwhile isn't taken for a pause")
+    func methodSwitchForgetsAnnouncements() async {
+        let assertions = MockPowerAssertions()
+        let name = "com.apple.WebCore: HTMLMediaElement playback"
+        var videoOnly = AnnouncedAssertions() // one assertion for video, the display's or the Mac's (Safari)
+        videoOnly.learn([PowerAssertion(.system, name), PowerAssertion(.display, name)])
+        let h = Harness(configuration: Self.config(startConfirmation: 0, stopGrace: 0), assertions: assertions,
+                        learnedAssertions: ["com.example.browser": videoOnly])
+        h.monitor.setDetectionMethod(.playbackSignals)
+        h.start()
+        let browser = [Self.process(1, "com.example.browser")] // pid 1001
+        assertions.held = [1001: [PowerAssertion(.display, name)]] // a video shows
+        h.step(browser)
+        await h.recorder.waitForEvents(count: 1)
+
+        h.monitor.setDetectionMethod(.openStreams)
+        h.provider.flush()
+        assertions.held = [:] // withdrawn while its output is judged instead
+        h.step(after: 1)
+        h.monitor.setDetectionMethod(.playbackSignals)
+        h.provider.flush()
+        h.step(after: 1)
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events.map(\.isPlaying) == [true])
+    }
+
+    @Test("a release of the taps called off because levels are needed again is cancelled: it can't fire under a later release and end the taps early")
+    func calledOffReleaseCancelled() {
+        let h = Harness(permission: MockAudioCapturePermission(.granted), releaseDelay: 60)
+        h.start()
+        h.step([Self.process(1, "org.videolan.vlc")])
+        h.monitor.setAudioLevelsNeeded(false)
+        let release = h.monitor.queue.sync { h.monitor.audioLevelsRelease }
+        #expect(release != nil)
+
+        h.monitor.setAudioLevelsNeeded(true)
+        h.monitor.queue.sync {}
+        #expect(release?.isCancelled == true)
+    }
+
     // MARK: - Publication and lifecycle
 
     @Test("active sources are published sorted by name, not by ID")

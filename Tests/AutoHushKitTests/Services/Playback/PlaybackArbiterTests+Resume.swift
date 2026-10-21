@@ -453,4 +453,77 @@ extension PlaybackArbiterTests {
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 1)
     }
+
+    @Test("with Stay paused after calls, a call playing as the fade-out begins counts, though it ends before the music is paused")
+    func callEndingDuringFadeOutCounts() async {
+        var configuration = AppConfiguration.testing
+        configuration.staysPausedAfterCalls = true
+        let player = MockMusicPlayer()
+        await player.setVolumeLevel(60)
+        let steps = FadeSteps(holdingAt: 2)
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in await steps.step() })
+        await arbiter.refreshPlaybackState() // as monitoring starts
+        let call = "us.zoom.xos"
+        await arbiter.handleCallChange(sourceID: call, inCall: true)
+        await arbiter.handleSourceChange(sourceID: call, isPlaying: true)
+        await TestWait.until { await steps.count == 2 } // the fade-out has begun, held
+        await arbiter.handleCallChange(sourceID: call, inCall: false) // the call ends; its app plays on
+        await steps.letGo(2)
+        await arbiter.waitForPause()
+        #expect(await player.state == .paused)
+
+        await arbiter.sourceChanged(call, playing: false)
+        await arbiter.waitUntilIdle()
+        #expect(await player.playCallCount == 0)
+    }
+
+    @Test("with Stay paused after calls, an app's call that ended before its sound came on doesn't count: the music comes back")
+    func endedCallForgotten() async {
+        var configuration = AppConfiguration.testing
+        configuration.staysPausedAfterCalls = true
+        let player = MockMusicPlayer()
+        let arbiter = makeArbiter(player: player, configuration: configuration)
+        let call = "us.zoom.xos"
+        await arbiter.handleCallChange(sourceID: call, inCall: true)
+        await arbiter.handleCallChange(sourceID: call, inCall: false) // over before it plays
+        await arbiter.sourceChanged(call, playing: true) // its sound, with no call
+        await arbiter.sourceChanged(call, playing: false)
+        await TestWait.until { await player.playCallCount == 1 }
+    }
+
+    @Test("with Auto-Pause off, a resume that fails while an app plays is tried again: the music comes back regardless")
+    func failedResumeRetriedWithAutoPauseOff() async {
+        let player = MockMusicPlayer()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeArbiter(player: player, scheduler: scheduler)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
+        await arbiter.setAutoPauseEnabled(false) // resumes at once, while VLC plays
+        await TestWait.until { scheduler.scheduledDelays == [PlaybackArbiter.resumeRetryDelay] } // the retry
+        #expect(await player.playCallCount == 1)
+
+        await player.setFailPlay(nil)
+        await scheduler.completeNext()
+        await TestWait.until { await player.playCallCount == 2 }
+        #expect(await player.state == .playing)
+    }
+
+    @Test("with Level the volume on, a resume tried again that finds an app playing, Auto-Pause on again, puts the volume back")
+    func retryFindingAppPutsLevelBack() async {
+        let player = MockMusicPlayer()
+        let leveler = RecordingVolumeLeveler()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeLevelingArbiter(player, leveler: leveler, scheduler: scheduler)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
+        await arbiter.setAutoPauseEnabled(false) // the resume lowers the volume, fails, and waits to try again
+        await TestWait.until { scheduler.scheduledDelays == [PlaybackArbiter.resumeRetryDelay] }
+        #expect(leveler.log == ["lower -6.0"])
+
+        await arbiter.setAutoPauseEnabled(true) // VLC still plays: a pause waits for it to be measured again
+        await scheduler.completeNext() // the retry, which finds VLC playing
+        await TestWait.until { leveler.log.count == 2 }
+        #expect(leveler.log == ["lower -6.0", "restore now"])
+    }
 }

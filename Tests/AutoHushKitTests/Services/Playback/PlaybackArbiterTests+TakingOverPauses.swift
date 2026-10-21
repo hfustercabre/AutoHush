@@ -436,4 +436,23 @@ extension PlaybackArbiterTests {
         #expect(run.log == ["lower -6.0"])
         #expect(run.plays == 1)
     }
+
+    @Test("a pause taken over once its app stopped during the check, that stop's resume having found nothing to resume, still ends: the music comes back")
+    func takenOverAfterStopsResume() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let arbiter = await makeClockedArbiter(player: player, clock: clock)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        await player.setBeforeStateAnswer { [arbiter, player] in // once
+            await player.setBeforeStateAnswer(nil)
+            await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+            let resume = await arbiter.pendingResumeTask
+            await resume?.value // it runs before the take-over: nothing is ours yet
+        }
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true, heardSince: heard)
+
+        await TestWait.until { await player.playCallCount == 1 }
+    }
 }

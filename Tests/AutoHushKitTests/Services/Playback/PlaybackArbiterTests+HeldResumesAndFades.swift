@@ -192,12 +192,17 @@ extension PlaybackArbiterTests {
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false) // music comes back up
         await steps.letGo(2)
         await TestWait.until { await steps.count == 4 }
-        #expect(await (player.volumeLevel ?? 0) > calledOff) // partway up
+        let partway = await player.volumeLevel ?? 0
+        #expect(partway > calledOff) // partway up
+        let mark = await player.commandLog.count
         await arbiter.handleSourceChange(sourceID: "com.google.Chrome", isPlaying: true) // and another app starts
         await steps.letGo(4)
         await arbiter.waitForPause()
 
         #expect(await player.pauseCallCount == 1)
+        // The way back up stops there: it fades out again from where it was.
+        let fadeOut = await player.commandLog.dropFirst(mark).prefix { $0 != "pause" }
+        #expect(fadeOut.allSatisfy { Int($0.dropFirst("volume ".count)).map { $0 <= partway } ?? true })
     }
 
     @Test("music paused just as the other app stopped, or Auto-Pause went off, is still resumed", arguments: [false, true])

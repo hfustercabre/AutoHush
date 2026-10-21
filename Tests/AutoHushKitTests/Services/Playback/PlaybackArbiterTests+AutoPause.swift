@@ -260,4 +260,40 @@ extension PlaybackArbiterTests {
         await arbiter.handleLocalPlaybackChange(false)
         #expect(log.value == [true, false])
     }
+
+    @Test("a pending pause called off is forgotten once its task ends, and the newer one kept")
+    func calledOffPauseForgotten() async {
+        let player = MockMusicPlayer()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeArbiter(player: player, scheduler: scheduler)
+        await arbiter.setAutoPauseEnabled(false)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.setAutoPauseEnabled(true) // a pause waits for VLC to be measured again
+        await arbiter.setAutoPauseEnabled(false) // called off
+        await arbiter.setAutoPauseEnabled(true) // a newer one waits
+        #expect(await arbiter.calledOff.count == 1)
+
+        await scheduler.completeNext() // the called-off one's wait ends
+        await arbiter.waitUntilIdle()
+        #expect(await arbiter.calledOff.isEmpty)
+        #expect(await arbiter.pendingPauseTask != nil)
+    }
+
+    @Test("a resume tried again that an app's start called off is forgotten once its task ends")
+    func calledOffResumeForgotten() async {
+        let player = MockMusicPlayer()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeArbiter(player: player, scheduler: scheduler)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await TestWait.until { scheduler.scheduledDelays == [PlaybackArbiter.resumeRetryDelay] } // the retry waits
+        await player.setFailPlay(nil)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true) // calls it off
+        #expect(await arbiter.calledOff.count == 1)
+
+        await scheduler.completeNext()
+        await arbiter.waitUntilIdle()
+        #expect(await arbiter.calledOff.isEmpty)
+    }
 }

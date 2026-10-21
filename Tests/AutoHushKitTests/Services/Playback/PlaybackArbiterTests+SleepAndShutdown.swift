@@ -239,4 +239,35 @@ extension PlaybackArbiterTests {
 
         #expect(await player.pauseCallCount == 0)
     }
+
+    @Test("shutdown lifts a mute standing in for the pause: a mute, unlike a pause, can't be undone by the user")
+    func shutdownLiftsMute() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setPlaysAnyway(true) // a web app's ad
+        let muting = MockMutingMusicPlayer(player)
+        let arbiter = PlaybackArbiter(player: muting, configuration: .testing, debounceScheduler: ManualDebounceScheduler())
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        #expect(await player.commandLog == ["mute"])
+
+        await arbiter.shutdown()
+        #expect(await muting.releasedMutes == 1)
+    }
+
+    @Test("a mute that comes after monitoring stopped is lifted at once: nothing would ever lift it")
+    func muteAfterShutdownLifted() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setPlaysAnyway(true)
+        let gate = Gate()
+        let started = Gate()
+        let muting = await Self.slowMuting(player, started: started, gate: gate)
+        let arbiter = PlaybackArbiter(player: muting, configuration: .testing, debounceScheduler: ManualDebounceScheduler())
+
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await started.wait() // it's being listened to
+        await arbiter.shutdown()
+        await gate.open()
+        await arbiter.waitForPause()
+        #expect(await player.commandLog == ["mute"])
+        #expect(await muting.releasedMutes == 1)
+    }
 }
