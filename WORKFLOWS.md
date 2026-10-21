@@ -494,11 +494,11 @@ flowchart TD
   GO{"Start?"}
   BACK["Cancel: back<br/>to step 5"]
   RUN["The check runs in AutoHush’s<br/>helper; AutoHush’s own player<br/>stays as it is (Paused while<br/>a check runs)"]
-  BLOCK["The screen dimmed; clicks,<br/>scrolling and keys blocked;<br/>a panel at the bottom right:<br/>progress and Stop"]
+  BLOCK["The screen dimmed; clicks,<br/>scrolling and keys blocked<br/>(said in orange); a panel at<br/>the bottom right: progress<br/>and Stop"]
   MUTE["The app muted meanwhile:<br/>on its own (Audio Recording,<br/>not in AntiDot mode), else<br/>the Mac’s output (and any the<br/>sound moves to), put back after"]
   STATES["Its window in 7 states: in<br/>view, covered, on another<br/>desktop, covered there, full<br/>screen, minimized, hidden"]
   WAYS["In each state, each way<br/>pauses and plays it: its<br/>AppleScript, playback menu,<br/>page’s Play/Pause, Now<br/>Playing row"]
-  ASK["It asks you to pause it<br/>yourself (to learn its page):<br/>mouse and keyboard yours"]
+  ASK["It asks you, in blue on<br/>the panel, to pause it<br/>yourself (to learn its page):<br/>mouse and keyboard yours"]
   SHOW["Now Playing hidden in<br/>the menu bar: shown for<br/>the moment of a press"]
   STOP["Escape, or Stop"]
   PUT["Windows, desktops<br/>and sound put back<br/>as they were"]
