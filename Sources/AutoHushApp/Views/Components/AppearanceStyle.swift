@@ -47,6 +47,9 @@ extension ShapeStyle where Self == Color {
     static var chipHoverFill: Color { Color(nsColor: .tertiarySystemFill) }
     /// Behind a `HeadingBadge`, a step's warning: `appWarning`, faint.
     static var warningBadgeFill: Color { .orange.opacity(0.15) }
+    /// Behind what the user must do now: what the check's panel asks
+    /// (`appAccent` on it), the accent color, faint.
+    static var nextStepFill: Color { .accentColor.opacity(0.15) }
     /// Behind a list row the user selected (Settings → Sound Sources).
     static var selectedRowFill: Color { .accentColor.opacity(0.16) }
     /// Behind the chosen player's tile (`PlayerTiles`).

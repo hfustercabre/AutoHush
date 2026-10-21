@@ -162,6 +162,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Shorter texts.** The 30 longest say the same in fewer words, in every
   language: Settings' Detection and Sound Sources, Add an App's steps and
   check, adding and learning web apps, and choosing a player.
+- **What Add an App's check asks of you is blue.** Start it playing, pause
+  it with its own Pause, allow Accessibility: the panel's request is in the
+  accent color, so it stands apart from the orange warning that clicks and
+  keys are blocked. Player Check's panel does the same.
 
 ### Added
 

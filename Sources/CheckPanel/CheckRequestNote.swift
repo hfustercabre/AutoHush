@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// What the check asks of the user (play, pause, allow), tinted orange,
+/// What the check asks of the user (play, pause, allow), in its look's tint,
 /// with more under it: the time left.
 package struct CheckRequestNote: View {
     let text: String
@@ -17,7 +17,7 @@ package struct CheckRequestNote: View {
 
     package var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Label(text, systemImage: symbol).fontWeight(.medium).foregroundStyle(.orange)
+            Label(text, systemImage: symbol).fontWeight(.medium).foregroundStyle(look.requestTint)
                 .fixedSize(horizontal: false, vertical: true)
             if !detail.isEmpty {
                 Text(verbatim: detail).font(look.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
@@ -25,7 +25,7 @@ package struct CheckRequestNote: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(look.warningFill))
+        .background(RoundedRectangle(cornerRadius: 8).fill(look.requestFill))
         .accessibilityElement(children: .combine)
     }
 }

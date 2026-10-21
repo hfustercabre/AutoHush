@@ -84,10 +84,13 @@ struct CheckPanelView: View {
         }
     }
 
-    /// AutoHush's look for the parts both apps' panels draw.
-    private static let look = CheckPanelLook(caption: .appCaption, warningFill: .warningBadgeFill, track: .chipHoverFill)
+    /// AutoHush's look for the parts both apps' panels draw: what the check
+    /// asks in the accent color, apart from the orange warning that input is
+    /// blocked, so the step to do now stands out (the user, 2026-10-21).
+    private static let look = CheckPanelLook(caption: .appCaption, requestTint: .appAccent, requestFill: .nextStepFill,
+                                             track: .chipHoverFill)
 
-    /// What's asked of the user, tinted, with the time left under it.
+    /// What's asked of the user, in the accent color, with the time left under it.
     private func note(_ text: String, detail: String, symbol: String) -> some View {
         CheckRequestNote(text, detail: detail, symbol: symbol, look: Self.look)
     }

@@ -63,7 +63,7 @@ to it and loses its permissions; one signed with a certificate keeps them.
   hear it; Player Check still hears whether it plays) and heard again at the
   end; a Chromium browser's web app plays through its browser, so the whole
   browser is, its other tabs and web apps too. Then it makes sure the app
-  plays: if it isn't playing, an orange request asks you to start it, and
+  plays: if it isn't playing, a blue request asks you to start it, and
   the check goes on by itself as soon as it plays (up to 2 minutes; if it
   doesn't, the check stops there, with nothing moved or pressed). Only then
   does anything move. The check tests each way to control it (AppleScript,

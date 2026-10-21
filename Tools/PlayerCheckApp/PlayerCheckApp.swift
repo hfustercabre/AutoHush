@@ -1365,9 +1365,10 @@ struct CheckPanelView: View {
     }
 
     /// Player Check's look for the parts both apps' panels draw.
-    private static let look = CheckPanelLook(caption: .caption, warningFill: .orange.opacity(0.12), track: .secondary.opacity(0.22))
+    private static let look = CheckPanelLook(caption: .caption, requestTint: .accentColor, requestFill: .accentColor.opacity(0.15),
+                                             track: .secondary.opacity(0.22))
 
-    /// The main window's orange note: what's asked of you, and more under it.
+    /// The main window's note in the accent color: what's asked of you, and more under it.
     private func note(_ text: String, detail: String, systemImage: String) -> some View {
         CheckRequestNote(text, detail: detail, symbol: systemImage, look: Self.look)
     }
