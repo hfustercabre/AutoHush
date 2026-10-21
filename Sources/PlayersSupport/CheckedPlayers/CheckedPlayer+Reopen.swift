@@ -21,7 +21,11 @@ extension CheckedPlayer {
             guard app.isTerminated else { return false }
         }
         // Where it is now: it may have been moved since its check.
-        let url = installedURL ?? setup.appURL
+        return await openWithLaunchOption(installedURL ?? setup.appURL)
+    }
+
+    /// Opens the app at `url` with `PlayerSetup.launchOption`, in the background.
+    static func openWithLaunchOption(_ url: URL) async -> Bool {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.arguments = [PlayerSetup.launchOption]
         configuration.activates = false

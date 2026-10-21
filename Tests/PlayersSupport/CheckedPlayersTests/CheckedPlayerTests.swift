@@ -84,8 +84,14 @@ struct CheckedPlayerTests {
         var menu = setup([.menu(menuName: "Controls")])
         menu.needsLaunchOption = true
         #expect(await jukebox(menu).needsReopen() == false)
+        // Gone, it can't be opened again: asked of a stand-in, as macOS shows an
+        // alert for an app that isn't there.
         page.appURL = URL(fileURLWithPath: "/nonexistent/Jukebox.app")
-        #expect(await CheckedPlayer(setup: page, reports: nil, store: MemorySetupStore()).reopen() == false)
+        let asked = Locked<[URL]>([])
+        let gone = CheckedPlayer(setup: page, parts: CheckedPlayer.parts(for: page, store: MemorySetupStore()), reports: nil,
+                                 openWithLaunchOption: { asked.append($0); return false })
+        #expect(await gone.reopen() == false)
+        #expect(asked.value == [page.appURL])
     }
 
     @Test("it's an app, controlled as its first way needs")

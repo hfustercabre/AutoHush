@@ -70,6 +70,8 @@ package actor CheckedPlayer: AddedAppPlayer {
     let processIdentifier: @Sendable () -> pid_t?
     /// What its process was opened with (`needsReopen`).
     let processArguments: @Sendable (pid_t) -> [String]
+    /// Opens it with the launch option, in the background (`reopen`).
+    let openWithLaunchOption: @Sendable (URL) async -> Bool
     /// Whether its sound output is on (a process of its own plays).
     private let soundOn: @Sendable (pid_t) -> Bool
     private let levelProbe: any AudioLevelProbing
@@ -96,6 +98,7 @@ package actor CheckedPlayer: AddedAppPlayer {
     init(setup: PlayerSetup, parts: Parts, reports: NowPlayingReports?,
          processIdentifier: (@Sendable () -> pid_t?)? = nil,
          processArguments: @escaping @Sendable (pid_t) -> [String] = { ProcessArguments.of($0) },
+         openWithLaunchOption: @escaping @Sendable (URL) async -> Bool = CheckedPlayer.openWithLaunchOption,
          levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
          soundOn: (@Sendable (pid_t) -> Bool)? = nil,
          assertionsHeld: @escaping @Sendable (pid_t) -> Set<PowerAssertion> = PlaybackAssertions.read,
@@ -108,6 +111,7 @@ package actor CheckedPlayer: AddedAppPlayer {
             NSRunningApplication.running(bundleID)?.processIdentifier
         }
         self.processArguments = processArguments
+        self.openWithLaunchOption = openWithLaunchOption
         self.levelProbe = levelProbe
         let sound = OwnedAudioProcesses()
         self.soundOn = soundOn ?? { sound.isPlayingSound(appPID: $0) }
