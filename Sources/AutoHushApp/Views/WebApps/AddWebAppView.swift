@@ -21,6 +21,12 @@ struct AddWebAppView: View {
     /// announcement alone went unheard after Continue, VoiceOver reading the
     /// dimmed field or the web app's window instead (2026-10-18/19).
     @AccessibilityFocusState private var focusedStep: String?
+    /// Whether the window is key: back in front, the cursor goes to the step
+    /// again (`stepList`). (`appearsActive` replaces it from macOS 15.)
+    @Environment(\.controlActiveState) private var activeState
+    /// The step to do now, for that move a second later: `focusedStep`
+    /// follows VoiceOver's cursor, wherever VoiceOver puts it.
+    @State private var currentStep: String?
 
     /// The window's width, which its bottom bar's buttons fit in every language.
     static let width: CGFloat = 440
@@ -205,8 +211,23 @@ struct AddWebAppView: View {
             }
         }
         .announcesCurrentStep(announcement, atOnce: locked)
-        .onChange(of: steps.currentTitle) { _, title in
-            if let title { focusedStep = title }
+        .onChange(of: steps.currentTitle, initial: true) { old, title in
+            currentStep = title
+            if let title, title != old { focusedStep = title }
+        }
+        // Back in front (after Safari's window or the web app's), VoiceOver
+        // reads where its cursor is, and a move made while another app was in
+        // front never reached it: it read a step done before (heard in the VM,
+        // 2026-10-21). So the cursor moves to the step again, a second later:
+        // VoiceOver puts it back where it was as the window comes in front.
+        .onChange(of: activeState) { _, state in
+            guard state == .key, currentStep != nil else { return }
+            Task {
+                try? await Task.sleep(for: .seconds(1))
+                focusedStep = nil
+                try? await Task.sleep(for: .milliseconds(50))
+                focusedStep = currentStep // the newest, should one have come meanwhile
+            }
         }
     }
 
