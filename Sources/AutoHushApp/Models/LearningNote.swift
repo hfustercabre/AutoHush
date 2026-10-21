@@ -25,7 +25,7 @@ enum LearningNote: Equatable, Sendable {
             String(localized: "A minute went by without the pause. Play it again, then click It’s Playing.",
                    comment: "Under the step “Play something in %@” once learning went back to it: “It’s Paused” wasn't clicked within a minute")
         case .cantSeePage:
-            String(localized: "AutoHush can’t see \(name)’s page. Open its window, or close it and open it again, then click It’s Playing again.",
+            String(localized: "AutoHush can’t see \(name)’s page. Open its window, or close and reopen it, then click It’s Playing again.",
                    comment: "Under the step “Play something in %@” when AutoHush couldn't read the web app's page (not running, no window, or a window restored without its buttons' names); %@ is the web app")
         }
     }

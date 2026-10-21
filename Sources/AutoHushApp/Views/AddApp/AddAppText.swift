@@ -145,7 +145,7 @@ enum AddAppText {
     }
 
     static var allowNote: String {
-        String(localized: "Only what that app needs, all at once: Accessibility and Audio Recording, and Automation if it can be scripted.",
+        String(localized: "Only what that app needs, at once: Accessibility, Audio Recording, and Automation if it’s scriptable.",
                comment: "Add an App window, under the step “Allow what the check needs” before the app is chosen")
     }
 
@@ -168,31 +168,32 @@ enum AddAppText {
     }
 
     static func accessibilityNeeded(_ app: String) -> String {
-        String(localized: "Accessibility is needed: without it, the check can’t read \(app)’s menus or page, press the Now Playing panel, or move its window.",
+        String(localized: "The check needs Accessibility to read \(app)’s menus and page, use the Now Playing panel and move its window.",
                comment: "Add an App window, warning under the permissions while Accessibility isn't allowed; %@ is the app")
     }
 
     /// What the check does without the permissions in `missing` (Audio
-    /// Recording, Automation), and that it can go on without them, in one
-    /// text (sentences joined in code read wrong in Chinese and Japanese).
+    /// Recording, Automation), in one text (sentences joined in code read
+    /// wrong in Chinese and Japanese); its Allow buttons and Continue say
+    /// the rest.
     /// Without Audio Recording the Mac's sound is muted instead of the app's
     /// (`macMuted`), unless its output has no mute control.
     static func withoutWarning(_ missing: [CheckPermission], app: String, macMuted: Bool = false) -> String {
         switch (missing.contains(.audioRecording), missing.contains(.automation), macMuted) {
         case (true, true, true):
-            String(localized: "Without Audio Recording, the Mac’s sound is muted during the check, and whether \(app) plays is told by other signs. Without Automation, its AppleScript, the surest way to pause and play \(app), isn’t tried. Allow them now, or go on without them.",
-                   comment: "Add an App window, warning above Continue while neither Audio Recording nor Automation is allowed (the whole Mac's sound is muted during the check instead of the app's); every %@ is the app")
+            String(localized: "Without Audio Recording, the Mac is muted during the check, and other signs tell whether \(app) plays. Without Automation, AppleScript, the surest way, isn’t tried.",
+                   comment: "Add an App window, warning above Continue while neither Audio Recording nor Automation is allowed (the whole Mac's sound is muted during the check instead of the app's); %@ is the app")
         case (true, false, true):
-            String(localized: "Without Audio Recording, the Mac’s sound is muted during the check, and whether \(app) plays is told by other signs. Allow it now, or go on without it.",
+            String(localized: "Without Audio Recording, the Mac is muted during the check, and other signs tell whether \(app) plays.",
                    comment: "Add an App window, warning above Continue while Audio Recording isn't allowed (the whole Mac's sound is muted during the check instead of the app's); %@ is the app")
         case (true, true, false):
-            String(localized: "Without Audio Recording, \(app) isn’t muted during the check: you’ll hear it pause and play, and whether it plays is told by other signs. Without Automation, its AppleScript, the surest way to pause and play \(app), isn’t tried. Allow them now, or go on without them.",
-                   comment: "Add an App window, warning above Continue while neither Audio Recording nor Automation is allowed; every %@ is the app")
+            String(localized: "Without Audio Recording, you’ll hear \(app) during the check, and other signs tell whether it plays. Without Automation, AppleScript, the surest way, isn’t tried.",
+                   comment: "Add an App window, warning above Continue while neither Audio Recording nor Automation is allowed (the app isn't muted during the check); %@ is the app")
         case (true, false, false):
-            String(localized: "Without Audio Recording, \(app) isn’t muted during the check: you’ll hear it pause and play, and whether it plays is told by other signs. Allow it now, or go on without it.",
-                   comment: "Add an App window, warning above Continue while Audio Recording isn't allowed; %@ is the app")
+            String(localized: "Without Audio Recording, you’ll hear \(app) during the check, and other signs tell whether it plays.",
+                   comment: "Add an App window, warning above Continue while Audio Recording isn't allowed (the app isn't muted during the check); %@ is the app")
         case (false, true, _):
-            String(localized: "Without Automation, its AppleScript, the surest way to pause and play \(app), isn’t tried. Allow it now, or go on without it.",
+            String(localized: "Without Automation, AppleScript, the surest way to pause and play \(app), isn’t tried.",
                    comment: "Add an App window, warning above Continue while Automation for the app isn't allowed; %@ is the app")
         case (false, false, _):
             ""
@@ -261,16 +262,16 @@ enum AddAppText {
     /// Why an app opened without its option needs reopening: the Reopen
     /// step's warning, the alert's message, the card's button's help.
     static func reopenReason(_ app: String) -> String {
-        String(localized: "\(app) was opened without an option it needs: without it, AutoHush can pause and play \(app) only while its window can be seen, not while it’s covered, on another desktop or in full screen.",
-               comment: "Add an App's Reopen step (as a warning), the alert that asks to reopen the media player, and the help of the menu card's Reopen button; both %@ are the app")
+        String(localized: "Without an option it needs, AutoHush can pause \(app) only while its window is in view.",
+               comment: "Add an App's Reopen step (as a warning), the alert that asks to reopen the media player, and the help of the menu card's Reopen button; %@ is the app")
     }
 
     /// The reopen alert's message: why, and that reopening stops what it
     /// plays, in one text (sentences joined in code read wrong in Chinese
     /// and Japanese).
     static func reopenAlertMessage(_ app: String) -> String {
-        String(localized: "\(app) was opened without an option it needs: without it, AutoHush can pause and play \(app) only while its window can be seen, not while it’s covered, on another desktop or in full screen. Reopening it stops whatever it plays.",
-               comment: "Message of the alert that asks to reopen the media player (an app added with Add an App) with the option it needs; both %@ are the app")
+        String(localized: "Without an option it needs, AutoHush can pause \(app) only while its window is in view. Reopening it stops what it plays.",
+               comment: "Message of the alert that asks to reopen the media player (an app added with Add an App) with the option it needs; %@ is the app")
     }
 
     /// The reopen alert's checkbox: from then on, reopened without asking.
@@ -280,7 +281,7 @@ enum AddAppText {
     }
 
     static var reopenPending: String {
-        String(localized: "It was opened without the option its page needs to be pressed while it’s covered or on another desktop. AutoHush asks before it quits and reopens it.",
+        String(localized: "It was opened without the option its page needs to be pressed while covered or on another desktop. AutoHush asks before reopening it.",
                comment: "Add an App window, under the step “Reopen %@” before it's the one to do")
     }
 
@@ -378,7 +379,7 @@ enum AddAppText {
     /// The check step's note when nothing is muted (no Audio Recording, or
     /// AntiDot mode, and an output with no mute control).
     static func checkNoteHeard(_ app: String) -> String {
-        String(localized: "About 3 minutes, with its window moving; \(app) isn’t muted, so you’ll hear it pause and play. You’re told more before it starts.",
+        String(localized: "About 3 minutes; you’ll hear \(app) pause and play as its window moves.",
                comment: "Add an App window, under the step “AutoHush tries every way to pause and play it” when the app won't be muted during the check; %@ is the app")
     }
 
@@ -444,7 +445,7 @@ enum AddAppText {
     }
 
     static func muteInstead(_ app: String) -> String {
-        String(localized: "AutoHush can mute \(app) instead while other apps play: it keeps playing, silent, and is heard again when they stop. Pausing it and playing it again yourself unmutes it.",
+        String(localized: "AutoHush can mute \(app) instead while other apps play, and unmute it when they stop.",
                comment: "Add an App window, under the last step when no way could pause the app; %@ is the app")
     }
 
@@ -552,7 +553,7 @@ enum AddAppText {
     }
 
     static func statesNote(_ app: String) -> String {
-        String(localized: "In each, AutoHush pauses and plays \(app) every way it can, the menu bar’s Now Playing panel too (it opens for a moment).",
+        String(localized: "In each, AutoHush pauses and plays \(app) every way it can, the Now Playing panel too (it opens for a moment).",
                comment: "The window shown before a check starts, under the window states; %@ is the app")
     }
 
@@ -565,7 +566,7 @@ enum AddAppText {
     }
 
     static var blockedDetail: String {
-        String(localized: "The screen dims, except the panel with the progress. The pointer still moves, except while AutoHush drags a window. Escape or the panel’s Stop ends the check; when AutoHush asks you something, they work again.",
+        String(localized: "The screen dims except the progress panel. Escape or Stop ends the check, and they work again whenever AutoHush asks you something.",
                comment: "The window shown before a check starts, under “Mouse and keyboard are blocked”")
     }
 

@@ -26,8 +26,8 @@ enum PlayerAlerts {
             title: String(localized: "Remove \(app)?",
                           comment: "Alert title before an app added with Add an App is removed from AutoHush's media players; %@ is the app"),
             message: isChosen
-                ? String(localized: "It’s your current player, so you’ll choose another. \(app) won’t be offered as a player anymore. The app stays on your Mac. Add an App… can add it back.",
-                         comment: "Message of the alert before the media player (an app added with Add an App) is removed; %@ is the app")
+                ? String(localized: "You’ll choose another player. The app stays on your Mac, and Add an App… can add it back.",
+                         comment: "Message of the alert before the media player (an app added with Add an App) is removed")
                 : String(localized: "\(app) won’t be offered as a player anymore. The app stays on your Mac. Add an App… can add it back.",
                          comment: "Message of the alert before an app added with Add an App is removed from the media players; %@ is the app"),
             button: removeTitle

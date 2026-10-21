@@ -43,7 +43,7 @@ struct PlayerOptionTests {
         #expect(options.offered.map(\.name) == ["B", "A", "YT Music"])
         #expect(!PlayerOption.webAppsHeading.isEmpty)
         #expect(PlayerOption.experimentalBadge == "Experimental")
-        #expect(PlayerOption.webAppsWarning.hasPrefix("Web apps are experimental."))
+        #expect(PlayerOption.webAppsWarning.hasPrefix("Experimental:"))
     }
 
     @Test("apps added through a check come after the supported apps and before the web apps, under their heading")
@@ -112,7 +112,7 @@ struct PlayerOptionTests {
         #expect(muted.antiDotModeReason
             == "AutoHush can only mute it, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
         #expect(soundOnly.antiDotModeReason
-            == "Only its sound tells AutoHush whether it plays, and hearing it needs Audio Recording, which AntiDot mode doesn’t use.")
+            == "It needs Audio Recording, which AntiDot mode doesn’t use.")
     }
 
     @Test("an app that can only be muted says so in a short line on its tile and a longer one on its menu row")

@@ -36,7 +36,7 @@ enum LearningText {
     /// plays nothing until you log in, and during an ad the player's own
     /// button may say it's paused (some sites' do).
     static func playTip(_ name: String) -> String {
-        String(localized: "Log in first if \(name) asks you to. Ads don’t count: wait for what you chose to play. Then click It’s Playing.",
+        String(localized: "Log in first if \(name) asks. Ads don’t count: wait for what you chose, then click It’s Playing.",
                comment: "Under the step “Play something in %@” while AutoHush learns a web app's controls; %@ is the web app; “It’s Playing” is the button under it")
     }
 

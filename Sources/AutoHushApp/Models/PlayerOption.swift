@@ -224,7 +224,7 @@ struct PlayerOption: Equatable, Identifiable {
 
     /// In the "Add a Web App" and learning windows.
     static var webAppsWarning: String {
-        String(localized: "Web apps are experimental. Every website works differently, so AutoHush may not pause or resume one as expected.",
+        String(localized: "Experimental: some websites may not pause or resume as expected.",
                comment: "Warning in the Add a Web App window and in the window that learns a web app's controls")
     }
 
@@ -272,7 +272,7 @@ struct PlayerOption: Equatable, Identifiable {
         pausesByMuting
             ? String(localized: "AutoHush can only mute it, and muting needs Audio Recording, which AntiDot mode doesn’t use.",
                      comment: "Help tag and VoiceOver hint of an app added with Add an App that can only be muted, where media players are offered, dimmed while AntiDot mode is on")
-            : String(localized: "Only its sound tells AutoHush whether it plays, and hearing it needs Audio Recording, which AntiDot mode doesn’t use.",
+            : String(localized: "It needs Audio Recording, which AntiDot mode doesn’t use.",
                      comment: "Help tag and VoiceOver hint of an app added with Add an App whose Now Playing row doesn't show whether it plays, where media players are offered, dimmed while AntiDot mode is on")
     }
 

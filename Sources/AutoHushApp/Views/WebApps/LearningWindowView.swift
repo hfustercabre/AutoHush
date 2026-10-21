@@ -21,7 +21,7 @@ struct LearningWindowView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 WindowHeader(icon: player?.icon(size: 56),
-                             description: Text(String(localized: "Web apps have no controls AutoHush can use directly, so it learns which of \(name)’s buttons plays and pauses it.",
+                             description: Text(String(localized: "Web apps have no controls AutoHush can use, so it learns \(name)’s Play and Pause buttons.",
                                                       comment: "The learning window, at its top beside the web app's icon; %@ is the web app")))
                 NoteLabel(PlayerOption.webAppsWarning)
                     .padding(.top, 8)

@@ -330,8 +330,8 @@ struct SettingsModelTests {
         #expect(model.settings.state.detection == .audioLevels)
         // How long an app must play before your player pauses, at the least.
         let configuration = AppConfiguration()
-        #expect(DetectionMethod.playbackSignals.summary.contains("at least \(Int(configuration.minimumStartWithoutVideo)) seconds"))
-        #expect(DetectionMethod.openStreams.summary.contains("at least \(Int(configuration.minimumStartWithOpenStreams)) seconds"))
+        #expect(DetectionMethod.playbackSignals.summary.contains("under \(Int(configuration.minimumStartWithoutVideo)) seconds"))
+        #expect(DetectionMethod.openStreams.summary.contains("stay open \(Int(configuration.minimumStartWithOpenStreams)) seconds"))
     }
 
     @Test("each page's Restore Defaults restores the settings it shows only: Detection's timings, the fades, or Advanced's switches")

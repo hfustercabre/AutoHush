@@ -34,7 +34,7 @@ extension AppDelegateTests {
         let (sut, _) = makeSUT(scratch)
         let alerts = CallLog()
         sut.runAlert = { alert in
-            alerts.calls.append(alert.messageText + (alert.informativeText.hasPrefix("It’s your current player") ? " (chosen)" : ""))
+            alerts.calls.append(alert.messageText + (alert.informativeText.hasPrefix("You’ll choose another player") ? " (chosen)" : ""))
             return alerts.calls.count <= answers.count ? answers[alerts.calls.count - 1] : .alertSecondButtonReturn
         }
         return (scratch, added, sut, alerts)

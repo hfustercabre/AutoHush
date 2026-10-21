@@ -29,7 +29,7 @@ struct AddWebAppView: View {
         VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: 8) {
                 WindowHeader(icon: AppIcon.safari,
-                             description: Text("Paste the address of a website that plays music, podcasts or videos. AutoHush opens it in Safari, adds it to your Dock as an app, and learns its controls.",
+                             description: Text("Paste a website that plays music, podcasts or videos. AutoHush adds it to your Dock as an app and learns its controls.",
                                                comment: "Add a Web App window, at its top beside Safari's icon"))
                 NoteLabel(PlayerOption.webAppsWarning)
                     .padding(.top, 8)

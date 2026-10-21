@@ -42,7 +42,7 @@ struct SoundSourcesSettingsView: View {
                         SoundSourceRow(model: model, row: row)
                     }
                 } footer: {
-                    Text("Turn an app off to keep your player playing while it makes sound. Select apps to remove them from the list.",
+                    Text("Apps turned off don’t pause your player. Select apps to remove them.",
                          comment: "Settings → Sound Sources, under the list; “Select” as in clicking apps in the list (⌘-click or ⇧-click selects several)")
                         .captionStyle()
                 }
@@ -84,7 +84,7 @@ struct SoundSourcesSettingsView: View {
     private func confirmReset() {
         let alert = PlayerAlerts.confirm(
             title: String(localized: "Reset the list of apps?", comment: "Settings → Sound Sources: title of the confirmation for Reset List"),
-            message: String(localized: "Every app is removed, and apps you turned off will pause your player again. Apps reappear as they play audio.",
+            message: String(localized: "All apps are removed; those you turned off will pause your player again.",
                             comment: "Settings → Sound Sources: what Reset List does, in its confirmation"),
             button: String(localized: "Reset List", comment: "Settings → Sound Sources: confirms forgetting every app in the list"))
         if InfoAlert.runInFront(alert) == .alertFirstButtonReturn { model.settings.forgetAll() }

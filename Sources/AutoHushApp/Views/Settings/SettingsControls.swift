@@ -30,7 +30,7 @@ enum SettingsSwitch: CaseIterable {
             Text("Out before pausing, and back in when resuming.",
                  comment: "Settings → Fades, under “Fade playback”")
         case .levelsMusic:
-            Text("After quieter apps, your player resumes with the Mac’s volume lowered to match, until the next pause. Calls don’t count.",
+            Text("After quieter apps, your player resumes with the Mac’s volume lowered to match. Calls don’t count.",
                  comment: "Settings → Advanced, under “Level the volume”; a call is an app using the microphone")
         case .staysPausedAfterCalls:
             Text("Your player doesn’t resume after a call that came while it was paused.",
@@ -158,7 +158,7 @@ enum SettingsTiming {
     var help: Text {
         switch self {
         case .pauseAfter:
-            Text("How long another app must be audible. Filters out short sounds apps play themselves; system notification sounds are always ignored.",
+            Text("How long another app must be audible, so short sounds don’t pause your player.",
                  comment: "Settings → Detection, under “Pause playback after”")
         case .resumeAfter:
             Text("How long another app must be silent. Bridges gaps between tracks and videos.",

@@ -32,7 +32,7 @@ struct AutoPauseFocusFilter: SetFocusFilterIntent {
     static let title = LocalizedStringResource(
         "Auto-Pause", comment: "Auto-Pause, the feature's name: the switch's label in the menu's card and Settings → General, a Diagnostics row, the Focus filter's name, and the name of the Focus filter's On/Off choice")
     static let description: IntentDescription? = IntentDescription(LocalizedStringResource(
-        "Turns Auto-Pause on or off during this Focus. When the Focus ends, Auto-Pause goes back to how it was, unless you changed it meanwhile.",
+        "Turns Auto-Pause on or off during this Focus. Afterwards it goes back to how it was, unless you changed it.",
         comment: "Focus filter: what it does, in System Settings, once added to a Focus"))
 
     // Optional with no default: a Focus's end arrives as nil (a default would

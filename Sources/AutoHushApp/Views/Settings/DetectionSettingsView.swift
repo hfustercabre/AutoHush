@@ -121,13 +121,13 @@ extension DetectionMethod {
     var summary: String {
         switch self {
         case .audioLevels:
-            return String(localized: "Most accurate: a paused video stops counting as soon as it goes silent. macOS shows its purple recording indicator while AutoHush measures.",
+            return String(localized: "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple recording indicator while AutoHush measures.",
                           comment: "Settings → Detection, under the ways of detecting playing apps: what measuring audio levels does")
         case .playbackSignals:
-            return String(localized: "An app counts as playing while it tells macOS it’s playing, and as paused once it stops, even with its audio still open. Apps that never tell macOS count while their audio is open. Sound without video must last at least 3 seconds before your player pauses, so notification sounds don’t interrupt it.",
+            return String(localized: "Apps count as playing while they tell macOS so; apps that never do, while their audio is open. Sounds without video under 3 seconds don’t pause your player.",
                           comment: "Settings → Detection, under the ways of detecting playing apps: how “What apps tell macOS” works")
         case .openStreams:
-            return String(localized: "Any app with its audio open counts as playing, even when paused. Its audio must stay open at least 2 seconds before your player pauses, so notification sounds don’t interrupt it.",
+            return String(localized: "Any app with its audio open counts as playing, even when paused. It must stay open 2 seconds before your player pauses, so notification sounds don’t interrupt it.",
                           comment: "Settings → Detection, under the ways of detecting playing apps: how “Open audio streams only” works")
         }
     }
