@@ -60,10 +60,11 @@ extension AppDelegate {
         }
     }
 
-    /// The welcome window closed while it asked for the permissions: done,
-    /// as with its Done button.
+    /// The welcome window closed while it asked for the permissions, or
+    /// with a web app chosen there waiting to be learned (closed after
+    /// Back): done, as with its Done button.
     func followWelcomeClosed() {
-        if settingsModel.welcomeAsksPermissions, !isShowingPlayerChooser { finishWelcome() }
+        if settingsModel.welcomeAsksPermissions || learningAfterWelcome, !isShowingPlayerChooser { finishWelcome() }
     }
 
     /// Edit → Find… (⌘F): opens Settings → Sound Sources' search while it lists

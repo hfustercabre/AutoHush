@@ -410,6 +410,40 @@ struct AddAppModelTests {
         world.run.finish(.stopped) // else its task waits for good, keeping the model and the world
     }
 
+    @Test("Stop while the last check still puts things back: the new one never starts, back to its step")
+    func stopWhileLastCheckEnds() async {
+        let world = World()
+        let model = await ready(world)
+        let first = world.run
+        first.endsWhenStopped = false
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        model.windowClosed()
+        world.run = FakeCheckRun()
+        model.reset()
+        await model.loadApps()
+        model.continueWithApp()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck()
+        await Task.yield()
+        #expect(model.stage == .checking && model.isEndingLastCheck)
+        model.stopCheck() // the window's Stop, or Escape
+        #expect(model.stage == .ready)
+        first.finish(.stopped)
+        await TestWait.until { !model.isEndingLastCheck }
+        #expect(world.runs == 1 && model.stage == .ready)
+    }
+
+    @Test("Change… closes the warning before a check: its Start was for the app before")
+    func changeClosesWarning() async {
+        let world = World()
+        let model = await ready(world)
+        model.continueToCheck()
+        let closed = world.warningsClosed
+        model.changeApp()
+        #expect(world.warningsClosed == closed + 1)
+    }
+
     @Test("the app quitting while it's waited for says so; Open opens it and waits again, or says so again when it doesn't open")
     func appQuits() async {
         let world = World()

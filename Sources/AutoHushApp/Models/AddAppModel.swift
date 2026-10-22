@@ -351,6 +351,7 @@ final class AddAppModel {
     func changeApp() {
         guard canChangeApp else { return }
         keptChecks.forget()
+        presenter?.closeWarning() // its Start was for the app before
         resetSteps()
         search = ""
         presenter?.showChooser()
@@ -591,9 +592,15 @@ final class AddAppModel {
         }
     }
 
-    /// Stop (the window's, the panel's): the check puts everything back first.
+    /// Stop (the window's, the panel's): the check puts everything back
+    /// first. While the last one still does, the new one never starts: back
+    /// to its step (the workflow audit, 2026-10-22).
     func stopCheck() {
-        run?.stop()
+        guard let run else {
+            if stage == .checking { stage = .ready }
+            return
+        }
+        run.stop()
     }
 
     /// After a check that stopped or failed, or one whose last step offers

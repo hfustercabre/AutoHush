@@ -264,6 +264,34 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("in the welcome window, Back then Continue on the same player goes on to what it needs again")
+    func welcomeBackThenSamePlayer() async {
+        let (_, _, sut) = await welcomeWatched(installed: [Players.first, Players.second])
+        sut.chooseMusicPlayer(Players.second)
+        sut.settingsModel.showWelcomePlayers() // Back
+        #expect(!sut.settingsModel.welcomeAsksPermissions)
+        sut.chooseMusicPlayer(Players.second) // Continue, the same one picked
+        #expect(sut.settingsModel.welcomeAsksPermissions && sut.status.chosenPlayerID == Players.second)
+    }
+
+    @MainActor
+    @Test("a web app chosen in the welcome window, then Back and the window closed: the learning window opens all the same")
+    func welcomeClosedAfterBack() async {
+        let scratch = Scratch()
+        let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
+        let clock = ManualSleep()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil, windowWatchSleep: clock.sleep)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
+        await TestWait.until { clock.sleeping == 1 }
+        sut.chooseMusicPlayer(webApp.bundleID)
+        #expect(sut.settingsModel.welcomeAsksPermissions && !scratch.learningWindow.isOpen)
+        sut.settingsModel.showWelcomePlayers() // Back
+        scratch.chooser.close()
+        clock.step()
+        await TestWait.until { scratch.learningWindow.isOpen }
+    }
+
+    @MainActor
     @Test("while Settings is open, the window watch follows what its page needs: launch at login, switched on in System Settings")
     func watchFollowsSettings() async {
         let scratch = Scratch()

@@ -688,11 +688,18 @@ enum AddAppText {
         String(localized: "The last check is putting things back first…", comment: "Add an App window, under the check's step, while a check that was stopped still puts windows and sound back; the new one starts after")
     }
 
-    /// Audio Recording allowed in System Settings: macOS applies it once
-    /// AutoHush reopens.
+    /// Audio Recording allowed in System Settings before the check:
+    /// macOS applies it once AutoHush reopens (nothing found to keep yet).
+    static var audioAllowedAwaitsReopen: String {
+        String(localized: "Allowed in System Settings: it works once AutoHush reopens.",
+               comment: "Add an App window, under Audio Recording before the check, after the user allowed it in System Settings: macOS applies it only from AutoHush's next launch; a Reopen AutoHush button follows")
+    }
+
+    /// Audio Recording allowed in System Settings after the check (above
+    /// Mute It Instead): macOS applies it once AutoHush reopens.
     static var audioAfterReopen: String {
         String(localized: "Allowed in System Settings: it works once AutoHush reopens. What the check found is kept.",
-               comment: "Add an App window, under Audio Recording (or above Mute It Instead) after the user allowed it in System Settings: macOS applies it only from AutoHush's next launch; a Reopen AutoHush button follows")
+               comment: "Add an App window, above Mute It Instead once the check is done, after the user allowed Audio Recording in System Settings: macOS applies it only from AutoHush's next launch; a Reopen AutoHush button follows")
     }
 
     /// A numbered step, as VoiceOver reads its title: "Step 2 of 6, …".

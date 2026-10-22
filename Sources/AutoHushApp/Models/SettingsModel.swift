@@ -130,10 +130,15 @@ final class SettingsModel {
     var pausingAreDefaults: Bool { timings.withDefaultPausing == timings }
     /// Resuming's: Resume playback on, 2 s, Stay paused after calls off.
     var resumingAreDefaults: Bool { timings.withDefaultResuming == timings }
-    /// The fades (the switch and both lengths) are their defaults.
-    var fadesAreDefaults: Bool { timings.withDefaultFades == timings }
-    /// Volume's switch and limits are their defaults (off, 10 and 2 dB).
-    var volumeAreDefaults: Bool { timings.withDefaultVolume == timings }
+    /// The fades (the switch and both lengths) are their defaults, or
+    /// greyed out with a player AutoHush can't fade: Restore Defaults
+    /// wouldn't change what shows (the workflow audit, 2026-10-22).
+    var fadesAreDefaults: Bool { !playerCanFade || timings.withDefaultFades == timings }
+    /// Volume's switch and limits are their defaults (off, 10 and 2 dB), or
+    /// greyed out (AntiDot mode, Resume playback off), as the fades.
+    var volumeAreDefaults: Bool {
+        SettingsSwitch.levelsMusic.isUnavailable(self) || timings.withDefaultVolume == timings
+    }
     /// Detection's silence threshold is −60 dB, or greyed out in AntiDot
     /// mode, which never restores it.
     var silenceThresholdIsDefault: Bool {
@@ -197,7 +202,12 @@ final class SettingsModel {
 
     func refreshLaunchAtLogin() {
         let enabled = launchAtLoginController.isEnabled, needsApproval = launchAtLoginController.needsApproval
-        if launchAtLoginEnabled != enabled { launchAtLoginEnabled = enabled }
+        // Changed meanwhile (System Settings → Login Items): an error from
+        // before no longer stands (the workflow audit, 2026-10-22).
+        if launchAtLoginEnabled != enabled {
+            launchAtLoginEnabled = enabled
+            launchAtLoginError = nil
+        }
         if launchAtLoginNeedsApproval != needsApproval { launchAtLoginNeedsApproval = needsApproval }
     }
 

@@ -374,7 +374,7 @@ private struct CheckPermissionRows: View {
                     allowed: nil, permission: .audioRecording)
             } else {
                 row(symbol: "waveform", title: PermissionText.audioTitle,
-                    note: model.audioAwaitsReopen && model.permissions.audio != .allowed ? AddAppText.audioAfterReopen : AddAppText.audioUse(app),
+                    note: model.audioAwaitsReopen && model.permissions.audio != .allowed ? AddAppText.audioAllowedAwaitsReopen : AddAppText.audioUse(app),
                     allowed: model.permissions.audio == .allowed, permission: .audioRecording)
             }
             if let automation = model.permissions.automation {

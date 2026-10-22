@@ -188,6 +188,19 @@ struct SettingsModelTests {
         #expect(model.launchAtLoginError == nil)
     }
 
+    @Test("the error of a failed change goes once the login item is changed elsewhere (System Settings), not before")
+    func launchAtLoginErrorClears() {
+        let controller = MockLaunchAtLoginController(isEnabled: false)
+        controller.setEnabledResult = .failure(StubError.failed)
+        let model = makeModel(controller)
+        model.setLaunchAtLogin(true)
+        model.refreshLaunchAtLogin()
+        #expect(model.launchAtLoginError != nil) // nothing changed yet
+        controller.isEnabled = true // turned on in System Settings
+        model.refreshLaunchAtLogin()
+        #expect(model.launchAtLoginEnabled && model.launchAtLoginError == nil)
+    }
+
     @Test("opening Login Items settings is delegated")
     func openLoginItems() {
         let controller = MockLaunchAtLoginController(isEnabled: false)
@@ -357,7 +370,7 @@ struct SettingsModelTests {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                      fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                     pausesOnOutputDisconnect: true, resumesPlayback: false,
+                                     pausesOnOutputDisconnect: true,
                                      levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
                                      pausesForMicrophone: true, staysPausedAfterCalls: true)
         model.setTimings(changed)
@@ -368,7 +381,6 @@ struct SettingsModelTests {
         #expect(model.pausingAreDefaults && !model.resumingAreDefaults) // the other cards keep their own
         #expect(model.timings == TimingSettings(stopGrace: 7, silenceThresholdDB: -40,
                                                 fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                resumesPlayback: false,
                                                 levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
                                                 staysPausedAfterCalls: true))
 
@@ -385,7 +397,7 @@ struct SettingsModelTests {
         model.restoreDefaultFades()
         #expect(model.fadesAreDefaults && !model.volumeAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                                pausesOnOutputDisconnect: true, resumesPlayback: false,
+                                                pausesOnOutputDisconnect: true,
                                                 levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
                                                 pausesForMicrophone: true, staysPausedAfterCalls: true))
 
@@ -394,7 +406,7 @@ struct SettingsModelTests {
         #expect(model.volumeAreDefaults && !model.fadesAreDefaults)
         #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
                                                 fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                pausesOnOutputDisconnect: true, resumesPlayback: false,
+                                                pausesOnOutputDisconnect: true,
                                                 pausesForMicrophone: true, staysPausedAfterCalls: true))
 
         model.setTimings(changed)
@@ -412,6 +424,22 @@ struct SettingsModelTests {
         #expect(model.silenceThresholdIsDefault)
         model.restoreDefaultSilenceThreshold()
         #expect(model.timings == TimingSettings(silenceThresholdDB: -40))
+    }
+
+    @Test("a card greyed out has nothing for Restore Defaults to change: the fades with a player AutoHush can't fade, Volume in AntiDot mode or with Resume playback off")
+    func restoreDefaultsWhileDimmed() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.setTimings(TimingSettings(fadesEnabled: false, levelsMusic: true))
+        model.state.status.choosePlayer(named: "Radio")
+        #expect(!model.fadesAreDefaults && !model.volumeAreDefaults)
+        model.state.status.playerOptions[0].canFade = false
+        #expect(model.fadesAreDefaults)
+        model.setAntiDotMode(true)
+        #expect(model.volumeAreDefaults)
+        model.setAntiDotMode(false)
+        #expect(!model.volumeAreDefaults)
+        model.setTimings(TimingSettings(fadesEnabled: false, resumesPlayback: false, levelsMusic: true))
+        #expect(model.volumeAreDefaults)
     }
 
     // MARK: - Updates

@@ -22,6 +22,13 @@ extension AppDelegate {
             addWebApp.show(address: address)
             return
         }
+        // Picked again in the welcome window after its Back: on to what it
+        // needs, as the first time (the workflow audit, 2026-10-22).
+        if bundleID == player?.bundleID, !replacing, isShowingPlayerChooser {
+            settingsModel.welcomeAsksPermissions = true
+            windowWatch.wake()
+            return
+        }
         guard bundleID != player?.bundleID || replacing,
               let chosen = players.player(bundleID: bundleID),
               let appURL = option?.appURL

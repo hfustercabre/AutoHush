@@ -23694,8 +23694,235 @@
         }
       }
     },
+    "Allowed in System Settings: it works once AutoHush reopens." : {
+      "comment" : "Add an App window, under Audio Recording before the check, after the user allowed it in System Settings: macOS applies it only from AutoHush's next launch; a Reopen AutoHush button follows",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسموح به في إعدادات النظام: يعمل بمجرد إعادة فتح AutoHush."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permès a Configuració del Sistema: funciona quan l’AutoHush es torni a obrir."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povoleno v Nastavení systému: začne fungovat po opětovném otevření AutoHush."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilladt i Systemindstillinger: det virker, når AutoHush åbnes igen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In den Systemeinstellungen erlaubt: Es wirkt, sobald AutoHush erneut geöffnet wird."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιτρέπεται στις Ρυθμίσεις συστήματος: θα λειτουργήσει μόλις ανοίξει ξανά το AutoHush."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido en Ajustes del Sistema: funciona en cuanto AutoHush se vuelva a abrir."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido en Configuración del Sistema: funciona en cuanto AutoHush se vuelva a abrir."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sallittu Järjestelmäasetuksissa: toimii, kun AutoHush avataan uudelleen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisé dans Réglages Système : effectif dès qu’AutoHush sera rouvert."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorisé dans Réglages Système : effectif dès qu’AutoHush sera rouvert."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "אושר בהגדרות המערכת: זה יפעל אחרי ש-AutoHush ייפתח מחדש."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिस्टम सेटिंग्ज़ में अनुमति दी गई: AutoHush के फिर से खुलते ही यह काम करेगा।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dozvoljeno u Postavkama sustava: radi čim se AutoHush ponovno otvori."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Engedélyezve a Rendszerbeállításokban: az AutoHush újranyitása után működik."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diizinkan di Pengaturan Sistem: berfungsi setelah AutoHush dibuka ulang."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consentito in Impostazioni di Sistema: funziona appena AutoHush viene riaperto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“システム設定”で許可しました。AutoHushを再度開くと有効になります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템 설정에서 허용됨: AutoHush를 다시 열면 작동합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dibenarkan dalam Seting Sistem: ia berfungsi sebaik AutoHush dibuka semula."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tillatt i Systeminnstillinger: det virker når AutoHush åpnes på nytt."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toegestaan in Systeeminstellingen: het werkt zodra AutoHush opnieuw wordt geopend."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dozwolone w Ustawieniach systemowych: zadziała po ponownym otwarciu AutoHush."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido nos Ajustes do Sistema: funciona assim que o AutoHush for reaberto."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitido nas Definições do Sistema: funciona assim que o AutoHush for reaberto."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permis în Configurări sistem: funcționează imediat ce AutoHush este redeschis."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешено в Системных настройках: заработает, как только AutoHush будет открыт повторно."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Povolené v Systémových nastaveniach: začne fungovať po opätovnom otvorení AutoHush."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dovoljeno v Sistemskih nastavitvah: deluje, ko se AutoHush znova odpre."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tillåtet i Systeminställningar: det fungerar när AutoHush har öppnats igen."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อนุญาตในการตั้งค่าระบบแล้ว: จะใช้งานได้เมื่อเปิด AutoHush ใหม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistem Ayarları’nda izin verildi: AutoHush yeniden açılınca çalışır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дозволено в Параметрах системи: запрацює, щойно AutoHush буде відкрито повторно."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã cho phép trong Cài đặt hệ thống: sẽ hoạt động khi AutoHush mở lại."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已在「系統設定」中允許：重新打開 AutoHush 後便會生效。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已在“系统设置”中允许：重新打开 AutoHush 后即可生效。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已在「系統設定」中允許：重新打開 AutoHush 後即可生效。"
+          }
+        }
+      }
+    },
     "Allowed in System Settings: it works once AutoHush reopens. What the check found is kept." : {
-      "comment" : "Add an App window, under Audio Recording (or above Mute It Instead) after the user allowed it in System Settings: macOS applies it only from AutoHush's next launch; a Reopen AutoHush button follows",
+      "comment" : "Add an App window, above Mute It Instead once the check is done, after the user allowed Audio Recording in System Settings: macOS applies it only from AutoHush's next launch; a Reopen AutoHush button follows",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

@@ -317,6 +317,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **The welcome window's Back, then Continue on the same player, goes on
+  again.** It did nothing until you picked another player.
+- **Launch at login's error goes once the login item is fixed** in System
+  Settings; it stayed under the switch.
 - **Settings opens on the desktop you're on.** Closed on one desktop and
   opened again from another, it took you back to the first.
 - **A player's error message no longer reaches the log or Copy Report.**
