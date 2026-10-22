@@ -267,7 +267,7 @@ final class WindowTitleTests {
         }
 
         /// A check running on the stand-ins, its panel shown.
-        private func panelShown() async throws -> (world: World, sut: CheckPanelController, panel: NSPanel) {
+        private func panelShown() async throws -> (world: World, model: AddAppModel, sut: CheckPanelController, panel: NSPanel) {
             let world = World()
             world.playing = true
             let model = AddAppModel(world)
@@ -281,30 +281,33 @@ final class WindowTitleTests {
             let before = Set(NSApp.windows.map(ObjectIdentifier.init))
             sut.show(world.apps[0], model: model)
             let panel = try #require(NSApp.windows.first { !before.contains(ObjectIdentifier($0)) } as? NSPanel)
-            return (world, sut, panel)
+            return (world, model, sut, panel)
+        }
+
+        /// Ends the check and waits until the model has taken its end: its
+        /// task holds the model, and the model the world, until then (B6, the
+        /// full check, 2026-10-20: a world freed only after the test process
+        /// ended left its folder behind).
+        private func endCheck(_ world: World, _ model: AddAppModel) async {
+            world.run.finish(.stopped)
+            await TestWait.until { model.stage != .checking }
         }
 
         @Test("the check's panel is on every desktop, in the screen's corner, and never takes the keyboard")
         func checkPanel() async throws {
-            let (world, sut, panel) = try await panelShown()
-            defer {
-                sut.hide()
-                world.run.finish(.stopped)
-            }
+            let (world, model, sut, panel) = try await panelShown()
             #expect(panel.isVisible && panel.styleMask.contains(.nonactivatingPanel) && !panel.canBecomeKey)
             #expect(panel.collectionBehavior.contains(.canJoinAllSpaces) && panel.level == .floating)
             let corner = NSScreen.screens.first?.visibleFrame ?? .zero // the main display's, above the Dock
             #expect(abs(panel.frame.maxX - (corner.maxX - 16)) <= 1 && abs(panel.frame.minY - (corner.minY + 16)) <= 1)
+            sut.hide()
+            await endCheck(world, model)
         }
 
         @Test("only while the check blocks input does a shade under its panel dim each screen")
         func checkPanelShades() async throws {
             let before = Set(NSApp.windows.map(ObjectIdentifier.init))
-            let (world, sut, panel) = try await panelShown()
-            defer {
-                sut.hide()
-                world.run.finish(.stopped)
-            }
+            let (world, model, sut, panel) = try await panelShown()
             #expect(shades(since: before).isEmpty)
             world.report?(CheckReportLine.blocked)
             await TestWait.until { panel.level == CheckPanelController.panelLevel && shades(since: before).count == NSScreen.screens.count }
@@ -312,17 +315,19 @@ final class WindowTitleTests {
             #expect(shades(since: before).allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
             world.report?(CheckReportLine.free)
             await TestWait.until { panel.level == .floating && shades(since: before).isEmpty }
+            sut.hide()
+            await endCheck(world, model)
         }
 
         @Test("the check's panel hidden, it and its shades all go")
         func checkPanelHidden() async throws {
             let before = Set(NSApp.windows.map(ObjectIdentifier.init))
-            let (world, sut, panel) = try await panelShown()
+            let (world, model, sut, panel) = try await panelShown()
             world.report?(CheckReportLine.blocked)
             await TestWait.until { !shades(since: before).isEmpty }
             sut.hide()
             #expect(!panel.isVisible && shades(since: before).isEmpty)
-            world.run.finish(.stopped)
+            await endCheck(world, model)
         }
     }
 

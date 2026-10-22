@@ -55,7 +55,8 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// keeps each in a window (MenuBarAgent does), named by its identifier
     /// there (its list of the menu bar's items doesn't name them), wherever
     /// it is and whatever covers it: a wide app's menus by the notch,
-    /// another app's window over it.
+    /// another app's window over it. `package`, as `hitTestedItem()`: a
+    /// probe outside the module reads both, to tell which one finds it.
     package static func listedItem() -> AXUIElement? {
         for id in itemApps {
             guard let app = NSRunningApplication.running(id) else { continue }
