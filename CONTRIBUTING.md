@@ -19,15 +19,22 @@ privately, as [SECURITY.md](SECURITY.md) says.
 - **`main`** holds the latest release. It only moves when a new version is
   published.
 - **`dev`** is where development happens. Every change goes there first.
+- Every other branch follows [Conventional Branch](https://conventionalbranch.org/):
+  `<type>/<description>`, the description in lowercase letters and numbers
+  joined by single hyphens (dots only in versions). The types are
+  **`feature/`**, **`fix/`** and **`chore/`**, which anyone may use, and
+  **`release/`** (preparing a release, `release/v1.1.0`) and **`hotfix/`**
+  (an urgent fix to the latest release), which only the maintainer uses.
 
 ## Proposing a change
 
 1. Fork the repository.
-2. Create a branch from `dev` whose name starts with what it is:
-   - **`fix-`** for a bug fix (`fix-vlc-resume`);
-   - **`feature-`** for something new (`feature-qobuz`);
-   - **`change-`** for a change to how something already works
-     (`change-fade-length`).
+2. Create a branch from `dev` whose name says what it is:
+   - **`feature/`** for something new, or a change to how something works
+     (`feature/qobuz`, `feature/longer-fades`);
+   - **`fix/`** for a bug fix (`fix/vlc-resume`);
+   - **`chore/`** for anything that doesn't change what AutoHush does:
+     docs, translations, tests, tooling (`chore/update-readme`).
 3. Check that it builds and its tests pass (DEVELOPMENT.md →
    [Build and test](DEVELOPMENT.md#build-and-test)), and that it follows the
    [style guide](STYLE_GUIDE.md). A change to what AutoHush does updates

@@ -1,6 +1,8 @@
 # Checks that a pull request follows CONTRIBUTING.md: it goes into dev, from
-# a branch named fix-…, feature-… or change-…. Runs again when the pull
-# request is edited (a new target), so fixing it clears the check.
+# a branch named as Conventional Branch (conventionalbranch.org) asks, of the
+# types contributors use: feature/…, fix/… or chore/…, then lowercase words
+# and numbers joined by single hyphens (dots for versions). Runs again when
+# the pull request is edited (a new target), so fixing it clears the check.
 name: Pull request rules
 
 on:
@@ -27,13 +29,11 @@ jobs:
             echo "::error title=Target::Open the pull request into dev (see CONTRIBUTING.md)."
             problems=1
           fi
-          case "$HEAD_BRANCH" in
-            fix-?* | feature-?* | change-?*) ;;
-            *)
-              echo "::error title=Branch name::Name the branch fix-…, feature-… or change-… (see CONTRIBUTING.md)."
-              problems=1
-              ;;
-          esac
+          segment='[a-z0-9]+(\.[a-z0-9]+)*'
+          if ! printf '%s\n' "$HEAD_BRANCH" | grep -Eqx "(feature|fix|chore)/$segment(-$segment)*"; then
+            echo "::error title=Branch name::Name the branch feature/…, fix/… or chore/…, in lowercase words joined by hyphens, e.g. fix/vlc-resume (see CONTRIBUTING.md)."
+            problems=1
+          fi
           if [ "$problems" = 0 ]; then
             echo "Into dev, from a branch named as CONTRIBUTING.md asks."
           fi
