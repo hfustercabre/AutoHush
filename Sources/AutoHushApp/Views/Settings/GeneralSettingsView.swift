@@ -4,7 +4,7 @@ import AutoHushKit
 
 /// Settings → General, a grouped form: the media player, with the
 /// Auto-Pause switch; every player as tiles, to choose another; then launch
-/// at login.
+/// at login and where the menu bar icon goes.
 struct GeneralSettingsView: View {
     let model: SettingsModel
 
@@ -46,6 +46,12 @@ struct GeneralSettingsView: View {
                     }
                         .buttonStyle(.chip)
                 }
+                CardDivider()
+                SwitchRow(Text(verbatim: MenuBarIconPlace.title),
+                          subtitle: Text("Where the notch or other apps’ icons can’t hide it. Turned off, ⌘-drag it where you like.",
+                                         comment: "Settings → General, under Keep icon next to system icons; ⌘-drag is how macOS moves menu bar icons"),
+                          isOn: Binding(get: { model.keepsMenuBarIconNearSystemIcons },
+                                        set: { model.setKeepsMenuBarIconNearSystemIcons($0) }))
             }
         }
     }

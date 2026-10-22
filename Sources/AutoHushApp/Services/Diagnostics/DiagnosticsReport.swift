@@ -270,6 +270,7 @@ enum DiagnosticsReport {
                         Row(label: AutoPauseText.title, value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
                         Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
+                        Row(label: MenuBarIconPlace.title, value: facts.keepsMenuBarIconNearSystemIcons ? on : off),
                         Row(label: SettingsWindowController.Page.updates.title, value: updates),
                         Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),
                      ])

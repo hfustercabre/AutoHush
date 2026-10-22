@@ -50,6 +50,21 @@ struct SettingsModelTests {
         #expect(model.launchAtLoginNeedsApproval)
     }
 
+    @Test("keeping the menu bar icon beside the system's icons moves it there at once; letting it go doesn't move it")
+    func menuBarIconKept() {
+        let defaults = UserDefaults(suiteName: "SettingsModelTests-\(UUID().uuidString)")!
+        let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
+                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
+                                  menuBarIcon: MenuBarIconPlace(defaults: defaults))
+        #expect(!model.keepsMenuBarIconNearSystemIcons)
+        model.setKeepsMenuBarIconNearSystemIcons(true)
+        #expect(model.keepsMenuBarIconNearSystemIcons && MenuBarIconPlace(defaults: defaults).keepsNearSystemIcons)
+        #expect(log.calls == ["moveMenuBarIcon"])
+        model.setKeepsMenuBarIconNearSystemIcons(false)
+        #expect(!MenuBarIconPlace(defaults: defaults).keepsNearSystemIcons)
+        #expect(log.calls == ["moveMenuBarIcon"])
+    }
+
     @Test("AntiDot mode is the way past Audio Recording; Back returns to the welcome window's players")
     func permissionActions() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))

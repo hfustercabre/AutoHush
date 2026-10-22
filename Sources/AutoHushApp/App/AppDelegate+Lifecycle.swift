@@ -55,10 +55,11 @@ extension AppDelegate {
         }
     }
 
-    /// Puts AutoHush's menu in the menu bar: it shows the status, and its
-    /// items go to the user's settings, the player session, the updates and
-    /// AppDelegate.
+    /// Puts AutoHush's menu in the menu bar, its icon placed first
+    /// (`MenuBarIconPlace`): it shows the status, and its items go to the
+    /// user's settings, the player session, the updates and AppDelegate.
     func showStatusMenu() {
+        MenuBarIconPlace(defaults: defaults).prepare()
         statusMenu = StatusMenuController(status: status, settings: userSettings, session: session,
                                           updates: updates, actions: self, settingsModel: settingsModel)
     }

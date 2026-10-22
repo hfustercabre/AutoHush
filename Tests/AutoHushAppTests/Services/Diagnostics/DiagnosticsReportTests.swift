@@ -75,6 +75,7 @@ struct DiagnosticsReportTests {
             Auto-Pause: On
             Ignored apps: VLC
             Launch at login: On
+            Keep icon next to system icons: Off
             Updates: Install it automatically
             Last checked: 1 hour ago
 

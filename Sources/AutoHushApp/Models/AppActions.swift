@@ -47,5 +47,8 @@ protocol AppActions: AnyObject {
     func showLogs()
     /// System Settings, on AutoHush's notifications.
     func openNotificationSettings()
+    /// Makes the menu bar icon again, so it goes beside the system's icons
+    /// (Settings → General's switch, turned on).
+    func moveMenuBarIconNearSystemIcons()
     func quit()
 }

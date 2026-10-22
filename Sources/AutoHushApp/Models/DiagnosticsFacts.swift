@@ -29,6 +29,7 @@ struct DiagnosticsFacts: Equatable {
     /// E.g. "0.6.1 (19)".
     var appVersion: String
     var launchAtLogin: Bool
+    var keepsMenuBarIconNearSystemIcons = false
     var checksForUpdates: Bool
     var automaticUpdates: AutomaticUpdates
     var lastUpdateCheck: Date?

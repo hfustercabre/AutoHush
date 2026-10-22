@@ -97,7 +97,7 @@ flowchart TD
   LRN{"A web app whose<br/>button isn’t learned?"}
   LW["The learning window"]
   RUN(["Monitoring starts"])
-  LOG["Settings → General:<br/>Launch at login"]
+  LOG["Settings → General:<br/>Launch at login, Keep icon<br/>next to system icons"]
 
   A --> W
   A -.-> NT

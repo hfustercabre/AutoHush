@@ -212,7 +212,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             permissionCenter: permissionCenter,
             learningSession: learning,
             actions: self,
-            launchAtLoginController: launchAtLoginController
+            launchAtLoginController: launchAtLoginController,
+            menuBarIcon: MenuBarIconPlace(defaults: defaults)
         )
         windowWatch = WindowWatch(sleep: windowWatchSleep,
                                   refresh: { [weak self] in await self?.refresh($0) },
@@ -253,6 +254,11 @@ extension AppDelegate: AppActions {
     }
     func reopenAutoHush() { reopen() }
     func openNotificationSettings() { SystemSettingsPane.notifications.open() }
+
+    func moveMenuBarIconNearSystemIcons() {
+        statusMenu?.remove()
+        showStatusMenu()
+    }
     func showLogs() {
         if logsWindowController == nil { logsWindowController = LogsWindowController(model: LogsModel()) }
         logsWindowController?.show()

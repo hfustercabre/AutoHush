@@ -31,6 +31,7 @@ final class FakeAppActions: AppActions {
     func showControlError() { log.calls.append("why") }
     func showLogs() { log.calls.append("showLogs") }
     func openNotificationSettings() { log.calls.append("notificationSettings") }
+    func moveMenuBarIconNearSystemIcons() { log.calls.append("moveMenuBarIcon") }
     func quit() { log.calls.append("quit") }
 }
 

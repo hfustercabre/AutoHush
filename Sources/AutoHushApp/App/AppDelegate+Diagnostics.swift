@@ -47,6 +47,7 @@ extension AppDelegate {
             timings: userSettings.state.timings,
             appVersion: settingsModel.fullVersion ?? "",
             launchAtLogin: settingsModel.launchAtLoginEnabled,
+            keepsMenuBarIconNearSystemIcons: settingsModel.keepsMenuBarIconNearSystemIcons,
             checksForUpdates: settingsModel.checksForUpdatesAutomatically,
             automaticUpdates: settingsModel.automaticUpdates,
             lastUpdateCheck: settingsModel.lastUpdateCheck,

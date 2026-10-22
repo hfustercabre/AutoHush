@@ -77052,6 +77052,233 @@
         }
       }
     },
+    "Keep icon next to system icons" : {
+      "comment" : "Settings → General and Diagnostics: whether AutoHush's menu bar icon goes back beside the system's icons (Control Center, the clock) each time it opens",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إبقاء الأيقونة بجوار أيقونات النظام"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantenir la icona al costat de les del sistema"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponechat ikonu vedle systémových ikon"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold symbolet ved siden af systemsymbolerne"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Symbol neben Systemsymbolen halten"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Διατήρηση εικονιδίου δίπλα στα εικονίδια συστήματος"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener el icono junto a los del sistema"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantener el ícono junto a los del sistema"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pidä symboli järjestelmäsymbolien vieressä"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder l’icône près des icônes système"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Garder l’icône près des icônes système"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "השאר את הצלמית ליד צלמיות המערכת"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आइकन को सिस्टम आइकन के पास रखें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drži ikonu uz ikone sustava"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ikon a rendszerikonok mellett"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan ikon di sebelah ikon sistem"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni l’icona vicino alle icone di sistema"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アイコンをシステムアイコンの隣に保つ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아이콘을 시스템 아이콘 옆에 유지"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simpan ikon di sebelah ikon sistem"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behold symbolet ved siden av systemsymbolene"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Houd symbool naast systeemsymbolen"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trzymaj ikonę obok ikon systemowych"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter ícone ao lado dos ícones do sistema"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manter ícone junto dos ícones do sistema"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Păstrați pictograma lângă pictogramele sistemului"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Держать значок рядом с системными"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ponechať ikonu vedľa systémových ikon"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohrani ikono ob sistemskih ikonah"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behåll symbolen bredvid systemsymbolerna"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เก็บไอคอนไว้ข้างไอคอนระบบ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simgeyi sistem simgelerinin yanında tut"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тримати значок поруч із системними"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giữ biểu tượng cạnh biểu tượng hệ thống"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將圖像保持在系統圖像旁"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将图标保持在系统图标旁"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "將圖像保持在系統圖像旁"
+          }
+        }
+      }
+    },
     "Last 24 Hours" : {
       "comment" : "The logs window's time pop-up: the entries of the last 24 hours, earlier launches included",
       "localizations" : {
@@ -145167,6 +145394,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "發現更新項目時"
+          }
+        }
+      }
+    },
+    "Where the notch or other apps’ icons can’t hide it. Turned off, ⌘-drag it where you like." : {
+      "comment" : "Settings → General, under Keep icon next to system icons; ⌘-drag is how macOS moves menu bar icons",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حيث لا تخفيها الحافة العلوية أو أيقونات التطبيقات الأخرى. عند الإيقاف، اسحبها مع ⌘ إلى حيث تشاء."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On ni la càmera ni les icones d’altres apps l’amaguen. Desactivat, arrossega-la amb ⌘ on vulguis."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tam, kde ji výřez ani ikony jiných aplikací neskryjí. Když je vypnuto, přetáhněte ji s ⌘ kamkoli."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvor kamerahakket og andre apps’ symboler ikke skjuler det. Når det er slået fra, kan du ⌘-trække det, hvor du vil."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wo die Kameraeinbuchtung oder Symbole anderer Apps es nicht verdecken. Ausgeschaltet kannst du es mit ⌘ beliebig verschieben."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Εκεί όπου η εγκοπή ή τα εικονίδια άλλων εφαρμογών δεν το κρύβουν. Όταν είναι ανενεργό, σύρετέ το με ⌘ όπου θέλετε."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donde la cámara ni los iconos de otras apps lo ocultan. Desactivado, arrástralo con ⌘ donde quieras."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donde la cámara ni los íconos de otras apps lo ocultan. Desactivado, arrástralo con ⌘ donde quieras."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siellä, missä lovi tai muiden appien symbolit eivät peitä sitä. Kun tämä on pois, ⌘-vedä se minne haluat."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Là où l’encoche et les icônes d’autres apps ne la masquent pas. Désactivé, faites-la glisser avec ⌘ où vous voulez."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Là où l’encoche et les icônes d’autres apps ne la masquent pas. Désactivé, faites-la glisser avec ⌘ où vous voulez."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "במקום שבו המגרעת וצלמיות של יישומים אחרים לא יסתירו אותה. כשהאפשרות כבויה, גרור אותה עם ⌘ לכל מקום."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जहाँ नॉच या अन्य ऐप्स के आइकन इसे छिपा न सकें। बंद होने पर, ⌘ के साथ इसे कहीं भी ड्रैग करें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gdje je ni zarez ni ikone drugih aplikacija ne skrivaju. Kad je isključeno, povuci je s ⌘ kamo želiš."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ahol a kivágás és más appok ikonjai nem takarják el. Kikapcsolva ⌘ lenyomásával húzza oda, ahová szeretné."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di tempat takik atau ikon app lain tidak menyembunyikannya. Saat dinonaktifkan, seret dengan ⌘ ke mana pun Anda mau."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dove né la tacca né le icone di altre app la nascondono. Se disattivato, trascinala con ⌘ dove vuoi."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ノッチや他のアプリのアイコンに隠れない位置です。オフのときは、⌘キーを押しながら好きな場所へドラッグできます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "노치나 다른 앱의 아이콘에 가려지지 않는 곳입니다. 끄면 ⌘를 누른 채 원하는 곳으로 드래그하십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Di tempat takuk atau ikon app lain tidak menyembunyikannya. Apabila dimatikan, seret dengan ⌘ ke mana-mana yang anda mahu."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der kamerahakket og andre apper sine symboler ikke skjuler det. Når det er slått av, kan du ⌘-dra det dit du vil."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waar de inkeping en symbolen van andere apps het niet verbergen. Uitgeschakeld sleep je het met ⌘ waar je wilt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tam, gdzie wcięcie ani ikony innych aplikacji jej nie zasłonią. Po wyłączeniu przeciągnij ją z ⌘ w dowolne miejsce."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onde o entalhe e os ícones de outros apps não o escondem. Desativado, arraste-o com ⌘ para onde quiser."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onde o entalhe e os ícones de outras apps não o escondem. Desativado, arraste-o com ⌘ para onde quiser."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unde decupajul și pictogramele altor aplicații nu o ascund. Dezactivat, trageți-o cu ⌘ unde doriți."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Там, где вырез и значки других приложений его не скроют. Если выключено, перетащите его с ⌘ куда угодно."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tam, kde ju výrez ani ikony iných aplikácií neskryjú. Keď je vypnuté, potiahnite ju s ⌘ kamkoľvek."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kjer je izrez ali ikone drugih aplikacij ne skrijejo. Ko je izklopljeno, jo s ⌘ povleci, kamor želiš."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Där kamerahacket och andra appars symboler inte döljer den. Avstängt kan du ⌘-dra den dit du vill."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ในตำแหน่งที่รอยบากหรือไอคอนของแอปอื่นไม่บังไว้ เมื่อปิด ให้กด ⌘ ค้างแล้วลากไปที่ใดก็ได้"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çentiğin veya diğer uygulamaların simgelerinin onu gizlemediği yerde. Kapalıyken ⌘ ile istediğiniz yere sürükleyin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Там, де виріз і значки інших програм його не сховають. Коли вимкнено, перетягніть його з ⌘ куди завгодно."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ở nơi phần khuyết hoặc biểu tượng của ứng dụng khác không che nó. Khi tắt, hãy kéo nó bằng ⌘ đến nơi bạn muốn."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "瀏海和其他 App 的圖像不會遮住它。關閉時，可按住 ⌘ 將它拖到任意位置。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刘海和其他 App 的图标不会遮住它。关闭时，可按住 ⌘ 将它拖到任意位置。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "瀏海和其他 App 的圖像不會遮住它。關閉時，可按住 ⌘ 將它拖到任意位置。"
           }
         }
       }

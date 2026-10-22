@@ -20,6 +20,8 @@ final class SettingsModel {
     private(set) var launchAtLoginError: String?
     /// macOS waits for the user to allow AutoHush in Login Items.
     private(set) var launchAtLoginNeedsApproval = false
+    /// The menu bar icon goes back beside the system's icons at each launch.
+    private(set) var keepsMenuBarIconNearSystemIcons: Bool
     /// Whether AutoHush can fade the chosen player; the fade settings are
     /// dimmed when it can't.
     var playerCanFade: Bool { chosenPlayer?.canFade ?? true }
@@ -181,11 +183,13 @@ final class SettingsModel {
     /// permissions.
     @ObservationIgnored weak var actions: any AppActions?
     @ObservationIgnored private let launchAtLoginController: any LaunchAtLoginControlling
+    @ObservationIgnored private let menuBarIcon: MenuBarIconPlace
 
     init(state: AppState = AppState(), settings: UserSettings, updates: any UpdateCommands,
          permissionCenter: PermissionCenter = PermissionCenter(),
          learningSession: LearningSession = LearningSession(), actions: any AppActions?,
-         launchAtLoginController: any LaunchAtLoginControlling) {
+         launchAtLoginController: any LaunchAtLoginControlling,
+         menuBarIcon: MenuBarIconPlace = MenuBarIconPlace(defaults: .standard)) {
         self.state = state
         self.settings = settings
         self.updates = updates
@@ -194,6 +198,8 @@ final class SettingsModel {
         self.learningSession = learningSession
         self.actions = actions
         self.launchAtLoginController = launchAtLoginController
+        self.menuBarIcon = menuBarIcon
+        keepsMenuBarIconNearSystemIcons = menuBarIcon.keepsNearSystemIcons
         appList = AppListModel(state: state, settings: settings)
         refreshLaunchAtLogin()
     }
@@ -222,6 +228,15 @@ final class SettingsModel {
 
     func openLoginItemsSettings() {
         launchAtLoginController.openSystemSettings()
+    }
+
+    // MARK: - Menu bar icon
+
+    /// Turned on, the icon moves beside the system's icons at once.
+    func setKeepsMenuBarIconNearSystemIcons(_ keeps: Bool) {
+        menuBarIcon.keepsNearSystemIcons = keeps
+        keepsMenuBarIconNearSystemIcons = keeps
+        if keeps { actions?.moveMenuBarIconNearSystemIcons() }
     }
 
     // MARK: - Choices

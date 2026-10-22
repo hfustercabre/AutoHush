@@ -5,6 +5,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **AutoHush's menu bar icon starts beside the system's icons** (Control
+  Center, the clock), where the notch or other apps' icons don't hide it:
+  once, unless you've already moved it. **Keep icon next to system icons**
+  in Settings → General puts it back there each time AutoHush opens; off,
+  it stays where you ⌘-drag it.
+
 ## [1.0.0] — 2026-10-22
 
 ### Changed
