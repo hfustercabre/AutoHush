@@ -476,229 +476,229 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "حقوق النشر © 2026 Hector Fuster Cabre. ترخيص MIT."
+            "value" : "حقوق النشر © 2026 Hector Fuster Cabre. ترخيص GNU GPL v3."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Llicència MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Llicència GNU GPL v3."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licence MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licence GNU GPL v3."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT-licens."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT-Lizenz."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Άδεια MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Άδεια GNU GPL v3."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT License."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licencia MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licencia GNU GPL v3."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licencia MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licencia GNU GPL v3."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT-lisenssi."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licence MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licence GNU GPL v3."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licence MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licence GNU GPL v3."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. רישיון MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. רישיון GNU GPL v3."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "कॉपीराइट © 2026 Hector Fuster Cabre. MIT लाइसेंस।"
+            "value" : "कॉपीराइट © 2026 Hector Fuster Cabre. GNU GPL v3 लाइसेंस।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT licenca."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3 licenca."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT-licenc."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hak Cipta © 2026 Hector Fuster Cabre. Lisensi MIT."
+            "value" : "Hak Cipta © 2026 Hector Fuster Cabre. Lisensi GNU GPL v3."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licenza MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licenza GNU GPL v3."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MITライセンス。"
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3 ライセンス。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT 라이선스."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3 라이선스."
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hak Cipta © 2026 Hector Fuster Cabre. Lesen MIT."
+            "value" : "Hak Cipta © 2026 Hector Fuster Cabre. Lesen GNU GPL v3."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT-lisens."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT-licentie."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licencja MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licencja GNU GPL v3."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licença MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licença GNU GPL v3."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licença MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licença GNU GPL v3."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licență MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licență GNU GPL v3."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Лицензия MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Лицензия GNU GPL v3."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licencia MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licencia GNU GPL v3."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Licenca MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Licenca GNU GPL v3."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. MIT-licens."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. GNU GPL v3."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ลิขสิทธิ์ © 2026 Hector Fuster Cabre สัญญาอนุญาต MIT"
+            "value" : "ลิขสิทธิ์ © 2026 Hector Fuster Cabre สัญญาอนุญาต GNU GPL v3"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Telif Hakkı © 2026 Hector Fuster Cabre. MIT Lisansı."
+            "value" : "Telif Hakkı © 2026 Hector Fuster Cabre. GNU GPL v3 Lisansı."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre. Ліцензія MIT."
+            "value" : "Copyright © 2026 Hector Fuster Cabre. Ліцензія GNU GPL v3."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bản quyền © 2026 Hector Fuster Cabre. Giấy phép MIT."
+            "value" : "Bản quyền © 2026 Hector Fuster Cabre. Giấy phép GNU GPL v3."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre。MIT 授權。"
+            "value" : "Copyright © 2026 Hector Fuster Cabre。GNU GPL v3 授權。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre。MIT 许可证。"
+            "value" : "Copyright © 2026 Hector Fuster Cabre。GNU GPL v3 许可证。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Copyright © 2026 Hector Fuster Cabre。MIT 授權。"
+            "value" : "Copyright © 2026 Hector Fuster Cabre。GNU GPL v3 授權。"
           }
         }
       }

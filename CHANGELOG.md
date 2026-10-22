@@ -27,6 +27,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   - If AutoHush says a permission is missing while System Settings shows
     AutoHush switched on, that switch belongs to the old copy: select
     AutoHush there, remove it with **−**, then allow it again.
+- **AutoHush is now free software under the GNU GPL,** version 3 or any
+  later version (GPL-3.0-or-later). Versions up to 0.12.1 stay under the
+  MIT License.
 - **AutoHush looks like the macOS it runs on.** Its text uses macOS's text
   styles and sizes, its switches, buttons, choices and sliders are macOS's
   own, and its colors are macOS's, in light and dark mode. Settings' pages

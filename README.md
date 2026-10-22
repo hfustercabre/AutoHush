@@ -10,7 +10,7 @@
   <a href="https://github.com/hfustercabre/AutoHush/releases/latest"><img src="https://img.shields.io/github/v/release/hfustercabre/AutoHush?color=BD5FFF" alt="Latest release"></a>
   <a href="https://github.com/hfustercabre/AutoHush/releases"><img src="https://img.shields.io/github/downloads/hfustercabre/AutoHush/total?color=BD5FFF" alt="Downloads"></a>
   <a href="#install"><img src="https://img.shields.io/badge/macOS-14.4%2B-BD5FFF" alt="macOS 14.4 or later"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/hfustercabre/AutoHush?color=BD5FFF" alt="MIT license"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/hfustercabre/AutoHush?color=BD5FFF" alt="GPL-3.0 license"></a>
 </p>
 <p align="center">
   <a href="https://buymeacoffee.com/hfustercabre"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-violet.png" alt="Buy me a coffee" height="40"></a>
@@ -359,4 +359,4 @@ How AutoHush works, its architecture, building and testing it, translations, con
 
 ## License
 
-[MIT](LICENSE)
+AutoHush is free software: you can redistribute it and modify it under the terms of the [GNU General Public License](LICENSE), version 3 or (at your option) any later version (GPL-3.0-or-later). Versions up to 0.12.1 were released under the MIT License, which still applies to them.

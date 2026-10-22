@@ -39,7 +39,9 @@ A check on every pull request flags one whose branch name or target doesn't
 follow these rules; a wrong target can be fixed by editing the pull
 request. Another builds it with warnings as errors and runs the tests, on
 Xcode 27. I review each pull request before approving and merging it, and it
-reaches `main` with the next release.
+reaches `main` with the next release. By opening one, you agree that your
+contribution is licensed under the project's license, the GNU GPL version 3
+or later (GPL-3.0-or-later).
 
 ## Where to look
 
