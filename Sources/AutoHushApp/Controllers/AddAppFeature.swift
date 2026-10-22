@@ -109,6 +109,7 @@ extension AddAppFeature: AddAppPresenting {
         system.outputMute.restore()
         panel.hide()
         host?.holdsPlayerForCheck(false)
+        window?.bringForward() // its result, or why there's none, in view
     }
 
     var canMuteOutput: Bool { system.outputMute.canMute }

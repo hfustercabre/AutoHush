@@ -8,8 +8,23 @@ extension AppDelegate {
 
     /// Learns the chosen player's controls afresh, as the user asked: a
     /// window showing the steps closes, and so does Add a Web App, and a new
-    /// learning window starts from the first step (`LearningSession`).
+    /// learning window starts from the first step (`LearningSession`). While
+    /// Add a Web App adds one, it asks first, as that add stops (the user's
+    /// pick, the workflow audit, 2026-10-22): from the run loop, as an
+    /// alert run from a main-actor task would hold up every other job.
     func learnControlsAgain() {
+        guard let player = player as? any LearningMusicPlayer else { return }
+        guard addWebApp.adding != nil else { return learnAgainNow() }
+        let site = addWebApp.model.address, name = player.name
+        RunLoop.main.perform(inModes: [.common]) {
+            MainActor.assumeIsolated {
+                guard self.runAlert(PlayerAlerts.stopAddingWebApp(site: site, player: name)) == .alertFirstButtonReturn else { return }
+                self.learnAgainNow()
+            }
+        }
+    }
+
+    private func learnAgainNow() {
         guard player is any LearningMusicPlayer else { return }
         if let window = learningWindow, window.isOpen {
             window.onClose = nil // replaced, not left: nothing to keep

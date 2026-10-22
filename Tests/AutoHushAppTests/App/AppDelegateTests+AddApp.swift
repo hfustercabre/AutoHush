@@ -182,6 +182,28 @@ extension AppDelegateTests {
     /// Add an App opened on the stand-ins (its windows are AutoHush's own),
     /// an app playing to check, and the apps read at its first step.
     @MainActor
+    @Test("Add an App, which asked AutoHush to reopen, opens again at launch with its app chosen; a note from long before doesn't")
+    func addAppAfterRelaunch() async throws {
+        let scratch = Scratch()
+        let world = World()
+        world.playing = true
+        scratch.defaults.set(["at": scratch.clock.now, "app": world.apps[0].url.path], forKey: AppDelegate.addAppAfterRelaunchKey)
+        let (sut, _) = makeSUT(scratch, addApp: world)
+        sut.reopenAddAppIfAsked()
+        let model = try #require(sut.addApp.model)
+        #expect(sut.addApp.window?.isOpen == true)
+        await TestWait.until { model.chosen?.bundleID == "com.example.picked" } // as the stand-in reads the app at that path
+        #expect(scratch.defaults.dictionary(forKey: AppDelegate.addAppAfterRelaunchKey) == nil)
+        sut.addApp.window?.close()
+
+        let stale = Scratch()
+        stale.defaults.set(["at": stale.clock.now.addingTimeInterval(-600), "app": ""], forKey: AppDelegate.addAppAfterRelaunchKey)
+        let (late, _) = makeSUT(stale, addApp: World())
+        late.reopenAddAppIfAsked()
+        #expect(late.addApp.model == nil && stale.defaults.dictionary(forKey: AppDelegate.addAppAfterRelaunchKey) == nil)
+    }
+
+    @MainActor
     private func addAppOpened() async throws -> (scratch: Scratch, world: World, sut: AppDelegate, feature: AddAppFeature) {
         let scratch = Scratch()
         let world = World()

@@ -580,11 +580,18 @@ final class AddAppModel {
                     self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
                 }
             }
-        case .finished(nil), .failed:
-            failureReason = !reader.appExists(at: app.url) ? .appNotFound : !reader.isRunning(app.bundleID) ? .appQuit : .other
-            stage = .failed
-        case .stopped:
-            stage = .stopped
+        case .finished(nil), .failed, .stopped:
+            // A check again of an app whose result is kept (Check Again
+            // beside Use) that doesn't finish: that result comes back, Use
+            // with it (the workflow audit, 2026-10-22).
+            if let kept = keptChecks.load(now: now()), kept.app.bundleID == app.bundleID {
+                restore(kept)
+            } else if case .stopped = end {
+                stage = .stopped
+            } else {
+                failureReason = !reader.appExists(at: app.url) ? .appNotFound : !reader.isRunning(app.bundleID) ? .appQuit : .other
+                stage = .failed
+            }
         case .permissionMissing:
             permissionMissingInCheck = true
             stage = .allowing

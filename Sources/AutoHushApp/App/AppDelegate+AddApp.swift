@@ -52,7 +52,32 @@ extension AppDelegate: AddAppHost {
 
     func reopenForAudioRecording() {
         noteAudioRecordingAllowedInSettings()
-        reopen()
+        // Add an App opens again after the relaunch, its app chosen again
+        // (the workflow audit, 2026-10-22).
+        defaults.set([Self.reopenedAtKey: clock(), Self.reopenedAppKey: addApp.model?.chosen?.url.path ?? ""],
+                     forKey: Self.addAppAfterRelaunchKey)
+        if !reopen() { defaults.removeObject(forKey: Self.addAppAfterRelaunchKey) }
+    }
+
+    /// Add an App asked AutoHush to reopen (Audio Recording): when, and the
+    /// app it had chosen.
+    static let addAppAfterRelaunchKey = "addAppAfterRelaunch"
+    private static let reopenedAtKey = "at", reopenedAppKey = "app"
+    /// A relaunch takes seconds: one noted longer ago didn't happen then.
+    static let addAppAfterRelaunchWithin: TimeInterval = 120
+
+    /// At launch: Add an App again, when it was what asked AutoHush to
+    /// reopen, its app chosen again unless a check of one is kept (the
+    /// window shows that one's result then).
+    func reopenAddAppIfAsked() {
+        guard let note = defaults.dictionary(forKey: Self.addAppAfterRelaunchKey) else { return }
+        defaults.removeObject(forKey: Self.addAppAfterRelaunchKey)
+        guard let at = note[Self.reopenedAtKey] as? Date,
+              abs(clock().timeIntervalSince(at)) < Self.addAppAfterRelaunchWithin else { return }
+        addApp.open()
+        if let path = note[Self.reopenedAppKey] as? String, !path.isEmpty, addApp.model?.stage == .choosing {
+            addApp.model?.chooseOther(at: URL(fileURLWithPath: path))
+        }
     }
 
     /// Keeps what the check found, then makes the app the player: chosen

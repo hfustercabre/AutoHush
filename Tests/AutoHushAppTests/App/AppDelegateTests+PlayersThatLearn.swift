@@ -39,6 +39,36 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("Learn Again while Add a Web App adds one asks first: Cancel keeps the add, Stop Adding stops it and learns", arguments: [false, true])
+    func learnAgainWhileAdding(stops: Bool) async {
+        let scratch = Scratch()
+        let webApp = scratch.offerWebApp(.learned)
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz",
+                                                            url: URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app"), alreadyThere: false)))
+        let (sut, _) = makeSUT(scratch)
+        sut.chooseMusicPlayer(webApp.bundleID)
+        await TestWait.until { sut.status.learning == .learned }
+        let asked = CallLog()
+        sut.runAlert = { alert in
+            asked.calls.append(alert.messageText)
+            return stops ? .alertFirstButtonReturn : .alertSecondButtonReturn
+        }
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.qobuz.com") } // waits for Add to Dock
+
+        sut.learnControlsAgain()
+        await TestWait.until { asked.calls == ["Stop Adding play.qobuz.com?"] }
+        if stops {
+            await TestWait.until { scratch.learningWindow.isOpen && !scratch.addWindow.isOpen }
+        } else {
+            #expect(scratch.addWindow.isOpen && sut.addWebApp.adding != nil && !scratch.learningWindow.isOpen)
+            sut.addWebApp.close()
+        }
+    }
+
+    @MainActor
     @Test("a web app's controls are learned afresh in a new window, which replaces an open one; closed before It's Playing, what it learned stays")
     func learnControlsAgain() async {
         let scratch = Scratch()
@@ -296,6 +326,7 @@ extension AppDelegateTests {
         await TestWait.until { sut.addWebApp.adding == nil }
         #expect(sut.status.chosenPlayerID == Players.second)
         #expect(sut.addWebApp.model.problem == nil)
+        #expect(!scratch.addWindow.isOpen) // its learning step would never move
     }
 
     @MainActor

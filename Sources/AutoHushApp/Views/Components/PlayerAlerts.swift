@@ -40,6 +40,19 @@ enum PlayerAlerts {
         String(localized: "Remove", comment: "A button that removes: under Settings → Sound Sources' list (the selected apps), in its confirmation for removing apps turned off, and in the alert before an app added with Add an App is removed")
     }
 
+    /// Before Learn Again stops a web app being added (Add a Web App
+    /// floats where the learning window does, and goes with its add):
+    /// Return stops the add and learns, Escape cancels.
+    static func stopAddingWebApp(site: String, player: String) -> NSAlert {
+        confirm(
+            title: String(localized: "Stop Adding \(site)?",
+                          comment: "Alert title when Learn Again (the chosen web app's controls) is clicked while Add a Web App adds another; %@ is the address being added, e.g. music.youtube.com"),
+            message: String(localized: "Learning \(player)’s controls again stops adding it.",
+                            comment: "Message of the alert when Learn Again is clicked while Add a Web App adds another web app; %@ is the chosen web app, e.g. YouTube Music"),
+            button: String(localized: "Stop Adding",
+                           comment: "Default button of the alert when Learn Again is clicked while Add a Web App adds another web app: stops that add and learns the chosen one's controls again"))
+    }
+
     /// Before Add an App's Change… forgets a check that has run (the user,
     /// 2026-10-18: "Ask first"), the same way: Return chooses another app,
     /// Escape cancels.

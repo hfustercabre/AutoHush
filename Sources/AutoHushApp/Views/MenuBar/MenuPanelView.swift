@@ -152,8 +152,12 @@ struct MenuPanelView: View {
                 Image(systemName: "arrow.down.circle")
                     .accessibilityLabel(Text("Update", comment: "VoiceOver label of the update icon"))
             } content: {
+                // Only what this copy can do: one that can't install itself
+                // tells where to get it (the workflow audit, 2026-10-22).
                 Text(verbatim: installing
                      ? String(localized: "Installing AutoHush \(version)…", comment: "Menu item, greyed out while an update installs; %@ is its version")
+                     : !offer.canInstall
+                     ? String(localized: "AutoHush \(version) Is Available…", comment: "Menu item: shows the update found, for a copy that can't install it itself (its alert says where to get it); %@ is its version")
                      : String(localized: "Install AutoHush \(version)…", comment: "Menu item: shows the update found; %@ is its version"))
             }
             .disabled(installing)

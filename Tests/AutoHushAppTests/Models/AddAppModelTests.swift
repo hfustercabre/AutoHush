@@ -529,6 +529,28 @@ struct AddAppModelTests {
         await TestWait.until { model.stage == .ready }
     }
 
+    @Test("Check Again beside Use that doesn't finish (stopped, or failed) brings the kept result back, Use with it", arguments: [true, false])
+    func checkAgainUnfinished(stopped: Bool) async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: .works), CheckResult.WayResult(kind: .panel, mark: .menuBarHidden)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.menu(menuName: "Playback")]))))
+        await TestWait.until { model.result != nil }
+        let result = model.result
+        world.run = FakeCheckRun()
+        model.checkAgain()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck()
+        await TestWait.until { world.runs == 2 }
+        world.run.finish(stopped ? .stopped : .failed(1))
+        await TestWait.until { model.result != nil }
+        #expect(model.result == result && model.mark(of: .use) == .current)
+    }
+
     @Test("after Skip at the Reopen step, Use doesn't ask to reopen it, also once the kept check is restored")
     func skippedReopen() async {
         let world = World()

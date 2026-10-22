@@ -13,6 +13,9 @@ struct UpdateOffer: Equatable {
 
     let release: AppRelease
     let state: State
+    /// This copy can install it itself; else its alert only tells where to
+    /// get it (the release page, Homebrew).
+    var canInstall = true
 }
 
 extension UpdateOffer {

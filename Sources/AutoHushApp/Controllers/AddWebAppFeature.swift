@@ -101,7 +101,13 @@ final class AddWebAppFeature {
                 // and the learning window follows its Done, as for a web app
                 // picked there; this window's work is done.
                 let fromWelcome = host.isShowingPlayerChooser
-                guard host.chosenPlayerID == before else { return }
+                // Another player chosen meanwhile (the user's) stays: the web
+                // app is added, and this window has nothing left to show (the
+                // workflow audit, 2026-10-22).
+                guard host.chosenPlayerID == before else {
+                    self.window?.close()
+                    return
+                }
                 host.chooseWebApp(made.bundleID, showsLearningWindow: fromWelcome)
                 // macOS may list a new web app a little later: looked for again
                 // for a few seconds, then the window says so.
@@ -115,7 +121,10 @@ final class AddWebAppFeature {
                 }
                 guard model.attempt == attempt, !Task.isCancelled else { return }
                 guard host.chosenPlayerID == made.bundleID else {
-                    guard host.chosenPlayerID == before else { return } // the user chose another one
+                    guard host.chosenPlayerID == before else { // the user chose another one
+                        self.window?.close()
+                        return
+                    }
                     self.logger.error("\(made.name, privacy: .public) was made but can’t be chosen: it isn’t found as installed")
                     model.fail(.notFound(name: made.name))
                     // Picked up by itself once it's listed (`pickUpListed`).

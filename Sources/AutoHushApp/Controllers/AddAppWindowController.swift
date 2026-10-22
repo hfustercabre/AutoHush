@@ -14,9 +14,13 @@ final class AddAppWindowController: HostedWindowController, NSWindowDelegate {
                    title: String(localized: "Add an App", comment: "Title of the window that checks how AutoHush can pause and play an app, then adds it, in its title bar"))
         window?.delegate = self
         // While it waits for the app to play, it stays above the app the user
-        // goes into, so its steps go on in view.
+        // goes into, so its steps go on in view; once it plays, it stays in
+        // front for the next step (the workflow audit, 2026-10-22).
         hosting.rootView = AddAppView(model: model, close: { [weak self] in self?.close() },
-                                      floats: { [weak self] on in self?.window?.level = on ? .floating : .normal })
+                                      floats: { [weak self] on in
+                                          self?.window?.level = on ? .floating : .normal
+                                          if !on { self?.bringForward() }
+                                      })
     }
 
     func windowWillClose(_ notification: Notification) {

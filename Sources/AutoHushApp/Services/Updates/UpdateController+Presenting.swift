@@ -19,7 +19,7 @@ extension UpdateController {
     func reportOffer() {
         guard let release = availableUpdate else { return onOffer(nil) }
         let state: UpdateOffer.State = isInstalling ? .installing : downloads.isKept(release) ? .downloaded : .available
-        onOffer(UpdateOffer(release: release, state: state))
+        onOffer(UpdateOffer(release: release, state: state, canInstall: canInstall(release)))
     }
 
     func availableStatus(_ release: AppRelease) -> String {

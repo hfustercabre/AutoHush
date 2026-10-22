@@ -26,6 +26,7 @@ extension AppDelegate {
             if !others.isEmpty { logger.notice("Quit \(others.count) other running AutoHush") }
             session.launch()
             if player == nil { showPlayerChooser() }
+            reopenAddAppIfAsked()
         }
         updates.noteLaunch()
         updates.scheduleAutomaticChecks()

@@ -20,17 +20,20 @@ extension AppDelegate {
     }
 
     /// Quits and opens AutoHush again, as macOS's own "Quit & Reopen" does,
-    /// handing over a pause it holds.
+    /// handing over a pause it holds; `false` when the reopening couldn't be
+    /// set up (it doesn't quit then).
+    @discardableResult
     func reopen(
         openAfterExit: (URL) throws -> Void = { _ = try UpdateInstaller.openAfterExit($0) },
         terminate: () -> Void = { NSApp.terminate(nil) }
-    ) {
+    ) -> Bool {
         do {
             try openAfterExit(Bundle.main.bundleURL)
         } catch {
             logger.error("Couldn’t reopen AutoHush: \(error)")
-            return
+            return false
         }
         terminate()
+        return true
     }
 }

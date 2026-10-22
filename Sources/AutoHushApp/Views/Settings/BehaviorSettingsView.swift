@@ -103,7 +103,7 @@ struct BehaviorSettingsView: View {
     /// Over the fades, here and in the menu's settings; also, with a check,
     /// under the media player in Settings → General and at the foot of the
     /// menu's card, and a Diagnostics row.
-    static var fadesTitle: String {
+    nonisolated static var fadesTitle: String {
         String(localized: "Fades", comment: "Settings → Behavior, and a section title in the menu's settings: heading over playback's fade out and fade in; also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
     }
 
