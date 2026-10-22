@@ -134,13 +134,20 @@ identity_team() {
 # The designated requirement for an identity issued by Apple: the app's
 # identifier and the developer's team, not the certificate itself. A renewed
 # certificate has another name and fingerprint but the same team, so
-# permissions and self-updates carry over. Prints nothing for an identity
-# without a team (see identity_team): codesign's default requirement stays.
+# permissions and self-updates carry over. The leaf must come from one of
+# Apple's developer authorities, as in Apple's own requirements: Worldwide
+# Developer Relations (Apple Development, 1.2.840.113635.100.6.2.1) or
+# Developer ID (1.2.840.113635.100.6.2.6), so no other certificate Apple
+# issued to the team (a push certificate, say) passes, and a later switch to
+# Developer ID still updates (the security review, 2026-10-22). Installed
+# copies check updates against it: from 1.0.0 it may only get looser.
+# Prints nothing for an identity without a team (see identity_team):
+# codesign's default requirement stays.
 team_requirement() {
     local team identifier="${2:-$BUNDLE_ID}"
     team="$(identity_team "$1")"
     [[ -n "$team" ]] || return 0
-    echo "designated => identifier \"$identifier\" and anchor apple generic and certificate leaf[subject.OU] = \"$team\""
+    echo "designated => identifier \"$identifier\" and anchor apple generic and certificate leaf[subject.OU] = \"$team\" and (certificate 1[field.1.2.840.113635.100.6.2.1] or certificate 1[field.1.2.840.113635.100.6.2.6])"
 }
 
 # Signs the app bundle (or a helper inside it, given its path) with the
