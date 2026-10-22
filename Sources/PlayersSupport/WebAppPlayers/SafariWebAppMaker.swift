@@ -88,7 +88,11 @@ package final class SafariWebAppMaker: WebAppMaking {
         try Task.checkCancellation()
         guard await safari.open(url) else { throw WebAppMakingError.browserFailed("Safari couldn't open \(url.absoluteString)") }
         guard let tab = await safari.waitForPage() else {
-            try Task.checkCancellation()
+            if Task.isCancelled {
+                // Cancelled while the page loaded: the tab opened for it goes too.
+                await takeAway(url, since: before, tab: nil, waitsForApp: false)
+                throw CancellationError()
+            }
             throw WebAppMakingError.browserFailed("the page didn't load in Safari")
         }
         // The tab to close once added, or cancelled: the one opened, or, once
@@ -102,7 +106,7 @@ package final class SafariWebAppMaker: WebAppMaking {
             onStep(.opened)
             return try await add(url, since: before, tab: &addedTab, addClicked: &addClicked, onStep: onStep, confirmAdd: confirmAdd)
         } catch is CancellationError {
-            await takeAway(since: before, tab: addedTab, waitsForApp: addClicked)
+            await takeAway(url, since: before, tab: addedTab, waitsForApp: addClicked)
             throw CancellationError()
         }
     }
@@ -157,19 +161,27 @@ package final class SafariWebAppMaker: WebAppMaking {
         }
     }
 
-    /// What a cancelled add leaves goes: its tab, then, when Add was
-    /// clicked in Safari's dialog, the web app Safari makes all the same
-    /// (as long as `appearTimeout`), quit and moved to the Trash. Off the
-    /// cancelled task, so its waits aren't cut short.
-    private func takeAway(since before: Set<String>, tab: SafariTab, waitsForApp: Bool) async {
-        let (safari, webApps, isSealed, discard, sleep, clock, logger) = (safari, webApps, isSealed, discard, sleep, clock, logger)
+    /// What a cancelled add of `url` leaves goes: its tab (`nil`: not known
+    /// yet, the page still loading: the tab in front, if it shows the site),
+    /// then, when Add was clicked in Safari's dialog, the web app Safari
+    /// makes all the same for that site (as long as `appearTimeout`), quit
+    /// and moved to the Trash: never one of another site, made meanwhile.
+    /// Off the cancelled task, so its waits aren't cut short.
+    private func takeAway(_ url: URL, since before: Set<String>, tab: SafariTab?, waitsForApp: Bool) async {
+        let (safari, webApps, sameSite, isSealed, discard, sleep, clock, logger)
+            = (safari, webApps, sameSite, isSealed, discard, sleep, clock, logger)
         await Task.detached {
-            await safari.closeTab(tab)
+            if let tab {
+                await safari.closeTab(tab)
+            } else if let shown = await safari.frontPageURL(), WebAddress.isSameSite(shown, as: url),
+                      let front = await safari.frontTab() {
+                await safari.closeTab(front)
+            }
             guard waitsForApp else { return }
             let deadline = clock().addingTimeInterval(Self.appearTimeout)
             while clock() < deadline {
                 // Once Safari is done with it (sealed), so nothing of it is left behind.
-                if let app = webApps().first(where: { !before.contains($0.bundleID) }), isSealed(app.url) {
+                if let app = webApps().first(where: { !before.contains($0.bundleID) && sameSite($0, url) }), isSealed(app.url) {
                     logger.notice("A web app made by a cancelled add: quit and moved to the Trash")
                     discard(app)
                     return

@@ -27,7 +27,9 @@ extension AppDelegate {
     /// user's pick, the workflow audit, 2026-10-22).
     func addSuggestedWebApp(_ address: String) {
         let site = addWebApp.model.address
-        guard addWebApp.adding != nil, site != address else { return addWebApp.show(address: address) }
+        // The same site typed another way (https://, www.) is the add under way.
+        let sameSite = WebAddress.url(from: site).flatMap { typed in WebAddress.url(from: address).map { WebAddress.isSameSite($0, as: typed) } }
+        guard addWebApp.adding != nil, sameSite != true else { return addWebApp.show(address: address) }
         InfoAlert.whenNoneOpen {
             guard self.runAlert(PlayerAlerts.stopAddingWebApp(site: site, for: address)) == .alertFirstButtonReturn else { return }
             self.addWebApp.cancel()

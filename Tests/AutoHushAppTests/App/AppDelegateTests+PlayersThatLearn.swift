@@ -392,6 +392,32 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("a suggested web app clicked while its own site is added, typed another way, asks nothing: the add goes on")
+    func suggestedWhileAddingItself() async {
+        let scratch = Scratch()
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], suggested: {
+            [WebAppSuggestion(name: "Deezer", address: "deezer.com")]
+        })
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: "com.apple.Safari.WebApp.NEW", name: "Deezer",
+                                                            url: URL(fileURLWithPath: "/Users/test/Applications/Deezer.app"), alreadyThere: false)))
+        let (sut, _) = makeSUT(scratch)
+        let asked = CallLog()
+        sut.runAlert = { alert in
+            asked.calls.append(alert.messageText)
+            return .alertSecondButtonReturn
+        }
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "https://www.deezer.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.adding != nil }
+        sut.chooseMusicPlayer(PlayerOption.suggestionID("deezer.com"))
+        #expect(sut.addWebApp.adding != nil && sut.addWebApp.model.address == "https://www.deezer.com")
+        try? await Task.sleep(for: .milliseconds(50)) // an alert would have come by now
+        #expect(asked.calls.isEmpty)
+        sut.addWebApp.close()
+    }
+
+    @MainActor
     @Test("a suggested web app opens the add window filled in with its address, and the player stays")
     func suggestedWebApp() {
         let scratch = Scratch()

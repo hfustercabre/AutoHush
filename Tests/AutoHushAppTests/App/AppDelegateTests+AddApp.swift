@@ -179,8 +179,6 @@ extension AppDelegateTests {
         #expect(await keptPlayer.releases == 0) // not chosen: nothing to let go of
     }
 
-    /// Add an App opened on the stand-ins (its windows are AutoHush's own),
-    /// an app playing to check, and the apps read at its first step.
     @MainActor
     @Test("Add an App, which asked AutoHush to reopen, opens again at launch with its app chosen; a note from long before doesn't")
     func addAppAfterRelaunch() async throws {
@@ -203,6 +201,8 @@ extension AppDelegateTests {
         #expect(late.addApp.model == nil && stale.defaults.dictionary(forKey: AppDelegate.addAppAfterRelaunchKey) == nil)
     }
 
+    /// Add an App opened on the stand-ins (its windows are AutoHush's own),
+    /// an app playing to check, and the apps read at its first step.
     @MainActor
     private func addAppOpened() async throws -> (scratch: Scratch, world: World, sut: AppDelegate, feature: AddAppFeature) {
         let scratch = Scratch()

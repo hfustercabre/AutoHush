@@ -199,6 +199,15 @@ struct SettingsModelTests {
         controller.isEnabled = true // turned on in System Settings
         model.refreshLaunchAtLogin()
         #expect(model.launchAtLoginEnabled && model.launchAtLoginError == nil)
+
+        // Only approved meanwhile (it was on, waiting for approval): the error goes too.
+        controller.needsApproval = true
+        model.refreshLaunchAtLogin()
+        model.setLaunchAtLogin(true)
+        #expect(model.launchAtLoginError != nil)
+        controller.needsApproval = false
+        model.refreshLaunchAtLogin()
+        #expect(model.launchAtLoginError == nil)
     }
 
     @Test("opening Login Items settings is delegated")

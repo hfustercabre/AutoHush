@@ -204,10 +204,8 @@ final class SettingsModel {
         let enabled = launchAtLoginController.isEnabled, needsApproval = launchAtLoginController.needsApproval
         // Changed meanwhile (System Settings → Login Items): an error from
         // before no longer stands (the workflow audit, 2026-10-22).
-        if launchAtLoginEnabled != enabled {
-            launchAtLoginEnabled = enabled
-            launchAtLoginError = nil
-        }
+        if launchAtLoginEnabled != enabled || launchAtLoginNeedsApproval != needsApproval { launchAtLoginError = nil }
+        if launchAtLoginEnabled != enabled { launchAtLoginEnabled = enabled }
         if launchAtLoginNeedsApproval != needsApproval { launchAtLoginNeedsApproval = needsApproval }
     }
 

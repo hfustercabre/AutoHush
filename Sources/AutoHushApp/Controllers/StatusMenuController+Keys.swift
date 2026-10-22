@@ -20,7 +20,7 @@ extension StatusMenuController {
     /// keyboard's focus.
     func handleKey(_ event: NSEvent) -> Bool {
         // Space presses the highlighted player until something is typed.
-        let spaceChooses = event.keyCode == 49 && model.playerSearch.isEmpty
+        let spaceChooses = HighlightKey(event) == .space && model.playerSearch.isEmpty
         if model.isChoosingPlayer, model.players.showsSearch, !spaceChooses {
             if Self.composes(event) {
                 // Only the field itself can compose it: it takes the keyboard.

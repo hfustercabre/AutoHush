@@ -308,6 +308,37 @@ struct SafariWebAppMakerTests {
         #expect(setup.safari.log.value.last == "close tab 1")
     }
 
+    @Test("cancelled once Add was clicked, a web app of another site made meanwhile (another add, or by hand) is left alone")
+    func cancelledLeavesOtherSites() async throws {
+        let setup = Setup()
+        let other = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "OTHER", name: "SoundCloud",
+                                 url: URL(fileURLWithPath: "/Users/test/Applications/SoundCloud.app"),
+                                 startURL: URL(string: "https://soundcloud.com/"))
+        setup.unsealedLooks.withLock { $0 = 1 } // not sealed at the first look: AutoHush waits
+        setup.safari.adds.withLock { $0 = [false] } // Cancel in Safari's dialog: nothing of this site comes
+        let task = Locked<Task<MadeWebApp, any Error>?>(nil)
+        setup.safari.onClosed = { [installed = setup.installed] in
+            installed.append(other) // made meanwhile, another site
+            task.value?.cancel()
+        }
+        task.withLock { $0 = Task { try await setup.make("play.qobuz.com") } }
+        let made = try #require(task.value)
+        await #expect(throws: CancellationError.self) { try await made.value }
+        #expect(setup.discarded.value.isEmpty)
+    }
+
+    @Test("cancelled while Safari loads the page, the tab it opened for it is closed")
+    func cancelledWhileLoading() async throws {
+        let setup = Setup()
+        setup.safari.holdsPage = true
+        setup.safari.pages.withLock { $0 = [URL(string: "https://play.qobuz.com/")!] }
+        let task = Task { try await setup.make("play.qobuz.com") }
+        await TestWait.until { setup.safari.log.value.contains("wait") }
+        task.cancel()
+        await #expect(throws: CancellationError.self) { try await task.value }
+        #expect(setup.safari.log.value.last == "close tab 1")
+    }
+
     @Test("another country's site of a tested service counts as the same: its web app is used")
     func sameService() async throws {
         var setup = Setup()
@@ -402,13 +433,22 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     var addsToDock = true
     var loads = true
     var onAdd: (@Sendable () -> Void)?
+    /// As the dialog closes, with Add or Cancel.
+    var onClosed: (@Sendable () -> Void)?
 
     func isTrusted(prompt: Bool) async -> Bool { log.append("trusted"); return trusted }
     func open(_ url: URL) async -> Bool { log.append("open \(url.absoluteString)"); return opens }
     /// The dialog stays open until the task is cancelled.
     var holdsDialog = false
 
-    func waitForPage() async -> SafariTab? { log.append("wait"); return loads ? SafariTab(page: 1) : nil }
+    /// The page keeps loading until the task is cancelled.
+    var holdsPage = false
+
+    func waitForPage() async -> SafariTab? {
+        log.append("wait")
+        while holdsPage, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
+        return loads && !Task.isCancelled ? SafariTab(page: 1) : nil
+    }
     /// The front page's address at each look, the last one staying; none:
     /// it can't be read.
     let pages = Locked<[URL]>([])
@@ -441,6 +481,7 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
             return adds.first ?? true
         }
         if added { onAdd?() }
+        onClosed?()
         return .closed
     }
     func closeTab(_ tab: SafariTab) async { log.append("close tab \(tab.page)") }

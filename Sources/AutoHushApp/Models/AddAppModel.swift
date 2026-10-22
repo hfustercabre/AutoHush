@@ -619,7 +619,8 @@ final class AddAppModel {
             // A check again of an app whose result is kept (Check Again
             // beside Use) that doesn't finish: that result comes back, Use
             // with it (the workflow audit, 2026-10-22).
-            if let kept = keptChecks.load(now: now()), kept.app.bundleID == app.bundleID {
+            // Not for an app gone from where it was: Use couldn't work.
+            if let kept = keptChecks.load(now: now()), kept.app.bundleID == app.bundleID, reader.appExists(at: kept.app.url) {
                 restore(kept)
             } else if case .stopped = end {
                 stage = .stopped

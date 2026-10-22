@@ -612,6 +612,18 @@ struct AddAppModelTests {
         world.run.finish(stopped ? .stopped : .failed(1))
         await TestWait.until { model.result != nil }
         #expect(model.result == result && model.mark(of: .use) == .current)
+
+        // Gone from the disk meanwhile: no Use for it, but why, with Change….
+        world.run = FakeCheckRun()
+        model.checkAgain()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck()
+        await TestWait.until { world.runs == 3 }
+        world.exists = false
+        world.running = false
+        world.run.finish(.failed(1))
+        await TestWait.until { model.stage == .failed }
+        #expect(model.result == nil && model.failureReason == .appNotFound)
     }
 
     @Test("after Skip at the Reopen step, Use doesn't ask to reopen it, also once the kept check is restored")
