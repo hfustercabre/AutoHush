@@ -134,6 +134,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     facts.stateNotification = announcingNotification.map { .announced($0) }
         ?? (!stateNotes.isEmpty ? .seen(stateNotes) : notifications == nil ? .notFollowed : .noneSeen)
     facts.scriptResult = firstResults[.script]
+    facts.scriptStateWrong = scriptStateWrong
     facts.menuResult = firstResults[.menu]
     facts.menuTitle = menu?.title
     facts.isRunning = running != nil

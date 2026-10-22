@@ -16,6 +16,8 @@ package enum PlayerKindVerdict {
         package var stateNotification: StateNotification = .notFollowed
         /// The first trial of each way, when the test tried it.
         package var scriptResult: TrialResult?
+        /// Its state by script said it didn't play while it was heard.
+        package var scriptStateWrong = false
         package var menuResult: TrialResult?
         /// Its playback menu's title, when it has one.
         package var menuTitle: String?
@@ -53,8 +55,13 @@ package enum PlayerKindVerdict {
             say("  A Chromium web app. Its sound is \(browser)'s, shared with its tabs:")
             say("  another page of \(browser) playing (a tab, a call, another web app) shows as one more “Playing audio” assertion.")
         } else if let scripting = facts.scripting, scripting.fitsScriptablePlayer, let suite = scripting.suite {
-            say("  A scriptable player, as the supported scriptable players are: its own pause and play, and its state.")
-            sayForDevelopers("  As a built-in player: a ScriptablePlayerProfile with suite fourCharCode(\"\(suite)\").")
+            if facts.scriptStateWrong {
+                say("  A scriptable player: its own pause and play, but its state by script is wrong (not playing while it played), so AutoHush tells it by its other signs.")
+                sayForDevelopers("  As a built-in player: \(ownKind), its state from its menu or sound.")
+            } else {
+                say("  A scriptable player, as the supported scriptable players are: its own pause and play, and its state.")
+                sayForDevelopers("  As a built-in player: a ScriptablePlayerProfile with suite fourCharCode(\"\(suite)\").")
+            }
             say("  " + (scripting.hasVolume ? "It has a volume, so it can fade." : "No volume: it pauses without fading."))
             if scripting.hasVolume {
                 sayForDevelopers("  Measure its volume's curve: swift run measure-volume-curve \(facts.bundleID).")

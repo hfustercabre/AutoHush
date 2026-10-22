@@ -73,6 +73,11 @@ struct PlayerKindVerdictTests {
         ])
         #expect(PlayerKindVerdict.lines(facts, developer: true).contains(
             "  As a built-in player: a ScriptablePlayerProfile with suite fourCharCode(\"abcd\")."))
+        // Its state found wrong (Apple TV's): said, and no profile offered.
+        facts.scriptStateWrong = true
+        #expect(PlayerKindVerdict.lines(facts, developer: false).first?.contains("its state by script is wrong") == true)
+        #expect(!PlayerKindVerdict.lines(facts, developer: true).contains { $0.contains("ScriptablePlayerProfile") })
+        facts.scriptStateWrong = false
         facts.scriptResult = .didNotPause
         #expect(PlayerKindVerdict.lines(facts, developer: false).last
             == "  But its scripted pause didn't take: check it by hand before building on it.")

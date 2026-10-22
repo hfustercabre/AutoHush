@@ -30,7 +30,12 @@ import WebAppPlayers
         : pageNotChecked == "no Accessibility permission" ? .noAccessibility : .notChecked
     var findings = CheckFindings(bundleID: bundleID, appName: appName, appURL: appURL, ways: [
         .script: found(.script, scriptable, notChecked: scriptable && noAutomation ? .noAutomation : nil,
-                       setup: scripting.flatMap(ScriptSetup.init(dictionary:)).map { .script($0) }),
+                       setup: scripting.flatMap(ScriptSetup.init(dictionary:)).map { setup in
+                           var setup = setup
+                           // Its state was found wrong: AutoHush reads it from other signs.
+                           if scriptStateWrong { setup.state = nil }
+                           return .script(setup)
+                       }),
         .menu: found(.menu, menu != nil, notChecked: unread, setup: menu.map { .menu(menuName: $0.title) }),
         .page: found(.page, page?.toggle != nil, notChecked: unread ?? pageUnread,
                      setup: .page(PageAccess(interface: pageAccess.interface, switchAttribute: pageSwitch))),

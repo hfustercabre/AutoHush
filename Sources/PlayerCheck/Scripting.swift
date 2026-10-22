@@ -243,6 +243,11 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 /// macOS refused the app's state (-1743): it's no longer asked. Each kind of
 /// error, and each unknown state value, is said once.
 @MainActor var scriptRefused = false
+/// Its state by script said it didn't play while it was heard (Apple TV's
+/// `player state` reads stopped while it plays a stream, 2026-10-22): wrong
+/// for this app, so it's no longer read, and AutoHush isn't given it
+/// (`writeResult`): other signs tell its state.
+@MainActor var scriptStateWrong = false
 @MainActor var scriptErrorsSaid: Set<Int> = []
 @MainActor var unknownStatesSaid: Set<FourCharCode> = []
 
@@ -254,10 +259,11 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 /// `current time` telling stopped from paused), else its documents'
 /// (playing while one is, stopped with none open), asked by Apple event.
 /// Only macOS refusing it (-1743: no Automation permission for whatever
-/// runs this tool) stops the asking; another error (a timeout, -1712, from
-/// a busy app) counts for that look only.
+/// runs this tool), or its state found wrong (`scriptStateWrong`), stops the
+/// asking; another error (a timeout, -1712, from a busy app) counts for that
+/// look only.
 @MainActor func scriptedState() -> PlayerState? {
-    guard let scriptState, !scriptRefused else { return nil }
+    guard let scriptState, !scriptRefused, !scriptStateWrong else { return nil }
     func failed(_ error: NSError) -> PlayerState? {
         noteScriptError(error.code)
         let refused = error.code == -1743

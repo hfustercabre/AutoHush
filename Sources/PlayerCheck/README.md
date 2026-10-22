@@ -184,7 +184,9 @@ only to the Now Playing app, which AutoHush can't choose.
 A pause or a play is judged by the surest sign the app showed before it: its
 AppleScript state (read where AutoHush reads it: its `player state` only
 with the three standard values, else its `playing` flag, else its
-documents'), what it reports to Now Playing (from macOS's log,
+documents'; one that says it doesn't play while it's heard is wrong for
+that app, as Apple TV's is while it plays a stream, so it isn't read again
+and AutoHush reads the app's state from its other signs), what it reports to Now Playing (from macOS's log,
 administrators only), its page's word (only while current: a WebKit page's
 anywhere, a Chromium or Flutter page's only on screen), its level, its
 keep-awake assertion, its menu's state; else its menu's word changing or its

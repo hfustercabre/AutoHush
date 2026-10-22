@@ -15,6 +15,14 @@ This project follows [Semantic Versioning](https://semver.org/).
   in Settings → General puts it back there each time AutoHush opens; off,
   it stays where you ⌘-drag it.
 
+### Fixed
+
+- **Add an App now sees Apple TV playing.** Its AppleScript says it's
+  stopped while it plays, so the check kept asking you to play something.
+  An app whose AppleScript state disagrees with its sound now has that
+  state ignored: the check goes on, and AutoHush tells its state by the
+  app's other signs.
+
 ## [1.0.0] — 2026-10-22
 
 ### Changed

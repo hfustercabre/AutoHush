@@ -21,9 +21,13 @@ struct ResultWaysTests {
         #expect(ordered == [.page(.webKit), .menu(menuName: "Controls"), .script(script), .panel(rememberedRow: nil)])
     }
 
-    @Test("a toggle with no state is kept only with another sign of the app's state")
+    @Test("a toggle with no state is kept only with another sign of the app's state; a pause and a play always")
     func toggles() {
         #expect(ResultWays.canRun(script, besides: [], reportsReadable: false))
+        // A state found wrong (Apple TV's) is left out: its pause and play still run.
+        var stateless = script
+        stateless.state = nil
+        #expect(ResultWays.canRun(stateless, besides: [], reportsReadable: false))
         #expect(!ResultWays.canRun(toggle, besides: [.script(toggle), .panel(rememberedRow: nil)], reportsReadable: false))
         #expect(ResultWays.canRun(toggle, besides: [.menu(menuName: "Controls")], reportsReadable: false))
         #expect(ResultWays.canRun(toggle, besides: [.page(.webKit)], reportsReadable: false))

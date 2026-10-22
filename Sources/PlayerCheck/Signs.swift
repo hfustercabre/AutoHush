@@ -62,6 +62,13 @@ extension Look {
         if kind == .level {
             if let heard = audible(pid) { return heard }
         } else if let said = now.says(kind) {
+            // A scripted state that says it doesn't play while it's heard is
+            // wrong for this app: it plays, and the state isn't read again.
+            if kind == .script, said != .playing, audible(pid) == true {
+                scriptStateWrong = true
+                say("  its state by script reads \(said.rawValue) while it's heard: wrong for \(appName), so it isn't read again")
+                return true
+            }
             // A report of a pause may be stale: heard, it plays.
             if kind == .report, said != .playing, audible(pid) == true {
                 noteHeard(against: now.reported)
