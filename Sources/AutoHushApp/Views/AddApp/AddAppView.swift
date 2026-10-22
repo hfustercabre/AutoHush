@@ -100,7 +100,8 @@ struct AddAppView: View {
         let app = appName ?? ""
         switch step {
         case .choose: return model.openFailed ? AddAppText.couldNotOpen(app) : nil
-        case .allow: return model.permissionMissingInCheck ? AddAppText.neededInCheck : nil
+        case .allow: return model.accessibilityNeedsReopen ? AddAppText.accessibilityChanged
+            : model.permissionMissingInCheck ? AddAppText.neededInCheck : nil
         case .reopen: return model.reopenFailed ? AddAppText.didNotQuit(app) : nil
         case .play:
             guard mark == .failed else { return nil }
@@ -182,14 +183,21 @@ struct AddAppView: View {
         default:
             if let app = appName {
                 if model.traits?.scriptable == false { StepNote(AddAppText.notScriptable(app)) }
-                if model.permissionMissingInCheck { NoteLabel(AddAppText.neededInCheck).padding(.top, 2) }
+                if model.accessibilityNeedsReopen {
+                    // Allowed as AutoHush reads it, missing for the check: AutoHush reads it again once reopened.
+                    NoteLabel(AddAppText.accessibilityChanged).padding(.top, 2)
+                    MainButton(PermissionText.reopen, inStep: true) { model.reopenForAccessibility() }
+                        .focused($focused, equals: .allow)
+                } else if model.permissionMissingInCheck {
+                    NoteLabel(AddAppText.neededInCheck).padding(.top, 2)
+                }
                 CheckPermissionRows(model: model, app: app, focused: $focused).padding(.top, 4)
                 // Some not allowed: what the check does without them, then
                 // Continue once what's needed is (all allowed goes on by itself).
                 let missing = model.permissions.missingOptional(antiDot: model.antiDot)
                 if !model.permissions.neededAllowed {
                     NoteLabel(AddAppText.accessibilityNeeded(app)).padding(.top, 4)
-                } else if !missing.isEmpty {
+                } else if !missing.isEmpty, !model.accessibilityNeedsReopen {
                     NoteLabel(AddAppText.withoutWarning(missing, app: app, macMuted: model.checkMuting == .mac)).padding(.top, 4)
                     MainButton(AddAppText.continueButton, inStep: true) { model.continueWithoutAll() }
                         .focused($focused, equals: .allow)

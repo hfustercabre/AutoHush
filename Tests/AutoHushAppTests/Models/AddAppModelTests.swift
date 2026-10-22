@@ -344,6 +344,28 @@ struct AddAppModelTests {
         #expect(model.permissionMissingInCheck)
     }
 
+    @Test("Accessibility missing for the check while AutoHush still reads it allowed: nothing goes on by itself, Reopen AutoHush is offered; once AutoHush reads it missing, it's asked for as usual")
+    func accessibilityNeedsReopen() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.permissionMissing) // the helper's answer; AutoHush's stays allowed
+        await TestWait.until { model.stage == .allowing }
+        #expect(model.accessibilityNeedsReopen && model.permissions.neededAllowed)
+        model.continueWithoutAll()
+        #expect(model.stage == .allowing)
+        model.reopenForAccessibility()
+        #expect(world.autoHushReopened == 1)
+
+        world.permissions.accessibility = false // macOS told AutoHush after all
+        await TestWait.until { !model.accessibilityNeedsReopen }
+        world.permissions.accessibility = true // allowed again: on as usual
+        await TestWait.until { model.stage != .allowing }
+        model.reopenForAccessibility()
+        #expect(world.autoHushReopened == 1)
+    }
+
     @Test("when no way worked it can be muted instead, with Audio Recording: the app is kept to be muted, never paused")
     func muteInstead() async {
         let world = World()

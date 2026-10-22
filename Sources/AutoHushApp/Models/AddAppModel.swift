@@ -70,6 +70,12 @@ final class AddAppModel {
     var otherAppProblem: OtherAppProblem?
     /// The check found Accessibility missing after all (`CheckExitStatus.permissionMissing`).
     private(set) var permissionMissingInCheck = false
+    /// The check found Accessibility missing while AutoHush still reads it
+    /// allowed: macOS gives a running app such a change only when it says
+    /// so, which it doesn't always (`tccutil reset`; measured in the VM,
+    /// 2026-10-22), so AutoHush sees it once it reopens. Until then,
+    /// nothing goes on by itself; Reopen AutoHush is offered.
+    private(set) var accessibilityNeedsReopen = false
     private(set) var progress = CheckProgress()
     /// The chosen app quit while it was waited for, or during the check.
     private(set) var appQuit = false
@@ -296,6 +302,7 @@ final class AddAppModel {
         reopenFailed = false
         openFailed = false
         permissionMissingInCheck = false
+        accessibilityNeedsReopen = false
         otherAppProblem = nil
         appQuit = false
         appNotFound = false
@@ -413,7 +420,9 @@ final class AddAppModel {
         work = Task { [weak self] in
             while let self, !Task.isCancelled, self.stage == .allowing {
                 self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
-                if self.permissions.allAllowed(antiDot: self.antiDot) {
+                // AutoHush read the change after all: as any missing permission.
+                if !self.permissions.neededAllowed { self.accessibilityNeedsReopen = false }
+                if self.permissions.allAllowed(antiDot: self.antiDot), !self.accessibilityNeedsReopen {
                     self.permissionMissingInCheck = false
                     self.afterPermissions()
                     return
@@ -426,7 +435,7 @@ final class AddAppModel {
     /// The Allow step's Continue, once what's needed is allowed: the check
     /// goes on without the rest, checking less.
     func continueWithoutAll() {
-        guard stage == .allowing, permissions.neededAllowed else { return }
+        guard stage == .allowing, permissions.neededAllowed, !accessibilityNeedsReopen else { return }
         stopWork()
         afterPermissions()
     }
@@ -448,6 +457,12 @@ final class AddAppModel {
     /// Reopen AutoHush, for Audio Recording: a finished check is kept.
     func reopenAutoHush() {
         host?.reopenForAudioRecording()
+    }
+
+    /// Reopen AutoHush, for Accessibility (`accessibilityNeedsReopen`).
+    func reopenForAccessibility() {
+        guard accessibilityNeedsReopen else { return }
+        host?.reopenKeepingAddApp()
     }
 
     private func afterPermissions() {
@@ -615,6 +630,9 @@ final class AddAppModel {
             }
         case .permissionMissing:
             permissionMissingInCheck = true
+            // The check's helper, a new process, found it missing; AutoHush,
+            // which read it as the check started, may still read it allowed.
+            accessibilityNeedsReopen = permissions.neededAllowed
             stage = .allowing
             watchPermissions()
         }

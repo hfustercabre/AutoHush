@@ -17792,6 +17792,233 @@
         }
       }
     },
+    "Accessibility changed while AutoHush was open. Reopen AutoHush to go on." : {
+      "comment" : "Add an App window, warning under the step “Allow what the check needs” when the check found Accessibility missing while AutoHush still sees it allowed (macOS tells AutoHush of the change only once it reopens); a Reopen AutoHush button follows",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّرت تسهيلات الاستخدام بينما كان AutoHush مفتوحًا. أعد فتح AutoHush للمتابعة."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibilitat ha canviat amb l’AutoHush obert. Torna a obrir l’AutoHush per continuar."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zpřístupnění se změnilo, když byl AutoHush otevřený. Pokračujte tím, že AutoHush znovu otevřete."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilgængelighed blev ændret, mens AutoHush var åben. Åbn AutoHush igen for at fortsætte."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "„Bedienungshilfen“ wurde geändert, während AutoHush geöffnet war. Öffne AutoHush erneut, um fortzufahren."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η Προσβασιμότητα άλλαξε ενώ το AutoHush ήταν ανοιχτό. Ανοίξτε ξανά το AutoHush για να συνεχίσετε."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accesibilidad ha cambiado con AutoHush abierto. Vuelve a abrir AutoHush para continuar."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accesibilidad cambió con AutoHush abierto. Vuelve a abrir AutoHush para continuar."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Käyttöapu muuttui, kun AutoHush oli auki. Jatka avaamalla AutoHush uudelleen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’accès « Accessibilité » a changé pendant qu’AutoHush était ouvert. Rouvrez AutoHush pour continuer."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’accès « Accessibilité » a changé pendant qu’AutoHush était ouvert. Rouvrez AutoHush pour continuer."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "הנגישות השתנתה בזמן ש‑AutoHush היה פתוח. יש לפתוח מחדש את AutoHush כדי להמשיך."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush खुला रहते हुए ऐक्सेसिबिलिटी बदल गई। आगे बढ़ने के लिए AutoHush फिर से खोलें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pristupačnost se promijenila dok je AutoHush bio otvoren. Ponovno otvorite AutoHush da biste nastavili."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Kisegítő lehetőségek megváltoztak, amíg az AutoHush nyitva volt. A folytatáshoz nyissa meg újra az AutoHusht."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aksesibilitas berubah saat AutoHush terbuka. Buka ulang AutoHush untuk melanjutkan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibilità è cambiata mentre AutoHush era aperto. Riapri AutoHush per continuare."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushが開いている間にアクセシビリティが変更されました。続けるには、AutoHushを再度開いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 열려 있는 동안 손쉬운 사용이 변경되었습니다. 계속하려면 AutoHush를 다시 여십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kebolehcapaian berubah semasa AutoHush dibuka. Buka semula AutoHush untuk meneruskan."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tilgjengelighet ble endret mens AutoHush var åpen. Åpne AutoHush på nytt for å fortsette."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toegankelijkheid is gewijzigd terwijl AutoHush open was. Open AutoHush opnieuw om door te gaan."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostępność zmieniła się, gdy AutoHush był otwarty. Otwórz ponownie AutoHush, aby kontynuować."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Acessibilidade mudou com o AutoHush aberto. Reabra o AutoHush para continuar."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Acessibilidade mudou com o AutoHush aberto. Reabra o AutoHush para continuar."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accesibilitatea s-a schimbat cât timp AutoHush era deschis. Redeschideți AutoHush pentru a continua."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разрешение «Универсальный доступ» изменилось, пока AutoHush был открыт. Откройте AutoHush снова, чтобы продолжить."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prístupnosť sa zmenila, keď bol AutoHush otvorený. Pokračujte tak, že AutoHush znova otvoríte."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dostopnost se je spremenila, ko je bil AutoHush odprt. Znova odprite AutoHush, da nadaljujete."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hjälpmedel ändrades medan AutoHush var öppet. Öppna AutoHush igen för att fortsätta."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การช่วยการเข้าถึงเปลี่ยนไประหว่างที่ AutoHush เปิดอยู่ เปิด AutoHush ใหม่เพื่อดำเนินการต่อ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush açıkken Erişilebilirlik değişti. Devam etmek için AutoHush’ı yeniden açın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дозвіл «Доступність» змінився, поки AutoHush був відкритий. Відкрийте AutoHush знову, щоб продовжити."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trợ năng đã thay đổi khi AutoHush đang mở. Hãy mở lại AutoHush để tiếp tục."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 打開期間，「輔助使用」已更改。請重新打開 AutoHush 以繼續。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 打开期间，辅助功能已更改。请重新打开 AutoHush 以继续。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 打開期間，「輔助使用」已更改。請重新打開 AutoHush 以繼續。"
+          }
+        }
+      }
+    },
     "Accessibility for %@" : {
       "comment" : "Diagnostics: the permission to control the media player, e.g. “Accessibility for TIDAL”",
       "localizations" : {
@@ -116564,7 +116791,7 @@
       }
     },
     "Reopen AutoHush" : {
-      "comment" : "Menu item, after the user went to allow audio recording in System Settings: macOS applies it only once AutoHush is quit and opened again",
+      "comment" : "Menu item and button, after the user went to allow audio recording in System Settings: macOS applies it only once AutoHush is quit and opened again. Also Add an App’s step “Allow what the check needs” when Accessibility changed while AutoHush was open",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

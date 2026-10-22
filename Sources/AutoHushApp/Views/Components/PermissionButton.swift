@@ -60,7 +60,7 @@ enum PermissionText {
 
     static var reopen: String {
         String(localized: "Reopen AutoHush",
-               comment: "Menu item, after the user went to allow audio recording in System Settings: macOS applies it only once AutoHush is quit and opened again")
+               comment: "Menu item and button, after the user went to allow audio recording in System Settings: macOS applies it only once AutoHush is quit and opened again. Also Add an App’s step “Allow what the check needs” when Accessibility changed while AutoHush was open")
     }
 
     static var useAntiDot: String {

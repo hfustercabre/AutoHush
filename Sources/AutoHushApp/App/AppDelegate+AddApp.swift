@@ -52,6 +52,10 @@ extension AppDelegate: AddAppHost {
 
     func reopenForAudioRecording() {
         noteAudioRecordingAllowedInSettings()
+        reopenKeepingAddApp()
+    }
+
+    func reopenKeepingAddApp() {
         // Add an App opens again after the relaunch, its app chosen again
         // (the workflow audit, 2026-10-22).
         defaults.set([Self.reopenedAtKey: clock(), Self.reopenedAppKey: addApp.model?.chosen?.url.path ?? ""],

@@ -121,6 +121,8 @@ struct SafariWebAppMakerTests {
         /// How many more looks a new app takes to be sealed.
         let unsealedLooks = Locked(0)
         let clock = ManualClock.webAppTests()
+        /// The web apps a cancelled add quit and moved to the Trash.
+        let discarded = Locked<[String]>([])
         var maker: SafariWebAppMaker {
             SafariWebAppMaker(
                 safari: safari,
@@ -133,6 +135,7 @@ struct SafariWebAppMakerTests {
                     }
                 },
                 checkAnswers: { [checked] in checked.append($0) },
+                discard: { [discarded] in discarded.append($0.bundleID) },
                 sleep: { [clock] in clock.advance(by: $0) },
                 clock: { [clock] in clock.now }
             )
@@ -187,12 +190,13 @@ struct SafariWebAppMakerTests {
         #expect(setup.safari.log.value.last == "close tab 2") // the tab the site then showed in
     }
 
-    @Test("nothing is added until the user clicks Add to Dock; cancelling instead adds nothing")
+    @Test("nothing is added until the user clicks Add to Dock; cancelling instead adds nothing and closes the tab it opened")
     func waitsForTheClick() async throws {
         let setup = Setup()
         setup.clicksAdd.withLock { $0 = false }
         await #expect(throws: CancellationError.self) { try await setup.make("play.qobuz.com") }
         #expect(!setup.safari.log.value.contains { $0.hasPrefix("add ") })
+        #expect(setup.safari.log.value.last == "close tab 1" && setup.discarded.value.isEmpty)
         #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com")])
     }
 
@@ -272,7 +276,7 @@ struct SafariWebAppMakerTests {
         #expect(setup.steps.value == [.checked, .made(made)])
     }
 
-    @Test("cancelled while Safari's dialog is open, it cancels the dialog: nothing is added")
+    @Test("cancelled while Safari's dialog is open, it cancels the dialog: nothing is added, the tab it opened is closed")
     func cancelled() async throws {
         let setup = Setup()
         setup.safari.holdsDialog = true
@@ -283,9 +287,25 @@ struct SafariWebAppMakerTests {
         try #require(setup.safari.log.value.contains("add https://play.qobuz.com"))
         task.cancel()
         await #expect(throws: CancellationError.self) { try await task.value }
-        #expect(setup.safari.log.value.last == "cancel dialog")
-        #expect(setup.installed.value == [Self.existing])
+        #expect(setup.safari.log.value.suffix(2) == ["cancel dialog", "close tab 1"])
+        #expect(setup.installed.value == [Self.existing] && setup.discarded.value.isEmpty)
         #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding])
+    }
+
+    @Test("cancelled once Add was clicked in Safari's dialog: the web app Safari makes all the same is quit and moved to the Trash, its tab closed")
+    func cancelledAfterAdd() async throws {
+        let setup = Setup()
+        setup.unsealedLooks.withLock { $0 = 1 } // not sealed at the first look: AutoHush waits for it
+        let task = Locked<Task<MadeWebApp, any Error>?>(nil)
+        setup.safari.onAdd = { [installed = setup.installed] in
+            installed.append(Self.made)
+            task.value?.cancel() // the window's Cancel, just after Add in Safari's dialog
+        }
+        task.withLock { $0 = Task { try await setup.make("play.qobuz.com") } }
+        let made = try #require(task.value)
+        await #expect(throws: CancellationError.self) { try await made.value }
+        #expect(setup.discarded.value == [Self.made.bundleID])
+        #expect(setup.safari.log.value.last == "close tab 1")
     }
 
     @Test("another country's site of a tested service counts as the same: its web app is used")

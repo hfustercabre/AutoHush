@@ -357,7 +357,7 @@ flowchart TD
   MADE["The new web app appears<br/>(within 20 s); the Safari tab<br/>AutoHush opened is closed"]
   CHO["Chosen as the media<br/>player, and opened"]
   LRN["Learning its controls,<br/>in the same window"]
-  STOP["Cancel, or closing the<br/>window: nothing is added"]
+  STOP["Cancel, or closing the<br/>window: nothing is added;<br/>the tab it opened closes,<br/>and a web app made all the<br/>same goes to the Trash"]
 
   ST --> ADDR
   SUG --> ADDR
@@ -509,7 +509,7 @@ flowchart TD
   STOP["Escape, or Stop:<br/>Stopping… until<br/>all is put back"]
   PUT["Windows, desktops<br/>and sound put back<br/>as they were"]
   HOW{"How did<br/>it end?"}
-  PERM["A permission<br/>missing: back<br/>to step 2"]
+  PERM["A permission<br/>missing: back<br/>to step 2 (Reopen<br/>AutoHush if it still<br/>reads it allowed)"]
   FAIL["It couldn’t finish<br/>(the app quit or moved):<br/>Show Log…, Check Again<br/>(Change… if it’s gone); a<br/>kept result checked again<br/>comes back instead"]
   STOPPED["Stopped: Check Again;<br/>a kept result checked<br/>again comes back instead"]
   KEEP["The result kept<br/>for a day, until Use"]

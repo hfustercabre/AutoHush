@@ -326,6 +326,13 @@ This project follows [Semantic Versioning](https://semver.org/).
   does, and an app that quit and was moved or deleted offers Change…
   instead of opening it again over and over. Opening a quit app again
   keeps the steps before it ticked.
+- **Cancelling Add a Web App leaves nothing behind.** The Safari tab it
+  opened closes, and a web app Safari made all the same (Add clicked just
+  before) is quit and moved to the Trash. A web app you had already is
+  never touched.
+- **Add an App no longer fails its check over and over** when
+  Accessibility changed in a way macOS didn't tell AutoHush about: step 2
+  says so and offers Reopen AutoHush.
 - **Alerts no longer open over one another.** One that comes while
   another alert or a panel is open waits until it closes.
 - **What failed now says so.** Reopen AutoHush, the card's Reopen and

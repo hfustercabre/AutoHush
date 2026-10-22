@@ -16,8 +16,10 @@ import AutoHushKit
 /// shows, it waits for the user to answer there; then the user adds it.
 ///
 /// A website that already has a web app isn't added again: that one is
-/// used. Cancelling stops it before Add is clicked (Safari's dialog is
-/// cancelled too); after that, the web app exists and is left as it is.
+/// used, and nothing is opened in Safari. Cancelling stops it (Safari's
+/// dialog is cancelled too) and takes away what it left: the tab it
+/// opened, and a web app Safari made all the same (Add was clicked just
+/// before), quit and moved to the Trash (the user, 2026-10-22).
 package final class SafariWebAppMaker: WebAppMaking {
     /// Once Safari's dialog closes, how long the new web app may take to
     /// appear (as long as after AutoHush's own Add before); none by then,
@@ -34,6 +36,8 @@ package final class SafariWebAppMaker: WebAppMaking {
     private let sameSite: @Sendable (SafariWebApp, URL) -> Bool
     private let isSealed: @Sendable (URL) -> Bool
     private let checkAnswers: @Sendable (URL) async throws -> Void
+    /// Quits a web app this add made after it was cancelled, and moves it to the Trash.
+    private let discard: @Sendable (SafariWebApp) -> Void
     private let sleep: @Sendable (TimeInterval) async -> Void
     private let clock: @Sendable () -> Date
     private let logger = AutoHushLogger(category: "WebAppPlayer")
@@ -47,6 +51,7 @@ package final class SafariWebAppMaker: WebAppMaking {
         sameSite: @escaping @Sendable (SafariWebApp, URL) -> Bool = { $0.opens($1) },
         isSealed: @escaping @Sendable (URL) -> Bool = { SafariWebApp.isSealed(at: $0) },
         checkAnswers: @escaping @Sendable (URL) async throws -> Void = { try await WebAddress.checkAnswers($0) },
+        discard: @escaping @Sendable (SafariWebApp) -> Void = { SafariWebAppMaker.quitAndTrash($0) },
         sleep: @escaping @Sendable (TimeInterval) async -> Void = { try? await Task.sleep(for: .seconds($0)) },
         clock: @escaping @Sendable () -> Date = { Date() }
     ) {
@@ -55,6 +60,7 @@ package final class SafariWebAppMaker: WebAppMaking {
         self.sameSite = sameSite
         self.isSealed = isSealed
         self.checkAnswers = checkAnswers
+        self.discard = discard
         self.sleep = sleep
         self.clock = clock
     }
@@ -85,15 +91,29 @@ package final class SafariWebAppMaker: WebAppMaking {
             try Task.checkCancellation()
             throw WebAppMakingError.browserFailed("the page didn't load in Safari")
         }
-        try Task.checkCancellation()
-        onStep(.opened)
+        // The tab to close once added, or cancelled: the one opened, or, once
+        // the site asked something first, the page it then showed in it
+        // (answering loads another page). Never a tab the user moves to later.
+        var addedTab = tab
+        // Add clicked in Safari's dialog: a web app may come even once cancelled.
+        var addClicked = false
+        do {
+            try Task.checkCancellation()
+            onStep(.opened)
+            return try await add(url, since: before, tab: &addedTab, addClicked: &addClicked, onStep: onStep, confirmAdd: confirmAdd)
+        } catch is CancellationError {
+            await takeAway(since: before, tab: addedTab, waitsForApp: addClicked)
+            throw CancellationError()
+        }
+    }
 
+    /// From the page loaded in Safari: Add to Dock, once the site itself
+    /// shows and the user clicked, until a new web app comes.
+    private func add(_ url: URL, since before: Set<String>, tab addedTab: inout SafariTab, addClicked: inout Bool,
+                     onStep: @escaping @Sendable (WebAppMakingStep) -> Void,
+                     confirmAdd: @escaping @Sendable () async -> Bool) async throws -> MadeWebApp {
         let site = url.host() ?? url.absoluteString
         var asking: String?
-        // The tab to close once added: the one opened, or, once the site
-        // asked something first, the page it then showed in it (answering
-        // loads another page). Never a tab the user moves to later.
-        var addedTab = tab
         while true {
             if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) {
                 let host = shown.host() ?? shown.absoluteString
@@ -123,7 +143,7 @@ package final class SafariWebAppMaker: WebAppMaking {
             case .cancelled:
                 throw CancellationError()
             case .closed:
-                break
+                addClicked = true
             }
             // Added, the new web app comes; closed with Cancel, none does.
             let deadline = clock().addingTimeInterval(Self.appearTimeout)
@@ -134,6 +154,38 @@ package final class SafariWebAppMaker: WebAppMaking {
             }
             logger.notice("Safari’s Add to Dock closed without a new web app: waiting for Add to Dock again")
             onStep(.notAdded)
+        }
+    }
+
+    /// What a cancelled add leaves goes: its tab, then, when Add was
+    /// clicked in Safari's dialog, the web app Safari makes all the same
+    /// (as long as `appearTimeout`), quit and moved to the Trash. Off the
+    /// cancelled task, so its waits aren't cut short.
+    private func takeAway(since before: Set<String>, tab: SafariTab, waitsForApp: Bool) async {
+        let (safari, webApps, isSealed, discard, sleep, clock, logger) = (safari, webApps, isSealed, discard, sleep, clock, logger)
+        await Task.detached {
+            await safari.closeTab(tab)
+            guard waitsForApp else { return }
+            let deadline = clock().addingTimeInterval(Self.appearTimeout)
+            while clock() < deadline {
+                // Once Safari is done with it (sealed), so nothing of it is left behind.
+                if let app = webApps().first(where: { !before.contains($0.bundleID) }), isSealed(app.url) {
+                    logger.notice("A web app made by a cancelled add: quit and moved to the Trash")
+                    discard(app)
+                    return
+                }
+                await sleep(Self.pollInterval)
+            }
+        }.value
+    }
+
+    /// Quits `app` if it runs, and moves it to the Trash (never deleted).
+    package static func quitAndTrash(_ app: SafariWebApp) {
+        for running in NSRunningApplication.runningApplications(withBundleIdentifier: app.bundleID) { running.terminate() }
+        do {
+            try FileManager.default.trashItem(at: app.url, resultingItemURL: nil)
+        } catch {
+            AutoHushLogger(category: "WebAppPlayer").error("A cancelled add’s web app couldn’t be moved to the Trash: \(error)")
         }
     }
 

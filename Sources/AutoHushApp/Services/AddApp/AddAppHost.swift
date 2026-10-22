@@ -23,6 +23,10 @@ protocol AddAppHost: AnyObject {
     /// Quits AutoHush and opens it again: Audio Recording allowed in System
     /// Settings applies from the next launch.
     func reopenForAudioRecording()
+    /// Quits AutoHush and opens it again, Add an App with it: a running app
+    /// learns of an Accessibility change only when macOS says so, which it
+    /// doesn't always (`AddAppModel.accessibilityNeedsReopen`).
+    func reopenKeepingAddApp()
     /// Keeps what the check found and makes the app the player; `asksToReopen`
     /// false once the user skipped reopening it.
     func useCheckedApp(_ result: CheckResult, asksToReopen: Bool)

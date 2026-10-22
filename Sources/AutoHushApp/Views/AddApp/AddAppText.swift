@@ -148,6 +148,11 @@ enum AddAppText {
                comment: "Add an App window, under the step “Allow what the check needs”; %@ is the app")
     }
 
+    static var accessibilityChanged: String {
+        String(localized: "Accessibility changed while AutoHush was open. Reopen AutoHush to go on.",
+               comment: "Add an App window, warning under the step “Allow what the check needs” when the check found Accessibility missing while AutoHush still sees it allowed (macOS tells AutoHush of the change only once it reopens); a Reopen AutoHush button follows")
+    }
+
     static var neededInCheck: String {
         String(localized: "The check needs Accessibility allowed.",
                comment: "Add an App window, warning under the step “Allow what the check needs” when the check found Accessibility missing")

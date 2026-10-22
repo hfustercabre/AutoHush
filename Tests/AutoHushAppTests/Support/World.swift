@@ -159,6 +159,7 @@ extension World: AddAppHost {
 
     func holdsPlayerForCheck(_ held: Bool) { holds.append(held) }
     func reopenForAudioRecording() { autoHushReopened += 1 }
+    func reopenKeepingAddApp() { autoHushReopened += 1 }
 
     func useCheckedApp(_ result: CheckResult, asksToReopen: Bool) {
         used.append(result)
