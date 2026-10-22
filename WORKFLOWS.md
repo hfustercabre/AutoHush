@@ -409,7 +409,7 @@ flowchart TD
   RES(["The apps stop: Play<br/>pressed, or the mute lifted"])
   NOMUTE["In AntiDot mode nothing is<br/>muted: an ad (its button says<br/>Play) plays on, nothing shown;<br/>a refused press says<br/>Couldn’t pause"]
   LOST["Its button not found for<br/>a minute while it plays:<br/>asks you again"]
-  AGN["Learn Again…: a new<br/>learning window; the old<br/>button works until<br/>It’s Playing"]
+  AGN["Learn Again…: a new<br/>learning window (it asks<br/>first while Add a Web App<br/>adds one); the old button<br/>works until It’s Playing"]
 
   WH -->|"Safari"| CH
   WH -->|"Chromium"| CHROM
@@ -510,8 +510,8 @@ flowchart TD
   PUT["Windows, desktops<br/>and sound put back<br/>as they were"]
   HOW{"How did<br/>it end?"}
   PERM["A permission<br/>missing: back<br/>to step 2"]
-  FAIL["It couldn’t finish<br/>(the app quit or moved):<br/>Show Log…, Check Again"]
-  STOPPED["Stopped:<br/>Check Again"]
+  FAIL["It couldn’t finish<br/>(the app quit or moved):<br/>Show Log…, Check Again; a<br/>kept result checked again<br/>comes back instead"]
+  STOPPED["Stopped: Check Again;<br/>a kept result checked<br/>again comes back instead"]
   KEEP["The result kept<br/>for a day, until Use"]
   ANY{"Did a way AutoHush<br/>can use work?"}
   CARDS["6 · Cards of the ways that<br/>worked, Recommended first;<br/>those that didn’t, with why"]
@@ -626,7 +626,7 @@ flowchart TD
   NEW{"A newer<br/>version?"}
   UTD["Up to date, or it<br/>couldn’t check: said<br/>only when you asked"]
   CAN{"Can this copy<br/>install it?"}
-  HAND["By hand: Homebrew, or Open<br/>Release Page (a folder it can’t<br/>write to, or a copy signed<br/>with another certificate)"]
+  HAND["By hand: Homebrew, or Open<br/>Release Page (a folder it can’t<br/>write to, or a copy signed<br/>with another certificate); the<br/>menu says AutoHush X Is Available…"]
   MODE{"Settings → Updates:<br/>when an update<br/>is found"}
   NOT["A notification; the icon’s<br/>arrow, Updates in the accent<br/>color, Install AutoHush in<br/>the menu"]
   DL["Downloaded (not in<br/>Low Data Mode), kept<br/>up to 7 days"]
