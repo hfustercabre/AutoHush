@@ -29,6 +29,8 @@ final class KeyHighlight {
         var press: (() -> Void)?
         /// ← (-1) or → (1): a slider's step, a choice's next option.
         var adjust: ((Int) -> Void)?
+        /// What Delete does: removes it (an added app's tile), once confirmed.
+        var delete: (() -> Void)?
         /// Pressing it opens a side window, which → does too.
         var opensSide = false
         /// It stands for what's shown now (Settings' sidebar: the page's row).
@@ -205,6 +207,13 @@ final class KeyHighlight {
     @discardableResult func press() -> Bool {
         guard let control = highlightedControl, let press = control.press else { return false }
         press()
+        return true
+    }
+
+    /// Delete on the highlighted control; `false` when it takes none.
+    @discardableResult func delete() -> Bool {
+        guard let delete = highlightedControl?.delete else { return false }
+        delete()
         return true
     }
 

@@ -16,7 +16,8 @@ struct CheckPanelView: View {
     let resized: (CGSize) -> Void
     /// Whether the screen is dimmed: while input is blocked.
     let dimmed: (Bool) -> Void
-    @State private var stopping = false
+
+    private var stopping: Bool { model.isStopping }
 
     private var progress: CheckProgress { model.progress }
 
@@ -34,10 +35,7 @@ struct CheckPanelView: View {
                         .font(.appCaption).foregroundStyle(.appSecondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
-                Button {
-                    stopping = true
-                    model.stopCheck()
-                } label: { Text(verbatim: AddAppText.stop) }
+                Button { model.stopCheck() } label: { Text(verbatim: AddAppText.stop) }
                     .buttonStyle(.chip)
                     .disabled(stopping)
             }
@@ -71,7 +69,7 @@ struct CheckPanelView: View {
         .onChange(of: progress.request) { _, request in
             if let request { AccessibilityNotification.Announcement(AddAppText.request(request, app: app.name)).post() }
         }
-        .onChange(of: stopping) { _, stopping in
+        .onChange(of: model.isStopping) { _, stopping in
             if stopping { AccessibilityNotification.Announcement(AddAppText.stopping).post() }
         }
     }

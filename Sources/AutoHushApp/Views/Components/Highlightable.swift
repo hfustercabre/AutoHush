@@ -73,6 +73,7 @@ struct Highlightable: ViewModifier {
     @State private var actions = Actions()
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.highlightBand) private var band
+    @Environment(\.highlightRemoval) private var removal
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     /// What pressing it does as it was drawn last: registered once, its
@@ -81,6 +82,7 @@ struct Highlightable: ViewModifier {
     @MainActor private final class Actions {
         var press: (() -> Void)?
         var adjust: ((Int) -> Void)?
+        var delete: (() -> Void)?
         var isCurrent: (() -> Bool)?
     }
 
@@ -111,13 +113,16 @@ struct Highlightable: ViewModifier {
                     keyboard.register(id, .init(band: band, isEnabled: enabled,
                                                 press: press == nil ? nil : { actions.press?() },
                                                 adjust: adjust == nil ? nil : { actions.adjust?($0) },
+                                                delete: removal == nil ? nil : { actions.delete?() },
                                                 opensSide: opensSide,
                                                 isCurrent: isCurrent == nil ? nil : { actions.isCurrent?() == true }))
                 }
                 .onChange(of: enabled) { keyboard.update(id, isEnabled: enabled) }
+                .onChange(of: lit) { removal?.lit(lit) }
                 .onChange(of: Drawing(), initial: true) {
                     actions.press = press
                     actions.adjust = adjust
+                    actions.delete = removal?.remove
                     actions.isCurrent = isCurrent
                 }
                 .onDisappear { keyboard.remove(id) }
@@ -166,4 +171,14 @@ extension EnvironmentValues {
     /// set on the menu's card and buttons, and Sound Sources' heading and
     /// buttons, around what scrolls between them.
     @Entry var highlightBand = HighlightBand.middle
+    /// Set around a control Delete removes (an added app's tile).
+    @Entry var highlightRemoval: HighlightRemoval?
+}
+
+/// What Delete does on a highlighted control that can be removed (an added
+/// app's tile), and what it's told as the highlight comes and goes, for its
+/// × to show (the workflow audit, 2026-10-22).
+struct HighlightRemoval {
+    let remove: () -> Void
+    let lit: (Bool) -> Void
 }

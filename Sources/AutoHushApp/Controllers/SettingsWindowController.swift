@@ -157,7 +157,12 @@ final class SettingsWindowController: NSWindowController {
         let controlHasFocus = NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow)
         // One highlight at a time: the arrows take it from the focus.
         if key == .up || key == .down { window.makeFirstResponder(nil) }
-        return keys.handle(key, controlHasFocus: controlHasFocus)
+        if keys.handle(key, controlHasFocus: controlHasFocus) { return true }
+        // Delete removes the apps selected in Sound Sources, as their Remove
+        // does (macOS's lists' key; the workflow audit, 2026-10-22).
+        guard key == .delete, navigation.page == .soundSources, !model.appList.selectedApps.isEmpty else { return false }
+        model.appList.removeSelected()
+        return true
     }
 
     @available(*, unavailable)

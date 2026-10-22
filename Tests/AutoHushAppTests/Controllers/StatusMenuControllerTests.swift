@@ -507,6 +507,18 @@ struct StatusMenuControllerTests {
         #expect(log.calls == ["menuWillOpen", "player com.example.Apple Music"])
     }
 
+    @Test("among the players, Space presses the highlighted one, not typing, until something is typed; then it's a space in the search")
+    func spaceAmongPlayers() throws {
+        let sut = menuWithManyPlayers()
+        defer { sut.remove() }
+        let space = try Self.keyDown(" ", code: 49)
+        #expect(sut.handleKey(space))
+        #expect(sut.model.playerSearch.isEmpty)
+        sut.perform(.searchPlayers("apple"))
+        #expect(sut.handleKey(space))
+        #expect(sut.model.playerSearch == "apple ")
+    }
+
     @Test("what was typed in the players' search goes as they close; a closing field handing its text back changes nothing")
     func playerSearchCleared() {
         let sut = menuWithManyPlayers()

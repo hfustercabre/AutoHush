@@ -179,6 +179,10 @@ package actor MockMusicPlayer: MusicPlayer {
     package var needsReopening = false
     package var reopenKeepsNeed = false
     package var reopenCount = 0
+    /// A reopen that doesn't go (it didn't quit, or didn't open again).
+    package var reopenFails = false
+
+    package func setReopenFails(_ fails: Bool) { reopenFails = fails }
 
     package func setNeedsReopening(_ needs: Bool, afterReopen: Bool = false) {
         needsReopening = needs
@@ -189,6 +193,7 @@ package actor MockMusicPlayer: MusicPlayer {
 
     package func reopen() -> Bool {
         reopenCount += 1
+        if reopenFails { return false }
         needsReopening = reopenKeepsNeed
         return true
     }

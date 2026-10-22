@@ -1,3 +1,4 @@
+import AutoHushKit
 import Foundation
 
 /// Settings → Diagnostics, as it is now.
@@ -21,12 +22,21 @@ struct DiagnosticsSnapshot: Equatable {
         let evidence: String?
     }
 
-    /// A label and its value, with a mark for permissions and problems.
+    /// A label and its value, with a mark for permissions and problems,
+    /// and a problem's fix, where AutoHush has one (the user's pick, the
+    /// workflow audit, 2026-10-22).
     struct Row: Equatable {
         enum Mark: Equatable { case ok, problem, neutral }
+        /// What its button does: choose a player (Settings → General), learn
+        /// the web app's controls, or allow a permission.
+        enum Fix: Equatable {
+            case choosePlayer, learnControls
+            case allow(Permission)
+        }
         let label: String
         let value: String
         var mark: Mark?
+        var fix: Fix?
     }
 
     /// A section below the apps; folded, it shows `summary`.

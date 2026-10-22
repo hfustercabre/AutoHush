@@ -102,7 +102,9 @@ struct AddAppView: View {
         case .choose: return model.openFailed ? AddAppText.couldNotOpen(app) : nil
         case .allow: return model.permissionMissingInCheck ? AddAppText.neededInCheck : nil
         case .reopen: return model.reopenFailed ? AddAppText.didNotQuit(app) : nil
-        case .play: return mark == .failed ? (model.appQuit ? AddAppText.appQuit(app) : AddAppText.didNotPlay(app)) : nil
+        case .play:
+            guard mark == .failed else { return nil }
+            return model.appNotFound ? AddAppText.appNotFound(app) : model.appQuit ? AddAppText.appQuit(app) : AddAppText.didNotPlay(app)
         case .check:
             switch model.stage {
             case .stopped: return AddAppText.stoppedNote
@@ -225,6 +227,13 @@ struct AddAppView: View {
                 CountdownBanner(text: AddAppText.timeToPlay(AddAppModel.playWait - context.date.timeIntervalSince(since)))
             }
             .padding(.top, 2)
+        case (.busy, _):
+            StepNote(AddAppText.opening(appName ?? ""))
+        case (.failed, _) where model.appNotFound:
+            // Moved or deleted: Open can't find it, another app is chosen instead.
+            NoteLabel(AddAppText.appNotFound(appName ?? "")).padding(.top, 2)
+            MainButton(AddAppText.changeApp, inStep: true) { changeApp() }
+                .focused($focused, equals: .play)
         case (.failed, _) where model.appQuit:
             NoteLabel(AddAppText.appQuit(appName ?? "")).padding(.top, 2)
             MainButton(AddAppText.open(appName ?? ""), inStep: true) { model.openAppAgain() }
@@ -243,9 +252,11 @@ struct AddAppView: View {
         case (.done, _):
             StepNote(AddAppText.putBackNote)
         case (.busy, _):
-            StepNote(model.isEndingLastCheck ? AddAppText.lastCheckEnding : AddAppText.stage(model.progress.stage))
+            StepNote(model.isStopping ? AddAppText.stopping
+                     : model.isEndingLastCheck ? AddAppText.lastCheckEnding : AddAppText.stage(model.progress.stage))
             StepNote(AddAppText.stopHint)
             MainButton(AddAppText.stop, secondary: true, cancels: true, inStep: true) { model.stopCheck() }
+                .disabled(model.isStopping)
                 .focused($focused, equals: .check)
         case (.failed, .stopped):
             StepNote(AddAppText.stoppedNote)
@@ -254,8 +265,14 @@ struct AddAppView: View {
         case (.failed, _):
             StepNote(AddAppText.checkFailed(model.failureReason, app: appName ?? ""))
             FlowingButtons {
-                MainButton(AddAppText.checkAgain, inStep: true) { model.checkAgain() }
-                    .focused($focused, equals: .check)
+                if model.failureReason == .appNotFound {
+                    // Moved or deleted: checked again, it would fail again.
+                    MainButton(AddAppText.changeApp, inStep: true) { changeApp() }
+                        .focused($focused, equals: .check)
+                } else {
+                    MainButton(AddAppText.checkAgain, inStep: true) { model.checkAgain() }
+                        .focused($focused, equals: .check)
+                }
                 if model.failureReason == .other {
                     MainButton(AddAppText.showLog, secondary: true, inStep: true) { model.showLog() }
                         .disabled(!model.canShowLog)

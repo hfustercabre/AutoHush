@@ -18,6 +18,9 @@ final class AddAppModel {
         /// Asks before reopening it with its launch option.
         case reopenAsked
         case reopening
+        /// The chosen app opening again after it quit while it was waited
+        /// for: the play step is busy, the steps before keep their ticks.
+        case openingAgain
         case waitingToPlay(since: Date)
         case playTimedOut
         /// It plays: the check can start (its Continue… shows the warning).
@@ -70,6 +73,9 @@ final class AddAppModel {
     private(set) var progress = CheckProgress()
     /// The chosen app quit while it was waited for, or during the check.
     private(set) var appQuit = false
+    /// It quit and isn't where it was chosen (moved or deleted): another
+    /// app is chosen instead (Change…), as Open can't find it.
+    private(set) var appNotFound = false
     /// Why the last check couldn't finish, as far as AutoHush can tell.
     private(set) var failureReason: PlayerCheckEnd.Reason?
     /// Audio Recording was allowed in System Settings (here or elsewhere in
@@ -78,6 +84,9 @@ final class AddAppModel {
     /// A check that was stopped and still puts things back: the next one
     /// waits for it.
     private(set) var isEndingLastCheck = false
+    /// Stop was pressed (the window's, Escape or the panel's): the check
+    /// puts things back before it ends, both say so.
+    private(set) var isStopping = false
 
     /// The apps on the Mac, and the check's helper (`nil`: missing from
     /// the app, so nothing can be checked).
@@ -131,7 +140,7 @@ final class AddAppModel {
         if index < at { return .done }
         if index > at { return .todo }
         switch stage {
-        case .opening, .reopening, .checking: return .busy
+        case .opening, .reopening, .openingAgain, .checking: return .busy
         case .playTimedOut, .stopped, .failed: return .failed
         case .done: return choosableWays.isEmpty ? .failed : .current
         default: return .current
@@ -144,7 +153,7 @@ final class AddAppModel {
         case .choosing, .opening: .choose
         case .allowing: .allow
         case .reopenAsked, .reopening: .reopen
-        case .waitingToPlay, .playTimedOut: .play
+        case .openingAgain, .waitingToPlay, .playTimedOut: .play
         case .ready, .checking, .stopped, .failed: .check
         case .done: .use
         }
@@ -165,7 +174,7 @@ final class AddAppModel {
     /// Another app can be chosen instead: one is, and nothing is under way.
     var canChangeApp: Bool {
         switch stage {
-        case .choosing, .opening, .reopening, .checking: false
+        case .choosing, .opening, .reopening, .openingAgain, .checking: false
         default: true
         }
     }
@@ -289,8 +298,10 @@ final class AddAppModel {
         permissionMissingInCheck = false
         otherAppProblem = nil
         appQuit = false
+        appNotFound = false
         failureReason = nil
         progress = CheckProgress()
+        isStopping = false
     }
 
     /// The check's result as it was kept: its app chosen, the last step.
@@ -481,13 +492,13 @@ final class AddAppModel {
         guard let app = chosen, let traits else { return }
         let since = now()
         appQuit = false
+        appNotFound = false
         failureReason = nil
         stage = .waitingToPlay(since: since)
         work = Task { [weak self] in
             while let self, !Task.isCancelled, self.stage == .waitingToPlay(since: since) {
                 if !self.reader.isRunning(app.bundleID) {
-                    self.appQuit = true
-                    self.stage = .playTimedOut
+                    self.quit(app)
                     return
                 }
                 if await self.reader.isPlaying(app, traits: traits), self.stage == .waitingToPlay(since: since) {
@@ -505,9 +516,9 @@ final class AddAppModel {
 
     /// Opens the app again after it quit, then waits for it to play.
     func openAppAgain() {
-        guard let app = chosen, let traits else { return }
+        guard let app = chosen, let traits, !appNotFound else { return }
         appQuit = false
-        stage = .opening
+        stage = .openingAgain
         work = Task { [weak self] in
             guard let self else { return }
             let opened = await self.reader.open(app, withLaunchOption: traits.needsLaunchOption)
@@ -515,10 +526,17 @@ final class AddAppModel {
             if opened {
                 self.waitForPlaying()
             } else {
-                self.appQuit = true
-                self.stage = .playTimedOut
+                self.quit(app)
             }
         }
+    }
+
+    /// The app quit while it was waited for (or didn't open again): the
+    /// play step says so, and whether it's still where it was chosen.
+    private func quit(_ app: CheckableApp) {
+        appQuit = true
+        appNotFound = !reader.appExists(at: app.url)
+        stage = .playTimedOut
     }
 
     /// The check step's Continue…: the warning before the check.
@@ -535,6 +553,7 @@ final class AddAppModel {
         progress = CheckProgress()
         failureReason = nil
         pickedWay = nil
+        isStopping = false
         stage = .checking
         Task { [weak self] in
             if let ending = self?.endingRun { _ = await ending.waitForEnd() }
@@ -562,6 +581,7 @@ final class AddAppModel {
         guard run === ending else { return } // started again since
         presenter?.checkEnded()
         run = nil
+        isStopping = false
         switch end {
         case .finished(let result?):
             if result.setup == nil, !reader.isRunning(app.bundleID) {
@@ -589,7 +609,8 @@ final class AddAppModel {
             } else if case .stopped = end {
                 stage = .stopped
             } else {
-                failureReason = !reader.appExists(at: app.url) ? .appNotFound : !reader.isRunning(app.bundleID) ? .appQuit : .other
+                appNotFound = !reader.appExists(at: app.url)
+                failureReason = appNotFound ? .appNotFound : !reader.isRunning(app.bundleID) ? .appQuit : .other
                 stage = .failed
             }
         case .permissionMissing:
@@ -607,6 +628,7 @@ final class AddAppModel {
             if stage == .checking { stage = .ready }
             return
         }
+        isStopping = true
         run.stop()
     }
 

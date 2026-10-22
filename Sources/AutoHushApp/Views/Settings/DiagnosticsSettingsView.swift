@@ -150,8 +150,31 @@ struct DiagnosticsSettingsView: View {
                     Text(verbatim: row.value)
                         .multilineTextAlignment(.trailing)
                         .textSelection(.enabled)
+                    if let fix = row.fix {
+                        Button { perform(fix) } label: { Text(verbatim: Self.title(of: fix)) }
+                            .buttonStyle(.chip)
+                            .fixedSize()
+                    }
                 }
             }
+        }
+    }
+
+    /// A problem's fix, as the same button does elsewhere: Settings →
+    /// General's players, the card's Learn Controls…, a permission's Allow….
+    private func perform(_ fix: DiagnosticsSnapshot.Row.Fix) {
+        switch fix {
+        case .choosePlayer: model.actions?.openSettings(page: .general)
+        case .learnControls: model.actions?.learnControlsAgain()
+        case .allow(let permission): model.actions?.requestPermission(permission)
+        }
+    }
+
+    static func title(of fix: DiagnosticsSnapshot.Row.Fix) -> String {
+        switch fix {
+        case .choosePlayer: MenuMediaPlayerView.chooseTitle
+        case .learnControls: LearningText.learnButton
+        case .allow: AddAppText.allowButton
         }
     }
 

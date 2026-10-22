@@ -142,7 +142,7 @@ struct DiagnosticsReportTests {
         #expect(!plainRows.contains("Last error"))
     }
 
-    @Test("permissions: allowed, refused, not asked yet, unknown, not needed in AntiDot mode, and not checked yet, each with its mark; Audio Recording once")
+    @Test("permissions: allowed, refused, not asked yet, unknown, not needed in AntiDot mode, and not checked yet, each with its mark (Allow… beside a missing one); Audio Recording once")
     func permissions() throws {
         func rows(_ change: (inout DiagnosticsFacts) -> Void) throws -> [DiagnosticsSnapshot.Row] {
             let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts(change))
@@ -159,8 +159,8 @@ struct DiagnosticsReportTests {
             $0.playerPermissionGranted = false
             $0.notificationsOff = true
         } == [
-            .init(label: "Audio Recording", value: "Not allowed", mark: .problem),
-            .init(label: "Accessibility for Jukebox", value: "Not allowed", mark: .problem),
+            .init(label: "Audio Recording", value: "Not allowed", mark: .problem, fix: .allow(.systemAudioRecording)),
+            .init(label: "Accessibility for Jukebox", value: "Not allowed", mark: .problem, fix: .allow(.accessibility(player: "Jukebox"))),
             .init(label: "Notifications", value: "Off", mark: .neutral),
         ])
         #expect(try rows {
@@ -169,7 +169,7 @@ struct DiagnosticsReportTests {
             $0.playerPermissionGranted = nil
         }.map(\.value) == ["Not needed in AntiDot mode", "Not checked yet", "Allowed"])
         // Measuring audio levels: macOS hasn't asked yet, or can't tell.
-        #expect(try rows { $0.audioRecording = .notDetermined }.first == .init(label: "Audio Recording", value: "Not asked yet", mark: .problem))
+        #expect(try rows { $0.audioRecording = .notDetermined }.first == .init(label: "Audio Recording", value: "Not asked yet", mark: .problem, fix: .allow(.systemAudioRecording)))
         #expect(try rows { $0.audioRecording = nil }.first == .init(label: "Audio Recording", value: "Unknown", mark: .neutral))
         // An app muted instead of paused needs Audio Recording to control it too: one row, which can't disagree with itself.
         #expect(try rows {
@@ -283,13 +283,13 @@ struct DiagnosticsReportTests {
         #expect(quietReport(.audioLevel, .audioLevels).text.contains("Behavior\nPause playback after: \(half) s\nPause for the microphone: Off"))
     }
 
-    @Test("a chosen player that isn't installed, or can't fade, says so")
+    @Test("a chosen player that isn't installed (Choose… beside it), or can't fade, says so")
     func playerNotInstalled() throws {
         var status = workingStatus()
         status.playerOptions = [PlayerOption(bundleID: "com.example.jukebox", name: "Jukebox", appURL: nil)]
         let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: status, facts: facts { $0.playerCanFade = false })
         let rows = try #require(snapshot.sections.first { $0.kind == .player }).rows
-        #expect(rows.first == .init(label: "Player", value: "Jukebox · Not installed", mark: .problem))
+        #expect(rows.first == .init(label: "Player", value: "Jukebox · Not installed", mark: .problem, fix: .choosePlayer))
         #expect(rows.last?.value == "No")
     }
 
@@ -341,7 +341,7 @@ struct DiagnosticsReportTests {
             $0.playerLearned = false
             $0.reachesOtherSpaces = true
         }.suffix(2) == [
-            .init(label: "Play/Pause button learned", value: "No", mark: .problem),
+            .init(label: "Play/Pause button learned", value: "No", mark: .problem, fix: .learnControls),
             .init(label: "Reaches windows on other Spaces", value: "Yes", mark: .ok),
         ])
         #expect(try rows { $0.playerLearned = true }.last == .init(label: "Play/Pause button learned", value: "Yes", mark: .ok))

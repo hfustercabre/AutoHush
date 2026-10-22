@@ -339,7 +339,7 @@ AutoHush only ever resumes a pause it holds, and it keeps holding one across a c
 ```mermaid
 flowchart TD
   ST(["Add a Web App…: the menu,<br/>Settings → General,<br/>the welcome window"])
-  SUG(["A tested site’s tile, not<br/>added yet: Spotify, YouTube<br/>Music, Amazon Music,<br/>Deezer, SoundCloud"])
+  SUG(["A tested site’s tile, not<br/>added yet: Spotify, YouTube<br/>Music, Amazon Music,<br/>Deezer, SoundCloud (while<br/>another is added, it asks<br/>first: Stop Adding)"])
   ADDR["Paste the website’s address<br/>(a tested site’s is filled in;<br/>Amazon Music: your<br/>account’s country)"]
   CHK{"A web address,<br/>and the site answers?"}
   ERR["The window says why:<br/>not a web address, no<br/>answer, page not found"]
@@ -465,7 +465,7 @@ flowchart TD
   REO["3 · Reopen it (what it plays<br/>stops), or Skip: then paused<br/>only while its window<br/>can be seen"]
   PLAY["4 · Play something in it<br/>(heard by its sound; without<br/>Audio Recording or in AntiDot<br/>mode, by an open output)"]
   PL{"Playing within<br/>2 minutes?"}
-  NOPL["It didn’t play, or quit:<br/>Try Again, or open it again"]
+  NOPL["It didn’t play, or quit:<br/>Try Again, or open it again;<br/>moved or deleted: Change…"]
   CHK["5 · The check: Continue…<br/>shows the warning first"]
 
   ST --> KEPT
@@ -506,11 +506,11 @@ flowchart TD
   WAYS["In each state, each way<br/>pauses and plays it: its<br/>AppleScript, playback menu,<br/>page’s Play/Pause, Now<br/>Playing row"]
   ASK["It asks you, in blue on<br/>the panel, to pause it<br/>yourself (to learn its page):<br/>mouse and keyboard yours"]
   SHOW["Now Playing hidden in<br/>the menu bar: shown for<br/>the moment of a press"]
-  STOP["Escape, or Stop"]
+  STOP["Escape, or Stop:<br/>Stopping… until<br/>all is put back"]
   PUT["Windows, desktops<br/>and sound put back<br/>as they were"]
   HOW{"How did<br/>it end?"}
   PERM["A permission<br/>missing: back<br/>to step 2"]
-  FAIL["It couldn’t finish<br/>(the app quit or moved):<br/>Show Log…, Check Again; a<br/>kept result checked again<br/>comes back instead"]
+  FAIL["It couldn’t finish<br/>(the app quit or moved):<br/>Show Log…, Check Again<br/>(Change… if it’s gone); a<br/>kept result checked again<br/>comes back instead"]
   STOPPED["Stopped: Check Again;<br/>a kept result checked<br/>again comes back instead"]
   KEEP["The result kept<br/>for a day, until Use"]
   ANY{"Did a way AutoHush<br/>can use work?"}
@@ -580,7 +580,7 @@ flowchart TD
   ANTI["In AntiDot mode: dimmed,<br/>Not in AntiDot; while it’s<br/>the player, the AntiDot<br/>switch is off and dimmed"]
   subgraph ANY["At any time"]
     direction TB
-    REM["Remove: × on its tile,<br/>right-click it, or ⌥ Option<br/>in the menu’s list; asked first"]
+    REM["Remove: × on its tile (or<br/>Delete with the keys on it),<br/>right-click it, or ⌥ Option<br/>in the menu’s list; asked first"]
     GONE["Forgotten; if it was the<br/>player, the window to<br/>choose another opens"]
     QUIT["AutoHush quits: always<br/>unmuted, its switch<br/>turned back off"]
   end
@@ -712,10 +712,11 @@ flowchart TD
   AUDF["Allow… in the menu or<br/>Detection; switched on in<br/>System Settings: Reopen<br/>AutoHush. Or AntiDot mode"]
   PF["A pause fails or is<br/>ignored: Couldn’t pause —<br/>Safari is playing, with ⓘ"]
   NPH["Now Playing hidden and<br/>couldn’t be shown: ⓘ offers<br/>Open Menu Bar Settings…"]
-  DIAG["Settings → Diagnostics:<br/>what AutoHush sees, Last<br/>error, Copy Report (⌥ Option-<br/>click Settings in the menu)"]
+  DIAG["Settings → Diagnostics:<br/>what AutoHush sees, Last<br/>error, Copy Report (⌥ Option-<br/>click Settings in the menu);<br/>Choose…, Learn Controls… or<br/>Allow… beside a problem"]
   LOGS["Show Logs…: this launch<br/>or 24 hours, every entry or<br/>only problems; copy or save"]
   CHK["Add an App’s check couldn’t<br/>finish: Show Log… (the<br/>check’s own log), Check Again"]
   DEL["The chosen web app deleted:<br/>no player chosen; the window<br/>to choose another opens"]
+  FAILS["Reopen AutoHush, the<br/>player’s Reopen or Unmute<br/>didn’t work: an alert says so"]
   QUIT["Quitting, within a second:<br/>fades stopped, volume back,<br/>mutes lifted, switches off,<br/>Now Playing put back, the<br/>Mac’s output unmuted,<br/>pauses handed over"]
   NEXT(["The next launch: a press<br/>cut short put right, the Mac’s<br/>output unmuted, its volume<br/>put back if lowered within<br/>the hour, a pause handed<br/>over taken over"])
 
@@ -725,9 +726,10 @@ flowchart TD
   PF --> DIAG --> LOGS
   R -.-> CHK
   R -.-> DEL
+  R -.-> FAILS
   R -->|"Quit"| QUIT --> NEXT
 
-  class AUD,PF,NPH,CHK,DEL warn
+  class AUD,PF,NPH,CHK,DEL,FAILS warn
   class NEXT done
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22

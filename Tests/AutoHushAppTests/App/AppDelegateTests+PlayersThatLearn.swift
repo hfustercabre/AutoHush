@@ -360,6 +360,38 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("a suggested web app clicked while Add a Web App adds another asks first: Stop Adding fills it in instead, Cancel keeps the add",
+          arguments: [true, false])
+    func suggestedWhileAdding(stops: Bool) async {
+        let scratch = Scratch()
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], suggested: {
+            [WebAppSuggestion(name: "Deezer", address: "deezer.com")]
+        })
+        scratch.maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: "com.apple.Safari.WebApp.NEW", name: "Qobuz",
+                                                            url: URL(fileURLWithPath: "/Users/test/Applications/Qobuz.app"), alreadyThere: false)))
+        let (sut, _) = makeSUT(scratch)
+        let asked = CallLog()
+        sut.runAlert = { alert in
+            asked.calls.append(alert.messageText)
+            return stops ? .alertFirstButtonReturn : .alertSecondButtonReturn
+        }
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.qobuz.com"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.qobuz.com") } // waits for Add to Dock
+
+        sut.chooseMusicPlayer(PlayerOption.suggestionID("deezer.com"))
+        await TestWait.until { asked.calls == ["Stop Adding play.qobuz.com?"] }
+        if stops {
+            await TestWait.until { sut.addWebApp.adding == nil }
+            #expect(sut.addWebApp.model.address == "deezer.com" && sut.addWebApp.model.phase == .entering && scratch.addWindow.isOpen)
+        } else {
+            #expect(sut.addWebApp.adding != nil && sut.addWebApp.model.address == "play.qobuz.com")
+        }
+        sut.addWebApp.close()
+    }
+
+    @MainActor
     @Test("a suggested web app opens the add window filled in with its address, and the player stays")
     func suggestedWebApp() {
         let scratch = Scratch()

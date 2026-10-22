@@ -29,6 +29,22 @@ struct SettingsKeysTests {
         return (keys, rows, [toggle, slider])
     }
 
+    @Test("Delete removes the highlighted control that can be removed (an added app's tile); on another, or with none, it isn't taken")
+    func delete() {
+        let log = Log()
+        let (keys, _, _) = makeKeys(log: log)
+        let tile = UUID()
+        keys.page.register(tile, .init(frame: CGRect(x: 0, y: 120, width: 120, height: 44), delete: { log.calls.append("remove") }))
+        #expect(!keys.handle(.delete)) // nothing highlighted
+        #expect(keys.handle(.down))
+        #expect(!keys.handle(.delete)) // the switch row takes none
+        #expect(keys.handle(.down) && keys.handle(.down))
+        #expect(keys.page.highlighted == tile)
+        #expect(keys.handle(.delete))
+        #expect(log.calls == ["remove"])
+        #expect(HighlightKey(keyCode: 51, modifiers: []) == .delete && HighlightKey(keyCode: 117, modifiers: []) == .delete)
+    }
+
     @Test("↓ and ↑ start in the page; Return or Space presses its control, ← and → change a slider and do nothing on another")
     func page() {
         let log = Log()

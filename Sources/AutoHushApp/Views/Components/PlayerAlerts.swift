@@ -45,12 +45,58 @@ enum PlayerAlerts {
     /// Return stops the add and learns, Escape cancels.
     static func stopAddingWebApp(site: String, player: String) -> NSAlert {
         confirm(
-            title: String(localized: "Stop Adding \(site)?",
-                          comment: "Alert title when Learn Again (the chosen web app's controls) is clicked while Add a Web App adds another; %@ is the address being added, e.g. music.youtube.com"),
+            title: stopAddingTitle(site),
             message: String(localized: "Learning \(player)’s controls again stops adding it.",
                             comment: "Message of the alert when Learn Again is clicked while Add a Web App adds another web app; %@ is the chosen web app, e.g. YouTube Music"),
-            button: String(localized: "Stop Adding",
-                           comment: "Default button of the alert when Learn Again is clicked while Add a Web App adds another web app: stops that add and learns the chosen one's controls again"))
+            button: stopAddingButton)
+    }
+
+    /// Before a suggested web app's tile adds it while Add a Web App adds
+    /// another (the workflow audit, 2026-10-22): Return stops that add and
+    /// starts this one, Escape cancels.
+    static func stopAddingWebApp(site: String, for newSite: String) -> NSAlert {
+        confirm(
+            title: stopAddingTitle(site),
+            message: String(localized: "Adding \(newSite) instead stops adding it.",
+                            comment: "Message of the alert when a suggested web app is clicked while Add a Web App adds another web app; %@ is the address of the one clicked, e.g. soundcloud.com"),
+            button: stopAddingButton)
+    }
+
+    private static func stopAddingTitle(_ site: String) -> String {
+        String(localized: "Stop Adding \(site)?",
+               comment: "Alert title when Learn Again (the chosen web app's controls), or a suggested web app, is clicked while Add a Web App adds another; %@ is the address being added, e.g. music.youtube.com")
+    }
+
+    private static var stopAddingButton: String {
+        String(localized: "Stop Adding",
+               comment: "Default button of the alert when Learn Again, or a suggested web app, is clicked while Add a Web App adds another web app: stops that add and learns the chosen one's controls again, or adds the one clicked")
+    }
+
+    /// When something the user asked for couldn't be done (the workflow
+    /// audit, 2026-10-22): the menu's or Add an App's Reopen AutoHush, the
+    /// card's Reopen and Unmute. Its title, and what to do.
+    static var couldNotReopenAutoHush: (title: String, message: String) {
+        (String(localized: "Couldn’t Reopen AutoHush",
+                comment: "Alert title when Reopen AutoHush (the menu, or Add an App for Audio Recording) couldn't quit and open AutoHush again"),
+         String(localized: "Quit AutoHush and open it again.",
+                comment: "Message of the alert when Reopen AutoHush couldn't reopen it: what the user can do instead"))
+    }
+
+    static func couldNotReopen(_ player: String) -> (title: String, message: String) {
+        (String(localized: "Couldn’t Reopen \(player)",
+                comment: "Alert title when the media player couldn't be quit and opened again with what AutoHush needs (the menu card's Reopen, or Reopen in the alert asking for it); %@ is the player"),
+         tryAgain)
+    }
+
+    static func couldNotUnmute(_ player: String) -> (title: String, message: String) {
+        (String(localized: "Couldn’t Unmute \(player)",
+                comment: "Alert title when the menu card's Unmute couldn't make the media player play again; %@ is the player"),
+         tryAgain)
+    }
+
+    private static var tryAgain: String {
+        String(localized: "Try again in a moment.",
+               comment: "Message of the alerts when the media player couldn't be reopened or unmuted")
     }
 
     /// Before Add an App's Change… forgets a check that has run (the user,

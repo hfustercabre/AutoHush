@@ -475,7 +475,7 @@ final class StatusMenuController: NSObject {
         case .removeAddedApp(let id):    actions?.removeAddedApp(id)
         case .addApp:                    actions?.openAddApp()
         case .addWebApp:                 actions?.openAddWebApp()
-        case .ignoreAnotherApp:          IgnoreAppsPicker.run { settings.setIgnored($0, true) }
+        case .ignoreAnotherApp:          IgnoreAppsPicker.run(player: status.chosenPlayer) { settings.setIgnored($0, true) }
         case .resolveWarning(let need):  actions?.requestPermission(need)
         case .reopenAutoHush:            actions?.reopenAutoHush()
         // Through Settings' model, whose guard keeps AntiDot mode off for a

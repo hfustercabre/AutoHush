@@ -80,14 +80,10 @@ final class UpdateController {
     /// Runs before a check's result shows in an alert: the menu, open while
     /// it checks, closes first.
     @ObservationIgnored var beforePresenting: @MainActor () async -> Void = {}
-    /// Shows an alert from the run loop, once the work that asked for it is
-    /// done. Run from inside a main-actor task (a check, an install, a
-    /// notification's click), an alert's modal loop would hold up every
-    /// other main-actor job until it closes: the menu, Settings, the
-    /// player's state reports. Tests replace it.
-    @ObservationIgnored var showAlert: @MainActor (@escaping @MainActor () -> Void) -> Void = { show in
-        RunLoop.main.perform(inModes: [.common]) { MainActor.assumeIsolated(show) }
-    }
+    /// Shows an alert from the run loop, once the work that asked for it (a
+    /// check, an install, a notification's click) is done and no other
+    /// alert is open (`InfoAlert.whenNoneOpen`). Tests replace it.
+    @ObservationIgnored var showAlert: @MainActor (@escaping @MainActor () -> Void) -> Void = InfoAlert.whenNoneOpen
     /// Runs an alert and returns the button pressed. Tests replace it.
     @ObservationIgnored var runAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
     let logger = AutoHushLogger(category: "Updates")

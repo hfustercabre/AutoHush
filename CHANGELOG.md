@@ -321,6 +321,25 @@ This project follows [Semantic Versioning](https://semver.org/).
   again.** It did nothing until you picked another player.
 - **Launch at login's error goes once the login item is fixed** in System
   Settings; it stayed under the switch.
+- **Add an App says when it's stopping.** Stop in the window, or Escape,
+  now shows "Stopping: putting everything back…" as the check's panel
+  does, and an app that quit and was moved or deleted offers Change…
+  instead of opening it again over and over. Opening a quit app again
+  keeps the steps before it ticked.
+- **Alerts no longer open over one another.** One that comes while
+  another alert or a panel is open waits until it closes.
+- **What failed now says so.** Reopen AutoHush, the card's Reopen and
+  Unmute show an alert when they don't work, and a suggested web app
+  clicked while another is being added asks before stopping that add.
+- **Ignoring your own media player says what it does:** it's ignored once
+  you choose another player.
+- **Delete removes,** as in macOS's lists: the apps selected in Settings →
+  Sound Sources, and an added app's tile reached with the arrow keys
+  (whose × now shows). In the menu's players, Space chooses the
+  highlighted one until you type in the search.
+- **Settings says why something is greyed out:** a note names the switch
+  that's off. Diagnostics offers Choose…, Learn Controls… or Allow…
+  beside a problem it can fix.
 - **Settings opens on the desktop you're on.** Closed on one desktop and
   opened again from another, it took you back to the first.
 - **A player's error message no longer reaches the log or Copy Report.**

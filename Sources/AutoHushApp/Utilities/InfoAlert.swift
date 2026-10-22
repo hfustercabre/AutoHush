@@ -5,6 +5,16 @@ import AppKit
 /// Return presses.
 @MainActor
 enum InfoAlert {
+    /// Runs `show`, which runs an alert, from the run loop once the work
+    /// that asked for it is done, and no other alert or panel is open: run
+    /// from a main-actor task, an alert's modal loop would hold up every
+    /// other main-actor job until it closes; in the run loop's default mode
+    /// only, it waits while another modal loop runs, so alerts never open
+    /// over each other (the workflow audit, 2026-10-22).
+    static func whenNoneOpen(_ show: @escaping @MainActor () -> Void) {
+        RunLoop.main.perform(inModes: [.default]) { MainActor.assumeIsolated(show) }
+    }
+
     /// `run`: how the alert runs (`runInFront`); tests replace it.
     /// `action`: a button that fixes what it says, first (Return presses
     /// it), with OK after it (Escape).

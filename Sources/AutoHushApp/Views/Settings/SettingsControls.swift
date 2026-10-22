@@ -167,6 +167,28 @@ enum SettingsSwitch: CaseIterable {
         String(localized: "Resume playback is off",
                comment: "Under settings that only matter when your player resumes (Resume playback after, Fade in when resuming, Level the volume, Stay paused after calls), dimmed while the Resume playback switch (Settings → Behavior) is off: Settings and the menu")
     }
+
+    /// Under what a switch turns on, dimmed while it's off, as
+    /// `resumeOffNote` (the user's pick, the workflow audit, 2026-10-22).
+    static var antiDotOffNote: String {
+        String(localized: "AntiDot mode is off",
+               comment: "Settings → Detection, under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch is off")
+    }
+
+    static var fadesOffNote: String {
+        String(localized: "Fade playback is off",
+               comment: "Settings → Behavior, under the fades' lengths, dimmed while the Fade playback switch is off")
+    }
+
+    static var levelingOffNote: String {
+        String(localized: "Level the volume is off",
+               comment: "Settings → Behavior, under Volume's limits, dimmed while the Level the volume switch is off")
+    }
+
+    static var updateChecksOffNote: String {
+        String(localized: "Automatic checks are off",
+               comment: "Settings → Updates, under what happens when an update is found, dimmed while the switch “Check for updates automatically” is off")
+    }
 }
 
 /// One of `SettingsSwitch`, with what it does under it (`showsSubtitle`).

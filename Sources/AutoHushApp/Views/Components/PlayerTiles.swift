@@ -271,23 +271,30 @@ struct PlayerTiles: View {
 }
 
 /// An added app's tile with a × in its corner while the pointer is over it,
-/// or the keyboard is on it or its × (Tab, with keyboard navigation on),
-/// which removes it once confirmed; its right-click menu and VoiceOver have
-/// it too.
+/// or the keyboard is on it or its × (the arrow keys' highlight, or Tab
+/// with keyboard navigation on), which removes it once confirmed, as Delete
+/// does there; its right-click menu and VoiceOver have it too.
 private struct RemovableTile<Content: View>: View {
     let name: String
     let remove: () -> Void
     @ViewBuilder let content: Content
     @State private var isHovered = false
+    /// The arrow keys' highlight is on it.
+    @State private var isHighlighted = false
     @FocusState private var focus: Focus?
 
     private enum Focus { case tile, remove }
 
     var body: some View {
         content
+            .environment(\.highlightRemoval, HighlightRemoval(remove: remove, lit: { isHighlighted = $0 }))
             .focused($focus, equals: .tile)
+            .onKeyPress(keys: [.delete, .deleteForward]) { _ in
+                remove()
+                return .handled
+            }
             .overlay(alignment: .topTrailing) {
-                if isHovered || focus != nil {
+                if isHovered || isHighlighted || focus != nil {
                     Button(action: remove) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title3)

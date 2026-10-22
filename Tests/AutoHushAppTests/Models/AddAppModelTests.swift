@@ -444,7 +444,7 @@ struct AddAppModelTests {
         #expect(world.warningsClosed == closed + 1)
     }
 
-    @Test("the app quitting while it's waited for says so; Open opens it and waits again, or says so again when it doesn't open")
+    @Test("the app quitting while it's waited for says so; Open opens it (its step busy, the steps before still done) and waits again, or says so again when it doesn't open")
     func appQuits() async {
         let world = World()
         let model = await model(world)
@@ -455,13 +455,54 @@ struct AddAppModelTests {
         #expect(model.appQuit && model.mark(of: .play) == .failed)
         world.opens = false
         model.openAppAgain()
-        #expect(model.stage == .opening && !model.appQuit)
+        #expect(model.stage == .openingAgain && !model.appQuit)
+        #expect(model.mark(of: .play) == .busy && [.choose, .allow].allSatisfy { model.mark(of: $0) == .done })
         await TestWait.until { model.appQuit }
         #expect(model.stage == .playTimedOut && world.opened.count == 1)
         world.opens = true
         model.openAppAgain()
-        await TestWait.until { model.currentStep == .play && !model.appQuit }
-        #expect(model.stage == .waitingToPlay(since: world.now) && world.opened.count == 2)
+        await TestWait.until { model.stage == .waitingToPlay(since: world.now) }
+        #expect(!model.appQuit && world.opened.count == 2)
+    }
+
+    @Test("the app quitting and no longer found (moved or deleted) while it's waited for, or in the check, offers another app instead of Open or Check Again")
+    func appGone() async {
+        let world = World()
+        let model = await model(world)
+        model.continueWithApp()
+        await TestWait.until { model.currentStep == .play }
+        world.running = false
+        world.exists = false
+        await TestWait.until { model.stage == .playTimedOut }
+        #expect(model.appQuit && model.appNotFound && model.canChangeApp)
+        model.openAppAgain() // nothing to open
+        #expect(model.stage == .playTimedOut && world.opened.isEmpty)
+        model.changeApp()
+        #expect(model.stage == .choosing && !model.appNotFound)
+
+        let checked = World()
+        let ready = await ready(checked)
+        ready.startCheck()
+        await TestWait.until { checked.panel == ["shown"] }
+        checked.exists = false
+        checked.run.finish(.failed(1))
+        await TestWait.until { ready.stage == .failed }
+        #expect(ready.failureReason == .appNotFound && ready.appNotFound && ready.canChangeApp)
+    }
+
+    @Test("Stop (the window's, Escape or the panel's) says it's stopping, its button off, until the check has put things back")
+    func stopping() async {
+        let world = World()
+        let model = await ready(world)
+        world.run.endsWhenStopped = false
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        #expect(!model.isStopping)
+        model.stopCheck()
+        #expect(model.isStopping && model.stage == .checking && world.run.stopped)
+        world.run.finish(.stopped)
+        await TestWait.until { model.stage == .stopped }
+        #expect(!model.isStopping)
     }
 
     @Test("a check that couldn't finish says why: the app quit (its result empty too), it's gone, or the log, also when none could start")

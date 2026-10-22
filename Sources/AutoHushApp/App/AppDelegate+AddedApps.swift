@@ -11,13 +11,9 @@ extension AppDelegate {
     func removeAddedAppAfterAsking(_ bundleID: String) {
         guard let option = status.playerOptions.first(where: { $0.bundleID == bundleID && $0.kind == .checkedApp }) else { return }
         let isChosen = player?.bundleID == bundleID
-        // From the run loop: an alert run from a main-actor task would hold
-        // up every other main-actor job until it closes.
-        RunLoop.main.perform(inModes: [.common]) {
-            MainActor.assumeIsolated {
-                guard self.runAlert(PlayerAlerts.remove(option.name, isChosen: isChosen)) == .alertFirstButtonReturn else { return }
-                self.removeAddedApp(option, wasChosen: isChosen)
-            }
+        InfoAlert.whenNoneOpen {
+            guard self.runAlert(PlayerAlerts.remove(option.name, isChosen: isChosen)) == .alertFirstButtonReturn else { return }
+            self.removeAddedApp(option, wasChosen: isChosen)
         }
     }
 

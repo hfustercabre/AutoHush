@@ -32,8 +32,8 @@ struct MenuMediaPlayerView: View {
         String(localized: "Media Player", comment: "Settings → General, Diagnostics and the menu: heading over the media player")
     }
 
-    private static var chooseTitle: String {
-        String(localized: "Choose…", comment: "The menu: under Media Player, while no media player is chosen; a click opens them beside the menu")
+    static var chooseTitle: String {
+        String(localized: "Choose…", comment: "The menu: under Media Player, while no media player is chosen; a click opens them beside the menu. Also Settings → Diagnostics' button beside “Player” while none is chosen or it's not installed, which opens Settings → General's players")
     }
 
     /// What kind of player it is, or why it can't play now.

@@ -45,7 +45,7 @@ enum AddAppText {
     }
 
     static func opening(_ app: String) -> String {
-        String(localized: "Opening \(app)…", comment: "Add an App window, under the step “Choose the app” while the chosen app opens in the background; %@ is the app")
+        String(localized: "Opening \(app)…", comment: "Add an App window, under the step “Choose the app” while the chosen app opens in the background, and under “Play something” while it opens again after it quit; %@ is the app")
     }
 
     static func couldNotOpen(_ app: String) -> String {
@@ -57,7 +57,7 @@ enum AddAppText {
     }
 
     static var changeApp: String {
-        String(localized: "Change…", comment: "Add an App window: button under the step “Choose the app” once done, which chooses another app")
+        String(localized: "Change…", comment: "Add an App window: button under the step “Choose the app” once done, which chooses another app; also under “Play something” and the check’s step when the app can’t be found any more")
     }
 
     /// The question Change… asks once the check has run (the user, 2026-10-18: "Ask first").
@@ -214,7 +214,7 @@ enum AddAppText {
     }
 
     static var allowButton: String {
-        String(localized: "Allow…", comment: "Welcome window, Add an App window and the menu's card (under “Needs Automation access” and the like): button that asks for a permission (macOS's prompt, or System Settings)")
+        String(localized: "Allow…", comment: "Welcome window, Add an App window, the menu's card (under “Needs Automation access” and the like) and Settings → Diagnostics (beside a permission not allowed): button that asks for a permission (macOS's prompt, or System Settings)")
     }
 
     /// The Allow step once done: what's allowed, and what the check goes
@@ -656,6 +656,10 @@ enum AddAppText {
     /// the app being checked once it quit.
     static func open(_ app: String) -> String {
         String(localized: "Open \(app)", comment: "Button that opens an app: the media player, so macOS can ask for Automation (Settings, the welcome window), or, in the Add an App window, the app being checked after it quit; %@ is the app")
+    }
+
+    static func appNotFound(_ app: String) -> String {
+        String(localized: "\(app) quit and can’t be found. Choose another app.", comment: "Add an App window, warning under the step “Play something” when the app being checked quit and is no longer where it was chosen (moved or deleted); a Change… button follows; %@ is the app")
     }
 
     static func appQuit(_ app: String) -> String {

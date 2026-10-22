@@ -19,6 +19,18 @@ struct IgnoreAppsPickerTests {
         #expect(unidentified == [oldTool])
     }
 
+    @Test("the media player among the apps chosen is ignored too, and an alert says that counts once another player is chosen")
+    func playerAmongThem() {
+        let calculator = URL(fileURLWithPath: "/System/Applications/Calculator.app")
+        let textEdit = URL(fileURLWithPath: "/System/Applications/TextEdit.app")
+        let player = PlayerOption(bundleID: "com.apple.calculator", name: "Calculator", appURL: calculator)
+        var ignored: [String] = []
+        let alerts = IgnoreAppsPicker.ignoring([calculator, textEdit], player: player) { ignored.append($0.id) }
+        #expect(ignored == ["com.apple.calculator", "com.apple.TextEdit"])
+        #expect(alerts.map(\.title) == ["Calculator Is Your Media Player"])
+        #expect(IgnoreAppsPicker.ignoring([textEdit], player: player) { _ in }.isEmpty)
+    }
+
     @Test("apps chosen to ignore that can't be told apart are named in one alert: by name for one, how many and their names for several, none for none")
     func unidentifiedAppsAlert() throws {
         #expect(IgnoreAppsPicker.unidentifiedAppsAlert(urls: []) == nil)

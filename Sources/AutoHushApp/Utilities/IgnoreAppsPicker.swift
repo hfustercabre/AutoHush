@@ -18,8 +18,10 @@ enum IgnoreAppsPicker {
     }
 
     /// Asks for apps, then ignores each one (`ignore`) AutoHush can tell
-    /// apart, and says in one alert which it can't.
-    static func run(ignore: (AudioSource) -> Void) {
+    /// apart, and says in one alert which it can't; the media player
+    /// (`player`) among them too, which it says applies later (the user's
+    /// pick, the workflow audit, 2026-10-22).
+    static func run(player: PlayerOption?, ignore: (AudioSource) -> Void) {
         let panel = NSOpenPanel()
         panel.title = String(localized: "Choose Apps to Ignore",
                              comment: "Title of the panel that picks one or more apps to ignore (Settings → Sound Sources' and the menu's Ignore Another App…)")
@@ -29,9 +31,29 @@ enum IgnoreAppsPicker {
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
         // From the menu, AutoHush isn't the active app: the panel comes in front.
         NSApp.becomeActive()
-        guard panel.runModal() == .OK,
-              let alert = unidentifiedAppsAlert(urls: ignoreApps(at: panel.urls, ignore: ignore)) else { return }
-        InfoAlert.show(alert.title, alert.message)
+        guard panel.runModal() == .OK else { return }
+        for alert in ignoring(panel.urls, player: player, ignore: ignore) { InfoAlert.show(alert.title, alert.message) }
+    }
+
+    /// Ignores the apps at `urls` it can, and returns the alerts that say
+    /// which it couldn't, and that the media player (`player`) among them
+    /// is ignored only once another is chosen.
+    static func ignoring(_ urls: [URL], player: PlayerOption?, ignore: (AudioSource) -> Void) -> [(title: String, message: String)] {
+        var ignoredPlayer = false
+        let unidentified = ignoreApps(at: urls) { source in
+            ignore(source)
+            if source.id == player?.bundleID { ignoredPlayer = true }
+        }
+        return [unidentifiedAppsAlert(urls: unidentified), ignoredPlayer ? player.map { playerIgnoredNote($0.name) } : nil].compactMap(\.self)
+    }
+
+    /// The media player chosen to ignore: it never pauses itself, so that
+    /// counts once another player is chosen.
+    static func playerIgnoredNote(_ player: String) -> (title: String, message: String) {
+        (String(localized: "\(player) Is Your Media Player",
+                comment: "Settings → Sound Sources' or the menu's Ignore Another App…: title of the alert when the media player itself was among the apps chosen to ignore; %@ is the player"),
+         String(localized: "It doesn’t pause itself, so it’s ignored once you choose another player.",
+                comment: "Settings → Sound Sources' or the menu's Ignore Another App…: the alert when the media player was chosen to ignore (it's saved as ignored, which counts once another player is chosen)"))
     }
 
     /// Ignores each app at `urls` AutoHush can tell apart; the others, which

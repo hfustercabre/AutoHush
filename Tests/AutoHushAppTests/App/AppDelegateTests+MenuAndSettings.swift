@@ -106,6 +106,27 @@ extension AppDelegateTests {
         await TestWait.until { await scratch.second.reopenCount == 1 }
     }
 
+    @MainActor
+    @Test("the card's Unmute or Reopen that doesn't go says so")
+    func menuSaysPlayerFailed() async throws {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch, chosenPlayer: Players.second)
+        let shown = CallLog()
+        sut.runAlert = { alert in
+            shown.calls.append(alert.messageText)
+            return .alertFirstButtonReturn
+        }
+        let menu = try statusMenu(sut)
+        defer { menu.remove() }
+        await scratch.second.setFailPlay(MusicPlayerError.playerNotResponding)
+        await scratch.second.setReopenFails(true)
+        let name = sut.status.playerName
+        menu.perform(.unmutePlayer)
+        await TestWait.until { shown.calls == ["Couldn’t Unmute \(name)"] }
+        menu.perform(.reopenPlayer)
+        await TestWait.until { shown.calls.last == "Couldn’t Reopen \(name)" }
+    }
+
     // MARK: - Settings and updates
 
     @MainActor

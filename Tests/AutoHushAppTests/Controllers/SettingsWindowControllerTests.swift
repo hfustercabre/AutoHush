@@ -151,4 +151,22 @@ final class SettingsWindowControllerTests {
         #expect(!sut.handleKey(48, flags: [], windowNumber: window.windowNumber)) // Tab: the window's
         #expect(sut.keys.page.highlighted == nil)
     }
+    @Test("on Sound Sources, Delete removes the selected apps, as Remove does; with none selected, or on another page, it isn't taken")
+    func deleteRemovesSelected() async throws {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let arc = AudioSource(id: "com.example.arc", name: "Arc")
+        preferences.recordSeen([arc])
+        let model = SettingsModel.forTests(actions: actions, updates: updates, settings: UserSettings(preferences: preferences))
+        model.state.status.seenApps = [arc]
+        let sut = makeController(model)
+        defer { sut.close() }
+        sut.show(page: .detection)
+        let window = try #require(sut.window)
+        model.appList.click(on: arc.id, command: false, shift: false)
+        #expect(!sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // another page
+        sut.show(page: .soundSources)
+        #expect(sut.handleKey(51, flags: [], windowNumber: window.windowNumber))
+        #expect(model.appList.selectedApps.isEmpty && preferences.seenApps.isEmpty)
+        #expect(!sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // none selected
+    }
 }

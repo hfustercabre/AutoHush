@@ -8,7 +8,7 @@ import AutoHushKit
 /// Now", in the order the user chose; a magnifier opens a search by name in
 /// place of the heading. A click selects
 /// an app, ⌘-click and ⇧-click several, as in macOS's lists, and Remove
-/// takes them off the list (asking first when one is turned off, which then
+/// (or Delete) takes them off the list (asking first when one is turned off, which then
 /// pauses the music again). The page fills the window: the list scrolls
 /// between the heading and the buttons.
 struct SoundSourcesSettingsView: View {
@@ -53,7 +53,7 @@ struct SoundSourcesSettingsView: View {
             // Each button on one line, in every language: three of them leave
             // little room.
             BottomBar {
-                Button { IgnoreAppsPicker.run { model.settings.setIgnored($0, true) } } label: {
+                Button { IgnoreAppsPicker.run(player: model.chosenPlayer) { model.settings.setIgnored($0, true) } } label: {
                     Text(verbatim: IgnoreAppsPicker.title(noneIgnored: model.state.ignoredApps.isEmpty))
                 }
                     .buttonStyle(.chip)
@@ -74,14 +74,10 @@ struct SoundSourcesSettingsView: View {
             .environment(\.highlightBand, .bottom)
         }
         // Asked as every removal is (`PlayerAlerts.confirm`): its button
-        // blue, not red (the user, 2026-10-20). From the run loop, after
-        // this update: run from a main-actor task, the alert's modal loop
-        // would hold up every other main-actor job until it closes.
+        // blue, not red (the user, 2026-10-20), after this update.
         .onChange(of: list.appsAwaitingRemoval) { _, rows in
             guard !rows.isEmpty else { return }
-            RunLoop.main.perform(inModes: [.common]) {
-                MainActor.assumeIsolated { confirmRemoval(rows) }
-            }
+            InfoAlert.whenNoneOpen { confirmRemoval(rows) }
         }
     }
 

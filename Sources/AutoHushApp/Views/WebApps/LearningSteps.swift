@@ -97,7 +97,7 @@ enum LearningText {
     /// The row's button, until they're learned.
     static var learnButton: String {
         String(localized: "Learn Controls…",
-               comment: "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine")
+               comment: "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet, and Settings → Diagnostics beside “Play/Pause button learned: No”: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine")
     }
 
     /// The row's button, once they're learned.

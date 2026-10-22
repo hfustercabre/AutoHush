@@ -64,16 +64,13 @@ extension AppDelegate {
                 if needs { self.logger.notice("\(player.name, privacy: .public) runs without the option it needs: it needs reopening") }
             }
             guard needs, asking else { return }
-            // From the run loop: run inside this task, the alert's modal loop
-            // would hold up every other main-actor job until it closes (the
-            // player's state reports, the menu, a quit asked for).
-            RunLoop.main.perform(inModes: [.common]) {
-                MainActor.assumeIsolated {
-                    guard self.player?.bundleID == player.bundleID, self.status.playerNeedsReopen else { return }
-                    let (reopens, always) = self.askToReopen(player.name)
-                    if always { ReopenChoices.setReopensAlways(player.bundleID, defaults: self.defaults) }
-                    if reopens { Task { await self.reopen(player) } }
-                }
+            // Not inside this task: the alert's modal loop would hold up the
+            // player's state reports, the menu, a quit asked for.
+            InfoAlert.whenNoneOpen {
+                guard self.player?.bundleID == player.bundleID, self.status.playerNeedsReopen else { return }
+                let (reopens, always) = self.askToReopen(player.name)
+                if always { ReopenChoices.setReopensAlways(player.bundleID, defaults: self.defaults) }
+                if reopens { Task { await self.reopen(player, tellsIfFails: true) } }
             }
         }
     }
@@ -81,7 +78,7 @@ extension AppDelegate {
     /// The card's Reopen button.
     func reopenChosenPlayer() {
         guard let player else { return }
-        Task { [weak self] in await self?.reopen(player) }
+        Task { [weak self] in await self?.reopen(player, tellsIfFails: true) }
     }
 
     /// Whether a player the user chose to reopen always, found without its
@@ -98,11 +95,15 @@ extension AppDelegate {
         return false
     }
 
-    private func reopen(_ player: any MusicPlayer) async {
+    /// `tellsIfFails`: the user asked for it (the card's Reopen, the
+    /// alert's), so a reopen that fails says so; one AutoHush does by itself
+    /// leaves that to the card.
+    private func reopen(_ player: any MusicPlayer, tellsIfFails: Bool = false) async {
         // From the start: it opens again before the reopen is over.
         lastReopens[player.bundleID] = (clock(), false)
         let reopened = await player.reopen()
         logger.notice("\(player.name, privacy: .public) \(reopened ? "reopened with what it needs" : "couldn’t be reopened", privacy: .public)")
+        if !reopened, tellsIfFails { tellFailure(PlayerAlerts.couldNotReopen(player.name)) }
         let needs = await player.needsReopen()
         if self.player?.bundleID == player.bundleID { status.playerNeedsReopen = needs }
     }

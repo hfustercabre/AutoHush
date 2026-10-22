@@ -32,9 +32,12 @@ struct BehaviorSettingsView: View {
                 TimingSliderRow(model: model, timing: .resumeAfter)
                     .unavailable(!model.timings.resumesPlayback)
                 CardDivider()
-                // No note why these are greyed out: the switch above says it
-                // (the user, 2026-10-21; Fades and Volume, other cards, have one).
                 SettingsSwitchRow(model: model, kind: .staysPausedAfterCalls)
+                // Why what follows the switch is greyed out, as in the other
+                // cards (the user, 2026-10-22; none before).
+                if !model.timings.resumesPlayback {
+                    NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
+                }
             } footer: {
                 RestoreDefaultsButton(isDefault: model.resumingAreDefaults) { model.restoreDefaultResuming() }
             }
@@ -54,7 +57,9 @@ struct BehaviorSettingsView: View {
                     .unavailable(!model.timings.fadesEnabled && model.playerCanFade)
                 }
                 .unavailable(!model.playerCanFade)
-                if fadeInUnused {
+                if model.playerCanFade, !model.timings.fadesEnabled {
+                    NoteLabel(SettingsSwitch.fadesOffNote, kind: .info)
+                } else if fadeInUnused {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
                 }
                 if !model.playerCanFade, let player = model.chosenPlayerName {
@@ -77,6 +82,8 @@ struct BehaviorSettingsView: View {
                 .unavailable(SettingsTiming.levelingLimitsUnavailable(model))
                 if let reason = SettingsSwitch.levelsMusic.unavailableReason(model) {
                     NoteLabel(reason, kind: .info)
+                } else if !model.timings.levelsMusic {
+                    NoteLabel(SettingsSwitch.levelingOffNote, kind: .info)
                 }
             } footer: {
                 RestoreDefaultsButton(isDefault: model.volumeAreDefaults) { model.restoreDefaultVolume() }

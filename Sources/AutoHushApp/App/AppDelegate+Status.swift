@@ -21,7 +21,7 @@ extension AppDelegate {
 
     /// Quits and opens AutoHush again, as macOS's own "Quit & Reopen" does,
     /// handing over a pause it holds; `false` when the reopening couldn't be
-    /// set up (it doesn't quit then).
+    /// set up (it doesn't quit then, and says so).
     @discardableResult
     func reopen(
         openAfterExit: (URL) throws -> Void = { _ = try UpdateInstaller.openAfterExit($0) },
@@ -31,9 +31,17 @@ extension AppDelegate {
             try openAfterExit(Bundle.main.bundleURL)
         } catch {
             logger.error("Couldn’t reopen AutoHush: \(error)")
+            tellFailure(PlayerAlerts.couldNotReopenAutoHush)
             return false
         }
         terminate()
         return true
+    }
+
+    /// Says that something the user asked for couldn't be done
+    /// (`PlayerAlerts.couldNotReopenAutoHush` and the like), once no other
+    /// alert is open.
+    func tellFailure(_ failure: (title: String, message: String)) {
+        InfoAlert.whenNoneOpen { InfoAlert.show(failure.title, failure.message, run: self.runAlert) }
     }
 }

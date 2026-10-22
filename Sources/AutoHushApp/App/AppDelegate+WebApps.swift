@@ -16,11 +16,22 @@ extension AppDelegate {
         guard let player = player as? any LearningMusicPlayer else { return }
         guard addWebApp.adding != nil else { return learnAgainNow() }
         let site = addWebApp.model.address, name = player.name
-        RunLoop.main.perform(inModes: [.common]) {
-            MainActor.assumeIsolated {
-                guard self.runAlert(PlayerAlerts.stopAddingWebApp(site: site, player: name)) == .alertFirstButtonReturn else { return }
-                self.learnAgainNow()
-            }
+        InfoAlert.whenNoneOpen {
+            guard self.runAlert(PlayerAlerts.stopAddingWebApp(site: site, player: name)) == .alertFirstButtonReturn else { return }
+            self.learnAgainNow()
+        }
+    }
+
+    /// A suggested web app's tile or row: Add a Web App, filled in with its
+    /// address. While it adds another, it asks first, as that add stops (the
+    /// user's pick, the workflow audit, 2026-10-22).
+    func addSuggestedWebApp(_ address: String) {
+        let site = addWebApp.model.address
+        guard addWebApp.adding != nil, site != address else { return addWebApp.show(address: address) }
+        InfoAlert.whenNoneOpen {
+            guard self.runAlert(PlayerAlerts.stopAddingWebApp(site: site, for: address)) == .alertFirstButtonReturn else { return }
+            self.addWebApp.cancel()
+            self.addWebApp.show(address: address)
         }
     }
 

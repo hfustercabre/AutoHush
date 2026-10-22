@@ -35,7 +35,9 @@ struct UpdatesSettingsView: View {
                     model.updates.setMode(mode)
                 })
                 .unavailable(!model.checksForUpdatesAutomatically)
-                if model.checksForUpdatesAutomatically {
+                if !model.checksForUpdatesAutomatically {
+                    NoteLabel(SettingsSwitch.updateChecksOffNote, kind: .info)
+                } else {
                     // Every choice still works: the menu bar icon says what a notification would.
                     if model.notificationsOff {
                         Text(verbatim: Self.notificationsOffNote).captionStyle()

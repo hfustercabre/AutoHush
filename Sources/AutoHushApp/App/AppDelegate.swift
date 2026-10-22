@@ -241,7 +241,15 @@ extension AppDelegate: AppActions {
     func unmutePlayer() {
         guard let player else { return }
         logger.notice("\(player.name, privacy: .public) unmuted from the menu, until the other apps stop")
-        Task { try? await player.play() } // its state then reads as playing: the user's, as a resume by hand
+        // Its state then reads as playing: the user's, as a resume by hand.
+        Task { [weak self] in
+            do {
+                try await player.play()
+            } catch {
+                self?.logger.error("\(player.name, privacy: .public) couldn’t be unmuted: \(error)")
+                self?.tellFailure(PlayerAlerts.couldNotUnmute(player.name))
+            }
+        }
     }
     func reopenAutoHush() { reopen() }
     func openNotificationSettings() { SystemSettingsPane.notifications.open() }

@@ -12,13 +12,16 @@ extension StatusMenuController {
     /// opens a side window from its row, its first row lit, or lights it in
     /// one the pointer opened; ← closes it; on a slider or a choice, ← and →
     /// change it, and in a row of several (the durations, the buttons) they
-    /// move along it. Among the players, typing goes to their search, and
-    /// Return with nothing highlighted chooses the first one it left, only
-    /// while something is typed. Keys with nothing to act on do nothing,
+    /// move along it. Among the players, typing goes to their search (Space
+    /// too, once something is typed: before, it chooses, as in macOS's
+    /// menus), and Return with nothing highlighted chooses the first one it
+    /// left, only while something is typed. Keys with nothing to act on do nothing,
     /// without a beep, as in Settings. Tab leaves the highlight to the
     /// keyboard's focus.
     func handleKey(_ event: NSEvent) -> Bool {
-        if model.isChoosingPlayer, model.players.showsSearch {
+        // Space presses the highlighted player until something is typed.
+        let spaceChooses = event.keyCode == 49 && model.playerSearch.isEmpty
+        if model.isChoosingPlayer, model.players.showsSearch, !spaceChooses {
             if Self.composes(event) {
                 // Only the field itself can compose it: it takes the keyboard.
                 searchTakesKeyboard(replaying: event)
@@ -63,6 +66,8 @@ extension StatusMenuController {
             } else {
                 _ = keyboard.adjust(1) || keyboard.moveInRow(1)
             }
+        case .delete: // nothing in the menu is removed with it
+            return false
         case .left:
             if inSide {
                 closeSide()

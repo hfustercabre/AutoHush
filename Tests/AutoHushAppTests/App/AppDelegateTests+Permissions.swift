@@ -334,9 +334,14 @@ extension AppDelegateTests {
     // MARK: - Permissions while running
 
     @MainActor
-    @Test("reopening opens AutoHush again once it has quit, then quits; if that can't be set up, it stays open")
-    func reopenRelaunchesThenQuits() {
+    @Test("reopening opens AutoHush again once it has quit, then quits; if that can't be set up, it stays open and says so")
+    func reopenRelaunchesThenQuits() async {
         let (sut, _) = makeSUT()
+        let shown = CallLog()
+        sut.runAlert = { alert in
+            shown.calls.append(alert.messageText)
+            return .alertFirstButtonReturn
+        }
         var calls: [String] = []
         sut.reopen(openAfterExit: { calls.append("open \($0.lastPathComponent)") }, terminate: { calls.append("quit") })
         #expect(calls == ["open \(Bundle.main.bundleURL.lastPathComponent)", "quit"])
@@ -344,5 +349,6 @@ extension AppDelegateTests {
         calls = []
         sut.reopen(openAfterExit: { _ in throw CocoaError(.fileNoSuchFile) }, terminate: { calls.append("quit") })
         #expect(calls.isEmpty)
+        await TestWait.until { shown.calls == ["Couldn’t Reopen AutoHush"] }
     }
 }

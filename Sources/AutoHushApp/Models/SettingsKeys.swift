@@ -11,8 +11,9 @@ import Foundation
 /// move along first. Return or Space presses the page's control. The
 /// pointer moves the highlight to its side too. Tab leaves it to the
 /// keyboard's focus, and a control that has the focus takes Return, Space,
-/// ← and → itself, as in the menu (the full check, 2026-10-18). Keys with
-/// nothing to act on do nothing, without a beep.
+/// ← and → itself, as in the menu (the full check, 2026-10-18). Delete
+/// removes the highlighted control if it can be (an added app's tile).
+/// Keys with nothing to act on do nothing, without a beep.
 @MainActor
 final class SettingsKeys {
     enum Side { case sidebar, page }
@@ -49,6 +50,8 @@ final class SettingsKeys {
         case .tab:
             clear()
             return false
+        case .delete:
+            return page.delete()
         case .up, .down:
             let step = key == .down ? 1 : -1
             if side == .sidebar, sidebar.highlighted != nil {

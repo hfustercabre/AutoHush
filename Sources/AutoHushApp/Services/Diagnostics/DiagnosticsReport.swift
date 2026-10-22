@@ -89,14 +89,14 @@ enum DiagnosticsReport {
         guard let player = status.chosenPlayer else {
             let none = PlayerOption.noneChosenLabel
             return .init(kind: .player, title: title, summary: none,
-                         rows: [Row(label: playerLabel, value: none, mark: .problem)])
+                         rows: [Row(label: playerLabel, value: none, mark: .problem, fix: .choosePlayer)])
         }
         let name = player.isInstalled
             ? [player.name, facts.playerVersion].compactMap { $0 }.joined(separator: " ")
             : "\(player.name) · \(PlayerOption.notInstalledLabel)"
         let state = describe(status.playback, mutes: player.pausesByMuting)
         var rows = [
-            Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem),
+            Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem, fix: player.isInstalled ? nil : .choosePlayer),
             Row(label: String(localized: "State", comment: "Diagnostics: the media player's state"), value: state),
             // Yes, Off (turned off in Settings → Behavior), or No (the player can't fade).
             Row(label: BehaviorSettingsView.fadesTitle,
@@ -111,7 +111,7 @@ enum DiagnosticsReport {
         if let learned = facts.playerLearned {
             rows.append(Row(label: String(localized: "Play/Pause button learned",
                                           comment: "Diagnostics: whether AutoHush knows which button of the web app plays and pauses it"),
-                            value: learned ? yes : no, mark: learned ? .ok : .problem))
+                            value: learned ? yes : no, mark: learned ? .ok : .problem, fix: learned ? nil : .learnControls))
         }
         if let reaches = facts.reachesOtherSpaces {
             rows.append(Row(label: String(localized: "Reaches windows on other Spaces",
@@ -210,10 +210,10 @@ enum DiagnosticsReport {
         case _ where antiDot:
             rows.append(Row(label: audio, value: AntiDotText.notNeeded, mark: .neutral))
         case .denied?:
-            rows.append(Row(label: audio, value: notAllowed, mark: .problem))
+            rows.append(Row(label: audio, value: notAllowed, mark: .problem, fix: .allow(.systemAudioRecording)))
         case .notDetermined?:
             rows.append(Row(label: audio, value: String(localized: "Not asked yet", comment: "Diagnostics: a permission macOS hasn't asked about"),
-                            mark: .problem))
+                            mark: .problem, fix: .allow(.systemAudioRecording)))
         case nil:
             rows.append(Row(label: audio, value: unknown, mark: .neutral))
         }
@@ -229,7 +229,7 @@ enum DiagnosticsReport {
         if let label = control {
             switch facts.playerPermissionGranted {
             case true?:  rows.append(Row(label: label, value: allowed, mark: .ok))
-            case false?: rows.append(Row(label: label, value: notAllowed, mark: .problem))
+            case false?: rows.append(Row(label: label, value: notAllowed, mark: .problem, fix: facts.playerPermission.map { .allow($0) }))
             case nil:
                 rows.append(Row(label: label, value: String(localized: "Not checked yet",
                                                             comment: "Diagnostics: a permission AutoHush hasn't needed yet"),

@@ -19,7 +19,7 @@ extension AppDelegate {
         refreshPlayerOptions()
         let option = status.playerOptions.first { $0.bundleID == bundleID }
         if let address = option?.webAddress {
-            addWebApp.show(address: address)
+            addSuggestedWebApp(address)
             return
         }
         // Picked again in the welcome window after its Back: on to what it
