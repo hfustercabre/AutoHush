@@ -147,6 +147,8 @@ flowchart TD
   TONE["Too short: a notification<br/>or chat tone, ignored"]
   AP{"Auto-Pause on,<br/>the player playing<br/>on this Mac?"}
   LEFT["Left alone"]
+  HEARD{"Heard? Half a second<br/>of listening (AntiDot<br/>mode: not asked)"}
+  SILENT["Playing silently (a muted<br/>trailer): not paused, listened<br/>to again every 2 s"]
   TOOK["It stopped just as the app<br/>started (VLC pauses others):<br/>counted as AutoHush’s pause"]
   FO["Fade out over 1 s, then<br/>pause; the volume set back<br/>while paused (no fade without<br/>a readable volume)"]
   BACK["The app stops during<br/>the fade-out: the music<br/>comes back up, not paused"]
@@ -176,7 +178,10 @@ flowchart TD
   T -->|"yes"| AP
   AP -->|"no"| LEFT
   AP -->|"it just stopped"| TOOK --> PA
-  AP -->|"yes"| FO
+  AP -->|"yes"| HEARD
+  HEARD -->|"yes"| FO
+  HEARD -->|"no"| SILENT
+  SILENT -.->|"2 s later, an app<br/>still playing"| HEARD
   FO -.->|"the app stops first"| BACK
   FO -.->|"you pause it"| YOURS
   FO --> PC
@@ -262,6 +267,7 @@ stateDiagram-v2
   state "Starting" as Unknown
   state "Playing on this Mac" as Playing
   state "On another device" as Elsewhere
+  state "Playing silently" as Silent
   state "Not playing" as Idle
   state "Fading out" as FadingOut
   state "Paused by AutoHush" as PausedByUs
@@ -283,6 +289,10 @@ stateDiagram-v2
   Playing --> Muted : it won’t pause
   Muted --> PausedByUs : it can pause again
   Muted --> Playing : the apps stop
+  Playing --> Silent : not heard (an app plays, or the menu opens)
+  Silent --> FadingOut : heard while an app plays
+  Silent --> Playing : heard as the menu opens
+  Silent --> Idle : you pause or quit it
   Playing --> Elsewhere : another device
   Elsewhere --> Playing : back here
   Playing --> Idle : you pause or quit it
@@ -297,7 +307,7 @@ stateDiagram-v2
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-The chosen player as the menu’s card and the menu bar icon show it. **Not playing** is a player paused by you, stopped or quit: AutoHush never plays it, but takes over a pause the starting app made itself (VLC). **Muted instead** is a web app during an ad it won’t pause, or an app added as Muted only (Unmute ends it too). **The apps stop** means every other app quiet for 2 s, or Auto-Pause turned off.
+The chosen player as the menu’s card and the menu bar icon show it. **Not playing** is a player paused by you, stopped or quit: AutoHush never plays it, but takes over a pause the starting app made itself (VLC). **Playing silently** is a player that says it plays but isn’t heard (a muted trailer, a silent preview): AutoHush listens to it when another app plays (again every 2 s while one does) and when the menu opens, and pauses it only once it’s heard. **Muted instead** is a web app during an ad it won’t pause, or an app added as Muted only (Unmute ends it too). **The apps stop** means every other app quiet for 2 s, or Auto-Pause turned off.
 
 ## Pauses AutoHush holds
 

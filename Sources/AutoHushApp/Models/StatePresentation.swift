@@ -91,6 +91,14 @@ extension PlaybackState {
                 label: String(localized: "AutoHush: nothing is playing", comment: "VoiceOver label of the menu bar icon"),
                 line: String(localized: "Not playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: nothing plays")
             )
+        case .playingSilently:
+            return StatePresentation(
+                icon: .noMusic,
+                label: String(localized: "AutoHush: your player is playing silently",
+                              comment: "VoiceOver label of the menu bar icon: the media player says it plays, but nothing of it is heard (a muted trailer), so AutoHush doesn't pause it"),
+                line: String(localized: "Playing silently",
+                             comment: "At the top of the menu, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it")
+            )
         case .playingElsewhere:
             return StatePresentation(
                 icon: .elsewhere,

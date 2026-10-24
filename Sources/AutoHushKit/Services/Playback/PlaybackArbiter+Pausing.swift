@@ -73,6 +73,19 @@ extension PlaybackArbiter {
         latestStart = nil
         // Things may have changed while the player answered.
         guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
+        // Not heard (a muted trailer, a silent preview): nothing to pause.
+        // Listened to again every 2 s while apps play, so it's paused once heard.
+        if await hearsPlayer() == false {
+            guard !isShutDown, autoPauseEnabled, !activeSources.isEmpty else { return }
+            if !playsSilently {
+                logger.info("[arbiter] \(self.player.name, privacy: .public) says it plays but isn’t heard — not pausing")
+            }
+            playsSilently = true
+            schedulePause(after: Self.silentRecheckInterval)
+            return
+        }
+        playsSilently = false
+        guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
         isFadingOut = true
         noteCalls()
         if let levelLowered { volumeLeveler?.restore(over: configuration.fadeOutDuration, lowered: levelLowered) } // as the music fades out

@@ -31,6 +31,7 @@ package final class MonitoringPipeline {
         case asleep(Bool, change: Int)
         case resumesHeld(Bool)
         case outputDisconnected
+        case checkPlayerHeard
     }
 
     private let arbiter: PlaybackArbiter
@@ -107,7 +108,8 @@ package final class MonitoringPipeline {
             onPausedByUsChange: { monitorLink.monitor?.setMusicPaused($0) },
             volumeLeveler: volumeLeveler,
             resumeOffset: { await monitorLink.monitor?.resumeOffsetDB() },
-            onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) }
+            onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) },
+            hearsPlayer: { await monitorLink.monitor?.isPlayerHeard() }
         )
         let monitor = AudioMonitor(
             configuration: configuration,
@@ -147,6 +149,7 @@ package final class MonitoringPipeline {
                     case .asleep(let asleep, let change): await arbiter.setAsleep(asleep, change: change)
                     case .resumesHeld(let held): await arbiter.holdResumes(held)
                     case .outputDisconnected: await arbiter.handleOutputDisconnected()
+                    case .checkPlayerHeard: await arbiter.checkPlayerHeard()
                     }
                 }
             },
@@ -223,6 +226,12 @@ package final class MonitoringPipeline {
     /// `PlaybackArbiter.holdResumes`.
     package func holdResumes(_ held: Bool) {
         arbiterCommands.yield(.resumesHeld(held))
+    }
+
+    /// Listens to the player, so a menu opening says at once whether a
+    /// player that says it plays here is heard (`PlaybackArbiter.checkPlayerHeard`).
+    package func checkPlayerHeard() {
+        arbiterCommands.yield(.checkPlayerHeard)
     }
 
     /// Applies new timings and thresholds live.

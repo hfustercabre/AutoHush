@@ -79,6 +79,12 @@ actor PlaybackArbiter: PlaybackArbiting {
     var playerState: PlayerState = .unknown
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
     var playsLocally = true
+    /// It says it plays here, but wasn't heard when last listened to
+    /// (`hearsPlayer`): playing silently, not paused.
+    var playsSilently = false
+    /// Whether the player is heard now (half a second of listening); `nil`
+    /// when it can't be told (AntiDot mode, no Audio Recording).
+    let hearsPlayer: @Sendable () async -> Bool?
     var autoPauseEnabled: Bool
     var activeSources: Set<String> = []
     /// The apps playing with their microphone on (calls).
@@ -122,6 +128,9 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// its Play button): a timed-out query is not the user changing the player.
     static let resumeRetries = 2
     static let resumeRetryDelay: TimeInterval = 1
+    /// How often a player playing silently is listened to again while other
+    /// apps play, so it's paused as soon as it's heard.
+    static let silentRecheckInterval: TimeInterval = 2
     /// How long after a resume a polled player is asked again (`confirmResumeLater`).
     static let resumeConfirmDelay: TimeInterval = 3
     /// Once auto-pause is back on, the pause for apps already playing waits
@@ -157,7 +166,8 @@ actor PlaybackArbiter: PlaybackArbiting {
         onPausedByUsChange: @escaping @Sendable (Bool) -> Void = { _ in },
         volumeLeveler: any ResumeLeveling? = nil,
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
-        onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in }
+        onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
+        hearsPlayer: @escaping @Sendable () async -> Bool? = { nil }
     ) {
         self.player = player
         self.fader = VolumeFader(
@@ -177,6 +187,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.volumeLeveler = volumeLeveler
         self.resumeOffset = resumeOffset
         self.onPauseFailure = onPauseFailure
+        self.hearsPlayer = hearsPlayer
     }
 
     /// Records that a source started or stopped. Returns without waiting for
@@ -409,6 +420,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// `.unknown` carries no information and is ignored.
     func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
+        if state != .playing { playsSilently = false }
         noteStoppedPlaying(state)
         if state != .playing { pauseFailure = nil } // the user paused or stopped it
         guard pausedByUs, state != .paused else {
@@ -433,6 +445,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     func handleLocalPlaybackChange(_ isLocal: Bool) {
         guard !isShutDown, isLocal != playsLocally else { return }
         playsLocally = isLocal
+        playsSilently = false // a new output, or none: what was heard no longer stands
         if !isLocal { pauseFailure = nil } // it isn't heard here any more
         publishPlaybackState()
     }
@@ -511,5 +524,15 @@ actor PlaybackArbiter: PlaybackArbiting {
         case .unknown:
             break
         }
+    }
+
+    /// Listens to the player when the menu opens, so it says at once whether
+    /// a player that says it plays here is heard (the user, 2026-10-24).
+    func checkPlayerHeard() async {
+        guard !isShutDown, playerState == .playing, playsLocally, !pausedByUs, !isFadingOut,
+              let heard = await hearsPlayer() else { return }
+        guard !isShutDown, playerState == .playing, playsLocally, !pausedByUs, playsSilently == heard else { return }
+        playsSilently = !heard
+        publishPlaybackState()
     }
 }

@@ -9,6 +9,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Playing silently.** A player that says it plays but can't be heard,
+  like Apple TV's muted trailers, is no longer paused for nothing: the menu
+  says **Playing silently**. AutoHush listens to it for half a second when
+  another app starts (again every 2 seconds while one plays) and when you
+  open the menu, and pauses it as soon as it's heard. In AntiDot mode,
+  which listens to nothing, it pauses as before.
+
 - **AutoHush's menu bar icon starts beside the system's icons** (Control
   Center, the clock), where the notch or other apps' icons don't hide it:
   once, unless you've already moved it. **Keep icon next to system icons**

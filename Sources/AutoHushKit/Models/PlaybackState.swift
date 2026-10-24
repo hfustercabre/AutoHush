@@ -16,6 +16,9 @@ package enum PlaybackState: Equatable, Sendable {
     case musicIdle
     /// The music plays on another device (the player's own remote playback); it is never paused.
     case playingElsewhere
+    /// The player says it plays on this Mac, but nothing of it is heard (a
+    /// muted trailer, a silent preview): it isn't paused, since nothing needs it.
+    case playingSilently
     /// Another app plays, but the media player refused to pause or failed
     /// to (the arbiter says why); it plays on.
     case pauseFailed

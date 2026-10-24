@@ -12,6 +12,8 @@ protocol SessionMonitoring: HeldMonitoring {
     func setAsleep(_ asleep: Bool)
     func setConfiguration(_ configuration: AppConfiguration)
     func activeAudioReport() -> [ActiveAudioReport.Entry]
+    /// Listens to the player: see `MonitoringPipeline.checkPlayerHeard`.
+    func checkPlayerHeard()
 }
 
 extension MonitoringPipeline: SessionMonitoring {}

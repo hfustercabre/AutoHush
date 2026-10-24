@@ -334,6 +334,7 @@ enum DiagnosticsReport {
         case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the media player's state")
         case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, under the media player: nothing plays")
         case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
+        case .playingSilently:  return String(localized: "Playing silently", comment: "At the top of the menu, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it")
         case .pauseFailed:      return String(localized: "Playing: couldn’t pause it", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
         case .unknown:          return unknown
         }

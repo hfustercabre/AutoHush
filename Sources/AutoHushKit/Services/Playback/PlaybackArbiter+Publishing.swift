@@ -30,6 +30,7 @@ extension PlaybackArbiter {
         if pausedByUs, !activeSources.isEmpty || resumesHeld { return .pausedByMonitor }
         if pauseFailure != nil, !activeSources.isEmpty { return .pauseFailed }
         if playerState == .playing, !playsLocally { return .playingElsewhere }
+        if playerState == .playing, playsSilently { return .playingSilently }
 
         switch playerState {
         case .playing:                       return .musicPlaying
