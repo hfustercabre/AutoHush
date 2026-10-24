@@ -96,6 +96,8 @@ actor PlaybackArbiter: PlaybackArbiting {
         didSet { if mutedForRestart != oldValue { onMutedInsteadChange(mutedForRestart) } }
     }
     private let onMutedInsteadChange: @Sendable (Bool) -> Void
+    /// AutoHush just paused or played the player itself (`forgetLastState`).
+    let onPlayerCommanded: @Sendable () -> Void
     /// How long ago the user last pressed a key or clicked; by default just
     /// now, so every start is the user's (the monitoring gives the real one).
     let secondsSinceUserInput: @Sendable () -> TimeInterval
@@ -151,8 +153,6 @@ actor PlaybackArbiter: PlaybackArbiting {
     static let selfRestartWindow: TimeInterval = 5
     /// How many times such a player is paused again before it's muted.
     static let maxRepauses = 2
-    /// How long after a resume a polled player is asked again (`confirmResumeLater`).
-    static let resumeConfirmDelay: TimeInterval = 3
     /// Once auto-pause is back on, the pause for apps already playing waits
     /// their stop grace plus this: a couple of the monitor's ticks.
     static let remeasureMargin: TimeInterval = 0.5
@@ -190,6 +190,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         hearsPlayer: @escaping @Sendable () async -> Bool? = { nil },
         secondsSinceUserInput: @escaping @Sendable () -> TimeInterval = { 0 },
         onMutedInsteadChange: @escaping @Sendable (Bool) -> Void = { _ in },
+        onPlayerCommanded: @escaping @Sendable () -> Void = {},
         playerMute: (any PlayerMuting)? = nil
     ) {
         self.player = player
@@ -213,6 +214,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.hearsPlayer = hearsPlayer
         self.secondsSinceUserInput = secondsSinceUserInput
         self.onMutedInsteadChange = onMutedInsteadChange
+        self.onPlayerCommanded = onPlayerCommanded
         self.playerMute = playerMute
     }
 
@@ -596,6 +598,7 @@ actor PlaybackArbiter: PlaybackArbiting {
             repauses += 1
             do {
                 try await player.pause()
+                onPlayerCommanded()
                 pausedAt = clock()
                 playerState = .paused
                 logger.info("[arbiter] \(self.player.name, privacy: .public) started again by itself — paused again")

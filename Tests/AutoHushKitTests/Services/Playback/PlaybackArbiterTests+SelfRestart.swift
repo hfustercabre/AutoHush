@@ -28,11 +28,13 @@ extension PlaybackArbiterTests {
     /// input `inputAgo` seconds before each look, and `mute`.
     private func pausedForVLC(_ player: MockMusicPlayer, clock: ManualClock, inputAgo: TimeInterval = 600,
                               hearing: Hearing = Hearing(true), mute: FakeMute? = FakeMute(), published: LastPublished,
-                              configuration: AppConfiguration = .testing, mutedInstead: Locked<[Bool]>? = nil) async -> PlaybackArbiter {
+                              configuration: AppConfiguration = .testing, mutedInstead: Locked<[Bool]>? = nil,
+                              commanded: Locked<Int>? = nil) async -> PlaybackArbiter {
         let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
                                       clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
                                       hearsPlayer: { hearing.ask() }, secondsSinceUserInput: { inputAgo },
-                                      onMutedInsteadChange: { mutedInstead?.append($0) }, playerMute: mute)
+                                      onMutedInsteadChange: { mutedInstead?.append($0) },
+                                      onPlayerCommanded: { commanded?.increment() }, playerMute: mute)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         await arbiter.waitUntilIdle()
@@ -143,5 +145,19 @@ extension PlaybackArbiterTests {
         for _ in 0...PlaybackArbiter.maxRepauses { await startsAgain(player, arbiter, clock: clock) }
         #expect(mute.muteCount == 1)
         #expect(mute.unmuteCount == 1)
+    }
+
+    @Test("each pause or play AutoHush makes itself is told, so a polled player's next read is reported: its pause, a pause again, the resume")
+    func ownCommandsTold() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), published = LastPublished()
+        let commanded = Locked(0)
+        let arbiter = await pausedForVLC(player, clock: clock, published: published, commanded: commanded)
+        #expect(commanded.value == 1) // the pause
+        await startsAgain(player, arbiter, clock: clock)
+        #expect(commanded.value == 2) // paused again
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await TestWait.until { await player.playCallCount == 1 }
+        await TestWait.until { commanded.value == 3 } // the resume
+        #expect(commanded.value == 3)
     }
 }

@@ -116,6 +116,7 @@ package final class MonitoringPipeline {
         // The arbiter decides when audio levels are needed; the monitor, created
         // after it, captures audio only then.
         let monitorLink = MonitorLink()
+        let observerLink = ObserverLink()
         let tapsAllowed = OSAllocatedUnfairLock(initialState: Self.allowsTaps(detectionMethod))
         self.tapsAllowed = tapsAllowed
         let arbiter = PlaybackArbiter(
@@ -132,6 +133,7 @@ package final class MonitoringPipeline {
             hearsPlayer: { await monitorLink.monitor?.isPlayerHeard() },
             secondsSinceUserInput: readers.secondsSinceUserInput,
             onMutedInsteadChange: { statusUpdates.yield(.mutedInstead($0)) },
+            onPlayerCommanded: { observerLink.forgetLastState() },
             playerMute: readers.playerMute(player.bundleID) { tapsAllowed.withLock { $0 } }
         )
         let monitor = AudioMonitor(
@@ -157,6 +159,7 @@ package final class MonitoringPipeline {
             arbiterCommands.yield(.playerState(state))
             monitor?.setPlayerPlaying(state == .playing)
         }
+        observerLink.observer = playerObserver
         self.arbiter = arbiter
         self.monitor = monitor
         self.outputDisconnects = readers.outputDisconnects
@@ -298,4 +301,16 @@ package final class MonitoringPipeline {
 /// Lets the arbiter reach the monitor that is created after it.
 private final class MonitorLink: @unchecked Sendable {
     weak var monitor: AudioMonitor?
+}
+
+/// The player's state observer, for the arbiter to reach on the main actor;
+/// set once, as the pipeline is made.
+private final class ObserverLink: @unchecked Sendable {
+    @MainActor weak var observer: (any PlayerStateObserving)?
+
+    nonisolated init() {}
+
+    func forgetLastState() {
+        Task { @MainActor [weak self] in self?.observer?.forgetLastState() }
+    }
 }

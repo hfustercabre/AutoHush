@@ -257,4 +257,13 @@ package enum LearningStatus: Equatable, Sendable {
 package protocol PlayerStateObserving: AnyObject {
     func start()
     func stop()
+    /// AutoHush just paused or played the player itself: one read by
+    /// polling reports its next read even if it's the same as its last, so
+    /// a start right after a pause (the next trailer, 2026-10-24) isn't lost.
+    func forgetLastState()
+}
+
+extension PlayerStateObserving {
+    /// One told of every change by the player has nothing to forget.
+    package func forgetLastState() {}
 }

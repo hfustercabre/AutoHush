@@ -23,34 +23,6 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 1)
     }
 
-    @Test("a polled player is asked again a moment after a resume: one that stopped meanwhile shows as not playing, not as playing elsewhere",
-          arguments: [true, false])
-    func resumeConfirmedLater(keepsPlaying: Bool) async {
-        let player = MockMusicPlayer(stateReportDelay: 1) // read once a second
-        let scheduler = ManualDebounceScheduler()
-        let published = LastPublished()
-        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      onPlaybackStateChange: { published.set($0) })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await TestWait.until { await player.pauseCallCount == 1 }
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await TestWait.until { await player.playCallCount == 1 }
-        await arbiter.waitUntilIdle()
-        #expect(scheduler.scheduledDelays.last == PlaybackArbiter.resumeConfirmDelay)
-        // Stopped right after, unannounced: its last read was the pause's, so its
-        // observer has no change to report (Apple TV, its window closed during
-        // the fade-in), and its output closes.
-        if !keepsPlaying {
-            await player.setState(.paused)
-            await arbiter.handleLocalPlaybackChange(false)
-            #expect(published.state == .playingElsewhere) // as it was shown
-        }
-        await scheduler.completeNext()
-        let expected: PlaybackState = keepsPlaying ? .musicPlaying : .musicIdle
-        await TestWait.until { published.state == expected }
-        #expect(published.state == expected)
-    }
-
     /// The playback state last published.
     final class LastPublished: @unchecked Sendable {
         // Read and written only under `lock`.
@@ -58,18 +30,6 @@ extension PlaybackArbiterTests {
         private var last: PlaybackState?
         var state: PlaybackState? { lock.withLock { last } }
         func set(_ state: PlaybackState) { lock.withLock { last = state } }
-    }
-
-    @Test("a player that announces its state isn't asked again after a resume")
-    func announcingPlayerNotAskedAgain() async {
-        let player = MockMusicPlayer()
-        let scheduler = ManualDebounceScheduler()
-        let arbiter = makeArbiter(player: player, scheduler: scheduler)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
-        await TestWait.until { await player.playCallCount == 1 }
-        await arbiter.waitUntilIdle()
-        #expect(!scheduler.scheduledDelays.contains(PlaybackArbiter.resumeConfirmDelay))
     }
 
     /// How many times the music is played once the apps stop, with Stay
