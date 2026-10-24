@@ -300,6 +300,8 @@ stateDiagram-v2
   Idle --> PausedByUs : the app paused it
   PausedByUs --> Idle : you quit it, the Mac sleeps
   PausedByUs --> Playing : you play it
+  PausedByUs --> PausedByUs : it starts again by itself, paused again (twice at most)
+  PausedByUs --> Muted : it keeps starting again by itself
 
   class Failed warn
   class PausedByUs,Muted ref
@@ -307,7 +309,7 @@ stateDiagram-v2
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-The chosen player as the menu’s card and the menu bar icon show it. **Not playing** is a player paused by you, stopped or quit: AutoHush never plays it, but takes over a pause the starting app made itself (VLC). **Playing silently** is a player that says it plays but isn’t heard (a muted trailer, a silent preview): AutoHush listens to it when another app plays (again every 2 s while one does) and when the menu opens, and pauses it only once it’s heard. **Muted instead** is a web app during an ad it won’t pause, or an app added as Muted only (Unmute ends it too). **The apps stop** means every other app quiet for 2 s, or Auto-Pause turned off.
+The chosen player as the menu’s card and the menu bar icon show it. **Not playing** is a player paused by you, stopped or quit: AutoHush never plays it, but takes over a pause the starting app made itself (VLC). **Playing silently** is a player that says it plays but isn’t heard (a muted trailer, a silent preview): AutoHush listens to it when another app plays (again every 2 s while one does) and when the menu opens, and pauses it only once it’s heard. A player that starts again by itself within 5 s of AutoHush’s pause, with no key pressed or click from you since (an autoplay, an ad), is paused again, twice at most, then **muted instead** until the apps stop; a silent one is left alone. **Muted instead** is also a web app during an ad it won’t pause, or an app added as Muted only (Unmute ends it too). **The apps stop** means every other app quiet for 2 s, or Auto-Pause turned off.
 
 ## Pauses AutoHush holds
 

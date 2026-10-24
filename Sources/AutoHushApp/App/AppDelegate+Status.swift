@@ -14,6 +14,7 @@ extension AppDelegate {
         shown.playback = state.playback
         shown.detection = state.detection
         shown.controlError = state.controlError
+        shown.playerMutedInstead = state.mutedInstead
         if shown != status { status = shown }
         // The monitoring recorded the apps it heard: Settings → Sound Sources lists them.
         if sourcesChanged { userSettings.appsSeenChanged() }

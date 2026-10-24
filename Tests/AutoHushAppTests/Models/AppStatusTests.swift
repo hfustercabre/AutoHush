@@ -42,6 +42,17 @@ struct AppStatusTests {
         #expect(status.statusLine == "Not playing")
     }
 
+    @Test("a player muted in place of the pause (it kept starting again by itself) says “Muted”, without Unmute; Paused once the mute is over")
+    func mutedInstead() {
+        var status = ready(.pausedByMonitor)
+        status.setActiveSources([chrome])
+        status.playerMutedInstead = true
+        #expect(status.statusLine == "Muted — Google Chrome is playing")
+        #expect(status.icon == .pausedForApp && !status.offersUnmute)
+        status.playerMutedInstead = false
+        #expect(status.statusLine == "Paused — Google Chrome is playing")
+    }
+
     @Test("a player opened without what it needs says so, with the attention icon, whatever Auto-Pause is")
     func needsReopen() {
         var status = ready(.musicPlaying)

@@ -40953,7 +40953,7 @@
       }
     },
     "AutoHush: your player is muted" : {
-      "comment" : "VoiceOver label of the menu bar icon, while the media player (one that can only be muted) is muted for another app",
+      "comment" : "VoiceOver label of the menu bar icon, while the media player (one that can only be muted, or one that kept starting again by itself after AutoHush's pause) is muted for another app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85225,7 +85225,7 @@
       }
     },
     "Muted by AutoHush" : {
-      "comment" : "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted)",
+      "comment" : "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted, or a player that kept starting again by itself after AutoHush's pause)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85906,7 +85906,7 @@
       }
     },
     "Muted — %@" : {
-      "comment" : "At the top of the menu, under the media player (an app added with Add an App that can only be muted); %@ says which apps play, e.g. “Safari is playing”",
+      "comment" : "At the top of the menu, under the media player (an app added with Add an App that can only be muted, or a player that kept starting again by itself after AutoHush's pause); %@ says which apps play, e.g. “Safari is playing”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

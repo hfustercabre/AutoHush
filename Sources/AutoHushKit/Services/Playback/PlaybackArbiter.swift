@@ -85,6 +85,21 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// Whether the player is heard now (half a second of listening); `nil`
     /// when it can't be told (AntiDot mode, no Audio Recording).
     let hearsPlayer: @Sendable () async -> Bool?
+    /// When AutoHush's pause last took (paused again included), and how many
+    /// times it paused the player again since its own pause
+    /// (`handleSelfRestart`).
+    var pausedAt: Date?
+    var repauses = 0
+    /// The player keeps starting again by itself, so it's muted, standing
+    /// for the pause until it's over (`PlayerMuting`).
+    var mutedForRestart = false {
+        didSet { if mutedForRestart != oldValue { onMutedInsteadChange(mutedForRestart) } }
+    }
+    private let onMutedInsteadChange: @Sendable (Bool) -> Void
+    /// How long ago the user last pressed a key or clicked; by default just
+    /// now, so every start is the user's (the monitoring gives the real one).
+    let secondsSinceUserInput: @Sendable () -> TimeInterval
+    let playerMute: (any PlayerMuting)?
     var autoPauseEnabled: Bool
     var activeSources: Set<String> = []
     /// The apps playing with their microphone on (calls).
@@ -131,6 +146,11 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// How often a player playing silently is listened to again while other
     /// apps play, so it's paused as soon as it's heard.
     static let silentRecheckInterval: TimeInterval = 2
+    /// How soon after AutoHush's pause a player starting again with no input
+    /// from the user counts as starting by itself (an autoplay, an ad).
+    static let selfRestartWindow: TimeInterval = 5
+    /// How many times such a player is paused again before it's muted.
+    static let maxRepauses = 2
     /// How long after a resume a polled player is asked again (`confirmResumeLater`).
     static let resumeConfirmDelay: TimeInterval = 3
     /// Once auto-pause is back on, the pause for apps already playing waits
@@ -167,7 +187,10 @@ actor PlaybackArbiter: PlaybackArbiting {
         volumeLeveler: any ResumeLeveling? = nil,
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
         onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
-        hearsPlayer: @escaping @Sendable () async -> Bool? = { nil }
+        hearsPlayer: @escaping @Sendable () async -> Bool? = { nil },
+        secondsSinceUserInput: @escaping @Sendable () -> TimeInterval = { 0 },
+        onMutedInsteadChange: @escaping @Sendable (Bool) -> Void = { _ in },
+        playerMute: (any PlayerMuting)? = nil
     ) {
         self.player = player
         self.fader = VolumeFader(
@@ -188,6 +211,9 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.resumeOffset = resumeOffset
         self.onPauseFailure = onPauseFailure
         self.hearsPlayer = hearsPlayer
+        self.secondsSinceUserInput = secondsSinceUserInput
+        self.onMutedInsteadChange = onMutedInsteadChange
+        self.playerMute = playerMute
     }
 
     /// Records that a source started or stopped. Returns without waiting for
@@ -434,6 +460,10 @@ actor PlaybackArbiter: PlaybackArbiting {
             logger.debug("[arbiter] \(self.player.name, privacy: .public) reported \(state.rawValue, privacy: .public) but is paused — keeping pausedByUs")
         } else {
             if live == .unknown { playerState = state } // no answer: the report stands
+            if playerState == .playing, await handleSelfRestart() {
+                publishPlaybackState()
+                return
+            }
             if pausedByUs {
                 logger.info("[arbiter] \(self.player.name, privacy: .public) is \(self.playerState.rawValue, privacy: .public): the user took it over, it won’t be resumed")
                 pausedByUs = false
@@ -466,6 +496,8 @@ actor PlaybackArbiter: PlaybackArbiting {
         cancelPendingPause()
         cancelPendingResume()
         await fader.abandon() // never leave the music faded down
+        if mutedForRestart { await playerMute?.unmute() }
+        mutedForRestart = false
         // Nor muted: a mute, unlike a pause, can't be undone by the user.
         if heldByMute, let muting = player as? any MutingMusicPlayer { await muting.releaseMute() }
         heldByMute = false
@@ -534,5 +566,56 @@ actor PlaybackArbiter: PlaybackArbiting {
         guard !isShutDown, playerState == .playing, playsLocally, !pausedByUs, playsSilently == heard else { return }
         playsSilently = !heard
         publishPlaybackState()
+    }
+
+    // MARK: - Starting again by itself
+
+    /// Whether the player started again by itself since AutoHush's pause:
+    /// within `selfRestartWindow` of it, with no key pressed or click by the
+    /// user since. (A headphones' button sends no input: within those
+    /// seconds, a play from one counts as the app's.)
+    private var restartedByItself: Bool {
+        guard let pausedAt else { return false }
+        let since = clock().timeIntervalSince(pausedAt)
+        return since <= Self.selfRestartWindow && secondsSinceUserInput() > since
+    }
+
+    /// The player plays again while AutoHush holds its pause: one that
+    /// started by itself is left alone while it's silent, else paused again,
+    /// up to `maxRepauses` times, then muted until the pause is over (the
+    /// user, 2026-10-24); one that can't be muted plays on, and the pause
+    /// counts as failed. `false` when the user played it: theirs, as before.
+    func handleSelfRestart() async -> Bool {
+        guard pausedByUs, !mutedForRestart, restartedByItself else { return false }
+        if await hearsPlayer() == false {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) started again by itself, silently — left alone")
+            return true
+        }
+        guard !isShutDown, pausedByUs else { return true }
+        if repauses < Self.maxRepauses {
+            repauses += 1
+            do {
+                try await player.pause()
+                pausedAt = clock()
+                playerState = .paused
+                logger.info("[arbiter] \(self.player.name, privacy: .public) started again by itself — paused again")
+                return true
+            } catch {
+                logger.error("[arbiter] pausing \(self.player.name, privacy: .public) again failed: \(error)")
+            }
+        }
+        if let playerMute, await playerMute.mute() {
+            guard !isShutDown, pausedByUs else {
+                await playerMute.unmute()
+                return true
+            }
+            mutedForRestart = true
+            logger.info("[arbiter] \(self.player.name, privacy: .public) keeps starting again by itself — muted until the apps stop")
+            return true
+        }
+        logger.info("[arbiter] \(self.player.name, privacy: .public) keeps starting again by itself and can’t be muted — it plays on")
+        pausedByUs = false
+        if !activeSources.isEmpty { pauseFailure = .playerCommandFailed(.pressIgnored) }
+        return true
     }
 }

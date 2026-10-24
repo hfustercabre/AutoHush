@@ -13,6 +13,12 @@ extension PlaybackArbiter {
         if pausedByUs != publishedPausedByUs {
             publishedPausedByUs = pausedByUs
             if !pausedByUs { callDuringPause = false; heldByMute = false } // that pause is over
+            // A mute standing for it is lifted: the player plays on, heard.
+            if !pausedByUs, mutedForRestart {
+                mutedForRestart = false
+                let mute = playerMute
+                Task { await mute?.unmute() }
+            }
             onPausedByUsChange(pausedByUs)
         }
     }

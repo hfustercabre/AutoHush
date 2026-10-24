@@ -49,6 +49,8 @@ extension PlayerSession {
             preferences.playbackAssertions[id] = assertions
         case .pauseFailure(let error):
             state.controlError = error.map { ControlError($0, player: player?.name ?? "") }
+        case .mutedInstead(let muted):
+            state.mutedInstead = muted
         }
     }
 
@@ -90,6 +92,7 @@ extension PlayerSession {
         var stopped = state
         stopped.playback = .unknown
         stopped.detection = .pending
+        stopped.mutedInstead = false
         state = stopped
     }
 

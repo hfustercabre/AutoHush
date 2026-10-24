@@ -115,6 +115,8 @@ extension PlaybackArbiter {
             return
         }
         playerState = .paused
+        pausedAt = clock()
+        repauses = 0
         logger.info("[arbiter] \(self.player.name, privacy: .public) paused, because these apps play: \(self.playingApps, privacy: .public)")
         guard holdPause() else { return }
         if !autoPauseEnabled {

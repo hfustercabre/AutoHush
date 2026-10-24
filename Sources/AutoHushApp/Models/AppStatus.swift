@@ -112,6 +112,9 @@ struct AppStatus: Equatable {
     /// Add an App's check runs: AutoHush keeps the player it paused paused
     /// until the check ends (`AppDelegate.holdsPlayerForCheck`).
     var playerHeldForCheck = false
+    /// The player is muted in place of AutoHush's pause, as it kept starting
+    /// again by itself: shown as muted, as an app that's only muted is.
+    var playerMutedInstead = false
     /// Only the player's sound tells how it is (`PlayerOption.needsAudioLevels`).
     var playerNeedsLevels: Bool { chosenPlayer?.needsAudioLevels ?? false }
 
@@ -163,7 +166,7 @@ struct AppStatus: Equatable {
     /// The health's look until ready, the playback state's once ready.
     private var presentation: StatePresentation {
         health.presentation ?? (playerNeedsReopen ? .needingAttention(Self.needsReopenLine(playerName))
-            : playerMutes && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name), microphone: onlyMicrophone)
+            : (playerMutes || playerMutedInstead) && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name), microphone: onlyMicrophone)
             : playerHeldForCheck && playback == .pausedByMonitor ? .heldForCheck
             : playback.presentation(playing: pausingSources.map(\.name), microphone: onlyMicrophone))
     }

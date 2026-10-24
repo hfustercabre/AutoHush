@@ -78,6 +78,9 @@ extension PlaybackArbiter {
     /// Our pause, kept instead of resumed (or as the output went away),
     /// becomes the user's.
     func keepPaused() async {
+        // Muted while it plays on (it kept starting again by itself): paused
+        // for real before the mute is lifted, as it's to stay paused.
+        if mutedForRestart { try? await player.pause() }
         pausedByUs = false
         putBackResumeLevel()
         // A mute standing in for the pause: the player is paused for real
@@ -96,6 +99,12 @@ extension PlaybackArbiter {
         if currentState == .unknown, retriesLeft > 0 {
             logger.info("[arbiter] \(self.player.name, privacy: .public) didn’t answer — trying the resume again")
             scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
+            return
+        }
+        if mutedForRestart, currentState == .playing {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) unmuted, because \(self.autoPauseEnabled ? "no other app plays" : "Auto-Pause is off", privacy: .public)")
+            pausedByUs = false // the mute is lifted as it's published
+            publishPlaybackState()
             return
         }
         guard currentState == .paused else {

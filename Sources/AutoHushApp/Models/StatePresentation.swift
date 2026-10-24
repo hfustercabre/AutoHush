@@ -26,9 +26,9 @@ extension StatePresentation {
     static func muted(playing: [String], microphone: Bool = false) -> StatePresentation {
         StatePresentation(
             icon: .pausedForApp,
-            label: String(localized: "AutoHush: your player is muted", comment: "VoiceOver label of the menu bar icon, while the media player (one that can only be muted) is muted for another app"),
+            label: String(localized: "AutoHush: your player is muted", comment: "VoiceOver label of the menu bar icon, while the media player (one that can only be muted, or one that kept starting again by itself after AutoHush's pause) is muted for another app"),
             line: String(localized: "Muted — \(PlaybackState.describePlaying(playing, microphone: microphone))",
-                         comment: "At the top of the menu, under the media player (an app added with Add an App that can only be muted); %@ says which apps play, e.g. “Safari is playing”")
+                         comment: "At the top of the menu, under the media player (an app added with Add an App that can only be muted, or a player that kept starting again by itself after AutoHush's pause); %@ says which apps play, e.g. “Safari is playing”")
         )
     }
 

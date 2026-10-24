@@ -40,6 +40,9 @@ final class PlayerSession {
         /// Why the player couldn't be controlled, while that's what the menu
         /// says: a start that failed with an error, or a pause that failed.
         var controlError: ControlError?
+        /// The player is muted in place of AutoHush's pause (it kept starting
+        /// again by itself): the menu says Muted.
+        var mutedInstead = false
     }
 
     /// What a new monitoring starts with.

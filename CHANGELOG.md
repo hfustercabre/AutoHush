@@ -15,6 +15,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   another app starts (again every 2 seconds while one plays) and when you
   open the menu, and pauses it as soon as it's heard. In AntiDot mode,
   which listens to nothing, it pauses as before.
+- **A player that starts again by itself after AutoHush's pause** (an
+  autoplay, the next trailer, an ad) is paused again, twice at most, then
+  muted until the other apps stop, the menu saying **Muted**. It counts as starting by itself within
+  5 seconds of the pause, with no key pressed or click from you since;
+  otherwise it's yours, and AutoHush leaves it playing, as before.
 
 - **AutoHush's menu bar icon starts beside the system's icons** (Control
   Center, the clock), where the notch or other apps' icons don't hide it:
