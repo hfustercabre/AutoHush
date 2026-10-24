@@ -69,8 +69,6 @@ final class FakeMonitoring: SessionMonitoring {
     func setIgnoredSources(_ ids: Set<String>) { ignored = ids }
     func setAsleep(_ asleep: Bool) { self.asleep.append(asleep) }
     func holdResumes(_ held: Bool) { resumesHeld.append(held) }
-    private(set) var playerHeardChecks = 0
-    func checkPlayerHeard() { playerHeardChecks += 1 }
     func setConfiguration(_ configuration: AppConfiguration) { configurations.append(configuration) }
     func setDetectionMethod(_ method: DetectionMethod) { detectionMethods.append(method) }
     func activeAudioReport() -> [ActiveAudioReport.Entry] { audioReport }

@@ -34,8 +34,7 @@ struct PlayerSessionPipelinesTests {
         let make = PlayerSession.pipelines(hostedApp: { _ in nil }, volumeLeveler: leveler, readers: {
             MonitoringPipeline.Readers(processes: MockAudioProcessSnapshotProvider(), levelMeter: MockLevelMeter(),
                                        audioCapturePermission: MockAudioCapturePermission(.granted),
-                                       powerAssertions: MockPowerAssertions(), outputDisconnects: MockOutputDisconnects(),
-                                       secondsSinceUserInput: { 0 }) // every start the user's
+                                       powerAssertions: MockPowerAssertions(), outputDisconnects: MockOutputDisconnects())
         })
         let settings = MonitoringSettings(autoPause: true, ignored: [], timings: .defaults, detection: .audioLevels)
         // A pause held for the player chosen before, and the new one's.
@@ -65,8 +64,7 @@ struct PlayerSessionPipelinesTests {
         assertions.held = [page.pid: MockPowerAssertions.playing]
         let readers = MonitoringPipeline.Readers(processes: processes, levelMeter: meter,
                                                  audioCapturePermission: MockAudioCapturePermission(.granted),
-                                                 powerAssertions: assertions, outputDisconnects: MockOutputDisconnects(),
-                                                 secondsSinceUserInput: { 0 }) // every start the user's
+                                                 powerAssertions: assertions, outputDisconnects: MockOutputDisconnects())
         let player = MockMusicPlayer(state: .playing)
         let updates = PipelineUpdates()
         let levels = MonitoringSettings(autoPause: true, ignored: [ignored.bundleID], timings: .defaults, detection: .audioLevels)

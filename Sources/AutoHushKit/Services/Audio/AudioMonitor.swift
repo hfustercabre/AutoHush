@@ -155,12 +155,6 @@ final class AudioMonitor: @unchecked Sendable {
     /// How loud the music was before AutoHush's pause, and the apps
     /// during it (Settings → Behavior).
     var resumeLevel = ResumeLevel()
-    /// Listens to audio processes for a moment: whether any is heard, `nil`
-    /// when none could be listened to.
-    private let hears: @Sendable (Set<AudioObjectID>) -> Bool?
-    /// Where the player is listened to (`isPlayerHeard`): half a second
-    /// that mustn't hold up the monitor's queue.
-    private static let hearingQueue = DispatchQueue(label: "AutoHush.AudioMonitor.hearing", qos: .userInitiated)
 
     init(
         configuration: AppConfiguration,
@@ -178,10 +172,8 @@ final class AudioMonitor: @unchecked Sendable {
         audioLevelsReleaseDelay: TimeInterval = 2,
         clock: @escaping @Sendable () -> Date = { Date() },
         onActiveSourcesChange: @escaping @Sendable ([AudioSource]) -> Void = { _ in },
-        onDetectionModeChange: @escaping @Sendable (DetectionMode) -> Void = { _ in },
-        hears: @escaping @Sendable (Set<AudioObjectID>) -> Bool? = { ProcessTapLevelProbe().hearing($0) }
+        onDetectionModeChange: @escaping @Sendable (DetectionMode) -> Void = { _ in }
     ) {
-        self.hears = hears
         self.configuration = configuration
         self.snapshotProvider = snapshotProvider
         self.levelMeter = levelMeter
@@ -310,22 +302,6 @@ final class AudioMonitor: @unchecked Sendable {
                 self.logger.info("[level] the music’s loudness at the pause: \(Self.dBFS(reference), privacy: .public) dBFS")
             }
         }
-    }
-
-    /// Whether the media player is heard now: half a second of listening to
-    /// its processes with output running. `nil` when levels aren't measured
-    /// (AntiDot mode, Open audio streams only, no Audio Recording) or none
-    /// of its processes could be listened to; `false` with no output of its
-    /// own running.
-    func isPlayerHeard() async -> Bool? {
-        let processes: Set<AudioObjectID>? = await queue.run {
-            guard self.detectionMethod == .audioLevels, self.detectionMode == .audioLevel else { return nil }
-            return self.playerProcesses
-        }
-        guard let processes else { return nil }
-        guard !processes.isEmpty else { return false }
-        let hears = hears
-        return await Self.hearingQueue.run { hears(processes) }
     }
 
     /// How far (dB, below 0) to lower the Mac's volume as the music

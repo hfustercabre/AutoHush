@@ -56,10 +56,6 @@ package final class PolledStateObserver: PlayerStateObserving {
         lastState = nil
     }
 
-    package func forgetLastState() {
-        lastState = nil
-    }
-
     private func deliver(_ state: PlayerState) {
         guard polling != nil, state != .unknown, state != lastState else { return }
         lastState = state

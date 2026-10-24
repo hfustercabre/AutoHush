@@ -221,8 +221,6 @@ final class WebAppStateObserver: PlayerStateObserving {
 
     func start() { polled.start() }
 
-    func forgetLastState() { polled.forgetLastState() }
-
     func stop() {
         polled.stop()
         onStop()

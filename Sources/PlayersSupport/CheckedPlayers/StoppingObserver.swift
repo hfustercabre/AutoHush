@@ -15,8 +15,6 @@ final class StoppingObserver: PlayerStateObserving {
 
     func start() { observer.start() }
 
-    func forgetLastState() { observer.forgetLastState() }
-
     func stop() {
         observer.stop()
         onStop()

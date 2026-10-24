@@ -78,9 +78,6 @@ extension PlaybackArbiter {
     /// Our pause, kept instead of resumed (or as the output went away),
     /// becomes the user's.
     func keepPaused() async {
-        // Muted while it plays on (it kept starting again by itself): paused
-        // for real before the mute is lifted, as it's to stay paused.
-        if mutedForRestart { try? await player.pause() }
         pausedByUs = false
         putBackResumeLevel()
         // A mute standing in for the pause: the player is paused for real
@@ -99,12 +96,6 @@ extension PlaybackArbiter {
         if currentState == .unknown, retriesLeft > 0 {
             logger.info("[arbiter] \(self.player.name, privacy: .public) didn’t answer — trying the resume again")
             scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
-            return
-        }
-        if mutedForRestart, currentState == .playing {
-            logger.info("[arbiter] \(self.player.name, privacy: .public) unmuted, because \(self.autoPauseEnabled ? "no other app plays" : "Auto-Pause is off", privacy: .public)")
-            pausedByUs = false // the mute is lifted as it's published
-            publishPlaybackState()
             return
         }
         guard currentState == .paused else {
@@ -136,10 +127,10 @@ extension PlaybackArbiter {
         pausedByUs = false
         do {
             try await fader.playAndFadeIn()
-            onPlayerCommanded()
             playerState = .playing
             resumeLowered = false // the music plays at the volume lowered for it
             logger.info("[arbiter] \(self.player.name, privacy: .public) resumed, because \(self.autoPauseEnabled ? "no other app plays" : "Auto-Pause is off", privacy: .public)")
+            confirmResumeLater()
         } catch {
             logger.error("[arbiter] resume failed: \(error)")
             // Still ours to resume, unless something called it off meanwhile.
@@ -153,5 +144,30 @@ extension PlaybackArbiter {
         }
         publishPlaybackState()
         if resumeTask == resuming { resumeTask = nil } // unless a newer resume started meanwhile
+    }
+
+    /// A player whose state is read by polling (`stateReportDelay`) reports
+    /// only changes from its last read, the pause before the resume: one
+    /// that didn't start after all (Apple TV, its window closed during the
+    /// fade-in, 2026-10-22) would read paused again and say nothing, and
+    /// stay shown as playing, on another device since nothing is heard
+    /// here. So it's asked once more a moment after the resume.
+    private func confirmResumeLater() {
+        guard player.stateReportDelay > 0 else { return }
+        let wait = debounceScheduler.scheduleDebounce(after: Self.resumeConfirmDelay)
+        Task { [weak self] in
+            _ = await wait.value
+            await self?.confirmResumed()
+        }
+    }
+
+    /// Still taken as playing, and no newer pause or resume: what the player
+    /// says now stands.
+    func confirmResumed() async {
+        guard !isShutDown, playerState == .playing, !pausedByUs, !isFadingOut, pendingResumeID == nil else { return }
+        let state = await livePlayerState()
+        guard state != .playing, state != .unknown else { return }
+        logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) after the resume")
+        publishPlaybackState()
     }
 }

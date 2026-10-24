@@ -37,8 +37,6 @@ struct AudioMonitorTests {
         let activeSources = Locked<[[AudioSource]]>([])
         let modes = Locked<[DetectionMode]>([])
         let learned = Locked<[String]>([])
-        /// The processes listened to (`isPlayerHeard`), each time.
-        let listened = Locked<[Set<AudioObjectID>]>([])
         let monitor: AudioMonitor
 
         init(
@@ -67,8 +65,7 @@ struct AudioMonitorTests {
                 audioLevelsReleaseDelay: releaseDelay,
                 clock: { [clock] in clock.now },
                 onActiveSourcesChange: { [activeSources] in activeSources.append($0) },
-                onDetectionModeChange: { [modes] in modes.append($0) },
-                hears: { [listened] in listened.append($0); return true }
+                onDetectionModeChange: { [modes] in modes.append($0) }
             )
         }
 
@@ -148,26 +145,6 @@ struct AudioMonitorTests {
 
         #expect(await h.recorder.events.map(\.isPlaying) == [true, false, true])
         #expect(await h.recorder.heardSince == [heard, nil, heardAgain])
-    }
-
-    // MARK: - Listening to the player
-
-    @Test("the player is listened to, its own processes only, once levels are measured; not before, nor without measured levels; with no output, it isn't heard")
-    func playerListenedTo() async {
-        let h = Harness()
-        h.start()
-        let player = Self.process(2, TestPlayer.bundleID)
-        h.step([Self.process(1, "org.mozilla.firefox"), player], peaks: [:])
-        #expect(await h.monitor.isPlayerHeard() == nil) // levels not measured yet
-        h.step(peaks: [1: 0.2])
-        #expect(h.modes.value == [.audioLevel])
-        #expect(await h.monitor.isPlayerHeard() == true)
-        #expect(h.listened.value == [[2]])
-        h.step([Self.process(1, "org.mozilla.firefox")])
-        #expect(await h.monitor.isPlayerHeard() == false) // its output closed
-        h.monitor.setDetectionMethod(.playbackSignals)
-        #expect(await h.monitor.isPlayerHeard() == nil) // AntiDot mode measures no levels
-        #expect(h.listened.value == [[2]])
     }
 
     // MARK: - Audio level detection

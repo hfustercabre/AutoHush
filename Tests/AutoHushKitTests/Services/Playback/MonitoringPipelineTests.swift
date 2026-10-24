@@ -52,8 +52,7 @@ struct MonitoringPipelineTests {
                 learnedAssertions: [:],
                 readers: .init(processes: processes, levelMeter: meter,
                                audioCapturePermission: MockAudioCapturePermission(.granted),
-                               powerAssertions: MockPowerAssertions(), outputDisconnects: outputs,
-                               secondsSinceUserInput: { 0 }), // every start the user's
+                               powerAssertions: MockPowerAssertions(), outputDisconnects: outputs),
                 onStatusUpdate: { updates.all.append($0) }
             )
         }

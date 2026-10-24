@@ -49,19 +49,6 @@ struct PolledStateObserverTests {
         #expect(states == [.playing, .paused, .notRunning])
     }
 
-    @Test("once told to forget its last read (AutoHush paused or played the player itself), its next read is reported even if the same")
-    func forgetsLastRead() async {
-        let player = FakeState(.playing)
-        var states: [PlayerState] = []
-        let observer = PolledStateObserver(interval: .milliseconds(20), read: { player.read() }) { states.append($0) }
-        observer.start()
-        await TestWait.until { states == [.playing] }
-        observer.forgetLastState() // paused by AutoHush, and playing again before the next read
-        await TestWait.until { states.count == 2 }
-        #expect(states == [.playing, .playing])
-        observer.stop()
-    }
-
     @Test("an observer let go of without stop() stops reading")
     func released() async throws {
         let player = FakeState(.paused)

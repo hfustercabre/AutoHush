@@ -26,25 +26,12 @@ package struct ProcessTapLevelProbe: AudioLevelProbing {
     }
 
     package func isAudible(appPID: pid_t) -> Bool {
-        isAudible(processes: Set(OwnedAudioProcesses.objects(ownedBy: appPID)))
-    }
-
-    /// Listens to `processes` (audio process objects) for a moment, as
-    /// `isAudible(appPID:)` does; `false` with none.
-    package func isAudible(processes: Set<AudioObjectID>) -> Bool {
-        hearing(processes) == true
-    }
-
-    /// Whether any of `processes` is heard: `nil` when none could be
-    /// listened to (no tap gave a reading), which tells nothing.
-    package func hearing(_ processes: Set<AudioObjectID>) -> Bool? {
-        guard !processes.isEmpty else { return nil }
+        let processes = OwnedAudioProcesses.objects(ownedBy: appPID)
+        guard !processes.isEmpty else { return false }
         let meter = ProcessTapLevelMeter()
-        meter.setMeteredProcesses(processes)
+        meter.setMeteredProcesses(Set(processes))
         defer { meter.stopAll() }
         Thread.sleep(forTimeInterval: Self.listeningTime)
-        let peaks = meter.drainPeaks()
-        guard !peaks.isEmpty else { return nil }
-        return peaks.values.contains { $0 >= threshold }
+        return meter.drainPeaks().values.contains { $0 >= threshold }
     }
 }

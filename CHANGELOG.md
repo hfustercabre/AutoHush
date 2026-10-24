@@ -9,18 +9,6 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Playing silently.** A player that says it plays but can't be heard,
-  like Apple TV's muted trailers, is no longer paused for nothing: the menu
-  says **Playing silently**. AutoHush listens to it for half a second when
-  another app starts (again every 2 seconds while one plays) and when you
-  open the menu, and pauses it as soon as it's heard. In AntiDot mode,
-  which listens to nothing, it pauses as before.
-- **A player that starts again by itself after AutoHush's pause** (an
-  autoplay, the next trailer, an ad) is paused again, twice at most, then
-  muted until the other apps stop, the menu saying **Muted**. It counts as starting by itself within
-  5 seconds of the pause, with no key pressed or click from you since;
-  otherwise it's yours, and AutoHush leaves it playing, as before.
-
 - **AutoHush's menu bar icon starts beside the system's icons** (Control
   Center, the clock), where the notch or other apps' icons don't hide it:
   once, unless you've already moved it. **Keep icon next to system icons**
@@ -34,12 +22,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   An app whose AppleScript state disagrees with its sound now has that
   state ignored: the check goes on, and AutoHush tells its state by the
   app's other signs.
-- **A player that starts or stops right after AutoHush paused or resumed
-  it is noticed.** For a player whose state is read about once a second (an
-  added app, a web app), a change right after AutoHush's own pause or
-  resume looked like none: closing Apple TV's window during the fade-in
-  showed it as playing on another device, and its next trailer starting
-  after a pause went unseen.
+- **An added app that stops right after AutoHush resumes it no longer
+  shows as playing on another device.** AutoHush checks such an app again
+  a few seconds after resuming it, so closing Apple TV's window during
+  the fade-in shows it as not playing.
 
 ## [1.0.0] — 2026-10-22
 
