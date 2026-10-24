@@ -122,6 +122,8 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// its Play button): a timed-out query is not the user changing the player.
     static let resumeRetries = 2
     static let resumeRetryDelay: TimeInterval = 1
+    /// How long after a resume a polled player is asked again (`confirmResumeLater`).
+    static let resumeConfirmDelay: TimeInterval = 3
     /// Once auto-pause is back on, the pause for apps already playing waits
     /// their stop grace plus this: a couple of the monitor's ticks.
     static let remeasureMargin: TimeInterval = 0.5

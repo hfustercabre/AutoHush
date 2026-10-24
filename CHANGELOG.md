@@ -15,6 +15,13 @@ This project follows [Semantic Versioning](https://semver.org/).
   in Settings → General puts it back there each time AutoHush opens; off,
   it stays where you ⌘-drag it.
 
+### Fixed
+
+- **An added app that stops right after AutoHush resumes it no longer
+  shows as playing on another device.** AutoHush checks such an app again
+  a few seconds after resuming it, so closing Apple TV's window during
+  the fade-in shows it as not playing.
+
 ## [1.0.0] — 2026-10-22
 
 ### Changed
