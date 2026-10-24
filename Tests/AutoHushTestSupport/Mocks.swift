@@ -140,6 +140,8 @@ package actor MockMusicPlayer: MusicPlayer {
     /// doesn't follow one: the call succeeds, but its state stays.
     package var ignoredPresses = 0
     package func setIgnoredPresses(_ count: Int) { ignoredPresses = count }
+    /// Changes by itself, unannounced (the user, or the app).
+    package func setState(_ state: PlayerState) { self.state = state }
 
     package func pause() async throws {
         pauseCallCount += 1

@@ -22,6 +22,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   An app whose AppleScript state disagrees with its sound now has that
   state ignored: the check goes on, and AutoHush tells its state by the
   app's other signs.
+- **An added app that stops right after AutoHush resumes it no longer
+  shows as playing on another device.** AutoHush checks such an app again
+  a few seconds after resuming it, so closing Apple TV's window during
+  the fade-in shows it as not playing.
 
 ## [1.0.0] — 2026-10-22
 
