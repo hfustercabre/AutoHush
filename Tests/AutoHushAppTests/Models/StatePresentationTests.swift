@@ -13,6 +13,7 @@ struct StatePresentationTests {
         (PlaybackState.musicPlaying, MenuBarIcon.playing, "AutoHush: your player is playing", "Playing"),
         (.pausedByMonitor, .pausedForApp, "AutoHush: playback paused", "Paused — another app is playing"),
         (.musicIdle, .noMusic, "AutoHush: nothing is playing", "Not playing"),
+        (.playingSilently, .noMusic, "AutoHush: your player is playing silently", "Playing silently"),
         (.playingElsewhere, .elsewhere, "AutoHush: your player is playing on another device", "Playing on another device"),
     ])
     func playbackState(state: PlaybackState, icon: MenuBarIcon, label: String, line: String) {

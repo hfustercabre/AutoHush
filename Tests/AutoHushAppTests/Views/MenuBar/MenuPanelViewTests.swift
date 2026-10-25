@@ -43,6 +43,10 @@ struct MenuPanelViewTests {
         /// The player must be reopened, and is muted for another app: the
         /// card's Reopen and Unmute.
         case fixes
+        /// The player says it plays, but nothing of it is heard (a muted trailer).
+        case playingSilently
+        /// A web app whose controls are learned: the card's Learn Again.
+        case learnedControls
     }
 
     private func status(_ state: State) -> AppStatus {
@@ -69,6 +73,12 @@ struct MenuPanelViewTests {
             status.playerNeedsReopen = true
             status.setActiveSources([vlc])
             status.playback = .pausedByMonitor
+        case .playingSilently:
+            status.playback = .playingSilently
+        case .learnedControls:
+            status.chosenPlayerID = players.last?.bundleID // the web app
+            status.learning = .learned
+            status.playback = .musicPlaying
         case .playing, .moreSettings, .noPlayer:
             status.playback = .musicPlaying
         }
@@ -100,6 +110,8 @@ struct MenuPanelViewTests {
             }
             if state == .needsPermission { #expect(sut.model.sections.contains(.useAntiDot)) }
             if state == .fixes { #expect(sut.status.playerNeedsReopen && sut.status.isReady && sut.status.offersUnmute) }
+            if state == .playingSilently { #expect(sut.status.statusLine == "Playing silently") }
+            if state == .learnedControls { #expect(sut.status.canLearnControlsAgain) }
             let size = drawn(MenuPanelView(model: sut.model, settings: settingsModel, onHeight: { _ in }), width: menuContentWidth)
             #expect(size.height > 0)
         }

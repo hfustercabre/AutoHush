@@ -36,6 +36,9 @@ DMG_PATH="$DIST_DIR/$APP_NAME-$VERSION.dmg"
 NOTES_PATH="$DIST_DIR/release-notes-$VERSION.md"
 
 cd "$PROJECT_DIR"
+# The branch being released (release/vX, or a hotfix/ branch), named in the
+# next steps printed at the end.
+BRANCH="$(git branch --show-current)"
 if [[ "${ALLOW_DIRTY:-0}" != 1 && -n "$(git status --porcelain)" ]]; then
     fail "working tree has uncommitted changes (commit them or set ALLOW_DIRTY=1)"
 fi
@@ -95,7 +98,7 @@ echo ""
 echo "Next steps (not done by this script):"
 echo "  git add Resources/Info.plist CHANGELOG.md"
 echo "  git commit -m \"release: $VERSION\" && git tag -a $TAG -m \"AutoHush $VERSION\"   (on release/$TAG, or the hotfix/ branch)"
-echo "  git switch main && git merge --ff-only release/$TAG; git switch dev && git merge --ff-only release/$TAG   (a hotfix: git merge it into dev)"
+echo "  git switch main && git merge --ff-only $BRANCH; git switch dev && git merge --ff-only $BRANCH   (a hotfix: git merge it into dev)"
 echo "  git push origin dev main $TAG; git branch -d release/$TAG"
 echo "  Create the GitHub release $TAG (titled $TAG), upload $(basename "$DMG_PATH") and paste the release notes."
 echo "  bash Scripts/update-tap.sh $VERSION   (points the Homebrew tap at the published release)"

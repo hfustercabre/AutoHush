@@ -26,9 +26,9 @@ extension StatePresentation {
     static func muted(playing: [String], microphone: Bool = false) -> StatePresentation {
         StatePresentation(
             icon: .pausedForApp,
-            label: String(localized: "AutoHush: your player is muted", comment: "VoiceOver label of the menu bar icon, while the media player (one that can only be muted, or one that kept starting again by itself after AutoHush's pause) is muted for another app"),
+            label: String(localized: "AutoHush: your player is muted", comment: "VoiceOver label of the menu bar icon, while the media player (one that can only be muted, or one muted in place of a pause that didn't take) is muted for another app"),
             line: String(localized: "Muted — \(PlaybackState.describePlaying(playing, microphone: microphone))",
-                         comment: "At the top of the menu, under the media player (an app added with Add an App that can only be muted, or a player that kept starting again by itself after AutoHush's pause); %@ says which apps play, e.g. “Safari is playing”")
+                         comment: "At the top of the menu and in Settings → General's status line, under the media player (an app added with Add an App that can only be muted, or a player muted in place of a pause that didn't take); %@ says which apps play, e.g. “Safari is playing”")
         )
     }
 
@@ -97,7 +97,7 @@ extension PlaybackState {
                 label: String(localized: "AutoHush: your player is playing silently",
                               comment: "VoiceOver label of the menu bar icon: the media player says it plays, but nothing of it is heard (a muted trailer), so AutoHush doesn't pause it"),
                 line: String(localized: "Playing silently",
-                             comment: "At the top of the menu, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it")
+                             comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it")
             )
         case .playingElsewhere:
             return StatePresentation(
@@ -105,7 +105,7 @@ extension PlaybackState {
                 label: String(localized: "AutoHush: your player is playing on another device",
                               comment: "VoiceOver label of the menu bar icon"),
                 line: String(localized: "Playing on another device",
-                             comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
+                             comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player, e.g. through Spotify Connect")
             )
         case .pauseFailed:
             return .needingAttention(String(localized: "Couldn’t pause — \(Self.describePlaying(playing, microphone: microphone))",

@@ -45,7 +45,7 @@ package protocol MusicPlayer: Sendable {
 
     /// Whether its state comes from the player itself (its script, its page,
     /// a Now Playing report), not only from its open output: one that says
-    /// nothing (Apple TV's trailers, reported as Unknown) isn't playing
+    /// nothing (a player's trailers, reported as Unknown) isn't playing
     /// silently, just not known to play.
     func statesItself() async -> Bool
 

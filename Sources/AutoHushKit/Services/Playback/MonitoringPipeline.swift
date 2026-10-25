@@ -21,8 +21,9 @@ package final class MonitoringPipeline {
         case learnedAssertions(String, AnnouncedAssertions)
         /// Why the music couldn't be paused, then `nil` once that's over.
         case pauseFailure(MusicPlayerError?)
-        /// The player is muted in place of AutoHush's pause, as it kept
-        /// starting again by itself, then `false` once the mute is lifted.
+        /// The player is muted in place of AutoHush's pause (one that didn't
+        /// take, a start by itself, or a refused one), then `false` once the
+        /// mute is lifted.
         case mutedInstead(Bool)
     }
 
@@ -65,8 +66,8 @@ package final class MonitoringPipeline {
         let powerAssertions: any PowerAssertionReading
         /// When the output in use goes away (Pause on disconnect).
         let outputDisconnects: any OutputDisconnectWatching
-        /// Mutes the player with this bundle ID while taps are allowed: one
-        /// that keeps starting again by itself after a pause.
+        /// Mutes the player with this bundle ID while taps are allowed, in
+        /// place of a pause that didn't take, a start by itself, or a refused one.
         let playerMute: @Sendable (String, @escaping @Sendable () -> Bool) -> (any PlayerMuting)?
         /// For the player with this bundle ID: whether the user pressed a
         /// key or clicked in it, or pressed a media key, after a moment.

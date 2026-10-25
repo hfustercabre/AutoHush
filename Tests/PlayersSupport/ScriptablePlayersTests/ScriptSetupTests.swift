@@ -109,7 +109,7 @@ struct ScriptSetupTests {
         let itemNamed = vlc.replacingOccurrences(of: "</class-extension>", with: "<property name=\"name of current item\" code=\"nmci\"/></class-extension>")
         let vlcApp = try app("VLC", in: folder, files: ["A.sdef": "<dictionary/>", "B.sdef": itemNamed])
         let found = ScriptingDictionary.read(appAt: vlcApp, isRunning: false)
-        #expect(found?.hasPlayingFlag == true && found?.hasState == true)
+        #expect(found?.hasState == true) // from its `playing` flag
         #expect(found?.currentItemName == "nmci" && found?.namesItsSong == true)
     }
 

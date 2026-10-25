@@ -18,8 +18,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   not playing. In AntiDot mode, which listens to nothing, it pauses as before.
 - **A pause that doesn't work becomes a mute.** A player still heard after
   AutoHush's pause, or heard again (an autoplay, the next trailer, an ad),
-  is muted until the other apps stop, the menu saying **Muted**; so is one
-  that refuses to pause. It's yours only when it was silent and is heard
+  is muted until the other apps stop (with Audio Recording; not in AntiDot
+  mode), the menu saying **Muted**; so is one that refuses to pause. It's yours only when it was silent and is heard
   again within 3 seconds of a key press or click in it (not the one that
   brings it forward), or a media key.
   Muted, it's listened to every second: once it's silent (it paused itself)
@@ -29,7 +29,6 @@ This project follows [Semantic Versioning](https://semver.org/).
   is heard changes nothing.
 - **The player starting while another app plays** is paused, as at the
   app's start, unless you started it.
-
 - **AutoHush's menu bar icon starts beside the system's icons** (Control
   Center, the clock), where the notch or other apps' icons don't hide it:
   once, unless you've already moved it. **Keep icon next to system icons**
@@ -43,10 +42,21 @@ This project follows [Semantic Versioning](https://semver.org/).
   An app whose AppleScript state disagrees with its sound now has that
   state ignored: the check goes on, and AutoHush tells its state by the
   app's other signs.
-- **An added app that stops right after AutoHush resumes it no longer
-  shows as playing on another device.** AutoHush checks such an app again
-  a few seconds after resuming it, so closing Apple TV's window during
-  the fade-in shows it as not playing.
+- **A player AutoHush reads once a second (VLC, QuickTime Player, TIDAL,
+  Apple Podcasts, web apps, added apps) that stops right after AutoHush
+  resumes it no longer shows as playing on another device.** AutoHush
+  checks it again 3 seconds after resuming it, so closing Apple TV's
+  window during the fade-in shows it as not playing.
+- **An added app's Now Playing report of "Unknown"** (Apple TV's trailers)
+  is no longer read as paused, and its pause or play no longer waits on
+  that report to check it took.
+- **A player muted just as the other app stopped** is unmuted at once; it
+  stayed muted before.
+- **A muted player that AutoHush resumes** is unmuted first, so its
+  fade-in is heard.
+- **Add an App's check** no longer takes an app's AppleScript state for
+  wrong from its sound right after its own pause, and listens to the app
+  less while it waits.
 
 ## [1.0.0] — 2026-10-22
 

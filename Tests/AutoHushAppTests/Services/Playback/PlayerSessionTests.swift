@@ -428,6 +428,25 @@ struct PlayerSessionTests {
         #expect(bench.preferences.pauseHandover == nil)
     }
 
+    @MainActor
+    @Test("a player muted in place of the pause is muted in the state as the monitoring says; once monitoring stops it's muted no more, nor by the stopped one's late updates")
+    func mutedInsteadEndsWithMonitoring() async {
+        let bench = Bench()
+        let session = await bench.started()
+        let monitoring = bench.monitorings.made[0]
+        monitoring.send(.playback(.pausedByMonitor))
+        monitoring.send(.mutedInstead(true))
+        #expect(session.state.mutedInstead)
+        monitoring.send(.mutedInstead(false)) // paused again
+        #expect(!session.state.mutedInstead)
+
+        monitoring.send(.mutedInstead(true))
+        session.choose(nil) // nothing runs any more
+        #expect(!session.state.mutedInstead)
+        monitoring.send(.mutedInstead(true)) // on its way as it stopped
+        #expect(!session.state.mutedInstead)
+    }
+
     // MARK: - Checking access while it runs
 
     @MainActor

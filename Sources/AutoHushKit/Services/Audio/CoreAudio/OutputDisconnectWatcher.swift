@@ -22,7 +22,7 @@ package protocol OutputDisconnectWatching: AnyObject, Sendable {
 ///
 /// `@unchecked Sendable`: its state is only read and changed on `queue`,
 /// where every listener runs; `start` and `stop` hop onto it.
-package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, @unchecked Sendable {
+package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, OutputDevices, @unchecked Sendable {
     package init() {}
 
     /// Signs closer together than this are one disconnect.
@@ -56,7 +56,7 @@ package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, 
                 var address = CoreAudioProperty.address(selector)
                 AudioObjectAddPropertyListenerBlock(CoreAudioProperty.systemObject, &address, queue, listener)
             }
-            follow(Self.defaultOutput())
+            follow(defaultOutput())
         }
     }
 
@@ -76,9 +76,11 @@ package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, 
     }
 
     /// The devices or the output in use changed: the one in use is gone
-    /// if it left the list, or the one just left (`OutputLoss`).
+    /// if it left the list, or the one just left (`OutputLoss`). A listener
+    /// already queued when the watch stopped does nothing.
     private func check() {
-        let current = Self.defaultOutput()
+        guard onDisconnect != nil else { return }
+        let current = defaultOutput()
         if let reason = loss.update(output: output, current: current, devices: Self.devices(), now: Date()) {
             disconnected(because: reason)
         }
@@ -103,7 +105,7 @@ package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, 
     }
 
     private func jackChanged() {
-        guard let output else { return }
+        guard onDisconnect != nil, let output else { return }
         let connected = Self.jackIsConnected(output)
         if jackConnected == true, !connected { disconnected(because: "its jack was unplugged") }
         jackConnected = connected
@@ -115,12 +117,6 @@ package final class CoreAudioOutputDisconnectWatcher: OutputDisconnectWatching, 
         lastDisconnect = now
         logger.info("[outputs] the output in use went away: \(reason, privacy: .public)")
         onDisconnect?()
-    }
-
-    private static func defaultOutput() -> AudioObjectID? {
-        let device = CoreAudioProperty.value(kAudioHardwarePropertyDefaultOutputDevice, of: CoreAudioProperty.systemObject,
-                                             initial: AudioObjectID(kAudioObjectUnknown))
-        return device == AudioObjectID(kAudioObjectUnknown) ? nil : device
     }
 
     private static func devices() -> [AudioObjectID] {

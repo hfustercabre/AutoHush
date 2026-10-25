@@ -78,8 +78,9 @@ extension PlaybackArbiter {
     /// Our pause, kept instead of resumed (or as the output went away),
     /// becomes the user's.
     func keepPaused() async {
-        // Muted while it plays on (it kept starting again by itself): paused
-        // for real before the mute is lifted, as it's to stay paused.
+        // Muted while it plays on (its pause didn't take, or it started again
+        // by itself): paused for real before the mute is lifted, as it's to
+        // stay paused.
         if mutedForRestart { try? await player.pause() }
         pausedByUs = false
         putBackResumeLevel()
@@ -107,8 +108,8 @@ extension PlaybackArbiter {
             publishPlaybackState()
             return
         }
-        // Said playing, yet not heard through the pause (Apple TV's trailers
-        // report no state and keep their output open): it's still paused.
+        // Said playing, yet not heard through the pause (a player's trailers
+        // that report no state and keep its output open): it's still paused.
         let pausedUnheard = currentState == .playing && hearingDuringPause == .silent
         guard currentState == .paused || pausedUnheard else {
             // Playing: nothing to resume, whoever started it (nothing is
@@ -143,9 +144,11 @@ extension PlaybackArbiter {
         pendingResumeWait = nil
         pendingResumeID = nil
         pausedByUs = false
-        // Muted through the pause: heard as it plays again.
-        if muteKeptInPause {
+        // Muted through the pause, or in place of it (found paused before a
+        // look turned the mute into a pause): heard as it plays and fades in.
+        if muteKeptInPause || mutedForRestart {
             muteKeptInPause = false
+            mutedForRestart = false
             await playerMute?.unmute()
         }
         do {
@@ -171,8 +174,8 @@ extension PlaybackArbiter {
 
     /// A player whose state is read by polling (`stateReportDelay`) reports
     /// only changes from its last read, the pause before the resume: one
-    /// that didn't start after all (Apple TV, its window closed during the
-    /// fade-in, 2026-10-22) would read paused again and say nothing, and
+    /// that didn't start after all (its window closed during the fade-in,
+    /// 2026-10-22) would read paused again and say nothing, and
     /// stay shown as playing, on another device since nothing is heard
     /// here. So it's asked once more a moment after the resume.
     private func confirmResumeLater() {

@@ -112,8 +112,9 @@ struct AppStatus: Equatable {
     /// Add an App's check runs: AutoHush keeps the player it paused paused
     /// until the check ends (`AppDelegate.holdsPlayerForCheck`).
     var playerHeldForCheck = false
-    /// The player is muted in place of AutoHush's pause, as it kept starting
-    /// again by itself: shown as muted, as an app that's only muted is.
+    /// The player is muted in place of AutoHush's pause (one that didn't
+    /// take, a start by itself, or a refused one): shown as muted, as an app
+    /// that's only muted is.
     var playerMutedInstead = false
     /// Only the player's sound tells how it is (`PlayerOption.needsAudioLevels`).
     var playerNeedsLevels: Bool { chosenPlayer?.needsAudioLevels ?? false }

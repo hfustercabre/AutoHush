@@ -50,7 +50,9 @@ extension PlaybackArbiter {
     }
 
     /// The monitor heard the player again while other apps play: looked at
-    /// at once, held by AutoHush or not.
+    /// at once, held by AutoHush or not. A mute it makes is awaited here, so
+    /// the monitor's next event waits for its tap (a moment): their order is
+    /// kept.
     func handlePlayerHeard() async {
         guard !isShutDown, autoPauseEnabled, !isAsleep, !activeSources.isEmpty else { return }
         guard pausedByUs else {
@@ -149,14 +151,28 @@ extension PlaybackArbiter {
     /// pause from then on, ended as any. `true` once it's handled; one that
     /// can't be muted plays on, its pause failed (`failure`).
     func muteInsteadOfPause(_ why: String, failure: MusicPlayerError) async -> Bool {
+        // A mute lifted just before is lifted first, so it can't lift this one.
+        await muteLift?.value
         // Muted already, kept through the pause: only a relaunched process to mute.
         let keptMute = muteKeptInPause
-        if keptMute { await playerMute?.followRelaunch() }
-        if let playerMute, keptMute ? true : await playerMute.mute() {
+        let muted: Bool = if keptMute { await playerMute?.followRelaunch() ?? false } else { await playerMute?.mute() ?? false }
+        if muted, let playerMute {
+            // Things may have changed while its tap was made (the Mac asleep,
+            // the apps gone, Auto-Pause off): a mute is never left with
+            // nothing to lift it.
             guard !isShutDown else {
                 await playerMute.unmute()
                 return true
             }
+            if isAsleep || outputGoneDuringPause {
+                // Asleep, or the output gone: no pause held, so no mute either
+                // (what's shown changed with them).
+                outputGoneDuringPause = false
+                muteKeptInPause = false
+                await playerMute.unmute()
+                return true
+            }
+            // A call among the apps was noted as the music faded out.
             pausedByUs = true
             mutedForRestart = true
             muteKeptInPause = false
@@ -165,9 +181,14 @@ extension PlaybackArbiter {
             pausedAt = clock()
             logger.info("[arbiter] \(self.player.name, privacy: .public) \(why, privacy: .public) — muted until the apps stop")
             publishPlaybackState()
-            watchRestart(after: Self.silentRecheckInterval)
+            if !autoPauseEnabled || activeSources.isEmpty {
+                scheduleResume(after: nil) // its resume unmutes it
+            } else {
+                watchRestart(after: Self.silentRecheckInterval)
+            }
             return true
         }
+        if keptMute { muteKeptInPause = false } // a relaunched process heard: no mute stands
         logger.info("[arbiter] \(self.player.name, privacy: .public) \(why, privacy: .public) and can’t be muted — it plays on")
         pausedByUs = false
         if !activeSources.isEmpty { pauseFailure = failure }
@@ -178,7 +199,7 @@ extension PlaybackArbiter {
     /// Muted in place of the pause: each look mutes a relaunched player
     /// again and listens to it (its sound is measured before the mute).
     /// Silent since the mute or since its pause was pressed (it paused
-    /// itself: Apple TV's trailers in a hidden window), it's paused,
+    /// itself: a trailer in a hidden window), it's paused,
     /// AutoHush's pause from then on, still muted until it plays again
     /// (`muteKeptInPause`). Still heard, its pause is
     /// pressed again, every `mutedPauseRetry`. The user's input changes
@@ -187,8 +208,16 @@ extension PlaybackArbiter {
     /// muted, it should pause it").
     private func lookWhileMuted() async {
         guard let pausedAt else { return }
-        await playerMute?.followRelaunch()
-        guard !isShutDown, pausedByUs, mutedForRestart else { return }
+        let stillMuted = await playerMute?.followRelaunch() ?? false
+        guard !isShutDown, pausedByUs, mutedForRestart, !activeSources.isEmpty else { return }
+        guard stillMuted else {
+            // Relaunched, and its new process couldn't be muted: it plays on, heard.
+            logger.info("[arbiter] \(self.player.name, privacy: .public) relaunched and can’t be muted — it plays on")
+            pausedByUs = false
+            pauseFailure = .playerCommandFailed(.pressIgnored)
+            publishPlaybackState()
+            return
+        }
         let since = (pausePressedWhileMuted ?? pausedAt).addingTimeInterval(Self.pauseTail)
         let hearing = await hearsPlayer(false, since)
         logger.debug("[arbiter] muted \(self.player.name, privacy: .public): \(String(describing: hearing), privacy: .public)")
@@ -204,6 +233,8 @@ extension PlaybackArbiter {
             logger.info("[arbiter] \(self.player.name, privacy: .public) is silent now — paused, muted until it plays again")
             publishPlaybackState()
         case .heard:
+            // Things may have changed while it was measured.
+            guard !isShutDown, pausedByUs, mutedForRestart, !activeSources.isEmpty else { return }
             let now = clock()
             if let pressed = pausePressedWhileMuted, now.timeIntervalSince(pressed) < Self.mutedPauseRetry { return }
             do { try await player.pause() } catch {

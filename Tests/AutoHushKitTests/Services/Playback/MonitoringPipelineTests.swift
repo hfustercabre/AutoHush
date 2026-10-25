@@ -36,12 +36,21 @@ struct MonitoringPipelineTests {
 
         /// `stopGrace`: how long a playing app must be quiet to count as stopped.
         @MainActor
+        /// `playerMute`: mutes the player in place of a pause, as the app's
+        /// readers do by default (it can't mute the stand-in player).
         init(player: any MusicPlayer, detectionMethod: DetectionMethod = .audioLevels,
-             stopGrace: TimeInterval = TimingSettings.defaults.stopGrace, pausesOnOutputDisconnect: Bool = false) {
+             stopGrace: TimeInterval = TimingSettings.defaults.stopGrace, pausesOnOutputDisconnect: Bool = false,
+             playerMute: @escaping @Sendable (String, @escaping @Sendable () -> Bool) -> (any PlayerMuting)? = {
+                 ProcessPlayerMute(bundleID: $0, tapsAllowed: $1)
+             }) {
             var configuration = MonitoringPipelineTests.configuration(stopGrace: stopGrace)
             configuration.pausesOnOutputDisconnect = pausesOnOutputDisconnect
             self.configuration = configuration
             processes.processes = [MonitoringPipelineTests.playerProcess, MonitoringPipelineTests.otherApp]
+            // The player's stand-in sound follows it: heard while it plays, silent once paused.
+            if let mock = player as? MockMusicPlayer {
+                meter.follow(MonitoringPipelineTests.playerProcess.objectID, playing: mock.plays, peak: 0.3)
+            }
             let updates = updates
             pipeline = MonitoringPipeline(
                 player: player,
@@ -53,6 +62,7 @@ struct MonitoringPipelineTests {
                 readers: .init(processes: processes, levelMeter: meter,
                                audioCapturePermission: MockAudioCapturePermission(.granted),
                                powerAssertions: MockPowerAssertions(), outputDisconnects: outputs,
+                               playerMute: playerMute,
                                playerInput: { _ in { _ in true } }), // every start the user's
                 onStatusUpdate: { updates.all.append($0) }
             )
@@ -118,6 +128,9 @@ struct MonitoringPipelineTests {
         await TestWait.until { await mock.playCallCount == 1 }
         await setup.pipeline.waitForResume()
         #expect(await mock.playCallCount == 1)
+        // Measured again as it plays, so the next pause hears it.
+        setup.processes.triggerChange()
+        await setup.pipeline.eventsDelivered()
 
         // Shorter timings, then Auto-Pause back on: paused again for the app still playing.
         var shorter = setup.configuration
@@ -131,12 +144,10 @@ struct MonitoringPipelineTests {
         // Only a player found silent can be played again: measured silent a second
         // after the pause (the monitor looks at a process change), then a look finds
         // it so. Then it's heard again.
-        setup.meter.peaks[Self.playerProcess.objectID] = 0
         try? await Task.sleep(for: .seconds(1))
         setup.processes.triggerChange()
         try? await Task.sleep(for: .seconds(1.5))
         await mock.userSets(.playing)
-        setup.meter.peaks[Self.playerProcess.objectID] = 0.3
         try? await Task.sleep(for: .seconds(PlaybackArbiter.pauseTail + 0.1))
         setup.processes.triggerChange()
         await TestWait.until { setup.updates.playback.last == .musicPlaying }
@@ -222,6 +233,22 @@ struct MonitoringPipelineTests {
         #expect(player.tapsAreAllowed)
         setup.pipeline.setDetectionMethod(antiDot)
         #expect(!player.tapsAreAllowed) // AntiDot mode promises no taps, whichever way it detects
+        setup.pipeline.stop()
+    }
+
+    @Test("AntiDot mode, chosen while the monitoring runs, stops the player's mute in place of a pause; measuring allows it again",
+          arguments: [DetectionMethod.playbackSignals, .openStreams])
+    func antiDotModeStopsPlayerMute(antiDot: DetectionMethod) async {
+        let allowed = Locked<(@Sendable () -> Bool)?>(nil)
+        let setup = Setup(player: MockMusicPlayer(), playerMute: { _, tapsAllowed in
+            allowed.value = tapsAllowed
+            return FakeMute(allowed: tapsAllowed)
+        })
+        #expect(allowed.value?() == true)
+        setup.pipeline.setDetectionMethod(antiDot)
+        #expect(allowed.value?() == false)
+        setup.pipeline.setDetectionMethod(.audioLevels)
+        #expect(allowed.value?() == true)
         setup.pipeline.stop()
     }
 }

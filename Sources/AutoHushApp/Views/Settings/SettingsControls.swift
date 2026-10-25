@@ -57,24 +57,25 @@ enum SettingsSwitch: CaseIterable {
         }
     }
 
-    /// What it does in a few words, under it in the menu (Settings has
-    /// `subtitle`): a fragment, without a period (U12, the user, 2026-10-19).
+    /// What it does in a few words: the menu's switch's VoiceOver hint
+    /// (Settings has `subtitle`), a fragment, without a period (U12, the
+    /// user, 2026-10-19).
     var shortExplanation: Text {
         switch self {
         case .antiDot:
-            Text("No purple dot, less precise", comment: "The menu, under AntiDot mode: what it does, in a few words")
+            Text("No purple dot, less precise", comment: "VoiceOver hint of the menu's AntiDot mode switch: what it does, in a few words")
         case .pausesOnDisconnect:
-            Text("Headphones and other outputs", comment: "The menu, under Pause on disconnect: what it applies to, in a few words (headphones or another output unplugged or out of range)")
+            Text("Headphones and other outputs", comment: "VoiceOver hint of the menu's Pause on disconnect switch: what it applies to, in a few words (headphones or another output unplugged or out of range)")
         case .resumesPlayback:
-            Text("Once other apps go quiet", comment: "The menu, under Resume playback: when it resumes your player, in a few words")
+            Text("Once other apps go quiet", comment: "VoiceOver hint of the menu's Resume playback switch: when it resumes your player, in a few words")
         case .fades:
-            Text("Fades out and back in", comment: "The menu, under Fade playback: what it does, in a few words")
+            Text("Fades out and back in", comment: "VoiceOver hint of the menu's Fade playback switch: what it does, in a few words")
         case .levelsMusic:
-            Text("Matches quieter apps’ volume", comment: "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)")
+            Text("Matches quieter apps’ volume", comment: "VoiceOver hint of the menu's Level the volume switch: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)")
         case .pausesForMicrophone:
-            Text("Pauses when a microphone turns on", comment: "The menu, under Pause for the microphone: what it does, in a few words (an app turning on the microphone pauses your player)")
+            Text("Pauses when a microphone turns on", comment: "VoiceOver hint of the menu's Pause for the microphone switch: what it does, in a few words (an app turning on the microphone pauses your player)")
         case .staysPausedAfterCalls:
-            Text("No resume after a call", comment: "The menu, under Stay paused after calls: what it does, in a few words")
+            Text("No resume after a call", comment: "VoiceOver hint of the menu's Stay paused after calls switch: what it does, in a few words")
         }
     }
 

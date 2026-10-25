@@ -13,7 +13,18 @@ extension PlaybackArbiterTests {
         private var hearing: PlayerHearing
         private var asked: [Bool] = []
         private var askedSince: [Date?] = []
+        private var hook: (@Sendable () async -> Void)?
         init(_ hearing: PlayerHearing) { self.hearing = hearing }
+        /// Runs as it's asked, before it answers (something changing while
+        /// the player is measured).
+        var beforeAnswer: (@Sendable () async -> Void)? {
+            get { lock.withLock { hook } }
+            set { lock.withLock { hook = newValue } }
+        }
+        func answer(listening: Bool, since: Date? = nil) async -> PlayerHearing {
+            await beforeAnswer?()
+            return ask(listening: listening, since: since)
+        }
         var now: PlayerHearing {
             get { lock.withLock { hearing } }
             set { lock.withLock { hearing = newValue } }
@@ -31,7 +42,7 @@ extension PlaybackArbiterTests {
     private func makeHearingArbiter(_ player: MockMusicPlayer, hearing: Hearing, scheduler: ManualDebounceScheduler,
                                     published: LastPublished) -> PlaybackArbiter {
         PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                        onPlaybackStateChange: { published.set($0) }, hearsPlayer: { hearing.ask(listening: $0, since: $1) })
+                        onPlaybackStateChange: { published.set($0) }, hearsPlayer: { await hearing.answer(listening: $0, since: $1) })
     }
 
     @Test("a player that says it plays but isn't heard isn't paused: it's playing silently, asked again every second, never listening on its own, and paused once heard")
@@ -108,9 +119,11 @@ extension PlaybackArbiterTests {
         #expect(published.state == .musicPlaying)
 
         await arbiter.checkPlayerHeard()
+        await arbiter.waitUntilIdle() // the listen runs in a task of its own
         #expect(published.state == .playingSilently)
         hearing.now = .heard
         await arbiter.checkPlayerHeard()
+        await arbiter.waitUntilIdle() // the listen runs in a task of its own
         #expect(published.state == .musicPlaying)
         #expect(hearing.listened == [true, true])
     }
@@ -123,6 +136,7 @@ extension PlaybackArbiterTests {
             let arbiter = makeHearingArbiter(player, hearing: Hearing(.silent), scheduler: scheduler, published: published)
             await arbiter.refreshPlaybackState()
             await arbiter.checkPlayerHeard()
+            await arbiter.waitUntilIdle() // the listen runs in a task of its own
             #expect(published.state == .playingSilently)
             await arbiter.handlePlayerStateChange(.playing) // said again: still silent
             #expect(published.state == .playingSilently)
@@ -179,6 +193,7 @@ extension PlaybackArbiterTests {
         let arbiter = makeHearingArbiter(player, hearing: Hearing(.silent), scheduler: scheduler, published: published)
         await arbiter.refreshPlaybackState()
         await arbiter.checkPlayerHeard()
+        await arbiter.waitUntilIdle() // the listen runs in a task of its own
         #expect(published.state == .musicIdle)
     }
 }

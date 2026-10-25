@@ -196,6 +196,31 @@ struct CheckedPlayerTests {
         #expect(await jukebox.playerState() == .playing) // its sound still on: what it reads, not what checks a press
     }
 
+    @Test("it states itself only by a sure sign that answers: by its sound alone (its output on, or its level heard) never, so it's never taken to play silently")
+    func statesItself() async {
+        let sign = MockMusicPlayer(state: .playing)
+        #expect(await player(ways: [sign], signs: [sign]).statesItself()) // its menu's item, its page's word or its script's state
+        let mute = MockMusicPlayer(state: .unknown)
+        #expect(await player(ways: [mute], signs: [mute]).statesItself() == false) // a sign that says nothing now
+
+        // No sure sign: its output, on or off, tells nothing of itself.
+        for soundOn in [true, false] {
+            let way = MockMusicPlayer(state: .playing)
+            let unsigned = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [way], signs: []), reports: nil,
+                                         processIdentifier: { 4242 }, soundOn: { _ in soundOn }, pressSleep: { _ in }, audioRecordingAllowed: { true })
+            #expect(await unsigned.statesItself() == false, "its output \(soundOn ? "on" : "off")")
+        }
+
+        // Told by its level (its Now Playing row doesn't follow it): never, heard or not, and it isn't listened to for it.
+        var stale = setup([.panel(rememberedRow: nil)])
+        stale.panelRowIsStale = true
+        let heard = FakeLevelProbe(audible: true)
+        let byLevel = CheckedPlayer(setup: stale, parts: CheckedPlayer.parts(for: stale, store: MemorySetupStore()), reports: nil,
+                                    processIdentifier: { 4242 }, levelProbe: heard, soundOn: { _ in true }, audioRecordingAllowed: { true })
+        #expect(await byLevel.statesItself() == false)
+        #expect(heard.listens == 0)
+    }
+
     @Test("a script that only toggles, with no state, goes by the player's other signs")
     func toggleState() async throws {
         let late = LateState()

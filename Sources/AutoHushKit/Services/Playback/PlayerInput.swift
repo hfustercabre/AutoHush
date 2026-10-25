@@ -3,12 +3,13 @@ import os
 
 /// Whether the user played or paused the media player since a moment: a key
 /// pressed or a click while the player was already the frontmost app (not
-/// the click or keys that bring it forward: Apple TV plays its trailer again
-/// as it comes forward), or a media key (Play/Pause on the keyboard). Otherwise a start is the app's own (an
-/// autoplay, the next trailer). Read from macOS's input on the Mac's own
-/// keyboard, mouse and trackpad: moving the pointer doesn't count, nor events
-/// apps post (AutoHush's own presses). A headphones' button sends no such
-/// event, so a play from one counts as the app's.
+/// the click or keys that bring it forward: a player may play its trailer
+/// again as it comes forward), or a media key (Play/Pause on the keyboard).
+/// Otherwise a start is the app's own (an autoplay, the next trailer). Read
+/// from macOS's input on the Mac's own keyboard, mouse and trackpad: moving
+/// the pointer doesn't count, nor events apps post (AutoHush's own presses).
+/// A headphones' button sends no such event, so a play from one counts as
+/// the app's.
 package final class PlayerInput: NSObject, Sendable {
     private let bundleID: String
     /// When the player was the frontmost app, the last 10 minutes; an open
@@ -18,9 +19,15 @@ package final class PlayerInput: NSObject, Sendable {
     /// A click that brings another app forward comes a moment before macOS
     /// says it's frontmost.
     static let activationLag: TimeInterval = 0.5
+    /// How long the spans are kept.
+    static let spanMemory: TimeInterval = 600
+    /// How long ago the latest input of a kind came (`UserInput.secondsSince`).
+    private let secondsSince: @Sendable (CGEventType) -> Double
 
-    package init(bundleID: String) {
+    package init(bundleID: String,
+                 secondsSince: @escaping @Sendable (CGEventType) -> Double = UserInput.secondsSince) {
         self.bundleID = bundleID
+        self.secondsSince = secondsSince
         super.init()
         if NSWorkspace.shared.frontmostApplication?.bundleIdentifier == bundleID {
             spans.withLock { $0 = [(Date(), nil)] }
@@ -33,18 +40,21 @@ package final class PlayerInput: NSObject, Sendable {
     @objc private func activated(_ note: Notification) {
         let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
         let id = app?.bundleIdentifier, date = Date()
-        spans.withLock { spans in
-            if id == bundleID {
-                if spans.last.map({ $0.to != nil }) ?? true { spans.append((date, nil)) }
-            } else if let last = spans.last, last.to == nil {
-                spans[spans.count - 1].to = date
-            }
-            spans.removeAll { ($0.to ?? .distantFuture) < date.addingTimeInterval(-600) }
-        }
+        spans.withLock { $0 = Self.spans($0, afterActivating: id, player: bundleID, at: date) }
     }
 
-    private func wasFrontmost(at date: Date) -> Bool {
-        spans.withLock { Self.inFront(at: date, spans: $0) }
+    /// The spans once `activated` came forward at `date`: one opened as the
+    /// player does, the open one closed as another app does; those ended
+    /// longer than `spanMemory` ago forgotten.
+    static func spans(_ spans: [FrontSpan], afterActivating activated: String?, player: String, at date: Date) -> [FrontSpan] {
+        var spans = spans
+        if activated == player {
+            if spans.last.map({ $0.to != nil }) ?? true { spans.append((date, nil)) }
+        } else if let last = spans.last, last.to == nil {
+            spans[spans.count - 1].to = date
+        }
+        spans.removeAll { ($0.to ?? .distantFuture) < date.addingTimeInterval(-spanMemory) }
+        return spans
     }
 
     /// Whether input at `date` came while the player was already in front:
@@ -59,11 +69,20 @@ package final class PlayerInput: NSObject, Sendable {
     }
 
     /// Whether the user pressed a key or clicked in the player, or pressed a
-    /// media key, after `date`.
+    /// media key, after `date`. Each kind's latest is read on its own, so a
+    /// key pressed elsewhere since doesn't hide a click in the player.
     package func since(_ date: Date) -> Bool {
-        let now = Date()
-        if let input = UserInput.last(of: UserInput.keysAndClicks, now: now), input > date, wasFrontmost(at: input) { return true }
-        return UserInput.lastMediaKey(now: now).map { $0 > date } ?? false
+        Self.played(since: date, now: Date(), spans: spans.withLock { $0 }, secondsSince: secondsSince)
+    }
+
+    /// `since`, from the spans the player was in front and each kind of
+    /// input's age.
+    static func played(since date: Date, now: Date, spans: [FrontSpan], secondsSince: (CGEventType) -> Double) -> Bool {
+        for kind in UserInput.keysAndClicks {
+            if let input = UserInput.last(of: [kind], now: now, secondsSince: secondsSince), input > date,
+               inFront(at: input, spans: spans) { return true }
+        }
+        return UserInput.lastMediaKey(now: now, secondsSince: secondsSince).map { $0 > date } ?? false
     }
 }
 
@@ -80,16 +99,21 @@ package enum UserInput {
     /// A system-defined event this close to a mouse button's is that button's.
     static let sameEvent: TimeInterval = 0.05
 
+    /// How long ago macOS saw the latest input of a kind.
+    @Sendable package static func secondsSince(_ kind: CGEventType) -> Double {
+        CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: kind)
+    }
+
     /// When a media key was last pressed: the last system-defined event,
     /// unless it was a mouse button's. A click after a media key hides it.
-    static func lastMediaKey(now: Date) -> Date? {
-        guard let event = last(of: [systemDefined], now: now) else { return nil }
-        let buttons = buttons.compactMap { last(of: [$0], now: now) }
+    static func lastMediaKey(now: Date, secondsSince: (CGEventType) -> Double = secondsSince) -> Date? {
+        guard let event = last(of: [systemDefined], now: now, secondsSince: secondsSince) else { return nil }
+        let buttons = buttons.compactMap { last(of: [$0], now: now, secondsSince: secondsSince) }
         return buttons.contains(where: { abs($0.timeIntervalSince(event)) < sameEvent }) ? nil : event
     }
 
-    static func last(of kinds: [CGEventType], now: Date) -> Date? {
-        let ago = kinds.map { CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: $0) }.min() ?? .infinity
+    static func last(of kinds: [CGEventType], now: Date, secondsSince: (CGEventType) -> Double = secondsSince) -> Date? {
+        let ago = kinds.map(secondsSince).min() ?? .infinity
         return ago.isFinite ? now.addingTimeInterval(-ago) : nil
     }
 }

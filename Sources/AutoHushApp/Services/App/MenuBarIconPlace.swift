@@ -26,7 +26,7 @@ struct MenuBarIconPlace {
     /// The switch's title, in Settings → General and Diagnostics.
     nonisolated static var title: String {
         String(localized: "Keep icon next to system icons",
-               comment: "Settings → General and Diagnostics: whether AutoHush's menu bar icon goes back beside the system's icons (Control Center, the clock) each time it opens")
+               comment: "Settings → General and Diagnostics: whether AutoHush's menu bar icon goes back beside the system's icons (Control Center, the clock) each time AutoHush starts")
     }
 
     /// The icon goes back beside the system's icons at each launch.

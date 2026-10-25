@@ -20,21 +20,26 @@ struct NeutralSourcesTests {
         return found.filter { $0.pathExtension == "swift" }
     }
 
-    /// The supported players' names and bundle IDs, and the tested web apps'
-    /// names: a one-word name anywhere, whatever its case; a name of several
-    /// words whole, whatever its case, and each word but "Apple" and
-    /// "Player" (QuickTime Player's, as in Player Check) as a word of its
+    /// Players AutoHush has met that it doesn't list (added apps, examples
+    /// in comments): named no more there than the supported ones.
+    private static let otherPlayers = ["Apple TV", "Qobuz", "Deezer", "IINA", "YouTube Music", "Amazon Music"]
+
+    /// The supported players' names and bundle IDs, the tested web apps'
+    /// names, and `otherPlayers`: a one-word name anywhere, whatever its case; a name of several
+    /// words whole, whatever its case, and each word but "Apple",
+    /// "Player" (QuickTime Player's, as in Player Check) and "Amazon" as a word of its
     /// own, capitalized as the name has it (so not the same word in
     /// lowercase, which may be ordinary English).
     private static func names() -> (anyCase: [String], asWords: [String]) {
         let players = SupportedPlayers.catalog.players
-        let names = Set(players.map(\.name) + SupportedPlayers.testedWebApps.map(\.name))
+        let names = Set(players.map(\.name) + SupportedPlayers.testedWebApps.map(\.name) + otherPlayers)
         let anyCase = Array(names) + players.map(\.bundleID)
-        let asWords = names.filter { $0.contains(" ") }.flatMap { $0.split(separator: " ").map(String.init) }.filter { !["Apple", "Player"].contains($0) }
+        let asWords = names.filter { $0.contains(" ") }.flatMap { $0.split(separator: " ").map(String.init) }
+            .filter { !["Apple", "Player", "Amazon"].contains($0) }
         return (anyCase, asWords)
     }
 
-    @Test("no Swift file there names a supported player or a tested web app", arguments: ["Sources/AutoHushKit", "Sources/PlayerCheck"])
+    @Test("no Swift file there names a supported player, a tested web app or another known player", arguments: ["Sources/AutoHushKit", "Sources/PlayerCheck"])
     func namesNoPlayer(folder: String) throws {
         let files = Self.swiftFiles(in: Self.package.appending(path: folder))
         try #require(files.count > 20, "\(folder) not found in \(Self.package.path)")

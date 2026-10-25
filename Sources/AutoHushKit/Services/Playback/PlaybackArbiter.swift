@@ -83,7 +83,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// (`hearsPlayer`): playing silently, not paused.
     var playsSilently = false
     /// Not heard, and only its open output said it plays (it reports no
-    /// state: Apple TV's trailers): shown as not playing.
+    /// state, as a player's autoplaying trailers may): shown as not playing.
     var silentWithoutState = false
     /// Whether the player is heard, from the levels the monitor measures
     /// alongside other apps (`AudioMonitor.playerHearing`), counting only its
@@ -126,6 +126,10 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// 2026-10-24: "unmute it for the playback"), so a restart by itself
     /// is never heard.
     var muteKeptInPause = false
+    /// The lifting of the last mute, under way (`publishPlaybackState`).
+    var muteLift: Task<Void, Never>?
+    /// The menu's listen to the player, under way (`checkPlayerHeard`).
+    var heardCheck: Task<Void, Never>?
     /// Whether the user pressed a key or clicked in the player, or pressed a
     /// media key, after a moment (`PlayerInput`); by default always, so
     /// every start is the user's (the monitoring gives the real one).
@@ -477,9 +481,11 @@ actor PlaybackArbiter: PlaybackArbiting {
         }
     }
 
-    /// Called whenever the player reports a new state. If the user resumed,
-    /// stopped or quit it while we held it paused, we are no longer
-    /// responsible for it and must not resume it later.
+    /// Called whenever the player reports a new state. While other apps play,
+    /// a report that it plays again during our pause is judged by its sound
+    /// (`handleRestart`: the user's only after their input, else muted); one
+    /// that it stopped or quit ends our pause. Once no other app plays,
+    /// nothing is judged the user's: the resume decides.
     ///
     /// A report can be stale, though: some players post the state they had
     /// just before the new one (one, right after our pause: "Playing", then
@@ -615,8 +621,20 @@ actor PlaybackArbiter: PlaybackArbiting {
     }
 
     /// Listens to the player when the menu opens, so it says at once whether
-    /// a player that says it plays here is heard (the user, 2026-10-24).
-    func checkPlayerHeard() async {
+    /// a player that says it plays here is heard (the user, 2026-10-24). The
+    /// listen (a tap of its own, half a second) runs in a task of its own,
+    /// one at a time, so the pipeline's next command doesn't wait for it.
+    func checkPlayerHeard() {
+        guard heardCheck == nil else { return }
+        heardCheck = Task { [weak self] in
+            await self?.listenForMenu()
+            await self?.heardCheckEnded()
+        }
+    }
+
+    private func heardCheckEnded() { heardCheck = nil }
+
+    private func listenForMenu() async {
         guard !isShutDown, playerState == .playing, playsLocally, !pausedByUs, !isFadingOut else { return }
         let heard: Bool
         switch await hearsPlayer(true, nil) {

@@ -163,6 +163,25 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("opening the menu has the player listened to, so the menu says at once that it plays silently; a mute in place of the pause shows too")
+    func menuListensToPlayer() async {
+        let (sut, monitorings) = makeSUT()
+        await start(sut)
+        let monitoring = monitorings.made[0]
+        #expect(monitoring.playerHeardChecks == 0)
+        sut.menuWillOpen()
+        #expect(monitoring.playerHeardChecks == 1)
+        sut.menuWillOpen()
+        #expect(monitoring.playerHeardChecks == 2) // each time it opens
+
+        monitoring.send(.playback(.playingSilently))
+        #expect(sut.status.statusLine == "Playing silently")
+        monitoring.send(.playback(.pausedByMonitor))
+        monitoring.send(.mutedInstead(true))
+        #expect(sut.status.playerMutedInstead && sut.status.statusLine == "Muted — another app is playing")
+    }
+
+    @MainActor
     @Test("the chosen player is left out of Settings → Sound Sources and the ignored apps")
     func chosenPlayerNotListedAsApp() {
         let scratch = Scratch()

@@ -19,7 +19,12 @@ package actor MockMusicPlayer: MusicPlayer {
     /// The changes its observer reports: a test plays or pauses it as the
     /// user would (`userSets`).
     package nonisolated let stateReports = StateReports()
-    package var state: PlayerState
+    package var state: PlayerState {
+        didSet { plays.value = state == .playing }
+    }
+    /// Whether it plays now, readable from any thread: a stand-in for its
+    /// sound follows it (`MockLevelMeter.follow`).
+    package nonisolated let plays: Locked<Bool>
     package var pauseCallCount = 0
     package var playCallCount = 0
     package var verifyCallCount = 0
@@ -59,6 +64,7 @@ package actor MockMusicPlayer: MusicPlayer {
         self.bundleID = bundleID
         self.name = name
         self.state = state
+        plays = Locked(state == .playing)
         self.volumeCurve = volumeCurve
         self.canFade = canFade
         self.iconPlaceholder = iconPlaceholder

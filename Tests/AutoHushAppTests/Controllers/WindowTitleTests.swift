@@ -5,7 +5,6 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 @testable import CheckPanel
-import CheckedPlayers
 import PlayerCheckKit
 
 /// The logs window and Settings keep their place under a name of their

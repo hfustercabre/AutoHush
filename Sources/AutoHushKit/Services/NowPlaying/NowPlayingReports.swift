@@ -346,7 +346,7 @@ package final class NowPlayingReports: @unchecked Sendable {
     }
 
     /// Playing, Paused and Stopped as they are; Unknown says nothing (`nil`:
-    /// Apple TV's trailers, heard, report it); any other (Interrupted…) as paused.
+    /// a player's trailers, heard, may report it); any other (Interrupted…) as paused.
     package static func state(reported: String) -> PlayerState? {
         switch reported {
         case "Playing": .playing

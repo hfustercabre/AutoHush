@@ -44,7 +44,7 @@ let hostAppID: String? = {
 /// (hidden in System Settings, macOS removes it), which `writeResult` says.
 @MainActor var panelItemSeen = false
 @MainActor var panelItemMissing = false
-/// The app's row showed a state its sound didn't (Qobuz's always shows
+/// The app's row showed a state its sound didn't (one app's always shows
 /// paused, 2026-10-16), and was pressed as a toggle: kept in its setup
 /// (`PlayerSetup.panelRowIsStale`) when the panel worked.
 @MainActor var panelRowStale = false

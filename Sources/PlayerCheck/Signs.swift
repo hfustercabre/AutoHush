@@ -1,6 +1,5 @@
 import AppKit
 import AutoHushKit
-import CheckedPlayers
 import MenuPlayers
 import PlayerCheckKit
 
@@ -64,7 +63,8 @@ extension Look {
         } else if let said = now.says(kind) {
             // A scripted state that says it doesn't play while it's heard is
             // wrong for this app: it plays, and the state isn't read again.
-            if kind == .script, said != .playing, audible(pid) == true {
+            if kind == .script { noteScriptWord(said) }
+            if kind == .script, said != .playing, now.sounding, scriptWordToCheck(), audible(pid) == true {
                 scriptStateWrong = true
                 say("  its state by script reads \(said.rawValue) while it's heard: wrong for \(appName), so it isn't read again")
                 return true
@@ -78,6 +78,31 @@ extension Look {
         }
     }
     return now.sounding
+}
+
+/// Since when the script has said it doesn't play, and when that was last
+/// checked against its sound (`scriptWordToCheck`).
+@MainActor var scriptQuietSince: Date?
+@MainActor var scriptWordCheckedAt: Date?
+/// The sound right after a pause is its tail: a script's "paused" is checked
+/// against it only once it has said so this long.
+let scriptSettle: TimeInterval = 1
+/// And at most this often, so a look doesn't listen each time (the user,
+/// 2026-10-11: the check as unintrusive as possible).
+let scriptRecheck: TimeInterval = 2
+
+@MainActor func noteScriptWord(_ said: PlayerState) {
+    if said == .playing { scriptQuietSince = nil } else if scriptQuietSince == nil { scriptQuietSince = Date() }
+}
+
+/// Whether the script's "not playing" is to be checked against the app's
+/// sound now: said for `scriptSettle`, not checked in the last `scriptRecheck`.
+@MainActor func scriptWordToCheck() -> Bool {
+    let now = Date()
+    guard let since = scriptQuietSince, now.timeIntervalSince(since) >= scriptSettle,
+          scriptWordCheckedAt.map({ now.timeIntervalSince($0) >= scriptRecheck }) ?? true else { return false }
+    scriptWordCheckedAt = now
+    return true
 }
 
 /// Waits up to `seconds`, running the run loop (for notifications), until

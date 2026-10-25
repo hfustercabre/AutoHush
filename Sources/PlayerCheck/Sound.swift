@@ -1,5 +1,4 @@
 import AppKit
-import CheckedPlayers
 import PlayerCheckKit
 import AutoHushKit
 import CoreAudio
@@ -250,7 +249,7 @@ final class TestMute: @unchecked Sendable {
     }
 
     /// Whether it still looks every 0.1 s for processes to mute: until its
-    /// first mute works.
+    /// first mute works. For tests (`TestMuteTests`).
     var isRetrying: Bool { queue.sync { timer != nil } }
 
     /// Until it's muted: the muter keeps it so from then on.

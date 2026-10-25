@@ -117,7 +117,7 @@ enum AddAppText {
     }
 
     static var playingLabel: String {
-        String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
+        String(localized: "Playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
     }
 
     static var lookingForApps: String {

@@ -1,5 +1,4 @@
 import AppKit
-import CheckedPlayers
 import PlayerCheckKit
 import os
 import AutoHushKit
@@ -243,7 +242,7 @@ func items(_ descriptor: NSAppleEventDescriptor?) -> [NSAppleEventDescriptor] {
 /// macOS refused the app's state (-1743): it's no longer asked. Each kind of
 /// error, and each unknown state value, is said once.
 @MainActor var scriptRefused = false
-/// Its state by script said it didn't play while it was heard (Apple TV's
+/// Its state by script said it didn't play while it was heard (an app whose
 /// `player state` reads stopped while it plays a stream, 2026-10-22): wrong
 /// for this app, so it's no longer read, and AutoHush isn't given it
 /// (`writeResult`): other signs tell its state.

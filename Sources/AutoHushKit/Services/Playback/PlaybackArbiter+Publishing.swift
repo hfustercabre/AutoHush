@@ -19,7 +19,8 @@ extension PlaybackArbiter {
                 mutedForRestart = false
                 muteKeptInPause = false
                 let mute = playerMute
-                Task { await mute?.unmute() }
+                // A mute made next awaits this one's lifting (`muteInsteadOfPause`).
+                muteLift = Task { await mute?.unmute() }
             }
             onPausedByUsChange(pausedByUs)
         }

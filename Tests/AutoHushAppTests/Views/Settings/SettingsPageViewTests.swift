@@ -33,13 +33,56 @@ struct SettingsPageViewTests {
         #expect(draws(.general, model))
     }
 
+    @Test("General draws a web app's controls, learned or not, with the button that learns them", arguments: [
+        LearningStatus.learned, .learning(hasPlayed: false),
+    ])
+    func generalWithControls(_ learning: LearningStatus) {
+        let model = SettingsModel.forTests(actions: actions, updates: FakeUpdateCommands())
+        model.state.status.choosePlayer(named: "YT Music")
+        model.state.status.learning = learning
+        #expect(model.canLearnControlsAgain)
+        #expect(draws(.general, model))
+    }
+
+    @Test("Diagnostics draws every part unfolded: how AutoHush is doing, the apps with sound or none, each section's rows with their marks and fixes",
+          arguments: [DiagnosticsSnapshot.Overview.Kind.working, .attention, .off, .starting])
+    func diagnosticsUnfolded(_ kind: DiagnosticsSnapshot.Overview.Kind) {
+        let model = SettingsModel.forTests(actions: actions, updates: FakeUpdateCommands())
+        model.state.status.choosePlayer(named: "Jukebox")
+        model.diagnostics = Self.diagnostics(kind, apps: kind != .starting) // starting: none has sound yet
+        #expect(model.foldedDiagnostics.isEmpty)
+        #expect(draws(.diagnostics, model, height: 2400)) // every row in sight
+    }
+
+    /// Diagnostics as AutoHush finds it, each section with a row of every
+    /// mark and each fix.
+    private static func diagnostics(_ kind: DiagnosticsSnapshot.Overview.Kind, apps: Bool) -> DiagnosticsSnapshot {
+        typealias Row = DiagnosticsSnapshot.Row
+        let rows = [
+            Row(label: "Player", value: "Jukebox 2.1", mark: .ok),
+            Row(label: "Automation for Jukebox", value: "Not allowed", mark: .problem, fix: .allow(.automation(player: "Jukebox"))),
+            Row(label: "Controls", value: "Not learned", mark: .problem, fix: .learnControls),
+            Row(label: "Media player", value: "None chosen", mark: .neutral, fix: .choosePlayer),
+            Row(label: "Version", value: "0.2.0 (2)"),
+        ]
+        let kinds: [DiagnosticsSnapshot.Section.Kind] = [.player, .behavior, .detection, .permissions, .autoHush, .mac]
+        return DiagnosticsSnapshot(
+            overview: .init(kind: kind, title: "Working normally", detail: "Jukebox · Paused — Google Chrome is playing"),
+            apps: apps ? [.init(id: "com.google.Chrome", name: "Google Chrome", bundlePath: nil, judgement: "Playing", evidence: "-20 dBFS"),
+                          .init(id: "org.videolan.vlc", name: "VLC", bundlePath: nil, judgement: "Silent, ignored", evidence: nil)] : [],
+            appsSummary: apps ? "Google Chrome, VLC" : "None",
+            sections: kinds.map { .init(kind: $0, title: "\($0)", summary: "Summary", rows: rows) },
+            text: "The report"
+        )
+    }
+
     /// `page` drawn as Settings' window draws it.
-    private func draws(_ page: SettingsWindowController.Page, _ model: SettingsModel) -> Bool {
+    private func draws(_ page: SettingsWindowController.Page, _ model: SettingsModel, height: CGFloat = 600) -> Bool {
         let navigation = SettingsNavigation()
         navigation.page = page
         let keys = SettingsKeys()
         let width = SettingsWindowController.initialSize.width - SettingsWindowController.sidebarWidth
-        let size = drawn(SettingsPageView(model: model, navigation: navigation).environment(keys.page), width: width)
+        let size = drawn(SettingsPageView(model: model, navigation: navigation).environment(keys.page), width: width, height: height)
         return size.height > 0
     }
 }

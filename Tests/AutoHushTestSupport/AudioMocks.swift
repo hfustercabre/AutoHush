@@ -67,6 +67,7 @@ package final class MockLevelMeter: AudioLevelMetering, @unchecked Sendable {
 
     private let lock = NSLock()
     private var _peaks: [AudioObjectID: Float] = [:]
+    private var _followed: [AudioObjectID: (peak: Float, plays: Locked<Bool>)] = [:]
     private var _metered: Set<AudioObjectID> = []
     private var _stopAllCount = 0
 
@@ -74,6 +75,12 @@ package final class MockLevelMeter: AudioLevelMetering, @unchecked Sendable {
     package var peaks: [AudioObjectID: Float] {
         get { lock.withLock { _peaks } }
         set { lock.withLock { _peaks = newValue } }
+    }
+
+    /// The process's peak follows a player: `peak` while it plays, 0 while
+    /// it doesn't, whatever `peaks` says.
+    package func follow(_ objectID: AudioObjectID, playing plays: Locked<Bool>, peak: Float) {
+        lock.withLock { _followed[objectID] = (peak, plays) }
     }
 
     package var lastMetered: Set<AudioObjectID> { lock.withLock { _metered } }
@@ -97,7 +104,9 @@ package final class MockLevelMeter: AudioLevelMetering, @unchecked Sendable {
 
     package func drainPeaks() -> [AudioObjectID: Float] {
         lock.withLock {
-            Dictionary(uniqueKeysWithValues: _metered.map { ($0, _peaks[$0] ?? 0) })
+            Dictionary(uniqueKeysWithValues: _metered.map { id in
+                (id, _followed[id].map { $0.plays.value ? $0.peak : 0 } ?? _peaks[id] ?? 0)
+            })
         }
     }
 

@@ -31,8 +31,6 @@ package struct ScriptingDictionary: Equatable, Sendable {
     }
     /// A `player state` (pPlS), as Spotify's and Music's.
     package var hasPlayerState: Bool { properties["pPlS"] != nil }
-    /// A true/false `playing` property instead (VLC's): its state too.
-    var hasPlayingFlag: Bool { properties.values.contains("playing") }
     /// `player state`'s values: stopped, playing, paused.
     package var hasStateValues: Bool { enumerators.isSuperset(of: ["kPSS", "kPSP", "kPSp"]) }
     /// Played and paused through its documents, each with its own `playing`

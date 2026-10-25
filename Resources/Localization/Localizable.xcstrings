@@ -40953,7 +40953,7 @@
       }
     },
     "AutoHush: your player is muted" : {
-      "comment" : "VoiceOver label of the menu bar icon, while the media player (one that can only be muted, or one that kept starting again by itself after AutoHush's pause) is muted for another app",
+      "comment" : "VoiceOver label of the menu bar icon, while the media player (one that can only be muted, or one muted in place of a pause that didn't take) is muted for another app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -64568,7 +64568,7 @@
       }
     },
     "Fades out and back in" : {
-      "comment" : "The menu, under Fade playback: what it does, in a few words",
+      "comment" : "VoiceOver hint of the menu's Fade playback switch: what it does, in a few words",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -66611,7 +66611,7 @@
       }
     },
     "Headphones and other outputs" : {
-      "comment" : "The menu, under Pause on disconnect: what it applies to, in a few words (headphones or another output unplugged or out of range)",
+      "comment" : "VoiceOver hint of the menu's Pause on disconnect switch: what it applies to, in a few words (headphones or another output unplugged or out of range)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -77280,7 +77280,7 @@
       }
     },
     "Keep icon next to system icons" : {
-      "comment" : "Settings → General and Diagnostics: whether AutoHush's menu bar icon goes back beside the system's icons (Control Center, the clock) each time it opens",
+      "comment" : "Settings → General and Diagnostics: whether AutoHush's menu bar icon goes back beside the system's icons (Control Center, the clock) each time AutoHush starts",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -82274,7 +82274,7 @@
       }
     },
     "Matches quieter apps’ volume" : {
-      "comment" : "The menu, under Level the volume: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)",
+      "comment" : "VoiceOver hint of the menu's Level the volume switch: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85225,7 +85225,7 @@
       }
     },
     "Muted by AutoHush" : {
-      "comment" : "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted, or a player that kept starting again by itself after AutoHush's pause)",
+      "comment" : "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted, or a player muted in place of a pause that didn't take)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85906,7 +85906,7 @@
       }
     },
     "Muted — %@" : {
-      "comment" : "At the top of the menu, under the media player (an app added with Add an App that can only be muted, or a player that kept starting again by itself after AutoHush's pause); %@ says which apps play, e.g. “Safari is playing”",
+      "comment" : "At the top of the menu and in Settings → General's status line, under the media player (an app added with Add an App that can only be muted, or a player muted in place of a pause that didn't take); %@ says which apps play, e.g. “Safari is playing”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -90900,7 +90900,7 @@
       }
     },
     "No purple dot, less precise" : {
-      "comment" : "The menu, under AntiDot mode: what it does, in a few words",
+      "comment" : "VoiceOver hint of the menu's AntiDot mode switch: what it does, in a few words",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -91354,7 +91354,7 @@
       }
     },
     "No resume after a call" : {
-      "comment" : "The menu, under Stay paused after calls: what it does, in a few words",
+      "comment" : "VoiceOver hint of the menu's Stay paused after calls switch: what it does, in a few words",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -95213,7 +95213,7 @@
       }
     },
     "Not playing" : {
-      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: nothing plays\nAt the top of the menu, under the media player: nothing plays",
+      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: nothing plays",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -99526,7 +99526,7 @@
       }
     },
     "Once other apps go quiet" : {
-      "comment" : "The menu, under Resume playback: when it resumes your player, in a few words",
+      "comment" : "VoiceOver hint of the menu's Resume playback switch: when it resumes your player, in a few words",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -108839,7 +108839,7 @@
       }
     },
     "Pauses when a microphone turns on" : {
-      "comment" : "The menu, under Pause for the microphone: what it does, in a few words (an app turning on the microphone pauses your player)",
+      "comment" : "VoiceOver hint of the menu's Pause for the microphone switch: what it does, in a few words (an app turning on the microphone pauses your player)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -110882,7 +110882,7 @@
       }
     },
     "Playing" : {
-      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list\nAt the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list",
+      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -111336,7 +111336,7 @@
       }
     },
     "Playing on another device" : {
-      "comment" : "At the top of the menu, under the media player, e.g. through Spotify Connect",
+      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player, e.g. through Spotify Connect",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -111563,7 +111563,7 @@
       }
     },
     "Playing silently" : {
-      "comment" : "At the top of the menu, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it",
+      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -145894,13 +145894,13 @@
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Donde la cámara ni los iconos de otras apps lo ocultan. Desactivado, arrástralo con ⌘ donde quieras."
+            "value" : "Donde ni la muesca ni los iconos de otras apps lo ocultan. Desactivado, arrástralo con ⌘ donde quieras."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Donde la cámara ni los íconos de otras apps lo ocultan. Desactivado, arrástralo con ⌘ donde quieras."
+            "value" : "Donde ni la muesca ni los íconos de otras apps lo ocultan. Desactivado, arrástralo con ⌘ donde quieras."
           }
         },
         "fi" : {
@@ -145936,7 +145936,7 @@
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Gdje je ni zarez ni ikone drugih aplikacija ne skrivaju. Kad je isključeno, povuci je s ⌘ kamo želiš."
+            "value" : "Gdje je ni zarez ni ikone drugih aplikacija ne skrivaju. Kad je isključeno, povucite je s ⌘ kamo želite."
           }
         },
         "hu" : {
@@ -146026,7 +146026,7 @@
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kjer je izrez ali ikone drugih aplikacij ne skrijejo. Ko je izklopljeno, jo s ⌘ povleci, kamor želiš."
+            "value" : "Kjer je izrez ali ikone drugih aplikacij ne skrijejo. Ko je izklopljeno, jo s ⌘ povlecite, kamor želite."
           }
         },
         "sv" : {

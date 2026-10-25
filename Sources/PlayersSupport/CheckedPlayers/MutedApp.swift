@@ -59,6 +59,10 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
         guard processIdentifier() != nil else { throw MusicPlayerError.playerNotRunning }
     }
 
+    /// Its state is its sound output's or its keep-awake assertion's, never
+    /// its own (`MusicPlayer.statesItself`).
+    func statesItself() async -> Bool { false }
+
     func playerState() async -> PlayerState {
         guard let pid = processIdentifier() else {
             // Quit while muted: what the mute stood for goes with it.

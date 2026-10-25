@@ -133,13 +133,6 @@ extension PlayerSession {
         monitoring?.setAsleep(asleep)
     }
 
-    /// Holds every resume, or lets them happen again: the chosen player's,
-    /// the held pauses', and those of a monitoring started meanwhile, which
-    /// starts held. While held, a player AutoHush paused stays paused, and
-    /// one that plays is still paused when another app starts; released, the
-    /// music comes back as usual (see `PlaybackArbiter.holdResumes`).
-    /// Quitting ends the hold: the pauses are handed over as any (`quit`),
-    /// and the AutoHush opened next resumes them once no other app plays.
     /// Listens to the chosen player as the menu opens, so the menu says at
     /// once whether it plays silently (the user, 2026-10-24).
     func checkPlayerHeard() {
@@ -147,6 +140,13 @@ extension PlayerSession {
         monitoring?.checkPlayerHeard()
     }
 
+    /// Holds every resume, or lets them happen again: the chosen player's,
+    /// the held pauses', and those of a monitoring started meanwhile, which
+    /// starts held. While held, a player AutoHush paused stays paused, and
+    /// one that plays is still paused when another app starts; released, the
+    /// music comes back as usual (see `PlaybackArbiter.holdResumes`).
+    /// Quitting ends the hold: the pauses are handed over as any (`quit`),
+    /// and the AutoHush opened next resumes them once no other app plays.
     func holdResumes(_ held: Bool) {
         guard !hasQuit, held != resumesHeld else { return }
         resumesHeld = held
