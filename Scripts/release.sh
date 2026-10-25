@@ -63,7 +63,7 @@ fi
 # its own Info.plist); Resources/Info.plist and the CHANGELOG change only
 # once it's built.
 BUILD_NUMBER=$(( $(plist_value "$INFO_PLIST" CFBundleVersion) + 1 ))
-SIGNING_IDENTITY="$IDENTITY" BUILD_NUMBER="$BUILD_NUMBER" bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
+SIGNING_IDENTITY="$IDENTITY" BUILD_NUMBER="$BUILD_NUMBER" KEEP_SYMBOLS=1 bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
 # The team the built app is signed with: anything but $RELEASE_TEAM stops the
 # release here, before the version and the CHANGELOG change.
 TEAM="$(codesign -dv "$APP_BUNDLE" 2>&1 | sed -n 's/^TeamIdentifier=//p')"

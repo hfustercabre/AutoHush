@@ -8,6 +8,7 @@
 #   VERSION           CFBundleShortVersionString for this bundle (default: Resources/Info.plist)
 #   BUILD_NUMBER      CFBundleVersion for this bundle (default: Resources/Info.plist)
 #   KEEP_PERMISSIONS=1  skip the privacy-permission reset of ad-hoc builds
+#   KEEP_SYMBOLS=1    keep a release's symbols in dist/dSYMs (release.sh sets it)
 set -euo pipefail
 source "$(dirname "$0")/lib/common.sh"
 
@@ -201,21 +202,29 @@ else
 fi
 
 # A release ships without its local symbols, less than half the size (the
-# App Intents step above has read them already). They're kept for reading
-# crash logs: each build's dSYMs go to a folder of their own in
-# dist/dSYMs/, one per version, build and the app's UUID (which a crash log
-# names); dist/ is git-ignored, so they stay on this Mac.
+# App Intents step above has read them already). A published release's are
+# kept for reading crash logs (KEEP_SYMBOLS=1, from release.sh): its dSYMs go
+# to a folder of their own in dist/dSYMs/, named for its version, build and
+# the app's UUID (which a crash log names); dist/ is git-ignored, so they
+# stay on this Mac. Other release builds (checks, tests) keep none: 71 MB each.
 if [[ "$BUILD_CONFIG" == release ]]; then
-    step "Keeping the symbols, then stripping them"
-    APP_UUID="$(xcrun dwarfdump --uuid "$APP_BUNDLE/Contents/MacOS/$APP_NAME" | awk '/arm64/ {print $2; exit}')"
-    DSYM_DIR="$DIST_DIR/dSYMs/$(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleShortVersionString)-$(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleVersion)-${APP_UUID:0:8}"
-    mkdir -p "$DSYM_DIR"
+    DSYM_DIR=""
+    if [[ "${KEEP_SYMBOLS:-0}" == 1 ]]; then
+        step "Keeping the symbols, then stripping them"
+        APP_UUID="$(xcrun dwarfdump --uuid "$APP_BUNDLE/Contents/MacOS/$APP_NAME" | awk '/arm64/ {print $2; exit}')"
+        DSYM_DIR="$DIST_DIR/dSYMs/$(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleShortVersionString)-$(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleVersion)-${APP_UUID:0:8}"
+        mkdir -p "$DSYM_DIR"
+    else
+        step "Stripping the symbols"
+    fi
     for binary in "$APP_BUNDLE/Contents/MacOS/$APP_NAME" "$HELPER"; do
-        xcrun dsymutil "$binary" -o "$DSYM_DIR/$(basename "$binary").dSYM" 2>/dev/null \
-            || fail "dsymutil could not keep $(basename "$binary")'s symbols"
+        if [[ -n "${DSYM_DIR:-}" ]]; then
+            xcrun dsymutil "$binary" -o "$DSYM_DIR/$(basename "$binary").dSYM" 2>/dev/null \
+                || fail "dsymutil could not keep $(basename "$binary")'s symbols"
+        fi
         xcrun strip -x "$binary"
     done
-    note "symbols kept in ${DSYM_DIR#"$PROJECT_DIR/"}"
+    if [[ -n "${DSYM_DIR:-}" ]]; then note "symbols kept in ${DSYM_DIR#"$PROJECT_DIR/"}"; fi
 fi
 
 IDENTITY="$(resolve_signing_identity)"

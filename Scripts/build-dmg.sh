@@ -8,7 +8,7 @@
 # Environment:
 #   SKIP_BUILD=1      package the existing AutoHush.app instead of rebuilding it
 #   PYTHON            the Python (3.10 or later) for dmgbuild, if python3 is older
-#   SIGNING_IDENTITY, SIGNING_KEYCHAIN, BUILD_NUMBER  passed through to build-app.sh
+#   SIGNING_IDENTITY, SIGNING_KEYCHAIN, BUILD_NUMBER, KEEP_SYMBOLS  passed through to build-app.sh
 #
 # dmgbuild (https://github.com/dmgbuild/dmgbuild) builds the image and writes
 # its window layout (Scripts/lib/dmg-settings.py) without Finder. It's
