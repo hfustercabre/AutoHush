@@ -7,6 +7,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Back and Forward in Settings**, as in System Settings: the arrows
+  before the page's name, or ⌘[ and ⌘] in the View menu.
+
 ### Changed
 
 - **A shorter menu.** The settings are in Settings only, and you choose

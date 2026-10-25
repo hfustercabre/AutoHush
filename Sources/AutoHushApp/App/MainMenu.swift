@@ -3,7 +3,8 @@ import AppKit
 /// The menu bar AutoHush shows while one of its windows is open (it's in the
 /// Dock then, `DockPresence`): a Mac app's standard menus, with Apple's
 /// keyboard shortcuts and none of AutoHush's own. The Edit menu is what makes
-/// ⌘X, ⌘C, ⌘V, ⌘A and ⌘Z work in text fields.
+/// ⌘X, ⌘C, ⌘V, ⌘A and ⌘Z work in text fields; the View menu's Back (⌘[) and
+/// Forward (⌘]) walk Settings' pages, as System Settings' do.
 @MainActor
 enum MainMenu {
     /// `about` and `settings` open those pages of Settings; `find` opens or
@@ -15,6 +16,7 @@ enum MainMenu {
         let bar = NSMenu()
         bar.addItem(submenu(appMenu(about: about, settings: settings), title: "AutoHush"))
         bar.addItem(submenu(editMenu(find: find, canFind: canFind), title: editTitle))
+        bar.addItem(submenu(viewMenu(), title: viewTitle))
         let window = windowMenu()
         bar.addItem(submenu(window, title: windowTitle))
         NSApplication.shared.windowsMenu = window
@@ -63,6 +65,19 @@ enum MainMenu {
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Find…", comment: "The menu bar's Edit menu: opens or focuses the search of the window in front (⌘F); macOS's own word"),
                           key: "f", isEnabled: canFind, perform: find))
+        return menu
+    }
+
+    private static var viewTitle: String {
+        String(localized: "View", comment: "The menu bar: the View menu, with Back and Forward; macOS's own word")
+    }
+
+    /// Back and Forward, along the responder chain to the window in front
+    /// that has them (Settings), dimmed elsewhere or with nothing to go to.
+    private static func viewMenu() -> NSMenu {
+        let menu = NSMenu(title: viewTitle)
+        menu.addItem(item(SettingsWindowController.backTitle, #selector(SettingsWindowController.goBack(_:)), key: "["))
+        menu.addItem(item(SettingsWindowController.forwardTitle, #selector(SettingsWindowController.goForward(_:)), key: "]"))
         return menu
     }
 

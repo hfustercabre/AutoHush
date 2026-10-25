@@ -100,7 +100,7 @@ AutoHush's updates (DEVELOPMENT.md: [Build and test](DEVELOPMENT.md#build-and-te
 
 ## First launch
 
-AutoHush lives in the menu bar; it shows in the Dock only while one of its windows is open, with the Mac's usual menus and keyboard shortcuts (⌘V to paste, ⌘W to close, ⌘Q to quit, Return and Escape for a window's buttons). The first time it opens, it asks which media player to control. A player counts as installed when it's in /Applications, your own ~/Applications or /System/Applications, not when it's elsewhere, such as on the disk image it came from. You can change your choice any time in the menu or in Settings.
+AutoHush lives in the menu bar; it shows in the Dock only while one of its windows is open, with the Mac's usual menus and keyboard shortcuts (⌘V to paste, ⌘W to close, ⌘Q to quit, ⌘[ and ⌘] to go back and forward in Settings, Return and Escape for a window's buttons). The first time it opens, it asks which media player to control. A player counts as installed when it's in /Applications, your own ~/Applications or /System/Applications, not when it's elsewhere, such as on the disk image it came from. You can change your choice any time in the menu or in Settings.
 
 <p align="center">
   <picture>
@@ -213,7 +213,7 @@ AutoHush can also control an app it doesn't support itself, once it has checked 
   </picture>
 </p>
 
-Settings has a page for each of these in its sidebar, in two groups: **Everyday**, what most people change, and **Advanced**, for fine-tuning and checks. The sidebar also shows AutoHush's version and a link to support it. You can resize the window; it opens where you left it. It takes the arrow keys as the menu does, ← going to the sidebar and → back to the page; a control Tab reached takes Return, Space, ← and → itself.
+Settings has a page for each of these in its sidebar, and Back and Forward arrows before the page's name, as System Settings does (a row in Behavior opens Fine-Tuning; ‹ brings you back). The pages come in two groups: **Everyday**, what most people change, and **Advanced**, for fine-tuning and checks. The sidebar also shows AutoHush's version and a link to support it. You can resize the window; it opens where you left it. It takes the arrow keys as the menu does, ← going to the sidebar and → back to the page; a control Tab reached takes Return, Space, ← and → itself.
 
 | Page | What you'll find |
 |---|---|

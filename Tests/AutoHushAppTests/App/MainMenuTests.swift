@@ -18,13 +18,13 @@ struct MainMenuTests {
         var opened: [String] = []
         let bar = MainMenu.make(about: { opened.append("about") }, settings: { opened.append("settings") },
                                 find: { opened.append("find") })
-        #expect(bar.items.count == 3) // AutoHush, Edit, Window
+        #expect(bar.items.count == 4) // AutoHush, Edit, View, Window
         let items = bar.items.flatMap { $0.submenu?.items ?? [] }
         let shortcuts = items.filter { !$0.keyEquivalent.isEmpty }
             .map { "\(shortcut($0)) \($0.action.map(NSStringFromSelector) ?? "")" }
         #expect(shortcuts == ["⌘, run", "⌘H hide:", "⌥⌘H hideOtherApplications:", "⌘Q terminate:",
                               "⌘Z undo:", "⇧⌘Z redo:", "⌘X cut:", "⌘C copy:", "⌘V paste:", "⌘A selectAll:", "⌘F run",
-                              "⌘W performClose:", "⌘M performMiniaturize:"])
+                              "⌘[ goBack:", "⌘] goForward:", "⌘W performClose:", "⌘M performMiniaturize:"])
 
         // About and Settings… open those pages of Settings; Find… the search.
         for title in ["About AutoHush", "Settings…", "Find…"] {
@@ -32,7 +32,7 @@ struct MainMenuTests {
             NSApp.sendAction(try #require(item.action), to: item.target, from: item)
         }
         #expect(opened == ["about", "settings", "find"])
-        #expect(NSApp.windowsMenu === bar.items[2].submenu)
+        #expect(NSApp.windowsMenu === bar.items[3].submenu)
     }
 
     @Test("Find… is dimmed while the window in front has no search")

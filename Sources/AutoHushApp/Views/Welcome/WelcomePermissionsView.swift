@@ -45,7 +45,7 @@ struct WelcomePermissionsView: View {
             .windowMargins()
             BottomBar {
                 Button { model.showWelcomePlayers() } label: {
-                    Text("Back", comment: "Welcome window: button that goes back to the list of media players")
+                    Text("Back", comment: "Welcome window: button that goes back to the list of media players. Also Settings: the toolbar's arrow and the View menu's item (⌘[) that show the page shown before; macOS's own word")
                 }
                 .buttonStyle(.chip)
                 Spacer()

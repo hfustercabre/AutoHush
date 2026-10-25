@@ -98,6 +98,42 @@ final class SettingsWindowControllerTests {
         #expect(sut.shownPage == .general)
     }
 
+    @Test("Back and Forward walk the pages shown, as System Settings': a Behavior row's Fine-Tuning goes back to Behavior; opened afresh, nothing to go back to")
+    func backAndForward() throws {
+        let sut = makeController()
+        defer { sut.close() }
+        sut.show()
+        #expect(!sut.canGoBack && !sut.canGoForward)
+        sut.show(page: .behavior)
+        sut.show(page: .fineTuning) // a Behavior row
+        #expect(sut.canGoBack && !sut.canGoForward)
+
+        sut.goBack(nil)
+        #expect(sut.shownPage == .behavior && sut.window?.title == "Behavior")
+        #expect(sut.canGoBack && sut.canGoForward)
+        sut.goForward(nil)
+        #expect(sut.shownPage == .fineTuning && !sut.canGoForward)
+
+        // The View menu's items follow: dimmed with nothing to go to.
+        let back = NSMenuItem(title: "Back", action: #selector(SettingsWindowController.goBack(_:)), keyEquivalent: "[")
+        let forward = NSMenuItem(title: "Forward", action: #selector(SettingsWindowController.goForward(_:)), keyEquivalent: "]")
+        #expect(sut.validateMenuItem(back) && !sut.validateMenuItem(forward))
+
+        // The toolbar has them, joined, before the page's name: its ‹ goes back,
+        // dimmed with nothing to go to.
+        let toolbar = try #require(sut.window?.toolbar)
+        let arrows = try #require(toolbar.items.first { $0.itemIdentifier.rawValue == "history" } as? NSToolbarItemGroup)
+        #expect(arrows.subitems.map(\.isEnabled) == [true, false])
+        arrows.selectedIndex = 0
+        NSApp.sendAction(try #require(arrows.action), to: arrows.target, from: arrows)
+        #expect(sut.shownPage == .behavior && arrows.subitems.map(\.isEnabled) == [true, true])
+        sut.goForward(nil)
+
+        sut.close()
+        sut.show()
+        #expect(sut.shownPage == .general && !sut.canGoBack && !sut.canGoForward)
+    }
+
     @Test("minimized, Settings is still open: it keeps its page, and shows again as it was")
     func minimizedIsOpen() async throws {
         let model = makeModel()

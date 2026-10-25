@@ -105,7 +105,7 @@ final class SettingsWindowController: NSWindowController {
 
     let model: SettingsModel
     private let navigation = SettingsNavigation()
-    private let toolbarDelegate = SettingsToolbarDelegate()
+    private let toolbarDelegate: SettingsToolbarDelegate
     /// The highlight the arrow keys and the pointer move, the sidebar's and the page's.
     let keys = SettingsKeys()
     /// The window has a place: kept from a previous launch, or centered once.
@@ -116,6 +116,7 @@ final class SettingsWindowController: NSWindowController {
     /// window at a time.
     init(model: SettingsModel, frameName: String = SettingsWindowController.frameName) {
         self.model = model
+        toolbarDelegate = SettingsToolbarDelegate(navigation: navigation)
         let split = SettingsSplitViewController()
         let sidebar = NSHostingController(rootView: SettingsSidebar(model: model, navigation: navigation).environment(keys.sidebar))
         sidebar.sizingOptions = []
@@ -164,10 +165,11 @@ final class SettingsWindowController: NSWindowController {
         // which cleared the window's (it opened at its first place and size
         // at each launch).
         windowFrameAutosaveName = frameName
-        navigation.onChange = { [weak window, weak model] page in
+        navigation.onChange = { [weak window, weak model, toolbarDelegate] page in
             window?.title = page.title
             // A Behavior row's card in Fine-Tuning: only for that visit.
             if page != .fineTuning { model?.fineTuningFocus = nil }
+            toolbarDelegate.updateArrows()
         }
         // Before the focused control: the arrows move the highlight, as in
         // the menu. Kept for the controller's life, which is AutoHush's.
@@ -218,6 +220,11 @@ final class SettingsWindowController: NSWindowController {
             keys.clear()
         }
         if let target = page ?? (reopening ? .general : nil) { navigation.page = target }
+        // Opened afresh, nothing to go back to.
+        if reopening {
+            navigation.clearHistory()
+            toolbarDelegate.updateArrows()
+        }
         model.refreshLaunchAtLogin()
         if !isPlaced {
             window?.center()
@@ -227,23 +234,99 @@ final class SettingsWindowController: NSWindowController {
         // Nothing has the keyboard until the user asks: no focus ring on a page at first.
         if reopening { window?.makeFirstResponder(nil) }
     }
+
+    // MARK: - Back and Forward
+
+    /// The page shown before (the toolbar's ‹, ⌘[ in the View menu, sent
+    /// along the responder chain).
+    @objc func goBack(_ sender: Any?) { navigation.goBack() }
+
+    /// The page left by Back (›, ⌘]).
+    @objc func goForward(_ sender: Any?) { navigation.goForward() }
+
+    var canGoBack: Bool { navigation.canGoBack }
+    var canGoForward: Bool { navigation.canGoForward }
+
+    /// Back's and Forward's names: the toolbar's arrows and the View menu.
+    static var backTitle: String {
+        String(localized: "Back", comment: "Welcome window: button that goes back to the list of media players. Also Settings: the toolbar's arrow and the View menu's item (⌘[) that show the page shown before; macOS's own word")
+    }
+
+    static var forwardTitle: String {
+        String(localized: "Forward", comment: "Settings: the toolbar's arrow and the View menu's item (⌘]) that show the page left by Back again; macOS's own word")
+    }
 }
 
-/// The toolbar over the page: only the line that keeps the page's name over
-/// the page rather than over the sidebar.
+extension SettingsWindowController: NSMenuItemValidation {
+    /// Back and Forward dimmed with nothing to go to.
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        switch menuItem.action {
+        case #selector(goBack(_:)): canGoBack
+        case #selector(goForward(_:)): canGoForward
+        default: true
+        }
+    }
+}
+
+/// The toolbar over the page: the line that keeps the page's name over the
+/// page rather than over the sidebar, and Back and Forward before it.
+@MainActor
 private final class SettingsToolbarDelegate: NSObject, NSToolbarDelegate {
+    static let history = NSToolbarItem.Identifier("history")
+
+    private let navigation: SettingsNavigation
+    private weak var arrows: NSToolbarItemGroup?
+
+    init(navigation: SettingsNavigation) {
+        self.navigation = navigation
+    }
+
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.sidebarTrackingSeparator]
+        [.sidebarTrackingSeparator, Self.history]
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.sidebarTrackingSeparator]
+        [.sidebarTrackingSeparator, Self.history]
     }
 
-    /// No items of its own (macOS 14 logs the delegate as invalid without it).
+    /// Back and Forward, as System Settings has them (the user, 2026-10-25):
+    /// two arrows joined, before the page's name, each dimmed with nothing
+    /// to go to.
     func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
                  willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
-        nil
+        guard itemIdentifier == Self.history else { return nil }
+        let back = SettingsWindowController.backTitle, forward = SettingsWindowController.forwardTitle
+        let group = NSToolbarItemGroup(itemIdentifier: itemIdentifier,
+                                       images: [NSImage(systemSymbolName: "chevron.backward", accessibilityDescription: back),
+                                                NSImage(systemSymbolName: "chevron.forward", accessibilityDescription: forward)]
+                                           .compactMap { $0 },
+                                       selectionMode: .momentary, labels: [back, forward],
+                                       target: self, action: #selector(walk(_:)))
+        group.controlRepresentation = .expanded
+        group.isNavigational = true
+        group.autovalidates = false
+        for (item, tip) in zip(group.subitems, [back, forward]) {
+            item.autovalidates = false
+            item.toolTip = tip
+        }
+        arrows = group
+        update(group)
+        return group
+    }
+
+    func updateArrows() {
+        if let arrows { update(arrows) }
+    }
+
+    private func update(_ group: NSToolbarItemGroup) {
+        guard group.subitems.count == 2 else { return }
+        group.subitems[0].isEnabled = navigation.canGoBack
+        group.subitems[1].isEnabled = navigation.canGoForward
+    }
+
+    /// The arrow clicked: the group's segment, 0 for Back.
+    @objc private func walk(_ sender: NSToolbarItemGroup) {
+        if sender.selectedIndex == 0 { navigation.goBack() } else { navigation.goForward() }
     }
 }
 
