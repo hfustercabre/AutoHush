@@ -94,6 +94,11 @@ enum MenuSection: Equatable {
     case reopenAutoHush
     /// Under Audio Recording's warning: AntiDot mode instead.
     case useAntiDot
+    /// The card's Change Player row: not a part of its own, only where the
+    /// pointer is, so the players' side window closes once the pointer
+    /// rests on the rest of the card, as on any other part (the user,
+    /// 2026-10-25).
+    case playerRow
     case snooze
     case playingNow
     case recentlyPlayed
@@ -124,7 +129,8 @@ final class StatusMenuModel {
     /// controls, as in macOS's menus; the side window's, through its rows.
     @ObservationIgnored let keyboard = KeyHighlight()
     @ObservationIgnored let sideKeyboard = KeyHighlight()
-    /// Detection's, Fades' and Advanced's settings, as Settings changes them.
+    /// The settings the menu reads (AntiDot mode, the card's checks), as
+    /// Settings changes them.
     @ObservationIgnored weak var settings: SettingsModel?
     /// Whether AntiDot mode is on: an app that can only be muted can't be
     /// chosen then. Read live from the settings, so the players follow a
@@ -211,7 +217,7 @@ enum MenuSidePart: Hashable {
     /// The menu's part its row is in.
     var section: MenuSection {
         switch self {
-        case .players: .card
+        case .players: .playerRow
         case .ignoredApps: .ignoredApps
         }
     }

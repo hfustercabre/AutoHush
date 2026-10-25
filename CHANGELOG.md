@@ -16,11 +16,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **A shorter menu.** The settings are in Settings only, and you choose
   your player from **Change Player**, the card's last row.
-- **Simpler Settings.** Six pages instead of seven: the players have a
-  page of their own, **Media Player**, and General keeps your player with
-  **Change…**. AntiDot mode and the silence threshold are at the end of
-  **Behavior**, and the update settings are in **About**. Every card with
-  settings has its own **Restore Defaults**.
+- **Simpler Settings.** The players have a page of their own, **Media
+  Player**, and General keeps your player with **Change…**. AntiDot mode
+  is in **Behavior**, and the update settings are in **About**. Every card
+  with settings has its own **Restore Defaults**.
 - **Everyday and Advanced settings.** The sidebar groups what most people
   change apart from fine-tuning and checks. Behavior keeps the switches;
   the timings, fade lengths, volume limits and detection are in the new

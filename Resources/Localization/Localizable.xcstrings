@@ -8443,6 +8443,233 @@
         }
       }
     },
+    "%@ out" : {
+      "comment" : "Settings → Behavior, Fades' row to Fine-Tuning while Resume playback is off: the fade-out's length; %@ is it, e.g. “1 s”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تلاشٍ %@"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ d’esvaïment"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ztlumení %@"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ud"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ aus"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "μείωση %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ de salida"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ de salida"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ pois"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ en sortie"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ en sortie"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "עמעום %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ फ़ेड आउट"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "utišavanje %@"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "halkítás %@"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ keluar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ in uscita"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "フェードアウト %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "페이드 아웃 %@"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ keluar"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ut"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ uit"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "wyciszanie %@"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ de saída"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ de saída"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "estompare %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "затухание %@"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "stlmenie %@"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "pojemanje %@"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ ut"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เฟดออก %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ kısma"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "згасання %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "giảm %@"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淡出 %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淡出 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "淡出 %@"
+          }
+        }
+      }
+    },
     "%@ out, %@ in" : {
       "comment" : "Settings → Behavior, Fades' row to Fine-Tuning: the fade lengths; the first %@ is the fade-out's (e.g. “1 s”), the second the fade-in's",
       "localizations" : {
@@ -27106,7 +27333,7 @@
       }
     },
     "AntiDot mode is off" : {
-      "comment" : "Settings → Behavior, under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch is off",
+      "comment" : "Settings → Fine-Tuning, Detection: under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch (Settings → Behavior) is off",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -27333,7 +27560,7 @@
       }
     },
     "Any app with its audio open counts as playing, even when paused. It must stay open 2 seconds before your player pauses, so notification sounds don’t interrupt it." : {
-      "comment" : "Settings → Behavior, under the ways of detecting playing apps: how “Open audio streams only” works",
+      "comment" : "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: how “Open audio streams only” works",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -28014,7 +28241,7 @@
       }
     },
     "Apps count as playing while they tell macOS so; apps that never do, while their audio is open. Sounds without video under 3 seconds don’t pause your player." : {
-      "comment" : "Settings → Behavior, under the ways of detecting playing apps: how “What apps tell macOS” works",
+      "comment" : "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: how “What apps tell macOS” works",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -65028,7 +65255,7 @@
       }
     },
     "Fade in when resuming" : {
-      "comment" : "Settings → Behavior, and Diagnostics: slider for how long playback fades back in when it resumes",
+      "comment" : "Settings → Fine-Tuning, and Diagnostics: slider for how long playback fades back in when it resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -65482,7 +65709,7 @@
       }
     },
     "Fade out before pausing" : {
-      "comment" : "Settings → Behavior, and Diagnostics: slider for how long playback fades out before it pauses",
+      "comment" : "Settings → Fine-Tuning, and Diagnostics: slider for how long playback fades out before it pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -70476,7 +70703,7 @@
       }
     },
     "How long another app must be audible, so short sounds don’t pause your player." : {
-      "comment" : "Settings → Behavior, under “Pause playback after”",
+      "comment" : "Settings → Fine-Tuning, under “Pause playback after”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -70703,7 +70930,7 @@
       }
     },
     "How long another app must be silent. Bridges gaps between tracks and videos." : {
-      "comment" : "Settings → Behavior, under “Resume playback after”",
+      "comment" : "Settings → Fine-Tuning, under “Resume playback after”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -70930,7 +71157,7 @@
       }
     },
     "How long playback fades out before it pauses. 0 pauses it at once." : {
-      "comment" : "Settings → Behavior, under “Fade out before pausing”",
+      "comment" : "Settings → Fine-Tuning, under “Fade out before pausing”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -71157,7 +71384,7 @@
       }
     },
     "How long playback takes to fade back in once it resumes. 0 resumes at full volume." : {
-      "comment" : "Settings → Behavior, under “Fade in when resuming”",
+      "comment" : "Settings → Fine-Tuning, under “Fade in when resuming”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -84096,7 +84323,7 @@
       }
     },
     "Lower by at most" : {
-      "comment" : "Settings → Behavior, and Diagnostics, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)",
+      "comment" : "Settings → Fine-Tuning, and Diagnostics, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -85685,7 +85912,7 @@
       }
     },
     "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple recording indicator while AutoHush measures." : {
-      "comment" : "Settings → Behavior, under the ways of detecting playing apps: what measuring audio levels does",
+      "comment" : "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: what measuring audio levels does",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -101575,7 +101802,7 @@
       }
     },
     "Only when quieter by" : {
-      "comment" : "Settings → Behavior, and Diagnostics, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)",
+      "comment" : "Settings → Fine-Tuning, and Diagnostics, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -107250,7 +107477,7 @@
       }
     },
     "Pause playback after" : {
-      "comment" : "Settings → Behavior, and Diagnostics: how long another app must play before your player pauses",
+      "comment" : "Settings → Fine-Tuning, and Diagnostics: how long another app must play before your player pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -113385,7 +113612,7 @@
       }
     },
     "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)." : {
-      "comment" : "Settings → Behavior, under “Silence threshold”",
+      "comment" : "Settings → Fine-Tuning, under “Silence threshold”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -119748,7 +119975,7 @@
       }
     },
     "Restore Defaults" : {
-      "comment" : "Settings: the button under each card with settings (Behavior's, General's Startup and Menu Bar, About's Updates) that sets that card's settings back to their defaults",
+      "comment" : "Settings: the button under each card with settings (Behavior's, Fine-Tuning's, General's Startup and Menu Bar, About's Updates) that sets that card's settings back to their defaults",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -120202,7 +120429,7 @@
       }
     },
     "Resume playback after" : {
-      "comment" : "Settings → Behavior, and Diagnostics: how long other apps must be quiet before your player resumes",
+      "comment" : "Settings → Fine-Tuning, and Diagnostics: how long other apps must be quiet before your player resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -120429,7 +120656,7 @@
       }
     },
     "Resume playback is off" : {
-      "comment" : "Under settings that only matter when your player resumes (Resume playback after, Fade in when resuming, Level the volume, Stay paused after calls), dimmed while the Resume playback switch (Settings → Behavior) is off: Settings and the menu",
+      "comment" : "Under settings that only matter when your player resumes (Resume playback after, Fade in when resuming, Level the volume, Stay paused after calls), dimmed while the Resume playback switch (Settings → Behavior) is off: Settings → Behavior and Fine-Tuning",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -125196,7 +125423,7 @@
       }
     },
     "Silence threshold" : {
-      "comment" : "Settings → Behavior, and Diagnostics: the sound level below which an app counts as silent",
+      "comment" : "Settings → Fine-Tuning, and Diagnostics: the sound level below which an app counts as silent",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -125650,7 +125877,7 @@
       }
     },
     "Smaller differences leave the volume as it is." : {
-      "comment" : "Settings → Behavior, under “Only when quieter by”: when the other apps were less quieter than this, the Mac’s volume isn’t lowered",
+      "comment" : "Settings → Fine-Tuning, under “Only when quieter by”: when the other apps were less quieter than this, the Mac’s volume isn’t lowered",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -134963,7 +135190,7 @@
       }
     },
     "The most the Mac’s volume goes down as your player resumes." : {
-      "comment" : "Settings → Behavior, under “Lower by at most”",
+      "comment" : "Settings → Fine-Tuning, under “Lower by at most”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

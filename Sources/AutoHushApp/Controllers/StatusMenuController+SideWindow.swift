@@ -93,6 +93,9 @@ extension StatusMenuController {
     /// window's closes it after a moment, unless the pointer is on its way
     /// to it across other parts, as macOS's submenus (the user, 2026-10-18).
     func pointerEntered(_ section: MenuSection) {
+        // On the card, but on its Change Player row: that row's, whichever
+        // of the two told first.
+        let section = section == .card && hoveredSideRow == .players ? .playerRow : section
         pointerSection = section
         guard let open = model.openSide else { return }
         guard section != open.section else {

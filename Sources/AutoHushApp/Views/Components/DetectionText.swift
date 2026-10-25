@@ -17,7 +17,7 @@ enum DetectionText {
         Text("Modes", comment: "Settings → Behavior: heading over AntiDot mode")
     }
 
-    /// The title over AntiDot mode's ways, which VoiceOver hears with them (the menu's too).
+    /// The title over AntiDot mode's ways, which VoiceOver hears with them.
     static var detectByTitle: String {
         String(localized: "Detect playing apps by", comment: "Settings → Fine-Tuning, Detection: lead-in to AntiDot mode's ways of detecting playing apps")
     }
@@ -31,7 +31,7 @@ enum DetectionText {
 
 /// The detection choices as Settings and Diagnostics describe them.
 extension DetectionMethod {
-    /// AntiDot mode's ways, in the order Settings and the menu offer them.
+    /// AntiDot mode's ways, in the order Settings offers them.
     static let antiDotWays: [DetectionMethod] = [.playbackSignals, .openStreams]
 
     var title: String {
@@ -50,14 +50,13 @@ extension DetectionMethod {
         switch self {
         case .audioLevels:
             return String(localized: "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple recording indicator while AutoHush measures.",
-                          comment: "Settings → Behavior, under the ways of detecting playing apps: what measuring audio levels does")
+                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: what measuring audio levels does")
         case .playbackSignals:
             return String(localized: "Apps count as playing while they tell macOS so; apps that never do, while their audio is open. Sounds without video under 3 seconds don’t pause your player.",
-                          comment: "Settings → Behavior, under the ways of detecting playing apps: how “What apps tell macOS” works")
+                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: how “What apps tell macOS” works")
         case .openStreams:
             return String(localized: "Any app with its audio open counts as playing, even when paused. It must stay open 2 seconds before your player pauses, so notification sounds don’t interrupt it.",
-                          comment: "Settings → Behavior, under the ways of detecting playing apps: how “Open audio streams only” works")
+                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: how “Open audio streams only” works")
         }
     }
 }
-

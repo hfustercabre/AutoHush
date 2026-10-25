@@ -173,7 +173,7 @@ package final class Preferences {
         musicPlayer = bundleID
     }
 
-    /// Settings → Behavior: AntiDot mode and its way of detecting.
+    /// Settings → Behavior's AntiDot mode and Fine-Tuning's way of detecting.
     package var detectionMethod: DetectionMethod {
         get {
             if let stored = (defaults.object(forKey: Key.detectionMethod) as? String).flatMap(DetectionMethod.init) {

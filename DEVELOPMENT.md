@@ -136,9 +136,10 @@ Sources/
                          SettingsKeys (Settings' keys, its sidebar's and page's), AddWebAppModel,
                          PlayerOption (each player and whether it's installed), AppActions (what only
                          AppDelegate does), UpdateCommands (and what Settings reads of the updates),
-                         SettingsNavigation (Settings' page), PermissionsState, ChecklistStep (a step of
-                         the windows' checklists), DiagnosticsFacts, DiagnosticsSnapshot, AppRelease,
-                         UpdateCheckResult, PreparedUpdate, KeptImage, UpdatePrompt, UpdateNotice,
+                         SettingsNavigation (Settings' page and its history), PermissionsState,
+                         ChecklistStep (a step of the windows' checklists), DiagnosticsFacts,
+                         DiagnosticsSnapshot, AppRelease, UpdateCheckResult, PreparedUpdate, KeptImage,
+                         UpdatePrompt, UpdateNotice,
                          LearningNote, LearningPauseMode, MonitoringSettings (what the monitoring follows),
                          LogsModel (the logs window's entries, time range, levels and search), AddAppModel
                          (Add an App's steps, from choosing the app to Use), CheckableApp, CheckPermissions
@@ -198,7 +199,8 @@ Sources/
                          off for; PlayingAppsView, Playing Now and Recently Played; MenuToolbarView, the
                          buttons; MenuSpacing, the space around its parts; MenuRowButtonStyle,
                          MenuContentWidth, and MenuBarIcon, drawn in code),
-                         Settings/ (one per page, SettingsPageView, SettingsSidebar, UpdatesCard, About's, FineTuningRow, Behavior's rows to Fine-Tuning), Welcome/, WebApps/
+                         Settings/ (one per page, SettingsPageView, SettingsSidebar, UpdatesCard,
+                         About's, FineTuningRow, Behavior's rows to Fine-Tuning), Welcome/, WebApps/
                          (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView),
                          AddApp/ (Add an App's window and its numbered steps, the app chooser, the warning
                          before a check, the check's panel, AddAppText: what they say)

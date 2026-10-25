@@ -45,6 +45,19 @@ struct SettingsKeysTests {
         #expect(HighlightKey(keyCode: 51, modifiers: []) == .delete && HighlightKey(keyCode: 117, modifiers: []) == .delete)
     }
 
+    @Test("the highlight goes to the first control, in reading order, of those that stand for what's shown (a Fine-Tuning card's rows), skipping a dimmed one")
+    func highlightCurrent() {
+        let keys = SettingsKeys()
+        let ids = (0..<4).map { _ in UUID() }
+        // Registered out of order; the first of the card's rows is dimmed.
+        keys.page.register(ids[3], .init(frame: CGRect(x: 0, y: 180, width: 400, height: 40), isCurrent: { true }))
+        keys.page.register(ids[2], .init(frame: CGRect(x: 0, y: 120, width: 400, height: 40), isCurrent: { true }))
+        keys.page.register(ids[1], .init(frame: CGRect(x: 0, y: 60, width: 400, height: 40), isEnabled: false, isCurrent: { true }))
+        keys.page.register(ids[0], .init(frame: CGRect(x: 0, y: 0, width: 400, height: 40), isCurrent: { false }))
+        keys.page.highlightCurrent()
+        #expect(keys.page.highlighted == ids[2])
+    }
+
     @Test("↓ and ↑ start in the page; Return or Space presses its control, ← and → change a slider and do nothing on another")
     func page() {
         let log = Log()

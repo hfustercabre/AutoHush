@@ -69,6 +69,7 @@ struct StatusMenuControllerTests {
             case .ignoredApps: "ignoredApps"
             case .update: "update"
             case .toolbar: "toolbar"
+            case .playerRow: "playerRow"
             }
         }
     }
@@ -807,11 +808,24 @@ struct StatusMenuControllerTests {
         defer { sut.remove() }
         sut.perform(.hoverSideRow(.players, true))
         await sut.sideOpenTask?.value
-        sut.perform(.pointerEntered(.card)) // its own part, the card with Change Player: stays
+        sut.perform(.pointerEntered(.card)) // the card, told while on its Change Player row: stays
         sut.perform(.pointerEntered(.snooze))
-        sut.perform(.pointerEntered(.card)) // back before the moment is over
+        sut.perform(.pointerEntered(.playerRow)) // back before the moment is over
         await sut.sideCloseTask?.value
         #expect(sut.model.openSide == .players)
+    }
+
+    @Test("the pointer resting on the rest of the card closes the players' side window, as on another part")
+    func playersCloseOnTheCard() async {
+        let sut = menuIgnoringVLC()
+        defer { sut.remove() }
+        sut.perform(.hoverSideRow(.players, true))
+        await sut.sideOpenTask?.value
+        #expect(sut.model.openSide == .players)
+        sut.perform(.hoverSideRow(.players, false)) // off Change Player, onto the card
+        sut.perform(.pointerEntered(.card))
+        await sut.sideCloseTask?.value
+        #expect(sut.model.openSide == nil)
     }
 
     @Test("the pointer on another part closes the side window after a moment")

@@ -5,7 +5,7 @@ import SwiftUI
 /// small switches, 2026-10-18: "The menubar menu feels like it takes too
 /// much space without showing that much information").
 enum MenuSpacing {
-    /// Above a part's title ("Media Player", "Detection"), and under it.
+    /// Above a part's title ("Playing Now", "Media Player"), and under it.
     static let titleTop: CGFloat = 4
     static let titleBottom: CGFloat = 0
     /// Above and under a row of a switch or a chevron, and its two lines.

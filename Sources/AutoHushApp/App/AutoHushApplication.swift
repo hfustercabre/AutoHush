@@ -15,6 +15,11 @@ package enum AutoHushApplication {
         // AutoHush's own log of the last 24 hours: ~/Library/Logs/AutoHush.
         let logs = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
         LogFile.start(at: logs.appending(path: "Logs/AutoHush/AutoHush.log"))
+        // No tabs and no Enter Full Screen: AppKit adds them to the View and
+        // Window menus by itself, and AutoHush's windows use neither (the
+        // user, 2026-10-25). Before the app starts, when AppKit reads them.
+        NSWindow.allowsAutomaticWindowTabbing = false
+        UserDefaults.standard.register(defaults: ["NSFullScreenMenuItemEverywhere": false])
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.setActivationPolicy(.accessory)

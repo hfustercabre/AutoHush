@@ -138,11 +138,12 @@ extension View {
     /// below it: 6 and 3, as the menu's rows, unless it says otherwise.
     func highlightableRow(isFocused: Bool = false, isAvailable: Bool = true, ownsControls: Bool = false,
                           cornerRadius: CGFloat = 8, horizontal: CGFloat = 6, vertical: CGFloat = 3,
-                          press: (() -> Void)? = nil, adjust: ((Int) -> Void)? = nil) -> some View {
+                          press: (() -> Void)? = nil, adjust: ((Int) -> Void)? = nil,
+                          isCurrent: (() -> Bool)? = nil) -> some View {
         padding(.horizontal, horizontal)
             .padding(.vertical, vertical)
             .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, isAvailable: isAvailable,
-                                    ownsControls: ownsControls, press: press, adjust: adjust))
+                                    ownsControls: ownsControls, press: press, adjust: adjust, isCurrent: isCurrent))
             .padding(.horizontal, -horizontal)
             .padding(.vertical, -vertical)
     }

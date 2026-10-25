@@ -143,11 +143,15 @@ final class SettingsModel {
     /// The Fine-Tuning card a Behavior row asked for: Fine-Tuning opens
     /// scrolled to it, once.
     var fineTuningFocus: FineTuningSettingsView.Part?
+    /// The row was pressed with Return or Space: the arrow keys' highlight
+    /// goes on from that card's first row (the user, 2026-10-25).
+    var fineTuningFocusTakesHighlight = false
 
     /// Shows Fine-Tuning at `part`'s card (Behavior's rows, L4, the user's
-    /// pick, 2026-10-25).
-    func showFineTuning(_ part: FineTuningSettingsView.Part) {
+    /// pick, 2026-10-25), its first row highlighted if `byKeyboard`.
+    func showFineTuning(_ part: FineTuningSettingsView.Part, byKeyboard: Bool = false) {
         fineTuningFocus = part
+        fineTuningFocusTakesHighlight = byKeyboard
         actions?.openSettings(page: .fineTuning)
     }
 
@@ -173,9 +177,10 @@ final class SettingsModel {
             && (!timings.resumesPlayback || timings.stopGrace == TimingSettings.defaults.stopGrace)
     }
     /// Fade Lengths': 1 s and 2 s, or greyed out (the fades off, or a player
-    /// AutoHush can't fade).
+    /// AutoHush can't fade); the fade-in alone while nothing resumes.
     var fadeLengthsAreDefaults: Bool {
-        !playerCanFade || !timings.fadesEnabled || timings.withDefaultFadeLengths == timings
+        !playerCanFade || !timings.fadesEnabled
+            || timings.withDefaultFadeLengths(fadeIn: !SettingsTiming.fadeInUnused(self)) == timings
     }
     /// Volume Limits': 10 and 2 dB, or greyed out (leveling off or unavailable).
     var volumeLimitsAreDefaults: Bool {
@@ -366,7 +371,7 @@ final class SettingsModel {
 
     func restoreDefaultFadeLengths() {
         guard playerCanFade, timings.fadesEnabled else { return }
-        setTimings(timings.withDefaultFadeLengths)
+        setTimings(timings.withDefaultFadeLengths(fadeIn: !SettingsTiming.fadeInUnused(self)))
     }
 
     func restoreDefaultVolumeLimits() {
@@ -391,7 +396,8 @@ final class SettingsModel {
         setAntiDotMode(false)
     }
 
-    /// Startup and Menu Bar's: launch at login off, the icon left where it is.
+    /// Startup and Menu Bar's: launch at login off, the icon no longer kept
+    /// beside the system's (it stays where it is).
     func restoreDefaultStartup() {
         if launchAtLoginEnabled { setLaunchAtLogin(false) }
         if keepsMenuBarIconNearSystemIcons { setKeepsMenuBarIconNearSystemIcons(false) }
@@ -436,11 +442,12 @@ private extension TimingSettings {
         return timings
     }
 
-    /// These timings with both fade lengths back to their defaults.
-    var withDefaultFadeLengths: TimingSettings {
+    /// These timings with the fade lengths back to their defaults, the
+    /// fade-in's only if `fadeIn`.
+    func withDefaultFadeLengths(fadeIn: Bool) -> TimingSettings {
         var timings = self
         timings.fadeOutDuration = TimingSettings.defaults.fadeOutDuration
-        timings.fadeInDuration = TimingSettings.defaults.fadeInDuration
+        if fadeIn { timings.fadeInDuration = TimingSettings.defaults.fadeInDuration }
         return timings
     }
 

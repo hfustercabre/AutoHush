@@ -17,12 +17,20 @@ struct AboutSettingsView: View {
     /// The space that shows between parts.
     private static let gap: CGFloat = 24
 
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+
     var body: some View {
-        ScrollView {
-            content
-                .padding(.bottom, 8)
-                .padding(16)
-                .frame(maxWidth: .infinity)
+        ScrollViewReader { scroller in
+            ScrollView {
+                content
+                    .padding(.bottom, 8)
+                    .padding(16)
+                    .frame(maxWidth: .infinity)
+            }
+            // The arrow keys' highlight scrolls into view, as on the other pages.
+            .onChange(of: keyboard?.revealed) { _, revealed in
+                if let revealed { withAnimation(.easeOut(duration: 0.15)) { scroller.scrollTo(revealed) } }
+            }
         }
     }
 

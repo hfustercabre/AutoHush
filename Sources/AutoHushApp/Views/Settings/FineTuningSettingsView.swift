@@ -12,6 +12,7 @@ import AutoHushKit
 /// scrolled to its card (`SettingsModel.fineTuningFocus`).
 struct FineTuningSettingsView: View {
     let model: SettingsModel
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     /// Its cards, by what Behavior's rows open.
     enum Part: Hashable {
@@ -21,12 +22,17 @@ struct FineTuningSettingsView: View {
     var body: some View {
         SettingsPageScroll {
             Card(Self.timingTitle) {
-                TimingSliderRow(model: model, timing: .pauseAfter)
+                TimingSliderRow(model: model, timing: .pauseAfter, isCurrent: isFocus(.timing))
                     .background(anchor(.timing))
-                    // Always made: where the page is scrolled from.
-                    .background(ScrollDriver(target: model.fineTuningFocus.map(AnyHashable.init)))
+                    // Always made: where the page is scrolled from, once.
+                    .background(ScrollDriver(target: model.fineTuningFocus.map(AnyHashable.init)) {
+                        // Its row pressed with a key: the highlight goes on from this card.
+                        if model.fineTuningFocusTakesHighlight { keyboard?.highlightCurrent() }
+                        model.fineTuningFocus = nil
+                        model.fineTuningFocusTakesHighlight = false
+                    })
                 CardDivider()
-                TimingSliderRow(model: model, timing: .resumeAfter)
+                TimingSliderRow(model: model, timing: .resumeAfter, isCurrent: isFocus(.timing))
                     .unavailable(!model.timings.resumesPlayback)
                 if !model.timings.resumesPlayback {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
@@ -37,10 +43,10 @@ struct FineTuningSettingsView: View {
 
             Card(Self.fadeLengthsTitle) {
                 Group {
-                    TimingSliderRow(model: model, timing: .fadeOut)
+                    TimingSliderRow(model: model, timing: .fadeOut, isCurrent: isFocus(.fadeLengths))
                         .background(anchor(.fadeLengths))
                     CardDivider()
-                    TimingSliderRow(model: model, timing: .fadeIn)
+                    TimingSliderRow(model: model, timing: .fadeIn, isCurrent: isFocus(.fadeLengths))
                         .unavailable(SettingsTiming.fadeInUnused(model))
                 }
                 .unavailable(!model.timings.fadesEnabled || !model.playerCanFade)
@@ -57,10 +63,10 @@ struct FineTuningSettingsView: View {
 
             Card(Self.volumeLimitsTitle) {
                 Group {
-                    TimingSliderRow(model: model, timing: .levelingMaxCut)
+                    TimingSliderRow(model: model, timing: .levelingMaxCut, isCurrent: isFocus(.volumeLimits))
                         .background(anchor(.volumeLimits))
                     CardDivider()
-                    TimingSliderRow(model: model, timing: .levelingMinCut)
+                    TimingSliderRow(model: model, timing: .levelingMinCut, isCurrent: isFocus(.volumeLimits))
                 }
                 .unavailable(SettingsTiming.levelingLimitsUnavailable(model))
                 if let reason = SettingsSwitch.levelsMusic.unavailableReason(model) {
@@ -84,14 +90,15 @@ struct FineTuningSettingsView: View {
                         onSelect: { model.setDetectionMethod($0) }
                     )
                 }
+                .background(anchor(.detection))
                 // ← and → choose, while the arrow keys' highlight is on it.
                 .highlightableRow(adjust: { step in
                     if let method = DetectionMethod.antiDotWays.stepping(from: model.detectionMethod, by: step) {
                         model.setDetectionMethod(method)
                     }
-                })
+                }, isCurrent: isFocus(.detection))
                 .unavailable(!model.isAntiDotMode)
-                
+
                 if model.isAntiDotMode {
                     Text(model.detectionMethod.summary).captionStyle()
                 } else {
@@ -99,7 +106,7 @@ struct FineTuningSettingsView: View {
                 }
                 CardDivider()
                 // Only measuring audio levels has a threshold: greyed out in AntiDot mode.
-                TimingSliderRow(model: model, timing: .silenceThreshold)
+                TimingSliderRow(model: model, timing: .silenceThreshold, isCurrent: isFocus(.detection))
                     .unavailable(model.isAntiDotMode)
             } footer: {
                 RestoreDefaultsButton(isDefault: model.detectionIsDefault) { model.restoreDefaultDetection() }
@@ -108,10 +115,16 @@ struct FineTuningSettingsView: View {
     }
 
     /// Where the page scrolls to when a Behavior row asks for `part`: its
-    /// card's first row (`ScrollDriver`; the request is cleared once another
-    /// page shows).
+    /// card's first row (`ScrollDriver`; the request is cleared once it's
+    /// done, or another page shows).
     private func anchor(_ part: Part) -> some View {
         ScrollAnchor(id: AnyHashable(part))
+    }
+
+    /// `part`'s rows stand for what a Behavior row opened: the highlight
+    /// goes to the first one that can take it.
+    private func isFocus(_ part: Part) -> () -> Bool {
+        { model.fineTuningFocus == part }
     }
 
     static var timingTitle: Text {

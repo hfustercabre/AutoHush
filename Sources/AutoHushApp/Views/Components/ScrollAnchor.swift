@@ -26,8 +26,11 @@ struct ScrollAnchor: NSViewRepresentable {
 /// page's end first, where the last cards are made.
 struct ScrollDriver: NSViewRepresentable {
     let target: AnyHashable?
+    /// Once it has scrolled: the request is done, so a row made again later
+    /// (the form makes them as they come near) doesn't scroll back.
+    let onScrolled: @MainActor () -> Void
     /// Room left above the anchor for its section's heading.
-    var headingRoom: CGFloat = 44
+    private let headingRoom: CGFloat = 44
 
     final class Coordinator {
         var scrolledTo: AnyHashable?
@@ -44,14 +47,15 @@ struct ScrollDriver: NSViewRepresentable {
         }
         guard context.coordinator.scrolledTo != target else { return }
         context.coordinator.scrolledTo = target
-        let room = headingRoom
+        let room = headingRoom, done = onScrolled
         // Once the form has laid out its rows.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             guard let scroll = view.enclosingScrollView else { return }
-            if Self.scroll(scroll, to: target, room: room) { return }
+            if Self.scroll(scroll, to: target, room: room) { return done() }
             Self.setOrigin(Self.end(of: scroll), of: scroll, animated: false)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                 _ = Self.scroll(scroll, to: target, room: room)
+                done()
             }
         }
     }

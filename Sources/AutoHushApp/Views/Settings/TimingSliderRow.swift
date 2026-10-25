@@ -1,14 +1,14 @@
 import SwiftUI
 import AutoHushKit
 
-/// One of the timings as Settings → Behavior shows it: its title and value,
+/// One of the timings as Settings → Fine-Tuning shows it: its title and value,
 /// the slider, and what it does. It's changed as it's dragged.
 struct TimingSliderRow: View {
     let model: SettingsModel
     let timing: SettingsTiming
-    /// What it does, under it; left out under a switch it depends on, whose
-    /// description says it (W3, the user, 2026-10-25).
-    var showsHelp = true
+    /// It stands for what's shown now (`KeyHighlight.highlightCurrent`):
+    /// a row of the Fine-Tuning card a Behavior row opened.
+    var isCurrent: (() -> Bool)?
 
     private var title: Text { timing.title }
     private var keyPath: WritableKeyPath<TimingSettings, Double> { timing.keyPath }
@@ -44,12 +44,12 @@ struct TimingSliderRow: View {
             .focused($sliderFocused)
             .focusEffectDisabled(keyboard != nil) // the row's tint shows it
             .accessibilityValue(Text(verbatim: timing.format(model.timings[keyPath: keyPath])))
-            if showsHelp { timing.help.captionStyle() }
+            timing.help.captionStyle()
         }
-        // In the menu and Settings, highlighted by the arrow keys (← and →
+        // Highlighted by the arrow keys (← and →
         // move it) and the pointer, and tinted while its slider has the
         // keyboard's focus (F5).
-        .highlightableRow(isFocused: sliderFocused, adjust: step)
+        .highlightableRow(isFocused: sliderFocused, adjust: step, isCurrent: isCurrent)
     }
 
     /// One step of the slider up (1) or down (-1), kept in its range.
@@ -71,7 +71,7 @@ struct RestoreDefaultsButton: View {
         HStack {
             Spacer()
             Button(action: action) {
-                Text("Restore Defaults", comment: "Settings: the button under each card with settings (Behavior's, General's Startup and Menu Bar, About's Updates) that sets that card's settings back to their defaults")
+                Text("Restore Defaults", comment: "Settings: the button under each card with settings (Behavior's, Fine-Tuning's, General's Startup and Menu Bar, About's Updates) that sets that card's settings back to their defaults")
             }
                 .buttonStyle(.chip)
                 .disabled(isDefault)

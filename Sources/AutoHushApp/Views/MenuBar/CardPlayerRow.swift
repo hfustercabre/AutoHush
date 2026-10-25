@@ -5,7 +5,8 @@ import SwiftUI
 /// while none is chosen, between a list symbol and a chevron. As Ignored
 /// Apps' row, a click or the pointer resting on it opens the players in a
 /// side window beside the menu, level with it, and it's lit while that's
-/// open. Its own button: a click on it doesn't turn Auto-Pause on or off.
+/// open; resting on the rest of the card closes it, as another part does.
+/// Its own button: a click on it doesn't turn Auto-Pause on or off.
 struct CardPlayerRow: View {
     let model: StatusMenuModel
 
@@ -30,7 +31,11 @@ struct CardPlayerRow: View {
         }
         .buttonStyle(.plain)
         .modifier(HighlightableControl(cornerRadius: 6, outset: 4, isLit: model.isChoosingPlayer, press: open, opensSide: true))
-        .onHover { model.perform(.hoverSideRow(.players, $0)) }
+        .onHover { inside in
+            model.perform(.hoverSideRow(.players, inside))
+            // Off the row, the pointer is on the rest of the card (or past it).
+            model.perform(.pointerEntered(inside ? .playerRow : .card))
+        }
         .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { model.sideRowTops[.players] = $0 }
         .accessibilityValue(model.isChoosingPlayer ? AccessibilityText.expanded : AccessibilityText.collapsed)
     }

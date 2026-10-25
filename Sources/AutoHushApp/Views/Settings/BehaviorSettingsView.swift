@@ -23,7 +23,7 @@ struct BehaviorSettingsView: View {
                 CardDivider()
                 SettingsSwitchRow(model: model, kind: .pausesOnDisconnect)
                 CardDivider()
-                FineTuningRow(title: SettingsTiming.pauseAfter.name, value: value(.pauseAfter)) { model.showFineTuning(.timing) }
+                FineTuningRow(model: model, part: .timing, title: SettingsTiming.pauseAfter.name, value: value(.pauseAfter))
             } footer: {
                 RestoreDefaultsButton(isDefault: model.pausingAreDefaults) { model.restoreDefaultPausing() }
             }
@@ -38,8 +38,8 @@ struct BehaviorSettingsView: View {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
                 }
                 CardDivider()
-                FineTuningRow(title: SettingsTiming.resumeAfter.name,
-                              value: model.timings.resumesPlayback ? value(.resumeAfter) : nil) { model.showFineTuning(.timing) }
+                FineTuningRow(model: model, part: .timing, title: SettingsTiming.resumeAfter.name,
+                              value: model.timings.resumesPlayback ? value(.resumeAfter) : nil)
             } footer: {
                 RestoreDefaultsButton(isDefault: model.resumingAreDefaults) { model.restoreDefaultResuming() }
             }
@@ -51,10 +51,8 @@ struct BehaviorSettingsView: View {
                     NoteLabel(Self.cantFadeNote(player), kind: .info)
                 }
                 CardDivider()
-                FineTuningRow(title: Self.fadeLengthsRowTitle,
-                              value: model.playerCanFade && model.timings.fadesEnabled ? fadeLengths : nil) {
-                    model.showFineTuning(.fadeLengths)
-                }
+                FineTuningRow(model: model, part: .fadeLengths, title: Self.fadeLengthsRowTitle,
+                              value: model.playerCanFade && model.timings.fadesEnabled ? fadeLengths : nil)
             } footer: {
                 RestoreDefaultsButton(isDefault: model.fadesAreDefaults) { model.restoreDefaultFades() }
             }
@@ -65,10 +63,8 @@ struct BehaviorSettingsView: View {
                     NoteLabel(reason, kind: .info)
                 }
                 CardDivider()
-                FineTuningRow(title: Self.volumeLimitsRowTitle,
-                              value: SettingsTiming.levelingLimitsUnavailable(model) ? nil : volumeLimits) {
-                    model.showFineTuning(.volumeLimits)
-                }
+                FineTuningRow(model: model, part: .volumeLimits, title: Self.volumeLimitsRowTitle,
+                              value: SettingsTiming.levelingLimitsUnavailable(model) ? nil : volumeLimits)
             } footer: {
                 RestoreDefaultsButton(isDefault: model.volumeAreDefaults) { model.restoreDefaultVolume() }
             }
@@ -82,9 +78,13 @@ struct BehaviorSettingsView: View {
         timing.format(model.timings[keyPath: timing.keyPath])
     }
 
+    /// The fade-in's left out while it's greyed out (nothing resumes).
     private var fadeLengths: String {
-        String(localized: "\(value(.fadeOut)) out, \(value(.fadeIn)) in",
-               comment: "Settings → Behavior, Fades' row to Fine-Tuning: the fade lengths; the first %@ is the fade-out's (e.g. “1 s”), the second the fade-in's")
+        SettingsTiming.fadeInUnused(model)
+            ? String(localized: "\(value(.fadeOut)) out",
+                     comment: "Settings → Behavior, Fades' row to Fine-Tuning while Resume playback is off: the fade-out's length; %@ is it, e.g. “1 s”")
+            : String(localized: "\(value(.fadeOut)) out, \(value(.fadeIn)) in",
+                     comment: "Settings → Behavior, Fades' row to Fine-Tuning: the fade lengths; the first %@ is the fade-out's (e.g. “1 s”), the second the fade-in's")
     }
 
     private var volumeLimits: String {

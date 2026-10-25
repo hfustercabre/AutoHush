@@ -165,11 +165,16 @@ final class SettingsWindowController: NSWindowController {
         // which cleared the window's (it opened at its first place and size
         // at each launch).
         windowFrameAutosaveName = frameName
-        navigation.onChange = { [weak window, weak model, toolbarDelegate] page in
+        navigation.onChange = { [weak window, weak model, toolbarDelegate, keys] page in
             window?.title = page.title
             // A Behavior row's card in Fine-Tuning: only for that visit.
-            if page != .fineTuning { model?.fineTuningFocus = nil }
+            if page != .fineTuning {
+                model?.fineTuningFocus = nil
+                model?.fineTuningFocusTakesHighlight = false
+            }
             toolbarDelegate.updateArrows()
+            // Back and Forward while the sidebar has the highlight: it follows the page.
+            if keys.sidebar.highlighted != nil { keys.sidebar.highlightCurrent() }
         }
         // Before the focused control: the arrows move the highlight, as in
         // the menu. Kept for the controller's life, which is AutoHush's.

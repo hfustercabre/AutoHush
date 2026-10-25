@@ -115,6 +115,7 @@ struct MenuPanelView: View {
         case .ignoredApps: MenuIgnoredAppsView(model: model)
         case .update: updateRow
         case .toolbar: MenuToolbarView(model: model)
+        case .playerRow: EmptyView() // inside the card
         }
     }
 

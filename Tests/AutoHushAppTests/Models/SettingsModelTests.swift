@@ -468,14 +468,16 @@ struct SettingsModelTests {
         #expect(model.timings == expected && model.detectionIsDefault)
     }
 
-    @Test("a Behavior row opens Fine-Tuning at its card")
+    @Test("a Behavior row opens Fine-Tuning at its card, the highlight with it when pressed by a key")
     func showFineTuning() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.showFineTuning(.volumeLimits)
-        #expect(model.fineTuningFocus == .volumeLimits && log.calls.last == "fineTuning")
+        #expect(model.fineTuningFocus == .volumeLimits && log.calls.last == "fineTuning" && !model.fineTuningFocusTakesHighlight)
+        model.showFineTuning(.detection, byKeyboard: true) // Return on the row: the highlight goes there too
+        #expect(model.fineTuningFocus == .detection && model.fineTuningFocusTakesHighlight)
     }
 
-    @Test("greyed out, a Fine-Tuning setting is left as it is: the fade lengths while the fades are off, the wait to resume while nothing resumes, the threshold in AntiDot mode, where Detection restores the way")
+    @Test("greyed out, a Fine-Tuning setting is left as it is: the fade lengths while the fades are off, the fade-in and the wait to resume while nothing resumes, the threshold in AntiDot mode, where Detection restores the way")
     func fineTuningRestoresWhatShows() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.setTimings(TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
@@ -486,6 +488,17 @@ struct SettingsModelTests {
         model.restoreDefaultTiming()
         #expect(model.timings.startConfirmation == TimingSettings.defaults.startConfirmation && model.timings.stopGrace == 7)
         #expect(model.timingIsDefault)
+
+        // The fades on, nothing resuming: the fade-in is greyed out alone.
+        model.setTimings(TimingSettings(startConfirmation: model.timings.startConfirmation, stopGrace: 7, silenceThresholdDB: -40,
+                                        fadeInDuration: 4, fadesEnabled: true, resumesPlayback: false))
+        #expect(model.fadeLengthsAreDefaults)
+        model.setTimings(TimingSettings(startConfirmation: model.timings.startConfirmation, stopGrace: 7, silenceThresholdDB: -40,
+                                        fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: true, resumesPlayback: false))
+        #expect(!model.fadeLengthsAreDefaults)
+        model.restoreDefaultFadeLengths()
+        #expect(model.timings.fadeOutDuration == TimingSettings.defaults.fadeOutDuration && model.timings.fadeInDuration == 4)
+        #expect(model.fadeLengthsAreDefaults)
 
         model.setAntiDotMode(true)
         model.setDetectionMethod(.openStreams)

@@ -79,7 +79,8 @@ final class StatusMenuController: NSObject {
     private let session: PlayerSession
     private let updates: any UpdateCommands
     private(set) weak var actions: any AppActions?
-    /// Detection's, Fades' and Advanced's settings, as Settings changes them.
+    /// The settings the menu reads (AntiDot mode, the card's checks), as
+    /// Settings changes them.
     private let settingsModel: SettingsModel?
     /// What closes the menu (clicks elsewhere, another desktop) and what it
     /// follows while open (Option, for an added app's Remove).

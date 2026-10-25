@@ -199,7 +199,8 @@ final class KeyHighlight {
     /// The highlight on the control that stands for what's shown now
     /// (`Control.isCurrent`), if one does.
     func highlightCurrent() {
-        guard let current = controls.first(where: { $0.value.isEnabled && $0.value.isCurrent?() == true })?.key else { return }
+        // The first in reading order, when several do (a card's rows).
+        guard let current = rows.joined().first(where: { controls[$0]?.isCurrent?() == true }) else { return }
         highlight(current)
     }
 

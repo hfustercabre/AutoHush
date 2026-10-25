@@ -1,8 +1,5 @@
-import SwiftUI
-import AutoHushKit
+import CoreGraphics
 
-/// The width of the menu's panel: 345 pt, or more when AntiDot mode's ways
-/// (`ChoiceChips`, small) need it in the app's language, with More Settings'
-/// margins around them (8 pt for its part, 10 for the choice, a side).
-@MainActor let menuContentWidth: CGFloat = max(345, ChoiceChips<Never>.fittingWidth(
-    DetectionMethod.antiDotWays.map(\.title), size: .small) + 2 * (8 + 10))
+/// The width of the menu's panel, in every language: 345 pt (since A1,
+/// 2026-10-25, no AntiDot mode's ways to make room for).
+let menuContentWidth: CGFloat = 345
