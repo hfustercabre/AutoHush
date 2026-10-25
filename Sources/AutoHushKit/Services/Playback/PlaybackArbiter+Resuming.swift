@@ -78,6 +78,9 @@ extension PlaybackArbiter {
     /// Our pause, kept instead of resumed (or as the output went away),
     /// becomes the user's.
     func keepPaused() async {
+        // Muted while it plays on (it kept starting again by itself): paused
+        // for real before the mute is lifted, as it's to stay paused.
+        if mutedForRestart { try? await player.pause() }
         pausedByUs = false
         putBackResumeLevel()
         // A mute standing in for the pause: the player is paused for real
@@ -98,8 +101,23 @@ extension PlaybackArbiter {
             scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
             return
         }
-        guard currentState == .paused else {
-            logger.info("[arbiter] resume skipped — \(self.player.name, privacy: .public) is \(currentState.rawValue, privacy: .public) (user interaction detected)")
+        if mutedForRestart, currentState == .playing {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) unmuted, because \(self.autoPauseEnabled ? "no other app plays" : "Auto-Pause is off", privacy: .public)")
+            pausedByUs = false // the mute is lifted as it's published
+            publishPlaybackState()
+            return
+        }
+        // Said playing, yet not heard through the pause (Apple TV's trailers
+        // report no state and keep their output open): it's still paused.
+        let pausedUnheard = currentState == .playing && hearingDuringPause == .silent
+        guard currentState == .paused || pausedUnheard else {
+            // Playing: nothing to resume, whoever started it (nothing is
+            // judged the user's once no other app plays: the user, 2026-10-24).
+            if currentState == .playing {
+                logger.info("[arbiter] resume skipped — \(self.player.name, privacy: .public) plays already")
+            } else {
+                logger.info("[arbiter] resume skipped — \(self.player.name, privacy: .public) is \(currentState.rawValue, privacy: .public) (user interaction detected)")
+            }
             pausedByUs = false
             // Playing (an earlier try's play went through, or the user's), it
             // plays at the volume lowered for it, put back at its next pause.
@@ -125,6 +143,11 @@ extension PlaybackArbiter {
         pendingResumeWait = nil
         pendingResumeID = nil
         pausedByUs = false
+        // Muted through the pause: heard as it plays again.
+        if muteKeptInPause {
+            muteKeptInPause = false
+            await playerMute?.unmute()
+        }
         do {
             try await fader.playAndFadeIn()
             playerState = .playing

@@ -160,13 +160,14 @@ extension PlaybackArbiterTests {
         #expect(failures.value == [.playerCommandFailed(.buttonDisabled), nil])
     }
 
-    @Test("a pause that fails after the last app stopped during it says nothing: there's nothing to pause for any more")
+    @Test("a pause that fails after the last app stopped during it says nothing, nor is it muted: there's nothing to pause for any more")
     func failedPauseAfterLastAppStopped() async {
         let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.buttonDisabled))
         await player.setVolumeLevel(60)
         let failures = Locked<[MusicPlayerError?]>([])
+        let mute = FakeMute()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      fadeSleep: { _ in }, onPauseFailure: { failures.append($0) })
+                                      fadeSleep: { _ in }, onPauseFailure: { failures.append($0) }, playerMute: mute)
         await player.setBeforeStateAnswer { [arbiter, player] in
             // The fade-out's check, after the arbiter's: the app stops just before the press.
             guard await player.stateQueryCount == 2 else { return }
@@ -178,6 +179,7 @@ extension PlaybackArbiterTests {
 
         #expect(await player.pauseCallCount == 1)
         #expect(failures.value.isEmpty)
+        #expect(mute.muteCount == 0)
     }
 
     /// What ends a failed pause, for `failedPauseOver`.

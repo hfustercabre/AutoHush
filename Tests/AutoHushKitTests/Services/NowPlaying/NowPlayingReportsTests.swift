@@ -21,6 +21,9 @@ struct NowPlayingReportsTests {
         #expect(clients[812]?.removed == true)
         #expect(NowPlayingReports.state(reported: "Interrupted") == .paused)
         #expect(NowPlayingReports.state(reported: "Stopped") == .stopped)
+        NowPlayingReports.apply("PlaybackState changed from Paused to Unknown for [com.apple.TV (299) TV ❯]", to: &clients)
+        #expect(clients[299]?.reported == "Unknown")
+        #expect(clients[299]?.state == nil) // says nothing (Apple TV's trailers)
     }
 
     @Test("a client keeps its name, its report as the log says it, and when it came")

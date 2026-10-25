@@ -16,16 +16,18 @@ extension PlaybackArbiter {
 
     /// Waits until nothing is left running: the pause under way, and a
     /// pending resume or pause whose debounce is over or that had none,
-    /// called off ones included (`calledOff`). One still waiting on its
+    /// called off ones included (`calledOff`), and so for the looks at a
+    /// restart (`watchRestart`). One still waiting on its
     /// debounce doesn't count. Tests use it before checking what happened,
     /// or that nothing did; their manual scheduler ends a debounce by
     /// cancelling it.
     func waitUntilIdle() async {
         var finished: Set<Task<Void, Never>> = []
         while true {
+            let watches = ([restartWatch].compactMap { $0 } + calledOffWatches.values).map { (Optional($0.task), Optional($0.wait)) }
             let pending = [(pendingResumeTask, pendingResumeWait), (pendingPauseTask, pendingPauseWait)]
-                + calledOff.values.map { ($0.task, $0.wait) }
-            let running = ([pauseTask] + pending.filter { Self.isOver($0.1) }.map(\.0))
+                + calledOff.values.map { ($0.task, $0.wait) } + watches
+            let running = ([pauseTask, lookUnderWay] + pending.filter { Self.isOver($0.1) }.map(\.0))
                 .compactMap { $0 }.filter { !finished.contains($0) }
             guard let next = running.first else { return }
             await next.value

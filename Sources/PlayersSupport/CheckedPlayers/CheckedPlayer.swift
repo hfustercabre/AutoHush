@@ -210,6 +210,13 @@ package actor CheckedPlayer: AddedAppPlayer {
         return soundIsOn ? .playing : .paused
     }
 
+    /// Only its sure signs tell (`sureState`); one told by its sound alone
+    /// (`parts.hearing`) never states itself.
+    package func statesItself() async -> Bool {
+        guard parts.hearing == nil else { return false }
+        return await sureState() != .unknown
+    }
+
     /// Whether its sound output is on, read on the probe's queue, never on
     /// Swift's shared threads (DEVELOPMENT.md).
     private func soundOnNow(_ pid: pid_t) async -> Bool {
@@ -303,7 +310,10 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// whose press doesn't take, hands it to the next, the panel last.
     private func press(to target: PlayerState) async throws {
         var firstError: any Error?
-        let checkable = !parts.signs.isEmpty || reports != nil
+        // A sign that says nothing now (a Now Playing report of Unknown:
+        // Apple TV's trailers) would only be waited on: not checked then.
+        var checkable = !parts.signs.isEmpty || reports != nil
+        if checkable { checkable = await sureState() != .unknown }
         for way in parts.ways {
             do {
                 if way.checksItsPresses || !checkable {

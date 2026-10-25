@@ -34,7 +34,8 @@ struct PlayerSessionPipelinesTests {
         let make = PlayerSession.pipelines(hostedApp: { _ in nil }, volumeLeveler: leveler, readers: {
             MonitoringPipeline.Readers(processes: MockAudioProcessSnapshotProvider(), levelMeter: MockLevelMeter(),
                                        audioCapturePermission: MockAudioCapturePermission(.granted),
-                                       powerAssertions: MockPowerAssertions(), outputDisconnects: MockOutputDisconnects())
+                                       powerAssertions: MockPowerAssertions(), outputDisconnects: MockOutputDisconnects(),
+                                       playerInput: { _ in { _ in true } }) // every start the user's
         })
         let settings = MonitoringSettings(autoPause: true, ignored: [], timings: .defaults, detection: .audioLevels)
         // A pause held for the player chosen before, and the new one's.
@@ -52,19 +53,20 @@ struct PlayerSessionPipelinesTests {
         live.stop()
 
         // With stand-ins, started: a web app's page plays, loud, telling macOS
-        // so; another app, ignored, has its output open.
+        // so, over the player; another app, ignored, has its output open.
         let page = AudioProcessInfo(objectID: 2, bundleID: "com.apple.WebKit.WebContent", pid: 999_999)
         let ignored = AudioProcessInfo(objectID: 3, bundleID: "com.example.ignored", pid: 999_997)
         let site = AudioSource(id: "com.example.site", name: "Site")
         let processes = MockAudioProcessSnapshotProvider()
         processes.processes = [Self.playerProcess, page, ignored]
         let meter = MockLevelMeter()
-        meter.peaks = [page.objectID: 0.5]
+        meter.peaks = [page.objectID: 0.5, Self.playerProcess.objectID: 0.3] // the player heard too
         let assertions = MockPowerAssertions()
         assertions.held = [page.pid: MockPowerAssertions.playing]
         let readers = MonitoringPipeline.Readers(processes: processes, levelMeter: meter,
                                                  audioCapturePermission: MockAudioCapturePermission(.granted),
-                                                 powerAssertions: assertions, outputDisconnects: MockOutputDisconnects())
+                                                 powerAssertions: assertions, outputDisconnects: MockOutputDisconnects(),
+                                                 playerInput: { _ in { _ in true } }) // every start the user's
         let player = MockMusicPlayer(state: .playing)
         let updates = PipelineUpdates()
         let levels = MonitoringSettings(autoPause: true, ignored: [ignored.bundleID], timings: .defaults, detection: .audioLevels)

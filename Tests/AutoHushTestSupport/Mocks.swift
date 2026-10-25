@@ -27,6 +27,9 @@ package actor MockMusicPlayer: MusicPlayer {
     package var failPauseWith: any Error?
     package var failPlayWith: any Error?
     package var failVerifyWith: any Error?
+    /// Whether its state comes from the player itself (`statesItself`); one
+    /// known only by its open output doesn't.
+    package var statesItsOwnState = true
     /// The next this many state queries answer `.unknown`, as when the player
     /// is busy and doesn't answer in time.
     package var unansweredStateQueries = 0
@@ -86,6 +89,9 @@ package actor MockMusicPlayer: MusicPlayer {
     }
 
     package func setUnansweredStateQueries(_ count: Int) { unansweredStateQueries = count }
+
+    package func statesItself() async -> Bool { statesItsOwnState }
+    package func setStatesItself(_ states: Bool) { statesItsOwnState = states }
     package func setFailPlay(_ error: any Error?) { failPlayWith = error }
     package func setFailPause(_ error: any Error?) { failPauseWith = error }
     package func setFailVerify(_ error: any Error?) { failVerifyWith = error }

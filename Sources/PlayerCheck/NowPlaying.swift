@@ -130,7 +130,8 @@ let nowPlayingReports = NowPlayingReports(idleLimit: nil)
 /// Its report says it isn't playing while it's heard: the report is stale
 /// from then on (`reportIsStale`), said once.
 @MainActor func noteHeard(against reported: String?) {
-    guard !reportIsStale, let reported, NowPlayingReports.state(reported: reported) != .playing else { return }
+    // Unknown says nothing, so it can't be wrong.
+    guard !reportIsStale, let reported, let state = NowPlayingReports.state(reported: reported), state != .playing else { return }
     reportIsStale = true
     say("  its Now Playing report says “\(reported.lowercased())” while it's heard playing: taken as stale, its level is judged instead")
 }

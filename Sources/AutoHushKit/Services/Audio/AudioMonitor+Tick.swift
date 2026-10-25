@@ -146,10 +146,10 @@ extension AudioMonitor {
         } : []
         let tapsPlayer = metered.contains { playerProcesses.contains($0.objectID) }
         playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
-        // Leveling the music: the music too, for its loudness, but only while
-        // another app is measured, so the recording indicator isn't on for the
-        // music alone.
-        if configuration.levelsMusic, detectionMode == .audioLevel, !tapsPlayer,
+        // The music too while another app is measured: whether it's heard
+        // (`playerHearing`) and, leveling the music, its loudness. Not for
+        // the music alone, so the recording indicator isn't on for it.
+        if detectionMode == .audioLevel, !tapsPlayer,
            metered.contains(where: { sourceOfProcess[$0.objectID] != nil }) {
             metered += candidates.filter { playerProcesses.contains($0.objectID) }
         }
@@ -162,6 +162,7 @@ extension AudioMonitor {
         let peaks = measured.mapValues(\.peak)
         updateDetectionMode(peaks: peaks, at: now)
         updateResumeLevel(levels: measured, at: now)
+        notePlayerHearing(levels: measured, at: now)
 
         var audible: Set<String> = []
         var levels: [String: Float] = [:]
@@ -253,6 +254,24 @@ extension AudioMonitor {
 
         publishActiveSources()
         publishReport(audible: audible, levels: levels, verdicts: verdicts)
+    }
+
+    /// Notes since when the player's processes are measured and when it was
+    /// last heard (`playerHearing`); forgotten once they aren't measured.
+    private func notePlayerHearing(levels: [AudioObjectID: AudioLevel], at now: Date) {
+        let peaks = playerProcesses.compactMap { levels[$0]?.peak }
+        guard detectionMode == .audioLevel, !peaks.isEmpty else {
+            playerMeasuredSince = nil
+            playerMeasuredAt = nil
+            playerHeardAt = nil
+            return
+        }
+        let wasHeard = playerHeardAt.map { now.timeIntervalSince($0) < Self.playerSilenceWindow } ?? false
+        playerMeasuredSince = playerMeasuredSince ?? now
+        playerMeasuredAt = now
+        guard peaks.contains(where: { $0 >= configuration.audibleThreshold }) else { return }
+        playerHeardAt = now
+        if !wasHeard { events.yield(.playerHeard) } // heard again: the arbiter looks at once
     }
 
     /// Notes a tapped source process's level: `true` once it has been silent

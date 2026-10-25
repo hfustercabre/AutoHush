@@ -94,7 +94,7 @@ enum DiagnosticsReport {
         let name = player.isInstalled
             ? [player.name, facts.playerVersion].compactMap { $0 }.joined(separator: " ")
             : "\(player.name) · \(PlayerOption.notInstalledLabel)"
-        let state = describe(status.playback, mutes: player.pausesByMuting)
+        let state = describe(status.playback, mutes: player.pausesByMuting || status.playerMutedInstead)
         var rows = [
             Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem, fix: player.isInstalled ? nil : .choosePlayer),
             Row(label: String(localized: "State", comment: "Diagnostics: the media player's state"), value: state),
@@ -330,10 +330,11 @@ enum DiagnosticsReport {
         switch playback {
         case .musicPlaying:     return String(localized: "Playing", comment: "At the top of the menu, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
         case .pausedByMonitor where mutes:
-            return String(localized: "Muted by AutoHush", comment: "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted)")
+            return String(localized: "Muted by AutoHush", comment: "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted, or a player that kept starting again by itself after AutoHush's pause)")
         case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the media player's state")
         case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, under the media player: nothing plays")
         case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, under the media player, e.g. through Spotify Connect")
+        case .playingSilently:  return String(localized: "Playing silently", comment: "At the top of the menu, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it")
         case .pauseFailed:      return String(localized: "Playing: couldn’t pause it", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
         case .unknown:          return unknown
         }

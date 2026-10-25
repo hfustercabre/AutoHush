@@ -79,6 +79,58 @@ actor PlaybackArbiter: PlaybackArbiting {
     var playerState: PlayerState = .unknown
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
     var playsLocally = true
+    /// It says it plays here, but wasn't heard when last asked
+    /// (`hearsPlayer`): playing silently, not paused.
+    var playsSilently = false
+    /// Not heard, and only its open output said it plays (it reports no
+    /// state: Apple TV's trailers): shown as not playing.
+    var silentWithoutState = false
+    /// Whether the player is heard, from the levels the monitor measures
+    /// alongside other apps (`AudioMonitor.playerHearing`), counting only its
+    /// sound after `since` when given. With `listening`, it may also listen
+    /// with a tap of its own when nothing measures it (the menu opening:
+    /// `AudioMonitor.listenToPlayer`), which takes seconds.
+    let hearsPlayer: @Sendable (_ listening: Bool, _ since: Date?) async -> PlayerHearing
+    /// When AutoHush's pause, or its mute in place of one, took
+    /// (`handleRestart`).
+    var pausedAt: Date?
+    /// What the player's sound said when last asked during AutoHush's pause
+    /// (`watchRestart`): `nil` until then, or with nothing measured.
+    var hearingDuringPause: PlayerHearing?
+    /// The user played the player while other apps play (or AutoHush let
+    /// them have it): left alone until another app starts, or none plays.
+    var leftToUser = false
+    /// Since when other apps play, without a gap: input to the player since
+    /// then makes a start the user's (`playerStartedDuringApps`).
+    var appsPlayingSince: Date?
+    /// While muted in place of the pause: when its pause was pressed, once
+    /// its own state said it plays again, to be unmuted once it's silent
+    /// since (`lookWhileMuted`).
+    var pausePressedWhileMuted: Date?
+    /// The pending look at whether the player is heard again (`watchRestart`),
+    /// with its wait, and the looks called off whose tasks haven't ended
+    /// (`waitUntilIdle`).
+    var restartWatch: (task: Task<Void, Never>, wait: Task<Void, Never>)?
+    var calledOffWatches: [UUID: (task: Task<Void, Never>, wait: Task<Void, Never>)] = [:]
+    /// The look under way, once its wait is over (`waitUntilIdle`).
+    var lookUnderWay: Task<Void, Never>?
+    /// The player plays on through AutoHush's pause, or started again by
+    /// itself, so it's muted, standing for the pause until it's over
+    /// (`PlayerMuting`).
+    var mutedForRestart = false {
+        didSet { if mutedForRestart != oldValue { onMutedInsteadChange(mutedForRestart) } }
+    }
+    private let onMutedInsteadChange: @Sendable (Bool) -> Void
+    /// Muted in place of the pause, then paused (it went silent): the mute
+    /// is kept until it plays again, the resume or the user's play (the user,
+    /// 2026-10-24: "unmute it for the playback"), so a restart by itself
+    /// is never heard.
+    var muteKeptInPause = false
+    /// Whether the user pressed a key or clicked in the player, or pressed a
+    /// media key, after a moment (`PlayerInput`); by default always, so
+    /// every start is the user's (the monitoring gives the real one).
+    let inputToPlayer: @Sendable (Date) -> Bool
+    let playerMute: (any PlayerMuting)?
     var autoPauseEnabled: Bool
     var activeSources: Set<String> = []
     /// The apps playing with their microphone on (calls).
@@ -122,6 +174,22 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// its Play button): a timed-out query is not the user changing the player.
     static let resumeRetries = 2
     static let resumeRetryDelay: TimeInterval = 1
+    /// How often a player playing silently, or paused or muted by AutoHush,
+    /// is looked at again while other apps play. The monitor tells the moment
+    /// it's heard again (`handlePlayerHeard`): this is the rest.
+    static let silentRecheckInterval: TimeInterval = 1
+    /// The player's sound up to this long after AutoHush's pause may be its
+    /// sound from before it, still in the measure (a tick's lag, a buffer).
+    static let pauseTail: TimeInterval = 0.4
+    /// The first look at whether the pause took comes this long after it:
+    /// past `pauseTail`, and a tick of the monitor's.
+    static let restartWatchDelay: TimeInterval = 0.75
+    /// Muted in place of the pause and still heard, its pause is pressed
+    /// again this often (`lookWhileMuted`).
+    static let mutedPauseRetry: TimeInterval = 2
+    /// The user's input counts as their play only when the player is heard
+    /// again within this long of it (`userPlayedJustNow`).
+    static let playInputWindow: TimeInterval = 3
     /// How long after a resume a polled player is asked again (`confirmResumeLater`).
     static let resumeConfirmDelay: TimeInterval = 3
     /// Once auto-pause is back on, the pause for apps already playing waits
@@ -157,7 +225,11 @@ actor PlaybackArbiter: PlaybackArbiting {
         onPausedByUsChange: @escaping @Sendable (Bool) -> Void = { _ in },
         volumeLeveler: any ResumeLeveling? = nil,
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
-        onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in }
+        onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
+        hearsPlayer: @escaping @Sendable (_ listening: Bool, _ since: Date?) async -> PlayerHearing = { _, _ in .unknown },
+        inputToPlayer: @escaping @Sendable (Date) -> Bool = { _ in true },
+        onMutedInsteadChange: @escaping @Sendable (Bool) -> Void = { _ in },
+        playerMute: (any PlayerMuting)? = nil
     ) {
         self.player = player
         self.fader = VolumeFader(
@@ -177,6 +249,10 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.volumeLeveler = volumeLeveler
         self.resumeOffset = resumeOffset
         self.onPauseFailure = onPauseFailure
+        self.hearsPlayer = hearsPlayer
+        self.inputToPlayer = inputToPlayer
+        self.onMutedInsteadChange = onMutedInsteadChange
+        self.playerMute = playerMute
     }
 
     /// Records that a source started or stopped. Returns without waiting for
@@ -189,6 +265,8 @@ actor PlaybackArbiter: PlaybackArbiting {
             // With auto-pause off, music we paused comes back regardless.
             if autoPauseEnabled { cancelPendingResume() }
             cancelPendingPause() // this app pauses the music now
+            if activeSources.isEmpty { appsPlayingSince = clock() }
+            leftToUser = false // a new app: the player is paused for it, as any
             activeSources.insert(sourceID)
             logActiveSources(after: "\(sourceID) started playing")
             noteCalls()
@@ -207,6 +285,8 @@ actor PlaybackArbiter: PlaybackArbiting {
                 publishPlaybackState()
             } else if activeSources.isEmpty {
                 pauseFailure = nil // nothing to pause for any more
+                appsPlayingSince = nil
+                leftToUser = false
                 // Stopped during the fade-out: the music comes back up unpaused.
                 if isFadingOut { await fader.cancel() }
                 scheduleResume(after: nil)
@@ -409,11 +489,14 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// `.unknown` carries no information and is ignored.
     func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
+        if state != .playing { playsSilently = false }
         noteStoppedPlaying(state)
         if state != .playing { pauseFailure = nil } // the user paused or stopped it
         guard pausedByUs, state != .paused else {
+            let was = playerState
             playerState = state
             publishPlaybackState()
+            if state == .playing, was != .playing, !pausedByUs { await playerStartedDuringApps() }
             return
         }
         let live = await livePlayerState()
@@ -422,19 +505,32 @@ actor PlaybackArbiter: PlaybackArbiting {
             logger.debug("[arbiter] \(self.player.name, privacy: .public) reported \(state.rawValue, privacy: .public) but is paused — keeping pausedByUs")
         } else {
             if live == .unknown { playerState = state } // no answer: the report stands
+            // With no other app playing, nothing is judged the user's (the
+            // user, 2026-10-24): the resume to come decides.
+            if activeSources.isEmpty, !resumesHeld {
+                publishPlaybackState()
+                return
+            }
+            if playerState == .playing, await handleRestart(reported: true) {
+                publishPlaybackState()
+                return
+            }
             if pausedByUs {
                 logger.info("[arbiter] \(self.player.name, privacy: .public) is \(self.playerState.rawValue, privacy: .public): the user took it over, it won’t be resumed")
                 pausedByUs = false
+                leftToUser = true
             }
         }
         publishPlaybackState()
     }
 
-    func handleLocalPlaybackChange(_ isLocal: Bool) {
+    func handleLocalPlaybackChange(_ isLocal: Bool) async {
         guard !isShutDown, isLocal != playsLocally else { return }
         playsLocally = isLocal
+        playsSilently = false // a new output, or none: what was heard no longer stands
         if !isLocal { pauseFailure = nil } // it isn't heard here any more
         publishPlaybackState()
+        if isLocal, playerState == .playing { await playerStartedDuringApps() } // its sound on this Mac now
     }
 
     /// Queries the player's live state, caches it and publishes the resulting
@@ -453,6 +549,11 @@ actor PlaybackArbiter: PlaybackArbiting {
         cancelPendingPause()
         cancelPendingResume()
         await fader.abandon() // never leave the music faded down
+        restartWatch?.task.cancel()
+        restartWatch = nil
+        if mutedForRestart || muteKeptInPause { await playerMute?.unmute() }
+        mutedForRestart = false
+        muteKeptInPause = false
         // Nor muted: a mute, unlike a pause, can't be undone by the user.
         if heldByMute, let muting = player as? any MutingMusicPlayer { await muting.releaseMute() }
         heldByMute = false
@@ -512,4 +613,21 @@ actor PlaybackArbiter: PlaybackArbiting {
             break
         }
     }
+
+    /// Listens to the player when the menu opens, so it says at once whether
+    /// a player that says it plays here is heard (the user, 2026-10-24).
+    func checkPlayerHeard() async {
+        guard !isShutDown, playerState == .playing, playsLocally, !pausedByUs, !isFadingOut else { return }
+        let heard: Bool
+        switch await hearsPlayer(true, nil) {
+        case .heard: heard = true
+        case .silent: heard = false
+        case .measuring, .unknown: return
+        }
+        guard !isShutDown, playerState == .playing, playsLocally, !pausedByUs, playsSilently == heard else { return }
+        if !heard { silentWithoutState = !(await player.statesItself()) }
+        playsSilently = !heard
+        publishPlaybackState()
+    }
+
 }

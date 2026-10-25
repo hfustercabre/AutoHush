@@ -52,14 +52,16 @@ struct MonitoringPipelineTests {
                 learnedAssertions: [:],
                 readers: .init(processes: processes, levelMeter: meter,
                                audioCapturePermission: MockAudioCapturePermission(.granted),
-                               powerAssertions: MockPowerAssertions(), outputDisconnects: outputs),
+                               powerAssertions: MockPowerAssertions(), outputDisconnects: outputs,
+                               playerInput: { _ in { _ in true } }), // every start the user's
                 onStatusUpdate: { updates.all.append($0) }
             )
         }
 
-        /// The other app's sound comes on, loud, as the audio server announces it.
+        /// The other app's sound comes on, loud, as the audio server announces
+        /// it; the player is heard too.
         func otherAppPlays() async {
-            meter.peaks = [MonitoringPipelineTests.otherApp.objectID: 0.5]
+            meter.peaks = [MonitoringPipelineTests.otherApp.objectID: 0.5, MonitoringPipelineTests.playerProcess.objectID: 0.3]
             await TestWait.until { processes.isObserving }
             processes.triggerChange()
         }
@@ -126,7 +128,17 @@ struct MonitoringPipelineTests {
         #expect(await mock.pauseCallCount == 2)
 
         // The user plays it during that pause, then pauses it: it's theirs, so it stays paused once the app stops.
+        // Only a player found silent can be played again: measured silent a second
+        // after the pause (the monitor looks at a process change), then a look finds
+        // it so. Then it's heard again.
+        setup.meter.peaks[Self.playerProcess.objectID] = 0
+        try? await Task.sleep(for: .seconds(1))
+        setup.processes.triggerChange()
+        try? await Task.sleep(for: .seconds(1.5))
         await mock.userSets(.playing)
+        setup.meter.peaks[Self.playerProcess.objectID] = 0.3
+        try? await Task.sleep(for: .seconds(PlaybackArbiter.pauseTail + 0.1))
+        setup.processes.triggerChange()
         await TestWait.until { setup.updates.playback.last == .musicPlaying }
         await mock.userSets(.paused)
         await TestWait.until { setup.updates.playback.last == .musicIdle }

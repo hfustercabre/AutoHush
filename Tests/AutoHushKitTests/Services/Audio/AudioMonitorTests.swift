@@ -37,6 +37,8 @@ struct AudioMonitorTests {
         let activeSources = Locked<[[AudioSource]]>([])
         let modes = Locked<[DetectionMode]>([])
         let learned = Locked<[String]>([])
+        /// The processes listened to with a tap of their own (`listenToPlayer`), each time.
+        let listened = Locked<[Set<AudioObjectID>]>([])
         let monitor: AudioMonitor
 
         init(
@@ -65,7 +67,8 @@ struct AudioMonitorTests {
                 audioLevelsReleaseDelay: releaseDelay,
                 clock: { [clock] in clock.now },
                 onActiveSourcesChange: { [activeSources] in activeSources.append($0) },
-                onDetectionModeChange: { [modes] in modes.append($0) }
+                onDetectionModeChange: { [modes] in modes.append($0) },
+                hears: { [listened] in listened.append($0); return true }
             )
         }
 
@@ -147,6 +150,66 @@ struct AudioMonitorTests {
         #expect(await h.recorder.heardSince == [heard, nil, heardAgain])
     }
 
+    // MARK: - Listening to the player
+
+    @Test("the player is measured alongside another app, never alone: heard within the last half second it's heard, measured half a second with nothing heard it's silent, briefer it's measuring; heard again, the arbiter is told at once; no tap of its own")
+    func playerHearingFromLevels() async {
+        let h = Harness(permission: MockAudioCapturePermission(.granted))
+        h.start()
+        let player = Self.process(2, TestPlayer.bundleID)
+        h.step([player], peaks: [2: 0.3])
+        #expect(h.meter.lastMetered == []) // the music alone: no tap
+        #expect(await h.monitor.playerHearing() == .unknown)
+
+        h.step(after: 0.25, [Self.process(1, "org.mozilla.firefox"), player], peaks: [1: 0.2, 2: 0])
+        #expect(h.meter.lastMetered == [1, 2])
+        h.step(after: 0.25)
+        #expect(await h.monitor.playerHearing() == .measuring(remaining: 0.25))
+        h.step(after: 0.25)
+        #expect(await h.monitor.playerHearing() == .silent) // a muted trailer
+        h.step(after: 0.25, peaks: [1: 0.2, 2: 0.3])
+        #expect(await h.monitor.playerHearing() == .heard)
+        let heard = h.clock.now
+        h.step(after: 0.25, peaks: [1: 0.2, 2: 0])
+        #expect(await h.monitor.playerHearing() == .heard) // a quiet moment
+        h.step(after: 0.25)
+        #expect(await h.monitor.playerHearing() == .silent)
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.playerHeard == 1)
+
+        // Since a moment (AutoHush's pause): only its sound after it counts.
+        let since = heard.addingTimeInterval(0.25)
+        #expect(await h.monitor.playerHearing(since: since) == .measuring(remaining: 0.25))
+        h.step(after: 0.25, peaks: [1: 0.2, 2: 0.3])
+        #expect(await h.monitor.playerHearing(since: since) == .heard)
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.playerHeard == 2) // heard again after a silence
+
+        h.step(after: 0.25, [Self.process(1, "org.mozilla.firefox")])
+        #expect(await h.monitor.playerHearing() == .silent) // its output closed
+        h.monitor.setDetectionMethod(.playbackSignals)
+        #expect(await h.monitor.playerHearing() == .unknown) // AntiDot mode measures no levels
+        #expect(h.listened.value.isEmpty)
+    }
+
+    @Test("asked to listen while nothing measures the player (the menu opening), it's listened to with a tap of its own, its processes only; not without measured levels")
+    func listenToPlayer() async {
+        let h = Harness(permission: MockAudioCapturePermission(.granted))
+        h.start()
+        h.step([Self.process(2, TestPlayer.bundleID)])
+        #expect(await h.monitor.listenToPlayer() == .heard)
+        #expect(h.listened.value == [[2]])
+        h.monitor.setDetectionMethod(.playbackSignals)
+        #expect(await h.monitor.listenToPlayer() == .unknown)
+        #expect(h.listened.value == [[2]])
+
+        let denied = Harness(permission: MockAudioCapturePermission(.denied)) // levels measure nothing
+        denied.start()
+        denied.step([Self.process(2, TestPlayer.bundleID)])
+        #expect(await denied.monitor.listenToPlayer() == .unknown)
+        #expect(denied.listened.value.isEmpty)
+    }
+
     // MARK: - Audio level detection
 
     @Test("a non-zero sample verifies level detection")
@@ -195,8 +258,15 @@ struct AudioMonitorTests {
         #expect(h.modes.value.isEmpty)
     }
 
-    @Test("when the permission cannot be read, the player is tapped only until levels are verified")
+    @Test("when the permission cannot be read, the player is tapped to verify levels, then only alongside another app")
     func playerTappedOnlyForVerification() async {
+        let alone = Harness()
+        alone.start()
+        alone.step([Self.process(1, TestPlayer.bundleID)])
+        #expect(alone.meter.lastMetered == [1])
+        alone.step(after: 0.25, peaks: [1: 0.4])
+        #expect(alone.meter.lastMetered == []) // verified: not tapped alone
+
         let h = Harness()
         h.start()
         h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "com.apple.Safari")])
@@ -204,7 +274,9 @@ struct AudioMonitorTests {
 
         h.step(after: 0.25, peaks: [1: 0.4, 2: 0])
         #expect(h.modes.value == [.audioLevel])
-        #expect(h.meter.lastMetered == [2])
+        #expect(h.meter.lastMetered == [1, 2]) // now alongside Safari, for whether it's heard
+        h.step(after: 0.25, [Self.process(1, TestPlayer.bundleID)])
+        #expect(h.meter.lastMetered == []) // never alone
     }
 
     /// The music player's process and Safari's, for the tests of Level the volume.
@@ -222,7 +294,7 @@ struct AudioMonitorTests {
         return h
     }
 
-    @Test("with Level the volume on, the player is measured too, but only while another app is")
+    @Test("with Level the volume on too, the player is measured only while another app is")
     func levelsMusicMeasuresPlayer() {
         let h = Self.levelingHarness()
         #expect(h.meter.lastMetered == []) // the music alone: no tap
@@ -345,12 +417,14 @@ struct AudioMonitorTests {
         #expect(await h.recorder.log.filter { $0.contains("zoom") }.isEmpty)
     }
 
-    @Test("with the permission granted, the player itself is never tapped")
+    @Test("with the permission granted, the player is never tapped alone, only alongside another app")
     func playerNotTappedWithPermission() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.start()
+        h.step([Self.process(1, TestPlayer.bundleID)])
+        #expect(h.meter.lastMetered == [])
         h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "com.apple.Safari")])
-        #expect(h.meter.lastMetered == [2])
+        #expect(h.meter.lastMetered == [1, 2])
     }
 
     /// An app that keeps its output open while paused.
@@ -1405,6 +1479,11 @@ private actor ArbiterEventRecorder: PlaybackArbiting {
     func handleStartConfirmationChange(_ longest: TimeInterval) async {
         startConfirmations.append(longest)
     }
+
+    /// How many times the monitor said the player is heard again.
+    private(set) var playerHeard = 0
+
+    func handlePlayerHeard() async { playerHeard += 1 }
 
     func handleCallChange(sourceID: String, inCall: Bool) async {
         log.append("\(inCall ? "call" : "no call") \(sourceID)")

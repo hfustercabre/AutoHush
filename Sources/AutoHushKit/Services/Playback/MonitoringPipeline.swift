@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Everything one start creates (see GLOSSARY.md) — arbiter, audio monitor
 /// and player observer — wired together, started and torn down as a unit.
@@ -20,6 +21,9 @@ package final class MonitoringPipeline {
         case learnedAssertions(String, AnnouncedAssertions)
         /// Why the music couldn't be paused, then `nil` once that's over.
         case pauseFailure(MusicPlayerError?)
+        /// The player is muted in place of AutoHush's pause, as it kept
+        /// starting again by itself, then `false` once the mute is lifted.
+        case mutedInstead(Bool)
     }
 
     /// What the app tells the arbiter.
@@ -31,12 +35,16 @@ package final class MonitoringPipeline {
         case asleep(Bool, change: Int)
         case resumesHeld(Bool)
         case outputDisconnected
+        case checkPlayerHeard
     }
 
     private let arbiter: PlaybackArbiter
     private let monitor: AudioMonitor
     /// Told whether it may tap its sound, when it can (see `allowTaps`).
     private let mutingPlayer: any MutingMusicPlayer?
+    /// Whether the player may be muted through a tap (`PlayerMuting`): not
+    /// in AntiDot mode.
+    private let tapsAllowed: OSAllocatedUnfairLock<Bool>
     private let playerObserver: any PlayerStateObserving
     private let outputDisconnects: any OutputDisconnectWatching
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
@@ -57,14 +65,29 @@ package final class MonitoringPipeline {
         let powerAssertions: any PowerAssertionReading
         /// When the output in use goes away (Pause on disconnect).
         let outputDisconnects: any OutputDisconnectWatching
+        /// Mutes the player with this bundle ID while taps are allowed: one
+        /// that keeps starting again by itself after a pause.
+        let playerMute: @Sendable (String, @escaping @Sendable () -> Bool) -> (any PlayerMuting)?
+        /// For the player with this bundle ID: whether the user pressed a
+        /// key or clicked in it, or pressed a media key, after a moment.
+        let playerInput: @Sendable (String) -> @Sendable (Date) -> Bool
 
         package init(
             processes: any AudioProcessSnapshotProviding = HALAudioProcessSnapshotProvider(),
             levelMeter: any AudioLevelMetering? = ProcessTapLevelMeter(),
             audioCapturePermission: any AudioCapturePermissionChecking = TCCAudioCapturePermission(),
             powerAssertions: any PowerAssertionReading = IOKitPowerAssertionReader(),
-            outputDisconnects: any OutputDisconnectWatching = CoreAudioOutputDisconnectWatcher()
+            outputDisconnects: any OutputDisconnectWatching = CoreAudioOutputDisconnectWatcher(),
+            playerMute: @escaping @Sendable (String, @escaping @Sendable () -> Bool) -> (any PlayerMuting)? = {
+                ProcessPlayerMute(bundleID: $0, tapsAllowed: $1)
+            },
+            playerInput: @escaping @Sendable (String) -> @Sendable (Date) -> Bool = { bundleID in
+                let input = PlayerInput(bundleID: bundleID)
+                return { input.since($0) }
+            }
         ) {
+            self.playerMute = playerMute
+            self.playerInput = playerInput
             self.processes = processes
             self.levelMeter = levelMeter
             self.audioCapturePermission = audioCapturePermission
@@ -97,6 +120,8 @@ package final class MonitoringPipeline {
         // The arbiter decides when audio levels are needed; the monitor, created
         // after it, captures audio only then.
         let monitorLink = MonitorLink()
+        let tapsAllowed = OSAllocatedUnfairLock(initialState: Self.allowsTaps(detectionMethod))
+        self.tapsAllowed = tapsAllowed
         let arbiter = PlaybackArbiter(
             player: player,
             configuration: configuration,
@@ -107,7 +132,14 @@ package final class MonitoringPipeline {
             onPausedByUsChange: { monitorLink.monitor?.setMusicPaused($0) },
             volumeLeveler: volumeLeveler,
             resumeOffset: { await monitorLink.monitor?.resumeOffsetDB() },
-            onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) }
+            onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) },
+            hearsPlayer: { listening, since in
+                guard let monitor = monitorLink.monitor else { return .unknown }
+                return listening ? await monitor.listenToPlayer() : await monitor.playerHearing(since: since)
+            },
+            inputToPlayer: readers.playerInput(player.bundleID),
+            onMutedInsteadChange: { statusUpdates.yield(.mutedInstead($0)) },
+            playerMute: readers.playerMute(player.bundleID) { tapsAllowed.withLock { $0 } }
         )
         let monitor = AudioMonitor(
             configuration: configuration,
@@ -147,6 +179,7 @@ package final class MonitoringPipeline {
                     case .asleep(let asleep, let change): await arbiter.setAsleep(asleep, change: change)
                     case .resumesHeld(let held): await arbiter.holdResumes(held)
                     case .outputDisconnected: await arbiter.handleOutputDisconnected()
+                    case .checkPlayerHeard: await arbiter.checkPlayerHeard()
                     }
                 }
             },
@@ -225,6 +258,12 @@ package final class MonitoringPipeline {
         arbiterCommands.yield(.resumesHeld(held))
     }
 
+    /// Listens to the player, so a menu opening says at once whether a
+    /// player that says it plays here is heard (`PlaybackArbiter.checkPlayerHeard`).
+    package func checkPlayerHeard() {
+        arbiterCommands.yield(.checkPlayerHeard)
+    }
+
     /// Applies new timings and thresholds live.
     package func setConfiguration(_ configuration: AppConfiguration) {
         monitor.setConfiguration(configuration)
@@ -234,6 +273,8 @@ package final class MonitoringPipeline {
     package func setDetectionMethod(_ method: DetectionMethod) {
         monitor.setDetectionMethod(method)
         Self.allowTaps(for: mutingPlayer, in: method)
+        let allowed = Self.allowsTaps(method)
+        tapsAllowed.withLock { $0 = allowed }
     }
 
     /// AntiDot mode promises no audio taps, with either of its ways of

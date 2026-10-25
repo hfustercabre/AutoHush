@@ -51,7 +51,7 @@ package struct Look: Sendable {
     package func says(_ kind: SignKind) -> PlayerState? {
         switch kind {
         case .script: state
-        case .report: reported.map(NowPlayingReports.state(reported:))
+        case .report: reported.flatMap(NowPlayingReports.state(reported:))
         case .page: pageCurrent ? pageSays : nil
         case .level: audible.map { $0 ? .playing : .paused }
         case .awake: awake.map { $0 ? .playing : .paused }

@@ -13,6 +13,14 @@ extension PlaybackArbiter {
         if pausedByUs != publishedPausedByUs {
             publishedPausedByUs = pausedByUs
             if !pausedByUs { callDuringPause = false; heldByMute = false } // that pause is over
+            // A mute standing for it, or kept through it, is lifted: the
+            // player plays on, heard, or can be played.
+            if !pausedByUs, mutedForRestart || muteKeptInPause {
+                mutedForRestart = false
+                muteKeptInPause = false
+                let mute = playerMute
+                Task { await mute?.unmute() }
+            }
             onPausedByUsChange(pausedByUs)
         }
     }
@@ -30,6 +38,7 @@ extension PlaybackArbiter {
         if pausedByUs, !activeSources.isEmpty || resumesHeld { return .pausedByMonitor }
         if pauseFailure != nil, !activeSources.isEmpty { return .pauseFailed }
         if playerState == .playing, !playsLocally { return .playingElsewhere }
+        if playerState == .playing, playsSilently { return silentWithoutState ? .musicIdle : .playingSilently }
 
         switch playerState {
         case .playing:                       return .musicPlaying

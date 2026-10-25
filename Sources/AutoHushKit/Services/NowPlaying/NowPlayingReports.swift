@@ -39,7 +39,7 @@ package final class NowPlayingReports: @unchecked Sendable {
         /// The app's own bundle ID (a web app's, not WebKit's).
         package var appID: String { id.split(separator: "/").last.map(String.init) ?? id }
         /// What its report says.
-        package var state: PlayerState? { reported.map(NowPlayingReports.state(reported:)) }
+        package var state: PlayerState? { reported.flatMap(NowPlayingReports.state(reported:)) }
     }
 
     /// How far back the past is read when following starts.
@@ -345,11 +345,13 @@ package final class NowPlayingReports: @unchecked Sendable {
         clients[pid] = client
     }
 
-    /// Playing, Paused and Stopped as they are; any other (Interrupted…) as paused.
-    package static func state(reported: String) -> PlayerState {
+    /// Playing, Paused and Stopped as they are; Unknown says nothing (`nil`:
+    /// Apple TV's trailers, heard, report it); any other (Interrupted…) as paused.
+    package static func state(reported: String) -> PlayerState? {
         switch reported {
         case "Playing": .playing
         case "Stopped": .stopped
+        case "Unknown": nil
         default: .paused
         }
     }

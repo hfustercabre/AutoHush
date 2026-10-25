@@ -43,6 +43,12 @@ package protocol MusicPlayer: Sendable {
     /// presses are checked by `PressCheck`.
     var checksItsPresses: Bool { get }
 
+    /// Whether its state comes from the player itself (its script, its page,
+    /// a Now Playing report), not only from its open output: one that says
+    /// nothing (Apple TV's trailers, reported as Unknown) isn't playing
+    /// silently, just not known to play.
+    func statesItself() async -> Bool
+
     /// The player's own volume, 0–100, or `nil` when it can't be read.
     /// Fades need it; players without one pause and play without fading.
     func volume() async -> Int?
@@ -97,6 +103,7 @@ extension MusicPlayer {
     package var isUntested: Bool { false }
     package var ownWordsRead: Bool? { nil }
     package var checksItsPresses: Bool { false }
+    package func statesItself() async -> Bool { true }
     package func release() async {}
     package var releasesOnQuit: Bool { false }
     package var pausesByMuting: Bool { false }

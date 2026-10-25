@@ -73,6 +73,32 @@ extension PlaybackArbiter {
         latestStart = nil
         // Things may have changed while the player answered.
         guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
+        // Not heard (a muted trailer, a silent preview): nothing to pause.
+        // Read from the levels the monitor measures, so nothing waits; asked
+        // again every second while apps play, so it's paused once heard.
+        let hearing = await hearsPlayer(false, nil)
+        if case .measuring(let remaining) = hearing {
+            // Its tap was made with the other app's: not heard yet, but not
+            // long enough to tell. A sound meanwhile tells at once.
+            schedulePause(after: min(remaining, Self.silentRecheckInterval))
+            return
+        }
+        // Unknown once the other app's output closes (nothing is measured
+        // then): what was silent stays so, with nothing left to pause for.
+        if hearing == .silent || (hearing == .unknown && playsSilently) {
+            guard !isShutDown, autoPauseEnabled, !activeSources.isEmpty else { return }
+            if !playsSilently {
+                logger.info("[arbiter] \(self.player.name, privacy: .public) says it plays but isn’t heard — not pausing")
+                // Only its open output said so: shown as not playing.
+                silentWithoutState = !(await player.statesItself())
+                guard !isShutDown, autoPauseEnabled, !activeSources.isEmpty else { return }
+            }
+            playsSilently = true // shown once this pause ends (`startPause`)
+            schedulePause(after: Self.silentRecheckInterval)
+            return
+        }
+        playsSilently = false
+        guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
         isFadingOut = true
         noteCalls()
         if let levelLowered { volumeLeveler?.restore(over: configuration.fadeOutDuration, lowered: levelLowered) } // as the music fades out
@@ -88,9 +114,9 @@ extension PlaybackArbiter {
             isFadingOut = false
             logger.error("[arbiter] pausing \(self.player.name, privacy: .public) failed: \(error)")
             // Unless every app stopped meanwhile: then there's nothing to say.
-            if !activeSources.isEmpty, autoPauseEnabled, !isAsleep {
-                pauseFailure = error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed)
-            }
+            guard !activeSources.isEmpty, autoPauseEnabled, !isAsleep, !isShutDown else { return }
+            // The user's rule (2026-10-24): "If pauses didn't work, you should mute it".
+            _ = await muteInsteadOfPause("refused to pause", failure: error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed))
             return
         }
         isFadingOut = false
@@ -102,6 +128,9 @@ extension PlaybackArbiter {
             return
         }
         playerState = .paused
+        pausedAt = clock()
+        hearingDuringPause = nil
+        leftToUser = false
         logger.info("[arbiter] \(self.player.name, privacy: .public) paused, because these apps play: \(self.playingApps, privacy: .public)")
         guard holdPause() else { return }
         if !autoPauseEnabled {
@@ -110,6 +139,9 @@ extension PlaybackArbiter {
         } else if activeSources.isEmpty, !isShutDown {
             // Every app stopped while we were pausing, too late to call it off.
             scheduleResume(after: nil)
+        } else if await hearsPlayer(false, nil) != .unknown, pausedByUs, !isShutDown, !activeSources.isEmpty {
+            // Watched where its sound is measured (not in AntiDot mode).
+            watchRestart(after: Self.restartWatchDelay)
         }
     }
 

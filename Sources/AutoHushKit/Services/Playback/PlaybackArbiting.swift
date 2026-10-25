@@ -16,4 +16,7 @@ protocol PlaybackArbiting: Actor {
     func handleStartConfirmationChange(_ longest: TimeInterval) async
     /// Whether the app plays with its microphone on: in a call.
     func handleCallChange(sourceID: String, inCall: Bool) async
+    /// The media player is heard again while other apps play, after it
+    /// wasn't for a moment (`AudioMonitor.playerHearing`).
+    func handlePlayerHeard() async
 }

@@ -209,6 +209,25 @@ struct CheckedPlayerTests {
         _ = jukebox
     }
 
+    @Test("a report of Unknown while it's heard (Apple TV's trailers) says nothing: it isn't listened to, its sound output tells, and its reports still count")
+    func unknownReport() async {
+        var clients: [pid_t: NowPlayingReports.Client] = [:]
+        NowPlayingReports.apply("[com.example.jukebox (\(getpid())) Jukebox ❯] PlaybackState changed from Paused to Unknown", to: &clients)
+        let heard = FakeLevelProbe(audible: true)
+        let jukebox = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
+                                    reports: NowPlayingReports(clients: clients), processIdentifier: { 4242 },
+                                    levelProbe: heard, soundOn: { _ in true }, audioRecordingAllowed: { true })
+        #expect(await jukebox.playerState() == .playing) // its output on
+        #expect(heard.listens == 0) // nothing to check against its level
+
+        NowPlayingReports.apply("[com.example.jukebox (\(getpid())) Jukebox ❯] PlaybackState changed from Unknown to Paused", to: &clients)
+        let silent = FakeLevelProbe(audible: false)
+        let paused = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
+                                   reports: NowPlayingReports(clients: clients), processIdentifier: { 4242 },
+                                   levelProbe: silent, soundOn: { _ in true }, audioRecordingAllowed: { true })
+        #expect(await paused.playerState() == .paused) // its output open, silent: as it reports
+    }
+
     @Test("a report of a pause while it's heard is stale: its reports count no more; in AntiDot mode it isn't listened to")
     func staleReport() async {
         var clients: [pid_t: NowPlayingReports.Client] = [:]
