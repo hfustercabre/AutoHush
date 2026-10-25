@@ -42,6 +42,7 @@ package final class MonitoringPipeline {
         case checkPlayerHeard
         case tapsAllowed(Bool)
         case retryResume
+        case unmuteInstead
     }
 
     private let arbiter: PlaybackArbiter
@@ -75,7 +76,8 @@ package final class MonitoringPipeline {
         /// place of a pause that didn't take, a start by itself, or a refused one.
         let playerMute: @Sendable (String, @escaping @Sendable () -> Bool) -> (any PlayerMuting)?
         /// For the player with this bundle ID: whether the user pressed a
-        /// key or clicked in it, or pressed a media key, after a moment.
+        /// key or clicked in it, while it was already in front, after a
+        /// moment (media keys don't count).
         let playerInput: @Sendable (String) -> @Sendable (Date) -> Bool
 
         package init(
@@ -146,7 +148,8 @@ package final class MonitoringPipeline {
             },
             inputToPlayer: readers.playerInput(player.bundleID),
             onMutedInsteadChange: { statusUpdates.yield(.mutedInstead($0)) },
-            playerMute: readers.playerMute(player.bundleID) { tapsAllowed.withLock { $0 } }
+            playerMute: readers.playerMute(player.bundleID) { tapsAllowed.withLock { $0 } },
+            tapsAllowed: { tapsAllowed.withLock { $0 } }
         )
         let monitor = AudioMonitor(
             configuration: configuration,
@@ -189,6 +192,7 @@ package final class MonitoringPipeline {
                     case .checkPlayerHeard: await arbiter.checkPlayerHeard()
                     case .tapsAllowed(let allowed): await arbiter.setTapsAllowed(allowed)
                     case .retryResume: await arbiter.retryResume()
+                    case .unmuteInstead: await arbiter.unmuteInstead()
                     }
                 }
             },
@@ -270,6 +274,12 @@ package final class MonitoringPipeline {
     /// Try Again on the menu's "Couldn't resume" (`PlaybackArbiter.retryResume`).
     package func retryResume() {
         arbiterCommands.yield(.retryResume)
+    }
+
+    /// Unmute on the menu's card, for a player muted in place of its pause
+    /// (`PlaybackArbiter.unmuteInstead`).
+    package func unmuteInstead() {
+        arbiterCommands.yield(.unmuteInstead)
     }
 
     /// Listens to the player, so a menu opening says at once whether a

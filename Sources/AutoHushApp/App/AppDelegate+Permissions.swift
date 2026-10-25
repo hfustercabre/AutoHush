@@ -64,10 +64,16 @@ extension AppDelegate {
     /// controlled (also in Settings → Diagnostics, as "Last error").
     func showControlError() {
         guard let alert = status.controlErrorAlert else { return }
-        // Now Playing hidden in the menu bar: the pane where it's shown.
-        let opens = status.controlError?.opensMenuBarSettings == true
-        InfoAlert.show(alert.title, alert.message,
-                       action: opens ? (ControlFailure.openMenuBarSettings, { SystemSettingsPane.menuBar.open() }) : nil,
-                       run: runAlert)
+        // Now Playing hidden in the menu bar: the pane where it's shown;
+        // otherwise a given-up resume offers Try Again (the user, 2026-10-25).
+        let action: (title: String, perform: () -> Void)? =
+            if status.alertError?.opensMenuBarSettings == true {
+                (ControlFailure.openMenuBarSettings, { SystemSettingsPane.menuBar.open() })
+            } else if status.showsResumeFailure {
+                (TryAgainText.title, { [weak self] in self?.session.retryResume() })
+            } else {
+                nil
+            }
+        InfoAlert.show(alert.title, alert.message, action: action, run: runAlert)
     }
 }

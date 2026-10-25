@@ -9,76 +9,41 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Playing silently.** A player that says it plays but can't be heard,
-  like Apple TV's muted trailers, is no longer paused for nothing: the menu
-  says **Playing silently**. AutoHush measures its sound along with the
-  other app's, so a pause comes as quickly as before, listens to it when you
-  open the menu, and pauses it the moment it's heard. One that only has its
-  sound output open (it reports no state, as Apple TV's trailers) shows as
-  not playing. In AntiDot mode, which listens to nothing, it pauses as before.
-- **A pause that doesn't work becomes a mute.** A player still heard after
-  AutoHush's pause, or heard again (an autoplay, the next trailer, an ad),
-  is muted until the other apps stop (with Audio Recording; not in AntiDot
-  mode), the menu saying **Muted** and the playing app **Mutes your
-  player**; so is one that refuses to pause. It's yours only when it was
-  silent and is heard again within 3 seconds of a key press or click in it
-  (not the one that brings it forward); media keys don't count, as macOS
-  sends them to the app playing. Muted, it's listened to every second: once
-  it's silent (it paused itself) it counts as paused, kept muted until it
-  plays again; silent within 3 seconds of your key press or click in it,
-  it's your pause, unmuted and not resumed. While it's heard, its pause is
-  tried again every 2 seconds, never through the Now Playing panel. The Mac
-  going to sleep, or AntiDot mode turned on, pauses it for real, then
-  unmutes it. A player whose pause is a mute already (Mute It Instead, a
-  web app during an ad) keeps its own. Nothing is taken as yours once no
-  other app plays. Its sound decides: a "playing" report while nothing of
-  it is heard changes nothing.
-- **The player starting while another app plays** is paused, as at the
-  app's start, unless a key press or click in it came within 3 seconds
-  before.
-- **Couldn't resume.** When your player doesn't answer AutoHush's resume
-  (asked three times, a second apart), or won't play, the menu says
-  **Couldn't resume — Spotify didn't answer** in orange, with **Try Again**
-  under it and an ⓘ that tells why. It goes once another app plays or the
-  player answers.
-- **AutoHush's menu bar icon starts beside the system's icons** (Control
-  Center, the clock), where the notch or other apps' icons don't hide it:
-  once, unless you've already moved it. **Keep icon next to system icons**
-  in Settings → General puts it back there each time AutoHush opens; off,
-  it stays where you ⌘-drag it.
+- **Muting what won't pause.** If your player keeps playing after AutoHush
+  pauses it, starts again by itself (an autoplay, the next trailer),
+  refuses to pause, or is heard while it says it's paused, AutoHush mutes
+  it until the other apps stop and keeps trying to pause it. The menu says
+  **Muted**, with **Unmute**. Needs Audio Recording; not in AntiDot mode.
+- **Playing silently.** A player that says it plays but can't be heard (a
+  muted trailer) is no longer paused for nothing; it's paused the moment
+  it's heard.
+- **Your play counts; an autoplay doesn't.** If your player starts while
+  other apps play, AutoHush leaves it playing only when you clicked or
+  pressed a key in it just before. Media keys and the click that brings it
+  forward don't count.
+- **Couldn't resume.** When your player doesn't answer AutoHush's resume,
+  the menu and Settings say so, with **Try Again**.
+- **The menu bar icon starts beside the system's icons,** where the notch
+  or other icons don't hide it; **Keep icon next to system icons**
+  (Settings → General) keeps it there.
+
+### Changed
+
+- Settings → General's last card is titled **Startup and Menu Bar**.
+- macOS's Audio Recording prompt says AutoHush measures your player too.
 
 ### Fixed
 
-- **Add an App now sees Apple TV playing.** Its AppleScript says it's
-  stopped while it plays, so the check kept asking you to play something.
-  An app whose AppleScript state disagrees with its sound now has that
-  state ignored: the check goes on, and AutoHush tells its state by the
-  app's other signs.
-- **A player AutoHush reads once a second (VLC, QuickTime Player, TIDAL,
-  Apple Podcasts, web apps, added apps) that stops right after AutoHush
-  resumes it no longer shows as playing on another device.** AutoHush
-  checks it again 3 seconds after resuming it, so closing Apple TV's
-  window during the fade-in shows it as not playing.
-- **An added app's Now Playing report of "Unknown"** (Apple TV's trailers)
-  is no longer read as paused, and its pause or play no longer waits on
-  that report to check it took.
-- **A player muted just as the other app stopped** is unmuted at once; it
-  stayed muted before.
-- **A muted player that AutoHush resumes** is unmuted first, so its
-  fade-in is heard.
-- **Add an App's check** no longer takes an app's AppleScript state for
-  wrong from its sound right after its own pause, and listens to the app
-  less while it waits.
+- Add an App now sees Apple TV playing.
+- A player that stops right after AutoHush resumes it no longer shows as
+  playing on another device.
+- An added app reporting "Unknown" to Now Playing (Apple TV's trailers) is
+  no longer taken as paused.
 
 ## [1.0.0] — 2026-10-22
 
 ### Changed
 
-- **Settings → General's last card** has a title, **Startup and Menu Bar**,
-  so it no longer reads as part of the Safari Web Apps.
-- **macOS's Audio Recording prompt** says AutoHush measures your player
-  too, and mutes what's heard: "AutoHush measures how loud your player and
-  other apps are, to pause or mute only what's heard."
 - **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
   is now signed with an Apple developer certificate, because macOS runs an
   app's Shortcuts actions only when a developer team signed it. Copies

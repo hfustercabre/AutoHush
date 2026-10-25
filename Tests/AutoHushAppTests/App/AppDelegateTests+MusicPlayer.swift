@@ -361,6 +361,35 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("the info button after “Couldn’t resume” has its alert offer Try Again (Return), which resumes once more")
+    func resumeFailedAlertOffersTryAgain() async {
+        let (sut, monitorings) = makeSUT()
+        await start(sut)
+        let alerts = CallLog()
+        sut.runAlert = { alert in
+            alerts.calls.append(([alert.messageText] + alert.buttons.map(\.title)).joined(separator: " | "))
+            return .alertFirstButtonReturn // Try Again
+        }
+        monitorings.made[0].send(.resumeFailure(.playerNotResponding))
+        await TestWait.until { sut.status.showsResumeFailure }
+        sut.showControlError()
+        #expect(alerts.calls.last?.hasSuffix(" | Try Again | OK") == true)
+        #expect(monitorings.made[0].resumeRetries == 1)
+    }
+
+    @MainActor
+    @Test("Unmute on a player muted in place of its pause lifts AutoHush's own mute through the session")
+    func unmuteInsteadThroughSession() async {
+        let (sut, monitorings) = makeSUT()
+        await start(sut)
+        monitorings.made[0].send(.playback(.pausedByMonitor))
+        monitorings.made[0].send(.mutedInstead(true))
+        await TestWait.until { sut.status.playerMutedInstead }
+        sut.unmutePlayer()
+        #expect(monitorings.made[0].unmutesInstead == 1)
+    }
+
+    @MainActor
     @Test("why the player session can't control the player goes once the player is controlled")
     func controlErrorGoes() async {
         let (scratch, sut, _) = await controlFailed()

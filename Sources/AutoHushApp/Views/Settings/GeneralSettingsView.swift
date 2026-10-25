@@ -71,12 +71,18 @@ struct GeneralSettingsView: View {
                         .font(.appSubheadline)
                         .foregroundStyle(model.statusNeedsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
-                    if model.offersReopenPlayer || model.offersUnmute {
+                    if model.offersReopenPlayer || model.offersUnmute || model.showsResumeFailure {
                         // As the menu's card has them.
                         HStack(spacing: 8) {
                             PlayerFixButtons(player: model.chosenPlayerName ?? "",
                                              reopen: model.offersReopenPlayer ? { model.actions?.reopenPlayer() } : nil,
                                              unmute: model.offersUnmute ? { model.actions?.unmutePlayer() } : nil)
+                            if model.showsResumeFailure {
+                                Button { model.actions?.retryResume() } label: {
+                                    Label { Text(verbatim: TryAgainText.title) } icon: { Image(systemName: "arrow.clockwise") }
+                                }
+                                .buttonStyle(.chip)
+                            }
                         }
                         .padding(.vertical, 4)
                     }

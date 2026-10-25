@@ -29,6 +29,10 @@ struct AppStatusTests {
         #expect(status.statusLine == "Couldn’t resume — Jukebox didn’t answer")
         #expect(status.controlErrorAlert?.title == "Couldn’t Resume Jukebox")
         #expect(status.controlErrorAlert?.message.hasPrefix("Jukebox isn’t responding.") == true)
+        // Its alert's button follows its own error, not a pause's (the apps
+        // stopping cleared that): Now Playing hidden offers the pane.
+        status.resumeError = ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Jukebox")
+        #expect(status.controlError == nil && status.alertError?.opensMenuBarSettings == true)
         status.playback = .pausedByMonitor // paused again for another app
         status.setActiveSources([safari])
         #expect(!status.showsResumeFailure && !status.needsAttention)
@@ -56,15 +60,16 @@ struct AppStatusTests {
         #expect(status.statusLine == "Not playing")
     }
 
-    @Test("a player muted in place of the pause (it kept starting again by itself) says “Muted”, without Unmute; Paused once the mute is over")
+    @Test("a player muted in place of the pause (it kept starting again by itself) says “Muted”, with Unmute (the user, 2026-10-25); Paused once the mute is over")
     func mutedInstead() {
         var status = ready(.pausedByMonitor)
         status.setActiveSources([chrome])
         status.playerMutedInstead = true
         #expect(status.statusLine == "Muted — Google Chrome is playing")
-        #expect(status.icon == .pausedForApp && !status.offersUnmute)
+        #expect(status.icon == .pausedForApp && status.offersUnmute)
         status.playerMutedInstead = false
         #expect(status.statusLine == "Paused — Google Chrome is playing")
+        #expect(!status.offersUnmute)
     }
 
     @Test("while the player is muted in place of the pause, the apps that interrupt it say “Mutes your player”; “Pauses” again once it's over")

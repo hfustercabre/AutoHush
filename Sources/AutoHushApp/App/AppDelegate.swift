@@ -242,6 +242,11 @@ extension AppDelegate: AppActions {
     func unmutePlayer() {
         guard let player else { return }
         logger.notice("\(player.name, privacy: .public) unmuted from the menu, until the other apps stop")
+        // Muted in place of its pause: AutoHush's own mute, lifted by the session.
+        if status.playerMutedInstead {
+            session.unmuteInstead()
+            return
+        }
         // Its state then reads as playing: the user's, as a resume by hand.
         Task { [weak self] in
             do {
@@ -259,6 +264,7 @@ extension AppDelegate: AppActions {
         statusMenu?.remove()
         showStatusMenu()
     }
+    func retryResume() { session.retryResume() }
     func showLogs() {
         if logsWindowController == nil { logsWindowController = LogsWindowController(model: LogsModel()) }
         logsWindowController?.show()

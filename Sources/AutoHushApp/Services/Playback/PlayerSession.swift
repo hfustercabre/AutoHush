@@ -16,6 +16,8 @@ protocol SessionMonitoring: HeldMonitoring {
     func checkPlayerHeard()
     /// Try Again on "Couldn't resume": see `MonitoringPipeline.retryResume`.
     func retryResume()
+    /// Unmute, muted in place of the pause: see `MonitoringPipeline.unmuteInstead`.
+    func unmuteInstead()
 }
 
 extension MonitoringPipeline: SessionMonitoring {}

@@ -11,13 +11,14 @@ extension PlaybackArbiterTests {
     private func pausedForVLC(_ player: MockMusicPlayer, clock: ManualClock, userPlayed: Locked<Bool> = Locked(false),
                               hearing: Hearing = Hearing(.heard), mute: FakeMute? = FakeMute(), published: LastPublished,
                               configuration: AppConfiguration = .testing, mutedInstead: Locked<[Bool]>? = nil,
-                              inputAsked: Locked<[Date]>? = nil,
+                              inputAsked: Locked<[Date]>? = nil, tapsAllowed: Locked<Bool> = Locked(true),
                               scheduler: ManualDebounceScheduler = ManualDebounceScheduler()) async -> PlaybackArbiter {
         let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: scheduler,
                                       clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
                                       hearsPlayer: { await hearing.answer(listening: $0, since: $1) },
                                       inputToPlayer: { inputAsked?.append($0); return userPlayed.value },
-                                      onMutedInsteadChange: { mutedInstead?.append($0) }, playerMute: mute)
+                                      onMutedInsteadChange: { mutedInstead?.append($0) }, playerMute: mute,
+                                      tapsAllowed: { tapsAllowed.value })
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         await arbiter.waitUntilIdle()
@@ -89,7 +90,7 @@ extension PlaybackArbiterTests {
         #expect(published.state == .pausedByMonitor)
     }
 
-    @Test("heard again after it was silent, just after the user pressed a key or clicked in the player, or a media key, it's theirs: left playing, not resumed")
+    @Test("heard again after it was silent, just after the user pressed a key or clicked in the player, it's theirs: left playing, not resumed")
     func userPlayedIsTheirs() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let userPlayed = Locked(false), hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
@@ -123,15 +124,28 @@ extension PlaybackArbiterTests {
         #expect(published.state == .pausedByMonitor)
     }
 
-    @Test("with nothing measured (AntiDot mode), a player said to play during the pause is the user's, as before")
-    func unmeasuredRestartIsTheirs() async {
+    @Test("with nothing measured (AntiDot mode), a player said to play during the pause is the user's only after their key or click in it just before; otherwise it's paused again", arguments: [true, false])
+    func unmeasuredRestartNeedsInput(userPlayed: Bool) async {
         let player = MockMusicPlayer(), clock = ManualClock(), published = LastPublished()
         let hearing = Hearing(.heard)
-        let arbiter = await pausedForVLC(player, clock: clock, hearing: hearing, published: published)
+        let arbiter = await pausedForVLC(player, clock: clock, userPlayed: Locked(userPlayed), hearing: hearing, published: published)
         hearing.now = .unknown
         await reportsPlaying(player, arbiter, clock: clock)
-        #expect(await player.pauseCallCount == 1)
-        #expect(published.state == .musicPlaying)
+        #expect(await player.pauseCallCount == (userPlayed ? 1 : 2))
+        #expect(published.state == (userPlayed ? .musicPlaying : .pausedByMonitor))
+        #expect(await arbiter.pausedByUs == !userPlayed)
+    }
+
+    @Test("with nothing measured, a player said to play during the pause that refuses its pause again plays on, its pause failed (nothing to mute it by)")
+    func unmeasuredRestartRefused() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), published = LastPublished()
+        let hearing = Hearing(.heard)
+        let arbiter = await pausedForVLC(player, clock: clock, hearing: hearing, mute: FakeMute(works: false), published: published)
+        hearing.now = .unknown
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        await reportsPlaying(player, arbiter, clock: clock)
+        #expect(published.state == .pauseFailed)
+        #expect(await arbiter.pausedByUs == false)
     }
 
     @Test("measured too briefly since the pause to tell, the player is looked at again once it can be")
@@ -333,7 +347,7 @@ extension PlaybackArbiterTests {
         #expect(mute.unmuteCount == 1)
     }
 
-    @Test("muted, the user's key press or click in the player (or a media key) changes nothing: it plays already, so it stays muted")
+    @Test("muted and still heard, the user's key press or click in the player changes nothing: it plays already, so it stays muted")
     func mutedUserInputKeepsMute() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let userPlayed = Locked(false), scheduler = ManualDebounceScheduler()
@@ -508,7 +522,7 @@ extension PlaybackArbiterTests {
         #expect(published.state == .musicPlaying)
     }
 
-    @Test("never silent since the pause, the player is muted though the user pressed a key or a media key (one meant for the other app): nothing of theirs started it")
+    @Test("never silent since the pause, the player is muted though the user pressed a key (one meant for the other app): nothing of theirs started it")
     func neverSilentInputMuted() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let scheduler = ManualDebounceScheduler()
@@ -594,6 +608,49 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.pausedByUs == false)
     }
 
+    @Test("a mute made just as AntiDot mode is turned on is lifted at once, the player paused for real: no tap stays in AntiDot mode")
+    func muteAsAntiDotOnLifted() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), taps = Locked(true)
+        let arbiter = await pausedForVLC(player, clock: clock, mute: mute, published: published, tapsAllowed: taps,
+                                         scheduler: scheduler)
+        await player.setState(.playing) // its pause didn't take
+        // As the pipeline does: the flag first, then the arbiter told.
+        mute.whileMuting = {
+            taps.value = false
+            await arbiter.setTapsAllowed(false)
+        }
+        await firstLook(scheduler, arbiter, clock: clock)
+        #expect(mute.muteCount == 1)
+        #expect(mute.unmuteCount == 1)
+        #expect(await player.pauseCallCount == 2) // paused for real
+        #expect(await arbiter.mutedForRestart == false)
+        #expect(published.state == .pausedByMonitor) // still AutoHush's pause
+        #expect(scheduler.scheduledDelays.last != PlaybackArbiter.silentRecheckInterval) // not watched in AntiDot mode
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await TestWait.until { await player.playCallCount == 1 }
+    }
+
+    @Test("a mute made just as AntiDot mode is turned on and the other app stops: paused for real, unmuted, then resumed")
+    func muteAsAntiDotOnAndAppsStopResumed() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), taps = Locked(true)
+        let arbiter = await pausedForVLC(player, clock: clock, mute: mute, published: published, tapsAllowed: taps,
+                                         scheduler: scheduler)
+        await player.setState(.playing) // its pause didn't take
+        mute.whileMuting = {
+            taps.value = false
+            await arbiter.setTapsAllowed(false)
+            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            if let resume = await arbiter.pendingResumeTask { await resume.value }
+        }
+        await firstLook(scheduler, arbiter, clock: clock)
+        #expect(mute.unmuteCount == 1)
+        await TestWait.until { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        #expect(published.state == .musicPlaying)
+    }
+
     @Test("muted, a relaunched player whose new process can't be muted plays on, its pause failed")
     func relaunchUnmutable() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
@@ -672,6 +729,10 @@ extension PlaybackArbiterTests {
         #expect(!scheduler.scheduledDelays.contains(PlaybackArbiter.restartWatchDelay)) // not watched
         await arbiter.handlePlayerHeard() // heard through its own mute
         #expect(mute.muteCount == 0)
+        // Said to play while its page is muted (the ad plays on): the pause stands.
+        await mock.setState(.playing)
+        await arbiter.handlePlayerStateChange(.playing)
+        #expect(await arbiter.pausedByUs)
     }
 
     @Test("a player whose pause is always a mute (an app added as Mute It Instead) isn't watched or muted again")
@@ -685,6 +746,7 @@ extension PlaybackArbiterTests {
         #expect(!scheduler.scheduledDelays.contains(PlaybackArbiter.restartWatchDelay))
         await arbiter.handlePlayerHeard()
         #expect(mute.muteCount == 0)
+        #expect(await arbiter.pausedByUs) // heard through its mute: still AutoHush's pause
     }
 
     @Test("muted, a player the user paused just before (their key or click in it) is theirs: unmuted, not resumed")
@@ -717,6 +779,119 @@ extension PlaybackArbiterTests {
         await TestWait.until { mute.unmuteCount == 1 }
         #expect(pausesAtUnmute.value == [2]) // paused for real before
         #expect(await player.state == .paused)
+    }
+
+    @Test("muted, a player that refuses its real pause as the Mac sleeps or AntiDot mode turns on is unmuted and plays on: Couldn't pause", arguments: [true, false])
+    func mutedRealPauseRefused(sleeps: Bool) async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = await mutedForVLC(player, clock: clock, mute: mute, published: published, scheduler: scheduler)
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        if sleeps { await arbiter.setAsleep(true) } else { await arbiter.setTapsAllowed(false) }
+        await TestWait.until { mute.unmuteCount == 1 }
+        await arbiter.waitUntilIdle()
+        #expect(await arbiter.pausedByUs == false)
+        #expect(await arbiter.pauseFailure == .playerCommandFailed(.pressFailed))
+        if !sleeps { #expect(published.state == .pauseFailed) }
+    }
+
+    @Test("heard while it says it's paused, as another app plays, the player is muted a moment later, past a pause's tail; when the apps stop it's only unmuted, never played")
+    func heardWhileSayingPausedMuted() async {
+        let player = MockMusicPlayer(state: .paused), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), hearing = Hearing(.heard)
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
+                                      hearsPlayer: { await hearing.answer(listening: $0, since: $1) },
+                                      inputToPlayer: { _ in false }, playerMute: mute)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        #expect(mute.muteCount == 0) // heard just now: looked at again first
+        #expect(scheduler.scheduledDelays.last == PlaybackArbiter.silentRecheckInterval)
+        clock.advance(by: PlaybackArbiter.silentRecheckInterval)
+        await scheduler.completeNext()
+        await arbiter.waitForPause()
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 1)
+        #expect(await player.pauseCallCount == 0) // it says it's paused: nothing pressed for that
+        #expect(published.state == .pausedByMonitor)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await TestWait.until { mute.unmuteCount == 1 }
+        await arbiter.waitUntilIdle()
+        #expect(await player.playCallCount == 0)
+    }
+
+    @Test("heard just as it says it's paused (its pause's tail), then not, the player isn't muted")
+    func heardTailWhileSayingPausedNotMuted() async {
+        let player = MockMusicPlayer(state: .paused), clock = ManualClock(), mute = FakeMute()
+        let scheduler = ManualDebounceScheduler(), hearing = Hearing(.heard)
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      clock: { clock.now }, hearsPlayer: { await hearing.answer(listening: $0, since: $1) },
+                                      inputToPlayer: { _ in false }, playerMute: mute)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        hearing.now = .silent
+        clock.advance(by: PlaybackArbiter.silentRecheckInterval)
+        await scheduler.completeNext()
+        await arbiter.waitForPause()
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 0)
+        #expect(await arbiter.pausedByUs == false)
+    }
+
+    @Test("muted while it said it's paused, the player going silent is only unmuted: no pause of AutoHush's to resume")
+    func mutedWhileSayingPausedSilentUnmuted() async {
+        let player = MockMusicPlayer(state: .paused), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), hearing = Hearing(.heard)
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
+                                      hearsPlayer: { await hearing.answer(listening: $0, since: $1) },
+                                      inputToPlayer: { _ in false }, playerMute: mute)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        clock.advance(by: PlaybackArbiter.silentRecheckInterval)
+        await scheduler.completeNext()
+        await arbiter.waitForPause()
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 1)
+        hearing.now = .silent
+        await nextLook(scheduler, arbiter, clock: clock)
+        #expect(mute.unmuteCount == 1)
+        #expect(await arbiter.pausedByUs == false)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.waitUntilIdle()
+        #expect(await player.playCallCount == 0)
+    }
+
+    @Test("an app that can only be muted, said to play during the pause (the menu's Unmute), is the user's: left playing, not muted again")
+    func muteOnlyAppUnmutedIsTheirs() async {
+        let player = MockMusicPlayer(pausesByMuting: true), mute = FakeMute(), published = LastPublished()
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      onPlaybackStateChange: { published.set($0) },
+                                      hearsPlayer: { _, _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await TestWait.until { await player.pauseCallCount == 1 }
+        await arbiter.waitForPause()
+        await player.setState(.playing)
+        await arbiter.handlePlayerStateChange(.playing)
+        #expect(await arbiter.pausedByUs == false)
+        #expect(published.state == .musicPlaying)
+        #expect(mute.muteCount == 0)
+    }
+
+    @Test("muted in place of the pause, the menu's Unmute lifts the mute: the user's, not paused or muted again while the apps play")
+    func unmuteInsteadIsTheirs() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = await mutedForVLC(player, clock: clock, mute: mute, published: published, scheduler: scheduler)
+        await arbiter.unmuteInstead()
+        await TestWait.until { mute.unmuteCount == 1 }
+        await arbiter.waitUntilIdle()
+        #expect(await arbiter.pausedByUs == false)
+        #expect(published.state == .musicPlaying)
+        await arbiter.handlePlayerHeard() // heard as it plays: theirs
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 1)
+        #expect(await player.pauseCallCount == 1)
     }
 
     @Test("muted, AntiDot mode turned on pauses the player for real and lifts the mute at once; still AutoHush's pause, resumed with the apps")

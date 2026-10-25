@@ -111,6 +111,9 @@ struct AppStatus: Equatable {
                      comment: "Title of the alert that says why the media player can't be controlled; %@ is the player")
         return (title, "\(controlError.text)\n\n\(controlError.detail)")
     }
+    /// What the info button's alert is about: the given-up resume while the
+    /// card says so, else why the player couldn't be controlled.
+    var alertError: ControlError? { showsResumeFailure ? resumeError : controlError }
     /// The user went to allow System Audio Recording during this launch.
     /// macOS applies it only from the next launch, so the menu then offers to
     /// reopen AutoHush instead of asking again.
@@ -196,8 +199,10 @@ struct AppStatus: Equatable {
         pausingSources.count == 1 && pausingSources[0].isMicrophoneOnly
     }
 
-    /// The card offers Unmute: the player is muted for other apps.
-    var offersUnmute: Bool { isReady && playerMutes && playback == .pausedByMonitor }
+    /// The card offers Unmute: the player is muted for other apps (one that
+    /// can only be muted, or one muted in place of its pause: the user,
+    /// 2026-10-25).
+    var offersUnmute: Bool { isReady && mutesNow && playback == .pausedByMonitor }
 
     /// The status line once a resume was given up.
     static func resumeFailedLine(_ player: String) -> String {

@@ -78,6 +78,12 @@ final class SettingsModel {
         _ = state.statusLine
         return state.autoPause == .on && state.status.offersUnmute
     }
+    /// "Couldn't resume", with Try Again, as the menu's card has it. Followed
+    /// as `offersUnmute` is, through the status line.
+    var showsResumeFailure: Bool {
+        _ = state.statusLine
+        return state.status.showsResumeFailure
+    }
     /// The chosen player is muted now rather than paused (`AppStatus.mutesNow`):
     /// Sound Sources' apps say "Mutes your player". Followed through the
     /// chosen player (one that can only be muted) and, as `offersReopenPlayer`

@@ -152,6 +152,7 @@ flowchart TD
   START(["It starts, or is heard,<br/>while an app plays"])
   MUTED["Muted instead until the<br/>apps stop (the menu: Muted,<br/>the app: Mutes your player;<br/>Audio Recording, not in<br/>AntiDot mode)"]
   THEIRS["Yours: left playing,<br/>not resumed"]
+  MUTEQ["Heard while it says it’s<br/>paused or stopped: muted;<br/>once silent, or the apps<br/>stop, only unmuted (never<br/>played)"]
   TOOK["It stopped just as the app<br/>started (VLC pauses others):<br/>counted as AutoHush’s pause"]
   FO["Fade out over 1 s, then<br/>pause; the volume set back<br/>while paused (no fade without<br/>a readable volume)"]
   BACK["The app stops during<br/>the fade-out: the music<br/>comes back up, not paused"]
@@ -184,6 +185,7 @@ flowchart TD
   AP -->|"yes"| HEARD
   HEARD -->|"yes"| FO
   HEARD -->|"no"| SILENT
+  AP -.->|"it says it’s paused or<br/>stopped, yet it’s heard,<br/>still a second later"| MUTEQ
   SILENT -.->|"heard, an app<br/>still playing"| HEARD
   HEARD -.->|"measured under half a<br/>second: asked again"| HEARD
   START -->|"a key or click in it<br/>within 3 s before"| THEIRS
@@ -196,10 +198,13 @@ flowchart TD
   PC -->|"yes"| PA
   FAIL -.->|"the apps stop"| LEFT
   PA -.->|"heard, not just after you<br/>played it from silence: the<br/>pause didn’t take, or it<br/>started again (not one whose<br/>pause is a mute already)"| MUTED
-  PA -.->|"heard again from silence<br/>within 3 s of a key or click<br/>in it (already in front; no<br/>media keys; AntiDot mode:<br/>any play it reports)"| THEIRS
+  PA -.->|"heard again from silence<br/>within 3 s of a key or click<br/>in it (already in front; no<br/>media keys; AntiDot mode: a<br/>play it reports, after one)"| THEIRS
+  PA -.->|"AntiDot mode: said to<br/>play, no key or click in it<br/>just before: paused again"| PA
   MUTED -.->|"silent (it paused itself, or<br/>its pause took: tried every<br/>2 s, never through the Now<br/>Playing panel): paused, kept<br/>muted until it plays again"| PA
   MUTED -.->|"silent within 3 s of a<br/>key or click in it: your<br/>pause, unmuted"| USER
   MUTED -.->|"AntiDot mode turned on:<br/>paused, then unmuted"| PA
+  MUTED -.->|"AntiDot mode or the Mac<br/>sleeping, and it refuses<br/>that pause: unmuted"| FAIL
+  MUTED -.->|"Unmute (the card): heard,<br/>yours until the apps stop"| THEIRS
   MUTED -->|"the apps stop:<br/>unmuted"| LEFT
   MUTED -->|"the apps stop, Resume<br/>playback off, or a call with<br/>Stay paused after calls:<br/>paused, then unmuted"| STAY
   MUTED -->|"the apps stop, found<br/>paused: unmuted first"| FI
@@ -210,7 +215,7 @@ flowchart TD
   RES -->|"on"| CHK
   CHK -->|"no"| USER
   CHK -->|"no answer"| RETRY --> CHK
-  RETRY -->|"still none"| NORES["Couldn’t resume: orange,<br/>with Try Again (asks again)"]
+  RETRY -->|"still none"| NORES["Couldn’t resume: orange,<br/>with Try Again (asks again;<br/>also in Settings, and in<br/>its alert)"]
   CHK -->|"yes"| CALL
   CALL -->|"yes"| STAY
   CALL -->|"no"| FI
@@ -306,6 +311,8 @@ stateDiagram-v2
   Playing --> Muted : it won’t pause
   Muted --> PausedByUs : silent (it paused itself, or its pause took), kept muted
   Muted --> PausedByUs : AntiDot mode turned on (paused, then unmuted)
+  Muted --> Failed : AntiDot mode turned on or the Mac sleeps, and it refuses that pause (unmuted)
+  Muted --> Playing : Unmute (yours until the apps stop)
   Muted --> Playing : the apps stop (unmuted)
   Muted --> FadingIn : the apps stop, found paused
   Muted --> Idle : you pause or quit it, or it stays paused (Resume playback off, a call, the Mac sleeps)
@@ -321,7 +328,7 @@ stateDiagram-v2
   Idle --> FadingOut : it starts by itself while an app plays
   PausedByUs --> Idle : you quit it, the Mac sleeps, found stopped
   PausedByUs --> Playing : you play it again
-  PausedByUs --> PausedByUs : says it plays, not heard (the pause stands)
+  PausedByUs --> PausedByUs : says it plays, not heard (the pause stands); AntiDot mode: no key or click in it just before (paused again)
   PausedByUs --> Muted : heard, not by you (the pause didn’t take, or it started again)
 
   class Failed warn

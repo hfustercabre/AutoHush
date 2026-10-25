@@ -163,6 +163,7 @@ final class StatusMenuController: NSObject {
         model.isAntiDotMode = settings.state.detection.isAntiDot
         model.isOptionHeld = NSEvent.modifierFlags.contains(.option)
         model.announcesRetryOutcome = false
+        model.announcesResumeOutcome = false
     }
 
     // MARK: - Opening and closing
@@ -451,6 +452,7 @@ final class StatusMenuController: NSObject {
             model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes
         case .retryResume:
+            model.announcesResumeOutcome = true
             session.retryResume() // the card shows how it goes
         case .updates where status.updateOffer == nil:
             // The menu stays open, its button saying "Checking…", until the

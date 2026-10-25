@@ -139,6 +139,12 @@ extension PlayerSession {
         monitoring?.retryResume()
     }
 
+    /// Unmute on the menu's card, for the player muted in place of its pause.
+    func unmuteInstead() {
+        guard !hasQuit else { return }
+        monitoring?.unmuteInstead()
+    }
+
     /// Listens to the chosen player as the menu opens, so the menu says at
     /// once whether it plays silently (the user, 2026-10-24).
     func checkPlayerHeard() {

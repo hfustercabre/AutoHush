@@ -46,7 +46,8 @@ extension PlaybackArbiter {
         } else if await handleRestart(reported: false) == false {
             letUserHaveIt()
         }
-        if pausedByUs, !activeSources.isEmpty, restartWatch == nil { watchRestart(after: Self.silentRecheckInterval) }
+        // Watched while its sound is measured: not once AntiDot mode is on.
+        if pausedByUs, !activeSources.isEmpty, restartWatch == nil, tapsAllowed() { watchRestart(after: Self.silentRecheckInterval) }
     }
 
     /// The monitor heard the player again while other apps play: looked at
@@ -107,8 +108,9 @@ extension PlaybackArbiter {
     /// it's a report that's late or a silent start, and the pause stands
     /// (`true`). Heard again after it was silent, and the user played it
     /// just before (`userPlayedJustNow`), it's theirs (`false`); so is a
-    /// reported play with nothing measured (AntiDot mode), while a look that
-    /// can't measure it (the other app's output closed) tells nothing.
+    /// reported play with nothing measured (AntiDot mode) after their input,
+    /// while without it it's paused again; a look that can't measure it (the
+    /// other app's output closed) tells nothing.
     /// Otherwise the pause didn't take, or it started again by itself: muted
     /// until the pause is over; one that can't be muted plays on, its pause
     /// failed.
@@ -117,8 +119,9 @@ extension PlaybackArbiter {
         // Muted in place of the pause, it plays on, silent, as expected.
         guard !mutedForRestart else { return true }
         // Its pause is a mute of its own: heard through it, as any muted
-        // player, and left to it (the user, 2026-10-25).
-        guard !(await pauseIsItsOwnMute()) else { return true }
+        // player, and left to it (the user, 2026-10-25). One that only mutes,
+        // said to play, was unmuted (the menu's Unmute): the user's.
+        if await pauseIsItsOwnMute() { return !(reported && player.pausesByMuting) }
         let hearing = await hearsPlayer(false, pausedAt.addingTimeInterval(Self.pauseTail))
         guard !isShutDown, pausedByUs, !mutedForRestart else { return true }
         // Only a player that was silent can be played again (the user, 2026-10-24).
@@ -135,13 +138,56 @@ extension PlaybackArbiter {
             watchRestart(after: remaining) // looked at again once it's known
             return true
         case .unknown:
-            return !reported
+            // Nothing measured (AntiDot mode, no Audio Recording): a play it
+            // reports is the user's only after their key or click in it just
+            // before (the user, 2026-10-25); otherwise it's paused again.
+            guard reported else { return true }
+            if userPlayedJustNow(after: pausedAt) { return false }
+            return await pauseAgain()
         case .heard:
             break
         }
         if wasSilent, userPlayedJustNow(after: pausedAt) { return false }
         return await muteInsteadOfPause("plays on through the pause, or started again by itself",
                                         failure: .playerCommandFailed(.pressIgnored))
+    }
+
+    /// Said to play again during AutoHush's pause with nothing measured, and
+    /// not by the user: paused again (nothing to mute it by without its
+    /// sound); refused, it's muted where it can be, else its pause failed.
+    private func pauseAgain() async -> Bool {
+        logger.info("[arbiter] \(self.player.name, privacy: .public) says it plays again during the pause, not by the user — paused again")
+        do {
+            try await player.pause()
+        } catch {
+            return await muteInsteadOfPause("refused to pause again",
+                                            failure: error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed))
+        }
+        return true // its report of the pause says it's paused
+    }
+
+    /// Muted in place of the pause, paused for real before its mute is
+    /// lifted (the Mac asleep, AntiDot mode on, the pause kept): `nil` once
+    /// paused, the error when it refused.
+    func pauseForReal() async -> MusicPlayerError? {
+        do {
+            try await player.pause()
+            return nil
+        } catch {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) refused its pause before its mute is lifted: \(error)")
+            return error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed)
+        }
+    }
+
+    /// The menu's Unmute on a player muted in place of the pause (the user,
+    /// 2026-10-25): heard again, the user's until another app starts or none
+    /// plays, as an app that can only be muted is after its Unmute.
+    func unmuteInstead() {
+        guard !isShutDown, pausedByUs, mutedForRestart else { return }
+        logger.info("[arbiter] \(self.player.name, privacy: .public) unmuted from the menu: the user’s until the other apps stop")
+        pausedByUs = false // the mute is lifted as it's published
+        leftToUser = true
+        publishPlaybackState()
     }
 
     /// Whether the player's pause is a mute of its own: an app added as
@@ -193,9 +239,15 @@ extension PlaybackArbiter {
             pausedAt = clock()
             logger.info("[arbiter] \(self.player.name, privacy: .public) \(why, privacy: .public) — muted until the apps stop")
             publishPlaybackState()
+            // AntiDot mode turned on while its tap was made: no tap may stay,
+            // so paused for real and unmuted, as at its turning on.
+            if !tapsAllowed() {
+                await setTapsAllowed(false)
+                guard !isShutDown else { return true }
+            }
             if !autoPauseEnabled || activeSources.isEmpty {
                 scheduleResume(after: nil) // its resume unmutes it
-            } else {
+            } else if tapsAllowed() {
                 watchRestart(after: Self.silentRecheckInterval)
             }
             return true
@@ -214,10 +266,11 @@ extension PlaybackArbiter {
     /// itself: a trailer in a hidden window), it's paused,
     /// AutoHush's pause from then on, still muted until it plays again
     /// (`muteKeptInPause`). Still heard, its pause is
-    /// pressed again, every `mutedPauseRetry`. The user's input changes
-    /// nothing: it plays already, so nothing of theirs started it (the
+    /// pressed again, every `mutedPauseRetry`; the user's input changes
+    /// nothing then: it plays already, so nothing of theirs started it (the
     /// user, 2026-10-24: "if at any point it can be paused instead of
-    /// muted, it should pause it").
+    /// muted, it should pause it"). Silent just after their key or click in
+    /// it, it's their pause: unmuted, not resumed (the user, 2026-10-25).
     private func lookWhileMuted() async {
         guard let pausedAt else { return }
         let stillMuted = await playerMute?.followRelaunch() ?? false
@@ -236,6 +289,16 @@ extension PlaybackArbiter {
         switch hearing {
         case .silent:
             guard !isShutDown, pausedByUs, mutedForRestart else { return }
+            // Muted while it said it doesn't play: silent now, it's only
+            // unmuted, as it says (no pause of AutoHush's to resume).
+            if mutedWhileQuiet {
+                logger.info("[arbiter] \(self.player.name, privacy: .public) is silent now — unmuted, as it says it doesn’t play")
+                pausePressedWhileMuted = nil
+                playerState = .paused
+                pausedByUs = false // the mute is lifted as it's published
+                publishPlaybackState()
+                return
+            }
             // Paused by the user just now (their key or click in it): theirs,
             // unmuted, not resumed (the user, 2026-10-25).
             if userPlayedJustNow(after: pausedAt) {
@@ -272,5 +335,30 @@ extension PlaybackArbiter {
         case .measuring, .unknown:
             return // looked at again at the next look
         }
+    }
+
+    /// AntiDot mode turned on (`allowed` false), which promises no audio taps:
+    /// a mute standing for the pause is lifted at once, the player paused
+    /// for real first, still AutoHush's pause (the user, 2026-10-25).
+    func setTapsAllowed(_ allowed: Bool) async {
+        guard !allowed, !isShutDown, mutedForRestart || muteKeptInPause else { return }
+        let refused = mutedForRestart ? await pauseForReal() : nil
+        guard !isShutDown else { return }
+        if let refused {
+            // Refused: it plays on, heard once unmuted, its pause failed (the
+            // user, 2026-10-25: "Say Couldn't pause").
+            pausedByUs = false // the mute is lifted as it's published
+            if !activeSources.isEmpty { pauseFailure = refused }
+            publishPlaybackState()
+            return
+        }
+        mutedForRestart = false
+        muteKeptInPause = false
+        pausePressedWhileMuted = nil
+        await playerMute?.unmute()
+        playerState = .paused
+        hearingDuringPause = .silent
+        // Still paused by AutoHush, as shown; the Muted note goes with mutedForRestart.
+        logger.info("[arbiter] AntiDot mode: \(self.player.name, privacy: .public) paused, and no longer muted")
     }
 }

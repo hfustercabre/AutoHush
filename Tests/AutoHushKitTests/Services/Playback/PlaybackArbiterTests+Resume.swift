@@ -412,7 +412,9 @@ extension PlaybackArbiterTests {
     @Test("a resume the player never answers is given up and said so; Try Again resumes it; an app starting or the player answering ends it")
     func givenUpResumeSaidAndRetried() async {
         let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
+        let pausedByUs = Locked<[Bool]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      onPausedByUsChange: { pausedByUs.append($0) },
                                       onResumeFailure: { failures.append($0) })
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
@@ -428,6 +430,8 @@ extension PlaybackArbiterTests {
         await arbiter.retryResume() // it answers now: paused, so it's played
         await TestWait.until { await player.playCallCount == 1 }
         #expect(failures.value == [.playerNotResponding, nil])
+        // AutoHush's pause again while it tries (the monitor told), over once played.
+        #expect(pausedByUs.value == [true, false, true, false])
 
         await arbiter.retryResume() // nothing to try again
         #expect(failures.value == [.playerNotResponding, nil])

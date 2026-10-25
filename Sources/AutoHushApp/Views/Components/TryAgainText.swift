@@ -6,6 +6,6 @@ import Foundation
 enum TryAgainText {
     static var title: String {
         String(localized: "Try Again",
-               comment: "Button that tries again: on the menu's card after a problem (starting again); under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself; under Add an App's “Play something in %@” once the app didn't play in time")
+               comment: "Button that tries again: on the menu's card after a problem (starting again), or under “Couldn’t resume” (resuming again; also on Settings → General's player card and in the alert that says why); under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself; under Add an App's “Play something in %@” once the app didn't play in time")
     }
 }

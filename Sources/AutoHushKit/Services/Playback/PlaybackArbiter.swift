@@ -115,6 +115,13 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// its own state said it plays again, to be unmuted once it's silent
     /// since (`lookWhileMuted`).
     var pausePressedWhileMuted: Date?
+    /// Since when the player has been heard while it says it doesn't play
+    /// (`mutesHeardWhileQuiet`): still heard past a pause's tail, it's muted.
+    var heardWhileQuietSince: Date?
+    /// Muted while it said it doesn't play (`mutesHeardWhileQuiet`): its
+    /// mute is only lifted, never followed by a play, since nothing of it
+    /// was playing to resume.
+    var mutedWhileQuiet = false
     /// The pending look at whether the player is heard again (`watchRestart`),
     /// with its wait, and the looks called off whose tasks haven't ended
     /// (`waitUntilIdle`).
@@ -138,11 +145,16 @@ actor PlaybackArbiter: PlaybackArbiting {
     var muteLift: Task<Void, Never>?
     /// The menu's listen to the player, under way (`checkPlayerHeard`).
     var heardCheck: Task<Void, Never>?
-    /// Whether the user pressed a key or clicked in the player, or pressed a
-    /// media key, after a moment (`PlayerInput`); by default always, so
-    /// every start is the user's (the monitoring gives the real one).
+    /// Whether the user pressed a key or clicked in the player, while it was
+    /// already in front, after a moment (`PlayerInput`; media keys don't
+    /// count); by default always, so every start is the user's (the
+    /// monitoring gives the real one).
     let inputToPlayer: @Sendable (Date) -> Bool
     let playerMute: (any PlayerMuting)?
+    /// Whether the player may be muted through a tap now: not in AntiDot
+    /// mode. Read live, so a mute whose tap was being made as it turned on
+    /// is lifted too (`muteInsteadOfPause`).
+    let tapsAllowed: @Sendable () -> Bool
     var autoPauseEnabled: Bool
     var activeSources: Set<String> = []
     /// The apps playing with their microphone on (calls).
@@ -242,7 +254,8 @@ actor PlaybackArbiter: PlaybackArbiting {
         hearsPlayer: @escaping @Sendable (_ listening: Bool, _ since: Date?) async -> PlayerHearing = { _, _ in .unknown },
         inputToPlayer: @escaping @Sendable (Date) -> Bool = { _ in true },
         onMutedInsteadChange: @escaping @Sendable (Bool) -> Void = { _ in },
-        playerMute: (any PlayerMuting)? = nil
+        playerMute: (any PlayerMuting)? = nil,
+        tapsAllowed: @escaping @Sendable () -> Bool = { true }
     ) {
         self.player = player
         self.fader = VolumeFader(
@@ -267,6 +280,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.inputToPlayer = inputToPlayer
         self.onMutedInsteadChange = onMutedInsteadChange
         self.playerMute = playerMute
+        self.tapsAllowed = tapsAllowed
     }
 
     /// Records that a source started or stopped. Returns without waiting for
@@ -302,6 +316,7 @@ actor PlaybackArbiter: PlaybackArbiting {
                 pauseFailure = nil // nothing to pause for any more
                 appsPlayingSince = nil
                 leftToUser = false
+                heardWhileQuietSince = nil
                 // Stopped during the fade-out: the music comes back up unpaused.
                 if isFadingOut { await fader.cancel() }
                 scheduleResume(after: nil)
@@ -426,11 +441,16 @@ actor PlaybackArbiter: PlaybackArbiting {
             cancelPendingResume()
             if pausedByUs {
                 // Muted in place of the pause: paused for real first, so it
-                // wakes paused, as any pause held then (the user, 2026-10-25).
-                if mutedForRestart { try? await player.pause() }
+                // wakes paused, as any pause held then (the user, 2026-10-25);
+                // refused, it plays on, its pause failed.
+                let refused = mutedForRestart ? await pauseForReal() : nil
                 pausedByUs = false
-                forgotPauseInSleep = true
-                logger.info("[arbiter] the Mac sleeps: \(self.player.name, privacy: .public) stays paused")
+                if let refused {
+                    if !activeSources.isEmpty { pauseFailure = refused }
+                } else {
+                    forgotPauseInSleep = true
+                    logger.info("[arbiter] the Mac sleeps: \(self.player.name, privacy: .public) stays paused")
+                }
             }
         } else {
             logger.info("[arbiter] the Mac is awake")
@@ -634,62 +654,4 @@ actor PlaybackArbiter: PlaybackArbiting {
             break
         }
     }
-
-    /// Try Again on the menu's "Couldn't resume": the resume once more, with
-    /// its tries, as long as no other app plays.
-    func retryResume() {
-        guard !isShutDown, resumeFailure != nil else { return }
-        resumeFailure = nil
-        guard !isAsleep, activeSources.isEmpty || !autoPauseEnabled else { return }
-        logger.info("[arbiter] the user asked to try resuming \(self.player.name, privacy: .public) again")
-        pausedByUs = true
-        publishPlaybackState()
-        scheduleResume(after: nil)
-    }
-
-    /// AntiDot mode turned on (`allowed` false), which promises no audio taps:
-    /// a mute standing for the pause is lifted at once, the player paused
-    /// for real first, still AutoHush's pause (the user, 2026-10-25).
-    func setTapsAllowed(_ allowed: Bool) async {
-        guard !allowed, !isShutDown, mutedForRestart || muteKeptInPause else { return }
-        if mutedForRestart { try? await player.pause() }
-        guard !isShutDown else { return }
-        mutedForRestart = false
-        muteKeptInPause = false
-        pausePressedWhileMuted = nil
-        await playerMute?.unmute()
-        playerState = .paused
-        hearingDuringPause = .silent
-        // Still paused by AutoHush, as shown; the Muted note goes with mutedForRestart.
-        logger.info("[arbiter] AntiDot mode: \(self.player.name, privacy: .public) paused, and no longer muted")
-    }
-
-    /// Listens to the player when the menu opens, so it says at once whether
-    /// a player that says it plays here is heard (the user, 2026-10-24). The
-    /// listen (a tap of its own, half a second) runs in a task of its own,
-    /// one at a time, so the pipeline's next command doesn't wait for it.
-    func checkPlayerHeard() {
-        guard heardCheck == nil else { return }
-        heardCheck = Task { [weak self] in
-            await self?.listenForMenu()
-            await self?.heardCheckEnded()
-        }
-    }
-
-    private func heardCheckEnded() { heardCheck = nil }
-
-    private func listenForMenu() async {
-        guard !isShutDown, playerState == .playing, playsLocally, !pausedByUs, !isFadingOut else { return }
-        let heard: Bool
-        switch await hearsPlayer(true, nil) {
-        case .heard: heard = true
-        case .silent: heard = false
-        case .measuring, .unknown: return
-        }
-        guard !isShutDown, playerState == .playing, playsLocally, !pausedByUs, playsSilently == heard else { return }
-        if !heard { silentWithoutState = !(await player.statesItself()) }
-        playsSilently = !heard
-        publishPlaybackState()
-    }
-
 }

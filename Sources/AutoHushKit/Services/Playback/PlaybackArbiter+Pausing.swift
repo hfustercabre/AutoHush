@@ -65,12 +65,14 @@ extension PlaybackArbiter {
         guard state == .playing else {
             if await muteIfPlayingAnyway(saying: state) { return }
             if takeOverPauseOfStartingApp(state, checkedAt: checked) { return }
+            if state != .notRunning, await mutesHeardWhileQuiet(state) { return }
             logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) — not pausing")
             return
         }
         // Found playing: a pause from now on (the user's, during the fade-out)
         // is no app's doing.
         latestStart = nil
+        heardWhileQuietSince = nil
         // Things may have changed while the player answered.
         guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
         // Not heard (a muted trailer, a silent preview): nothing to pause.
@@ -166,6 +168,29 @@ extension PlaybackArbiter {
         logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted, because these apps play: \(self.playingApps, privacy: .public)")
         // Things may have changed while it was measured.
         if holdPause(), !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
+        return true
+    }
+
+    /// A player heard while it says it's paused or stopped, as other apps
+    /// play, is muted in place of a pause (the user, 2026-10-24: "If the
+    /// selected player is producing sound … first you should try to pause it.
+    /// If pauses didn't work, you should mute it"; its pause is pressed again
+    /// while it's muted). Heard just now, it's looked at again a moment
+    /// later, past a pause's tail, so a pause of the user's just before isn't
+    /// taken for sound.
+    private func mutesHeardWhileQuiet(_ state: PlayerState) async -> Bool {
+        if let since = heardWhileQuietSince {
+            heardWhileQuietSince = nil
+            guard await hearsPlayer(false, since.addingTimeInterval(Self.pauseTail)) == .heard,
+                  !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return false }
+            let handled = await muteInsteadOfPause("is heard while it says it’s \(state.rawValue)",
+                                                   failure: .playerCommandFailed(.pressIgnored))
+            if pausedByUs, mutedForRestart { mutedWhileQuiet = true }
+            return handled
+        }
+        guard await hearsPlayer(false, nil) == .heard, !isShutDown, autoPauseEnabled, !activeSources.isEmpty else { return false }
+        heardWhileQuietSince = clock()
+        schedulePause(after: Self.silentRecheckInterval)
         return true
     }
 

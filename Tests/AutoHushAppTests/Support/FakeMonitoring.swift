@@ -73,6 +73,8 @@ final class FakeMonitoring: SessionMonitoring {
     func checkPlayerHeard() { playerHeardChecks += 1 }
     private(set) var resumeRetries = 0
     func retryResume() { resumeRetries += 1 }
+    private(set) var unmutesInstead = 0
+    func unmuteInstead() { unmutesInstead += 1 }
     func setConfiguration(_ configuration: AppConfiguration) { configurations.append(configuration) }
     func setDetectionMethod(_ method: DetectionMethod) { detectionMethods.append(method) }
     func activeAudioReport() -> [ActiveAudioReport.Entry] { audioReport }

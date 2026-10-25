@@ -21,6 +21,7 @@ final class FakeAppActions: AppActions {
     func removeAddedApp(_ bundleID: String) { log.calls.append("remove \(bundleID)") }
     func reopenPlayer() { log.calls.append("reopenPlayer") }
     func unmutePlayer() { log.calls.append("unmutePlayer") }
+    func retryResume() { log.calls.append("retryResume") }
     func learnControlsAgain() { log.calls.append("learnAgain") }
     func requestPermission(_ permission: Permission) { log.calls.append("warning \(permission.grantTitle)") }
     func finishWelcome() { log.calls.append("finishWelcome") }

@@ -187,6 +187,10 @@ final class StatusMenuModel {
     /// Try Again was clicked: VoiceOver hears the card's line once the start is
     /// over, as it shows how it went.
     @ObservationIgnored var announcesRetryOutcome = false
+    /// Try Again on "Couldn't resume" was clicked: VoiceOver hears the card's
+    /// line once the resume is over (played, or given up again), not the
+    /// line shown while it tries.
+    @ObservationIgnored var announcesResumeOutcome = false
     @ObservationIgnored var perform: @MainActor (StatusMenuCommand) -> Void = { _ in }
 
     init(status: AppStatus) {

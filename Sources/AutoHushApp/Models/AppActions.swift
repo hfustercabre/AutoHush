@@ -50,5 +50,7 @@ protocol AppActions: AnyObject {
     /// Makes the menu bar icon again, so it goes beside the system's icons
     /// (Settings → General's switch, turned on).
     func moveMenuBarIconNearSystemIcons()
+    /// Try Again on "Couldn't resume" (Settings → General's player card).
+    func retryResume()
     func quit()
 }

@@ -81,7 +81,7 @@ extension PlaybackArbiter {
         // Muted while it plays on (its pause didn't take, or it started again
         // by itself): paused for real before the mute is lifted, as it's to
         // stay paused.
-        if mutedForRestart { try? await player.pause() }
+        if mutedForRestart { _ = await pauseForReal() }
         pausedByUs = false
         putBackResumeLevel()
         // A mute standing in for the pause: the player is paused for real
@@ -100,6 +100,13 @@ extension PlaybackArbiter {
         if currentState == .unknown, retriesLeft > 0 {
             logger.info("[arbiter] \(self.player.name, privacy: .public) didn’t answer — trying the resume again")
             scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
+            return
+        }
+        // Muted while it said it doesn't play: only unmuted, never played.
+        if mutedWhileQuiet {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) unmuted, not played: it said it doesn’t play")
+            pausedByUs = false // the mute is lifted as it's published
+            publishPlaybackState()
             return
         }
         if mutedForRestart, currentState == .playing {
@@ -209,5 +216,17 @@ extension PlaybackArbiter {
         guard state != .playing, state != .unknown else { return }
         logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) after the resume")
         publishPlaybackState()
+    }
+
+    /// Try Again on the menu's "Couldn't resume": the resume once more, with
+    /// its tries, as long as no other app plays.
+    func retryResume() {
+        guard !isShutDown, resumeFailure != nil else { return }
+        resumeFailure = nil
+        guard !isAsleep, activeSources.isEmpty || !autoPauseEnabled else { return }
+        logger.info("[arbiter] the user asked to try resuming \(self.player.name, privacy: .public) again")
+        pausedByUs = true
+        publishPlaybackState()
+        scheduleResume(after: nil)
     }
 }
