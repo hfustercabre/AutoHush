@@ -1,7 +1,7 @@
 import Foundation
 
 /// What AutoHush does when its automatic check finds a newer version
-/// (Settings → Updates).
+/// (Settings → About).
 package enum AutomaticUpdates: String, CaseIterable, Sendable {
     /// Lets the user know; installing is up to them.
     case notify

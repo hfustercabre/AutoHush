@@ -38,8 +38,6 @@ struct MenuPanelViewTests {
         case needsPermission
         /// No player chosen yet.
         case noPlayer
-        /// Detection's and Fades' other settings unfolded.
-        case moreSettings
         /// The player must be reopened, and is muted for another app: the
         /// card's Reopen and Unmute.
         case fixes
@@ -79,7 +77,7 @@ struct MenuPanelViewTests {
             status.chosenPlayerID = players.last?.bundleID // the web app
             status.learning = .learned
             status.playback = .musicPlaying
-        case .playing, .moreSettings, .noPlayer:
+        case .playing, .noPlayer:
             status.playback = .musicPlaying
         }
         return status
@@ -96,14 +94,14 @@ struct MenuPanelViewTests {
         sut.workspaceCenter = NotificationCenter()
         sut.status = status(state)
         sut.open(showsPanel: false)
-        if state == .moreSettings { sut.model.unfoldedSettings = [.settings] }
         try body(sut, settingsModel)
     }
 
     @Test("the menu draws in each state, every part it lists in it", arguments: State.allCases)
     func menu(_ state: State) {
         withMenu(state) { sut, settingsModel in
-            #expect(sut.model.sections.contains(.settings))
+            // The card (with Change Player) first, the buttons last; the settings are Settings' only.
+            #expect(sut.model.sections.first == .card && sut.model.sections.last == .toolbar)
             if state == .paused {
                 #expect(sut.model.sections.contains(.playingNow) && sut.model.sections.contains(.recentlyPlayed))
                 #expect(sut.model.sections.contains(.update))

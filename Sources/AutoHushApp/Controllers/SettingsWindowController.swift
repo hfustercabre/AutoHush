@@ -11,27 +11,28 @@ import AutoHushKit
 final class SettingsWindowController: NSWindowController {
     /// The window's pages, in the sidebar's order.
     enum Page: CaseIterable, Hashable {
-        case general, soundSources, behavior, detection, diagnostics, updates, about
+        case general, mediaPlayer, soundSources, behavior, diagnostics, about
 
         /// The sidebar's groups of pages, a gap between each (B, the user's
         /// pick, 2026-10-21: Behavior took Fades', Calls' and Advanced's
         /// pages and Detection's pausing and resuming; memory `settings-layout`).
-        static let groups: [[Page]] = [[.general, .soundSources], [.behavior, .detection], [.diagnostics, .updates, .about]]
+        /// From W1, W2 and W3 combined (the user, 2026-10-25): the players
+        /// on a page of their own, Detection's cards in Behavior, Updates'
+        /// in About.
+        static let groups: [[Page]] = [[.general, .mediaPlayer, .soundSources], [.behavior], [.diagnostics, .about]]
 
         var title: String {
             switch self {
             case .general:
                 String(localized: "General", comment: "Settings: a page in the sidebar")
+            case .mediaPlayer:
+                PlayerOption.mediaPlayerHeading
             case .soundSources:
                 String(localized: "Sound Sources", comment: "Settings: a page in the sidebar: the apps heard playing sound, each switched to pause your player or be ignored (keep it short, about 16 characters)")
             case .behavior:
                 String(localized: "Behavior", comment: "Settings: a page in the sidebar, and its part of the menu's settings: when your player pauses and resumes, the fades and the volume (keep it short, about 16 characters)")
-            case .detection:
-                String(localized: "Detection", comment: "Settings: the page (and Diagnostics' heading) of how AutoHush tells that other apps play: AntiDot mode and the silence threshold")
             case .diagnostics:
                 String(localized: "Diagnostics", comment: "Settings: a page in the sidebar: what AutoHush sees right now")
-            case .updates:
-                String(localized: "Updates", comment: "Menu toolbar button, Settings page and Diagnostics row: AutoHush's updates")
             case .about:
                 String(localized: "About", comment: "Menu: button at the bottom; shows About AutoHush")
             }
@@ -42,11 +43,10 @@ final class SettingsWindowController: NSWindowController {
         var symbol: String {
             switch self {
             case .general: "gearshape.fill"
+            case .mediaPlayer: "music.note"
             case .soundSources: "square.grid.2x2.fill"
             case .behavior: "playpause.fill"
-            case .detection: "waveform"
             case .diagnostics: "stethoscope"
-            case .updates: "arrow.down.circle.fill"
             case .about: "info.circle.fill"
             }
         }

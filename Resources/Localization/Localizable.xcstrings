@@ -20062,233 +20062,6 @@
         }
       }
     },
-    "Added with Add an App" : {
-      "comment" : "The menu, under the chosen media player's name: an app the user added through Add an App's check",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أُضيف عبر إضافة تطبيق"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Afegida amb Afegeix una app"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Přidáno pomocí Přidat aplikaci"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tilføjet med Tilføj en app"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mit „App hinzufügen“ hinzugefügt"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Προστέθηκε με την Προσθήκη εφαρμογής"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadida con Añadir una app"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Agregada con Agregar una app"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lisätty Lisää appi -toiminnolla"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajoutée avec « Ajouter une app »"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajoutée avec « Ajouter une app »"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "נוסף דרך “הוספת אפליקציה”"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "‘ऐप जोड़ें’ से जोड़ा गया"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dodano pomoću Dodaj aplikaciju"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Az App hozzáadása funkcióval hozzáadva"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ditambahkan dengan Tambahkan App"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aggiunta con Aggiungi un’app"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "「Appを追加」で追加"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "앱 추가로 추가됨"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ditambah dengan Tambah App"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lagt til med Legg til en app"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toegevoegd met Voeg een app toe"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dodana przez Dodaj aplikację"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adicionado com Adicionar um App"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adicionada com Adicionar uma app"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adăugată cu Adăugați o aplicație"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Добавлено через «Добавить приложение»"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pridané cez Pridať apku"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dodano z Dodaj aplikacijo"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillagd med Lägg till en app"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เพิ่มด้วย “เพิ่มแอป”"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uygulama Ekle ile eklendi"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Додано через «Додати програму»"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Đã thêm bằng Thêm ứng dụng"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "以「加入 App」加入"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通过“添加 App”添加"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "以「加入 App」加入"
-          }
-        }
-      }
-    },
     "Adding %@ instead stops adding it." : {
       "comment" : "Message of the alert when a suggested web app is clicked while Add a Web App adds another web app; %@ is the address of the one clicked, e.g. soundcloud.com",
       "localizations" : {
@@ -26419,7 +26192,7 @@
       }
     },
     "AntiDot mode" : {
-      "comment" : "Settings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator",
+      "comment" : "Settings → Behavior, and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -26646,7 +26419,7 @@
       }
     },
     "AntiDot mode is off" : {
-      "comment" : "Settings → Detection, under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch is off",
+      "comment" : "Settings → Behavior, under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch is off",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -26873,7 +26646,7 @@
       }
     },
     "Any app with its audio open counts as playing, even when paused. It must stay open 2 seconds before your player pauses, so notification sounds don’t interrupt it." : {
-      "comment" : "Settings → Detection, under the ways of detecting playing apps: how “Open audio streams only” works",
+      "comment" : "Settings → Behavior, under the ways of detecting playing apps: how “Open audio streams only” works",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -27554,7 +27327,7 @@
       }
     },
     "Apps count as playing while they tell macOS so; apps that never do, while their audio is open. Sounds without video under 3 seconds don’t pause your player." : {
-      "comment" : "Settings → Detection, under the ways of detecting playing apps: how “What apps tell macOS” works",
+      "comment" : "Settings → Behavior, under the ways of detecting playing apps: how “What apps tell macOS” works",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -33002,7 +32775,7 @@
       }
     },
     "AutoHush can only mute %@, and muting needs Audio Recording, which AntiDot mode doesn’t use." : {
-      "comment" : "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the menu; and Settings → Detection, under the AntiDot mode switch, dimmed while it's the player; %@ is the player",
+      "comment" : "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the menu; and Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; %@ is the player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37548,7 +37321,7 @@
       }
     },
     "AutoHush needs Audio Recording to hear whether %@ is playing." : {
-      "comment" : "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the menu; and Settings → Detection, under the AntiDot mode switch, dimmed while it's the player; %@ is the player",
+      "comment" : "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the menu; and Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; %@ is the player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -42088,7 +41861,7 @@
       }
     },
     "Automatic checks are off" : {
-      "comment" : "Settings → Updates, under what happens when an update is found, dimmed while the switch “Check for updates automatically” is off",
+      "comment" : "Settings → About, under what happens when an update is found, dimmed while the switch “Check for updates automatically” is off",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45265,8 +45038,235 @@
         }
       }
     },
+    "Change Player" : {
+      "comment" : "The menu: the last row of the card at the top, under the media player's name; opens every player beside the menu, to choose another",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيير المشغّل"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canvia el reproductor"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Změnit přehrávač"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skift afspiller"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Player wechseln"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Αλλαγή αναπαραγωγέα"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar reproductor"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar reproductor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vaihda soitin"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changer de lecteur"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changer de lecteur"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "החלפת נגן"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्लेयर बदलें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promijeni reproduktor"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lejátszó módosítása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ubah Pemutar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia lettore"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤーを変更"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플레이어 변경"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tukar Pemain"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bytt spiller"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wijzig speler"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmień odtwarzacz"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar player"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar leitor"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schimbați playerul"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сменить плеер"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zmeniť prehrávač"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Spremeni predvajalnik"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Byt spelare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปลี่ยนตัวเล่น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oynatıcıyı Değiştir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити програвач"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thay đổi trình phát"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改播放器"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改播放器"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "更改播放器"
+          }
+        }
+      }
+    },
     "Change…" : {
-      "comment" : "Add an App window: button under the step “Choose the app” once done, which chooses another app; also under “Play something” and the check’s step when the app can’t be found any more",
+      "comment" : "Add an App window: button under the step “Choose the app” once done, which chooses another app; also under “Play something” and the check’s step when the app can’t be found any more. Also Settings → General, beside the media player: opens the page with every player, to choose another",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -45947,7 +45947,7 @@
       }
     },
     "Check Now" : {
-      "comment" : "Settings → Updates: checks for an update now",
+      "comment" : "Settings → About: checks for an update now",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -46174,7 +46174,7 @@
       }
     },
     "Check for updates automatically" : {
-      "comment" : "Settings → Updates: switch for the daily update check",
+      "comment" : "Settings → About: switch for the daily update check",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -48443,6 +48443,233 @@
         }
       }
     },
+    "Choose Player" : {
+      "comment" : "The menu: the last row of the card at the top while no media player is chosen; opens every player beside the menu",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختيار المشغّل"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tria un reproductor"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrat přehrávač"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vælg afspiller"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Player auswählen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Επιλογή αναπαραγωγέα"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir reproductor"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir reproductor"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Valitse soitin"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir un lecteur"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir un lecteur"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "בחירת נגן"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्लेयर चुनें"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odaberi reproduktor"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lejátszó kiválasztása"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Pemutar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli lettore"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プレーヤーを選択"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "플레이어 선택"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pilih Pemain"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Velg spiller"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kies speler"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wybierz odtwarzacz"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher player"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher leitor"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selectați playerul"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать плеер"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vybrať prehrávač"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izberi predvajalnik"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Välj spelare"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกตัวเล่น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oynatıcı Seç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрати програвач"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn trình phát"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇播放器"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择播放器"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇播放器"
+          }
+        }
+      }
+    },
     "Choose Your Media Player" : {
       "comment" : "Welcome window: its title, in its title bar",
       "localizations" : {
@@ -50487,7 +50714,7 @@
       }
     },
     "Choose…" : {
-      "comment" : "The menu: under Media Player, while no media player is chosen; a click opens them beside the menu. Also Settings → Diagnostics' button beside “Player” while none is chosen or it's not installed, which opens Settings → General's players",
+      "comment" : "Settings → Diagnostics' button beside “Player” while none is chosen or it's not installed, and Settings → General's beside “No player chosen”, which open Settings' Media Player page",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60255,7 +60482,7 @@
       }
     },
     "Detect playing apps by" : {
-      "comment" : "Settings → Detection and the menu, AntiDot mode: lead-in to the ways of detecting playing apps",
+      "comment" : "Settings → Behavior and the menu, AntiDot mode: lead-in to the ways of detecting playing apps",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -60709,7 +60936,7 @@
       }
     },
     "Detection" : {
-      "comment" : "Settings: the page (and Diagnostics' heading) of how AutoHush tells that other apps play: AntiDot mode and the silence threshold",
+      "comment" : "Settings → Diagnostics: the heading over how AutoHush tells that other apps play (AntiDot mode and the silence threshold)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -63660,7 +63887,7 @@
       }
     },
     "Fade in when resuming" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu: slider for how long playback fades back in when it resumes",
+      "comment" : "Settings → Behavior, and Diagnostics: slider for how long playback fades back in when it resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -63887,7 +64114,7 @@
       }
     },
     "Fade out before pausing" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu: slider for how long playback fades out before it pauses",
+      "comment" : "Settings → Behavior, and Diagnostics: slider for how long playback fades out before it pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -64114,7 +64341,7 @@
       }
     },
     "Fade playback" : {
-      "comment" : "Settings → Behavior and the menu: the switch that turns the fades on or off",
+      "comment" : "Settings → Behavior: the switch that turns the fades on or off",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -65017,233 +65244,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "淡入淡出已關閉"
-          }
-        }
-      }
-    },
-    "Fades out and back in" : {
-      "comment" : "VoiceOver hint of the menu's Fade playback switch: what it does, in a few words",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تلاشٍ ثم ظهور تدريجي"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Esvaïment de sortida i d’entrada"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ztlumí a znovu zesílí"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toner ud og ind igen"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aus- und wieder einblenden"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Μείωση και ξανά αύξηση"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fundido de salida y de entrada"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fundido de salida y de entrada"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Häivyttää pois ja takaisin"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fondu sortant puis entrant"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fondu sortant puis entrant"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "מעמעם ומגביר בחזרה"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "फ़ेड आउट और फिर फ़ेड इन"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Utišava i ponovno pojačava"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elhalkítás és felerősítés"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Memudar lalu kembali membesar"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dissolvenza in uscita e in entrata"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "フェードアウトして再びフェードイン"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "페이드 아웃 후 다시 페이드 인"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pudar keluar dan masuk semula"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toner ut og inn igjen"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uitfaden en weer infaden"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wycisza i znów zgłaśnia"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fade-out e fade-in"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fade-out e fade-in"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Estompare și revenire treptată"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Затухание и нарастание"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Stlmí a znova zosilní"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pojemanje in ponovno naraščanje"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tonar ut och in igen"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เฟดออกและเฟดกลับเข้า"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kısılır ve yeniden açılır"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Згасання й наростання"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Giảm dần rồi tăng dần"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "淡出後再淡入"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "淡出后再淡入"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "淡出後再淡入"
           }
         }
       }
@@ -67064,233 +67064,6 @@
         }
       }
     },
-    "Headphones and other outputs" : {
-      "comment" : "VoiceOver hint of the menu's Pause on disconnect switch: what it applies to, in a few words (headphones or another output unplugged or out of range)",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "سماعات الرأس ومخارج أخرى"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auriculars i altres sortides"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sluchátka a jiné výstupy"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hovedtelefoner og andre output"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kopfhörer und andere Ausgaben"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ακουστικά και άλλες έξοδοι"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auriculares y otras salidas"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Audífonos y otras salidas"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kuulokkeet ja muut lähdöt"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Écouteurs et autres sorties"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Écouteurs et autres sorties"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "אוזניות ופלטים אחרים"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "हेडफ़ोन और अन्य आउटपुट"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Slušalice i drugi izlazi"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fejhallgató és más kimenetek"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Headphone dan output lain"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cuffie e altre uscite"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ヘッドフォンとほかの出力"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "헤드폰 및 기타 출력"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fon kepala dan output lain"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hodetelefoner og andre utganger"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Koptelefoon en andere uitvoer"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Słuchawki i inne wyjścia"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fones e outras saídas"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Auscultadores e outras saídas"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Căști și alte ieșiri"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Наушники и другие выходы"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Slúchadlá a iné výstupy"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Slušalke in drugi izhodi"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hörlurar och andra utgångar"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "หูฟังและเอาต์พุตอื่น"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kulaklık ve diğer çıkışlar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Навушники та інші виходи"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tai nghe và đầu ra khác"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "耳筒和其他輸出裝置"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "耳机和其他输出设备"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "耳機和其他輸出裝置"
-          }
-        }
-      }
-    },
     "Headphones and other outputs: your player stays paused instead of moving to the speakers. Some players already do this themselves." : {
       "comment" : "Settings → Behavior, under “Pause on disconnect”: when headphones or another output (Bluetooth or USB speakers) are unplugged or go out of range; AutoHush doesn’t resume it. Some media players already pause on their own when that happens",
       "localizations" : {
@@ -68195,233 +67968,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隱藏 AutoHush"
-          }
-        }
-      }
-    },
-    "Hide More Settings" : {
-      "comment" : "Menu: the tooltip of the Settings title over the menu's settings, which folds the rest of them away again",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إخفاء الإعدادات الإضافية"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Amagar més ajustos"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Skrýt další nastavení"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Skjul flere indstillinger"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Weitere Einstellungen ausblenden"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Απόκρυψη επιπλέον ρυθμίσεων"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ocultar más ajustes"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ocultar más ajustes"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Piilota lisäasetukset"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Masquer les réglages supplémentaires"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Masquer les réglages supplémentaires"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "הסתרת הגדרות נוספות"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "अतिरिक्त सेटिंग्ज़ छिपाएँ"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sakrij dodatne postavke"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "További beállítások elrejtése"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sembunyikan Pengaturan Lainnya"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nascondi altre impostazioni"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "その他の設定を隠す"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "추가 설정 숨기기"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sembunyikan Seting Tambahan"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Skjul flere innstillinger"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Verberg meer instellingen"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ukryj dodatkowe ustawienia"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ocultar mais ajustes"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ocultar mais definições"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ascundeți configurările suplimentare"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скрыть дополнительные настройки"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Skryť ďalšie nastavenia"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Skrij dodatne nastavitve"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Göm fler inställningar"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ซ่อนการตั้งค่าเพิ่มเติม"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ek Ayarları Gizle"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сховати додаткові параметри"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ẩn cài đặt bổ sung"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "隱藏更多設定"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "隐藏更多设置"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "隱藏更多設定"
           }
         }
       }
@@ -81366,7 +80912,7 @@
       }
     },
     "Level the volume" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them",
+      "comment" : "Settings → Behavior, and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -82501,7 +82047,7 @@
       }
     },
     "Lower by at most" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)",
+      "comment" : "Settings → Behavior, and Diagnostics, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -82723,233 +82269,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最多調低"
-          }
-        }
-      }
-    },
-    "Matches quieter apps’ volume" : {
-      "comment" : "VoiceOver hint of the menu's Level the volume switch: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يطابق صوت التطبيقات الأهدأ"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Iguala el volum d’apps més baixes"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Přizpůsobí se tišším aplikacím"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Følger lydstyrken i svagere apps"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Passt sich leiseren Apps an"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ταιριάζει με πιο ήσυχες εφαρμογές"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Iguala el volumen de apps más bajas"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Iguala el volumen de apps más bajas"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mukautuu hiljaisempiin appeihin"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Suit le volume des apps plus faibles"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Suit le volume des apps plus faibles"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "משווה לעוצמה של אפליקציות שקטות יותר"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "शांत ऐप्स के वॉल्यूम से मेल खाता है"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prilagođava se tišim aplikacijama"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A halkabb appokhoz igazodik"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menyamakan dengan app yang lebih pelan"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Si adegua alle app più basse"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "静かなAppの音量に合わせます"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "더 조용한 앱의 음량에 맞춥니다"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menyamai kelantangan app yang lebih perlahan"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Følger volumet til svakere apper"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Volgt het volume van stillere apps"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dopasowuje do cichszych aplikacji"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Iguala o volume de apps mais baixos"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Iguala o volume de apps mais baixas"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se potrivește cu aplicațiile mai silențioase"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Подстраивается под более тихие приложения"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prispôsobí sa tichším aplikáciám"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prilagodi se tišjim aplikacijam"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Följer tystare appars volym"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ปรับให้เท่ากับเสียงของแอปที่เบากว่า"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Daha sessiz uygulamalara uyar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Підлаштовується під тихіші програми"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Khớp âm lượng của ứng dụng nhỏ hơn"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "配合較安靜 App 的音量"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "匹配较安静 App 的音量"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "配合較安靜 App 的音量"
           }
         }
       }
@@ -83182,7 +82501,7 @@
       }
     },
     "Measuring" : {
-      "comment" : "Settings → Detection and the menu's Detection: heading over the silence threshold (AutoHush measures other apps' sound to tell whether they play)",
+      "comment" : "Settings → Behavior and the menu: heading over the silence threshold (AutoHush measures other apps' sound to tell whether they play)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -83409,7 +82728,7 @@
       }
     },
     "Media Player" : {
-      "comment" : "Settings → General, Diagnostics and the menu: heading over the media player",
+      "comment" : "Settings → General, Diagnostics and the menu's side window of players: heading over the media player; also a Settings page in the sidebar, with every player to choose from (keep it short, about 16 characters: the word for player is enough)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -83420,7 +82739,7 @@
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reproductor multimèdia"
+            "value" : "Reproductor"
           }
         },
         "cs" : {
@@ -83444,19 +82763,19 @@
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Εφαρμογή πολυμέσων"
+            "value" : "Αναπαραγωγέας"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reproductor multimedia"
+            "value" : "Reproductor"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Reproductor multimedia"
+            "value" : "Reproductor"
           }
         },
         "fi" : {
@@ -83468,13 +82787,13 @@
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lecteur multimédia"
+            "value" : "Lecteur"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lecteur multimédia"
+            "value" : "Lecteur"
           }
         },
         "he" : {
@@ -83492,7 +82811,7 @@
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Medijski reproduktor"
+            "value" : "Reproduktor"
           }
         },
         "hu" : {
@@ -83510,7 +82829,7 @@
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lettore multimediale"
+            "value" : "Lettore"
           }
         },
         "ja" : {
@@ -83546,7 +82865,7 @@
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Odtwarzacz multimediów"
+            "value" : "Odtwarzacz"
           }
         },
         "pt" : {
@@ -83558,7 +82877,7 @@
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Leitor multimédia"
+            "value" : "Leitor"
           }
         },
         "ro" : {
@@ -83582,7 +82901,7 @@
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Predvajalnik predstavnosti"
+            "value" : "Predvajalnik"
           }
         },
         "sv" : {
@@ -83612,7 +82931,7 @@
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trình phát đa phương tiện"
+            "value" : "Trình phát"
           }
         },
         "zh-HK" : {
@@ -84317,7 +83636,7 @@
       }
     },
     "Modes" : {
-      "comment" : "Settings → Detection and the menu: heading over AntiDot mode",
+      "comment" : "Settings → Behavior and the menu: heading over AntiDot mode",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -84544,7 +83863,7 @@
       }
     },
     "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple recording indicator while AutoHush measures." : {
-      "comment" : "Settings → Detection, under the ways of detecting playing apps: what measuring audio levels does",
+      "comment" : "Settings → Behavior, under the ways of detecting playing apps: what measuring audio levels does",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -91353,233 +90672,6 @@
         }
       }
     },
-    "No purple dot, less precise" : {
-      "comment" : "VoiceOver hint of the menu's AntiDot mode switch: what it does, in a few words",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "بلا نقطة أرجوانية، دقة أقل"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sense punt lila, menys precís"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bez fialové tečky, méně přesné"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingen lilla prik, mindre præcis"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kein violetter Punkt, weniger genau"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Χωρίς μοβ κουκκίδα, λιγότερο ακριβές"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin punto morado, menos preciso"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin punto morado, menos preciso"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ei violettia pistettä, epätarkempi"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sans point violet, moins précis"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sans point violet, moins précis"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "בלי נקודה סגולה, פחות מדויק"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "बैंगनी बिंदु नहीं, कम सटीक"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bez ljubičaste točke, manje precizno"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nincs lila pont, kevésbé pontos"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tanpa titik ungu, kurang presisi"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nessun punto viola, meno preciso"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "紫色のドットなし、精度は低め"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "보라색 점 없음, 정확도 낮음"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tiada titik ungu, kurang tepat"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingen lilla prikk, mindre presis"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Geen paarse stip, minder nauwkeurig"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bez fioletowej kropki, mniej dokładnie"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sem ponto roxo, menos preciso"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sem ponto roxo, menos preciso"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fără punct violet, mai puțin precis"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Без фиолетовой точки, менее точно"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bez fialovej bodky, menej presné"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Brez vijoličaste pike, manj natančno"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingen lila prick, mindre exakt"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ไม่มีจุดสีม่วง แม่นยำน้อยลง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mor nokta yok, daha az kesin"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Без фіолетової крапки, менш точно"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Không có chấm tím, kém chính xác hơn"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "沒有紫色圓點，精確度較低"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "没有紫色圆点，精度较低"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "沒有紫色圓點，精確度較低"
-          }
-        }
-      }
-    },
     "No releases have been published yet." : {
       "comment" : "Update status in Settings",
       "localizations" : {
@@ -91803,233 +90895,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "尚未發佈任何版本。"
-          }
-        }
-      }
-    },
-    "No resume after a call" : {
-      "comment" : "VoiceOver hint of the menu's Stay paused after calls switch: what it does, in a few words",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لا استئناف بعد مكالمة"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sense reprendre després d’una trucada"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bez obnovení po hovoru"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingen genoptagelse efter opkald"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kein Fortsetzen nach Anrufen"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Χωρίς συνέχιση μετά από κλήση"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin reanudar tras una llamada"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin reanudar tras una llamada"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ei jatkoa puhelun jälkeen"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pas de reprise après un appel"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pas de reprise après un appel"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "בלי חידוש אחרי שיחה"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कॉल के बाद फिर से शुरू नहीं"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bez nastavljanja nakon poziva"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nincs folytatás hívás után"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tidak dilanjutkan setelah panggilan"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nessuna ripresa dopo una chiamata"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通話後は再開しません"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "통화 후 재개하지 않음"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tiada sambung semula selepas panggilan"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingen gjenopptak etter samtaler"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Niet hervatten na een gesprek"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bez wznawiania po połączeniu"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não retoma após uma chamada"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não retoma após uma chamada"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fără reluare după un apel"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Без возобновления после звонка"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bez obnovenia po hovore"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Brez nadaljevanja po klicu"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inget återupptagande efter samtal"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ไม่เล่นต่อหลังการโทร"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aramadan sonra sürdürülmez"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Без відновлення після дзвінка"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Không tiếp tục sau cuộc gọi"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通話後不繼續播放"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通话后不继续播放"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通話後不繼續播放"
           }
         }
       }
@@ -97256,7 +96121,7 @@
       }
     },
     "Notifications are off for AutoHush: its menu bar icon shows when an update is found." : {
-      "comment" : "Settings → Updates, under the update choices, while notifications are off for AutoHush",
+      "comment" : "Settings → About, under the update choices, while notifications are off for AutoHush",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -99979,233 +98844,6 @@
         }
       }
     },
-    "Once other apps go quiet" : {
-      "comment" : "VoiceOver hint of the menu's Resume playback switch: when it resumes your player, in a few words",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "بمجرد أن تصمت التطبيقات الأخرى"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quan les altres apps callen"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jakmile ostatní aplikace ztichnou"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Når andre apps bliver stille"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sobald andere Apps still sind"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Μόλις σιγήσουν οι άλλες εφαρμογές"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cuando las demás apps callan"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cuando las demás apps callan"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kun muut apit hiljenevät"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dès que les autres apps se taisent"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dès que les autres apps se taisent"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ברגע שאפליקציות אחרות משתתקות"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "जब दूसरे ऐप शांत हो जाएँ"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kad druge aplikacije utihnu"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Amikor a többi app elhallgat"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Setelah app lain senyap"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quando le altre app tacciono"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ほかのAppが静かになったとき"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "다른 앱이 조용해지면"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sebaik sahaja app lain senyap"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Når andre apper blir stille"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zodra andere apps stil zijn"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gdy inne aplikacje ucichną"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quando os outros apps silenciam"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quando as outras apps silenciam"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Când celelalte aplicații tac"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Когда другие приложения затихают"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keď ostatné apky stíchnu"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ko druge aplikacije utihnejo"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "När andra appar tystnar"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เมื่อแอปอื่นเงียบลง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diğer uygulamalar sessizleşince"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Коли інші програми замовкають"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Khi các ứng dụng khác im lặng"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "其他 App 安靜下來後"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "其他 App 安静下来后"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "其他 App 安靜下來後"
-          }
-        }
-      }
-    },
     "Once other apps go quiet. Turned off, your player stays paused until you play it." : {
       "comment" : "Settings → Behavior, under “Resume playback”: when it resumes your player; turned off, AutoHush only pauses it",
       "localizations" : {
@@ -101115,7 +99753,7 @@
       }
     },
     "Only when quieter by" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)",
+      "comment" : "Settings → Behavior, and Diagnostics, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -102477,7 +101115,7 @@
       }
     },
     "Open Notifications Settings…" : {
-      "comment" : "Settings → Updates: button that opens System Settings → Notifications",
+      "comment" : "Settings → About: button that opens System Settings → Notifications",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -106109,7 +104747,7 @@
       }
     },
     "Pause for the microphone" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone",
+      "comment" : "Settings → Behavior, and Diagnostics: the switch that pauses your player as soon as an app turns on the microphone",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -106563,7 +105201,7 @@
       }
     },
     "Pause on disconnect" : {
-      "comment" : "Settings → Behavior (under “Pausing”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range",
+      "comment" : "Settings → Behavior (under “Pausing”), and Diagnostics: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -106790,7 +105428,7 @@
       }
     },
     "Pause playback after" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu: how long another app must play before your player pauses",
+      "comment" : "Settings → Behavior, and Diagnostics: how long another app must play before your player pauses",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -109288,233 +107926,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在其他 App 播放音訊時暫停正在播放的內容（音樂、Podcast 或影片），並在之後繼續播放。"
-          }
-        }
-      }
-    },
-    "Pauses when a microphone turns on" : {
-      "comment" : "VoiceOver hint of the menu's Pause for the microphone switch: what it does, in a few words (an app turning on the microphone pauses your player)",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يتوقف مؤقتًا عند تشغيل ميكروفون"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa quan s’activa un micròfon"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pozastaví při zapnutí mikrofonu"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pause, når en mikrofon tændes"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausiert, wenn ein Mikrofon angeht"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Παύση όταν ενεργοποιείται μικρόφωνο"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa al activarse un micrófono"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa al activarse un micrófono"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tauko, kun mikrofoni otetaan käyttöön"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pause quand un micro s’active"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pause quand un micro s’active"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "משהה כשמיקרופון מופעל"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "माइक्रोफ़ोन चालू होने पर पॉज़"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pauza kad se uključi mikrofon"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Szünet mikrofon bekapcsolásakor"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Jeda saat mikrofon menyala"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa quando si attiva un microfono"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "マイクがオンになると一時停止"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "마이크가 켜지면 일시 정지"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menjeda apabila mikrofon diaktifkan"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pause når en mikrofon slås på"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pauzeert als een microfoon aangaat"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wstrzymuje po włączeniu mikrofonu"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa quando um microfone liga"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa quando um microfone liga"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pauză când pornește un microfon"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Пауза при включении микрофона"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pozastaví pri zapnutí mikrofónu"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zaustavi ob vklopu mikrofona"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausar när en mikrofon slås på"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "หยุดพักเมื่อไมโครโฟนเปิด"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mikrofon açılınca duraklatır"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Пауза при ввімкненні мікрофона"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tạm dừng khi micrô bật"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "麥克風開啟時暫停"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "麦克风打开时暂停"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "麥克風開啟時暫停"
           }
         }
       }
@@ -113152,7 +111563,7 @@
       }
     },
     "Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off)." : {
-      "comment" : "Settings → Detection, under “Silence threshold”",
+      "comment" : "Settings → Behavior, under “Silence threshold”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -119742,7 +118153,7 @@
       }
     },
     "Resume playback" : {
-      "comment" : "Settings → Behavior (under “Resuming”), Diagnostics and the menu: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it",
+      "comment" : "Settings → Behavior (under “Resuming”), and Diagnostics: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -119969,7 +118380,7 @@
       }
     },
     "Resume playback after" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu: how long other apps must be quiet before your player resumes",
+      "comment" : "Settings → Behavior, and Diagnostics: how long other apps must be quiet before your player resumes",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -121326,233 +119737,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Safari 未能加入。請再試一次。"
-          }
-        }
-      }
-    },
-    "Safari web app" : {
-      "comment" : "The menu, under the chosen media player's name: a website added to the Dock from Safari",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تطبيق ويب من Safari"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web del Safari"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Webová aplikace Safari"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari-webapp"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari-Web-App"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Εφαρμογή web του Safari"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web de Safari"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web de Safari"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safarin verkkoappi"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web Safari"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Web Safari"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "אפליקציית רשת של Safari"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari वेब ऐप"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari web-aplikacija"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari-webapp"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web Safari"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web di Safari"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari Webアプリ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari 웹 앱"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web Safari"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari-nettapp"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari-webapp"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacja internetowa Safari"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web do Safari"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App web do Safari"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplicație web Safari"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Веб-приложение Safari"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Webová apka Safari"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Spletna aplikacija Safari"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari-webbapp"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เว็บแอป Safari"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari web uygulaması"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Вебпрограма Safari"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ứng dụng web Safari"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari 網頁 App"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari 网页 App"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Safari 網頁 App"
           }
         }
       }
@@ -123601,7 +121785,7 @@
       }
     },
     "Settings" : {
-      "comment" : "The menu: the button at the bottom that opens Settings, and the title over the menu's settings, which unfolds the rest of them",
+      "comment" : "The menu: the button at the bottom that opens Settings",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -124735,235 +122919,8 @@
         }
       }
     },
-    "Show More Settings" : {
-      "comment" : "Menu: the tooltip of the Settings title over the menu's settings, which shows the rest of them",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إظهار المزيد من الإعدادات"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar més ajustos"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zobrazit další nastavení"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vis flere indstillinger"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Weitere Einstellungen einblenden"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Εμφάνιση περισσότερων ρυθμίσεων"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar más ajustes"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar más ajustes"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Näytä lisää asetuksia"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Afficher plus de réglages"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Afficher plus de réglages"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "הצגת הגדרות נוספות"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "और सेटिंग्ज़ दिखाएँ"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Prikaži više postavki"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "További beállítások megjelenítése"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tampilkan Pengaturan Lainnya"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostra altre impostazioni"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "その他の設定を表示"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "추가 설정 보기"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tunjukkan Seting Tambahan"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vis flere innstillinger"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toon meer instellingen"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pokaż więcej ustawień"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar mais ajustes"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mostrar mais definições"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Afișați mai multe configurări"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Показать больше настроек"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zobraziť ďalšie nastavenia"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pokaži več nastavitev"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Visa fler inställningar"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "แสดงการตั้งค่าเพิ่มเติม"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Daha Fazla Ayar Göster"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Показати більше параметрів"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hiển thị thêm cài đặt"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "顯示更多設定"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "显示更多设置"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "顯示更多設定"
-          }
-        }
-      }
-    },
     "Silence threshold" : {
-      "comment" : "Settings → Detection, Diagnostics and the menu: the sound level below which an app counts as silent",
+      "comment" : "Settings → Behavior, and Diagnostics: the sound level below which an app counts as silent",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -128141,7 +126098,7 @@
       }
     },
     "Stay paused after calls" : {
-      "comment" : "Settings → Behavior, Diagnostics and the menu: the switch that keeps your player paused after a call",
+      "comment" : "Settings → Behavior, and Diagnostics: the switch that keeps your player paused after a call",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -130388,233 +128345,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Підтримувані програми"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ứng dụng được hỗ trợ"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "支援的 App"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "受支持的 App"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "支援的 App"
-          }
-        }
-      }
-    },
-    "Supported app" : {
-      "comment" : "The menu, under the chosen media player's name: an app AutoHush supports itself (one of the “Supported Apps”)",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تطبيق مدعوم"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App compatible"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Podporovaná aplikace"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Understøttet app"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unterstützte App"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Υποστηριζόμενη εφαρμογή"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App compatible"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App compatible"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tuettu appi"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App compatible"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App compatible"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "אפליקציה נתמכת"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "समर्थित ऐप"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Podržana aplikacija"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Támogatott app"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App yang didukung"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App supportata"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "対応App"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "지원되는 앱"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App disokong"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Støttet app"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ondersteunde app"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Obsługiwana aplikacja"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App compatível"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App compatível"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplicație acceptată"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Поддерживаемое приложение"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Podporovaná apka"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Podprta aplikacija"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App som stöds"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "แอปที่รองรับ"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Desteklenen uygulama"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Підтримувана програма"
           }
         },
         "vi" : {
@@ -139270,7 +137000,7 @@
       }
     },
     "Turn Off AntiDot Mode" : {
-      "comment" : "Add an App window, button under the warning in the last step when no way that worked can be used in AntiDot mode: turns AntiDot mode off (Settings → Detection), so muting or a way only the app's sound tells can be used",
+      "comment" : "Add an App window, button under the warning in the last step when no way that worked can be used in AntiDot mode: turns AntiDot mode off (Settings → Behavior), so muting or a way only the app's sound tells can be used",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -143129,7 +140859,7 @@
       }
     },
     "Updates" : {
-      "comment" : "Menu toolbar button, Settings page and Diagnostics row: AutoHush's updates",
+      "comment" : "Menu toolbar button, Settings → About's heading over the update settings, and a Diagnostics row: AutoHush's updates",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -146307,7 +144037,7 @@
       }
     },
     "When an update is found" : {
-      "comment" : "Settings → Updates: lead-in to what happens when an update is found",
+      "comment" : "Settings → About: lead-in to what happens when an update is found",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -147669,7 +145399,7 @@
       }
     },
     "Without Audio Recording access, a silent app with its sound open keeps your player paused." : {
-      "comment" : "Settings → Detection, under AntiDot mode, while Audio Recording isn't allowed",
+      "comment" : "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

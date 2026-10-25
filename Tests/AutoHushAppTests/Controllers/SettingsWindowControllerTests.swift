@@ -31,7 +31,7 @@ final class SettingsWindowControllerTests {
         #expect(split.splitViewItems.count == 2)
         #expect(split.splitViewItems.first?.behavior == .sidebar)
         #expect(SettingsWindowController.Page.groups.map { $0.map(\.title) }
-                == [["General", "Sound Sources"], ["Behavior", "Detection"], ["Diagnostics", "Updates", "About"]])
+                == [["General", "Media Player", "Sound Sources"], ["Behavior"], ["Diagnostics", "About"]])
         #expect(Set(SettingsWindowController.Page.groups.joined()) == Set(SettingsWindowController.Page.allCases))
         #expect(sut.shownPage == nil) // not on screen
 
@@ -76,9 +76,9 @@ final class SettingsWindowControllerTests {
         defer { sut.close() }
         sut.show()
         #expect(sut.shownPage == .general)
-        sut.show(page: .detection)
+        sut.show(page: .behavior)
         sut.show() // Settings in the menu while the window is open
-        #expect(sut.shownPage == .detection)
+        #expect(sut.shownPage == .behavior)
 
         sut.close()
         sut.show()
@@ -90,17 +90,17 @@ final class SettingsWindowControllerTests {
         let model = makeModel()
         let sut = makeController(model)
         defer { sut.close() }
-        sut.show(page: .detection)
+        sut.show(page: .behavior)
         model.foldedDiagnostics = [.apps]
         let window = try #require(sut.window)
         window.miniaturize(nil)
         await TestWait.until { window.isMiniaturized }
         #expect(!window.isVisible && window.isOpen) // macOS counts it as not visible
-        #expect(sut.shownPage == .detection)
+        #expect(sut.shownPage == .behavior)
 
         sut.show() // Settings in the menu
         await TestWait.until { !window.isMiniaturized }
-        #expect(!window.isMiniaturized && sut.shownPage == .detection)
+        #expect(!window.isMiniaturized && sut.shownPage == .behavior)
         #expect(model.foldedDiagnostics == [.apps]) // not reopened
     }
 
@@ -140,7 +140,7 @@ final class SettingsWindowControllerTests {
     func keyRouting() async throws {
         let sut = makeController()
         defer { sut.close() }
-        sut.show(page: .detection)
+        sut.show(page: .behavior)
         let window = try #require(sut.window)
         await TestWait.until { !sut.keys.page.rows.isEmpty } // its controls, as they register
         #expect(!sut.handleKey(125, flags: [], windowNumber: window.windowNumber + 1)) // another window's
@@ -160,7 +160,7 @@ final class SettingsWindowControllerTests {
         model.state.status.seenApps = [arc]
         let sut = makeController(model)
         defer { sut.close() }
-        sut.show(page: .detection)
+        sut.show(page: .behavior)
         let window = try #require(sut.window)
         model.appList.click(on: arc.id, command: false, shift: false)
         #expect(!sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // another page

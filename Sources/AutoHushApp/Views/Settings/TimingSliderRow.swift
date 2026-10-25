@@ -1,13 +1,14 @@
 import SwiftUI
 import AutoHushKit
 
-/// One of the timings as Settings → Behavior and → Detection show it: its title
-/// and value, the slider, and what it does; `compact` (the menu's More
-/// Settings), smaller and without what it does. It's changed as it's dragged.
+/// One of the timings as Settings → Behavior shows it: its title and value,
+/// the slider, and what it does. It's changed as it's dragged.
 struct TimingSliderRow: View {
     let model: SettingsModel
     let timing: SettingsTiming
-    var compact = false
+    /// What it does, under it; left out under a switch it depends on, whose
+    /// description says it (W3, the user, 2026-10-25).
+    var showsHelp = true
 
     private var title: Text { timing.title }
     private var keyPath: WritableKeyPath<TimingSettings, Double> { timing.keyPath }
@@ -16,7 +17,7 @@ struct TimingSliderRow: View {
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: compact ? 0 : 4) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack {
                 title
                 Spacer(minLength: 4)
@@ -24,7 +25,6 @@ struct TimingSliderRow: View {
                     .monospacedDigit()
                     .foregroundStyle(.appSecondary)
             }
-            .font(compact ? .appCallout : nil)
             .accessibilityHidden(true) // the slider says both, as its label and value
             Slider(
                 value: Binding(
@@ -41,11 +41,10 @@ struct TimingSliderRow: View {
                 title // what VoiceOver says for it; the row shows it above
             }
             .labelsHidden()
-            .controlSize(compact ? .small : .regular)
             .focused($sliderFocused)
             .focusEffectDisabled(keyboard != nil) // the row's tint shows it
             .accessibilityValue(Text(verbatim: timing.format(model.timings[keyPath: keyPath])))
-            if !compact { timing.help.captionStyle() }
+            if showsHelp { timing.help.captionStyle() }
         }
         // In the menu and Settings, highlighted by the arrow keys (← and →
         // move it) and the pointer, and tinted while its slider has the

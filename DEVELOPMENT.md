@@ -189,16 +189,16 @@ Sources/
                          main button), ChecklistStepRow, PermissionRow, CopyButton, NoteLabel, SearchField,
                          PlayerTiles, …), MenuBar/ (the menu's panel:
                          MenuPanelView; MenuScrollArea, what scrolls and whether more is below; StatusCardView, the
-                         card; MenuMediaPlayerView and MenuPlayerListView, the Media Player part and its
-                         players; MenuIgnoredAppsView, the Ignored Apps part; MenuSideRow, their rows;
-                         MenuPartTitle, a part's title and a title inside it; MenuSidePanelView, the
-                         side window they open; MenuActionRow and MenuSwitchRow, its rows that act and
+                         card, and CardPlayerRow, its Change Player row; MenuPlayerListView, the players
+                         beside the menu; MenuIgnoredAppsView, the Ignored Apps part; MenuSideRow, its row;
+                         MenuPartTitle, a part's title; MenuSidePanelView, the side window the players and
+                         the ignored apps open in; MenuActionRow and MenuSwitchRow, its rows that act and
                          those with a switch; MenuLine and MenuRowSymbol, its line between parts and a
                          row's symbol; SourceSwitchRow, an app's switch; SnoozeBarView, Turn
-                         off for; PlayingAppsView, Playing Now and Recently Played; MenuSettingsView,
-                         the settings; MenuToolbarView, the buttons; MenuSpacing, the space around its
-                         parts; MenuRowButtonStyle, MenuContentWidth, and MenuBarIcon, drawn in code),
-                         Settings/ (one per page, SettingsPageView, SettingsSidebar), Welcome/, WebApps/
+                         off for; PlayingAppsView, Playing Now and Recently Played; MenuToolbarView, the
+                         buttons; MenuSpacing, the space around its parts; MenuRowButtonStyle,
+                         MenuContentWidth, and MenuBarIcon, drawn in code),
+                         Settings/ (one per page, SettingsPageView, SettingsSidebar, UpdatesCard, About's), Welcome/, WebApps/
                          (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView),
                          AddApp/ (Add an App's window and its numbered steps, the app chooser, the warning
                          before a check, the check's panel, AddAppText: what they say)

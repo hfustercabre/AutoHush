@@ -8,11 +8,11 @@ struct MenuToolbarView: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            button(Text(verbatim: MenuSettingsView.title), symbol: "gearshape") {
+            button(Text(verbatim: Self.settingsTitle), symbol: "gearshape") {
                 // As the menu used to offer it: ⌥ turns Settings into Diagnostics.
                 NSEvent.modifierFlags.contains(.option) ? .showDiagnostics : .openSettings
             }
-            let updates = SettingsWindowController.Page.updates.title
+            let updates = UpdateOffer.updatesTitle
             button(Text(verbatim: model.isCheckingForUpdates ? UpdateOffer.checkingTitle : updates),
                    symbol: model.status.updateOffer == nil ? "arrow.down.circle" : "arrow.down.circle.fill",
                    tint: model.status.updateOffer == nil ? nil : .accentColor,
@@ -26,6 +26,11 @@ struct MenuToolbarView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 2)
         .frame(width: menuContentWidth)
+    }
+
+    /// The button that opens Settings.
+    static var settingsTitle: String {
+        String(localized: "Settings", comment: "The menu: the button at the bottom that opens Settings")
     }
 
     private func button(_ title: Text, symbol: String, tint: Color? = nil, spoken: String? = nil,

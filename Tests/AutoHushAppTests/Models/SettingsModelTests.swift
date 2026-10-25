@@ -105,7 +105,7 @@ struct SettingsModelTests {
         model.setAntiDotMode(true)
         model.useAntiDotMode()
         #expect(!model.isAntiDotMode)
-        #expect(DetectionSettingsView.unavailableNote("Muted") == "AutoHush can only mute Muted, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
+        #expect(DetectionText.unavailableNote("Muted") == "AutoHush can only mute Muted, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
     }
 
     @Test("the chosen player's traits come from its option")
@@ -458,6 +458,37 @@ struct SettingsModelTests {
         #expect(model.silenceThresholdIsDefault)
         model.restoreDefaultSilenceThreshold()
         #expect(model.timings == TimingSettings(silenceThresholdDB: -40))
+    }
+
+    @Test("Behavior's one Restore Defaults restores every card's settings and the silence threshold, but not AntiDot mode; what's greyed out stays")
+    func restoreDefaultBehavior() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
+                                     fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
+                                     pausesOnOutputDisconnect: true,
+                                     levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
+                                     pausesForMicrophone: true, staysPausedAfterCalls: true)
+        model.setTimings(changed)
+        #expect(!model.behaviorIsDefault)
+        model.restoreDefaultBehavior()
+        #expect(model.timings == TimingSettings.defaults && model.behaviorIsDefault)
+
+        // AntiDot mode stays on; the threshold and leveling, greyed out there, stay as they were.
+        model.setTimings(changed)
+        model.setAntiDotMode(true)
+        model.restoreDefaultBehavior()
+        #expect(model.isAntiDotMode && model.behaviorIsDefault)
+        #expect(model.timings.silenceThresholdDB == -40 && model.timings.levelsMusic && model.timings.levelingMaxCutDB == 14)
+        #expect(model.timings.startConfirmation == TimingSettings.defaults.startConfirmation)
+
+        // A player AutoHush can't fade keeps its greyed-out fades.
+        model.setAntiDotMode(false)
+        model.setTimings(changed)
+        model.state.status.choosePlayer(named: "Radio")
+        model.state.status.playerOptions[0].canFade = false
+        model.restoreDefaultBehavior()
+        #expect(!model.timings.fadesEnabled && model.timings.fadeOutDuration == 3)
+        #expect(model.behaviorIsDefault)
     }
 
     @Test("a card greyed out has nothing for Restore Defaults to change: the fades with a player AutoHush can't fade, Volume in AntiDot mode or with Resume playback off")

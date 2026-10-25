@@ -10,11 +10,10 @@ struct SettingsPageView: View {
         Group {
             switch navigation.page {
             case .general: GeneralSettingsView(model: model)
+            case .mediaPlayer: MediaPlayerSettingsView(model: model)
             case .soundSources: SoundSourcesSettingsView(model: model)
             case .behavior: BehaviorSettingsView(model: model)
-            case .detection: DetectionSettingsView(model: model)
             case .diagnostics: DiagnosticsSettingsView(model: model)
-            case .updates: UpdatesSettingsView(model: model)
             case .about: AboutSettingsView(model: model)
             }
         }

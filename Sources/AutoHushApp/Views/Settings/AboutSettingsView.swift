@@ -3,8 +3,9 @@ import AutoHushKit
 import SwiftUI
 
 /// Settings → About: the app's icon, name and version, what it does and the
-/// players it works with, links to the project, a way to support it, and the
-/// copyright. The menu's About button opens it.
+/// players it works with, its updates (`UpdatesCard`, a page of their own
+/// until W1, the user, 2026-10-25), links to the project, a way to support
+/// it, and the copyright. The menu's About button opens it.
 ///
 /// Every gap between those parts shows the same 24 points. A part's own edge
 /// adds to the space around it (the icon's transparent margin, a text's line
@@ -51,6 +52,8 @@ struct AboutSettingsView: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 12)
             .padding(.top, Self.gap - 3.5)
+            UpdatesCard(model: model)
+                .padding(.top, Self.gap)
             HStack(spacing: 8) {
                 link(Text(verbatim: "GitHub"), symbol: "chevron.left.forwardslash.chevron.right", to: ProjectInfo.homepage)
                 link(Text("What’s New", comment: "Settings → About: opens the release notes on GitHub"),

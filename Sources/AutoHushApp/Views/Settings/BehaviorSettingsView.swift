@@ -2,7 +2,11 @@ import SwiftUI
 import AutoHushKit
 
 /// Settings → Behavior, a grouped form (B, the user's pick, 2026-10-21;
-/// memory `settings-layout`): how AutoHush acts, a card for each moment.
+/// memory `settings-layout`): how AutoHush acts, a card for each moment,
+/// then how it tells that other apps play (W1, the user, 2026-10-25:
+/// Detection's page is its last two cards, `BehaviorSettingsView+Detection`).
+/// Each card's main switch comes first and what depends on it is indented
+/// under it, without a description of its own (W3, 2026-10-25).
 /// Pausing: how long another app must play, and the microphone and an
 /// output going away pausing too. Resuming: whether the player resumes at
 /// all, how long the apps must be quiet first, and staying paused after
@@ -10,9 +14,13 @@ import AutoHushKit
 /// lengths (the fade-in greyed out while nothing resumes; all of it dimmed
 /// for a player AutoHush can't fade). Volume: leveling the music and its
 /// limits (off in AntiDot mode, which measures no sound, and while nothing
-/// resumes). Each card's Restore Defaults restores its own settings only.
+/// resumes). One Restore Defaults at the end restores the whole page but
+/// AntiDot mode.
 struct BehaviorSettingsView: View {
     let model: SettingsModel
+
+    /// How far a setting that depends on a switch is indented under it.
+    static let dependentIndent: CGFloat = 22
 
     var body: some View {
         SettingsPageScroll {
@@ -22,24 +30,20 @@ struct BehaviorSettingsView: View {
                 SettingsSwitchRow(model: model, kind: .pausesForMicrophone)
                 CardDivider()
                 SettingsSwitchRow(model: model, kind: .pausesOnDisconnect)
-            } footer: {
-                RestoreDefaultsButton(isDefault: model.pausingAreDefaults) { model.restoreDefaultPausing() }
             }
 
             Card(Self.resumingTitle) {
                 SettingsSwitchRow(model: model, kind: .resumesPlayback)
                 CardDivider()
-                TimingSliderRow(model: model, timing: .resumeAfter)
+                dependent(TimingSliderRow(model: model, timing: .resumeAfter, showsHelp: false))
                     .unavailable(!model.timings.resumesPlayback)
                 CardDivider()
-                SettingsSwitchRow(model: model, kind: .staysPausedAfterCalls)
+                dependent(SettingsSwitchRow(model: model, kind: .staysPausedAfterCalls, showsSubtitle: false))
                 // Why what follows the switch is greyed out, as in the other
                 // cards (the user, 2026-10-22; none before).
                 if !model.timings.resumesPlayback {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
                 }
-            } footer: {
-                RestoreDefaultsButton(isDefault: model.resumingAreDefaults) { model.restoreDefaultResuming() }
             }
 
             Card(Text(verbatim: Self.fadesTitle)) {
@@ -49,9 +53,9 @@ struct BehaviorSettingsView: View {
                     // card is, with a player AutoHush can't fade).
                     Group {
                         CardDivider()
-                        TimingSliderRow(model: model, timing: .fadeOut)
+                        dependent(TimingSliderRow(model: model, timing: .fadeOut, showsHelp: false))
                         CardDivider()
-                        TimingSliderRow(model: model, timing: .fadeIn)
+                        dependent(TimingSliderRow(model: model, timing: .fadeIn, showsHelp: false))
                             .unavailable(fadeInUnused)
                     }
                     .unavailable(!model.timings.fadesEnabled && model.playerCanFade)
@@ -67,17 +71,15 @@ struct BehaviorSettingsView: View {
                                      comment: "Settings → Behavior, under the dimmed fade settings; %@ is the media player, e.g. TIDAL"),
                               kind: .info)
                 }
-            } footer: {
-                RestoreDefaultsButton(isDefault: model.fadesAreDefaults) { model.restoreDefaultFades() }
             }
 
             Card(Self.volumeTitle) {
                 SettingsSwitchRow(model: model, kind: .levelsMusic)
                 Group {
                     CardDivider()
-                    TimingSliderRow(model: model, timing: .levelingMaxCut)
+                    dependent(TimingSliderRow(model: model, timing: .levelingMaxCut, showsHelp: false))
                     CardDivider()
-                    TimingSliderRow(model: model, timing: .levelingMinCut)
+                    dependent(TimingSliderRow(model: model, timing: .levelingMinCut, showsHelp: false))
                 }
                 .unavailable(SettingsTiming.levelingLimitsUnavailable(model))
                 if let reason = SettingsSwitch.levelsMusic.unavailableReason(model) {
@@ -85,10 +87,16 @@ struct BehaviorSettingsView: View {
                 } else if !model.timings.levelsMusic {
                     NoteLabel(SettingsSwitch.levelingOffNote, kind: .info)
                 }
-            } footer: {
-                RestoreDefaultsButton(isDefault: model.volumeAreDefaults) { model.restoreDefaultVolume() }
             }
+
+            modesCard
+            measuringCard
         }
+    }
+
+    /// A setting that depends on the switch above it, indented under it.
+    private func dependent(_ row: some View) -> some View {
+        row.padding(.leading, Self.dependentIndent)
     }
 
     /// The fade-in, greyed out on its own while nothing resumes (Resume

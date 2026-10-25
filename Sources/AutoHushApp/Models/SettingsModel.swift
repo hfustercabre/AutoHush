@@ -141,7 +141,7 @@ final class SettingsModel {
     /// time Settings opens.
     var foldedDiagnostics: Set<DiagnosticsSnapshot.Part> = []
 
-    // Behavior and Detection: each card's Restore Defaults has nothing to do
+    // Behavior: each card's settings, which its one Restore Defaults restores, have nothing to do
     /// Pausing's: 0.5 s, and the microphone and an output going away off.
     var pausingAreDefaults: Bool { timings.withDefaultPausing == timings }
     /// Resuming's: Resume playback on, 2 s, Stay paused after calls off.
@@ -159,6 +159,11 @@ final class SettingsModel {
     /// mode, which never restores it.
     var silenceThresholdIsDefault: Bool {
         isAntiDotMode || timings.silenceThresholdDB == TimingSettings.defaults.silenceThresholdDB
+    }
+    /// Everything Settings → Behavior's one Restore Defaults restores is
+    /// its default (W3, the user, 2026-10-25): it has nothing to do.
+    var behaviorIsDefault: Bool {
+        pausingAreDefaults && resumingAreDefaults && fadesAreDefaults && volumeAreDefaults && silenceThresholdIsDefault
     }
 
     /// The row with Check Now: what the last check found ("AutoHush 0.3.11
@@ -297,7 +302,7 @@ final class SettingsModel {
         setDetectionMethod(on ? settings.antiDotMethod : .audioLevels)
     }
 
-    /// Settings → Behavior's cards' Restore Defaults: each its own settings only.
+    /// Each card's settings only (`restoreDefaultBehavior` restores them all).
     func restoreDefaultPausing() {
         setTimings(timings.withDefaultPausing)
     }
@@ -314,12 +319,24 @@ final class SettingsModel {
         setTimings(timings.withDefaultVolume)
     }
 
-    /// Settings → Detection's Restore Defaults: the silence threshold, not
-    /// while it's greyed out in AntiDot mode.
+    /// The silence threshold, not while it's greyed out in AntiDot mode.
     func restoreDefaultSilenceThreshold() {
         guard !isAntiDotMode else { return }
         var restored = timings
         restored.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+        setTimings(restored)
+    }
+
+    /// Settings → Behavior's one Restore Defaults (W3, the user,
+    /// 2026-10-25): every setting on the page but AntiDot mode, at once;
+    /// what's greyed out stays as it is, as the cards' own buttons left it
+    /// (the fades for a player AutoHush can't fade, leveling while it can't
+    /// be changed, the threshold in AntiDot mode).
+    func restoreDefaultBehavior() {
+        var restored = timings.withDefaultPausing.withDefaultResuming
+        if playerCanFade { restored = restored.withDefaultFades }
+        if !SettingsSwitch.levelsMusic.isUnavailable(self) { restored = restored.withDefaultVolume }
+        if !isAntiDotMode { restored.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB }
         setTimings(restored)
     }
 }

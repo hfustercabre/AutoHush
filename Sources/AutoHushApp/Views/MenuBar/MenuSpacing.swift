@@ -8,14 +8,8 @@ enum MenuSpacing {
     /// Above a part's title ("Media Player", "Detection"), and under it.
     static let titleTop: CGFloat = 4
     static let titleBottom: CGFloat = 0
-    /// Above a title inside a part ("Modes", "Timing").
-    static let innerTitleTop: CGFloat = 2
     /// Above and under a row of a switch or a chevron, and its two lines.
     static let rowVertical: CGFloat = 2
-    /// Above and under a part's rows.
-    static let partVertical: CGFloat = 0
-    /// Above and under a slider's row.
-    static let sliderVertical: CGFloat = 2
     /// Above and under a line between parts.
     static let lineVertical: CGFloat = 2
     /// Above and under "Turn off for" and "Playing Now", and between their

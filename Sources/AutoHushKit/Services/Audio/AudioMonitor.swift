@@ -135,7 +135,7 @@ final class AudioMonitor: @unchecked Sendable {
     var permissionStatus: AudioCapturePermission?
     var lastPermissionCheck: Date?
     var hasRequestedPermission = false
-    /// How playing apps are detected (Settings → Detection → AntiDot mode).
+    /// How playing apps are detected (Settings → Behavior → AntiDot mode).
     var detectionMethod: DetectionMethod
     /// AntiDot mode's judge, and what it learned about how apps announce playback.
     var signals: PlaybackSignals

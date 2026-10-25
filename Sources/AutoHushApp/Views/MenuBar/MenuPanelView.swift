@@ -2,25 +2,20 @@ import SwiftUI
 import AutoHushKit
 
 /// Everything the menu shows, in `StatusMenuModel.sections`' order: the
-/// card, the media player (its players in a side window), a warning and its
-/// fix, Turn off for, Playing Now and Recently Played, Ignored Apps (its
-/// side window), the settings, the update found, and the buttons. As in
+/// card (its Change Player row opening the players in a side window), a
+/// warning and its fix, Turn off for, Playing Now and Recently Played,
+/// Ignored Apps (its side window), the update found, and the buttons. As in
 /// macOS's own menu bar menus (Wi-Fi's), the card and the buttons stay put
 /// and only what's between them scrolls, between lines, when the panel is
-/// taller than the screen (P1, the user's pick, 2026-10-18). It folds and
-/// unfolds its parts in `MenuPanelView.animation`, the panel's height
-/// following (`MenuPanel`); it reports its height to the panel (`onHeight`).
+/// taller than the screen (P1, the user's pick, 2026-10-18). It reports its
+/// height to the panel (`onHeight`), which follows it (`MenuPanel`).
 /// While more is below what shows, the last rows fade out over a small
 /// chevron (`MenuScrollArea`).
 struct MenuPanelView: View {
     let model: StatusMenuModel
-    /// Detection's, Fades' and Advanced's settings, as Settings changes them.
+    /// The card's checks, as Settings shows them.
     let settings: SettingsModel?
     let onHeight: @MainActor (CGFloat) -> Void
-
-    /// How its parts fold and unfold: smooth, no bounce, as the panel's
-    /// height follows.
-    static let animation = Animation.smooth(duration: MenuPanel.resizeDuration)
 
     /// The heights of the card (and the line under it), of what scrolls,
     /// and of the buttons (and the line over them): the panel's is their sum.
@@ -92,7 +87,7 @@ struct MenuPanelView: View {
         switch section {
         case .warning, .reopenAutoHush, .snooze, .playingNow: return true
         case .recentlyPlayed: return previous != .playingNow
-        case .ignoredApps, .settings, .update: return true
+        case .ignoredApps, .update: return true
         default: return false
         }
     }
@@ -108,7 +103,6 @@ struct MenuPanelView: View {
     @ViewBuilder private func part(_ section: MenuSection) -> some View {
         switch section {
         case .card: StatusCardView(model: model, settings: settings)
-        case .mediaPlayer: MenuMediaPlayerView(model: model)
         case .warning(let permission):
             actionRow(permission.grantTitle, symbol: "exclamationmark.triangle.fill", .resolveWarning(permission))
         case .reopenAutoHush:
@@ -119,8 +113,6 @@ struct MenuPanelView: View {
         case .playingNow: PlayingAppsView(model: model, list: .playingNow)
         case .recentlyPlayed: PlayingAppsView(model: model, list: .recentlyPlayed)
         case .ignoredApps: MenuIgnoredAppsView(model: model)
-        case .settings:
-            if let settings { MenuSettingsView(model: model, settings: settings) }
         case .update: updateRow
         case .toolbar: MenuToolbarView(model: model)
         }

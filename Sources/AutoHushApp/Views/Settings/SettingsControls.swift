@@ -11,26 +11,26 @@ enum SettingsSwitch: CaseIterable {
     var name: String {
         switch self {
         case .antiDot:
-            String(localized: "AntiDot mode", comment: "Settings → Detection, Diagnostics and the menu: the switch for AntiDot mode, which hides the purple recording indicator")
+            String(localized: "AntiDot mode", comment: "Settings → Behavior, and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator")
         case .pausesOnDisconnect:
-            String(localized: "Pause on disconnect", comment: "Settings → Behavior (under “Pausing”), Diagnostics and the menu: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range")
+            String(localized: "Pause on disconnect", comment: "Settings → Behavior (under “Pausing”), and Diagnostics: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range")
         case .resumesPlayback:
-            String(localized: "Resume playback", comment: "Settings → Behavior (under “Resuming”), Diagnostics and the menu: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it")
+            String(localized: "Resume playback", comment: "Settings → Behavior (under “Resuming”), and Diagnostics: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it")
         case .fades:
-            String(localized: "Fade playback", comment: "Settings → Behavior and the menu: the switch that turns the fades on or off")
+            String(localized: "Fade playback", comment: "Settings → Behavior: the switch that turns the fades on or off")
         case .levelsMusic:
-            String(localized: "Level the volume", comment: "Settings → Behavior, Diagnostics and the menu: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
+            String(localized: "Level the volume", comment: "Settings → Behavior, and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
         case .pausesForMicrophone:
-            String(localized: "Pause for the microphone", comment: "Settings → Behavior, Diagnostics and the menu: the switch that pauses your player as soon as an app turns on the microphone")
+            String(localized: "Pause for the microphone", comment: "Settings → Behavior, and Diagnostics: the switch that pauses your player as soon as an app turns on the microphone")
         case .staysPausedAfterCalls:
-            String(localized: "Stay paused after calls", comment: "Settings → Behavior, Diagnostics and the menu: the switch that keeps your player paused after a call")
+            String(localized: "Stay paused after calls", comment: "Settings → Behavior, and Diagnostics: the switch that keeps your player paused after a call")
         }
     }
 
     /// `name` as a view's text.
     var title: Text { Text(verbatim: name) }
 
-    /// What it does, under it in Settings (the menu leaves it out).
+    /// What it does, under it in Settings.
     var subtitle: Text {
         switch self {
         case .antiDot:
@@ -57,52 +57,16 @@ enum SettingsSwitch: CaseIterable {
         }
     }
 
-    /// What it does in a few words: the menu's switch's VoiceOver hint
-    /// (Settings has `subtitle`), a fragment, without a period (U12, the
-    /// user, 2026-10-19).
-    var shortExplanation: Text {
-        switch self {
-        case .antiDot:
-            Text("No purple dot, less precise", comment: "VoiceOver hint of the menu's AntiDot mode switch: what it does, in a few words")
-        case .pausesOnDisconnect:
-            Text("Headphones and other outputs", comment: "VoiceOver hint of the menu's Pause on disconnect switch: what it applies to, in a few words (headphones or another output unplugged or out of range)")
-        case .resumesPlayback:
-            Text("Once other apps go quiet", comment: "VoiceOver hint of the menu's Resume playback switch: when it resumes your player, in a few words")
-        case .fades:
-            Text("Fades out and back in", comment: "VoiceOver hint of the menu's Fade playback switch: what it does, in a few words")
-        case .levelsMusic:
-            Text("Matches quieter apps’ volume", comment: "VoiceOver hint of the menu's Level the volume switch: what it does, in a few words (it lowers the Mac’s volume as your player resumes after quieter apps)")
-        case .pausesForMicrophone:
-            Text("Pauses when a microphone turns on", comment: "VoiceOver hint of the menu's Pause for the microphone switch: what it does, in a few words (an app turning on the microphone pauses your player)")
-        case .staysPausedAfterCalls:
-            Text("No resume after a call", comment: "VoiceOver hint of the menu's Stay paused after calls switch: what it does, in a few words")
-        }
-    }
-
-    /// Its symbol in the menu, in the accent color while it's on.
-    var symbol: String {
-        switch self {
-        case .antiDot: "eye.slash"
-        case .pausesOnDisconnect: "headphones"
-        case .resumesPlayback: "play"
-        case .fades: "wave.3.right"
-        case .levelsMusic: "slider.horizontal.below.rectangle"
-        case .pausesForMicrophone: "mic"
-        case .staysPausedAfterCalls: "phone.down"
-        }
-    }
-
-    /// Why it can't be changed, in a few words, under it in the menu (R2,
-    /// the user's pick, 2026-10-18; Settings has a note of its own), without
-    /// a period but for AntiDot mode's, Settings' own sentence; `nil` while
-    /// it can.
+    /// Why it can't be changed, in a few words (Behavior's Volume note
+    /// says leveling's), without a period but for AntiDot mode's, Settings'
+    /// own sentence; `nil` while it can.
     @MainActor func unavailableReason(_ model: SettingsModel) -> String? {
         guard isUnavailable(model) else { return nil }
         switch self {
         case .antiDot:
             // Settings' own note under the switch.
             guard let player = model.antiDotUnavailablePlayer else { return nil }
-            return DetectionSettingsView.unavailableNote(player.name, mutes: player.pausesByMuting)
+            return DetectionText.unavailableNote(player.name, mutes: player.pausesByMuting)
         case .fades:
             guard let player = model.chosenPlayerName else { return nil }
             return String(localized: "\(player) can’t be faded",
@@ -163,7 +127,7 @@ enum SettingsSwitch: CaseIterable {
     }
 
     /// Under what only matters when resuming, dimmed while Resume playback
-    /// is off: a note in Settings, the reason's line in the menu.
+    /// is off: a note in Settings.
     static var resumeOffNote: String {
         String(localized: "Resume playback is off",
                comment: "Under settings that only matter when your player resumes (Resume playback after, Fade in when resuming, Level the volume, Stay paused after calls), dimmed while the Resume playback switch (Settings → Behavior) is off: Settings and the menu")
@@ -173,7 +137,7 @@ enum SettingsSwitch: CaseIterable {
     /// `resumeOffNote` (the user's pick, the workflow audit, 2026-10-22).
     static var antiDotOffNote: String {
         String(localized: "AntiDot mode is off",
-               comment: "Settings → Detection, under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch is off")
+               comment: "Settings → Behavior, under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch is off")
     }
 
     static var fadesOffNote: String {
@@ -188,7 +152,7 @@ enum SettingsSwitch: CaseIterable {
 
     static var updateChecksOffNote: String {
         String(localized: "Automatic checks are off",
-               comment: "Settings → Updates, under what happens when an update is found, dimmed while the switch “Check for updates automatically” is off")
+               comment: "Settings → About, under what happens when an update is found, dimmed while the switch “Check for updates automatically” is off")
     }
 }
 
@@ -201,12 +165,11 @@ struct SettingsSwitchRow: View {
     var body: some View {
         SwitchRow(kind.title, subtitle: showsSubtitle ? kind.subtitle : nil,
                   isOn: Binding(get: { kind.isOn(model) }, set: { kind.set($0, in: model) }))
-            .unavailable(kind.isUnavailable(model)) // dimmed as in the menu, not only its switch
+            .unavailable(kind.isUnavailable(model)) // dimmed whole, not only its switch
     }
 }
 
-/// The timings Settings → Behavior and → Detection share with the menu's More
-/// Settings.
+/// The timings Settings → Behavior and Diagnostics share.
 enum SettingsTiming {
     case pauseAfter, resumeAfter, silenceThreshold, fadeOut, fadeIn, levelingMaxCut, levelingMinCut
 
@@ -214,26 +177,26 @@ enum SettingsTiming {
     var name: String {
         switch self {
         case .pauseAfter:
-            String(localized: "Pause playback after", comment: "Settings → Behavior, Diagnostics and the menu: how long another app must play before your player pauses")
+            String(localized: "Pause playback after", comment: "Settings → Behavior, and Diagnostics: how long another app must play before your player pauses")
         case .resumeAfter:
-            String(localized: "Resume playback after", comment: "Settings → Behavior, Diagnostics and the menu: how long other apps must be quiet before your player resumes")
+            String(localized: "Resume playback after", comment: "Settings → Behavior, and Diagnostics: how long other apps must be quiet before your player resumes")
         case .silenceThreshold:
-            String(localized: "Silence threshold", comment: "Settings → Detection, Diagnostics and the menu: the sound level below which an app counts as silent")
+            String(localized: "Silence threshold", comment: "Settings → Behavior, and Diagnostics: the sound level below which an app counts as silent")
         case .fadeOut:
-            String(localized: "Fade out before pausing", comment: "Settings → Behavior, Diagnostics and the menu: slider for how long playback fades out before it pauses")
+            String(localized: "Fade out before pausing", comment: "Settings → Behavior, and Diagnostics: slider for how long playback fades out before it pauses")
         case .fadeIn:
-            String(localized: "Fade in when resuming", comment: "Settings → Behavior, Diagnostics and the menu: slider for how long playback fades back in when it resumes")
+            String(localized: "Fade in when resuming", comment: "Settings → Behavior, and Diagnostics: slider for how long playback fades back in when it resumes")
         case .levelingMaxCut:
-            String(localized: "Lower by at most", comment: "Settings → Behavior, Diagnostics and the menu, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)")
+            String(localized: "Lower by at most", comment: "Settings → Behavior, and Diagnostics, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)")
         case .levelingMinCut:
-            String(localized: "Only when quieter by", comment: "Settings → Behavior, Diagnostics and the menu, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)")
+            String(localized: "Only when quieter by", comment: "Settings → Behavior, and Diagnostics, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)")
         }
     }
 
     /// `name` as a view's text.
     var title: Text { Text(verbatim: name) }
 
-    /// What it does, under it in Settings (the menu leaves it out).
+    /// What it does, under it in Settings.
     var help: Text {
         switch self {
         case .pauseAfter:
@@ -244,7 +207,7 @@ enum SettingsTiming {
                  comment: "Settings → Behavior, under “Resume playback after”")
         case .silenceThreshold:
             Text("Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off).",
-                 comment: "Settings → Detection, under “Silence threshold”")
+                 comment: "Settings → Behavior, under “Silence threshold”")
         case .fadeOut:
             Text("How long playback fades out before it pauses. 0 pauses it at once.",
                  comment: "Settings → Behavior, under “Fade out before pausing”")
@@ -304,13 +267,13 @@ enum SettingsTiming {
         String(localized: "\(Int(value)) dB", comment: "A sound level in decibels")
     }
 
-    /// The fade-in greyed out on its own, in Settings and the menu: nothing
+    /// The fade-in greyed out on its own, in Settings: nothing
     /// resumes, while the fades otherwise apply.
     @MainActor static func fadeInUnused(_ model: SettingsModel) -> Bool {
         !model.timings.resumesPlayback && model.timings.fadesEnabled && model.playerCanFade
     }
 
-    /// Level the volume's limits greyed out, in Settings and the menu: it's
+    /// Level the volume's limits greyed out, in Settings: it's
     /// off, or can't be on.
     @MainActor static func levelingLimitsUnavailable(_ model: SettingsModel) -> Bool {
         !model.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(model)

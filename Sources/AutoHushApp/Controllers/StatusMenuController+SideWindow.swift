@@ -17,7 +17,7 @@ extension StatusMenuController {
         let side = sidePanel ?? makeSidePanel()
         sidePanel = side
         // VoiceOver names it by its part (the full check, 2026-10-18).
-        side.title = part == .players ? MenuMediaPlayerView.title : MenuIgnoredAppsView.title
+        side.title = part == .players ? PlayerOption.mediaPlayerHeading : MenuIgnoredAppsView.title
         side.contentView?.layoutSubtreeIfNeeded()
         placeSide(side, beside: panel)
         side.orderFrontRegardless()

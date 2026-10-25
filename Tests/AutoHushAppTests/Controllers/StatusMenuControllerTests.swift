@@ -60,7 +60,6 @@ struct StatusMenuControllerTests {
         sut.model.sections.map { section in
             switch section {
             case .card: "card"
-            case .mediaPlayer: "mediaPlayer"
             case .warning(let permission): permission.grantTitle
             case .reopenAutoHush: PermissionText.reopen
             case .useAntiDot: PermissionText.useAntiDot
@@ -68,7 +67,6 @@ struct StatusMenuControllerTests {
             case .playingNow: "playingNow"
             case .recentlyPlayed: "recentlyPlayed"
             case .ignoredApps: "ignoredApps"
-            case .settings: "settings"
             case .update: "update"
             case .toolbar: "toolbar"
             }
@@ -100,27 +98,27 @@ struct StatusMenuControllerTests {
 
     // MARK: - Layout
 
-    @Test("the menu is the card, the duration buttons, Ignored Apps and the toolbar; playing apps and the settings add their parts")
+    @Test("the menu is the card (Change Player at its foot), the duration buttons, Ignored Apps and the toolbar; playing apps add their part, Settings' model none (the settings are Settings' only)")
     func layout() {
         let sut = makeController()
         defer { sut.remove() }
         sut.status = readyStatus()
         reopen(sut)
-        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "ignoredApps", "toolbar"])
+        #expect(parts(sut) == ["card", "snooze", "ignoredApps", "toolbar"])
 
         var status = readyStatus()
         status.ignoredApps = [vlc]
         status.setActiveSources([vlc, chrome])
         sut.status = status
         reopen(sut)
-        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "ignoredApps", "toolbar"])
+        #expect(parts(sut) == ["card", "snooze", "playingNow", "ignoredApps", "toolbar"])
         #expect(sut.model.listedSources == [chrome, vlc])
 
         let withSettings = makeController(settingsModel: SettingsModel.forTests(actions: actions, updates: updates, settings: settings))
         defer { withSettings.remove() }
         withSettings.status = readyStatus()
         reopen(withSettings)
-        #expect(parts(withSettings) == ["card", "mediaPlayer", "snooze", "ignoredApps", "settings", "toolbar"])
+        #expect(parts(withSettings) == ["card", "snooze", "ignoredApps", "toolbar"])
     }
 
     @Test("Recently Played follows Playing Now, and shows on its own once nothing plays; never the chosen player")
@@ -132,13 +130,13 @@ struct StatusMenuControllerTests {
         status.setActiveSources([chrome])
         sut.status = status
         reopen(sut)
-        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "recentlyPlayed", "ignoredApps", "toolbar"])
+        #expect(parts(sut) == ["card", "snooze", "playingNow", "recentlyPlayed", "ignoredApps", "toolbar"])
         #expect(sut.model.listedRecentSources == [vlc])
 
         status.setActiveSources([])
         sut.status = status
         reopen(sut)
-        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "recentlyPlayed", "ignoredApps", "toolbar"])
+        #expect(parts(sut) == ["card", "snooze", "recentlyPlayed", "ignoredApps", "toolbar"])
         #expect(sut.model.listedRecentSources == [chrome, vlc])
 
         // VLC chosen as the player meanwhile: its switch would only store it as ignored.
@@ -417,7 +415,7 @@ struct StatusMenuControllerTests {
             sut.status = status
             reopen(sut)
             #expect(sut.model.status.canLearnControlsAgain) // the card shows its Controls row
-            #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "ignoredApps", "toolbar"])
+            #expect(parts(sut) == ["card", "snooze", "ignoredApps", "toolbar"])
         }
 
         // Its button: the menu closes, and a new learning window opens.
@@ -809,9 +807,9 @@ struct StatusMenuControllerTests {
         defer { sut.remove() }
         sut.perform(.hoverSideRow(.players, true))
         await sut.sideOpenTask?.value
-        sut.perform(.pointerEntered(.mediaPlayer)) // its own part: stays
+        sut.perform(.pointerEntered(.card)) // its own part, the card with Change Player: stays
         sut.perform(.pointerEntered(.snooze))
-        sut.perform(.pointerEntered(.mediaPlayer)) // back before the moment is over
+        sut.perform(.pointerEntered(.card)) // back before the moment is over
         await sut.sideCloseTask?.value
         #expect(sut.model.openSide == .players)
     }
@@ -823,7 +821,7 @@ struct StatusMenuControllerTests {
         sut.perform(.hoverSideRow(.players, true))
         await sut.sideOpenTask?.value
         #expect(sut.model.openSide == .players) // it opened, first
-        sut.perform(.pointerEntered(.settings))
+        sut.perform(.pointerEntered(.ignoredApps))
         await sut.sideCloseTask?.value
         #expect(sut.model.openSide == nil)
     }
@@ -970,88 +968,6 @@ struct StatusMenuControllerTests {
         #expect(side.isKeyWindow)
         #expect(sut.model.searchFocus == focus + 1)
         await TestWait.until { sut.model.playerSearch == "a" } // typed once
-    }
-
-    // MARK: - The settings
-
-    /// The menu open with the settings.
-    private func menuWithSettings() -> StatusMenuController {
-        let settingsModel = SettingsModel.forTests(actions: actions, updates: updates, settings: settings)
-        let sut = makeController(settingsModel: settingsModel)
-        sut.status = readyStatus()
-        reopen(sut)
-        return sut
-    }
-
-    @Test("the settings' switches always show, their other settings folded")
-    func moreSettings() {
-        let sut = menuWithSettings()
-        defer { sut.remove() }
-        #expect(parts(sut).contains("settings") && sut.model.unfoldedSettings.isEmpty)
-    }
-
-    @Test("the settings' title unfolds the rest, asking nothing of AutoHush")
-    func settingsUnfold() {
-        let sut = menuWithSettings()
-        defer { sut.remove() }
-        sut.perform(.toggleSettings(.settings))
-        #expect(sut.model.unfoldedSettings == [.settings])
-        #expect(log.calls.allSatisfy { $0 == "menuWillOpen" })
-    }
-
-    @Test("the settings unfolded stay as left when the menu opens again")
-    func settingsStayUnfolded() {
-        let sut = menuWithSettings()
-        defer { sut.remove() }
-        sut.perform(.toggleSettings(.settings))
-        reopen(sut)
-        #expect(sut.model.unfoldedSettings == [.settings]) // kept, unlike the players' list
-    }
-
-    @Test("folding, the rest of the settings fades out first")
-    func settingsFadeAsTheyFold() async {
-        let sut = menuWithSettings()
-        defer { sut.remove() }
-        sut.perform(.toggleSettings(.settings))
-        sut.perform(.toggleSettings(.settings))
-        #expect(sut.model.foldingSettings == [.settings]) // fading out, still there
-        await sut.foldTasks[.settings]?.value
-        #expect(sut.model.unfoldedSettings.isEmpty && sut.model.foldingSettings.isEmpty && sut.isMenuOpen)
-    }
-
-    @Test("a click on the title while the rest fades out keeps it")
-    func settingsKeptWhileFading() {
-        let sut = menuWithSettings()
-        defer { sut.remove() }
-        sut.perform(.toggleSettings(.settings))
-        sut.perform(.toggleSettings(.settings)) // fading out
-        sut.perform(.toggleSettings(.settings)) // clicked again meanwhile: it stays
-        #expect(sut.foldTasks[.settings] == nil)
-        #expect(sut.model.unfoldedSettings == [.settings] && sut.model.foldingSettings.isEmpty)
-    }
-
-    @Test("settings kept by a click while fading out fade out whole as they fold again")
-    func settingsFoldAgainWhole() async {
-        let sut = menuWithSettings()
-        defer { sut.remove() }
-        sut.perform(.toggleSettings(.settings))
-        sut.perform(.toggleSettings(.settings))
-        sut.perform(.toggleSettings(.settings)) // kept
-        sut.perform(.toggleSettings(.settings)) // folding again: its own fade, whole
-        #expect(sut.model.foldingSettings == [.settings] && sut.model.unfoldedSettings.contains(.settings))
-        await sut.foldTasks[.settings]?.value
-        #expect(sut.model.unfoldedSettings.isEmpty && sut.model.foldingSettings.isEmpty)
-    }
-
-    @Test("with Reduce Motion, the rest of the settings folds at once, without fading out")
-    func settingsFoldAtOnceWithReduceMotion() {
-        let sut = menuWithSettings()
-        defer { sut.remove() }
-        sut.reducesMotion = { true }
-        sut.perform(.toggleSettings(.settings))
-        #expect(sut.model.unfoldedSettings == [.settings])
-        sut.perform(.toggleSettings(.settings))
-        #expect(sut.model.unfoldedSettings.isEmpty && sut.model.foldingSettings.isEmpty)
     }
 
     @Test("the menu reads AntiDot mode live from the settings, so the players follow its switch in the menu at once")
@@ -1204,7 +1120,7 @@ struct StatusMenuControllerTests {
     func ignoredAppsSideWindow() {
         let (sut, _) = menuWithVLCIgnored()
         defer { sut.remove() }
-        #expect(parts(sut) == ["card", "mediaPlayer", "snooze", "playingNow", "ignoredApps", "toolbar"])
+        #expect(parts(sut) == ["card", "snooze", "playingNow", "ignoredApps", "toolbar"])
         #expect(sut.model.openSide == nil)
         sut.perform(.openSide(.ignoredApps))
         #expect(sut.model.openSide == .ignoredApps && sut.model.listedIgnoredApps == [vlc])
@@ -1260,7 +1176,7 @@ struct StatusMenuControllerTests {
         sut.status = status
         reopen(sut)
 
-        #expect(parts(sut).prefix(5) == ["card", "mediaPlayer", "Reopen AutoHush", "Use AntiDot Mode Instead", "snooze"])
+        #expect(parts(sut).prefix(4) == ["card", "Reopen AutoHush", "Use AntiDot Mode Instead", "snooze"])
         sut.perform(.reopenAutoHush)
         sut.perform(.useAntiDotMode)
         await TestWait.until { settings.state.detection == .playbackSignals }
@@ -1288,12 +1204,12 @@ struct StatusMenuControllerTests {
         #expect(settings.state.detection == .audioLevels)
     }
 
-    @Test("what opens a window or an alert closes the menu first; switches, folding and the side windows act at once")
+    @Test("what opens a window or an alert closes the menu first; switches and the side windows act at once")
     func closesMenuFirst() {
         for command: StatusMenuCommand in [.addApp, .addWebApp, .ignoreAnotherApp, .useAntiDotMode, .openSettings, .updates, .quit] {
             #expect(command.closesMenuFirst, "\(command)")
         }
-        for command: StatusMenuCommand in [.toggleAutoPause, .choosePlayer("x"), .toggleSettings(.settings), .openSide(.players), .retry] {
+        for command: StatusMenuCommand in [.toggleAutoPause, .choosePlayer("x"), .openSide(.players), .retry] {
             #expect(!command.closesMenuFirst, "\(command)")
         }
     }
@@ -1314,7 +1230,7 @@ struct StatusMenuControllerTests {
         let sut = menuNeedingAutomation()
         defer { sut.remove() }
         #expect(sut.status.statusLine == "Needs Automation access" && sut.status.missingPermission == .automation(player: "Jukebox"))
-        #expect(parts(sut).prefix(3) == ["card", "mediaPlayer", "snooze"]) // no row asking again
+        #expect(parts(sut).prefix(2) == ["card", "snooze"]) // no row asking again
     }
 
     @Test("the card's Allow… asks for the player's missing permission")
@@ -1334,7 +1250,7 @@ struct StatusMenuControllerTests {
         running.detection = .unavailable
         sut.status = running
         reopen(sut)
-        #expect(parts(sut).prefix(3) == ["card", "mediaPlayer", "Allow Audio Recording Access…"])
+        #expect(parts(sut).prefix(2) == ["card", "Allow Audio Recording Access…"])
     }
 
     @Test("once an update is found, a row above the toolbar shows it", arguments: [UpdateOffer.State.available, .downloaded, .installing])

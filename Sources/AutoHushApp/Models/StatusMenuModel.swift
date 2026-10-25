@@ -25,9 +25,6 @@ enum StatusMenuCommand: Equatable, Sendable {
     case addWebApp
     /// Picks apps to ignore (the ignored apps' side window).
     case ignoreAnotherApp
-    /// Shows or folds away a settings part's other settings (Detection's
-    /// ways and timings, the fades' lengths), under its switch.
-    case toggleSettings(MenuSettingsPart)
     /// Opens a part's side window (its row clicked), closing the other.
     case openSide(MenuSidePart)
     /// The pointer came onto (`true`) or left a row that opens a side
@@ -77,7 +74,7 @@ extension StatusMenuCommand {
              .reopenPlayer, .unmutePlayer, .quit:
             true
         case .toggleAutoPause, .setIgnored, .choosePlayer, .searchPlayers, .typeInSearch, .moveHighlight, .chooseHighlighted,
-             .toggleSettings, .openSide, .hoverSideRow, .pointerEntered, .retry, .retryResume:
+             .openSide, .hoverSideRow, .pointerEntered, .retry, .retryResume:
             false
         }
     }
@@ -97,26 +94,13 @@ enum MenuSection: Equatable {
     case reopenAutoHush
     /// Under Audio Recording's warning: AntiDot mode instead.
     case useAntiDot
-    /// The media player's row, under the card: it opens the players in a
-    /// side window.
-    case mediaPlayer
     case snooze
     case playingNow
     case recentlyPlayed
     case ignoredApps
-    /// The settings' switches under their sections' titles, the rest folded
-    /// (`MenuSettingsPart`).
-    case settings
     /// The update found, or being installed.
     case update
     case toolbar
-}
-
-/// What the menu folds away under its switches (F3, the user's pick,
-/// 2026-10-18): since S6 (the user, 2026-10-21) one part, the settings'
-/// sliders, AntiDot mode's ways and the silence threshold.
-enum MenuSettingsPart: Hashable, Sendable {
-    case settings
 }
 
 /// What the menu shows. Unlike the status, the apps listed are fixed while
@@ -153,13 +137,6 @@ final class StatusMenuModel {
     private var antiDotModeAtOpening = false
     /// Option is held: an added app's row removes it instead.
     var isOptionHeld = false
-    /// The settings parts whose other settings show: folded at first, then
-    /// each as the user left it, while AutoHush runs.
-    var unfoldedSettings: Set<MenuSettingsPart> = []
-    /// Unfolded parts whose other settings are fading out, before they
-    /// fold and the rows under them move up (the user, 2026-10-18), as they
-    /// came in after the move.
-    var foldingSettings: Set<MenuSettingsPart> = []
     /// Whether the ignored apps' side window is open, beside their row.
     var showsIgnoredApps = false
     /// The apps listed in the ignored apps' side window, fixed while it's
@@ -180,8 +157,6 @@ final class StatusMenuModel {
     var isCappedByScreen = false
     /// The same for the side window.
     var isSideCappedByScreen = false
-    /// The menu shows Detection's, Fades' and Advanced's settings.
-    var hasSettings = false
     /// An update check asked from the menu runs: its Updates button says so.
     var isCheckingForUpdates = false
     /// Try Again was clicked: VoiceOver hears the card's line once the start is
@@ -203,12 +178,14 @@ final class StatusMenuModel {
                        antiDotMode: isAntiDotMode, search: playerSearch)
     }
 
-    /// The menu's parts, in order: the card, the media player, a warning
-    /// and its fix (not the player's own missing permission, which the card
-    /// asks for), Turn off for, the apps playing and played, Ignored Apps,
-    /// the settings, the update found, and the buttons.
+    /// The menu's parts, in order: the card (with the media player's row,
+    /// H4, the user's pick, 2026-10-25), a warning and its fix (not the
+    /// player's own missing permission, which the card asks for), Turn off
+    /// for, the apps playing and played, Ignored Apps, the update found, and
+    /// the buttons. The settings are Settings' only (A1, the user's pick,
+    /// 2026-10-25).
     var sections: [MenuSection] {
-        var sections: [MenuSection] = [.card, .mediaPlayer]
+        var sections: [MenuSection] = [.card]
         if let warning = status.warning {
             if status.missingPermission == nil {
                 sections.append(status.offersReopen ? .reopenAutoHush : .warning(warning))
@@ -221,7 +198,6 @@ final class StatusMenuModel {
         if !listedRecentSources.isEmpty { sections.append(.recentlyPlayed) }
         // Always, so the first app to ignore can be added from the menu (the user, 2026-10-18).
         sections.append(.ignoredApps)
-        if hasSettings { sections.append(.settings) }
         if status.updateOffer != nil { sections.append(.update) }
         sections.append(.toolbar)
         return sections
@@ -235,7 +211,7 @@ enum MenuSidePart: Hashable {
     /// The menu's part its row is in.
     var section: MenuSection {
         switch self {
-        case .players: .mediaPlayer
+        case .players: .card
         case .ignoredApps: .ignoredApps
         }
     }

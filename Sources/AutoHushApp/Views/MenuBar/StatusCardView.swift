@@ -5,8 +5,9 @@ import AutoHushKit
 /// The card at the top of the menu, which stays put while the rest scrolls:
 /// the media player, what's happening and the Auto-Pause switch, then what
 /// AutoHush can do with the player, as Settings → General shows it
-/// (`PlayerChecks`, K3, the user's pick, 2026-10-18) (the player's choice is
-/// under it, `MenuMediaPlayerView`). The whole card is Auto-Pause's (the
+/// (`PlayerChecks`, K3, the user's pick, 2026-10-18), a web app's controls,
+/// and Change Player, which opens the players beside the menu
+/// (`CardPlayerRow`, H4, the user's pick, 2026-10-25). The whole card is Auto-Pause's (the
 /// user, 2026-10-18: "add that little accent color to the whole box. Also,
 /// a click on the box should toggle Auto-Pause"): the menu's highlight and
 /// the switch's focus tint all of it, and a click anywhere on it but on its
@@ -78,6 +79,9 @@ struct StatusCardView: View {
                     model.perform(.learnControls)
                 }
             }
+            // The players, beside the menu (H4, the user's pick, 2026-10-25).
+            CardDivider()
+            CardPlayerRow(model: model)
         }
         .contentShape(RoundedRectangle(cornerRadius: ClearGlassCard.cornerRadius, style: .continuous))
         .onTapGesture { model.perform(.toggleAutoPause) }

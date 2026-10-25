@@ -7,17 +7,17 @@ import Foundation
 enum AntiDotText {
     /// An app added with Add an App that can only be muted: why it couldn't
     /// be controlled (the menu's card), and why AntiDot mode is off while
-    /// it's the player (Settings → Detection).
+    /// it's the player (Settings → Behavior).
     static func onlyMuted(_ player: String) -> String {
         String(localized: "AutoHush can only mute \(player), and muting needs Audio Recording, which AntiDot mode doesn’t use.",
-               comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the menu; and Settings → Detection, under the AntiDot mode switch, dimmed while it's the player; %@ is the player")
+               comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the menu; and Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; %@ is the player")
     }
 
     /// An app added with Add an App whose Now Playing row doesn't show
     /// whether it plays, so only its sound tells: the same two places.
     static func onlyHeard(_ player: String) -> String {
         String(localized: "AutoHush needs Audio Recording to hear whether \(player) is playing.",
-               comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the menu; and Settings → Detection, under the AntiDot mode switch, dimmed while it's the player; %@ is the player")
+               comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the menu; and Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; %@ is the player")
     }
 
     /// Under a switch that needs sound measured (Level the volume), dimmed:

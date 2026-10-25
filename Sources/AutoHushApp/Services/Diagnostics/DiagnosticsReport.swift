@@ -85,7 +85,7 @@ enum DiagnosticsReport {
 
     private static func player(status: AppStatus, facts: DiagnosticsFacts,
                                ways: (String) -> [PlayerSetup.Way]?) -> DiagnosticsSnapshot.Section {
-        let title = MenuMediaPlayerView.title
+        let title = PlayerOption.mediaPlayerHeading
         guard let player = status.chosenPlayer else {
             let none = PlayerOption.noneChosenLabel
             return .init(kind: .player, title: title, summary: none,
@@ -197,7 +197,7 @@ enum DiagnosticsReport {
         if !antiDot {
             rows.append(Row(label: SettingsTiming.silenceThreshold.name, value: SettingsTiming.decibels(facts.timings.silenceThresholdDB)))
         }
-        return .init(kind: .detection, title: SettingsWindowController.Page.detection.title, summary: method, rows: rows)
+        return .init(kind: .detection, title: DetectionText.title, summary: method, rows: rows)
     }
 
     private static func permissions(facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
@@ -271,7 +271,7 @@ enum DiagnosticsReport {
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
                         Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
                         Row(label: MenuBarIconPlace.title, value: facts.keepsMenuBarIconNearSystemIcons ? on : off),
-                        Row(label: SettingsWindowController.Page.updates.title, value: updates),
+                        Row(label: UpdateOffer.updatesTitle, value: updates),
                         Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),
                      ])
     }

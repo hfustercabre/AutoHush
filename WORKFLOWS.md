@@ -32,12 +32,12 @@ flowchart TD
   R["Problems and recovery:<br/>the card says why,<br/>tried again by itself"]
   M["Monitoring and deciding:<br/>another app plays, the player<br/>fades out and pauses; it stops,<br/>the player fades back in"]
   ST["The player’s states"]
-  MENU["The menu bar menu: the card<br/>and Auto-Pause, the players,<br/>Turn off for, the apps playing<br/>and played, Ignored Apps,<br/>the settings' switches,<br/>the buttons (laid out in<br/>STYLE_GUIDE.md)"]
+  MENU["The menu bar menu: the card<br/>and Auto-Pause, Change Player<br/>(the players beside it), Turn<br/>off for, the apps playing and<br/>played, Ignored Apps, the<br/>buttons (laid out in<br/>STYLE_GUIDE.md)"]
   CH["Choose another player:<br/>it’s started afresh"]
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
-  SET["Settings: Sound Sources<br/>(ignore, remove, reset),<br/>Behavior (pausing, resuming,<br/>fades, volume), Detection<br/>(AntiDot mode, silence),<br/>Diagnostics"]
+  SET["Settings: Media Player,<br/>Sound Sources (ignore,<br/>remove, reset), Behavior<br/>(pausing, resuming, fades,<br/>volume, AntiDot mode,<br/>silence), Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])
@@ -378,7 +378,7 @@ AutoHush only ever resumes a pause it holds, and it keeps holding one across a c
 
 ```mermaid
 flowchart TD
-  ST(["Add a Web App…: the menu,<br/>Settings → General,<br/>the welcome window"])
+  ST(["Add a Web App…: the menu,<br/>Settings → Media Player,<br/>the welcome window"])
   SUG(["A tested site’s tile, not<br/>added yet: Spotify, YouTube<br/>Music, Amazon Music,<br/>Deezer, SoundCloud (while<br/>another is added, it asks<br/>first: Stop Adding)"])
   ADDR["Paste the website’s address<br/>(a tested site’s is filled in;<br/>Amazon Music: your<br/>account’s country)"]
   CHK{"A web address,<br/>and the site answers?"}
@@ -490,7 +490,7 @@ A web app can’t be scripted and has no playback menu, so AutoHush learns its P
 
 ```mermaid
 flowchart TD
-  ST(["Add an App…: after Other Apps<br/>in the menu, or the Add… tile<br/>in Settings → General or<br/>the welcome window"])
+  ST(["Add an App…: after Other Apps<br/>in the menu, or the Add… tile<br/>in Settings → Media Player<br/>or the welcome window"])
   KEPT{"A finished check<br/>kept from the last day?"}
   RES["Back at its last step,<br/>to choose a way and Use"]
   CHO["1 · Choose an App…: the apps<br/>that can play, Now Playing’s<br/>first, with a search (not Apple’s<br/>other apps, not supported players)"]
@@ -667,7 +667,7 @@ flowchart TD
   UTD["Up to date, or it<br/>couldn’t check: said<br/>only when you asked"]
   CAN{"Can this copy<br/>install it?"}
   HAND["By hand: Homebrew, or Open<br/>Release Page (a folder it can’t<br/>write to, or a copy signed<br/>with another certificate); the<br/>menu says AutoHush X Is Available…"]
-  MODE{"Settings → Updates:<br/>when an update<br/>is found"}
+  MODE{"Settings → About,<br/>Updates: when an<br/>update is found"}
   NOT["A notification; the icon’s<br/>arrow, Updates in the accent<br/>color, Install AutoHush in<br/>the menu"]
   DL["Downloaded (not in<br/>Low Data Mode), kept<br/>up to 7 days"]
   AI["Waits for a quiet moment:<br/>no pause held, no window<br/>or menu open"]
@@ -706,7 +706,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-Settings → Updates sets what happens when an update is found, and can turn the automatic checks off. Notifications are optional: without them every choice still works and the menu bar icon shows the update. Settings, permissions and any pause AutoHush held carry over to the new version.
+Updates, in Settings → About, sets what happens when an update is found, and can turn the automatic checks off. Notifications are optional: without them every choice still works and the menu bar icon shows the update. Settings, permissions and any pause AutoHush held carry over to the new version.
 
 ## Problems: when the player can’t start
 
@@ -749,7 +749,7 @@ What the menu’s card says when AutoHush can’t start controlling the player, 
 flowchart TD
   R(["Monitoring runs"])
   AUD["Audio Recording not allowed:<br/>it still works, as AntiDot mode<br/>does (its waits too): any open<br/>sound counts, so a paused video<br/>may keep the player paused"]
-  AUDF["Allow… in the menu or<br/>Detection; switched on in<br/>System Settings: Reopen<br/>AutoHush. Or AntiDot mode"]
+  AUDF["Allow… in the menu or<br/>Behavior; switched on in<br/>System Settings: Reopen<br/>AutoHush. Or AntiDot mode"]
   PF["A pause fails and can’t<br/>be muted (AntiDot mode, no<br/>Audio Recording): Couldn’t<br/>pause — Safari is playing,<br/>with ⓘ"]
   NPH["Now Playing hidden and<br/>couldn’t be shown: ⓘ offers<br/>Open Menu Bar Settings…"]
   DIAG["Settings → Diagnostics:<br/>what AutoHush sees, Last<br/>error, Copy Report (⌥ Option-<br/>click Settings in the menu);<br/>Choose…, Learn Controls… or<br/>Allow… beside a problem"]

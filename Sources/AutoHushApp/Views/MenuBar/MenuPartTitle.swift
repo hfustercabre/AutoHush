@@ -16,19 +16,3 @@ struct MenuPartTitle: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
-
-/// A section's title inside the menu's settings ("Pausing", "Modes"): a
-/// description's size, grey; a line between the sections (the user,
-/// 2026-10-21).
-struct MenuInnerTitle: View {
-    let title: Text
-
-    init(_ title: Text) { self.title = title }
-
-    var body: some View {
-        title
-            .font(.appCaption)
-            .foregroundStyle(.appSecondary)
-            .accessibilityAddTraits(.isHeader)
-    }
-}

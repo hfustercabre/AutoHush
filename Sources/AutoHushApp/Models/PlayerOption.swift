@@ -153,6 +153,19 @@ struct PlayerOption: Equatable, Identifiable {
     /// search over them (Settings shows every tile on a page that scrolls).
     static let searchThreshold = 8
 
+    /// "Media Player": the heading over the chosen player in Settings →
+    /// General and Diagnostics, atop the players' side window beside the
+    /// menu, and Settings' page with every player.
+    nonisolated static var mediaPlayerHeading: String {
+        String(localized: "Media Player", comment: "Settings → General, Diagnostics and the menu's side window of players: heading over the media player; also a Settings page in the sidebar, with every player to choose from (keep it short, about 16 characters: the word for player is enough)")
+    }
+
+    /// Where no player is chosen yet: Diagnostics' button beside “Player”
+    /// and Settings → General's beside “No player chosen”.
+    static var chooseLabel: String {
+        String(localized: "Choose…", comment: "Settings → Diagnostics' button beside “Player” while none is chosen or it's not installed, and Settings → General's beside “No player chosen”, which open Settings' Media Player page")
+    }
+
     /// Over the players that are apps, before the Safari web apps, wherever
     /// players are offered.
     static var supportedAppsHeading: String {

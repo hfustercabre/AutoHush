@@ -48,9 +48,6 @@ final class StatusMenuController: NSObject {
     static let sideCloseDelay: TimeInterval = 0.3
     private(set) var isMenuOpen = false
 
-    /// Each settings part's fold under way, while its other settings fade
-    /// out: another click on its title undoes it.
-    private(set) var foldTasks: [MenuSettingsPart: Task<Void, Never>] = [:]
     /// The side window opening once the pointer rests on its row, and
     /// closing once it stays on another part: each new move replaces it.
     var sideOpenTask: Task<Void, Never>?
@@ -106,7 +103,6 @@ final class StatusMenuController: NSObject {
         model = StatusMenuModel(status: status)
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
-        model.hasSettings = settingsModel != nil
         model.settings = settingsModel
         model.perform = { [weak self] in self?.perform($0) }
         if let button = statusItem.button {
@@ -367,41 +363,10 @@ final class StatusMenuController: NSObject {
         window.isVisible && window !== statusItemWindow && window.level != .statusBar
     }
 
-    /// Folds or unfolds a part of the menu, smoothly unless Reduce Motion is on.
-    func animated(_ change: () -> Void) {
-        withAnimation(reducesMotion() ? nil : MenuPanelView.animation, change)
-    }
-
-    /// How long a part's other settings take to fade out before it folds.
-    static let foldFade: TimeInterval = 0.15
-
-    /// Folds `part`: its other settings fade out first, then go as the rows
-    /// under them move up, so none overlap (the user, 2026-10-18). At once
-    /// with Reduce Motion.
-    private func fold(_ part: MenuSettingsPart) {
-        foldTasks[part]?.cancel()
-        guard !reducesMotion() else {
-            model.unfoldedSettings.remove(part)
-            return
-        }
-        withAnimation(.easeOut(duration: Self.foldFade)) { _ = model.foldingSettings.insert(part) }
-        let pause = pause
-        foldTasks[part] = Task { [weak self] in
-            await pause(Self.foldFade)
-            // Unfolded again meanwhile: another click cancelled it.
-            guard !Task.isCancelled, let self, self.model.foldingSettings.contains(part) else { return }
-            self.animated {
-                self.model.foldingSettings.remove(part)
-                self.model.unfoldedSettings.remove(part)
-            }
-            self.foldTasks[part] = nil
-        }
-    }
-
     // MARK: - Actions
 
-    /// What the menu's controls ask for. Switches, folding and the players'
-    /// search act at once and keep the menu open; what opens a window or an
+    /// What the menu's controls ask for. Switches and the players' search
+    /// act at once and keep the menu open; what opens a window or an
     /// alert closes it first, as a menu's rows do; choosing a player keeps
     /// it open (the user, 2026-10-18).
     func perform(_ command: StatusMenuCommand) {
@@ -430,17 +395,6 @@ final class StatusMenuController: NSObject {
             guard !model.sideKeyboard.press(), !model.playerSearch.isEmpty,
                   let id = model.players.choosable.first?.id else { return }
             perform(.choosePlayer(id))
-        case .toggleSettings(let part):
-            if model.foldingSettings.contains(part) {
-                // Clicked again while its settings fade out: they stay.
-                foldTasks[part]?.cancel()
-                foldTasks[part] = nil
-                withAnimation(.easeOut(duration: Self.foldFade)) { _ = model.foldingSettings.remove(part) }
-            } else if model.unfoldedSettings.contains(part) {
-                fold(part)
-            } else {
-                animated { _ = model.unfoldedSettings.insert(part) }
-            }
         case .openSide(let part):
             guard model.openSide != part else { return }
             open(part)

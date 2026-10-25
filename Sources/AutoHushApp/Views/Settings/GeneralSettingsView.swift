@@ -3,8 +3,9 @@ import SwiftUI
 import AutoHushKit
 
 /// Settings → General, a grouped form: the media player, with the
-/// Auto-Pause switch; every player as tiles, to choose another; then launch
-/// at login and where the menu bar icon goes.
+/// Auto-Pause switch and Change… (every player is on the Media Player page,
+/// W2, the user, 2026-10-25); then launch at login and where the menu bar
+/// icon goes.
 struct GeneralSettingsView: View {
     let model: SettingsModel
 
@@ -30,10 +31,6 @@ struct GeneralSettingsView: View {
     var body: some View {
         SettingsPageScroll {
             playerCard
-            PlayerTiles(options: model.offeredPlayers, selection: model.chosenPlayerID,
-                        onSelect: { model.actions?.choosePlayer($0.bundleID) }, onAddWebApp: { model.actions?.openAddWebApp() },
-                        onAddApp: { model.actions?.openAddApp() },
-                        onRemove: { model.actions?.removeAddedApp($0.bundleID) })
             Card(Text("Startup and Menu Bar", comment: "Settings → General: heading over the last section, with Launch at login and Keep icon next to system icons")) {
                 SwitchRow(Text("Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), isOn: Binding(
                     get: { model.launchAtLoginEnabled },
@@ -57,10 +54,11 @@ struct GeneralSettingsView: View {
     }
 
     /// The chosen player with what it's doing (with Reopen or Unmute, as
-    /// the menu's card has them) and what works; what it lacks and the way
-    /// to allow it; a web app's controls; then the Auto-Pause switch.
+    /// the menu's card has them) and what works, and Change… (Choose… while
+    /// none is chosen), which shows the Media Player page; what it lacks and
+    /// the way to allow it; a web app's controls; then the Auto-Pause switch.
     private var playerCard: some View {
-        Card(Text(verbatim: MenuMediaPlayerView.title)) {
+        Card(Text(verbatim: PlayerOption.mediaPlayerHeading)) {
             HStack(alignment: .center, spacing: 12) {
                 PlayerIcon(player: model.chosenPlayer, size: 56)
                 VStack(alignment: .leading, spacing: 2) {
@@ -89,7 +87,12 @@ struct GeneralSettingsView: View {
                     // What works: the permission the player needs, once allowed, and whether it fades.
                     PlayerChecks(model: model).padding(.top, 2)
                 }
-                Spacer(minLength: 0)
+                Spacer(minLength: 8)
+                Button { model.actions?.openSettings(page: .mediaPlayer) } label: {
+                    Text(verbatim: model.chosenPlayer == nil ? PlayerOption.chooseLabel : AddAppText.changeApp)
+                }
+                .buttonStyle(.chip)
+                .fixedSize()
             }
             // What the chosen player needs and lacks, and the way to allow it.
             if let control = model.permissions.control, !model.permissions.controlAccess.isSatisfied {

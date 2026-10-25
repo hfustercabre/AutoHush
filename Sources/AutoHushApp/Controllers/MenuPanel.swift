@@ -12,8 +12,7 @@ import SwiftUI
 /// then rounds its shadow and border with its corners. A borderless one got
 /// a square shadow, a dark line around its corners (2026-10-17).
 final class MenuPanel: NSPanel {
-    /// How long its height takes to follow its content (and the content's
-    /// parts to fold and unfold: `MenuPanelView.animation`).
+    /// How long its height takes to follow its content.
     static let resizeDuration: TimeInterval = 0.25
     static var cornerRadius: CGFloat {
         if #available(macOS 26, *) { 16 } else { 10 }

@@ -19,6 +19,12 @@ struct UpdateOffer: Equatable {
 }
 
 extension UpdateOffer {
+    /// AutoHush's updates: the menu's button, the heading over them in
+    /// Settings → About, and a Diagnostics row.
+    static var updatesTitle: String {
+        String(localized: "Updates", comment: "Menu toolbar button, Settings → About's heading over the update settings, and a Diagnostics row: AutoHush's updates")
+    }
+
     /// While a check runs: Settings' update status, and the menu's Updates
     /// button.
     static var checkingTitle: String {

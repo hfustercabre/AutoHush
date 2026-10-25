@@ -19,7 +19,7 @@ struct MenuSidePanelView: View {
                 switch model.openSide {
                 // Each title as far over its first row as Playing Now's is (the user, 2026-10-18).
                 case .players?:
-                    MenuPartTitle(Text(verbatim: MenuMediaPlayerView.title))
+                    MenuPartTitle(Text(verbatim: PlayerOption.mediaPlayerHeading))
                         .padding(.bottom, MenuSpacing.playingSpacing)
                     MenuPlayerListView(model: model)
                         .padding(.horizontal, 14)

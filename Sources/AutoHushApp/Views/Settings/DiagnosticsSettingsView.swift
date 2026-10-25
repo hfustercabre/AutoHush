@@ -164,7 +164,7 @@ struct DiagnosticsSettingsView: View {
     /// General's players, the card's Learn Controls…, a permission's Allow….
     private func perform(_ fix: DiagnosticsSnapshot.Row.Fix) {
         switch fix {
-        case .choosePlayer: model.actions?.openSettings(page: .general)
+        case .choosePlayer: model.actions?.openSettings(page: .mediaPlayer)
         case .learnControls: model.actions?.learnControlsAgain()
         case .allow(let permission): model.actions?.requestPermission(permission)
         }
@@ -172,7 +172,7 @@ struct DiagnosticsSettingsView: View {
 
     static func title(of fix: DiagnosticsSnapshot.Row.Fix) -> String {
         switch fix {
-        case .choosePlayer: MenuMediaPlayerView.chooseTitle
+        case .choosePlayer: PlayerOption.chooseLabel
         case .learnControls: LearningText.learnButton
         case .allow: AddAppText.allowButton
         }

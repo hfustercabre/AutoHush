@@ -57,7 +57,7 @@ enum AddAppText {
     }
 
     static var changeApp: String {
-        String(localized: "Change…", comment: "Add an App window: button under the step “Choose the app” once done, which chooses another app; also under “Play something” and the check’s step when the app can’t be found any more")
+        String(localized: "Change…", comment: "Add an App window: button under the step “Choose the app” once done, which chooses another app; also under “Play something” and the check’s step when the app can’t be found any more. Also Settings → General, beside the media player: opens the page with every player, to choose another")
     }
 
     /// The question Change… asks once the check has run (the user, 2026-10-18: "Ask first").
@@ -454,7 +454,7 @@ enum AddAppText {
 
     static var turnOffAntiDot: String {
         String(localized: "Turn Off AntiDot Mode",
-               comment: "Add an App window, button under the warning in the last step when no way that worked can be used in AntiDot mode: turns AntiDot mode off (Settings → Detection), so muting or a way only the app's sound tells can be used")
+               comment: "Add an App window, button under the warning in the last step when no way that worked can be used in AntiDot mode: turns AntiDot mode off (Settings → Behavior), so muting or a way only the app's sound tells can be used")
     }
 
     static var muteNeedsAudio: String {
