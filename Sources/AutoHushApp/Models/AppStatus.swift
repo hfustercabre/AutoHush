@@ -87,9 +87,22 @@ struct AppStatus: Equatable {
     /// Why the player couldn't be controlled, while that's what the menu
     /// says: a start that failed with an error, or a pause that failed.
     var controlError: ControlError?
+    /// Why the last resume was given up (no answer, or its play failed):
+    /// the card says "Couldn't resume" with Try Again (the user, 2026-10-25).
+    var resumeError: ControlError?
+    /// The card says the resume was given up: nothing else about the
+    /// player is more pressing (no pause under way or failed, no reopening).
+    var showsResumeFailure: Bool {
+        resumeError != nil && isReady && !playerNeedsReopen && playback != .pausedByMonitor && playback != .pauseFailed
+    }
     /// The alert the info button after the card's line opens: what failed
     /// as its title, the cause in words, then as the log has it.
     var controlErrorAlert: (title: String, message: String)? {
+        if showsResumeFailure, let resumeError {
+            return (String(localized: "Couldn’t Resume \(playerName)",
+                           comment: "Title of the alert that says why AutoHush couldn't resume the media player (it didn't answer, or its play failed); %@ is the player"),
+                    "\(resumeError.text)\n\n\(resumeError.detail)")
+        }
         guard let controlError else { return nil }
         let title = playback == .pauseFailed && isReady
             ? String(localized: "Couldn’t Pause \(playerName)",
@@ -116,6 +129,11 @@ struct AppStatus: Equatable {
     /// take, a start by itself, or a refused one): shown as muted, as an app
     /// that's only muted is.
     var playerMutedInstead = false
+    /// The player is muted now rather than paused: one that can only be
+    /// muted, or one muted in place of AutoHush's pause while it holds it.
+    /// The apps that interrupt it then say "Mutes your player" (the menu's
+    /// Playing Now, Settings → Sound Sources), as the card says "Muted".
+    var mutesNow: Bool { playerMutes || (playerMutedInstead && playback == .pausedByMonitor) }
     /// Only the player's sound tells how it is (`PlayerOption.needsAudioLevels`).
     var playerNeedsLevels: Bool { chosenPlayer?.needsAudioLevels ?? false }
 
@@ -167,7 +185,8 @@ struct AppStatus: Equatable {
     /// The health's look until ready, the playback state's once ready.
     private var presentation: StatePresentation {
         health.presentation ?? (playerNeedsReopen ? .needingAttention(Self.needsReopenLine(playerName))
-            : (playerMutes || playerMutedInstead) && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name), microphone: onlyMicrophone)
+            : showsResumeFailure ? .needingAttention(Self.resumeFailedLine(playerName))
+            : mutesNow && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name), microphone: onlyMicrophone)
             : playerHeldForCheck && playback == .pausedByMonitor ? .heldForCheck
             : playback.presentation(playing: pausingSources.map(\.name), microphone: onlyMicrophone))
     }
@@ -179,6 +198,12 @@ struct AppStatus: Equatable {
 
     /// The card offers Unmute: the player is muted for other apps.
     var offersUnmute: Bool { isReady && playerMutes && playback == .pausedByMonitor }
+
+    /// The status line once a resume was given up.
+    static func resumeFailedLine(_ player: String) -> String {
+        String(localized: "Couldn’t resume — \(player) didn’t answer",
+               comment: "Status line at the top of the menu (orange, with an info button and Try Again under it) and on Settings → General's player card: AutoHush tried to resume the media player once the other apps stopped, and it didn't answer (or its play failed); %@ is the player")
+    }
 
     /// The status line while the player needs reopening.
     static func needsReopenLine(_ player: String) -> String {
@@ -210,6 +235,7 @@ struct AppStatus: Equatable {
         switch health {
         case .starting, .playerClosed:                           return false
         case .ready:                                             return playerNeedsReopen || (playback == .pauseFailed && autoPause == .on)
+                                                                    || showsResumeFailure
         case .needsPlayer, .degraded, .retrying, .needsPermission, .failed: return true
         }
     }

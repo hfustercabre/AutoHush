@@ -133,6 +133,12 @@ extension PlayerSession {
         monitoring?.setAsleep(asleep)
     }
 
+    /// Try Again on the menu's "Couldn't resume": the resume once more.
+    func retryResume() {
+        guard !hasQuit else { return }
+        monitoring?.retryResume()
+    }
+
     /// Listens to the chosen player as the menu opens, so the menu says at
     /// once whether it plays silently (the user, 2026-10-24).
     func checkPlayerHeard() {

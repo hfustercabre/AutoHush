@@ -108,6 +108,16 @@ extension PlaybackArbiter {
             publishPlaybackState()
             return
         }
+        // Still no answer after its tries: given up, and the menu says so
+        // with Try Again (the user, 2026-10-25).
+        if currentState == .unknown {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) didn’t answer — the resume is given up")
+            pausedByUs = false
+            putBackResumeLevel()
+            resumeFailure = .playerNotResponding
+            publishPlaybackState()
+            return
+        }
         // Said playing, yet not heard through the pause (a player's trailers
         // that report no state and keep its output open): it's still paused.
         let pausedUnheard = currentState == .playing && hearingDuringPause == .silent
@@ -166,6 +176,10 @@ extension PlaybackArbiter {
                 scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
             } else {
                 putBackResumeLevel() // given up
+                // Its tries done, with nothing playing to pause it again: the menu says so.
+                if retriesLeft == 0, !isShutDown, !isAsleep, activeSources.isEmpty || !autoPauseEnabled {
+                    resumeFailure = error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed)
+                }
             }
         }
         publishPlaybackState()

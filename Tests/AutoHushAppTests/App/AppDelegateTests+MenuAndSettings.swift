@@ -94,6 +94,24 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("a given-up resume reaches the menu's card, its Try Again reaches the monitoring, and it's forgotten as the monitoring stops")
+    func givenUpResumeShown() async throws {
+        let (sut, monitorings) = makeSUT()
+        await start(sut)
+        let monitoring = monitorings.made[0]
+        monitoring.send(.playback(.musicIdle))
+        monitoring.send(.resumeFailure(.playerNotResponding))
+        #expect(sut.status.showsResumeFailure)
+        #expect(sut.status.statusLine.hasPrefix("Couldn’t resume — "))
+        let menu = try statusMenu(sut)
+        defer { menu.remove() }
+        menu.perform(.retryResume)
+        #expect(monitoring.resumeRetries == 1)
+        monitoring.send(.resumeFailure(nil))
+        #expect(!sut.status.showsResumeFailure)
+    }
+
+    @MainActor
     @Test("the menu card's chips reach the player itself: Unmute plays it, Reopen reopens it")
     func menuReachesPlayer() async throws {
         let scratch = Scratch()

@@ -38,6 +38,8 @@ enum StatusMenuCommand: Equatable, Sendable {
     case pointerEntered(MenuSection)
     /// Tries starting again after a failed start.
     case retry
+    /// Tries the resume that was given up again (`AppStatus.showsResumeFailure`).
+    case retryResume
     /// Reopens the player as it needs to be opened (`AppStatus.playerNeedsReopen`).
     case reopenPlayer
     /// Lifts the mute of a player that's muted instead of paused, until the
@@ -75,7 +77,7 @@ extension StatusMenuCommand {
              .reopenPlayer, .unmutePlayer, .quit:
             true
         case .toggleAutoPause, .setIgnored, .choosePlayer, .searchPlayers, .typeInSearch, .moveHighlight, .chooseHighlighted,
-             .toggleSettings, .openSide, .hoverSideRow, .pointerEntered, .retry:
+             .toggleSettings, .openSide, .hoverSideRow, .pointerEntered, .retry, .retryResume:
             false
         }
     }

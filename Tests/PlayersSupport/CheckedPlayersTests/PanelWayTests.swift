@@ -201,4 +201,15 @@ struct PanelWayTests {
                            shown: { _ in PanelWay.Shown(titles: ["Jukebox"], otherApps: ["Finder"], holdsNowPlaying: true) }).pause()
         #expect(once.pressed == ["Something, Else – Entirely"] && once.openings == 1)
     }
+
+    @Test("a quiet pause (pressed again while AutoHush mutes the app) never shows the Now Playing panel; a plain pause does")
+    func quietPauseSkipsPanel() async throws {
+        let panel = FakePanel(rows)
+        let player = CheckedPlayer(setup: setup, parts: .init(ways: [way(panel, store: MemorySetupStore())], signs: []), reports: nil,
+                                   processIdentifier: { 4242 }, pressSleep: { _ in }, audioRecordingAllowed: { true })
+        await #expect(throws: (any Error).self) { try await player.pauseQuietly() }
+        #expect(panel.pressed.isEmpty)
+        try await player.pause()
+        #expect(panel.pressed == ["Song, Artist – Album"])
+    }
 }

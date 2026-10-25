@@ -304,17 +304,24 @@ package actor CheckedPlayer: AddedAppPlayer {
         try await press(to: .playing)
     }
 
+    /// By its ways that show nothing: never the Now Playing panel, which
+    /// shows on screen and takes the keyboard.
+    package func pauseQuietly() async throws {
+        try await press(to: .paused, quietly: true)
+    }
+
     /// Presses by the first way that takes it, checked as that way allows
     /// (`sureState`; a page and a toggle judged by another sign check their
     /// own; with no sure sign at all, not checked): a way that fails, or
-    /// whose press doesn't take, hands it to the next, the panel last.
-    private func press(to target: PlayerState) async throws {
+    /// whose press doesn't take, hands it to the next, the panel last
+    /// (`quietly`: not the panel).
+    private func press(to target: PlayerState, quietly: Bool = false) async throws {
         var firstError: any Error?
         // A sign that says nothing now (a Now Playing report of Unknown:
         // Apple TV's trailers) would only be waited on: not checked then.
         var checkable = !parts.signs.isEmpty || reports != nil
         if checkable { checkable = await sureState() != .unknown }
-        for way in parts.ways {
+        for way in parts.ways where !(quietly && way is PanelWay) {
             do {
                 if way.checksItsPresses || !checkable {
                     if target == .playing { try await way.play() } else { try await way.pause() }
@@ -383,6 +390,11 @@ package actor CheckedPlayer: AddedAppPlayer {
         parts.page?.allowTaps(allowed)
         guard !allowed, let page = parts.page else { return }
         Task { await page.releaseMute() }
+    }
+
+    /// Its page's mute, standing for a pause.
+    package func isMutedForPause() async -> Bool {
+        await parts.page?.isMutedForPause() ?? false
     }
 
     /// Its page's (an ad its site won't pause, its button saying "Play"

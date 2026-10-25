@@ -53,6 +53,14 @@ actor PlaybackArbiter: PlaybackArbiting {
     var pauseFailure: MusicPlayerError? {
         didSet { if pauseFailure != oldValue { onPauseFailure(pauseFailure) } }
     }
+    /// The last resume got no answer from the player, or its play failed,
+    /// after its tries: the menu says so with Try Again (`retryResume`; the
+    /// user, 2026-10-25). Over once an app starts, the player says how it
+    /// is, or Try Again.
+    var resumeFailure: MusicPlayerError? {
+        didSet { if resumeFailure != oldValue { onResumeFailure(resumeFailure) } }
+    }
+    private let onResumeFailure: @Sendable (MusicPlayerError?) -> Void
     var publishedAudioLevelsNeeded: Bool?
     let logger = AutoHushLogger(category: "PlaybackArbiter")
 
@@ -230,6 +238,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         volumeLeveler: any ResumeLeveling? = nil,
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
         onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
+        onResumeFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
         hearsPlayer: @escaping @Sendable (_ listening: Bool, _ since: Date?) async -> PlayerHearing = { _, _ in .unknown },
         inputToPlayer: @escaping @Sendable (Date) -> Bool = { _ in true },
         onMutedInsteadChange: @escaping @Sendable (Bool) -> Void = { _ in },
@@ -253,6 +262,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.volumeLeveler = volumeLeveler
         self.resumeOffset = resumeOffset
         self.onPauseFailure = onPauseFailure
+        self.onResumeFailure = onResumeFailure
         self.hearsPlayer = hearsPlayer
         self.inputToPlayer = inputToPlayer
         self.onMutedInsteadChange = onMutedInsteadChange
@@ -265,6 +275,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         guard !isShutDown, configuration.isMediaSource(sourceID) else { return }
 
         if isPlaying {
+            resumeFailure = nil // a new pause for this app, if any
             if let heardSince { latestStart = (heardSince, clock()) }
             // With auto-pause off, music we paused comes back regardless.
             if autoPauseEnabled { cancelPendingResume() }
@@ -414,6 +425,9 @@ actor PlaybackArbiter: PlaybackArbiting {
             cancelPendingPause()
             cancelPendingResume()
             if pausedByUs {
+                // Muted in place of the pause: paused for real first, so it
+                // wakes paused, as any pause held then (the user, 2026-10-25).
+                if mutedForRestart { try? await player.pause() }
                 pausedByUs = false
                 forgotPauseInSleep = true
                 logger.info("[arbiter] the Mac sleeps: \(self.player.name, privacy: .public) stays paused")
@@ -495,6 +509,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// `.unknown` carries no information and is ignored.
     func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
+        resumeFailure = nil // it answers: the user may have played or paused it
         if state != .playing { playsSilently = false }
         noteStoppedPlaying(state)
         if state != .playing { pauseFailure = nil } // the user paused or stopped it
@@ -618,6 +633,35 @@ actor PlaybackArbiter: PlaybackArbiting {
         case .unknown:
             break
         }
+    }
+
+    /// Try Again on the menu's "Couldn't resume": the resume once more, with
+    /// its tries, as long as no other app plays.
+    func retryResume() {
+        guard !isShutDown, resumeFailure != nil else { return }
+        resumeFailure = nil
+        guard !isAsleep, activeSources.isEmpty || !autoPauseEnabled else { return }
+        logger.info("[arbiter] the user asked to try resuming \(self.player.name, privacy: .public) again")
+        pausedByUs = true
+        publishPlaybackState()
+        scheduleResume(after: nil)
+    }
+
+    /// AntiDot mode turned on (`allowed` false), which promises no audio taps:
+    /// a mute standing for the pause is lifted at once, the player paused
+    /// for real first, still AutoHush's pause (the user, 2026-10-25).
+    func setTapsAllowed(_ allowed: Bool) async {
+        guard !allowed, !isShutDown, mutedForRestart || muteKeptInPause else { return }
+        if mutedForRestart { try? await player.pause() }
+        guard !isShutDown else { return }
+        mutedForRestart = false
+        muteKeptInPause = false
+        pausePressedWhileMuted = nil
+        await playerMute?.unmute()
+        playerState = .paused
+        hearingDuringPause = .silent
+        // Still paused by AutoHush, as shown; the Muted note goes with mutedForRestart.
+        logger.info("[arbiter] AntiDot mode: \(self.player.name, privacy: .public) paused, and no longer muted")
     }
 
     /// Listens to the player when the menu opens, so it says at once whether

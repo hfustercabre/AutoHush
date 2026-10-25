@@ -565,7 +565,7 @@ enum AddAppText {
     }
 
     static var blockedDetail: String {
-        String(localized: "The screen dims except the progress panel. Escape or Stop ends the check, and they work again whenever AutoHush asks you something.",
+        String(localized: "The screen dims except the progress panel. Escape or Stop ends the check; the mouse and keyboard work again whenever AutoHush asks you something.",
                comment: "The window shown before a check starts, under “Mouse and keyboard are blocked”")
     }
 

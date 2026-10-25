@@ -19,16 +19,28 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **A pause that doesn't work becomes a mute.** A player still heard after
   AutoHush's pause, or heard again (an autoplay, the next trailer, an ad),
   is muted until the other apps stop (with Audio Recording; not in AntiDot
-  mode), the menu saying **Muted**; so is one that refuses to pause. It's yours only when it was silent and is heard
-  again within 3 seconds of a key press or click in it (not the one that
-  brings it forward), or a media key.
-  Muted, it's listened to every second: once it's silent (it paused itself)
-  it counts as paused, kept muted until it plays again; while it's heard,
-  its pause is tried again every 2 seconds. Nothing is taken as yours while it's muted, or once no
-  other app plays. Its sound decides: a "playing" report while nothing of it
-  is heard changes nothing.
+  mode), the menu saying **Muted** and the playing app **Mutes your
+  player**; so is one that refuses to pause. It's yours only when it was
+  silent and is heard again within 3 seconds of a key press or click in it
+  (not the one that brings it forward); media keys don't count, as macOS
+  sends them to the app playing. Muted, it's listened to every second: once
+  it's silent (it paused itself) it counts as paused, kept muted until it
+  plays again; silent within 3 seconds of your key press or click in it,
+  it's your pause, unmuted and not resumed. While it's heard, its pause is
+  tried again every 2 seconds, never through the Now Playing panel. The Mac
+  going to sleep, or AntiDot mode turned on, pauses it for real, then
+  unmutes it. A player whose pause is a mute already (Mute It Instead, a
+  web app during an ad) keeps its own. Nothing is taken as yours once no
+  other app plays. Its sound decides: a "playing" report while nothing of
+  it is heard changes nothing.
 - **The player starting while another app plays** is paused, as at the
-  app's start, unless you started it.
+  app's start, unless a key press or click in it came within 3 seconds
+  before.
+- **Couldn't resume.** When your player doesn't answer AutoHush's resume
+  (asked three times, a second apart), or won't play, the menu says
+  **Couldn't resume — Spotify didn't answer** in orange, with **Try Again**
+  under it and an ⓘ that tells why. It goes once another app plays or the
+  player answers.
 - **AutoHush's menu bar icon starts beside the system's icons** (Control
   Center, the clock), where the notch or other apps' icons don't hide it:
   once, unless you've already moved it. **Keep icon next to system icons**
@@ -62,6 +74,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Settings → General's last card** has a title, **Startup and Menu Bar**,
+  so it no longer reads as part of the Safari Web Apps.
+- **macOS's Audio Recording prompt** says AutoHush measures your player
+  too, and mutes what's heard: "AutoHush measures how loud your player and
+  other apps are, to pause or mute only what's heard."
 - **Updating from 0.12.1 or earlier takes one install by hand.** AutoHush
   is now signed with an Apple developer certificate, because macOS runs an
   app's Shortcuts actions only when a developer team signed it. Copies

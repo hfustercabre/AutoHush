@@ -78,6 +78,14 @@ final class SettingsModel {
         _ = state.statusLine
         return state.autoPause == .on && state.status.offersUnmute
     }
+    /// The chosen player is muted now rather than paused (`AppStatus.mutesNow`):
+    /// Sound Sources' apps say "Mutes your player". Followed through the
+    /// chosen player (one that can only be muted) and, as `offersReopenPlayer`
+    /// is, the status line, which says "Muted — …" while it's muted instead.
+    var playerMutesNow: Bool {
+        _ = (state.chosenPlayer, state.statusLine)
+        return state.status.mutesNow
+    }
     var isAutoPauseOn: Bool { state.autoPause == .on }
     /// E.g. "Turned off until 15:30.", shown under the auto-pause switch.
     var autoPauseNote: String? { state.autoPause.settingsNote }

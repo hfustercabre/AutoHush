@@ -14,6 +14,8 @@ protocol SessionMonitoring: HeldMonitoring {
     func activeAudioReport() -> [ActiveAudioReport.Entry]
     /// Listens to the player: see `MonitoringPipeline.checkPlayerHeard`.
     func checkPlayerHeard()
+    /// Try Again on "Couldn't resume": see `MonitoringPipeline.retryResume`.
+    func retryResume()
 }
 
 extension MonitoringPipeline: SessionMonitoring {}
@@ -43,6 +45,9 @@ final class PlayerSession {
         /// The player is muted in place of AutoHush's pause (one that didn't
         /// take, a start by itself, or a refused one): the menu says Muted.
         var mutedInstead = false
+        /// Why the last resume was given up (no answer, or its play failed),
+        /// while the menu says so with Try Again.
+        var resumeError: ControlError?
     }
 
     /// What a new monitoring starts with.

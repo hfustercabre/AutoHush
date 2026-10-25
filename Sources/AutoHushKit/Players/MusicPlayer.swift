@@ -49,6 +49,11 @@ package protocol MusicPlayer: Sendable {
     /// silently, just not known to play.
     func statesItself() async -> Bool
 
+    /// Its pause by a way that shows nothing on screen: pressed again while
+    /// it's muted in place of a pause, every couple of seconds (the user,
+    /// 2026-10-25: never the Now Playing panel). Its plain pause by default.
+    func pauseQuietly() async throws
+
     /// The player's own volume, 0–100, or `nil` when it can't be read.
     /// Fades need it; players without one pause and play without fading.
     func volume() async -> Int?
@@ -104,6 +109,7 @@ extension MusicPlayer {
     package var ownWordsRead: Bool? { nil }
     package var checksItsPresses: Bool { false }
     package func statesItself() async -> Bool { true }
+    package func pauseQuietly() async throws { try await pause() }
     package func release() async {}
     package var releasesOnQuit: Bool { false }
     package var pausesByMuting: Bool { false }
@@ -234,6 +240,13 @@ package protocol MutingMusicPlayer: MusicPlayer {
     /// Lifts a mute `muteIfPlayingAnyway` left, without playing anything:
     /// once AutoHush no longer watches it (its monitoring stopped).
     func releaseMute() async
+    /// Whether its pause is a mute of its own now (a web page during an ad
+    /// its site won't pause): AutoHush leaves it to that mute.
+    func isMutedForPause() async -> Bool
+}
+
+extension MutingMusicPlayer {
+    package func isMutedForPause() async -> Bool { false }
 }
 
 /// How far a `LearningMusicPlayer` has come.

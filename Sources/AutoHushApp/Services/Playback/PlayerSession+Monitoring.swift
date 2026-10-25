@@ -51,6 +51,8 @@ extension PlayerSession {
             state.controlError = error.map { ControlError($0, player: player?.name ?? "") }
         case .mutedInstead(let muted):
             state.mutedInstead = muted
+        case .resumeFailure(let error):
+            state.resumeError = error.map { ControlError($0, player: player?.name ?? "") }
         }
     }
 
@@ -93,6 +95,7 @@ extension PlayerSession {
         stopped.playback = .unknown
         stopped.detection = .pending
         stopped.mutedInstead = false
+        stopped.resumeError = nil
         state = stopped
     }
 

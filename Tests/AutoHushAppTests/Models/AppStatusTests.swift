@@ -21,6 +21,20 @@ struct AppStatusTests {
         return status
     }
 
+    @Test("a given-up resume says “Couldn’t resume”, its alert why; not while a pause holds or fails")
+    func resumeGivenUp() {
+        var status = ready(.musicIdle)
+        status.resumeError = ControlError(MusicPlayerError.playerNotResponding, player: "Jukebox")
+        #expect(status.showsResumeFailure && status.needsAttention) // orange, as Couldn't pause
+        #expect(status.statusLine == "Couldn’t resume — Jukebox didn’t answer")
+        #expect(status.controlErrorAlert?.title == "Couldn’t Resume Jukebox")
+        #expect(status.controlErrorAlert?.message.hasPrefix("Jukebox isn’t responding.") == true)
+        status.playback = .pausedByMonitor // paused again for another app
+        status.setActiveSources([safari])
+        #expect(!status.showsResumeFailure && !status.needsAttention)
+        #expect(status.statusLine == "Paused — Safari is playing")
+    }
+
     @Test("a player muted instead of paused says “Muted”, with Unmute, while another app plays; one held for a check says so")
     func muted() {
         var status = ready(.pausedByMonitor)
@@ -51,6 +65,20 @@ struct AppStatusTests {
         #expect(status.icon == .pausedForApp && !status.offersUnmute)
         status.playerMutedInstead = false
         #expect(status.statusLine == "Paused — Google Chrome is playing")
+    }
+
+    @Test("while the player is muted in place of the pause, the apps that interrupt it say “Mutes your player”; “Pauses” again once it's over")
+    func mutesNow() {
+        var status = ready(.pausedByMonitor)
+        status.setActiveSources([chrome])
+        #expect(!status.mutesNow)
+        status.playerMutedInstead = true
+        #expect(status.mutesNow && PlayerOption.interruptsLabel(mutes: status.mutesNow) == "Mutes your player")
+        status.playback = .musicIdle // the mute's flag alone, once AutoHush no longer holds a pause
+        #expect(!status.mutesNow && PlayerOption.interruptsLabel(mutes: status.mutesNow) == "Pauses your player")
+        status.playerMutedInstead = false
+        status.playerOptions[0].pausesByMuting = true // one that can only be muted, whatever it does
+        #expect(status.mutesNow)
     }
 
     @Test("a player opened without what it needs says so, with the attention icon, whatever Auto-Pause is")

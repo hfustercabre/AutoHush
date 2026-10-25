@@ -409,6 +409,130 @@ extension PlaybackArbiterTests {
         #expect(scheduler.scheduledDelays.count == PlaybackArbiter.resumeRetries)
     }
 
+    @Test("a resume the player never answers is given up and said so; Try Again resumes it; an app starting or the player answering ends it")
+    func givenUpResumeSaidAndRetried() async {
+        let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      onResumeFailure: { failures.append($0) })
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        for attempt in 1...PlaybackArbiter.resumeRetries {
+            await TestWait.until { scheduler.scheduledDelays.count == attempt }
+            await scheduler.completeNext()
+        }
+        await TestWait.until { failures.value == [.playerNotResponding] }
+        #expect(await arbiter.pausedByUs == false)
+
+        await arbiter.retryResume() // it answers now: paused, so it's played
+        await TestWait.until { await player.playCallCount == 1 }
+        #expect(failures.value == [.playerNotResponding, nil])
+
+        await arbiter.retryResume() // nothing to try again
+        #expect(failures.value == [.playerNotResponding, nil])
+    }
+
+    @Test("a given-up resume is over once another app starts, or the player says how it is")
+    func givenUpResumeEnds() async {
+        for byApp in [true, false] {
+            let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
+            let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                          onResumeFailure: { failures.append($0) })
+            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+            await arbiter.waitForPause()
+            await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
+            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            for attempt in 1...PlaybackArbiter.resumeRetries {
+                await TestWait.until { scheduler.scheduledDelays.count == attempt }
+                await scheduler.completeNext()
+            }
+            await TestWait.until { failures.value.count == 1 }
+            if byApp {
+                await arbiter.sourceChanged("com.apple.Safari", playing: true)
+            } else {
+                await arbiter.handlePlayerStateChange(.playing)
+            }
+            #expect(failures.value == [.playerNotResponding, nil])
+            await arbiter.waitUntilIdle()
+        }
+    }
+
+    @Test("a resume whose play keeps failing is given up after its tries and said so")
+    func failedPlaySaid() async {
+        let player = MockMusicPlayer(failPlayWith: MusicPlayerError.playerCommandFailed(.pressIgnored))
+        let scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      onResumeFailure: { failures.append($0) })
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        for attempt in 1...PlaybackArbiter.resumeRetries {
+            await TestWait.until { scheduler.scheduledDelays.count == attempt }
+            await scheduler.completeNext()
+        }
+        await TestWait.until { failures.value == [.playerCommandFailed(.pressIgnored)] }
+    }
+
+    @Test("a given-up resume ends AutoHush's pause as it's said, and a play failing on its last try while an app starts says nothing")
+    func givenUpResumeDetails() async {
+        let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), byUs = Locked<[Bool]>([])
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      onPausedByUsChange: { byUs.append($0) })
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        for attempt in 1...PlaybackArbiter.resumeRetries {
+            await TestWait.until { scheduler.scheduledDelays.count == attempt }
+            await scheduler.completeNext()
+        }
+        await TestWait.until { byUs.value.last == false }
+
+        let failing = MockMusicPlayer(failPlayWith: MusicPlayerError.playerCommandFailed(.pressIgnored))
+        let failures = Locked<[MusicPlayerError?]>([]), other = ManualDebounceScheduler()
+        let second = PlaybackArbiter(player: failing, configuration: .testing, debounceScheduler: other,
+                                     onResumeFailure: { failures.append($0) })
+        await failing.setBeforePlay {
+            if await failing.playCallCount == PlaybackArbiter.resumeRetries + 1 {
+                await second.sourceChanged("com.apple.Safari", playing: true) // an app starts meanwhile
+            }
+        }
+        await second.sourceChanged("org.videolan.vlc", playing: true)
+        await second.waitForPause()
+        await second.sourceChanged("org.videolan.vlc", playing: false)
+        for attempt in 1...PlaybackArbiter.resumeRetries {
+            await TestWait.until { other.scheduledDelays.count == attempt }
+            await other.completeNext()
+        }
+        await TestWait.until { await failing.playCallCount == PlaybackArbiter.resumeRetries + 1 }
+        await second.waitUntilIdle()
+        #expect(!failures.value.contains(.playerCommandFailed(.pressIgnored)))
+    }
+
+    @Test("Try Again while an app plays again (Auto-Pause back on) doesn't resume")
+    func retryResumeWhileAppPlays() async {
+        let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
+        let published = LastPublished()
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      onPlaybackStateChange: { published.set($0) }, onResumeFailure: { failures.append($0) })
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitForPause()
+        await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
+        await arbiter.setAutoPauseEnabled(false) // resumed at once, the app still playing
+        for attempt in 1...PlaybackArbiter.resumeRetries {
+            await TestWait.until { scheduler.scheduledDelays.count == attempt }
+            await scheduler.completeNext()
+        }
+        await TestWait.until { failures.value == [.playerNotResponding] }
+        await arbiter.setAutoPauseEnabled(true) // its pause waits for the app to be measured again
+        await arbiter.retryResume()
+        await arbiter.waitUntilIdle()
+        #expect(await player.playCallCount == 0)
+        #expect(published.state != .pausedByMonitor) // no pause held for it: the app's pause comes as usual
+        #expect(failures.value == [.playerNotResponding, nil])
+    }
+
     @Test("a resume whose command doesn't take is tried again")
     func retriesFailedResume() async {
         let player = MockMusicPlayer()

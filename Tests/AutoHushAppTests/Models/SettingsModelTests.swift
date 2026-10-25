@@ -115,6 +115,16 @@ struct SettingsModelTests {
         #expect(model.antiDotUnavailableFor == nil && model.playerCanFade && !model.state.status.playerMutes)
     }
 
+    @Test("Sound Sources' apps say “Mutes your player” while the chosen player is muted in place of the pause")
+    func playerMutesNow() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Radio")
+        model.state.status.playback = .pausedByMonitor
+        #expect(!model.playerMutesNow)
+        model.state.status.playerMutedInstead = true
+        #expect(model.playerMutesNow)
+    }
+
     @Test("the chosen player checked again to be muted (the same app) has AntiDot mode's switch off at once")
     func chosenPlayerTraitsFollowed() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))

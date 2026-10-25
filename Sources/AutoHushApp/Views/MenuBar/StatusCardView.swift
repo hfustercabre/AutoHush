@@ -29,7 +29,7 @@ struct StatusCardView: View {
                         .lineLimit(1)
                     // What's happening. When the player couldn't be controlled,
                     // an info symbol ends it, and a click on it tells why.
-                    if status.controlError != nil {
+                    if status.controlError != nil || status.showsResumeFailure {
                         Button { model.perform(.showControlError) } label: { statusLine(withInfo: true) }
                             .buttonStyle(.plain)
                             .modifier(HighlightableControl(cornerRadius: 6, press: { model.perform(.showControlError) }))
@@ -40,6 +40,9 @@ struct StatusCardView: View {
                         statusLine(withInfo: false)
                     }
                     if status.canRetry { retryButton }
+                    if status.showsResumeFailure {
+                        CardChip(title: Text(TryAgainText.title), symbol: "arrow.clockwise") { model.perform(.retryResume) }
+                    }
                     if let missing = status.missingPermission { allowButton(missing) }
                     PlayerFixButtons(player: status.playerName,
                                      reopen: status.playerNeedsReopen && status.isReady ? { model.perform(.reopenPlayer) } : nil,

@@ -28,16 +28,6 @@ struct PlayerInputTests {
         { times[$0] ?? .infinity }
     }
 
-    @Test("a media key is the last system-defined event, unless a mouse button's came at that moment")
-    func mediaKeys() {
-        let now = front, key = UserInput.systemDefined
-        #expect(UserInput.lastMediaKey(now: now, secondsSince: ago([key: 2])) == now.addingTimeInterval(-2))
-        #expect(UserInput.lastMediaKey(now: now, secondsSince: ago([key: 2, .leftMouseUp: 2.02])) == nil) // the button's
-        #expect(UserInput.lastMediaKey(now: now, secondsSince: ago([key: 2, .leftMouseUp: 2.2])) != nil)
-        #expect(UserInput.lastMediaKey(now: now, secondsSince: ago([key: 2, .keyDown: 1])) != nil) // a key after it
-        #expect(UserInput.lastMediaKey(now: now, secondsSince: ago([:])) == nil)
-    }
-
     @Test("a click in the player stays the user's though a key is pressed in another app after it; input before the moment doesn't count")
     func eachKindRead() {
         let now = front.addingTimeInterval(20)
@@ -46,8 +36,9 @@ struct PlayerInputTests {
         #expect(PlayerInput.played(since: now.addingTimeInterval(-3), now: now, spans: spans, secondsSince: input))
         #expect(!PlayerInput.played(since: now.addingTimeInterval(-1.5), now: now, spans: spans, secondsSince: input))
         #expect(!PlayerInput.played(since: now.addingTimeInterval(-3), now: now, spans: [], secondsSince: input)) // never in front
-        #expect(PlayerInput.played(since: now.addingTimeInterval(-3), now: now, spans: [],
-                                   secondsSince: ago([UserInput.systemDefined: 1]))) // a media key, wherever
+        // A media key doesn't count (the user, 2026-10-25): macOS sends it to the app playing.
+        #expect(!PlayerInput.played(since: now.addingTimeInterval(-3), now: now, spans: spans,
+                                    secondsSince: ago([CGEventType(rawValue: 14)!: 1])))
     }
 
     @Test("the player coming forward opens a span, another app closes it, and spans ended over 10 minutes ago are forgotten")

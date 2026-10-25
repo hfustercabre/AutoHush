@@ -139,8 +139,10 @@ extension PlaybackArbiter {
         } else if activeSources.isEmpty, !isShutDown {
             // Every app stopped while we were pausing, too late to call it off.
             scheduleResume(after: nil)
-        } else if await hearsPlayer(false, nil) != .unknown, pausedByUs, !isShutDown, !activeSources.isEmpty {
-            // Watched where its sound is measured (not in AntiDot mode).
+        } else if await hearsPlayer(false, nil) != .unknown, !(await pauseIsItsOwnMute()), pausedByUs, !isShutDown,
+                  !activeSources.isEmpty {
+            // Watched where its sound is measured (not in AntiDot mode), unless
+            // its pause is a mute of its own.
             watchRestart(after: Self.restartWatchDelay)
         }
     }

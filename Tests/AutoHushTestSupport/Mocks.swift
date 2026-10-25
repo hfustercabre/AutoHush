@@ -16,6 +16,8 @@ package actor MockMusicPlayer: MusicPlayer {
     package nonisolated let kind: MusicPlayerKind
     package nonisolated let releasesOnQuit: Bool
     package nonisolated let checksItsPresses: Bool
+    /// Its pause is a mute (an app added as Mute It Instead).
+    package nonisolated let pausesByMuting: Bool
     /// The changes its observer reports: a test plays or pauses it as the
     /// user would (`userSets`).
     package nonisolated let stateReports = StateReports()
@@ -56,6 +58,7 @@ package actor MockMusicPlayer: MusicPlayer {
         kind: MusicPlayerKind = .app,
         releasesOnQuit: Bool = false,
         checksItsPresses: Bool = false,
+        pausesByMuting: Bool = false,
         needsReopening: Bool = false,
         failPauseWith: any Error? = nil,
         failPlayWith: any Error? = nil,
@@ -71,6 +74,7 @@ package actor MockMusicPlayer: MusicPlayer {
         self.stateReportDelay = stateReportDelay
         self.kind = kind
         self.releasesOnQuit = releasesOnQuit
+        self.pausesByMuting = pausesByMuting
         self.checksItsPresses = checksItsPresses
         self.needsReopening = needsReopening
         self.failPauseWith = failPauseWith
@@ -103,6 +107,9 @@ package actor MockMusicPlayer: MusicPlayer {
     package func setFailVerify(_ error: any Error?) { failVerifyWith = error }
 
     package func setBeforeStateAnswer(_ hook: (@Sendable () async -> Void)?) { beforeStateAnswer = hook }
+    /// Runs inside every play, after it's counted and before it answers.
+    package var beforePlay: (@Sendable () async -> Void)?
+    package func setBeforePlay(_ hook: (@Sendable () async -> Void)?) { beforePlay = hook }
     package func setBeforeVerify(_ hook: (@Sendable () async -> Void)?) { beforeVerify = hook }
 
     /// The player's volume; `nil` (the default) means it has none, so no fades.
@@ -166,6 +173,7 @@ package actor MockMusicPlayer: MusicPlayer {
     package func play() async throws {
         playCallCount += 1
         commandLog.append("play")
+        if let beforePlay { await beforePlay() }
         if let error = failPlayWith { throw error }
         guard ignoredPresses == 0 else { ignoredPresses -= 1; return }
         state = .playing
@@ -266,6 +274,10 @@ package actor MockMutingMusicPlayer: MutingMusicPlayer {
         return await mock.muteIfPlayingAnyway()
     }
     package func forgetPause() async { await mock.forgetPause() }
+    /// Whether its pause is a mute of its own now (`isMutedForPause`).
+    package var mutedForPause = false
+    package func setMutedForPause(_ muted: Bool) { mutedForPause = muted }
+    package func isMutedForPause() async -> Bool { mutedForPause }
     /// How many times a mute was lifted for good (`releaseMute`).
     package private(set) var releasedMutes = 0
     package func releaseMute() async { releasedMutes += 1 }

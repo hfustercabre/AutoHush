@@ -170,6 +170,11 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         try await press(from: .playing)
     }
 
+    package func isMutedForPause() async -> Bool {
+        let control = control
+        return await queue.run { control.muted != nil }
+    }
+
     package func muteIfPlayingAnyway() async -> Bool {
         guard let pid = processIdentifier() else { return false }
         let control = control

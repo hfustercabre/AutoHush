@@ -25,6 +25,9 @@ package final class MonitoringPipeline {
         /// take, a start by itself, or a refused one), then `false` once the
         /// mute is lifted.
         case mutedInstead(Bool)
+        /// The last resume was given up (no answer, or its play failed),
+        /// then `nil` once that's over.
+        case resumeFailure(MusicPlayerError?)
     }
 
     /// What the app tells the arbiter.
@@ -37,6 +40,8 @@ package final class MonitoringPipeline {
         case resumesHeld(Bool)
         case outputDisconnected
         case checkPlayerHeard
+        case tapsAllowed(Bool)
+        case retryResume
     }
 
     private let arbiter: PlaybackArbiter
@@ -134,6 +139,7 @@ package final class MonitoringPipeline {
             volumeLeveler: volumeLeveler,
             resumeOffset: { await monitorLink.monitor?.resumeOffsetDB() },
             onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) },
+            onResumeFailure: { statusUpdates.yield(.resumeFailure($0)) },
             hearsPlayer: { listening, since in
                 guard let monitor = monitorLink.monitor else { return .unknown }
                 return listening ? await monitor.listenToPlayer() : await monitor.playerHearing(since: since)
@@ -181,6 +187,8 @@ package final class MonitoringPipeline {
                     case .resumesHeld(let held): await arbiter.holdResumes(held)
                     case .outputDisconnected: await arbiter.handleOutputDisconnected()
                     case .checkPlayerHeard: await arbiter.checkPlayerHeard()
+                    case .tapsAllowed(let allowed): await arbiter.setTapsAllowed(allowed)
+                    case .retryResume: await arbiter.retryResume()
                     }
                 }
             },
@@ -259,6 +267,11 @@ package final class MonitoringPipeline {
         arbiterCommands.yield(.resumesHeld(held))
     }
 
+    /// Try Again on the menu's "Couldn't resume" (`PlaybackArbiter.retryResume`).
+    package func retryResume() {
+        arbiterCommands.yield(.retryResume)
+    }
+
     /// Listens to the player, so a menu opening says at once whether a
     /// player that says it plays here is heard (`PlaybackArbiter.checkPlayerHeard`).
     package func checkPlayerHeard() {
@@ -276,6 +289,7 @@ package final class MonitoringPipeline {
         Self.allowTaps(for: mutingPlayer, in: method)
         let allowed = Self.allowsTaps(method)
         tapsAllowed.withLock { $0 = allowed }
+        arbiterCommands.yield(.tapsAllowed(allowed)) // a mute standing for a pause is lifted
     }
 
     /// AntiDot mode promises no audio taps, with either of its ways of

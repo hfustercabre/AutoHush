@@ -450,6 +450,8 @@ final class StatusMenuController: NSObject {
         case .retry:
             model.announcesRetryOutcome = true
             session.retry() // the card shows how it goes
+        case .retryResume:
+            session.retryResume() // the card shows how it goes
         case .updates where status.updateOffer == nil:
             // The menu stays open, its button saying "Checking…", until the
             // result: its alert closes the menu first (`closeMenu`).

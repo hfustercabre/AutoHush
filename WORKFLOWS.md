@@ -150,7 +150,7 @@ flowchart TD
   HEARD{"Heard? Its sound, measured<br/>with the other app's (AntiDot<br/>mode: not asked)"}
   SILENT["Playing silently (a muted<br/>trailer): not paused; shown as<br/>not playing when only its open<br/>output said it plays"]
   START(["It starts, or is heard,<br/>while an app plays"])
-  MUTED["Muted instead until the<br/>apps stop (the menu: Muted;<br/>Audio Recording, not in<br/>AntiDot mode)"]
+  MUTED["Muted instead until the<br/>apps stop (the menu: Muted,<br/>the app: Mutes your player;<br/>Audio Recording, not in<br/>AntiDot mode)"]
   THEIRS["Yours: left playing,<br/>not resumed"]
   TOOK["It stopped just as the app<br/>started (VLC pauses others):<br/>counted as AutoHush’s pause"]
   FO["Fade out over 1 s, then<br/>pause; the volume set back<br/>while paused (no fade without<br/>a readable volume)"]
@@ -163,7 +163,7 @@ flowchart TD
   MORE["More apps start or<br/>play on: it stays paused"]
   RES{"Resume playback<br/>on?"}
   CHK{"Still paused as<br/>AutoHush left it?"}
-  USER["Not resumed: you played,<br/>paused or quit it yourself"]
+  USER["Not resumed: you played,<br/>paused or quit it yourself,<br/>or it’s stopped"]
   RETRY["No answer: tried twice<br/>more, a second apart"]
   CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
   STAY["Stays paused: you<br/>play it when ready"]
@@ -186,7 +186,7 @@ flowchart TD
   HEARD -->|"no"| SILENT
   SILENT -.->|"heard, an app<br/>still playing"| HEARD
   HEARD -.->|"measured under half a<br/>second: asked again"| HEARD
-  START -->|"a key or click in it,<br/>or a media key, since<br/>the app started"| LEFT
+  START -->|"a key or click in it<br/>within 3 s before"| THEIRS
   START -->|"by itself"| HEARD
   FO -.->|"the app stops first"| BACK
   FO -.->|"you pause it"| YOURS
@@ -195,9 +195,11 @@ flowchart TD
   MUTED -->|"can’t be muted"| FAIL
   PC -->|"yes"| PA
   FAIL -.->|"the apps stop"| LEFT
-  PA -.->|"heard, not just after you<br/>played it from silence: the<br/>pause didn’t take, or it<br/>started again"| MUTED
-  PA -.->|"heard again from silence<br/>within 3 s of a key or click<br/>in it (already in front),<br/>or a media key (AntiDot<br/>mode: any play it reports)"| THEIRS
-  MUTED -.->|"silent (it paused itself, or<br/>its pause, pressed every 2 s,<br/>took): paused, kept muted<br/>until it plays again"| PA
+  PA -.->|"heard, not just after you<br/>played it from silence: the<br/>pause didn’t take, or it<br/>started again (not one whose<br/>pause is a mute already)"| MUTED
+  PA -.->|"heard again from silence<br/>within 3 s of a key or click<br/>in it (already in front; no<br/>media keys; AntiDot mode:<br/>any play it reports)"| THEIRS
+  MUTED -.->|"silent (it paused itself, or<br/>its pause took: tried every<br/>2 s, never through the Now<br/>Playing panel): paused, kept<br/>muted until it plays again"| PA
+  MUTED -.->|"silent within 3 s of a<br/>key or click in it: your<br/>pause, unmuted"| USER
+  MUTED -.->|"AntiDot mode turned on:<br/>paused, then unmuted"| PA
   MUTED -->|"the apps stop:<br/>unmuted"| LEFT
   MUTED -->|"the apps stop, Resume<br/>playback off, or a call with<br/>Stay paused after calls:<br/>paused, then unmuted"| STAY
   MUTED -->|"the apps stop, found<br/>paused: unmuted first"| FI
@@ -208,12 +210,13 @@ flowchart TD
   RES -->|"on"| CHK
   CHK -->|"no"| USER
   CHK -->|"no answer"| RETRY --> CHK
+  RETRY -->|"still none"| NORES["Couldn’t resume: orange,<br/>with Try Again (asks again)"]
   CHK -->|"yes"| CALL
   CALL -->|"yes"| STAY
   CALL -->|"no"| FI
   CALL -.->|"no, and quieter apps"| LVL --> FI
 
-  class FAIL warn
+  class FAIL,NORES warn
   class FI,USER,YOURS,STAY done
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
@@ -251,7 +254,7 @@ flowchart LR
   R4["What AutoHush paused comes<br/>back at once (stays paused<br/>with Resume playback off);<br/>nothing new is paused"]
   R5["Back on by itself: apps still<br/>playing pause the player once<br/>measured again"]
   R6["Auto-Pause follows the Focus,<br/>then goes back as it was,<br/>unless you changed it"]
-  R7["The pause is forgotten: the<br/>player stays paused after<br/>waking; nothing is paused or<br/>resumed while asleep"]
+  R7["The pause is forgotten: the<br/>player stays paused after<br/>waking (muted instead: paused,<br/>then unmuted); nothing is<br/>paused or resumed while asleep"]
   R8["Apps playing pause<br/>the player as usual"]
   R9["The hand-over: the next<br/>AutoHush, opened within<br/>a minute, takes it over"]
   R10["Paused while a check runs:<br/>nothing is resumed until<br/>it ends"]
@@ -302,9 +305,10 @@ stateDiagram-v2
   Failed --> Playing : the apps stop
   Playing --> Muted : it won’t pause
   Muted --> PausedByUs : silent (it paused itself, or its pause took), kept muted
+  Muted --> PausedByUs : AntiDot mode turned on (paused, then unmuted)
   Muted --> Playing : the apps stop (unmuted)
   Muted --> FadingIn : the apps stop, found paused
-  Muted --> Idle : you quit it, or it stays paused (Resume playback off, a call)
+  Muted --> Idle : you pause or quit it, or it stays paused (Resume playback off, a call, the Mac sleeps)
   Playing --> Silent : not heard (an app plays, or the menu opens)
   Silent --> FadingOut : heard while an app plays
   Silent --> Playing : heard as the menu opens
@@ -315,7 +319,7 @@ stateDiagram-v2
   Idle --> Playing : you play it
   Idle --> PausedByUs : the app paused it
   Idle --> FadingOut : it starts by itself while an app plays
-  PausedByUs --> Idle : you quit it, the Mac sleeps
+  PausedByUs --> Idle : you quit it, the Mac sleeps, found stopped
   PausedByUs --> Playing : you play it again
   PausedByUs --> PausedByUs : says it plays, not heard (the pause stands)
   PausedByUs --> Muted : heard, not by you (the pause didn’t take, or it started again)
@@ -326,7 +330,7 @@ stateDiagram-v2
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-The chosen player as the menu’s card and the menu bar icon show it. **Not playing** is a player paused by you, stopped or quit: AutoHush never plays it, but takes over a pause the starting app made itself (VLC). **Playing silently** is a player that says it plays but isn’t heard (a muted trailer, a silent preview): AutoHush measures its sound with the other app’s and listens to it when the menu opens, and pauses it the moment it’s heard; one that only has its output open (it reports no state, as Apple TV’s trailers) shows as **Not playing** instead. A player heard during AutoHush’s pause (the pause didn’t take, or it started again by itself) is **muted instead** until the apps stop, unless it was silent and is heard again within 3 s of a key press or click in it, or a media key: then it’s yours. Only input while it’s already in front counts, not the click or keys that bring it forward. In AntiDot mode, which hears nothing, any play it reports during the pause is yours. A pause the player refuses is a mute too. Muted, it’s listened to every second: silent (it paused itself), it’s paused, kept muted until it plays again (the resume, or you); still heard, its pause is pressed again every 2 s. When the apps stop, it’s unmuted; with Resume playback off, or after a call with Stay paused after calls, it’s paused first and left paused; found paused, it’s unmuted, then played and faded in. Your input changes nothing while it’s muted (it plays already), nor once no other app plays. The player starting while an app plays is paused as at the app’s start, unless you started it. A “playing” report that isn’t heard changes nothing. **Muted instead** is also a web app during an ad it won’t pause, or an app added as Muted only (Unmute ends it too). **The apps stop** means every other app quiet for 2 s, or Auto-Pause turned off.
+The chosen player as the menu’s card and the menu bar icon show it. **Not playing** is a player paused by you, stopped or quit: AutoHush never plays it, but takes over a pause the starting app made itself (VLC). **Playing silently** is a player that says it plays but isn’t heard (a muted trailer, a silent preview): AutoHush measures its sound with the other app’s and listens to it when the menu opens, and pauses it the moment it’s heard; one that only has its output open (it reports no state, as Apple TV’s trailers) shows as **Not playing** instead. A player heard during AutoHush’s pause (the pause didn’t take, or it started again by itself) is **muted instead** until the apps stop (the playing app’s row says **Mutes your player**), unless it was silent and is heard again within 3 s of a key press or click in it: then it’s yours. Only input while it’s already in front counts, not the click or keys that bring it forward, nor media keys (while another app plays, macOS sends them to that app). In AntiDot mode, which hears nothing, any play it reports during the pause is yours. A pause the player refuses is a mute too. Muted, it’s listened to every second: silent (it paused itself), it’s AutoHush’s pause, kept muted until it plays again (the resume, or you); silent within 3 s of a key press or click in it, it’s your pause, unmuted and never resumed; still heard, its pause is pressed again every 2 s by a way that shows nothing (its AppleScript, the page’s button, its menu; never the Now Playing panel). The Mac going to sleep, or AntiDot mode turned on, pauses it for real, then unmutes it (after AntiDot mode it’s still AutoHush’s pause). When the apps stop, it’s unmuted; with Resume playback off, or after a call with Stay paused after calls, it’s paused first and left paused; found paused, it’s unmuted, then played and faded in; found stopped, it stays stopped. Your play changes nothing while it’s muted (it plays already), nor does any input once no other app plays. The player starting while an app plays is paused as at the app’s start, unless a key press or click in it came within 3 s before. A “playing” report that isn’t heard changes nothing. **Muted instead** is also a web app during an ad it won’t pause, or an app added as Muted only (Unmute ends it too): those keep their own mute, which AutoHush doesn’t add to or retry. **The apps stop** means every other app quiet for 2 s, or Auto-Pause turned off.
 
 ## Pauses AutoHush holds
 
