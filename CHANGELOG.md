@@ -14,9 +14,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Simpler Settings.** Six pages instead of seven: the players have a
   page of their own, **Media Player**, and General keeps your player with
   **Change…**. AntiDot mode and the silence threshold are at the end of
-  **Behavior**, and the update settings are in **About**. In Behavior,
-  what depends on a switch sits under it, and one **Restore Defaults**
-  sets the whole page back.
+  **Behavior**, and the update settings are in **About**. Every card with
+  settings has its own **Restore Defaults**.
+- **Everyday and Advanced settings.** The sidebar groups what most people
+  change apart from fine-tuning and checks. Behavior keeps the switches;
+  the timings, fade lengths, volume limits and detection are in the new
+  **Fine-Tuning** page, and each Behavior card shows what they're set to,
+  one click away.
 
 ## [1.1.0] — 2026-10-25
 

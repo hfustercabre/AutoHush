@@ -399,7 +399,7 @@ struct SettingsModelTests {
         #expect(DetectionMethod.openStreams.summary.contains("stay open \(Int(configuration.minimumStartWithOpenStreams)) seconds"))
     }
 
-    @Test("each card's Restore Defaults restores the settings it shows only: Pausing's, Resuming's, the fades, Volume's or the silence threshold")
+    @Test("each card's Restore Defaults restores the settings it shows only: Behavior's its switches, Fine-Tuning's its sliders and ways")
     func restoreDefaults() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
@@ -408,87 +408,115 @@ struct SettingsModelTests {
                                      levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
                                      pausesForMicrophone: true, staysPausedAfterCalls: true)
         model.setTimings(changed)
-        #expect(!model.pausingAreDefaults && !model.resumingAreDefaults && !model.fadesAreDefaults
-                    && !model.volumeAreDefaults && !model.silenceThresholdIsDefault)
+        #expect(!model.pausingAreDefaults && !model.resumingAreDefaults && !model.fadesAreDefaults && !model.volumeAreDefaults)
+        #expect(!model.timingIsDefault && !model.volumeLimitsAreDefaults && !model.detectionIsDefault)
+        #expect(model.fadeLengthsAreDefaults) // greyed out: the fades are off
 
+        // Behavior's cards: their switches only.
         model.restoreDefaultPausing()
-        #expect(model.pausingAreDefaults && !model.resumingAreDefaults) // the other cards keep their own
-        #expect(model.timings == TimingSettings(stopGrace: 7, silenceThresholdDB: -40,
-                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
-                                                staysPausedAfterCalls: true))
+        var expected = changed
+        expected.pausesForMicrophone = false
+        expected.pausesOnOutputDisconnect = false
+        #expect(model.timings == expected && model.pausingAreDefaults && !model.timingIsDefault)
 
         model.setTimings(changed)
         model.restoreDefaultResuming()
-        #expect(model.resumingAreDefaults && !model.pausingAreDefaults)
-        #expect(model.timings == TimingSettings(startConfirmation: 2, silenceThresholdDB: -40,
-                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                pausesOnOutputDisconnect: true,
-                                                levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
-                                                pausesForMicrophone: true))
+        expected = changed
+        expected.staysPausedAfterCalls = false
+        #expect(model.timings == expected && model.resumingAreDefaults)
 
         model.setTimings(changed)
         model.restoreDefaultFades()
-        #expect(model.fadesAreDefaults && !model.volumeAreDefaults)
-        #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                                pausesOnOutputDisconnect: true,
-                                                levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
-                                                pausesForMicrophone: true, staysPausedAfterCalls: true))
+        expected = changed
+        expected.fadesEnabled = true
+        #expect(model.timings == expected && model.fadesAreDefaults && !model.fadeLengthsAreDefaults)
 
         model.setTimings(changed)
         model.restoreDefaultVolume()
-        #expect(model.volumeAreDefaults && !model.fadesAreDefaults)
-        #expect(model.timings == TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                                fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                                pausesOnOutputDisconnect: true,
-                                                pausesForMicrophone: true, staysPausedAfterCalls: true))
+        expected = changed
+        expected.levelsMusic = false
+        #expect(model.timings == expected && model.volumeAreDefaults && model.volumeLimitsAreDefaults) // the limits greyed out now
+
+        // Fine-Tuning's cards: their sliders only.
+        model.setTimings(changed)
+        model.restoreDefaultTiming()
+        expected = changed
+        expected.startConfirmation = TimingSettings.defaults.startConfirmation
+        expected.stopGrace = TimingSettings.defaults.stopGrace
+        #expect(model.timings == expected && model.timingIsDefault && !model.pausingAreDefaults)
+
+        var fading = changed
+        fading.fadesEnabled = true
+        model.setTimings(fading)
+        model.restoreDefaultFadeLengths()
+        expected = fading
+        expected.fadeOutDuration = TimingSettings.defaults.fadeOutDuration
+        expected.fadeInDuration = TimingSettings.defaults.fadeInDuration
+        #expect(model.timings == expected && model.fadeLengthsAreDefaults)
 
         model.setTimings(changed)
-        model.restoreDefaultSilenceThreshold()
-        #expect(model.silenceThresholdIsDefault && !model.pausingAreDefaults)
-        var threshold = changed
-        threshold.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
-        #expect(model.timings == threshold)
+        model.restoreDefaultVolumeLimits()
+        expected = changed
+        expected.levelingMaxCutDB = TimingSettings.defaults.levelingMaxCutDB
+        expected.levelingMinCutDB = TimingSettings.defaults.levelingMinCutDB
+        #expect(model.timings == expected && model.volumeLimitsAreDefaults && !model.volumeAreDefaults)
 
-        // In AntiDot mode the silence threshold is greyed out: it neither lights
-        // Restore Defaults nor is restored.
-        model.setTimings(TimingSettings(silenceThresholdDB: -40))
-        #expect(!model.silenceThresholdIsDefault)
-        model.setAntiDotMode(true)
-        #expect(model.silenceThresholdIsDefault)
-        model.restoreDefaultSilenceThreshold()
-        #expect(model.timings == TimingSettings(silenceThresholdDB: -40))
+        model.setTimings(changed)
+        model.restoreDefaultDetection()
+        expected = changed
+        expected.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+        #expect(model.timings == expected && model.detectionIsDefault)
     }
 
-    @Test("Behavior's one Restore Defaults restores every card's settings and the silence threshold, but not AntiDot mode; what's greyed out stays")
-    func restoreDefaultBehavior() {
+    @Test("a Behavior row opens Fine-Tuning at its card")
+    func showFineTuning() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        let changed = TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
-                                     fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
-                                     pausesOnOutputDisconnect: true,
-                                     levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
-                                     pausesForMicrophone: true, staysPausedAfterCalls: true)
-        model.setTimings(changed)
-        #expect(!model.behaviorIsDefault)
-        model.restoreDefaultBehavior()
-        #expect(model.timings == TimingSettings.defaults && model.behaviorIsDefault)
+        model.showFineTuning(.volumeLimits)
+        #expect(model.fineTuningFocus == .volumeLimits && log.calls.last == "fineTuning")
+    }
 
-        // AntiDot mode stays on; the threshold and leveling, greyed out there, stay as they were.
-        model.setTimings(changed)
+    @Test("greyed out, a Fine-Tuning setting is left as it is: the fade lengths while the fades are off, the wait to resume while nothing resumes, the threshold in AntiDot mode, where Detection restores the way")
+    func fineTuningRestoresWhatShows() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.setTimings(TimingSettings(startConfirmation: 2, stopGrace: 7, silenceThresholdDB: -40,
+                                        fadeOutDuration: 3, fadesEnabled: false, resumesPlayback: false))
+        model.restoreDefaultFadeLengths()
+        #expect(model.timings.fadeOutDuration == 3)
+        #expect(model.timingIsDefault == false)
+        model.restoreDefaultTiming()
+        #expect(model.timings.startConfirmation == TimingSettings.defaults.startConfirmation && model.timings.stopGrace == 7)
+        #expect(model.timingIsDefault)
+
         model.setAntiDotMode(true)
-        model.restoreDefaultBehavior()
-        #expect(model.isAntiDotMode && model.behaviorIsDefault)
-        #expect(model.timings.silenceThresholdDB == -40 && model.timings.levelsMusic && model.timings.levelingMaxCutDB == 14)
-        #expect(model.timings.startConfirmation == TimingSettings.defaults.startConfirmation)
+        model.setDetectionMethod(.openStreams)
+        #expect(!model.detectionIsDefault)
+        model.restoreDefaultDetection()
+        #expect(model.detectionMethod == .playbackSignals && model.timings.silenceThresholdDB == -40 && model.detectionIsDefault)
+    }
 
-        // A player AutoHush can't fade keeps its greyed-out fades.
-        model.setAntiDotMode(false)
-        model.setTimings(changed)
-        model.state.status.choosePlayer(named: "Radio")
-        model.state.status.playerOptions[0].canFade = false
-        model.restoreDefaultBehavior()
-        #expect(!model.timings.fadesEnabled && model.timings.fadeOutDuration == 3)
-        #expect(model.behaviorIsDefault)
+    @Test("Modes' Restore Defaults turns AntiDot mode off; Startup and Menu Bar's turns launch at login off and leaves the icon where it is; Updates' checks daily and installs")
+    func restoreDefaultsOfTheOtherCards() {
+        let icon = MenuBarIconPlace(defaults: UserDefaults(suiteName: "restore-\(UUID())")!)
+        let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
+                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false), menuBarIcon: icon)
+        #expect(model.modesAreDefaults && model.startupIsDefault && model.updatesAreDefaults)
+
+        model.setAntiDotMode(true)
+        #expect(!model.modesAreDefaults)
+        model.restoreDefaultModes()
+        #expect(!model.isAntiDotMode && model.modesAreDefaults)
+
+        model.setLaunchAtLogin(true)
+        model.setKeepsMenuBarIconNearSystemIcons(true)
+        #expect(!model.startupIsDefault)
+        model.restoreDefaultStartup()
+        #expect(!model.launchAtLoginEnabled && !model.keepsMenuBarIconNearSystemIcons && model.startupIsDefault)
+
+        updates.checksAutomatically = false
+        updates.mode = .notify
+        #expect(!model.updatesAreDefaults)
+        model.restoreDefaultUpdates()
+        #expect(updates.log.calls.suffix(2) == ["autoUpdate true", "updates install"])
     }
 
     @Test("a card greyed out has nothing for Restore Defaults to change: the fades with a player AutoHush can't fade, Volume in AntiDot mode or with Resume playback off")

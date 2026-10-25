@@ -198,7 +198,7 @@ Sources/
                          off for; PlayingAppsView, Playing Now and Recently Played; MenuToolbarView, the
                          buttons; MenuSpacing, the space around its parts; MenuRowButtonStyle,
                          MenuContentWidth, and MenuBarIcon, drawn in code),
-                         Settings/ (one per page, SettingsPageView, SettingsSidebar, UpdatesCard, About's), Welcome/, WebApps/
+                         Settings/ (one per page, SettingsPageView, SettingsSidebar, UpdatesCard, About's, FineTuningRow, Behavior's rows to Fine-Tuning), Welcome/, WebApps/
                          (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView),
                          AddApp/ (Add an App's window and its numbered steps, the app chooser, the warning
                          before a check, the check's panel, AddAppText: what they say)

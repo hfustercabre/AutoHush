@@ -140,30 +140,64 @@ final class SettingsModel {
     /// The parts of Diagnostics the user folded away; all open again each
     /// time Settings opens.
     var foldedDiagnostics: Set<DiagnosticsSnapshot.Part> = []
+    /// The Fine-Tuning card a Behavior row asked for: Fine-Tuning opens
+    /// scrolled to it, once.
+    var fineTuningFocus: FineTuningSettingsView.Part?
 
-    // Behavior: each card's settings, which its one Restore Defaults restores, have nothing to do
-    /// Pausing's: 0.5 s, and the microphone and an output going away off.
+    /// Shows Fine-Tuning at `part`'s card (Behavior's rows, L4, the user's
+    /// pick, 2026-10-25).
+    func showFineTuning(_ part: FineTuningSettingsView.Part) {
+        fineTuningFocus = part
+        actions?.openSettings(page: .fineTuning)
+    }
+
+    // Each card's settings are their defaults, or greyed out (Restore
+    // Defaults wouldn't change what shows, the workflow audit, 2026-10-22):
+    // its button has nothing to do. Behavior's cards hold the switches,
+    // Fine-Tuning's the rest (S5d + S5a, the user's pick, 2026-10-25).
+    /// Pausing's: the microphone and an output going away off.
     var pausingAreDefaults: Bool { timings.withDefaultPausing == timings }
-    /// Resuming's: Resume playback on, 2 s, Stay paused after calls off.
+    /// Resuming's: Resume playback on, Stay paused after calls off.
     var resumingAreDefaults: Bool { timings.withDefaultResuming == timings }
-    /// The fades (the switch and both lengths) are their defaults, or
-    /// greyed out with a player AutoHush can't fade: Restore Defaults
-    /// wouldn't change what shows (the workflow audit, 2026-10-22).
+    /// Fades': on, or greyed out with a player AutoHush can't fade.
     var fadesAreDefaults: Bool { !playerCanFade || timings.withDefaultFades == timings }
-    /// Volume's switch and limits are their defaults (off, 10 and 2 dB), or
-    /// greyed out (AntiDot mode, Resume playback off), as the fades.
+    /// Volume's: Level the volume off, or greyed out (AntiDot mode, Resume
+    /// playback off).
     var volumeAreDefaults: Bool {
         SettingsSwitch.levelsMusic.isUnavailable(self) || timings.withDefaultVolume == timings
     }
-    /// Detection's silence threshold is −60 dB, or greyed out in AntiDot
-    /// mode, which never restores it.
-    var silenceThresholdIsDefault: Bool {
-        isAntiDotMode || timings.silenceThresholdDB == TimingSettings.defaults.silenceThresholdDB
+    /// Fine-Tuning's Timing: 0.5 s, and 2 s unless greyed out with Resume
+    /// playback off.
+    var timingIsDefault: Bool {
+        timings.startConfirmation == TimingSettings.defaults.startConfirmation
+            && (!timings.resumesPlayback || timings.stopGrace == TimingSettings.defaults.stopGrace)
     }
-    /// Everything Settings → Behavior's one Restore Defaults restores is
-    /// its default (W3, the user, 2026-10-25): it has nothing to do.
-    var behaviorIsDefault: Bool {
-        pausingAreDefaults && resumingAreDefaults && fadesAreDefaults && volumeAreDefaults && silenceThresholdIsDefault
+    /// Fade Lengths': 1 s and 2 s, or greyed out (the fades off, or a player
+    /// AutoHush can't fade).
+    var fadeLengthsAreDefaults: Bool {
+        !playerCanFade || !timings.fadesEnabled || timings.withDefaultFadeLengths == timings
+    }
+    /// Volume Limits': 10 and 2 dB, or greyed out (leveling off or unavailable).
+    var volumeLimitsAreDefaults: Bool {
+        SettingsTiming.levelingLimitsUnavailable(self) || timings.withDefaultVolumeLimits == timings
+    }
+    /// Detection's: in AntiDot mode its way, what apps tell macOS; out of
+    /// it, the silence threshold at −60 dB (each greyed out in the other).
+    var detectionIsDefault: Bool {
+        isAntiDotMode ? detectionMethod == .playbackSignals
+            : timings.silenceThresholdDB == TimingSettings.defaults.silenceThresholdDB
+    }
+    /// AntiDot mode is off, its default (its way, greyed out then, isn't
+    /// restored), or can't be turned on with this player.
+    var modesAreDefaults: Bool { !isAntiDotMode }
+    /// General's Startup and Menu Bar: launch at login off and the icon
+    /// not kept beside the system's, as on a fresh install.
+    var startupIsDefault: Bool { !launchAtLoginEnabled && !keepsMenuBarIconNearSystemIcons }
+    /// About's Updates: checked daily and installed automatically, as on a
+    /// fresh install; the choice counts as default while this copy can't
+    /// install updates (it's greyed out then).
+    var updatesAreDefaults: Bool {
+        checksForUpdatesAutomatically && (updateInstallNote != nil || automaticUpdates == .install)
     }
 
     /// The row with Check Now: what the last check found ("AutoHush 0.3.11
@@ -302,7 +336,9 @@ final class SettingsModel {
         setDetectionMethod(on ? settings.antiDotMethod : .audioLevels)
     }
 
-    /// Each card's settings only (`restoreDefaultBehavior` restores them all).
+    /// Each card's Restore Defaults (the user, 2026-10-25: one for every
+    /// card with settings): that card's settings only, what's greyed out
+    /// left as it is.
     func restoreDefaultPausing() {
         setTimings(timings.withDefaultPausing)
     }
@@ -312,67 +348,105 @@ final class SettingsModel {
     }
 
     func restoreDefaultFades() {
+        guard playerCanFade else { return }
         setTimings(timings.withDefaultFades)
     }
 
     func restoreDefaultVolume() {
+        guard !SettingsSwitch.levelsMusic.isUnavailable(self) else { return }
         setTimings(timings.withDefaultVolume)
     }
 
-    /// The silence threshold, not while it's greyed out in AntiDot mode.
-    func restoreDefaultSilenceThreshold() {
-        guard !isAntiDotMode else { return }
+    func restoreDefaultTiming() {
         var restored = timings
-        restored.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+        restored.startConfirmation = TimingSettings.defaults.startConfirmation
+        if timings.resumesPlayback { restored.stopGrace = TimingSettings.defaults.stopGrace }
         setTimings(restored)
     }
 
-    /// Settings → Behavior's one Restore Defaults (W3, the user,
-    /// 2026-10-25): every setting on the page but AntiDot mode, at once;
-    /// what's greyed out stays as it is, as the cards' own buttons left it
-    /// (the fades for a player AutoHush can't fade, leveling while it can't
-    /// be changed, the threshold in AntiDot mode).
-    func restoreDefaultBehavior() {
-        var restored = timings.withDefaultPausing.withDefaultResuming
-        if playerCanFade { restored = restored.withDefaultFades }
-        if !SettingsSwitch.levelsMusic.isUnavailable(self) { restored = restored.withDefaultVolume }
-        if !isAntiDotMode { restored.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB }
-        setTimings(restored)
+    func restoreDefaultFadeLengths() {
+        guard playerCanFade, timings.fadesEnabled else { return }
+        setTimings(timings.withDefaultFadeLengths)
+    }
+
+    func restoreDefaultVolumeLimits() {
+        guard !SettingsTiming.levelingLimitsUnavailable(self) else { return }
+        setTimings(timings.withDefaultVolumeLimits)
+    }
+
+    /// Detection's: AntiDot mode's way in AntiDot mode, the silence
+    /// threshold out of it.
+    func restoreDefaultDetection() {
+        if isAntiDotMode {
+            setDetectionMethod(.playbackSignals)
+        } else {
+            var restored = timings
+            restored.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+            setTimings(restored)
+        }
+    }
+
+    /// Modes': AntiDot mode off.
+    func restoreDefaultModes() {
+        setAntiDotMode(false)
+    }
+
+    /// Startup and Menu Bar's: launch at login off, the icon left where it is.
+    func restoreDefaultStartup() {
+        if launchAtLoginEnabled { setLaunchAtLogin(false) }
+        if keepsMenuBarIconNearSystemIcons { setKeepsMenuBarIconNearSystemIcons(false) }
+    }
+
+    /// Updates': checked daily and installed automatically (the choice left
+    /// alone while this copy can't install updates).
+    func restoreDefaultUpdates() {
+        if !checksForUpdatesAutomatically { updates.setChecksAutomatically(true) }
+        if updateInstallNote == nil, automaticUpdates != .install { updates.setMode(.install) }
     }
 }
 
 private extension TimingSettings {
-    /// These timings with Pausing's back to their defaults.
+    /// These timings with Pausing's switches back to their defaults.
     var withDefaultPausing: TimingSettings {
         var timings = self
-        timings.startConfirmation = TimingSettings.defaults.startConfirmation
         timings.pausesForMicrophone = TimingSettings.defaults.pausesForMicrophone
         timings.pausesOnOutputDisconnect = TimingSettings.defaults.pausesOnOutputDisconnect
         return timings
     }
 
-    /// These timings with Resuming's back to their defaults.
+    /// These timings with Resuming's switches back to their defaults.
     var withDefaultResuming: TimingSettings {
         var timings = self
         timings.resumesPlayback = TimingSettings.defaults.resumesPlayback
-        timings.stopGrace = TimingSettings.defaults.stopGrace
         timings.staysPausedAfterCalls = TimingSettings.defaults.staysPausedAfterCalls
         return timings
     }
 
-    /// These timings with the fades back to their defaults.
+    /// These timings with the fades turned on again.
     var withDefaultFades: TimingSettings {
         var timings = self
         timings.fadesEnabled = TimingSettings.defaults.fadesEnabled
+        return timings
+    }
+
+    /// These timings with Level the volume back to its default.
+    var withDefaultVolume: TimingSettings {
+        var timings = self
+        timings.levelsMusic = TimingSettings.defaults.levelsMusic
+        return timings
+    }
+
+    /// These timings with both fade lengths back to their defaults.
+    var withDefaultFadeLengths: TimingSettings {
+        var timings = self
         timings.fadeOutDuration = TimingSettings.defaults.fadeOutDuration
         timings.fadeInDuration = TimingSettings.defaults.fadeInDuration
         return timings
     }
 
-    /// These timings with Volume's switch and limits back to their defaults.
-    var withDefaultVolume: TimingSettings {
+    /// These timings with leveling's limits back to their defaults.
+    var withDefaultVolumeLimits: TimingSettings {
         var timings = self
-        timings.levelsMusic = TimingSettings.defaults.levelsMusic
         timings.levelingMaxCutDB = TimingSettings.defaults.levelingMaxCutDB
         timings.levelingMinCutDB = TimingSettings.defaults.levelingMinCutDB
         return timings

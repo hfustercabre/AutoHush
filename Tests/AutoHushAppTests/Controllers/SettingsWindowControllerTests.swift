@@ -30,9 +30,10 @@ final class SettingsWindowControllerTests {
         let split = try #require(sut.window?.contentViewController as? NSSplitViewController)
         #expect(split.splitViewItems.count == 2)
         #expect(split.splitViewItems.first?.behavior == .sidebar)
-        #expect(SettingsWindowController.Page.groups.map { $0.map(\.title) }
-                == [["General", "Media Player", "Sound Sources"], ["Behavior"], ["Diagnostics", "About"]])
-        #expect(Set(SettingsWindowController.Page.groups.joined()) == Set(SettingsWindowController.Page.allCases))
+        #expect(SettingsWindowController.Page.groups.map { $0.pages.map(\.title) }
+                == [["General", "Media Player", "Sound Sources", "Behavior"], ["Fine-Tuning", "Diagnostics"], ["About"]])
+        #expect(SettingsWindowController.Page.groups.map(\.title) == ["Everyday", "Advanced", nil])
+        #expect(Set(SettingsWindowController.Page.groups.flatMap(\.pages)) == Set(SettingsWindowController.Page.allCases))
         #expect(sut.shownPage == nil) // not on screen
 
         sut.show(page: .diagnostics)
@@ -68,6 +69,18 @@ final class SettingsWindowControllerTests {
         #expect(window.frameAutosaveName == frameName)
         #expect(SettingsWindowController.frameName == "Settings")
         #expect(window.collectionBehavior.contains(.fullScreenNone)) // never full screen
+    }
+
+    @Test("the Fine-Tuning card a Behavior row asked for is forgotten once another page shows")
+    func fineTuningFocusForgotten() {
+        let model = makeModel()
+        let sut = makeController(model)
+        defer { sut.close() }
+        model.fineTuningFocus = .detection
+        sut.show(page: .fineTuning)
+        #expect(model.fineTuningFocus == .detection)
+        sut.show(page: .behavior)
+        #expect(model.fineTuningFocus == nil)
     }
 
     @Test("closed and opened again, Settings is back on General; while open, it keeps its page")

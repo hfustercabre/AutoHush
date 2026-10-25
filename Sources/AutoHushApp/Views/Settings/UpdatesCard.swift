@@ -3,7 +3,7 @@ import AutoHushKit
 
 /// Settings → About's Updates (a page of their own until W1, the user,
 /// 2026-10-25): the daily check, what it leads to (with a note while
-/// notifications are off), and Check Now.
+/// notifications are off), Check Now, and its Restore Defaults.
 struct UpdatesCard: View {
     let model: SettingsModel
 
@@ -57,6 +57,8 @@ struct UpdatesCard: View {
                     .buttonStyle(.chip)
             }
             .highlightableRow(ownsControls: true, press: { model.updates.checkFromUser() })
+        } footer: {
+            RestoreDefaultsButton(isDefault: model.updatesAreDefaults) { model.restoreDefaultUpdates() }
         }
     }
 }

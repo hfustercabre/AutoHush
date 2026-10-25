@@ -11,15 +11,41 @@ import AutoHushKit
 final class SettingsWindowController: NSWindowController {
     /// The window's pages, in the sidebar's order.
     enum Page: CaseIterable, Hashable {
-        case general, mediaPlayer, soundSources, behavior, diagnostics, about
+        case general, mediaPlayer, soundSources, behavior, fineTuning, diagnostics, about
 
         /// The sidebar's groups of pages, a gap between each (B, the user's
-        /// pick, 2026-10-21: Behavior took Fades', Calls' and Advanced's
-        /// pages and Detection's pausing and resuming; memory `settings-layout`).
-        /// From W1, W2 and W3 combined (the user, 2026-10-25): the players
-        /// on a page of their own, Detection's cards in Behavior, Updates'
-        /// in About.
-        static let groups: [[Page]] = [[.general, .mediaPlayer, .soundSources], [.behavior], [.diagnostics, .about]]
+        /// pick, 2026-10-21; W1, W2 and W3, 2026-10-25; memory
+        /// `settings-layout`): since S5d + S5a (the user's pick, 2026-10-25)
+        /// Everyday's pages and Advanced's, each named with what it's for,
+        /// then About.
+        static let groups: [Group] = [
+            Group(title: Group.everydayTitle, note: Group.everydayNote, pages: [.general, .mediaPlayer, .soundSources, .behavior]),
+            Group(title: Group.advancedTitle, note: Group.advancedNote, pages: [.fineTuning, .diagnostics]),
+            Group(title: nil, note: nil, pages: [.about]),
+        ]
+
+        /// A group of the sidebar's pages, under its name and what it's for.
+        struct Group {
+            let title: String?
+            let note: String?
+            let pages: [Page]
+
+            static var everydayTitle: String {
+                String(localized: "Everyday", comment: "Settings' sidebar: the name over the pages most people use (General, Media Player, Sound Sources, Behavior)")
+            }
+
+            static var everydayNote: String {
+                String(localized: "What most people change", comment: "Settings' sidebar, under “Everyday”: what its pages are for")
+            }
+
+            static var advancedTitle: String {
+                String(localized: "Advanced", comment: "Settings' sidebar: the name over Fine-Tuning and Diagnostics, for people who want to adjust more or look closer")
+            }
+
+            static var advancedNote: String {
+                String(localized: "Fine-tuning and checks", comment: "Settings' sidebar, under “Advanced”: what its pages are for (Fine-Tuning's settings, Diagnostics' checks)")
+            }
+        }
 
         var title: String {
             switch self {
@@ -30,7 +56,9 @@ final class SettingsWindowController: NSWindowController {
             case .soundSources:
                 String(localized: "Sound Sources", comment: "Settings: a page in the sidebar: the apps heard playing sound, each switched to pause your player or be ignored (keep it short, about 16 characters)")
             case .behavior:
-                String(localized: "Behavior", comment: "Settings: a page in the sidebar, and its part of the menu's settings: when your player pauses and resumes, the fades and the volume (keep it short, about 16 characters)")
+                String(localized: "Behavior", comment: "Settings: a page in the sidebar: the switches for when your player pauses and resumes, the fades, the volume and AntiDot mode (keep it short, about 16 characters)")
+            case .fineTuning:
+                String(localized: "Fine-Tuning", comment: "Settings: a page in the sidebar, under Advanced: the timings, fade lengths, volume limits and detection that Behavior's switches use (keep it short, about 16 characters)")
             case .diagnostics:
                 String(localized: "Diagnostics", comment: "Settings: a page in the sidebar: what AutoHush sees right now")
             case .about:
@@ -46,6 +74,7 @@ final class SettingsWindowController: NSWindowController {
             case .mediaPlayer: "music.note"
             case .soundSources: "square.grid.2x2.fill"
             case .behavior: "playpause.fill"
+            case .fineTuning: "slider.horizontal.3"
             case .diagnostics: "stethoscope"
             case .about: "info.circle.fill"
             }
@@ -135,7 +164,11 @@ final class SettingsWindowController: NSWindowController {
         // which cleared the window's (it opened at its first place and size
         // at each launch).
         windowFrameAutosaveName = frameName
-        navigation.onChange = { [weak window] page in window?.title = page.title }
+        navigation.onChange = { [weak window, weak model] page in
+            window?.title = page.title
+            // A Behavior row's card in Fine-Tuning: only for that visit.
+            if page != .fineTuning { model?.fineTuningFocus = nil }
+        }
         // Before the focused control: the arrows move the highlight, as in
         // the menu. Kept for the controller's life, which is AutoHush's.
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in

@@ -13,6 +13,7 @@ struct SettingsPageView: View {
             case .mediaPlayer: MediaPlayerSettingsView(model: model)
             case .soundSources: SoundSourcesSettingsView(model: model)
             case .behavior: BehaviorSettingsView(model: model)
+            case .fineTuning: FineTuningSettingsView(model: model)
             case .diagnostics: DiagnosticsSettingsView(model: model)
             case .about: AboutSettingsView(model: model)
             }

@@ -71,7 +71,7 @@ struct RestoreDefaultsButton: View {
         HStack {
             Spacer()
             Button(action: action) {
-                Text("Restore Defaults", comment: "Settings → Behavior's cards and → Detection: button that sets the card's settings back to their defaults")
+                Text("Restore Defaults", comment: "Settings: the button under each card with settings (Behavior's, General's Startup and Menu Bar, About's Updates) that sets that card's settings back to their defaults")
             }
                 .buttonStyle(.chip)
                 .disabled(isDefault)

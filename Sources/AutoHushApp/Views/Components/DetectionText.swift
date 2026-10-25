@@ -1,30 +1,25 @@
 import SwiftUI
 import AutoHushKit
 
-/// How AutoHush tells that other apps play, in words: the titles over
-/// Settings → Behavior's last two cards (`BehaviorSettingsView+Detection`)
-/// and the menu's, Diagnostics' heading, and why AntiDot mode can't be
-/// turned on. Detection was a page of its own until W1 (the user,
-/// 2026-10-25).
+/// How AutoHush tells that other apps play, in words: Behavior's Modes
+/// card, Fine-Tuning's Detection card, Diagnostics' heading, and why
+/// AntiDot mode can't be turned on. Detection was a page of its own until W1
+/// and Behavior's end until S5d + S5a (the user, 2026-10-25).
 enum DetectionText {
-    /// Diagnostics' heading over how AutoHush tells that other apps play.
+    /// Over how AutoHush tells that other apps play: Fine-Tuning's card,
+    /// Behavior's row to it, and Diagnostics' heading.
     static var title: String {
-        String(localized: "Detection", comment: "Settings → Diagnostics: the heading over how AutoHush tells that other apps play (AntiDot mode and the silence threshold)")
+        String(localized: "Detection", comment: "Settings → Fine-Tuning's card and Behavior's row to it (under AntiDot mode), and Diagnostics' heading: how AutoHush tells that other apps play (AntiDot mode's ways and the silence threshold)")
     }
 
-    /// Over AntiDot mode, in Settings → Behavior and the menu.
+    /// Over AntiDot mode, in Settings → Behavior.
     static var modesTitle: Text {
-        Text("Modes", comment: "Settings → Behavior and the menu: heading over AntiDot mode")
-    }
-
-    /// Over the silence threshold, in Settings → Behavior and the menu.
-    static var measuringTitle: Text {
-        Text("Measuring", comment: "Settings → Behavior and the menu: heading over the silence threshold (AutoHush measures other apps' sound to tell whether they play)")
+        Text("Modes", comment: "Settings → Behavior: heading over AntiDot mode")
     }
 
     /// The title over AntiDot mode's ways, which VoiceOver hears with them (the menu's too).
     static var detectByTitle: String {
-        String(localized: "Detect playing apps by", comment: "Settings → Behavior and the menu, AntiDot mode: lead-in to the ways of detecting playing apps")
+        String(localized: "Detect playing apps by", comment: "Settings → Fine-Tuning, Detection: lead-in to AntiDot mode's ways of detecting playing apps")
     }
 
     /// Under the AntiDot mode switch while it's off and dimmed: as the menu

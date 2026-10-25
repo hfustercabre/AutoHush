@@ -3,127 +3,129 @@ import AutoHushKit
 
 /// Settings → Behavior, a grouped form (B, the user's pick, 2026-10-21;
 /// memory `settings-layout`): how AutoHush acts, a card for each moment,
-/// then how it tells that other apps play (W1, the user, 2026-10-25:
-/// Detection's page is its last two cards, `BehaviorSettingsView+Detection`).
-/// Each card's main switch comes first and what depends on it is indented
-/// under it, without a description of its own (W3, 2026-10-25).
-/// Pausing: how long another app must play, and the microphone and an
-/// output going away pausing too. Resuming: whether the player resumes at
-/// all, how long the apps must be quiet first, and staying paused after
-/// calls (greyed out while nothing resumes). Fades: the switch and both
-/// lengths (the fade-in greyed out while nothing resumes; all of it dimmed
-/// for a player AutoHush can't fade). Volume: leveling the music and its
-/// limits (off in AntiDot mode, which measures no sound, and while nothing
-/// resumes). One Restore Defaults at the end restores the whole page but
-/// AntiDot mode.
+/// its switches only since S5d + S5a (the user's pick, 2026-10-25), what
+/// they use in Fine-Tuning. Each card ends with a row naming those settings
+/// and what they're set to, which shows them there (`FineTuningRow`, L4),
+/// and has its own Restore Defaults, for its switches. Pausing: the
+/// microphone and an output going away. Resuming: whether the player
+/// resumes at all, and staying paused after calls (greyed out while nothing
+/// resumes). Fades: the switch (dimmed for a player AutoHush can't fade).
+/// Volume: leveling the music (off in AntiDot mode, which measures no
+/// sound, and while nothing resumes). Modes: AntiDot mode
+/// (`BehaviorSettingsView+Modes`).
 struct BehaviorSettingsView: View {
     let model: SettingsModel
-
-    /// How far a setting that depends on a switch is indented under it.
-    static let dependentIndent: CGFloat = 22
 
     var body: some View {
         SettingsPageScroll {
             Card(Self.pausingTitle) {
-                TimingSliderRow(model: model, timing: .pauseAfter)
-                CardDivider()
                 SettingsSwitchRow(model: model, kind: .pausesForMicrophone)
                 CardDivider()
                 SettingsSwitchRow(model: model, kind: .pausesOnDisconnect)
+                CardDivider()
+                FineTuningRow(title: SettingsTiming.pauseAfter.name, value: value(.pauseAfter)) { model.showFineTuning(.timing) }
+            } footer: {
+                RestoreDefaultsButton(isDefault: model.pausingAreDefaults) { model.restoreDefaultPausing() }
             }
 
             Card(Self.resumingTitle) {
                 SettingsSwitchRow(model: model, kind: .resumesPlayback)
                 CardDivider()
-                dependent(TimingSliderRow(model: model, timing: .resumeAfter, showsHelp: false))
-                    .unavailable(!model.timings.resumesPlayback)
-                CardDivider()
-                dependent(SettingsSwitchRow(model: model, kind: .staysPausedAfterCalls, showsSubtitle: false))
+                SettingsSwitchRow(model: model, kind: .staysPausedAfterCalls)
                 // Why what follows the switch is greyed out, as in the other
                 // cards (the user, 2026-10-22; none before).
                 if !model.timings.resumesPlayback {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
                 }
+                CardDivider()
+                FineTuningRow(title: SettingsTiming.resumeAfter.name,
+                              value: model.timings.resumesPlayback ? value(.resumeAfter) : nil) { model.showFineTuning(.timing) }
+            } footer: {
+                RestoreDefaultsButton(isDefault: model.resumingAreDefaults) { model.restoreDefaultResuming() }
             }
 
             Card(Text(verbatim: Self.fadesTitle)) {
-                Group {
-                    SettingsSwitchRow(model: model, kind: .fades)
-                    // The lengths, greyed out while the fades are off (the whole
-                    // card is, with a player AutoHush can't fade).
-                    Group {
-                        CardDivider()
-                        dependent(TimingSliderRow(model: model, timing: .fadeOut, showsHelp: false))
-                        CardDivider()
-                        dependent(TimingSliderRow(model: model, timing: .fadeIn, showsHelp: false))
-                            .unavailable(fadeInUnused)
-                    }
-                    .unavailable(!model.timings.fadesEnabled && model.playerCanFade)
-                }
-                .unavailable(!model.playerCanFade)
-                if model.playerCanFade, !model.timings.fadesEnabled {
-                    NoteLabel(SettingsSwitch.fadesOffNote, kind: .info)
-                } else if fadeInUnused {
-                    NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
-                }
+                SettingsSwitchRow(model: model, kind: .fades)
+                    .unavailable(!model.playerCanFade)
                 if !model.playerCanFade, let player = model.chosenPlayerName {
-                    NoteLabel(String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
-                                     comment: "Settings → Behavior, under the dimmed fade settings; %@ is the media player, e.g. TIDAL"),
-                              kind: .info)
+                    NoteLabel(Self.cantFadeNote(player), kind: .info)
                 }
+                CardDivider()
+                FineTuningRow(title: Self.fadeLengthsRowTitle,
+                              value: model.playerCanFade && model.timings.fadesEnabled ? fadeLengths : nil) {
+                    model.showFineTuning(.fadeLengths)
+                }
+            } footer: {
+                RestoreDefaultsButton(isDefault: model.fadesAreDefaults) { model.restoreDefaultFades() }
             }
 
             Card(Self.volumeTitle) {
                 SettingsSwitchRow(model: model, kind: .levelsMusic)
-                Group {
-                    CardDivider()
-                    dependent(TimingSliderRow(model: model, timing: .levelingMaxCut, showsHelp: false))
-                    CardDivider()
-                    dependent(TimingSliderRow(model: model, timing: .levelingMinCut, showsHelp: false))
-                }
-                .unavailable(SettingsTiming.levelingLimitsUnavailable(model))
                 if let reason = SettingsSwitch.levelsMusic.unavailableReason(model) {
                     NoteLabel(reason, kind: .info)
-                } else if !model.timings.levelsMusic {
-                    NoteLabel(SettingsSwitch.levelingOffNote, kind: .info)
                 }
+                CardDivider()
+                FineTuningRow(title: Self.volumeLimitsRowTitle,
+                              value: SettingsTiming.levelingLimitsUnavailable(model) ? nil : volumeLimits) {
+                    model.showFineTuning(.volumeLimits)
+                }
+            } footer: {
+                RestoreDefaultsButton(isDefault: model.volumeAreDefaults) { model.restoreDefaultVolume() }
             }
 
             modesCard
-            measuringCard
         }
     }
 
-    /// A setting that depends on the switch above it, indented under it.
-    private func dependent(_ row: some View) -> some View {
-        row.padding(.leading, Self.dependentIndent)
+    /// A timing as its slider shows it ("0.5 s").
+    func value(_ timing: SettingsTiming) -> String {
+        timing.format(model.timings[keyPath: timing.keyPath])
     }
 
-    /// The fade-in, greyed out on its own while nothing resumes (Resume
-    /// playback off), when the rest isn't already.
-    private var fadeInUnused: Bool { SettingsTiming.fadeInUnused(model) }
+    private var fadeLengths: String {
+        String(localized: "\(value(.fadeOut)) out, \(value(.fadeIn)) in",
+               comment: "Settings → Behavior, Fades' row to Fine-Tuning: the fade lengths; the first %@ is the fade-out's (e.g. “1 s”), the second the fade-in's")
+    }
 
-    /// Over how long another app must play and what else pauses your
-    /// player, here and in the menu's settings.
+    private var volumeLimits: String {
+        String(localized: "\(value(.levelingMaxCut)) at most",
+               comment: "Settings → Behavior, Volume's row to Fine-Tuning: the most Level the volume lowers the Mac's volume; %@ is it, e.g. “10 dB”")
+    }
+
+    /// Under the dimmed Fade playback, for a player AutoHush can't fade;
+    /// Fine-Tuning's Fade Lengths too.
+    static func cantFadeNote(_ player: String) -> String {
+        String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
+               comment: "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player, e.g. TIDAL")
+    }
+
+    static var fadeLengthsRowTitle: String {
+        String(localized: "Fade lengths", comment: "Settings → Behavior, Fades' last row: opens Fine-Tuning at the fade lengths, which it shows after it")
+    }
+
+    static var volumeLimitsRowTitle: String {
+        String(localized: "Volume limits", comment: "Settings → Behavior, Volume's last row: opens Fine-Tuning at Level the volume's limits, the most it lowers the volume after it")
+    }
+
+    /// Over the microphone and an output going away pausing your player.
     static var pausingTitle: Text {
-        Text("Pausing", comment: "Settings → Behavior, and a section title in the menu's settings: heading over when your player pauses (how long another app must play, the microphone, an output going away)")
+        Text("Pausing", comment: "Settings → Behavior: heading over what else pauses your player (the microphone, an output going away)")
     }
 
-    /// Over Resume playback, its wait and staying paused after calls, here
-    /// and in the menu's settings.
+    /// Over Resume playback and staying paused after calls.
     static var resumingTitle: Text {
-        Text("Resuming", comment: "Settings → Behavior, and a section title in the menu's settings: heading over whether and when your player resumes once other apps go quiet")
+        Text("Resuming", comment: "Settings → Behavior: heading over whether your player resumes once other apps go quiet, and staying paused after calls")
     }
 
-    /// Over the fades, here and in the menu's settings; also, with a check,
-    /// under the media player in Settings → General and at the foot of the
-    /// menu's card, and a Diagnostics row.
+    /// Over the fades; also, with a check, under the media player in
+    /// Settings → General and at the foot of the menu's card, and a
+    /// Diagnostics row.
     nonisolated static var fadesTitle: String {
-        String(localized: "Fades", comment: "Settings → Behavior, and a section title in the menu's settings: heading over playback's fade out and fade in; also, with a check, under the media player in Settings → General and at the foot of the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
+        String(localized: "Fades", comment: "Settings → Behavior: heading over the fades' switch; also, with a check, under the media player in Settings → General and in the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
     }
 
-    /// Over Level the volume and its limits, here and in the menu's settings.
+    /// Over Level the volume.
     static var volumeTitle: Text {
-        Text("Volume", comment: "Settings → Behavior, and a section title in the menu's settings: heading over Level the volume and its limits")
+        Text("Volume", comment: "Settings → Behavior: heading over Level the volume")
     }
 }

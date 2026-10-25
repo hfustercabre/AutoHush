@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// Settings' sidebar: its pages, a row each with its symbol on a square
-/// tinted with the accent color, in groups; the page shown on a grey
+/// tinted with the accent color, in groups, each under its name and what
+/// it's for (S5d, the user's pick, 2026-10-25); the page shown on a grey
 /// background. At its foot, AutoHush's name and version, and a way to
 /// support it.
 struct SettingsSidebar: View {
@@ -14,7 +15,8 @@ struct SettingsSidebar: View {
                 VStack(alignment: .leading, spacing: 2) {
                     ForEach(Array(SettingsWindowController.Page.groups.enumerated()), id: \.offset) { index, group in
                         if index > 0 { Spacer().frame(height: 14) }
-                        ForEach(group, id: \.self) { row($0) }
+                        if let title = group.title { heading(title, note: group.note) }
+                        ForEach(group.pages, id: \.self) { row($0) }
                     }
                 }
                 .padding(.horizontal, 10)
@@ -22,6 +24,24 @@ struct SettingsSidebar: View {
             }
             SettingsSidebarFoot(model: model)
         }
+    }
+
+    /// A group's name, and what it's for under it, in grey.
+    private func heading(_ title: String, note: String?) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(verbatim: title)
+                .font(.appCaption.weight(.semibold))
+                .foregroundStyle(.appSecondary)
+                .accessibilityAddTraits(.isHeader)
+            if let note {
+                Text(verbatim: note)
+                    .font(.appCaption)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .padding(.leading, 10)
+        .padding(.bottom, 4)
     }
 
     private func row(_ page: SettingsWindowController.Page) -> some View {

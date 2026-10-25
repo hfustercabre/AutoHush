@@ -37,7 +37,7 @@ flowchart TD
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
-  SET["Settings: Media Player,<br/>Sound Sources (ignore,<br/>remove, reset), Behavior<br/>(pausing, resuming, fades,<br/>volume, AntiDot mode,<br/>silence), Diagnostics"]
+  SET["Settings, Everyday:<br/>Media Player, Sound Sources<br/>(ignore, remove, reset),<br/>Behavior (the switches);<br/>Advanced: Fine-Tuning<br/>(timings, lengths, limits,<br/>detection), Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])

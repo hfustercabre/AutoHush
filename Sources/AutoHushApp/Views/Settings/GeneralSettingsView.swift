@@ -49,6 +49,8 @@ struct GeneralSettingsView: View {
                                          comment: "Settings → General, under Keep icon next to system icons; ⌘-drag is how macOS moves menu bar icons"),
                           isOn: Binding(get: { model.keepsMenuBarIconNearSystemIcons },
                                         set: { model.setKeepsMenuBarIconNearSystemIcons($0) }))
+            } footer: {
+                RestoreDefaultsButton(isDefault: model.startupIsDefault) { model.restoreDefaultStartup() }
             }
         }
     }
