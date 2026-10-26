@@ -236,11 +236,14 @@ struct CheckedPlayerTests {
 
     @Test("a report of Unknown while it's heard (Apple TV's trailers) says nothing: it isn't listened to, its sound output tells, and its reports still count")
     func unknownReport() async {
+        // The reports below count their process as running without asking the
+        // system (`processRuns`): both report tests once failed together under
+        // Thread Sanitizer, finding no report (B4, 2026-10-25).
         var clients: [pid_t: NowPlayingReports.Client] = [:]
         NowPlayingReports.apply("[com.example.jukebox (\(getpid())) Jukebox ❯] PlaybackState changed from Paused to Unknown", to: &clients)
         let heard = FakeLevelProbe(audible: true)
         let jukebox = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
-                                    reports: NowPlayingReports(clients: clients), processIdentifier: { 4242 },
+                                    reports: NowPlayingReports(clients: clients, processRuns: { _ in true }), processIdentifier: { 4242 },
                                     levelProbe: heard, soundOn: { _ in true }, audioRecordingAllowed: { true })
         #expect(await jukebox.playerState() == .playing) // its output on
         #expect(heard.listens == 0) // nothing to check against its level
@@ -248,7 +251,7 @@ struct CheckedPlayerTests {
         NowPlayingReports.apply("[com.example.jukebox (\(getpid())) Jukebox ❯] PlaybackState changed from Unknown to Paused", to: &clients)
         let silent = FakeLevelProbe(audible: false)
         let paused = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
-                                   reports: NowPlayingReports(clients: clients), processIdentifier: { 4242 },
+                                   reports: NowPlayingReports(clients: clients, processRuns: { _ in true }), processIdentifier: { 4242 },
                                    levelProbe: silent, soundOn: { _ in true }, audioRecordingAllowed: { true })
         #expect(await paused.playerState() == .paused) // its output open, silent: as it reports
     }
@@ -259,7 +262,7 @@ struct CheckedPlayerTests {
         NowPlayingReports.apply("[com.example.jukebox (\(getpid())) Jukebox ❯] PlaybackState changed from Playing to Paused", to: &clients)
         let heard = FakeLevelProbe(audible: true)
         let jukebox = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
-                                    reports: NowPlayingReports(clients: clients), processIdentifier: { 4242 },
+                                    reports: NowPlayingReports(clients: clients, processRuns: { _ in true }), processIdentifier: { 4242 },
                                     levelProbe: heard, soundOn: { _ in true }, audioRecordingAllowed: { true })
         #expect(await jukebox.polledState() == .paused) // read once a second: as reported, not listened to
         #expect(heard.listens == 0)
@@ -270,7 +273,7 @@ struct CheckedPlayerTests {
 
         let silent = FakeLevelProbe(audible: false)
         let quiet = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
-                                  reports: NowPlayingReports(clients: clients), processIdentifier: { 4242 },
+                                  reports: NowPlayingReports(clients: clients, processRuns: { _ in true }), processIdentifier: { 4242 },
                                   levelProbe: silent, soundOn: { _ in true }, audioRecordingAllowed: { true })
         #expect(await quiet.playerState() == .paused) // its output open, but silent: paused, as it reports
         #expect(await quiet.playerState() == .paused)
@@ -278,7 +281,7 @@ struct CheckedPlayerTests {
 
         let unheard = FakeLevelProbe(audible: true)
         let antiDot = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
-                                    reports: NowPlayingReports(clients: clients), processIdentifier: { 4242 },
+                                    reports: NowPlayingReports(clients: clients, processRuns: { _ in true }), processIdentifier: { 4242 },
                                     levelProbe: unheard, soundOn: { _ in true }, audioRecordingAllowed: { true })
         antiDot.allowTaps(false) // no taps: as it reports
         #expect(await antiDot.playerState() == .paused)

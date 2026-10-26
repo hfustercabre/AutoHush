@@ -68,7 +68,7 @@ private final class FakeVLC: FakeAppleEventApp {
     }
 }
 
-@Suite("VLCPlayer")
+@Suite("VLCPlayer", .appleEventCoercions)
 struct VLCPlayerTests {
     // Never sent: building descriptors does not contact the target process.
     private let pid: pid_t = 4242

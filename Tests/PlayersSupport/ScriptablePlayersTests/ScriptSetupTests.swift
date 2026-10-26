@@ -3,8 +3,9 @@ import Foundation
 import Testing
 @testable import ScriptablePlayers
 import AutoHushTestSupport
+import PlayersTestSupport
 
-@Suite("ScriptSetup")
+@Suite("ScriptSetup", .appleEventCoercions)
 struct ScriptSetupTests {
     private func dictionary(_ xml: String) throws -> ScriptingDictionary {
         try #require(ScriptingDictionary.parse(XMLDocument(xmlString: xml)))

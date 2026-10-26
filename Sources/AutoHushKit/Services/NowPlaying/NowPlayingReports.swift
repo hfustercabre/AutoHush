@@ -48,6 +48,7 @@ package final class NowPlayingReports: @unchecked Sendable {
     static let idleLimit: TimeInterval = 60
 
     private let lock = NSLock()
+    private let processRuns: @Sendable (pid_t) -> Bool
     private var clients: [pid_t: Client] = [:]
     private var buffer = Data()
     /// The `log stream` followed, and whether the past was read since it started.
@@ -75,11 +76,16 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// `idleLimit` `nil`: followed until `stop` (Player Check's, for one run).
     /// `isAdministrator`: whether this account may read the log (tests that
     /// stand in for it, on any account, say yes).
+    /// `processRuns`: whether a client's process still runs (`stillRuns`;
+    /// tests whose reports name no real process say yes). Last, so a
+    /// trailing closure is still `readPast`.
     package init(lookBack: TimeInterval = NowPlayingReports.firstLookBack, idleLimit: TimeInterval? = NowPlayingReports.idleLimit,
                  streamCommand: [String] = NowPlayingReports.streamCommand,
                  isAdministrator: Bool = NowPlayingReports.isAdministrator,
-                 readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:)) {
+                 readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:),
+                 processRuns: @escaping @Sendable (pid_t) -> Bool = NowPlayingReports.stillRuns) {
         self.lookBack = lookBack
+        self.processRuns = processRuns
         idle = idleLimit
         self.streamCommand = streamCommand
         administrator = isAdministrator
@@ -89,8 +95,9 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// Reports as `clients` say, not read from the log (tests) until `stop`:
     /// the next question then follows it, through `streamCommand` and `readPast`.
     convenience init(clients: [pid_t: Client], streamCommand: [String] = NowPlayingReports.streamCommand,
-                     readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:)) {
-        self.init(idleLimit: nil, streamCommand: streamCommand, readPast: readPast)
+                     readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:),
+                     processRuns: @escaping @Sendable (pid_t) -> Bool = NowPlayingReports.stillRuns) {
+        self.init(idleLimit: nil, streamCommand: streamCommand, readPast: readPast, processRuns: processRuns)
         self.clients = clients
         ready = true
         given = true
@@ -122,7 +129,7 @@ package final class NowPlayingReports: @unchecked Sendable {
             followSoon()
             return nil
         }
-        return lock.withLock { Self.latest(of: bundleID, in: clients) }
+        return lock.withLock { Self.latest(of: bundleID, in: clients, stillRuns: processRuns) }
     }
 
     /// The newest of `clients` that is `bundleID`'s, reported a state, isn't

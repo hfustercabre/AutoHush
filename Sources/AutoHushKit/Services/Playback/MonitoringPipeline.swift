@@ -314,6 +314,15 @@ package final class MonitoringPipeline {
     func eventsDelivered() async {
         await monitor.eventsDelivered()
     }
+
+    /// Returns once what the monitor has seen has reached the arbiter and
+    /// the arbiter has nothing left running (`PlaybackArbiter.waitUntilIdle`);
+    /// tests use it to check that something didn't happen without waiting
+    /// out a time limit.
+    func settled() async {
+        await monitor.eventsDelivered()
+        await arbiter.waitUntilIdle()
+    }
 }
 
 /// Lets the arbiter reach the monitor that is created after it.

@@ -267,7 +267,8 @@ Sources/
                          Player Check follow) and CheckProgress (how far a check has got, read from them)
 Tests/                   a test module per module, mirroring its folders, plus AutoHushTestSupport (shared
                          fakes, a value behind a lock, a gate, a sleep the test ends) and PlayersTestSupport
-                         (the players' stores and a scripted app's Apple events, in memory); PlayerCheckTests
+                         (the players' stores and a scripted app's Apple events, in memory, and the
+                         suite trait that sets up Apple event coercions first); PlayerCheckTests
                          runs the helper itself as a read-only check of Calculator;
                          only the players' code names a player (AutoHushPlayersTests checks the engine
                          and the helper, comments included), but any test may use real apps (VLC,

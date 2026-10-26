@@ -106,7 +106,7 @@ struct MonitoringPipelineTests {
         setup.pipeline.stop()
     }
 
-    @Test("each command reaches the arbiter: held resumes, Auto-Pause, new timings, the user's own play and pause, an app no longer ignored")
+    @Test("each command reaches the arbiter: held resumes, Auto-Pause, new timings, an app ignored and counting again, the user's own pause and play, without waiting in real time")
     func commandsReachArbiter() async {
         // The user plays and pauses it: its observer reports the changes.
         let mock = MockMusicPlayer(state: .playing)
@@ -119,7 +119,7 @@ struct MonitoringPipelineTests {
 
         // Held, nothing resumes, not even with Auto-Pause off (the arbiter's state, told three
         // times: held, off, and the resume held).
-        var told = setup.updates.playback.count
+        let told = setup.updates.playback.count
         setup.pipeline.holdResumes(true)
         setup.pipeline.setAutoPauseEnabled(false)
         await TestWait.until { await mock.playCallCount > 0 || setup.updates.playback.count >= told + 3 }
@@ -140,26 +140,23 @@ struct MonitoringPipelineTests {
         await TestWait.until { setup.updates.playback.last == .pausedByMonitor }
         #expect(await mock.pauseCallCount == 2)
 
-        // The user plays it during that pause, then pauses it: it's theirs, so it stays paused once the app stops.
-        // Only a player found silent can be played again: measured silent a second
-        // after the pause (the monitor looks at a process change), then a look finds
-        // it so. Then it's heard again.
-        try? await Task.sleep(for: .seconds(1))
-        setup.processes.triggerChange()
-        try? await Task.sleep(for: .seconds(1.5))
-        await mock.userSets(.playing)
-        try? await Task.sleep(for: .seconds(PlaybackArbiter.pauseTail + 0.1))
-        setup.processes.triggerChange()
-        await TestWait.until { setup.updates.playback.last == .musicPlaying }
+        // The app ignored, it no longer counts: the pause ends and the music comes back.
+        setup.pipeline.setIgnoredSources([Self.otherApp.bundleID])
+        await TestWait.until { await mock.playCallCount == 2 }
+        await setup.pipeline.waitForResume()
+        // The user pauses it: its observer tells the arbiter, so once the app
+        // counts again nothing is paused or played: the pause is theirs.
         await mock.userSets(.paused)
         await TestWait.until { setup.updates.playback.last == .musicIdle }
-        told = setup.updates.playback.count
-        setup.pipeline.setIgnoredSources([Self.otherApp.bundleID])
-        await TestWait.until { await mock.playCallCount > 1 || setup.updates.playback.count > told }
-        #expect(await mock.playCallCount == 1)
+        setup.pipeline.setIgnoredSources([])
+        await setup.pipeline.settled()
+        #expect(await mock.pauseCallCount == 2)
+        #expect(await mock.playCallCount == 2)
 
-        // Played again, it can't be paused once the app counts again: the menu hears why.
+        // The user plays it while the app is ignored; the app counting again,
+        // it can't be paused: the menu hears why.
         await mock.setFailPause(MusicPlayerError.playerCommandFailed(.pressIgnored))
+        setup.pipeline.setIgnoredSources([Self.otherApp.bundleID])
         await mock.userSets(.playing)
         await TestWait.until { setup.updates.playback.last == .musicPlaying }
         setup.pipeline.setIgnoredSources([])
