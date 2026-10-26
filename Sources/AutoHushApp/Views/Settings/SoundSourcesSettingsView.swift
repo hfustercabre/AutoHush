@@ -135,7 +135,7 @@ struct SoundSourcesSettingsView: View {
                 }
                 .padding(.trailing, 10)
             } else {
-                SectionHeading(Text("Pauses Playback", comment: "Settings → Sound Sources: heading of the list of apps that pause your player while they play"), isFirst: true)
+                SectionHeading(Text("Apps", comment: "Settings → Sound Sources: heading of the list of the apps heard playing, each switched to pause your player or be ignored (SS1, the user's pick, 2026-10-26; “Pauses Playback” before)"), isFirst: true)
                 Spacer()
             }
             Self.sortByTitle

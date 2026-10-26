@@ -341,7 +341,9 @@ extension AppDelegateTests {
         let (_, sut, alerts) = await controlFailed()
         sut.showControlError() // the info button after the card's line
         #expect(alerts.calls.count == 1)
-        #expect(alerts.calls.first?.hasPrefix("Can’t Control First | AutoHush can’t find Play/Pause in First’s menus.\n\n") == true)
+        #expect(alerts.calls.first?.hasPrefix("Can’t Control First | AutoHush can’t find Play/Pause in First’s menus.") == true)
+        // The log's English after it only when AutoHush speaks another language.
+        #expect(alerts.calls.first?.contains("\n\n") == !AppStatus.speaksEnglish)
         #expect(alerts.calls.first?.contains(ControlFailure.openMenuBarSettings) == false)
     }
 

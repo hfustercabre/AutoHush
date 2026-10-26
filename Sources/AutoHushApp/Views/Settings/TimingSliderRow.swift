@@ -61,20 +61,24 @@ struct TimingSliderRow: View {
     }
 }
 
-/// A page's Restore Defaults, under its cards on the right: it sets the
-/// page's own settings back, and is dimmed while they're the defaults.
+/// A card's Restore Defaults, under it on the right: it sets the card's own
+/// settings back, and shows only once one differs from its default (RD1,
+/// the user's pick, 2026-10-26: a dimmed one under every card was clutter).
 struct RestoreDefaultsButton: View {
     let isDefault: Bool
     let action: () -> Void
 
     var body: some View {
+        if !isDefault { button }
+    }
+
+    private var button: some View {
         HStack {
             Spacer()
             Button(action: action) {
                 Text("Restore Defaults", comment: "Settings: the button under each card with settings (Behavior's, Fine-Tuning's, General's Startup and Menu Bar, About's Updates) that sets that card's settings back to their defaults")
             }
                 .buttonStyle(.chip)
-                .disabled(isDefault)
         }
         .padding(.top, 6)
     }

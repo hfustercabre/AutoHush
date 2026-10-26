@@ -27,8 +27,8 @@ struct AppStatusTests {
         status.resumeError = ControlError(MusicPlayerError.playerNotResponding, player: "Jukebox")
         #expect(status.showsResumeFailure && status.needsAttention) // orange, as Couldn't pause
         #expect(status.statusLine == "Couldn’t resume — Jukebox didn’t answer")
-        #expect(status.controlErrorAlert?.title == "Couldn’t Resume Jukebox")
-        #expect(status.controlErrorAlert?.message.hasPrefix("Jukebox isn’t responding.") == true)
+        #expect(status.controlErrorAlert()?.title == "Couldn’t Resume Jukebox")
+        #expect(status.controlErrorAlert()?.message.hasPrefix("Jukebox isn’t responding.") == true)
         // Its alert's button follows its own error, not a pause's (the apps
         // stopping cleared that): Now Playing hidden offers the pane.
         status.resumeError = ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Jukebox")
@@ -110,16 +110,17 @@ struct AppStatusTests {
         #expect(!status.needsAttention) // auto-pause off says so instead
     }
 
-    @Test("the info button's alert says what failed, then why in words and as the log has it")
+    @Test("the info button's alert says what failed, then why in words, and as the log has it unless AutoHush speaks English")
     func controlErrorAlert() {
         var status = ready(.pauseFailed)
-        #expect(status.controlErrorAlert == nil) // nothing to tell
+        #expect(status.controlErrorAlert() == nil) // nothing to tell
         let error = ControlError(MusicPlayerError.playerCommandFailed(.pressIgnored), player: "Jukebox")
         status.controlError = error
-        #expect(status.controlErrorAlert?.title == "Couldn’t Pause Jukebox")
-        #expect(status.controlErrorAlert?.message == "\(error.text)\n\n\(error.detail)")
+        #expect(status.controlErrorAlert()?.title == "Couldn’t Pause Jukebox")
+        #expect(status.controlErrorAlert(inEnglish: false)?.message == "\(error.text)\n\n\(error.detail)")
+        #expect(status.controlErrorAlert(inEnglish: true)?.message == error.text) // once is enough
         status.setHealth(.retrying("Can’t control Jukebox right now"))
-        #expect(status.controlErrorAlert?.title == "Can’t Control Jukebox")
+        #expect(status.controlErrorAlert()?.title == "Can’t Control Jukebox")
     }
 
     @Test("starts in the starting state with nothing to fix")

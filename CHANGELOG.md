@@ -12,6 +12,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **A calmer About page.** AutoHush's icon sits beside its name and
   version, and **When an update is found** is a pop-up menu, so the page
   fits without scrolling.
+- **Tidier Settings.** A card's **Restore Defaults** shows only once one
+  of its settings differs from its default; **Stay paused after calls**
+  sits under **Resume playback**, as a part of it; Sound Sources' list is
+  headed **Apps**.
+- **Clearer messages.** The alert after "Can't control" says why once in
+  English, and Add an App's recommended way says in orange where it
+  doesn't work.
 
 ### Fixed
 

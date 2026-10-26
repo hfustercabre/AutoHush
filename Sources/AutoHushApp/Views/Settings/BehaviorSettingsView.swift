@@ -31,7 +31,17 @@ struct BehaviorSettingsView: View {
             Card(Self.resumingTitle) {
                 SettingsSwitchRow(model: model, kind: .resumesPlayback)
                 CardDivider()
-                SettingsSwitchRow(model: model, kind: .staysPausedAfterCalls)
+                // Only with Resume playback on: indented beside a thin line,
+                // as a part of it (D3, the user's pick, 2026-10-26).
+                HStack(spacing: 12) {
+                    RoundedRectangle(cornerRadius: 1)
+                        .fill(.quaternary)
+                        .frame(width: 2)
+                        .accessibilityHidden(true)
+                    SettingsSwitchRow(model: model, kind: .staysPausedAfterCalls)
+                }
+                .padding(.leading, 8)
+                .fixedSize(horizontal: false, vertical: true)
                 // Why what follows the switch is greyed out, as in the other
                 // cards (the user, 2026-10-22; none before).
                 if !model.timings.resumesPlayback {

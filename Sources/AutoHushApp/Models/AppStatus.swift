@@ -96,12 +96,15 @@ struct AppStatus: Equatable {
         resumeError != nil && isReady && !playerNeedsReopen && playback != .pausedByMonitor && playback != .pauseFailed
     }
     /// The alert the info button after the card's line opens: what failed
-    /// as its title, the cause in words, then as the log has it.
-    var controlErrorAlert: (title: String, message: String)? {
+    /// as its title, the cause in words, then, unless AutoHush speaks
+    /// English, as the log has it, for a bug report (E1, the user's pick,
+    /// 2026-10-26: in English it said the same twice).
+    func controlErrorAlert(inEnglish: Bool = AppStatus.speaksEnglish) -> (title: String, message: String)? {
+        func message(_ error: ControlError) -> String { inEnglish ? error.text : "\(error.text)\n\n\(error.detail)" }
         if showsResumeFailure, let resumeError {
             return (String(localized: "Couldn’t Resume \(playerName)",
                            comment: "Title of the alert that says why AutoHush couldn't resume the media player (it didn't answer, or its play failed); %@ is the player"),
-                    "\(resumeError.text)\n\n\(resumeError.detail)")
+                    message(resumeError))
         }
         guard let controlError else { return nil }
         let title = playback == .pauseFailed && isReady
@@ -109,7 +112,12 @@ struct AppStatus: Equatable {
                      comment: "Title of the alert that says why the media player refused to pause or failed to; %@ is the player")
             : String(localized: "Can’t Control \(playerName)",
                      comment: "Title of the alert that says why the media player can't be controlled; %@ is the player")
-        return (title, "\(controlError.text)\n\n\(controlError.detail)")
+        return (title, message(controlError))
+    }
+
+    /// AutoHush runs in English, the language of its log.
+    nonisolated static var speaksEnglish: Bool {
+        (Bundle.main.preferredLocalizations.first ?? "en").hasPrefix("en")
     }
     /// What the info button's alert is about: the given-up resume while the
     /// card says so, else why the player couldn't be controlled.

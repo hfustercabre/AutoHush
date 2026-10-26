@@ -51,7 +51,7 @@ struct GeneralSettingsView: View {
                 }
                 CardDivider()
                 SwitchRow(Text(verbatim: MenuBarIconPlace.title),
-                          subtitle: Text("Where the notch or other apps’ icons can’t hide it. Turned off, ⌘-drag it where you like.",
+                          subtitle: Text("Where the notch or other apps’ icons can’t hide it. Turned off, ⌘‑drag it where you like.",
                                          comment: "Settings → General, under Keep icon next to system icons; ⌘-drag is how macOS moves menu bar icons"),
                           isOn: Binding(get: { model.keepsMenuBarIconNearSystemIcons },
                                         set: { model.setKeepsMenuBarIconNearSystemIcons($0) }))

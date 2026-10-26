@@ -63,7 +63,7 @@ extension AppDelegate {
     /// The info button after the card's line: why the player couldn't be
     /// controlled (also in Settings → Diagnostics, as "Last error").
     func showControlError() {
-        guard let alert = status.controlErrorAlert else { return }
+        guard let alert = status.controlErrorAlert() else { return }
         // Now Playing hidden in the menu bar: the pane where it's shown;
         // otherwise a given-up resume offers Try Again (the user, 2026-10-25).
         let action: (title: String, perform: () -> Void)? =

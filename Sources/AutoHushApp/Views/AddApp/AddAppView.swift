@@ -473,7 +473,14 @@ private struct WayRow: View {
                     Text(verbatim: AddAppText.wayTitle(way.kind)).fixedSize(horizontal: false, vertical: true)
                     if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true) }
                 }
-                Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle()
+                // The recommended way's exception (it works, but not in every
+                // window state) in orange, as its mark (W4, the user's pick,
+                // 2026-10-26).
+                if recommended && way.mark == .some {
+                    Text(verbatim: AddAppText.wayNote(way, app: app)).font(.appCaption).foregroundStyle(.appWarning)
+                } else {
+                    Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle()
+                }
                 if soundOnly {
                     Text(verbatim: AddAppText.panelSoundOnly).captionStyle()
                 }
