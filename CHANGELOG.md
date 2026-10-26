@@ -13,6 +13,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   player plays on its own no longer measures its sound. A player playing
   silently shows as playing again once the other apps stop, since nothing
   measures it then.
+- **The menu's card lights up again** under the pointer after the pointer
+  has been on **Change Player**.
 
 ## [1.2.0] — 2026-10-25
 

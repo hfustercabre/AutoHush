@@ -121,6 +121,32 @@ struct KeyHighlightTests {
         #expect(keyboard.highlighted == nil)
     }
 
+    @Test("a control inside another (the card's Change Player row in the card) takes the highlight while the pointer is on it, whichever is told first, and gives it back to the one around it as the pointer leaves it")
+    func nestedHover() {
+        let keyboard = KeyHighlight()
+        let card = UUID(), row = UUID()
+        keyboard.register(card, .init(frame: CGRect(x: 0, y: 0, width: 330, height: 140)))
+        keyboard.register(row, .init(frame: CGRect(x: 12, y: 104, width: 306, height: 28)))
+        keyboard.hover(card, true)
+        #expect(keyboard.highlighted == card)
+        keyboard.hover(row, true)
+        #expect(keyboard.highlighted == row)
+        keyboard.hover(row, false) // up onto the rest of the card
+        #expect(keyboard.highlighted == card)
+
+        // Into the row from outside the card: told in either order, the row's.
+        keyboard.hover(card, false)
+        #expect(keyboard.highlighted == nil)
+        keyboard.hover(row, true)
+        keyboard.hover(card, true)
+        #expect(keyboard.highlighted == row)
+        // Out of both, in either order: nothing.
+        keyboard.hover(card, false)
+        #expect(keyboard.highlighted == row)
+        keyboard.hover(row, false)
+        #expect(keyboard.highlighted == nil)
+    }
+
     @Test("Return or Space presses the highlighted control, ← and → adjust it if it takes them; with none, nothing")
     func pressing() {
         let keyboard = KeyHighlight()

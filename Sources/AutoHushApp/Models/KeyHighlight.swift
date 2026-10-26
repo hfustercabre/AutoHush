@@ -55,6 +55,12 @@ final class KeyHighlight {
     @ObservationIgnored private var wantsFirst = false
     /// Frames that came before their control registered.
     @ObservationIgnored private var earlyFrames: [UUID: CGRect] = [:]
+    /// The controls the pointer is over now. One can be inside another (the
+    /// menu card's Change Player row in the card): the innermost is
+    /// highlighted, and leaving it gives the highlight back to the one
+    /// around it (the user, 2026-10-26: the card lost its tint once the
+    /// pointer had been on the row).
+    @ObservationIgnored private var hovered: [UUID] = []
     /// Each control's own "highlighted", so a move redraws the two controls
     /// it concerns, not every one (the full check, 2026-10-18).
     @ObservationIgnored private var lights: [UUID: Light] = [:]
@@ -96,22 +102,41 @@ final class KeyHighlight {
     func remove(_ id: UUID) {
         controls[id] = nil
         earlyFrames[id] = nil
+        hovered.removeAll { $0 == id }
         if highlighted == id { highlighted = nil }
         lights[id] = nil
     }
 
     /// The pointer came onto a control (`true`) or left it.
     func hover(_ id: UUID, _ inside: Bool) {
+        hovered.removeAll { $0 == id }
         if inside {
-            highlighted = id
+            hovered.append(id)
+            highlighted = innermostHovered
             onHighlight?()
         } else if highlighted == id {
-            highlighted = nil
+            highlighted = innermostHovered
         }
+    }
+
+    /// Of the controls under the pointer, the last it came onto, or one
+    /// inside it, whichever was told first (SwiftUI tells a control inside
+    /// another and the one around it in no set order).
+    private var innermostHovered: UUID? {
+        guard var best = hovered.last else { return nil }
+        for id in hovered.reversed() where id != best && isInside(id, best) { best = id }
+        return best
+    }
+
+    /// Whether `inner`'s frame lies within `outer`'s, and is smaller.
+    private func isInside(_ inner: UUID, _ outer: UUID) -> Bool {
+        guard let a = controls[inner]?.frame, let b = controls[outer]?.frame, a != .zero, a != b else { return false }
+        return b.contains(a)
     }
 
     /// Nothing highlighted, as the menu opens or the keyboard's focus takes over.
     func clear() {
+        hovered = []
         highlighted = nil
         revealed = nil
         wantsFirst = false
