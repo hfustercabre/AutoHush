@@ -41,7 +41,7 @@ extension PlaybackArbiter {
 
     private func lookAtPause() async {
         guard !isShutDown, pausedByUs, !activeSources.isEmpty else { return }
-        if mutedForRestart {
+        if mutedInstead {
             await lookWhileMuted()
         } else if await handleRestart(reported: false) == false {
             letUserHaveIt()
@@ -60,7 +60,7 @@ extension PlaybackArbiter {
             await playerStartedDuringApps()
             return
         }
-        guard !mutedForRestart, await handleRestart(reported: false) == false else { return }
+        guard !mutedInstead, await handleRestart(reported: false) == false else { return }
         letUserHaveIt()
     }
 
@@ -117,13 +117,13 @@ extension PlaybackArbiter {
     func handleRestart(reported: Bool) async -> Bool {
         guard pausedByUs, let pausedAt else { return false }
         // Muted in place of the pause, it plays on, silent, as expected.
-        guard !mutedForRestart else { return true }
+        guard !mutedInstead else { return true }
         // Its pause is a mute of its own: heard through it, as any muted
         // player, and left to it (the user, 2026-10-25). One that only mutes,
         // said to play, was unmuted (the menu's Unmute): the user's.
         if await pauseIsItsOwnMute() { return !(reported && player.pausesByMuting) }
         let hearing = await hearsPlayer(pausedAt.addingTimeInterval(Self.pauseTail))
-        guard !isShutDown, pausedByUs, !mutedForRestart else { return true }
+        guard !isShutDown, pausedByUs, !mutedInstead else { return true }
         // Only a player that was silent can be played again (the user, 2026-10-24).
         let wasSilent = hearingDuringPause == .silent
         noteHearingDuringPause(hearing)
@@ -183,7 +183,7 @@ extension PlaybackArbiter {
     /// 2026-10-25): heard again, the user's until another app starts or none
     /// plays, as an app that can only be muted is after its Unmute.
     func unmuteInstead() {
-        guard !isShutDown, pausedByUs, mutedForRestart else { return }
+        guard !isShutDown, pausedByUs, mutedInstead else { return }
         logger.info("[arbiter] \(self.player.name, privacy: .public) unmuted from the menu: the user’s until the other apps stop")
         pausedByUs = false // the mute is lifted as it's published
         leftToUser = true
@@ -212,7 +212,7 @@ extension PlaybackArbiter {
         // A mute lifted just before is lifted first, so it can't lift this one.
         await muteLift?.value
         // Muted already, kept through the pause: only a relaunched process to mute.
-        let keptMute = muteKeptInPause
+        let keptMute = pauseMute == .keptInPause
         let muted: Bool = if keptMute { await playerMute?.followRelaunch() ?? false } else { await playerMute?.mute() ?? false }
         if muted, let playerMute {
             // Things may have changed while its tap was made (the Mac asleep,
@@ -226,14 +226,13 @@ extension PlaybackArbiter {
                 // Asleep, or the output gone: no pause held, so no mute either
                 // (what's shown changed with them).
                 outputGoneDuringPause = false
-                muteKeptInPause = false
+                pauseMute = .off
                 await playerMute.unmute()
                 return true
             }
             // A call among the apps was noted as the music faded out.
             pausedByUs = true
-            mutedForRestart = true
-            muteKeptInPause = false
+            pauseMute = .insteadOfPause
             pausePressedWhileMuted = nil
             playerState = .playing
             pausedAt = clock()
@@ -252,7 +251,7 @@ extension PlaybackArbiter {
             }
             return true
         }
-        if keptMute { muteKeptInPause = false } // a relaunched process heard: no mute stands
+        if keptMute { pauseMute = .off } // a relaunched process heard: no mute stands
         logger.info("[arbiter] \(self.player.name, privacy: .public) \(why, privacy: .public) and can’t be muted — it plays on")
         pausedByUs = false
         if !activeSources.isEmpty { pauseFailure = failure }
@@ -265,7 +264,7 @@ extension PlaybackArbiter {
     /// Silent since the mute or since its pause was pressed (it paused
     /// itself: a trailer in a hidden window), it's paused,
     /// AutoHush's pause from then on, still muted until it plays again
-    /// (`muteKeptInPause`). Still heard, its pause is
+    /// (`PauseMute.keptInPause`). Still heard, its pause is
     /// pressed again, every `mutedPauseRetry`; the user's input changes
     /// nothing then: it plays already, so nothing of theirs started it (the
     /// user, 2026-10-24: "if at any point it can be paused instead of
@@ -274,7 +273,7 @@ extension PlaybackArbiter {
     private func lookWhileMuted() async {
         guard let pausedAt else { return }
         let stillMuted = await playerMute?.followRelaunch() ?? false
-        guard !isShutDown, pausedByUs, mutedForRestart, !activeSources.isEmpty else { return }
+        guard !isShutDown, pausedByUs, mutedInstead, !activeSources.isEmpty else { return }
         guard stillMuted else {
             // Relaunched, and its new process couldn't be muted: it plays on, heard.
             logger.info("[arbiter] \(self.player.name, privacy: .public) relaunched and can’t be muted — it plays on")
@@ -288,7 +287,7 @@ extension PlaybackArbiter {
         logger.debug("[arbiter] muted \(self.player.name, privacy: .public): \(String(describing: hearing), privacy: .public)")
         switch hearing {
         case .silent:
-            guard !isShutDown, pausedByUs, mutedForRestart else { return }
+            guard !isShutDown, pausedByUs, mutedInstead else { return }
             // Muted while it said it doesn't play: silent now, it's only
             // unmuted, as it says (no pause of AutoHush's to resume).
             if mutedWhileQuiet {
@@ -302,9 +301,7 @@ extension PlaybackArbiter {
             // Paused by the user just now (their key or click in it): theirs,
             // unmuted, not resumed (the user, 2026-10-25).
             if userPlayedJustNow(after: pausedAt) {
-                mutedForRestart = false
-                pausePressedWhileMuted = nil
-                await playerMute?.unmute()
+                await liftPauseMute()
                 playerState = .paused
                 pausedByUs = false
                 leftToUser = true
@@ -312,8 +309,7 @@ extension PlaybackArbiter {
                 publishPlaybackState()
                 return
             }
-            mutedForRestart = false
-            muteKeptInPause = true
+            pauseMute = .keptInPause
             pausePressedWhileMuted = nil
             playerState = .paused
             self.pausedAt = clock()
@@ -322,7 +318,7 @@ extension PlaybackArbiter {
             publishPlaybackState()
         case .heard:
             // Things may have changed while it was measured.
-            guard !isShutDown, pausedByUs, mutedForRestart, !activeSources.isEmpty else { return }
+            guard !isShutDown, pausedByUs, mutedInstead, !activeSources.isEmpty else { return }
             let now = clock()
             if let pressed = pausePressedWhileMuted, now.timeIntervalSince(pressed) < Self.mutedPauseRetry { return }
             do { try await player.pauseQuietly() } catch {
@@ -330,7 +326,7 @@ extension PlaybackArbiter {
                 return
             }
             logger.debug("[arbiter] muted \(self.player.name, privacy: .public): its pause pressed in \(String(format: "%.2f", self.clock().timeIntervalSince(now)), privacy: .public) s")
-            guard !isShutDown, pausedByUs, mutedForRestart else { return }
+            guard !isShutDown, pausedByUs, mutedInstead else { return }
             pausePressedWhileMuted = now
         case .measuring, .unknown:
             return // looked at again at the next look
@@ -341,8 +337,8 @@ extension PlaybackArbiter {
     /// a mute standing for the pause is lifted at once, the player paused
     /// for real first, still AutoHush's pause (the user, 2026-10-25).
     func setTapsAllowed(_ allowed: Bool) async {
-        guard !allowed, !isShutDown, mutedForRestart || muteKeptInPause else { return }
-        let refused = mutedForRestart ? await pauseForReal() : nil
+        guard !allowed, !isShutDown, pauseMute != .off else { return }
+        let refused = mutedInstead ? await pauseForReal() : nil
         guard !isShutDown else { return }
         if let refused {
             // Refused: it plays on, heard once unmuted, its pause failed (the
@@ -352,13 +348,41 @@ extension PlaybackArbiter {
             publishPlaybackState()
             return
         }
-        mutedForRestart = false
-        muteKeptInPause = false
-        pausePressedWhileMuted = nil
-        await playerMute?.unmute()
+        await liftPauseMute()
         playerState = .paused
         hearingDuringPause = .silent
-        // Still paused by AutoHush, as shown; the Muted note goes with mutedForRestart.
+        // Still paused by AutoHush, as shown; the Muted note goes with the mute.
         logger.info("[arbiter] AntiDot mode: \(self.player.name, privacy: .public) paused, and no longer muted")
+    }
+
+    /// Ends AutoHush's mute of the player (`pauseMute` off), saying whether
+    /// there was one: the caller unmutes it, at once (`liftPauseMute`) or,
+    /// as the pause's end is published, without waiting.
+    func endPauseMute() -> Bool {
+        guard pauseMute != .off else { return false }
+        pauseMute = .off
+        pausePressedWhileMuted = nil
+        return true
+    }
+
+    /// Lifts AutoHush's mute of the player, if any, at once.
+    func liftPauseMute() async {
+        if endPauseMute() { await playerMute?.unmute() }
+    }
+
+    /// AutoHush's mute of the player, standing for its pause (the user,
+    /// 2026-10-24: "If pauses didn't work, you should mute it").
+    enum PauseMute: Sendable {
+        /// Not muted by AutoHush.
+        case off
+        /// Muted in place of the pause: the player plays on through it, or
+        /// started again by itself, so the mute stands for the pause until
+        /// it's over.
+        case insteadOfPause
+        /// Muted in place of the pause, then paused once it went silent: the
+        /// mute is kept until it plays again, the resume or the user's play
+        /// (the user, 2026-10-24: "unmute it for the playback"), so a restart
+        /// by itself is never heard.
+        case keptInPause
     }
 }

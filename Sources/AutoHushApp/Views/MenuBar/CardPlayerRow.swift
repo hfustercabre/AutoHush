@@ -13,21 +13,11 @@ struct CardPlayerRow: View {
     var body: some View {
         let open = { model.perform(.openSide(.players)) }
         Button(action: open) {
-            HStack(spacing: 8) {
-                Image(systemName: "music.note.list")
-                    .foregroundStyle(.appSecondary)
-                    .accessibilityHidden(true)
-                Text(verbatim: model.status.chosenPlayer == nil ? Self.chooseTitle : Self.changeTitle)
-                Spacer(minLength: 8)
-                // Toward the side window, mirrored right to left, in the
-                // accent color as Ignored Apps' (the user, 2026-10-21).
-                Image(systemName: "chevron.forward")
-                    .font(.callout.weight(.semibold))
-                    .foregroundStyle(.tint)
-                    .accessibilityHidden(true)
-            }
-            .font(.appCallout)
-            .contentShape(Rectangle())
+            // The chevron toward the side window, in the accent color as
+            // Ignored Apps' (the user, 2026-10-21).
+            ChevronRowLabel(symbol: "music.note.list",
+                            title: model.status.chosenPlayer == nil ? Self.chooseTitle : Self.changeTitle)
+                .font(.appCallout)
         }
         .buttonStyle(.plain)
         .modifier(HighlightableControl(cornerRadius: 6, outset: 4, isLit: model.isChoosingPlayer, press: open, opensSide: true))

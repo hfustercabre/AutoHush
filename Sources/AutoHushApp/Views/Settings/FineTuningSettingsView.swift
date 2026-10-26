@@ -14,11 +14,6 @@ struct FineTuningSettingsView: View {
     let model: SettingsModel
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
-    /// Its cards, by what Behavior's rows open.
-    enum Part: Hashable {
-        case timing, fadeLengths, volumeLimits, detection
-    }
-
     var body: some View {
         SettingsPageScroll {
             Card(Self.timingTitle) {
@@ -38,7 +33,7 @@ struct FineTuningSettingsView: View {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
                 }
             } footer: {
-                RestoreDefaultsButton(isDefault: model.timingIsDefault) { model.restoreDefaultTiming() }
+                RestoreDefaultsButton(model: model, card: .timing)
             }
 
             Card(Self.fadeLengthsTitle) {
@@ -49,16 +44,16 @@ struct FineTuningSettingsView: View {
                     TimingSliderRow(model: model, timing: .fadeIn, isCurrent: isFocus(.fadeLengths))
                         .unavailable(SettingsTiming.fadeInUnused(model))
                 }
-                .unavailable(!model.timings.fadesEnabled || !model.playerCanFade)
+                .unavailable(SettingsTiming.fadeLengthsUnavailable(model))
                 if !model.playerCanFade, let player = model.chosenPlayerName {
-                    NoteLabel(BehaviorSettingsView.cantFadeNote(player), kind: .info)
+                    NoteLabel(SettingsSwitch.cantFadeNote(player), kind: .info)
                 } else if !model.timings.fadesEnabled {
                     NoteLabel(SettingsSwitch.fadesOffNote, kind: .info)
                 } else if SettingsTiming.fadeInUnused(model) {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
                 }
             } footer: {
-                RestoreDefaultsButton(isDefault: model.fadeLengthsAreDefaults) { model.restoreDefaultFadeLengths() }
+                RestoreDefaultsButton(model: model, card: .fadeLengths)
             }
 
             Card(Self.volumeLimitsTitle) {
@@ -75,7 +70,7 @@ struct FineTuningSettingsView: View {
                     NoteLabel(SettingsSwitch.levelingOffNote, kind: .info)
                 }
             } footer: {
-                RestoreDefaultsButton(isDefault: model.volumeLimitsAreDefaults) { model.restoreDefaultVolumeLimits() }
+                RestoreDefaultsButton(model: model, card: .volumeLimits)
             }
 
             Card(Text(verbatim: DetectionText.title)) {
@@ -109,22 +104,22 @@ struct FineTuningSettingsView: View {
                 TimingSliderRow(model: model, timing: .silenceThreshold, isCurrent: isFocus(.detection))
                     .unavailable(model.isAntiDotMode)
             } footer: {
-                RestoreDefaultsButton(isDefault: model.detectionIsDefault) { model.restoreDefaultDetection() }
+                RestoreDefaultsButton(model: model, card: .detection)
             }
         }
     }
 
-    /// Where the page scrolls to when a Behavior row asks for `part`: its
-    /// card's first row (`ScrollDriver`; the request is cleared once it's
-    /// done, or another page shows).
-    private func anchor(_ part: Part) -> some View {
-        ScrollAnchor(id: AnyHashable(part))
+    /// Where the page scrolls to when a Behavior row asks for `card`: its
+    /// first row (`ScrollDriver`; the request is cleared once it's done, or
+    /// another page shows).
+    private func anchor(_ card: SettingsCard) -> some View {
+        ScrollAnchor(id: AnyHashable(card))
     }
 
-    /// `part`'s rows stand for what a Behavior row opened: the highlight
+    /// `card`'s rows stand for what a Behavior row opened: the highlight
     /// goes to the first one that can take it.
-    private func isFocus(_ part: Part) -> () -> Bool {
-        { model.fineTuningFocus == part }
+    private func isFocus(_ card: SettingsCard) -> () -> Bool {
+        { model.fineTuningFocus == card }
     }
 
     static var timingTitle: Text {

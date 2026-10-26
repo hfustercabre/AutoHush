@@ -35,7 +35,7 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let stateStream = StateStream()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      onPlaybackStateChange: { stateStream.yield($0) })
+                                      onStatusUpdate: statuses(playback: { stateStream.yield($0) }))
 
         await arbiter.takeOverPause()
         _ = await nextState(from: stateStream.stream) // drain the take-over's state

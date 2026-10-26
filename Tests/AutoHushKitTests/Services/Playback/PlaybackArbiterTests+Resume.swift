@@ -30,7 +30,7 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      onPlaybackStateChange: { published.set($0) })
+                                      onStatusUpdate: statuses(playback: { published.set($0) }))
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
@@ -180,7 +180,8 @@ extension PlaybackArbiterTests {
             await player.overrideState(.paused)
             await player.setPlaysAnyway(true) // a web app's ad
             arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: configuration,
-                                      debounceScheduler: ManualDebounceScheduler(), onPlaybackStateChange: { states.append($0) })
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      onStatusUpdate: statuses(playback: { states.append($0) }))
         }
         await arbiter.handleCallChange(sourceID: call, inCall: true)
         let heard = clock.now
@@ -256,7 +257,7 @@ extension PlaybackArbiterTests {
         let states = Locked<[PlaybackState]>([])
         let needs = Locked<[Bool]>([])
         let arbiter = PlaybackArbiter(player: MockMusicPlayer(), configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) },
+                                      onStatusUpdate: statuses(playback: { states.append($0) }),
                                       onAudioLevelsNeededChange: { needs.append($0) })
 
         await keepPausedAfterCall(arbiter)
@@ -414,8 +415,8 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
         let pausedByUs = Locked<[Bool]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      onPausedByUsChange: { pausedByUs.append($0) },
-                                      onResumeFailure: { failures.append($0) })
+                                      onStatusUpdate: statuses(resumeFailure: { failures.append($0) }),
+                                      onPausedByUsChange: { pausedByUs.append($0) })
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
         await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
@@ -442,7 +443,7 @@ extension PlaybackArbiterTests {
         for byApp in [true, false] {
             let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
             let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                          onResumeFailure: { failures.append($0) })
+                                          onStatusUpdate: statuses(resumeFailure: { failures.append($0) }))
             await arbiter.sourceChanged("org.videolan.vlc", playing: true)
             await arbiter.waitForPause()
             await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
@@ -467,7 +468,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(failPlayWith: MusicPlayerError.playerCommandFailed(.pressIgnored))
         let scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      onResumeFailure: { failures.append($0) })
+                                      onStatusUpdate: statuses(resumeFailure: { failures.append($0) }))
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
@@ -496,7 +497,7 @@ extension PlaybackArbiterTests {
         let failing = MockMusicPlayer(failPlayWith: MusicPlayerError.playerCommandFailed(.pressIgnored))
         let failures = Locked<[MusicPlayerError?]>([]), other = ManualDebounceScheduler()
         let second = PlaybackArbiter(player: failing, configuration: .testing, debounceScheduler: other,
-                                     onResumeFailure: { failures.append($0) })
+                                     onStatusUpdate: statuses(resumeFailure: { failures.append($0) }))
         await failing.setBeforePlay {
             if await failing.playCallCount == PlaybackArbiter.resumeRetries + 1 {
                 await second.sourceChanged("com.apple.Safari", playing: true) // an app starts meanwhile
@@ -519,7 +520,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
         let published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      onPlaybackStateChange: { published.set($0) }, onResumeFailure: { failures.append($0) })
+                                      onStatusUpdate: statuses(playback: { published.set($0) }, resumeFailure: { failures.append($0) }))
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
         await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
@@ -592,7 +593,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .playing)
         let states = Locked<[PlaybackState]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) })
+                                      onStatusUpdate: statuses(playback: { states.append($0) }))
 
         await skipResume(arbiter, player: player, found: found)
         #expect(await player.playCallCount == 0)

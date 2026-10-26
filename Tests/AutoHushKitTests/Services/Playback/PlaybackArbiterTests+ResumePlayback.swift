@@ -18,7 +18,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer()
         let states = Locked<[PlaybackState]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: noResume, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) })
+                                      onStatusUpdate: statuses(playback: { states.append($0) }))
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         #expect(states.value.last == .pausedByMonitor)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)

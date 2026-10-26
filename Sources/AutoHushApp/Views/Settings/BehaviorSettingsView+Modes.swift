@@ -22,9 +22,9 @@ extension BehaviorSettingsView {
                 FlowingButtons(spacing: 6) { audioButtons }
             }
             CardDivider()
-            FineTuningRow(model: model, part: .detection, title: DetectionText.title, value: detection)
+            FineTuningRow(model: model, card: .detection, title: DetectionText.title, value: detection)
         } footer: {
-            RestoreDefaultsButton(isDefault: model.modesAreDefaults) { model.restoreDefaultModes() }
+            RestoreDefaultsButton(model: model, card: .modes)
         }
     }
 

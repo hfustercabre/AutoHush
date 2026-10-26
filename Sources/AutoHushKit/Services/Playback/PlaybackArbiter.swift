@@ -27,7 +27,9 @@ actor PlaybackArbiter: PlaybackArbiting {
     var isFadingOut = false
     var configuration: AppConfiguration
     let debounceScheduler: any PlaybackArbiterDebounceScheduling
-    let onPlaybackStateChange: @Sendable (PlaybackState) -> Void
+    /// What the app is told: the playback state, why a pause or resume
+    /// failed, and whether the player is muted in place of the pause.
+    let onStatusUpdate: @Sendable (MonitoringPipeline.StatusUpdate) -> Void
     let onAudioLevelsNeededChange: @Sendable (Bool) -> Void
     /// Whether the music is paused by us now, for its loudness and the
     /// apps' (`AudioMonitor.setMusicPaused`).
@@ -46,21 +48,18 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// back (`putBackResumeLevel`).
     var resumeLowered = false
     var publishedPausedByUs: Bool?
-    /// Why the music couldn't be paused, then `nil` once that's over.
-    private let onPauseFailure: @Sendable (MusicPlayerError?) -> Void
     /// The last pause failed, while other apps play: the music plays on.
     /// Over once they stop, a pause works, or the player stops playing.
     var pauseFailure: MusicPlayerError? {
-        didSet { if pauseFailure != oldValue { onPauseFailure(pauseFailure) } }
+        didSet { if pauseFailure != oldValue { onStatusUpdate(.pauseFailure(pauseFailure)) } }
     }
     /// The last resume got no answer from the player, or its play failed,
     /// after its tries: the menu says so with Try Again (`retryResume`; the
     /// user, 2026-10-25). Over once an app starts, the player says how it
     /// is, or Try Again.
     var resumeFailure: MusicPlayerError? {
-        didSet { if resumeFailure != oldValue { onResumeFailure(resumeFailure) } }
+        didSet { if resumeFailure != oldValue { onStatusUpdate(.resumeFailure(resumeFailure)) } }
     }
-    private let onResumeFailure: @Sendable (MusicPlayerError?) -> Void
     var publishedAudioLevelsNeeded: Bool?
     let logger = AutoHushLogger(category: "PlaybackArbiter")
 
@@ -129,18 +128,14 @@ actor PlaybackArbiter: PlaybackArbiting {
     var calledOffWatches: [UUID: (task: Task<Void, Never>, wait: Task<Void, Never>)] = [:]
     /// The look under way, once its wait is over (`waitUntilIdle`).
     var lookUnderWay: Task<Void, Never>?
-    /// The player plays on through AutoHush's pause, or started again by
-    /// itself, so it's muted, standing for the pause until it's over
-    /// (`PlayerMuting`).
-    var mutedForRestart = false {
-        didSet { if mutedForRestart != oldValue { onMutedInsteadChange(mutedForRestart) } }
+    /// AutoHush's mute of the player during its pause (`PlayerMuting`),
+    /// lifted in one place (`endPauseMute`); the app is told whether it's
+    /// muted in place of the pause.
+    var pauseMute = PauseMute.off {
+        didSet { if mutedInstead != (oldValue == .insteadOfPause) { onStatusUpdate(.mutedInstead(mutedInstead)) } }
     }
-    private let onMutedInsteadChange: @Sendable (Bool) -> Void
-    /// Muted in place of the pause, then paused (it went silent): the mute
-    /// is kept until it plays again, the resume or the user's play (the user,
-    /// 2026-10-24: "unmute it for the playback"), so a restart by itself
-    /// is never heard.
-    var muteKeptInPause = false
+    /// Muted in place of the pause: it plays on, silent (`PauseMute.insteadOfPause`).
+    var mutedInstead: Bool { pauseMute == .insteadOfPause }
     /// The lifting of the last mute, under way (`publishPlaybackState`).
     var muteLift: Task<Void, Never>?
     /// Whether the user pressed a key or clicked in the player, while it was
@@ -242,16 +237,13 @@ actor PlaybackArbiter: PlaybackArbiting {
         clock: @escaping @Sendable () -> Date = { Date() },
         autoPauseEnabled: Bool = true,
         resumesHeld: Bool = false,
-        onPlaybackStateChange: @escaping @Sendable (PlaybackState) -> Void = { _ in },
+        onStatusUpdate: @escaping @Sendable (MonitoringPipeline.StatusUpdate) -> Void = { _ in },
         onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in },
         onPausedByUsChange: @escaping @Sendable (Bool) -> Void = { _ in },
         volumeLeveler: any ResumeLeveling? = nil,
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
-        onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
-        onResumeFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
         hearsPlayer: @escaping @Sendable (_ since: Date?) async -> PlayerHearing = { _ in .unknown },
         inputToPlayer: @escaping @Sendable (Date) -> Bool = { _ in true },
-        onMutedInsteadChange: @escaping @Sendable (Bool) -> Void = { _ in },
         playerMute: (any PlayerMuting)? = nil,
         tapsAllowed: @escaping @Sendable () -> Bool = { true }
     ) {
@@ -267,16 +259,13 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.clock = clock
         self.autoPauseEnabled = autoPauseEnabled
         self.resumesHeld = resumesHeld
-        self.onPlaybackStateChange = onPlaybackStateChange
+        self.onStatusUpdate = onStatusUpdate
         self.onAudioLevelsNeededChange = onAudioLevelsNeededChange
         self.onPausedByUsChange = onPausedByUsChange
         self.volumeLeveler = volumeLeveler
         self.resumeOffset = resumeOffset
-        self.onPauseFailure = onPauseFailure
-        self.onResumeFailure = onResumeFailure
         self.hearsPlayer = hearsPlayer
         self.inputToPlayer = inputToPlayer
-        self.onMutedInsteadChange = onMutedInsteadChange
         self.playerMute = playerMute
         self.tapsAllowed = tapsAllowed
     }
@@ -446,7 +435,7 @@ actor PlaybackArbiter: PlaybackArbiting {
                 // Muted in place of the pause: paused for real first, so it
                 // wakes paused, as any pause held then (the user, 2026-10-25);
                 // refused, it plays on, its pause failed.
-                let refused = mutedForRestart ? await pauseForReal() : nil
+                let refused = mutedInstead ? await pauseForReal() : nil
                 pausedByUs = false
                 if let refused {
                     if !activeSources.isEmpty { pauseFailure = refused }
@@ -595,9 +584,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         await fader.abandon() // never leave the music faded down
         restartWatch?.task.cancel()
         restartWatch = nil
-        if mutedForRestart || muteKeptInPause { await playerMute?.unmute() }
-        mutedForRestart = false
-        muteKeptInPause = false
+        await liftPauseMute()
         // Nor muted: a mute, unlike a pause, can't be undone by the user.
         if heldByMute, let muting = player as? any MutingMusicPlayer { await muting.releaseMute() }
         heldByMute = false

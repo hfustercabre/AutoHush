@@ -81,7 +81,7 @@ extension PlaybackArbiter {
         // Muted while it plays on (its pause didn't take, or it started again
         // by itself): paused for real before the mute is lifted, as it's to
         // stay paused.
-        if mutedForRestart { _ = await pauseForReal() }
+        if mutedInstead { _ = await pauseForReal() }
         pausedByUs = false
         putBackResumeLevel()
         // A mute standing in for the pause: the player is paused for real
@@ -109,7 +109,7 @@ extension PlaybackArbiter {
             publishPlaybackState()
             return
         }
-        if mutedForRestart, currentState == .playing {
+        if mutedInstead, currentState == .playing {
             logger.info("[arbiter] \(self.player.name, privacy: .public) unmuted, because \(self.autoPauseEnabled ? "no other app plays" : "Auto-Pause is off", privacy: .public)")
             pausedByUs = false // the mute is lifted as it's published
             publishPlaybackState()
@@ -163,11 +163,7 @@ extension PlaybackArbiter {
         pausedByUs = false
         // Muted through the pause, or in place of it (found paused before a
         // look turned the mute into a pause): heard as it plays and fades in.
-        if muteKeptInPause || mutedForRestart {
-            muteKeptInPause = false
-            mutedForRestart = false
-            await playerMute?.unmute()
-        }
+        await liftPauseMute()
         do {
             try await fader.playAndFadeIn()
             playerState = .playing

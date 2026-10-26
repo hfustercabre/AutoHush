@@ -79,7 +79,7 @@ package final class PlayerInput: NSObject, Sendable {
     /// input's age.
     static func played(since date: Date, now: Date, spans: [FrontSpan], secondsSince: (CGEventType) -> Double) -> Bool {
         UserInput.keysAndClicks.contains { kind in
-            guard let input = UserInput.last(of: [kind], now: now, secondsSince: secondsSince) else { return false }
+            guard let input = UserInput.last(kind, now: now, secondsSince: secondsSince) else { return false }
             return input > date && inFront(at: input, spans: spans)
         }
     }
@@ -95,8 +95,9 @@ package enum UserInput {
         CGEventSource.secondsSinceLastEventType(.hidSystemState, eventType: kind)
     }
 
-    static func last(of kinds: [CGEventType], now: Date, secondsSince: (CGEventType) -> Double = secondsSince) -> Date? {
-        let ago = kinds.map(secondsSince).min() ?? .infinity
+    /// When macOS saw the latest input of `kind`, if ever.
+    static func last(_ kind: CGEventType, now: Date, secondsSince: (CGEventType) -> Double = secondsSince) -> Date? {
+        let ago = secondsSince(kind)
         return ago.isFinite ? now.addingTimeInterval(-ago) : nil
     }
 }

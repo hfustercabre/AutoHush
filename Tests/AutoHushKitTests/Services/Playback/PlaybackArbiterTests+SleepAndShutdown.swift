@@ -29,7 +29,7 @@ extension PlaybackArbiterTests {
         let told = Locked<[Bool]>([])
         let needs = Locked<[Bool]>([])
         let arbiter = PlaybackArbiter(player: MockMusicPlayer(), configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) },
+                                      onStatusUpdate: statuses(playback: { states.append($0) }),
                                       onAudioLevelsNeededChange: { needs.append($0) },
                                       onPausedByUsChange: { told.append($0) })
 

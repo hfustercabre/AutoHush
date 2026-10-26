@@ -134,16 +134,13 @@ package final class MonitoringPipeline {
             configuration: configuration,
             autoPauseEnabled: autoPauseEnabled,
             resumesHeld: resumesHeld,
-            onPlaybackStateChange: { statusUpdates.yield(.playback($0)) },
+            onStatusUpdate: { statusUpdates.yield($0) },
             onAudioLevelsNeededChange: { monitorLink.monitor?.setAudioLevelsNeeded($0) },
             onPausedByUsChange: { monitorLink.monitor?.setMusicPaused($0) },
             volumeLeveler: volumeLeveler,
             resumeOffset: { await monitorLink.monitor?.resumeOffsetDB() },
-            onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) },
-            onResumeFailure: { statusUpdates.yield(.resumeFailure($0)) },
             hearsPlayer: { since in await monitorLink.monitor?.playerHearing(since: since) ?? .unknown },
             inputToPlayer: readers.playerInput(player.bundleID),
-            onMutedInsteadChange: { statusUpdates.yield(.mutedInstead($0)) },
             playerMute: readers.playerMute(player.bundleID) { tapsAllowed.withLock { $0 } },
             tapsAllowed: { tapsAllowed.withLock { $0 } }
         )

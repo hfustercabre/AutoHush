@@ -60,7 +60,7 @@ struct GeneralSettingsView: View {
                 NoteLabel(Self.hiddenIconNote, kind: .warning)
             }
             } footer: {
-                RestoreDefaultsButton(isDefault: model.startupIsDefault) { model.restoreDefaultStartup() }
+                RestoreDefaultsButton(model: model, card: .startup)
             }
         }
     }
@@ -101,7 +101,7 @@ struct GeneralSettingsView: View {
                 }
                 Spacer(minLength: 8)
                 Button { model.actions?.openSettings(page: .mediaPlayer) } label: {
-                    Text(verbatim: model.chosenPlayer == nil ? PlayerOption.chooseLabel : AddAppText.changeApp)
+                    Text(verbatim: model.chosenPlayer == nil ? ChooseText.choose : ChooseText.change)
                 }
                 .buttonStyle(.chip)
                 .fixedSize()

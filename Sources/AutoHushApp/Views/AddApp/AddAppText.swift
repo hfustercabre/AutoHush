@@ -56,10 +56,6 @@ enum AddAppText {
         String(localized: "Choose an App…", comment: "Add an App window: button under the step “Choose the app” that opens the window listing the apps")
     }
 
-    static var changeApp: String {
-        String(localized: "Change…", comment: "Add an App window: button under the step “Choose the app” once done, which chooses another app; also under “Play something” and the check’s step when the app can’t be found any more. Also Settings → General, beside the media player: opens the page with every player, to choose another")
-    }
-
     /// The question Change… asks once the check has run (the user, 2026-10-18: "Ask first").
     static var changeAppTitle: String {
         String(localized: "Choose another app?", comment: "Add an App window: title of the question Change… asks once the check has run")

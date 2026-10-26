@@ -55,8 +55,7 @@ struct PlaybackArbiterTests {
         PlaybackArbiter(player: player,
             configuration: AppConfiguration(),
             debounceScheduler: ManualDebounceScheduler(),
-            onPlaybackStateChange: { state in stream.yield(state) }
-        )
+            onStatusUpdate: statuses(playback: { state in stream.yield(state) }))
     }
 
     /// Awaits the next value from the stream, or `nil` after `TestWait.limit`.
@@ -76,6 +75,24 @@ struct PlaybackArbiterTests {
         }
     }
 
+    /// The arbiter's status updates, split by kind as the tests follow them.
+    func statuses(
+        playback: @escaping @Sendable (PlaybackState) -> Void = { _ in },
+        pauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
+        resumeFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
+        mutedInstead: @escaping @Sendable (Bool) -> Void = { _ in }
+    ) -> @Sendable (MonitoringPipeline.StatusUpdate) -> Void {
+        { update in
+            switch update {
+            case .playback(let state): playback(state)
+            case .pauseFailure(let failure): pauseFailure(failure)
+            case .resumeFailure(let failure): resumeFailure(failure)
+            case .mutedInstead(let muted): mutedInstead(muted)
+            case .activeSources, .detection, .learnedAssertions: break
+            }
+        }
+    }
+
     /// An arbiter on the test's clock, knowing its player plays.
     func makeClockedArbiter(
         player: MockMusicPlayer,
@@ -90,7 +107,7 @@ struct PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(
             player: player, configuration: configuration, debounceScheduler: scheduler, fadeSleep: fadeSleep,
             clock: { clock.now }, autoPauseEnabled: autoPauseEnabled,
-            onPlaybackStateChange: onPlaybackStateChange, onAudioLevelsNeededChange: onAudioLevelsNeededChange
+            onStatusUpdate: statuses(playback: onPlaybackStateChange), onAudioLevelsNeededChange: onAudioLevelsNeededChange
         )
         await arbiter.refreshPlaybackState()
         return arbiter

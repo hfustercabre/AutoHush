@@ -127,8 +127,7 @@ extension PlaybackArbiterTests {
         let states = Locked<[PlaybackState]>([])
         let failures = Locked<[MusicPlayerError?]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) },
-                                      onPauseFailure: { failures.append($0) })
+                                      onStatusUpdate: statuses(playback: { states.append($0) }, pauseFailure: { failures.append($0) }))
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
 
@@ -148,8 +147,7 @@ extension PlaybackArbiterTests {
         let states = Locked<[PlaybackState]>([])
         let failures = Locked<[MusicPlayerError?]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) },
-                                      onPauseFailure: { failures.append($0) })
+                                      onStatusUpdate: statuses(playback: { states.append($0) }, pauseFailure: { failures.append($0) }))
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         #expect(states.value.last == .pauseFailed)
@@ -167,7 +165,8 @@ extension PlaybackArbiterTests {
         let failures = Locked<[MusicPlayerError?]>([])
         let mute = FakeMute()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      fadeSleep: { _ in }, onPauseFailure: { failures.append($0) }, playerMute: mute)
+                                      fadeSleep: { _ in }, onStatusUpdate: statuses(pauseFailure: { failures.append($0) }),
+                                      playerMute: mute)
         await player.setBeforeStateAnswer { [arbiter, player] in
             // The fade-out's check, after the arbiter's: the app stops just before the press.
             guard await player.stateQueryCount == 2 else { return }
@@ -193,7 +192,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressFailed))
         let failures = Locked<[MusicPlayerError?]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPauseFailure: { failures.append($0) })
+                                      onStatusUpdate: statuses(pauseFailure: { failures.append($0) }))
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         switch end {

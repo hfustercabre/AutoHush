@@ -23,9 +23,9 @@ struct BehaviorSettingsView: View {
                 CardDivider()
                 SettingsSwitchRow(model: model, kind: .pausesOnDisconnect)
                 CardDivider()
-                FineTuningRow(model: model, part: .timing, title: SettingsTiming.pauseAfter.name, value: value(.pauseAfter))
+                FineTuningRow(model: model, card: .timing, title: SettingsTiming.pauseAfter.name, value: value(.pauseAfter))
             } footer: {
-                RestoreDefaultsButton(isDefault: model.pausingAreDefaults) { model.restoreDefaultPausing() }
+                RestoreDefaultsButton(model: model, card: .pausing)
             }
 
             Card(Self.resumingTitle) {
@@ -48,23 +48,23 @@ struct BehaviorSettingsView: View {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
                 }
                 CardDivider()
-                FineTuningRow(model: model, part: .timing, title: SettingsTiming.resumeAfter.name,
+                FineTuningRow(model: model, card: .timing, title: SettingsTiming.resumeAfter.name,
                               value: model.timings.resumesPlayback ? value(.resumeAfter) : nil)
             } footer: {
-                RestoreDefaultsButton(isDefault: model.resumingAreDefaults) { model.restoreDefaultResuming() }
+                RestoreDefaultsButton(model: model, card: .resuming)
             }
 
             Card(Text(verbatim: Self.fadesTitle)) {
                 SettingsSwitchRow(model: model, kind: .fades)
                     .unavailable(!model.playerCanFade)
                 if !model.playerCanFade, let player = model.chosenPlayerName {
-                    NoteLabel(Self.cantFadeNote(player), kind: .info)
+                    NoteLabel(SettingsSwitch.cantFadeNote(player), kind: .info)
                 }
                 CardDivider()
-                FineTuningRow(model: model, part: .fadeLengths, title: Self.fadeLengthsRowTitle,
+                FineTuningRow(model: model, card: .fadeLengths, title: Self.fadeLengthsRowTitle,
                               value: model.playerCanFade && model.timings.fadesEnabled ? fadeLengths : nil)
             } footer: {
-                RestoreDefaultsButton(isDefault: model.fadesAreDefaults) { model.restoreDefaultFades() }
+                RestoreDefaultsButton(model: model, card: .fades)
             }
 
             Card(Self.volumeTitle) {
@@ -73,10 +73,10 @@ struct BehaviorSettingsView: View {
                     NoteLabel(reason, kind: .info)
                 }
                 CardDivider()
-                FineTuningRow(model: model, part: .volumeLimits, title: Self.volumeLimitsRowTitle,
+                FineTuningRow(model: model, card: .volumeLimits, title: Self.volumeLimitsRowTitle,
                               value: SettingsTiming.levelingLimitsUnavailable(model) ? nil : volumeLimits)
             } footer: {
-                RestoreDefaultsButton(isDefault: model.volumeAreDefaults) { model.restoreDefaultVolume() }
+                RestoreDefaultsButton(model: model, card: .volume)
             }
 
             modesCard
@@ -100,13 +100,6 @@ struct BehaviorSettingsView: View {
     private var volumeLimits: String {
         String(localized: "\(value(.levelingMaxCut)) at most",
                comment: "Settings → Behavior, Volume's row to Fine-Tuning: the most Level the volume lowers the Mac's volume; %@ is it, e.g. “10 dB”")
-    }
-
-    /// Under the dimmed Fade playback, for a player AutoHush can't fade;
-    /// Fine-Tuning's Fade Lengths too.
-    static func cantFadeNote(_ player: String) -> String {
-        String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
-               comment: "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player, e.g. TIDAL")
     }
 
     static var fadeLengthsRowTitle: String {

@@ -149,6 +149,13 @@ enum SettingsSwitch: CaseIterable {
                comment: "Settings → Behavior, under Volume's limits, dimmed while the Level the volume switch is off")
     }
 
+    /// Under the dimmed Fade playback, for a player AutoHush can't fade;
+    /// Fine-Tuning's Fade Lengths too.
+    static func cantFadeNote(_ player: String) -> String {
+        String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
+               comment: "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player, e.g. TIDAL")
+    }
+
     static var updateChecksOffNote: String {
         String(localized: "Automatic checks are off",
                comment: "Settings → About, under what happens when an update is found, dimmed while the switch “Check for updates automatically” is off")
@@ -265,6 +272,12 @@ enum SettingsTiming {
     /// A sound level, as "-60 dB": here, and in Diagnostics.
     static func decibels(_ value: Double) -> String {
         String(localized: "\(Int(value)) dB", comment: "A sound level in decibels")
+    }
+
+    /// The fade lengths greyed out, in Settings: the fades are off, or the
+    /// player can't fade.
+    @MainActor static func fadeLengthsUnavailable(_ model: SettingsModel) -> Bool {
+        !model.timings.fadesEnabled || !model.playerCanFade
     }
 
     /// The fade-in greyed out on its own, in Settings: nothing

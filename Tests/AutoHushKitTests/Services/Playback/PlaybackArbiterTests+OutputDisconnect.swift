@@ -15,7 +15,7 @@ extension PlaybackArbiterTests {
         configuration.pausesOnOutputDisconnect = on
         return PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
                                fadeSleep: { _ in await steps.step() }, autoPauseEnabled: autoPause,
-                               onPlaybackStateChange: { states.append($0) })
+                               onStatusUpdate: statuses(playback: { states.append($0) }))
     }
 
     @Test("playing, the output going away pauses the music at once, without a fade, says it isn't playing, and nothing resumes it")

@@ -159,7 +159,7 @@ struct AddAppView: View {
         case .done:
             StepNote(AddAppText.chosen(appName ?? "", traits: model.traits, browser: model.chosen?.browserName))
             if model.canChangeApp {
-                Button { changeApp() } label: { Text(verbatim: AddAppText.changeApp) }
+                Button { changeApp() } label: { Text(verbatim: ChooseText.change) }
                     .buttonStyle(.chip)
                     .padding(.top, 2)
                     .focused($focused, equals: .choose)
@@ -240,7 +240,7 @@ struct AddAppView: View {
         case (.failed, _) where model.appNotFound:
             // Moved or deleted: Open can't find it, another app is chosen instead.
             NoteLabel(AddAppText.appNotFound(appName ?? "")).padding(.top, 2)
-            MainButton(AddAppText.changeApp, inStep: true) { changeApp() }
+            MainButton(ChooseText.change, inStep: true) { changeApp() }
                 .focused($focused, equals: .play)
         case (.failed, _) where model.appQuit:
             NoteLabel(AddAppText.appQuit(appName ?? "")).padding(.top, 2)
@@ -275,7 +275,7 @@ struct AddAppView: View {
             FlowingButtons {
                 if model.failureReason == .appNotFound {
                     // Moved or deleted: checked again, it would fail again.
-                    MainButton(AddAppText.changeApp, inStep: true) { changeApp() }
+                    MainButton(ChooseText.change, inStep: true) { changeApp() }
                         .focused($focused, equals: .check)
                 } else {
                     MainButton(AddAppText.checkAgain, inStep: true) { model.checkAgain() }

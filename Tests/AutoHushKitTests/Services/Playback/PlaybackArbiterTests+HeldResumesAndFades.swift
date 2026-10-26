@@ -12,7 +12,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer()
         let states = Locked<[PlaybackState]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) })
+                                      onStatusUpdate: statuses(playback: { states.append($0) }))
 
         if pausedBeforeHold { await arbiter.sourceChanged("org.videolan.vlc", playing: true) }
         await arbiter.holdResumes(true)
@@ -54,7 +54,7 @@ extension PlaybackArbiterTests {
         let states = Locked<[PlaybackState]>([])
         let arbiter = PlaybackArbiter(player: MockMusicPlayer(state: .paused), configuration: .testing,
                                       debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { states.append($0) })
+                                      onStatusUpdate: statuses(playback: { states.append($0) }))
 
         #expect(await arbiter.takeOverPause())
         #expect(states.value.last == .musicIdle) // no app plays, and its resume waits
@@ -214,7 +214,7 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing,
                                       debounceScheduler: ManualDebounceScheduler(),
                                       fadeSleep: { if $0 == VolumeFader.restoreDelay { await restore.wait() } },
-                                      onPlaybackStateChange: { states.append($0) })
+                                      onStatusUpdate: statuses(playback: { states.append($0) }))
 
         await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
         await TestWait.until { await player.pauseCallCount == 1 } // paused, volume not yet set back

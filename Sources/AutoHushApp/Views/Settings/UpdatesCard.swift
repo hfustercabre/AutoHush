@@ -71,7 +71,7 @@ struct UpdatesCard: View {
             }
             .highlightableRow(ownsControls: true, press: { model.updates.checkFromUser() })
         } footer: {
-            RestoreDefaultsButton(isDefault: model.updatesAreDefaults) { model.restoreDefaultUpdates() }
+            RestoreDefaultsButton(model: model, card: .updates)
         }
     }
 }

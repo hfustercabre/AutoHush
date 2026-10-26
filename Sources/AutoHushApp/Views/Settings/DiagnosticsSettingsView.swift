@@ -172,7 +172,7 @@ struct DiagnosticsSettingsView: View {
 
     static func title(of fix: DiagnosticsSnapshot.Row.Fix) -> String {
         switch fix {
-        case .choosePlayer: PlayerOption.chooseLabel
+        case .choosePlayer: ChooseText.choose
         case .learnControls: LearningText.learnButton
         case .allow: AddAppText.allowButton
         }

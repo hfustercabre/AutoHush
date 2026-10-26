@@ -3,7 +3,7 @@ import Foundation
 // PlaybackArbiter: what it tells the app.
 extension PlaybackArbiter {
     func publishPlaybackState() {
-        onPlaybackStateChange(mapPlaybackState())
+        onStatusUpdate(.playback(mapPlaybackState()))
 
         let needed = audioLevelsNeeded
         if needed != publishedAudioLevelsNeeded {
@@ -15,9 +15,7 @@ extension PlaybackArbiter {
             if !pausedByUs { callDuringPause = false; heldByMute = false; mutedWhileQuiet = false } // that pause is over
             // A mute standing for it, or kept through it, is lifted: the
             // player plays on, heard, or can be played.
-            if !pausedByUs, mutedForRestart || muteKeptInPause {
-                mutedForRestart = false
-                muteKeptInPause = false
+            if !pausedByUs, endPauseMute() {
                 let mute = playerMute
                 // A mute made next awaits this one's lifting (`muteInsteadOfPause`).
                 muteLift = Task { await mute?.unmute() }

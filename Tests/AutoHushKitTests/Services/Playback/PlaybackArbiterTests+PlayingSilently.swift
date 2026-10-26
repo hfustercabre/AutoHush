@@ -39,7 +39,7 @@ extension PlaybackArbiterTests {
     private func makeHearingArbiter(_ player: MockMusicPlayer, hearing: Hearing, scheduler: ManualDebounceScheduler,
                                     published: LastPublished) -> PlaybackArbiter {
         PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                        onPlaybackStateChange: { published.set($0) }, hearsPlayer: { await hearing.answer(since: $0) })
+                        onStatusUpdate: statuses(playback: { published.set($0) }), hearsPlayer: { await hearing.answer(since: $0) })
     }
 
     @Test("a player that says it plays but isn't heard isn't paused: it's playing silently, asked again every second, and paused once heard")
