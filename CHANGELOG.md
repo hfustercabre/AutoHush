@@ -7,6 +7,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **A calmer About page.** AutoHush's icon sits beside its name and
+  version, and **When an update is found** is a pop-up menu, so the page
+  fits without scrolling.
+
 ### Fixed
 
 - **No purple dot as you open the menu.** Opening the menu while your

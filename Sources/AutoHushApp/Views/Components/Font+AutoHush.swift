@@ -4,8 +4,8 @@ import SwiftUI
 /// text styles (the user, 2026-10-17: "native sizes and style text"), named
 /// for what they're used for. Settings' sidebar keeps its larger names.
 extension Font {
-    /// The app's name in Settings → About.
-    static let appLargeTitle = Font.largeTitle
+    /// The app's name in Settings → About, beside its icon (A4, 2026-10-26).
+    static let appAboutTitle = Font.title2.weight(.semibold)
     /// Plain text and rows' titles.
     static let appBody = Font.body
     /// A card's title, e.g. the media player's name; Settings' section titles.

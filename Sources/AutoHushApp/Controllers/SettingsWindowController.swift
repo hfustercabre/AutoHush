@@ -92,12 +92,11 @@ final class SettingsWindowController: NSWindowController {
     static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 600) }
     static var maximumSize: NSSize { NSSize(width: sidebarWidth + max(640, leastPageWidth), height: 900) }
 
-    /// The page's least width: 480, or the widest choice (`ChoiceChips`)
-    /// with the form's margins around it (20 pt to its box, 10 in it, a side).
+    /// The page's least width: 480, or Fine-Tuning's AntiDot mode's ways
+    /// (`ChoiceChips`) with the form's margins around them (20 pt to its box,
+    /// 10 in it, a side). The update choice is a pop-up menu since A4 (2026-10-26).
     private static let leastPageWidth: CGFloat = {
-        let choices = [AutomaticUpdates.allCases.map(\.title),
-                       DetectionMethod.antiDotWays.map(\.title)]
-        return max(480, (choices.map { ChoiceChips<Never>.fittingWidth($0) }.max() ?? 0) + 2 * (20 + 10))
+        max(480, ChoiceChips<Never>.fittingWidth(DetectionMethod.antiDotWays.map(\.title)) + 2 * (20 + 10))
     }()
     static let initialSize = NSSize(width: 760, height: 620)
     /// Where macOS keeps the window's place and size between launches.

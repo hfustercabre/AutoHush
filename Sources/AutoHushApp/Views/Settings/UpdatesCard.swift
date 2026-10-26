@@ -2,8 +2,9 @@ import SwiftUI
 import AutoHushKit
 
 /// Settings → About's Updates (a page of their own until W1, the user,
-/// 2026-10-25): the daily check, what it leads to (with a note while
-/// notifications are off), Check Now, and its Restore Defaults.
+/// 2026-10-25): the daily check, what it leads to as a pop-up menu (A4,
+/// 2026-10-26; with a note while notifications are off), Check Now, and its
+/// Restore Defaults.
 struct UpdatesCard: View {
     let model: SettingsModel
 
@@ -15,18 +16,30 @@ struct UpdatesCard: View {
             ))
             // What checks lead to only matters while they run: greyed out otherwise.
             CardDivider()
-            VStack(alignment: .leading, spacing: 10) {
-                let title = String(localized: "When an update is found", comment: "Settings → About: lead-in to what happens when an update is found")
-                Text(verbatim: title) // a row's title
-                ChoiceChips(
-                    label: title,
-                    options: AutomaticUpdates.allCases.map { .init(title: $0.title, value: $0) },
-                    // A copy that can't install itself can only notify.
-                    selection: model.updateInstallNote == nil ? model.automaticUpdates : .notify,
-                    onSelect: { model.updates.setMode($0) }
-                )
-                .disabled(model.updateInstallNote != nil)
-                Text(model.updateInstallNote ?? model.automaticUpdates.explanation).captionStyle()
+            // A pop-up menu, as System Settings has them (A4, the user's pick,
+            // 2026-10-26: chips were too much); what the choice does is its
+            // help tag and VoiceOver hint.
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    let title = String(localized: "When an update is found", comment: "Settings → About: lead-in to what happens when an update is found")
+                    Text(verbatim: title) // a row's title
+                    Spacer(minLength: 8)
+                    Picker(selection: Binding(
+                        // A copy that can't install itself can only notify.
+                        get: { model.updateInstallNote == nil ? model.automaticUpdates : .notify },
+                        set: { model.updates.setMode($0) }
+                    )) {
+                        ForEach(AutomaticUpdates.allCases, id: \.self) { Text(verbatim: $0.title).tag($0) }
+                    } label: {
+                        Text(verbatim: title)
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                    .disabled(model.updateInstallNote != nil)
+                    .help(model.automaticUpdates.explanation)
+                    .accessibilityHint(Text(verbatim: model.automaticUpdates.explanation))
+                }
+                if let note = model.updateInstallNote { Text(note).captionStyle() }
             }
             // ← and → choose, while the arrow keys' highlight is on it.
             .highlightableRow(adjust: { step in
