@@ -205,7 +205,6 @@ extension AppDelegate {
         refreshPlayerOptions()
         followPlayerReopen()
         session.checkAccess()
-        session.checkPlayerHeard() // a player playing silently says so
         // The card's checks say which permission is allowed: as it is now.
         Task { [weak self] in await self?.refreshPermissions() }
         if isShowingPlayerChooser { playerChooser?.bringForward() }

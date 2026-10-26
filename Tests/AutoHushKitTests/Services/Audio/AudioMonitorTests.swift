@@ -37,8 +37,6 @@ struct AudioMonitorTests {
         let activeSources = Locked<[[AudioSource]]>([])
         let modes = Locked<[DetectionMode]>([])
         let learned = Locked<[String]>([])
-        /// The processes listened to with a tap of their own (`listenToPlayer`), each time.
-        let listened = Locked<[Set<AudioObjectID>]>([])
         let monitor: AudioMonitor
 
         init(
@@ -67,8 +65,7 @@ struct AudioMonitorTests {
                 audioLevelsReleaseDelay: releaseDelay,
                 clock: { [clock] in clock.now },
                 onActiveSourcesChange: { [activeSources] in activeSources.append($0) },
-                onDetectionModeChange: { [modes] in modes.append($0) },
-                hears: { [listened] in listened.append($0); return true }
+                onDetectionModeChange: { [modes] in modes.append($0) }
             )
         }
 
@@ -189,25 +186,6 @@ struct AudioMonitorTests {
         #expect(await h.monitor.playerHearing() == .silent) // its output closed
         h.monitor.setDetectionMethod(.playbackSignals)
         #expect(await h.monitor.playerHearing() == .unknown) // AntiDot mode measures no levels
-        #expect(h.listened.value.isEmpty)
-    }
-
-    @Test("asked to listen while nothing measures the player (the menu opening), it's listened to with a tap of its own, its processes only; not without measured levels")
-    func listenToPlayer() async {
-        let h = Harness(permission: MockAudioCapturePermission(.granted))
-        h.start()
-        h.step([Self.process(2, TestPlayer.bundleID)])
-        #expect(await h.monitor.listenToPlayer() == .heard)
-        #expect(h.listened.value == [[2]])
-        h.monitor.setDetectionMethod(.playbackSignals)
-        #expect(await h.monitor.listenToPlayer() == .unknown)
-        #expect(h.listened.value == [[2]])
-
-        let denied = Harness(permission: MockAudioCapturePermission(.denied)) // levels measure nothing
-        denied.start()
-        denied.step([Self.process(2, TestPlayer.bundleID)])
-        #expect(await denied.monitor.listenToPlayer() == .unknown)
-        #expect(denied.listened.value.isEmpty)
     }
 
     // MARK: - Audio level detection

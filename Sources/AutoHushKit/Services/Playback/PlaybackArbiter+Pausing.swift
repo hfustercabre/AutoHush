@@ -78,7 +78,7 @@ extension PlaybackArbiter {
         // Not heard (a muted trailer, a silent preview): nothing to pause.
         // Read from the levels the monitor measures, so nothing waits; asked
         // again every second while apps play, so it's paused once heard.
-        let hearing = await hearsPlayer(false, nil)
+        let hearing = await hearsPlayer(nil)
         if case .measuring(let remaining) = hearing {
             // Its tap was made with the other app's: not heard yet, but not
             // long enough to tell. A sound meanwhile tells at once.
@@ -141,7 +141,7 @@ extension PlaybackArbiter {
         } else if activeSources.isEmpty, !isShutDown {
             // Every app stopped while we were pausing, too late to call it off.
             scheduleResume(after: nil)
-        } else if await hearsPlayer(false, nil) != .unknown, !(await pauseIsItsOwnMute()), pausedByUs, !isShutDown,
+        } else if await hearsPlayer(nil) != .unknown, !(await pauseIsItsOwnMute()), pausedByUs, !isShutDown,
                   !activeSources.isEmpty {
             // Watched where its sound is measured (not in AntiDot mode), unless
             // its pause is a mute of its own.
@@ -181,14 +181,14 @@ extension PlaybackArbiter {
     private func mutesHeardWhileQuiet(_ state: PlayerState) async -> Bool {
         if let since = heardWhileQuietSince {
             heardWhileQuietSince = nil
-            guard await hearsPlayer(false, since.addingTimeInterval(Self.pauseTail)) == .heard,
+            guard await hearsPlayer(since.addingTimeInterval(Self.pauseTail)) == .heard,
                   !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return false }
             let handled = await muteInsteadOfPause("is heard while it says it’s \(state.rawValue)",
                                                    failure: .playerCommandFailed(.pressIgnored))
             if pausedByUs, mutedForRestart { mutedWhileQuiet = true }
             return handled
         }
-        guard await hearsPlayer(false, nil) == .heard, !isShutDown, autoPauseEnabled, !activeSources.isEmpty else { return false }
+        guard await hearsPlayer(nil) == .heard, !isShutDown, autoPauseEnabled, !activeSources.isEmpty else { return false }
         heardWhileQuietSince = clock()
         schedulePause(after: Self.silentRecheckInterval)
         return true

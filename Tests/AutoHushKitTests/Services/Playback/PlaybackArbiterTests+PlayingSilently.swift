@@ -11,7 +11,6 @@ extension PlaybackArbiterTests {
         // Read and written only under `lock`.
         private let lock = NSLock()
         private var hearing: PlayerHearing
-        private var asked: [Bool] = []
         private var askedSince: [Date?] = []
         private var hook: (@Sendable () async -> Void)?
         init(_ hearing: PlayerHearing) { self.hearing = hearing }
@@ -21,31 +20,29 @@ extension PlaybackArbiterTests {
             get { lock.withLock { hook } }
             set { lock.withLock { hook = newValue } }
         }
-        func answer(listening: Bool, since: Date? = nil) async -> PlayerHearing {
+        func answer(since: Date? = nil) async -> PlayerHearing {
             await beforeAnswer?()
-            return ask(listening: listening, since: since)
+            return ask(since: since)
         }
         var now: PlayerHearing {
             get { lock.withLock { hearing } }
             set { lock.withLock { hearing = newValue } }
         }
-        var timesAsked: Int { lock.withLock { asked.count } }
-        /// Whether each ask let it listen with a tap of its own.
-        var listened: [Bool] { lock.withLock { asked } }
+        var timesAsked: Int { lock.withLock { askedSince.count } }
         /// From when each ask counted the player's sound.
         var since: [Date?] { lock.withLock { askedSince } }
-        func ask(listening: Bool, since: Date? = nil) -> PlayerHearing {
-            lock.withLock { asked.append(listening); askedSince.append(since); return hearing }
+        func ask(since: Date? = nil) -> PlayerHearing {
+            lock.withLock { askedSince.append(since); return hearing }
         }
     }
 
     private func makeHearingArbiter(_ player: MockMusicPlayer, hearing: Hearing, scheduler: ManualDebounceScheduler,
                                     published: LastPublished) -> PlaybackArbiter {
         PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                        onPlaybackStateChange: { published.set($0) }, hearsPlayer: { await hearing.answer(listening: $0, since: $1) })
+                        onPlaybackStateChange: { published.set($0) }, hearsPlayer: { await hearing.answer(since: $0) })
     }
 
-    @Test("a player that says it plays but isn't heard isn't paused: it's playing silently, asked again every second, never listening on its own, and paused once heard")
+    @Test("a player that says it plays but isn't heard isn't paused: it's playing silently, asked again every second, and paused once heard")
     func silentPlayerNotPaused() async {
         let player = MockMusicPlayer()
         let hearing = Hearing(.silent) // a muted trailer
@@ -65,7 +62,6 @@ extension PlaybackArbiterTests {
         await TestWait.until { await player.pauseCallCount == 1 }
         await TestWait.until { published.state == .pausedByMonitor }
         #expect(published.state == .pausedByMonitor)
-        #expect(hearing.listened.allSatisfy { !$0 }) // no tap of its own on a pause's way
     }
 
     @Test("a player playing silently stays so when it can no longer be measured (the other app's output closed): it isn't paused")
@@ -109,49 +105,38 @@ extension PlaybackArbiterTests {
         #expect(published.state != .playingSilently)
     }
 
-    @Test("the menu opening listens to a playing player: silent, it's playing silently; heard again, it's playing")
-    func menuOpeningListens() async {
-        let player = MockMusicPlayer()
-        let hearing = Hearing(.silent)
-        let scheduler = ManualDebounceScheduler(), published = LastPublished()
-        let arbiter = makeHearingArbiter(player, hearing: hearing, scheduler: scheduler, published: published)
-        await arbiter.refreshPlaybackState()
-        #expect(published.state == .musicPlaying)
-
-        await arbiter.checkPlayerHeard()
-        await arbiter.waitUntilIdle() // the listen runs in a task of its own
-        #expect(published.state == .playingSilently)
-        hearing.now = .heard
-        await arbiter.checkPlayerHeard()
-        await arbiter.waitUntilIdle() // the listen runs in a task of its own
-        #expect(published.state == .musicPlaying)
-        #expect(hearing.listened == [true, true])
-    }
-
     @Test("a player playing silently that pauses or closes its output is no longer playing silently")
     func silenceForgotten() async {
         for byOutput in [false, true] {
             let player = MockMusicPlayer()
             let scheduler = ManualDebounceScheduler(), published = LastPublished()
             let arbiter = makeHearingArbiter(player, hearing: Hearing(.silent), scheduler: scheduler, published: published)
-            await arbiter.refreshPlaybackState()
-            await arbiter.checkPlayerHeard()
-            await arbiter.waitUntilIdle() // the listen runs in a task of its own
-            #expect(published.state == .playingSilently)
+            await arbiter.sourceChanged("org.videolan.vlc", playing: true) // measured alongside it: silent
+            await TestWait.until { published.state == .playingSilently }
             await arbiter.handlePlayerStateChange(.playing) // said again: still silent
             #expect(published.state == .playingSilently)
             if byOutput {
                 await arbiter.handleLocalPlaybackChange(false)
                 #expect(published.state == .playingElsewhere)
-                await arbiter.handleLocalPlaybackChange(true)
-                #expect(published.state == .musicPlaying)
             } else {
                 await arbiter.handlePlayerStateChange(.paused)
                 #expect(published.state == .musicIdle)
-                await arbiter.handlePlayerStateChange(.playing)
-                #expect(published.state == .musicPlaying)
             }
         }
+    }
+
+    @Test("once the other apps stop, nothing measures a player playing silently: it shows as playing, and nothing is paused or played")
+    func silenceForgottenWhenAppsStop() async {
+        let player = MockMusicPlayer()
+        let scheduler = ManualDebounceScheduler(), published = LastPublished()
+        let arbiter = makeHearingArbiter(player, hearing: Hearing(.silent), scheduler: scheduler, published: published)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await TestWait.until { published.state == .playingSilently }
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.waitUntilIdle()
+        #expect(published.state == .musicPlaying)
+        #expect(await player.pauseCallCount == 0)
+        #expect(await player.playCallCount == 0)
     }
 
     @Test("a player playing silently is paused the moment the monitor hears it, not at the next look")
@@ -185,15 +170,4 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 0)
     }
 
-    @Test("the menu opening finds a player known only by its open output silent: shown as not playing")
-    func menuSilentWithoutState() async {
-        let player = MockMusicPlayer()
-        await player.setStatesItself(false)
-        let scheduler = ManualDebounceScheduler(), published = LastPublished()
-        let arbiter = makeHearingArbiter(player, hearing: Hearing(.silent), scheduler: scheduler, published: published)
-        await arbiter.refreshPlaybackState()
-        await arbiter.checkPlayerHeard()
-        await arbiter.waitUntilIdle() // the listen runs in a task of its own
-        #expect(published.state == .musicIdle)
-    }
 }

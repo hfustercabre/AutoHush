@@ -39,7 +39,6 @@ package final class MonitoringPipeline {
         case asleep(Bool, change: Int)
         case resumesHeld(Bool)
         case outputDisconnected
-        case checkPlayerHeard
         case tapsAllowed(Bool)
         case retryResume
         case unmuteInstead
@@ -142,10 +141,7 @@ package final class MonitoringPipeline {
             resumeOffset: { await monitorLink.monitor?.resumeOffsetDB() },
             onPauseFailure: { statusUpdates.yield(.pauseFailure($0)) },
             onResumeFailure: { statusUpdates.yield(.resumeFailure($0)) },
-            hearsPlayer: { listening, since in
-                guard let monitor = monitorLink.monitor else { return .unknown }
-                return listening ? await monitor.listenToPlayer() : await monitor.playerHearing(since: since)
-            },
+            hearsPlayer: { since in await monitorLink.monitor?.playerHearing(since: since) ?? .unknown },
             inputToPlayer: readers.playerInput(player.bundleID),
             onMutedInsteadChange: { statusUpdates.yield(.mutedInstead($0)) },
             playerMute: readers.playerMute(player.bundleID) { tapsAllowed.withLock { $0 } },
@@ -189,7 +185,6 @@ package final class MonitoringPipeline {
                     case .asleep(let asleep, let change): await arbiter.setAsleep(asleep, change: change)
                     case .resumesHeld(let held): await arbiter.holdResumes(held)
                     case .outputDisconnected: await arbiter.handleOutputDisconnected()
-                    case .checkPlayerHeard: await arbiter.checkPlayerHeard()
                     case .tapsAllowed(let allowed): await arbiter.setTapsAllowed(allowed)
                     case .retryResume: await arbiter.retryResume()
                     case .unmuteInstead: await arbiter.unmuteInstead()
@@ -280,12 +275,6 @@ package final class MonitoringPipeline {
     /// (`PlaybackArbiter.unmuteInstead`).
     package func unmuteInstead() {
         arbiterCommands.yield(.unmuteInstead)
-    }
-
-    /// Listens to the player, so a menu opening says at once whether a
-    /// player that says it plays here is heard (`PlaybackArbiter.checkPlayerHeard`).
-    package func checkPlayerHeard() {
-        arbiterCommands.yield(.checkPlayerHeard)
     }
 
     /// Applies new timings and thresholds live.

@@ -164,13 +164,6 @@ final class AudioMonitor: @unchecked Sendable {
     var playerMeasuredSince: Date?
     var playerMeasuredAt: Date?
     var playerHeardAt: Date?
-    /// Listens to audio processes for a moment, with a tap of its own:
-    /// whether any is heard, `nil` when none could be listened to. Only
-    /// for the menu opening while nothing else is measured (`listenToPlayer`).
-    private let hears: @Sendable (Set<AudioObjectID>) -> Bool?
-    /// Where the player is listened to (`listenToPlayer`): a moment that
-    /// mustn't hold up the monitor's queue.
-    private static let hearingQueue = DispatchQueue(label: "AutoHush.AudioMonitor.hearing", qos: .userInitiated)
     /// The player measured this long with nothing heard is silent; heard
     /// within it, it's heard (`playerHearing`). Short, since a quiet moment
     /// taken for silence costs little: the arbiter hears of the player's
@@ -193,10 +186,8 @@ final class AudioMonitor: @unchecked Sendable {
         audioLevelsReleaseDelay: TimeInterval = 2,
         clock: @escaping @Sendable () -> Date = { Date() },
         onActiveSourcesChange: @escaping @Sendable ([AudioSource]) -> Void = { _ in },
-        onDetectionModeChange: @escaping @Sendable (DetectionMode) -> Void = { _ in },
-        hears: @escaping @Sendable (Set<AudioObjectID>) -> Bool? = { ProcessTapLevelProbe().hearing($0) }
+        onDetectionModeChange: @escaping @Sendable (DetectionMode) -> Void = { _ in }
     ) {
-        self.hears = hears
         self.configuration = configuration
         self.snapshotProvider = snapshotProvider
         self.levelMeter = levelMeter
@@ -350,29 +341,6 @@ final class AudioMonitor: @unchecked Sendable {
            playerMeasuredAt.timeIntervalSince(playerHeardAt) < Self.playerSilenceWindow { return .heard }
         let measured = playerMeasuredAt.timeIntervalSince(from)
         return measured >= Self.playerSilenceWindow ? .silent : .measuring(remaining: Self.playerSilenceWindow - measured)
-    }
-
-    /// As `playerHearing`, but when nothing measures the player (no other
-    /// app plays: the menu opening), it's listened to for a moment with a
-    /// tap of its own, off the monitor's queue: `.heard`, `.silent` or
-    /// `.unknown`. Never on a pause's way: a tap takes macOS seconds to make.
-    func listenToPlayer() async -> PlayerHearing {
-        let (hearing, processes): (PlayerHearing, Set<AudioObjectID>?) = await queue.run {
-            let measures = self.detectionMethod == .audioLevels && self.detectionMode == .audioLevel
-            return (self.currentPlayerHearing(), measures ? self.playerProcesses : nil)
-        }
-        switch hearing {
-        case .heard, .silent: return hearing
-        case .measuring: return .unknown // its tap is being made: nothing to tell yet
-        case .unknown: break
-        }
-        guard let processes, !processes.isEmpty else { return .unknown }
-        let hears = hears
-        return switch await Self.hearingQueue.run({ hears(processes) }) {
-        case true?: .heard
-        case false?: .silent
-        case nil: .unknown
-        }
     }
 
     /// How far (dB, below 0) to lower the Mac's volume as the music

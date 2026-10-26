@@ -15,7 +15,7 @@ extension PlaybackArbiterTests {
                               scheduler: ManualDebounceScheduler = ManualDebounceScheduler()) async -> PlaybackArbiter {
         let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: scheduler,
                                       clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
-                                      hearsPlayer: { await hearing.answer(listening: $0, since: $1) },
+                                      hearsPlayer: { await hearing.answer(since: $0) },
                                       inputToPlayer: { inputAsked?.append($0); return userPlayed.value },
                                       onMutedInsteadChange: { mutedInstead?.append($0) }, playerMute: mute,
                                       tapsAllowed: { tapsAllowed.value })
@@ -165,7 +165,7 @@ extension PlaybackArbiterTests {
         let clock = ManualClock(), mute = FakeMute(), published = LastPublished(), mutedInstead = Locked<[Bool]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
-                                      hearsPlayer: { _, _ in .heard }, inputToPlayer: { _ in false },
+                                      hearsPlayer: { _ in .heard }, inputToPlayer: { _ in false },
                                       onMutedInsteadChange: { mutedInstead.append($0) }, playerMute: mute)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await TestWait.until { mute.muteCount == 1 }
@@ -175,7 +175,7 @@ extension PlaybackArbiterTests {
 
         let stubborn = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressIgnored)), unmutable = LastPublished()
         let other = PlaybackArbiter(player: stubborn, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                    onPlaybackStateChange: { unmutable.set($0) }, hearsPlayer: { _, _ in .heard },
+                                    onPlaybackStateChange: { unmutable.set($0) }, hearsPlayer: { _ in .heard },
                                     playerMute: FakeMute(works: false))
         await other.sourceChanged("org.videolan.vlc", playing: true)
         await TestWait.until { unmutable.state == .pauseFailed }
@@ -419,7 +419,7 @@ extension PlaybackArbiterTests {
     func startedDuringAppsPaused() async {
         let player = MockMusicPlayer(state: .paused), published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { published.set($0) }, hearsPlayer: { _, _ in .heard },
+                                      onPlaybackStateChange: { published.set($0) }, hearsPlayer: { _ in .heard },
                                       inputToPlayer: { _ in false })
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
@@ -435,7 +435,7 @@ extension PlaybackArbiterTests {
     func startedByUserDuringApps() async {
         let player = MockMusicPlayer(state: .paused), published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { published.set($0) }, hearsPlayer: { _, _ in .heard },
+                                      onPlaybackStateChange: { published.set($0) }, hearsPlayer: { _ in .heard },
                                       inputToPlayer: { _ in true })
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
@@ -552,7 +552,7 @@ extension PlaybackArbiterTests {
     func localAgainDuringAppsPaused() async {
         let player = MockMusicPlayer(), published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { published.set($0) }, hearsPlayer: { _, _ in .heard },
+                                      onPlaybackStateChange: { published.set($0) }, hearsPlayer: { _ in .heard },
                                       inputToPlayer: { _ in false })
         await arbiter.refreshPlaybackState()
         await arbiter.handleLocalPlaybackChange(false)
@@ -686,27 +686,13 @@ extension PlaybackArbiterTests {
         #expect(playsAtUnmute.value == [0])
     }
 
-    @Test("the menu opening while a listen is under way listens once")
-    func oneListenAtATime() async {
-        let player = MockMusicPlayer(), published = LastPublished(), hearing = Hearing(.silent)
-        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
-                                      onPlaybackStateChange: { published.set($0) },
-                                      hearsPlayer: { await hearing.answer(listening: $0, since: $1) })
-        await arbiter.refreshPlaybackState()
-        hearing.beforeAnswer = { await arbiter.checkPlayerHeard() }
-        await arbiter.checkPlayerHeard()
-        await arbiter.waitUntilIdle()
-        #expect(hearing.listened == [true])
-        #expect(published.state == .playingSilently)
-    }
-
     @Test("the player started while another app plays is the user's only after input just before: input long before doesn't count")
     func startedLongAfterInputPaused() async {
         let player = MockMusicPlayer(state: .paused), clock = ManualClock(), published = LastPublished()
         let inputAsked = Locked<[Date]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
-                                      hearsPlayer: { _, _ in .heard }, inputToPlayer: { inputAsked.append($0); return false })
+                                      hearsPlayer: { _ in .heard }, inputToPlayer: { inputAsked.append($0); return false })
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
         clock.advance(by: 20)
@@ -722,7 +708,7 @@ extension PlaybackArbiterTests {
         let player = MockMutingMusicPlayer(mock)
         await player.setMutedForPause(true)
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      hearsPlayer: { _, _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
+                                      hearsPlayer: { _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await TestWait.until { await mock.pauseCallCount == 1 }
         await arbiter.waitForPause()
@@ -739,7 +725,7 @@ extension PlaybackArbiterTests {
     func muteOnlyAppLeftAlone() async {
         let player = MockMusicPlayer(pausesByMuting: true), mute = FakeMute(), scheduler = ManualDebounceScheduler()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      hearsPlayer: { _, _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
+                                      hearsPlayer: { _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         await arbiter.waitForPause()
@@ -801,7 +787,7 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler(), hearing = Hearing(.heard)
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
-                                      hearsPlayer: { await hearing.answer(listening: $0, since: $1) },
+                                      hearsPlayer: { await hearing.answer(since: $0) },
                                       inputToPlayer: { _ in false }, playerMute: mute)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
@@ -825,7 +811,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .paused), clock = ManualClock(), mute = FakeMute()
         let scheduler = ManualDebounceScheduler(), hearing = Hearing(.heard)
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
-                                      clock: { clock.now }, hearsPlayer: { await hearing.answer(listening: $0, since: $1) },
+                                      clock: { clock.now }, hearsPlayer: { await hearing.answer(since: $0) },
                                       inputToPlayer: { _ in false }, playerMute: mute)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
@@ -844,7 +830,7 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler(), hearing = Hearing(.heard)
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       clock: { clock.now }, onPlaybackStateChange: { published.set($0) },
-                                      hearsPlayer: { await hearing.answer(listening: $0, since: $1) },
+                                      hearsPlayer: { await hearing.answer(since: $0) },
                                       inputToPlayer: { _ in false }, playerMute: mute)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.waitForPause()
@@ -867,7 +853,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(pausesByMuting: true), mute = FakeMute(), published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onPlaybackStateChange: { published.set($0) },
-                                      hearsPlayer: { _, _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
+                                      hearsPlayer: { _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         await arbiter.waitForPause()

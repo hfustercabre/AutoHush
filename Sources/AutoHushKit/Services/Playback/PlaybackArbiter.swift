@@ -95,10 +95,10 @@ actor PlaybackArbiter: PlaybackArbiting {
     var silentWithoutState = false
     /// Whether the player is heard, from the levels the monitor measures
     /// alongside other apps (`AudioMonitor.playerHearing`), counting only its
-    /// sound after `since` when given. With `listening`, it may also listen
-    /// with a tap of its own when nothing measures it (the menu opening:
-    /// `AudioMonitor.listenToPlayer`), which takes seconds.
-    let hearsPlayer: @Sendable (_ listening: Bool, _ since: Date?) async -> PlayerHearing
+    /// sound after `since` when given. Never with a tap of its own: the menu
+    /// opening listened so until the user dropped it (K5, 2026-10-26: macOS
+    /// showed the purple dot each time).
+    let hearsPlayer: @Sendable (_ since: Date?) async -> PlayerHearing
     /// When AutoHush's pause, or its mute in place of one, took
     /// (`handleRestart`).
     var pausedAt: Date?
@@ -143,8 +143,6 @@ actor PlaybackArbiter: PlaybackArbiting {
     var muteKeptInPause = false
     /// The lifting of the last mute, under way (`publishPlaybackState`).
     var muteLift: Task<Void, Never>?
-    /// The menu's listen to the player, under way (`checkPlayerHeard`).
-    var heardCheck: Task<Void, Never>?
     /// Whether the user pressed a key or clicked in the player, while it was
     /// already in front, after a moment (`PlayerInput`; media keys don't
     /// count); by default always, so every start is the user's (the
@@ -251,7 +249,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
         onPauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
         onResumeFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
-        hearsPlayer: @escaping @Sendable (_ listening: Bool, _ since: Date?) async -> PlayerHearing = { _, _ in .unknown },
+        hearsPlayer: @escaping @Sendable (_ since: Date?) async -> PlayerHearing = { _ in .unknown },
         inputToPlayer: @escaping @Sendable (Date) -> Bool = { _ in true },
         onMutedInsteadChange: @escaping @Sendable (Bool) -> Void = { _ in },
         playerMute: (any PlayerMuting)? = nil,
@@ -317,9 +315,14 @@ actor PlaybackArbiter: PlaybackArbiting {
                 appsPlayingSince = nil
                 leftToUser = false
                 heardWhileQuietSince = nil
+                // Measured no more: a player playing silently is what it says
+                // it is again, playing (the user, 2026-10-26).
+                let wasSilent = playsSilently
+                playsSilently = false
                 // Stopped during the fade-out: the music comes back up unpaused.
                 if isFadingOut { await fader.cancel() }
                 scheduleResume(after: nil)
+                if wasSilent { publishPlaybackState() }
             } else {
                 publishPlaybackState()
             }

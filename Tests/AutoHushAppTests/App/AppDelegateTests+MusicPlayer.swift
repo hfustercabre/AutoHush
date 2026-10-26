@@ -163,17 +163,11 @@ extension AppDelegateTests {
     }
 
     @MainActor
-    @Test("opening the menu has the player listened to, so the menu says at once that it plays silently; a mute in place of the pause shows too")
-    func menuListensToPlayer() async {
+    @Test("the menu says when the player plays silently, and a mute in place of the pause")
+    func menuSaysPlayingSilently() async {
         let (sut, monitorings) = makeSUT()
         await start(sut)
         let monitoring = monitorings.made[0]
-        #expect(monitoring.playerHeardChecks == 0)
-        sut.menuWillOpen()
-        #expect(monitoring.playerHeardChecks == 1)
-        sut.menuWillOpen()
-        #expect(monitoring.playerHeardChecks == 2) // each time it opens
-
         monitoring.send(.playback(.playingSilently))
         #expect(sut.status.statusLine == "Playing silently")
         monitoring.send(.playback(.pausedByMonitor))

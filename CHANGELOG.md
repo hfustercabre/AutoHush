@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **No purple dot as you open the menu.** Opening the menu while your
+  player plays on its own no longer measures its sound. A player playing
+  silently shows as playing again once the other apps stop, since nothing
+  measures it then.
+
 ## [1.2.0] — 2026-10-25
 
 ### Added

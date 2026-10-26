@@ -12,8 +12,6 @@ protocol SessionMonitoring: HeldMonitoring {
     func setAsleep(_ asleep: Bool)
     func setConfiguration(_ configuration: AppConfiguration)
     func activeAudioReport() -> [ActiveAudioReport.Entry]
-    /// Listens to the player: see `MonitoringPipeline.checkPlayerHeard`.
-    func checkPlayerHeard()
     /// Try Again on "Couldn't resume": see `MonitoringPipeline.retryResume`.
     func retryResume()
     /// Unmute, muted in place of the pause: see `MonitoringPipeline.unmuteInstead`.

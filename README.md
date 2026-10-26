@@ -38,7 +38,7 @@ AutoHush was inspired by [Background Music](https://github.com/kyleneideck/Backg
 
 So why write another one? To get your Mac's sound, Background Music routes it through a virtual audio device and reads it back from there, and macOS counts that as using a microphone. So while it runs, there's a yellow dot in the top-right corner of the screen and a yellow microphone icon in the menu bar, permanently. Nothing is being recorded, and macOS is right to point it out. Still, a yellow dot that never goes away tickles my 'tism in ways I couldn't ignore, so I built AutoHush with a different approach.
 
-AutoHush leaves your sound where it is and only checks which apps are playing. It never uses the microphone, so the yellow dot never shows up. The only dot it ever shows is macOS's purple one, and only while another app plays over your player (or for a moment as you open the menu), which to my eyes is easier to ignore. If it still bothers you, [AntiDot mode](#the-purple-dot-and-antidot-mode) gets rid of it entirely, at the cost of slightly less precise detection.
+AutoHush leaves your sound where it is and only checks which apps are playing. It never uses the microphone, so the yellow dot never shows up. The only dot it ever shows is macOS's purple one, and only while another app plays over your player, which to my eyes is easier to ignore. If it still bothers you, [AntiDot mode](#the-purple-dot-and-antidot-mode) gets rid of it entirely, at the cost of slightly less precise detection.
 
 Yes, this whole app exists because of a yellow dot.
 
@@ -251,9 +251,9 @@ The actions change the running AutoHush, and the menu shows the change at once; 
 
 To hear whether another app is *really* playing, AutoHush has to measure its sound level. Whenever an app does that, macOS shows a **purple dot** in the menu bar. It's a privacy feature that no app can hide, and that's a good thing.
 
-AutoHush keeps the dot to a minimum: it only measures while the answer matters, that is while your player is playing on this Mac (or was paused by AutoHush) and another app has its sound on; then it measures your player too, to know whether it's heard. Apart from that, your player is measured only for half a second: as you open the menu while it plays on its own, to know whether it's heard, and, rarely, when an app you added doesn't tell clearly whether it plays (its Now Playing row doesn't show its state, or it reports being paused while its sound is on), just before pausing or playing it, or once per such report. So:
+AutoHush keeps the dot to a minimum: it only measures while the answer matters, that is while your player is playing on this Mac (or was paused by AutoHush) and another app has its sound on; then it measures your player too, to know whether it's heard. Apart from that, your player is measured only rarely, for half a second: when an app you added doesn't tell clearly whether it plays (its Now Playing row doesn't show its state, or it reports being paused while its sound is on), just before pausing or playing it, or once per such report. So:
 
-- Your player paused, or on another device: **no dot**. Playing on its own: no dot either, except for half a second as you open the menu.
+- Your player paused, or on another device: **no dot**. Playing on its own: no dot either, opening the menu included.
 - Another app playing over your player: the dot shows while that app has its sound on, plus 2 seconds.
 - An app that keeps its sound on while silent (some players do, paused): the dot shows for its first 10 seconds of silence, then AutoHush stops measuring it until it opens its sound again or tells macOS it plays. An app that keeps telling macOS it plays (a call) stays measured, so its next sound is heard.
 
@@ -296,7 +296,7 @@ AntiDot mode offers two ways to detect playing apps: **What apps tell macOS** (r
 ## Privacy
 
 - AutoHush **never records, saves or sends audio**, and never uses the microphone.
-- With the audio permission, it reads other apps' sound only to work out how loud it is, in memory, and throws the rest away. It measures your player the same way whenever it measures another app, to know whether your player is heard (and, with **Level the volume** on, how loud it was), and for half a second as you open the menu while it plays on its own. It does the same, for half a second, only in a few rare cases: a web app that can be heard while its button says it's paused (an ad), and an app you added that doesn't tell clearly whether it plays (its Now Playing row doesn't show its state, or it reports being paused while its sound is on), just before pausing or playing it, or once per such report. In AntiDot mode it doesn't look at any sound at all.
+- With the audio permission, it reads other apps' sound only to work out how loud it is, in memory, and throws the rest away. It measures your player the same way whenever it measures another app, to know whether your player is heard (and, with **Level the volume** on, how loud it was). It does the same, for half a second, only in a few rare cases: a web app that can be heard while its button says it's paused (an ad), and an app you added that doesn't tell clearly whether it plays (its Now Playing row doesn't show its state, or it reports being paused while its sound is on), just before pausing or playing it, or once per such report. In AntiDot mode it doesn't look at any sound at all.
 - To tell your play from the player's own, it reads when you last pressed a key or clicked (the time only), and which app is in front.
 - It only goes online to check GitHub for a new version once a day, to download that version from GitHub, and to check a website you add as a web app (below). You can turn off the first two (see [Updates](#updates)). None of them leaves a cache or cookies on your Mac, and a downloaded update is kept for at most 7 days.
 - Its only notifications are about updates.

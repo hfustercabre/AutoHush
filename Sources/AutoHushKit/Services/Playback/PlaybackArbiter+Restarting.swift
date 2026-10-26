@@ -122,7 +122,7 @@ extension PlaybackArbiter {
         // player, and left to it (the user, 2026-10-25). One that only mutes,
         // said to play, was unmuted (the menu's Unmute): the user's.
         if await pauseIsItsOwnMute() { return !(reported && player.pausesByMuting) }
-        let hearing = await hearsPlayer(false, pausedAt.addingTimeInterval(Self.pauseTail))
+        let hearing = await hearsPlayer(pausedAt.addingTimeInterval(Self.pauseTail))
         guard !isShutDown, pausedByUs, !mutedForRestart else { return true }
         // Only a player that was silent can be played again (the user, 2026-10-24).
         let wasSilent = hearingDuringPause == .silent
@@ -284,7 +284,7 @@ extension PlaybackArbiter {
             return
         }
         let since = (pausePressedWhileMuted ?? pausedAt).addingTimeInterval(Self.pauseTail)
-        let hearing = await hearsPlayer(false, since)
+        let hearing = await hearsPlayer(since)
         logger.debug("[arbiter] muted \(self.player.name, privacy: .public): \(String(describing: hearing), privacy: .public)")
         switch hearing {
         case .silent:
