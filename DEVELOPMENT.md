@@ -150,7 +150,7 @@ Sources/
     Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
                          followed once a second; OtherInstances, quits the copies opened before it;
                          DockPresence, in the Dock while a window is open; MenuBarIconPlace, the icon
-                         beside the system's), Playback/ (PlayerSession,
+                         beside the system's; MenuBarIconVisibility, whether it's hidden), Playback/ (PlayerSession,
                          the chosen player from its start until AutoHush quits; HeldPauses), Settings/
                          (UserSettings, LaunchAtLoginController, ReopenChoices: the players reopened without
                          asking),

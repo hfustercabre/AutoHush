@@ -296,4 +296,23 @@ extension AppDelegateTests {
         let (sut, _) = makeSUT(updateInstaller: MockUpdateInstaller(unavailability: .readOnlyLocation))
         #expect(sut.settingsModel.updateInstallNote == "AutoHush can’t update itself, because it can’t write to the folder it’s in.")
     }
+
+    @MainActor
+    @Test("AutoHush opened again while it runs opens Settings at General, its way in when the menu bar icon is hidden; with a window of its own showing, AppKit's usual bringing it forward is left alone")
+    func reopenOpensSettings() {
+        let (sut, _) = makeSUT()
+        #expect(sut.applicationShouldHandleReopen(NSApplication.shared, hasVisibleWindows: true))
+        #expect(sut.settingsWindowController == nil)
+
+        // A place of its own: AppKit gives a name to one window at a time.
+        let frameName = "reopenOpensSettings-\(UUID().uuidString)"
+        sut.settingsWindowController = SettingsWindowController(model: sut.settingsModel, frameName: frameName)
+        defer {
+            sut.settingsWindowController?.close()
+            UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(frameName)")
+        }
+        #expect(!sut.applicationShouldHandleReopen(NSApplication.shared, hasVisibleWindows: false))
+        #expect(sut.settingsWindowController?.window?.isVisible == true)
+        #expect(sut.settingsWindowController?.window?.title == SettingsWindowController.Page.general.title)
+    }
 }

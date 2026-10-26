@@ -37,6 +37,7 @@ flowchart TD
   WA["Add a Web App…:<br/>Safari web apps"]
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
+  AGAIN(["AutoHush opened again<br/>while it runs (Finder,<br/>Spotlight, Launchpad)"])
   SET["Settings, Everyday:<br/>Media Player, Sound Sources<br/>(ignore, remove, reset),<br/>Behavior (the switches);<br/>Advanced: Fine-Tuning<br/>(timings, lengths, limits,<br/>detection), Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
@@ -56,6 +57,7 @@ flowchart TD
   MENU --> WA
   MENU --> AA --> AU
   MENU --> SET
+  AGAIN -->|"no window of its own<br/>showing: General, saying<br/>when the notch hides the icon"| SET
   MENU --> UP
   MENU -->|"Quit"| Q
   UP -->|"install"| Q

@@ -5,9 +5,15 @@ import AutoHushKit
 /// Settings → General, a grouped form: the media player, with the
 /// Auto-Pause switch and Change… (every player is on the Media Player page,
 /// W2, the user, 2026-10-25); then launch at login and where the menu bar
-/// icon goes.
+/// icon goes, saying when it's hidden. AutoHush opened again shows it.
 struct GeneralSettingsView: View {
     let model: SettingsModel
+
+    /// Under Keep icon next to system icons while the menu bar icon is hidden.
+    private static var hiddenIconNote: String {
+        String(localized: "The notch or other icons are hiding AutoHush’s icon in the menu bar.",
+               comment: "Settings → General, under Keep icon next to system icons, while AutoHush's menu bar icon is hidden behind the notch")
+    }
 
     private static var approvalNote: String {
         String(localized: "macOS is waiting for you to allow AutoHush in Login Items.",
@@ -49,6 +55,10 @@ struct GeneralSettingsView: View {
                                          comment: "Settings → General, under Keep icon next to system icons; ⌘-drag is how macOS moves menu bar icons"),
                           isOn: Binding(get: { model.keepsMenuBarIconNearSystemIcons },
                                         set: { model.setKeepsMenuBarIconNearSystemIcons($0) }))
+            // Its way in when AutoHush is opened again (the user, 2026-10-26).
+            if model.menuBarIconHidden {
+                NoteLabel(Self.hiddenIconNote, kind: .warning)
+            }
             } footer: {
                 RestoreDefaultsButton(isDefault: model.startupIsDefault) { model.restoreDefaultStartup() }
             }

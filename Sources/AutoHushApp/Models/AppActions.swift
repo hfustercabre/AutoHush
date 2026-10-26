@@ -50,6 +50,9 @@ protocol AppActions: AnyObject {
     /// Makes the menu bar icon again, so it goes beside the system's icons
     /// (Settings → General's switch, turned on).
     func moveMenuBarIconNearSystemIcons()
+    /// Whether the menu bar icon is hidden now: behind the notch, or off the
+    /// screen (`MenuBarIconVisibility`).
+    var menuBarIconIsHidden: Bool { get }
     /// Try Again on "Couldn't resume" (Settings → General's player card).
     func retryResume()
     func quit()

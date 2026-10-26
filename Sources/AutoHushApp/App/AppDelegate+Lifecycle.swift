@@ -4,6 +4,17 @@ import CheckedPlayers
 
 // AppDelegate: launching, quitting, sleep and wake.
 extension AppDelegate {
+    /// AutoHush opened again while it runs (Finder, Spotlight, Launchpad):
+    /// Settings → General, as other menu bar apps open their settings, and
+    /// its way in when the menu bar icon is hidden, which General then says
+    /// (R2 with R3's note, the user, 2026-10-26). With one of its windows
+    /// showing, AppKit brings it forward as usual.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard !flag else { return true }
+        openSettings(page: .general)
+        return false
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         putBackWhatWasLeft()
         // Shown while a window is open: the Mac's standard menus and keys.

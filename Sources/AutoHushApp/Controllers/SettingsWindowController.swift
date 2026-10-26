@@ -231,6 +231,7 @@ final class SettingsWindowController: NSWindowController {
             toolbarDelegate.updateArrows()
         }
         model.refreshLaunchAtLogin()
+        model.refreshMenuBarIcon()
         if !isPlaced {
             window?.center()
             isPlaced = true

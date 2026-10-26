@@ -126,7 +126,7 @@ If you said no by mistake, the menu, Settings (General for the media player, Beh
 
 **Start it automatically:** click **Settings** at the bottom of the menu and turn on **Launch at login**.
 
-**Keep its icon in sight:** the first time it starts, AutoHush puts its menu bar icon beside the system's icons (Control Center, the clock), where the notch or other apps' icons don't hide it, unless you've already moved it. To move it, hold ⌘ and drag it; macOS remembers where. To have it go back beside the system's icons each time AutoHush opens, turn on **Keep icon next to system icons** in Settings → General.
+**Keep its icon in sight:** the first time it starts, AutoHush puts its menu bar icon beside the system's icons (Control Center, the clock), where the notch or other apps' icons don't hide it, unless you've already moved it. To move it, hold ⌘ and drag it; macOS remembers where. To have it go back beside the system's icons each time AutoHush opens, turn on **Keep icon next to system icons** in Settings → General. Can't find the icon? Open AutoHush again (from Finder, Spotlight or Launchpad): it opens Settings → General, which says when the notch is hiding it.
 
 ## Using AutoHush
 

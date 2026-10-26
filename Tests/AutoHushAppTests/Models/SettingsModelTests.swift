@@ -65,6 +65,21 @@ struct SettingsModelTests {
         #expect(log.calls == ["moveMenuBarIcon"])
     }
 
+    @Test("General says the menu bar icon is hidden as it's read again (Settings opening), and no longer once it was moved beside the system's icons")
+    func menuBarIconHidden() {
+        let defaults = UserDefaults(suiteName: "SettingsModelTests-\(UUID().uuidString)")!
+        let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
+                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
+                                  menuBarIcon: MenuBarIconPlace(defaults: defaults))
+        #expect(!model.menuBarIconHidden)
+        actions.menuBarIconIsHidden = true // behind the notch
+        #expect(!model.menuBarIconHidden) // not read yet
+        model.refreshMenuBarIcon()
+        #expect(model.menuBarIconHidden)
+        model.setKeepsMenuBarIconNearSystemIcons(true) // moved: it shows
+        #expect(!model.menuBarIconHidden)
+    }
+
     @Test("AntiDot mode is the way past Audio Recording; Back returns to the welcome window's players")
     func permissionActions() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))

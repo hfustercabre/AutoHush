@@ -135416,6 +135416,233 @@
         }
       }
     },
+    "The notch or other icons are hiding AutoHush’s icon in the menu bar." : {
+      "comment" : "Settings → General, under Keep icon next to system icons, while AutoHush's menu bar icon is hidden behind the notch",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحافة العلوية أو أيقونات أخرى تخفي أيقونة AutoHush في شريط القوائم."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La càmera o altres icones amaguen la icona de l’AutoHush a la barra de menús."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Výřez nebo jiné ikony skrývají ikonu AutoHush na řádku nabídek."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamerahakket eller andre symboler skjuler AutoHushs symbol på menulinjen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Kameraeinbuchtung oder andere Symbole verdecken das Symbol von AutoHush in der Menüleiste."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η εγκοπή ή άλλα εικονίδια κρύβουν το εικονίδιο του AutoHush στη γραμμή μενού."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La muesca u otros iconos ocultan el icono de AutoHush en la barra de menús."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La muesca u otros íconos ocultan el ícono de AutoHush en la barra de menús."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lovi tai muut symbolit peittävät AutoHushin symbolin valikkorivillä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’encoche ou d’autres icônes masquent l’icône d’AutoHush dans la barre des menus."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’encoche ou d’autres icônes masquent l’icône d’AutoHush dans la barre des menus."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "המגרעת או צלמיות אחרות מסתירות את הצלמית של AutoHush בשורת התפריטים."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नॉच या अन्य आइकन मेनू बार में AutoHush का आइकन छिपा रहे हैं।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zarez ili druge ikone skrivaju ikonu aplikacije AutoHush na traci izbornika."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A kivágás vagy más ikonok eltakarják az AutoHush ikonját a menüsoron."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takik atau ikon lain menyembunyikan ikon AutoHush di bar menu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La tacca o altre icone nascondono l’icona di AutoHush nella barra dei menu."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ノッチや他のアイコンがメニューバーの AutoHush のアイコンを隠しています。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "노치나 다른 아이콘이 메뉴 막대의 AutoHush 아이콘을 가리고 있습니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takuk atau ikon lain menyembunyikan ikon AutoHush dalam bar menu."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamerahakket eller andre symboler skjuler AutoHush-symbolet i menylinjen."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De inkeping of andere symbolen verbergen het symbool van AutoHush in de menubalk."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wcięcie lub inne ikony zasłaniają ikonę AutoHush na pasku menu."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O entalhe ou outros ícones estão escondendo o ícone do AutoHush na barra de menus."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O entalhe ou outros ícones estão a esconder o ícone do AutoHush na barra de menus."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Decupajul sau alte pictograme ascund pictograma AutoHush din bara de meniu."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вырез или другие значки скрывают значок AutoHush в строке меню."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Výrez alebo iné ikony skrývajú ikonu AutoHush na riadku ponúk."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Izrez ali druge ikone skrivajo ikono AutoHush v menijski vrstici."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kamerahacket eller andra symboler döljer AutoHush-symbolen i menyraden."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รอยบากหรือไอคอนอื่นบังไอคอนของ AutoHush ในแถบเมนู"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çentik veya diğer simgeler, menü çubuğundaki AutoHush simgesini gizliyor."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Виріз або інші значки ховають значок AutoHush на смузі меню."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phần khuyết hoặc các biểu tượng khác đang che biểu tượng AutoHush trên thanh menu."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "瀏海或其他圖像遮住了選單列中的 AutoHush 圖像。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "刘海或其他图标遮住了菜单栏中的 AutoHush 图标。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "瀏海或其他圖像遮住了選單列中的 AutoHush 圖像。"
+          }
+        }
+      }
+    },
     "The screen dims except the progress panel. Escape or Stop ends the check; the mouse and keyboard work again whenever AutoHush asks you something." : {
       "comment" : "The window shown before a check starts, under “Mouse and keyboard are blocked”",
       "localizations" : {

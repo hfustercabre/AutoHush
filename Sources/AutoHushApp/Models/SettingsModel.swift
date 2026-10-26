@@ -17,6 +17,9 @@ import AutoHushKit
 final class SettingsModel {
     // General
     private(set) var launchAtLoginEnabled = false
+    /// The menu bar icon is hidden (behind the notch): General says so
+    /// under Keep icon next to system icons (the user, 2026-10-26).
+    private(set) var menuBarIconHidden = false
     private(set) var launchAtLoginError: String?
     /// macOS waits for the user to allow AutoHush in Login Items.
     private(set) var launchAtLoginNeedsApproval = false
@@ -295,6 +298,14 @@ final class SettingsModel {
         menuBarIcon.keepsNearSystemIcons = keeps
         keepsMenuBarIconNearSystemIcons = keeps
         if keeps { actions?.moveMenuBarIconNearSystemIcons() }
+        refreshMenuBarIcon()
+    }
+
+    /// Whether the menu bar icon is hidden, read again: as Settings opens,
+    /// and once the icon was moved.
+    func refreshMenuBarIcon() {
+        let hidden = actions?.menuBarIconIsHidden ?? false
+        if menuBarIconHidden != hidden { menuBarIconHidden = hidden }
     }
 
     // MARK: - Choices

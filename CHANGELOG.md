@@ -15,6 +15,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   measures it then.
 - **The menu's card lights up again** under the pointer after the pointer
   has been on **Change Player**.
+- **Opening AutoHush again** while it runs (from Finder, Spotlight or
+  Launchpad) opens Settings → General, which says when the notch is hiding
+  its menu bar icon. Before, nothing happened.
 
 ## [1.2.0] — 2026-10-25
 

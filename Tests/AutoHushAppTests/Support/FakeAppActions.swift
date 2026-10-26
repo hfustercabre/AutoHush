@@ -32,7 +32,9 @@ final class FakeAppActions: AppActions {
     func showControlError() { log.calls.append("why") }
     func showLogs() { log.calls.append("showLogs") }
     func openNotificationSettings() { log.calls.append("notificationSettings") }
-    func moveMenuBarIconNearSystemIcons() { log.calls.append("moveMenuBarIcon") }
+    func moveMenuBarIconNearSystemIcons() { log.calls.append("moveMenuBarIcon"); menuBarIconIsHidden = false }
+    /// As the test sets it; moving the icon shows it.
+    var menuBarIconIsHidden = false
     func quit() { log.calls.append("quit") }
 }
 

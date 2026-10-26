@@ -264,6 +264,7 @@ extension AppDelegate: AppActions {
         statusMenu?.remove()
         showStatusMenu()
     }
+    var menuBarIconIsHidden: Bool { MenuBarIconVisibility.isHidden(statusMenu?.statusItem.button) }
     func retryResume() { session.retryResume() }
     func showLogs() {
         if logsWindowController == nil { logsWindowController = LogsWindowController(model: LogsModel()) }
