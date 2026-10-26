@@ -93,9 +93,9 @@ import PlayerCheckKit
                 continue
             }
             // Its first item toggles, so it's pressed only when it's the
-            // other way; judged as a test judges it (`Sign`): its menu's word
-            // counts only for an app with no surer sign, as a menu's word may
-            // change late by itself.
+            // other way; judged as a test judges it (`Sign`): by its menu's
+            // word unless its scripted state or its page's word tells, as
+            // AutoHush judges it.
             let before = lookForSign(pid)
             let sign = Sign(before: before)
             let done = { (now: Look) in pausing ? sign.paused(now) : sign.playing(now) }

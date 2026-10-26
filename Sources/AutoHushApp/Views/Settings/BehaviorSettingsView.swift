@@ -54,7 +54,7 @@ struct BehaviorSettingsView: View {
                 RestoreDefaultsButton(model: model, card: .resuming)
             }
 
-            Card(Text(verbatim: Self.fadesTitle)) {
+            Card(Text(verbatim: FadesText.title)) {
                 SettingsSwitchRow(model: model, kind: .fades)
                     .unavailable(!model.playerCanFade)
                 if !model.playerCanFade, let player = model.chosenPlayerName {
@@ -118,13 +118,6 @@ struct BehaviorSettingsView: View {
     /// Over Resume playback and staying paused after calls.
     static var resumingTitle: Text {
         Text("Resuming", comment: "Settings → Behavior: heading over whether your player resumes once other apps go quiet, and staying paused after calls")
-    }
-
-    /// Over the fades; also, with a check, under the media player in
-    /// Settings → General and at the foot of the menu's card, and a
-    /// Diagnostics row.
-    nonisolated static var fadesTitle: String {
-        String(localized: "Fades", comment: "Settings → Behavior: heading over the fades' switch; also, with a check, under the media player in Settings → General and in the menu's card, and a Diagnostics row: whether AutoHush can fade the media player")
     }
 
     /// Over Level the volume.

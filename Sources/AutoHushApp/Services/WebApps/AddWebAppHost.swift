@@ -15,7 +15,7 @@ protocol AddWebAppHost: AnyObject {
     /// Whether `bundleID` is a player AutoHush can control.
     func isPlayer(_ bundleID: String) -> Bool
     /// Makes the web app just added the player, showing the learning window
-    /// or not (`AppDelegate.chooseMusicPlayer`).
+    /// or not (`AppDelegate.choosePlayer`).
     func chooseWebApp(_ bundleID: String, showsLearningWindow: Bool)
     /// Asks for what making a web app needs (Safari's Accessibility).
     func requestSafariAccess()

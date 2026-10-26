@@ -90,16 +90,16 @@ extension PlaybackArbiterTests {
     func fadeInIsNotRushed() async {
         let player = MockMusicPlayer()
         await player.setVolumeLevel(60)
-        let rushedSteps = Counter()
+        let rushedSteps = Locked(0)
         let arbiter = PlaybackArbiter(player: player, configuration: AppConfiguration(),
                                       debounceScheduler: ManualDebounceScheduler(),
-                                      fadeSleep: { _ in if Task.isCancelled { await rushedSteps.increment() } })
+                                      fadeSleep: { _ in if Task.isCancelled { rushedSteps.increment() } })
 
         await arbiter.sourceChanged("org.videolan.vlc", playing: true)
         await arbiter.sourceChanged("org.videolan.vlc", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await TestWait.until { await player.volumeLevel == 60 }
-        #expect(await rushedSteps.value == 0)
+        #expect(rushedSteps.value == 0)
     }
 
     @Test("waiting for the resume returns once the music has faded back in, and at once with none under way")
@@ -283,9 +283,4 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
         #expect(await player.state == .paused)
     }
-}
-
-private actor Counter {
-    private(set) var value = 0
-    func increment() { value += 1 }
 }

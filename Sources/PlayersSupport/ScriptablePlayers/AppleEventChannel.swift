@@ -57,6 +57,19 @@ package final class AppleEventChannel: AppleEventSending {
         }
     }
 
+    /// macOS installs its standard Apple event coercions on a process's
+    /// first coercion, and that isn't safe from several threads at once:
+    /// the tests' helper crashed there when tests made their first together
+    /// (2026-10-25: five threads in `typeCodeValue`, two inside the install,
+    /// one out of stack). Each channel reads its replies on its own queue,
+    /// so two players' first replies could race: the first send of any
+    /// channel installs them, once, and the others wait for it. As the
+    /// tests do (`AppleEventCoercions`).
+    private static let coercionsInstalled: Void = {
+        _ = NSAppleEventDescriptor(typeCode: fourCharCode("prop")).typeCodeValue
+        _ = NSAppleEventDescriptor(int32: 1).coerce(toDescriptorType: typeUnicodeText)?.stringValue
+    }()
+
     /// Builds the event on the queue (descriptors are not Sendable), sends it
     /// and returns the direct object of the reply as a Sendable value.
     package func send(
@@ -64,6 +77,7 @@ package final class AppleEventChannel: AppleEventSending {
         to pid: pid_t
     ) async throws -> PlayerReply {
         try await queue.runThrowing {
+            _ = Self.coercionsInstalled
             let event = makeEvent(pid)
             let reply: NSAppleEventDescriptor
             do {

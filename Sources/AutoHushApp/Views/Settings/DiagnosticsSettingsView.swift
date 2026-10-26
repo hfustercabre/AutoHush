@@ -174,7 +174,7 @@ struct DiagnosticsSettingsView: View {
         switch fix {
         case .choosePlayer: ChooseText.choose
         case .learnControls: LearningText.learnButton
-        case .allow: AddAppText.allowButton
+        case .allow: ButtonText.allow
         }
     }
 

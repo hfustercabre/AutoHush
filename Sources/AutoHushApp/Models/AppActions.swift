@@ -37,8 +37,9 @@ protocol AppActions: AnyObject {
     /// other apps stop: as if the user played it (AutoHush leaves it alone).
     func unmutePlayer()
     /// Quits and opens AutoHush again, so macOS applies System Audio
-    /// Recording (see `AppStatus.offersReopen`).
-    func reopenAutoHush()
+    /// Recording (see `AppStatus.offersReopen`); `false` when that couldn't
+    /// be set up (it stays open, and says so).
+    @discardableResult func reopenAutoHush() -> Bool
     /// Settings, on `page` (the one shown last when `nil`).
     func openSettings(page: SettingsWindowController.Page?)
     /// Why the media player couldn't be controlled, in an alert.

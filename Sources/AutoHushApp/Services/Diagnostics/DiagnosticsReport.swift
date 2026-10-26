@@ -28,7 +28,7 @@ enum DiagnosticsReport {
         let overview = overview(status: status)
         let sections = sections(status: status, facts: facts, ways: ways)
         let appsSummary = apps.isEmpty
-            ? MenuIgnoredAppsView.noneTitle
+            ? NoneText.title
             : apps.map(\.name).formatted(.list(type: .and, width: .narrow))
         return DiagnosticsSnapshot(
             overview: overview,
@@ -99,7 +99,7 @@ enum DiagnosticsReport {
             Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem, fix: player.isInstalled ? nil : .choosePlayer),
             Row(label: String(localized: "State", comment: "Diagnostics: the media player's state"), value: state),
             // Yes, Off (turned off in Settings → Behavior), or No (the player can't fade).
-            Row(label: BehaviorSettingsView.fadesTitle,
+            Row(label: FadesText.title,
                 value: !facts.playerCanFade ? no : facts.timings.fadesEnabled ? yes : off),
         ]
         // An app added with Add an App: its ways, the first tried first.
@@ -253,7 +253,7 @@ enum DiagnosticsReport {
             String(localized: "Off \(until)", comment: "Diagnostics: auto-pause; %@ says until when, e.g. “until 15:30”")
         }
         let ignored = status.ignoredApps.isEmpty
-            ? MenuIgnoredAppsView.noneTitle
+            ? NoneText.title
             : status.ignoredApps.map(\.name).formatted(.list(type: .and, width: .narrow))
         let updates = facts.checksForUpdates
             ? facts.automaticUpdates.title
@@ -344,10 +344,10 @@ enum DiagnosticsReport {
     /// names it.
     private static func describe(_ way: PlayerSetup.Way) -> String {
         switch way {
-        case .script: AddAppText.wayTitle(.script)
-        case .menu: AddAppText.wayTitle(.menu)
-        case .page: AddAppText.wayTitle(.page)
-        case .panel: AddAppText.wayTitle(.panel)
+        case .script: WayText.title(.script)
+        case .menu: WayText.title(.menu)
+        case .page: WayText.title(.page)
+        case .panel: WayText.title(.panel)
         case .mute: PlayerOption.mutedInsteadLabel
         }
     }

@@ -61,8 +61,8 @@ struct CheckResultTests {
 
     @Test("an app's traits come from its bundle: its framework (Electron's with its launch option), a web app's browser, a dictionary")
     func traits() throws {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("CheckResultTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let scratch = TemporaryFolder("CheckResultTests", create: false)
+        let folder = scratch.url
         func app(_ name: String, framework: String) throws -> URL {
             try TestAppBundle.make(in: folder, name: name, frameworks: [framework])
         }
@@ -82,5 +82,6 @@ struct CheckResultTests {
         #expect(CheckedAppTraits.of(appAt: chromeApp)
             == CheckedAppTraits(scriptable: false, framework: .browserWebApp(browserID: "com.google.Chrome"), needsLaunchOption: false))
         #expect(CheckedAppTraits.of(appAt: scripted) == CheckedAppTraits(scriptable: true, framework: nil, needsLaunchOption: false))
+        withExtendedLifetime(scratch) {}
     }
 }

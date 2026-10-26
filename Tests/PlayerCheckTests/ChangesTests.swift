@@ -3,7 +3,7 @@ import Testing
 @testable import PlayerCheck
 
 /// What the check changed, which a stop on another thread puts back.
-@Suite("playercheck: what it changed")
+@Suite("playercheck: what it changed", .readOnlyRun)
 struct ChangesTests {
     @Test("a switch is noted once, and each change is made whole: a stop takes them all and leaves none")
     func switches() {

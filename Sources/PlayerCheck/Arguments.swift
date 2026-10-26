@@ -132,12 +132,12 @@ var isWebApp: Bool { bundleID.hasPrefix(SafariWebApp.bundleIDPrefix) }
     changes.appPID = running?.processIdentifier ?? 0
 }
 
-/// Whether something surer than its menu's or page's word shows whether it
+/// Whether something besides its menu's or page's word shows whether it
 /// plays: its scripted state, or what it reports to Now Playing, which only
 /// an administrator can read.
-@MainActor var hasSurerSign: Bool { scripting?.hasState == true || (canBeNowPlaying && isAdministrator) }
+@MainActor var hasOtherSign: Bool { scripting?.hasState == true || (canBeNowPlaying && isAdministrator) }
 
 /// A press by one way reads the menu and the page for their own way (the
 /// panel needs the page's player bar, which names the song), or when nothing
-/// surer shows whether the app plays.
-@MainActor func pressNeeds(_ ways: Set<Way>) -> Bool { !pressingOneWay || via.map(ways.contains) == true || !hasSurerSign }
+/// else shows whether the app plays.
+@MainActor func pressNeeds(_ ways: Set<Way>) -> Bool { !pressingOneWay || via.map(ways.contains) == true || !hasOtherSign }

@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("NowPlayingApp")
 struct NowPlayingAppTests {
@@ -22,13 +23,12 @@ struct NowPlayingAppTests {
             #expect(NowPlayingApp.answer(from: NowPlayingApp.line(for: answer) + "\n") == answer)
         }
         // A stand-in copy that answers only when asked with the argument.
-        let folder = FileManager.default.temporaryDirectory.appending(path: "NowPlayingAppTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let folder = TemporaryFolder("NowPlayingAppTests")
         let copy = folder.appending(path: "AutoHush")
         try Data("#!/bin/sh\n[ \"$1\" = \"\(NowPlayingApp.argument)\" ] && echo 'process 4242'\n".utf8).write(to: copy)
         try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: copy.path)
         #expect(NowPlayingApp.current(executable: copy, timeout: 10) == .process(4242))
+        withExtendedLifetime(folder) {}
     }
 
     @Test("a copy that can't be started, or doesn't answer in time, gives unknown: the key is pressed as ever")

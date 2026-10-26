@@ -255,7 +255,7 @@ AutoHush keeps the dot to a minimum: it only measures while the answer matters, 
 
 - Your player paused, or on another device: **no dot**. Playing on its own: no dot either, opening the menu included.
 - Another app playing over your player: the dot shows while that app has its sound on, plus 2 seconds.
-- An app that keeps its sound on while silent (some players do, paused): the dot shows for its first 10 seconds of silence, then AutoHush stops measuring it until it opens its sound again or tells macOS it plays. An app that keeps telling macOS it plays (a call) stays measured, so its next sound is heard.
+- An app that keeps its sound on while silent (some players do, paused): the dot shows for its first 10 seconds of silence, then AutoHush stops measuring it until it opens its sound again or tells macOS it plays; while your player plays, it's measured again for half a second every 30 seconds, in case it plays without saying so (a game). An app that keeps telling macOS it plays (a call) stays measured, so its next sound is heard.
 
 **If the dot bothers you, turn on AntiDot mode** (Settings → Behavior → Modes; its ways of detecting are in Fine-Tuning). AutoHush then never measures any sound, so the dot never appears. Instead, it goes by what apps tell macOS: most players and browsers say "I'm playing, don't go to sleep" while they play, and stop saying it when you pause. It needs no extra permission, and treats every app the same way.
 

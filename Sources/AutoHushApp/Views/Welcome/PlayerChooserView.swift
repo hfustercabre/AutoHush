@@ -42,26 +42,20 @@ struct PlayerChooserView: View {
     /// The first page: the players to choose from.
     private var playersPage: some View {
         HeightLimit(limit: tallestPage) { playersPageContent }
-            .font(.appBody)
     }
 
     private var playersPageContent: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 16) {
-                WindowHeader(icon: NSApplication.shared.applicationIconImage,
-                             description: Text("AutoHush pauses it while other apps play audio, then resumes it. You can change it anytime in the menu or Settings.",
-                                               comment: "Welcome window, at its top beside AutoHush's icon, under the title “Choose Your Media Player”"))
-                players
-            }
-            .windowMargins()
-            BottomBar {
-                Spacer()
-                // The search, when it shows, keeps Return: `returnInSearch`.
-                MainButton(AddAppText.continueButton) { continueTapped() }
-                    .disabled(!canContinue)
-            }
+        WindowPage(icon: NSApplication.shared.applicationIconImage,
+                   description: Text("AutoHush pauses it while other apps play audio, then resumes it. You can change it anytime in the menu or Settings.",
+                                     comment: "Welcome window, at its top beside AutoHush's icon, under the title “Choose Your Media Player”"),
+                   width: Self.width, alignment: .center, spacing: 16) {
+            players
+        } bar: {
+            Spacer()
+            // The search, when it shows, keeps Return: `returnInSearch`.
+            MainButton(ButtonText.continue) { continueTapped() }
+                .disabled(!canContinue)
         }
-        .frame(width: Self.width)
     }
 
     /// The search and the tiles.

@@ -8,7 +8,7 @@ extension AppDelegate {
     /// is forgotten, and it's no longer offered. The chosen player first lets
     /// go of what it turned on in its app (a mute, a switch), and none is
     /// chosen after it: the welcome window asks for another.
-    func removeAddedAppAfterAsking(_ bundleID: String) {
+    func removeAddedApp(_ bundleID: String) {
         guard let option = status.playerOptions.first(where: { $0.bundleID == bundleID && $0.kind == .checkedApp }) else { return }
         let isChosen = player?.bundleID == bundleID
         InfoAlert.whenNoneOpen {

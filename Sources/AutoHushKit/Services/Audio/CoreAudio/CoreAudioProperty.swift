@@ -73,7 +73,7 @@ package enum CoreAudioProperty {
 
     /// The device with this lasting ID (`kAudioDevicePropertyDeviceUID`)
     /// now: its object ID changes from one launch to the next.
-    static func device(withUID uid: String) -> AudioObjectID? {
+    package static func device(withUID uid: String) -> AudioObjectID? {
         var address = address(kAudioHardwarePropertyTranslateUIDToDevice)
         var qualifier: CFString = uid as CFString
         var device = AudioObjectID(kAudioObjectUnknown)

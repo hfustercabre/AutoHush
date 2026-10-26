@@ -64,19 +64,17 @@ extension AppDelegateTests {
         #expect(monitorings.made[0].ignored == [betterDisplay.id]) // the monitoring ignores it
     }
 
-    /// macOS's notices come on NSWorkspace's own center, which every
-    /// AppDelegate that registered its observers hears: these tests run one
-    /// at a time, each AppDelegate quitting at its end, so only the test's
-    /// own observes them.
+    /// macOS's notices, as NSWorkspace's center brings them: each test posts
+    /// them on its own center (`Scratch.workspaceCenter`), so a real wake or
+    /// app opening during the run reaches none.
     @MainActor
-    @Suite("macOS's notices", .serialized)
+    @Suite("macOS's notices")
     struct WorkspaceNotices {
         private let tests = AppDelegateTests()
-        private let center = NSWorkspace.shared.notificationCenter
 
         /// AutoHush launched with First chosen, running or not, following
         /// macOS's notices.
-        private func observing(_ scratch: Scratch = Scratch(), running: Bool) async -> (AppDelegate, FakeMonitorings) {
+        private func observing(_ scratch: Scratch, running: Bool) async -> (AppDelegate, FakeMonitorings) {
             if !running { await scratch.first.setFailVerify(MusicPlayerError.playerNotRunning) }
             let (sut, monitorings) = tests.makeSUT(scratch)
             sut.session.launch()
@@ -87,9 +85,9 @@ extension AppDelegateTests {
             return (sut, monitorings)
         }
 
-        private func launch(_ app: FakeRunningApplication) {
-            center.post(name: NSWorkspace.didLaunchApplicationNotification, object: nil,
-                        userInfo: [NSWorkspace.applicationUserInfoKey: app])
+        private func launch(_ app: FakeRunningApplication, in scratch: Scratch) {
+            scratch.workspaceCenter.post(name: NSWorkspace.didLaunchApplicationNotification, object: nil,
+                                         userInfo: [NSWorkspace.applicationUserInfoKey: app])
         }
 
         private func quit(_ sut: AppDelegate) {
@@ -112,31 +110,33 @@ extension AppDelegateTests {
             let (sut, monitorings) = await observing(scratch, running: false)
             defer { quit(sut) }
             await scratch.first.setFailVerify(nil)
-            launch(FakeRunningApplication(bundleID: Players.first))
+            launch(FakeRunningApplication(bundleID: Players.first), in: scratch)
             await TestWait.until { sut.status.health == .ready }
             #expect(monitorings.made.count == 2) // the one listing the apps while it was closed, then its own
         }
 
         @Test("macOS telling an app that plays only the volume sound opened has it ignored")
         func volumeSoundAppOpened() async throws {
-            let (sut, _) = await observing(running: true)
+            let scratch = Scratch()
+            let (sut, _) = await observing(scratch, running: true)
             defer { quit(sut) }
             // BetterDisplay opened (an app on the disk: a running app's bundle names it).
-            let folder = FileManager.default.temporaryDirectory.appending(path: "AppDelegateTests-\(UUID().uuidString)")
-            defer { try? FileManager.default.removeItem(at: folder) }
-            let betterDisplay = try TestAppBundle.make(in: folder, name: "BetterDisplay", info: ["CFBundleIdentifier": "pro.betterdisplay.BetterDisplay"])
-            launch(FakeRunningApplication(bundleID: "pro.betterdisplay.BetterDisplay", bundleURL: betterDisplay))
+            let folder = TemporaryFolder("AppDelegateTests", create: false)
+            let betterDisplay = try TestAppBundle.make(in: folder.url, name: "BetterDisplay", info: ["CFBundleIdentifier": "pro.betterdisplay.BetterDisplay"])
+            launch(FakeRunningApplication(bundleID: "pro.betterdisplay.BetterDisplay", bundleURL: betterDisplay), in: scratch)
             await TestWait.until { !sut.userSettings.state.ignoredApps.isEmpty }
             #expect(sut.userSettings.state.ignoredApps.map(\.id) == ["pro.betterdisplay.BetterDisplay"])
+            withExtendedLifetime(folder) {}
         }
 
         @Test("macOS telling the Mac sleeps and wakes, or only its screens wake, reaches the session")
         func sleepAndWake() async {
-            let (sut, monitorings) = await observing(running: true)
+            let scratch = Scratch()
+            let (sut, monitorings) = await observing(scratch, running: true)
             defer { quit(sut) }
             for (notice, asleep) in [(NSWorkspace.willSleepNotification, true), (NSWorkspace.didWakeNotification, false),
                                      (NSWorkspace.willSleepNotification, true), (NSWorkspace.screensDidWakeNotification, false)] {
-                center.post(name: notice, object: nil)
+                scratch.workspaceCenter.post(name: notice, object: nil)
                 await TestWait.until { sut.session.isAsleep == asleep }
             }
             #expect(monitorings.made.last?.asleep == [true, false, true, false])
@@ -149,7 +149,7 @@ extension AppDelegateTests {
             await scratch.first.setFailVerify(nil)
             quit(sut)
             #expect(sut.playerLaunchObserver == nil && sut.sleepObservers.isEmpty)
-            launch(FakeRunningApplication(bundleID: Players.first))
+            launch(FakeRunningApplication(bundleID: Players.first), in: scratch)
             await Task.yield() // what a notice still observed would start
             await sut.session.waitUntilIdle()
             #expect(monitorings.made.count == 1) // not started again
@@ -179,7 +179,7 @@ extension AppDelegateTests {
     @MainActor
     private func radioChosenUnasked() async -> (scratch: Scratch, radio: MockMusicPlayer, sut: AppDelegate) {
         let (scratch, _, radio, sut) = await reopenBench(chosen: nil)
-        sut.chooseMusicPlayer(radio.bundleID, asksToReopen: false)
+        sut.choosePlayer(radio.bundleID, asksToReopen: false)
         await TestWait.until { sut.status.playerNeedsReopen }
         return (scratch, radio, sut)
     }
@@ -238,7 +238,7 @@ extension AppDelegateTests {
         let (_, tunes, _, sut) = await reopenBench(chosen: "com.example.tunes")
         await TestWait.until { sut.status.playerNeedsReopen } // reopened at once, and without its option again
         await tunes.setNeedsReopening(true)
-        sut.reopenChosenPlayer() // the card's Reopen
+        sut.reopenPlayer() // the card's Reopen
         await TestWait.until { !sut.status.playerNeedsReopen }
         #expect(await tunes.reopenCount == 2)
     }
@@ -247,7 +247,7 @@ extension AppDelegateTests {
     @Test("a player opened without the option it needs, chosen without asking (reopening it was just skipped in Add an App), is left to the card")
     func reopenLeftToTheCard() async {
         let (_, _, radio, sut) = await reopenBench(chosen: nil)
-        sut.chooseMusicPlayer(radio.bundleID, asksToReopen: false)
+        sut.choosePlayer(radio.bundleID, asksToReopen: false)
         await TestWait.until { sut.status.playerNeedsReopen }
         #expect(await radio.reopenCount == 0)
     }
@@ -267,7 +267,7 @@ extension AppDelegateTests {
     func reopenCancelled() async {
         let (scratch, radio, sut) = await radioChosenUnasked()
         let shown = answerAlerts(sut, with: .alertSecondButtonReturn) // Cancel
-        sut.chooseMusicPlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
+        sut.choosePlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
         await TestWait.until { shown.calls.count == 1 }
         #expect(await radio.reopenCount == 0)
         #expect(sut.status.playerNeedsReopen)
@@ -280,7 +280,7 @@ extension AppDelegateTests {
     func reopenedAlways() async {
         let (scratch, radio, sut) = await radioChosenUnasked()
         let shown = answerAlerts(sut, with: .alertFirstButtonReturn) // Reopen
-        sut.chooseMusicPlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
+        sut.choosePlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
         await TestWait.until { await radio.reopenCount == 1 }
         await TestWait.until { !sut.status.playerNeedsReopen }
         #expect(shown.calls == ["Reopen Radio?"])

@@ -20,7 +20,7 @@ struct NowPlayingSettingTests {
         #expect(NowPlayingSetting.isHidden(value) == hidden)
     }
 
-    @Test("shown for a press, then put back, unless the user changed it meanwhile; not shown within a second, no press; the record goes either way")
+    @Test("shown for a press, then put back, unless the user changed it meanwhile; not shown in time, no press; the record goes either way")
     func whileShown() {
         withDefaults { defaults in
             let held = NowPlayingSettingInMemory(24)
@@ -31,9 +31,9 @@ struct NowPlayingSettingTests {
             #expect(defaults.object(forKey: NowPlayingSetting.leftKey) == nil)
             // Not hidden: nothing to show.
             #expect(NowPlayingSetting.whileShown(defaults: defaults, setting: held.setting, until: { true }) { 1 } == nil)
-            // Its item never shows: no press, and hidden again.
+            // Its item never shows: no press, and hidden again (waited for less than the app's second).
             held.value = 24
-            #expect(NowPlayingSetting.whileShown(defaults: defaults, setting: held.setting, until: { false }) { 1 } == nil)
+            #expect(NowPlayingSetting.whileShown(defaults: defaults, setting: held.setting, waitingUpTo: 0.05, until: { false }) { 1 } == nil)
             #expect(held.value == 24)
             #expect(defaults.object(forKey: NowPlayingSetting.leftKey) == nil)
         }

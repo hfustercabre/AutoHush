@@ -95,6 +95,7 @@ let package = Package(
         // as you hear them. A developer tool: never part of AutoHush.app.
         .executableTarget(
             name: "ListenToFades",
+            dependencies: ["AutoHushKit"],
             path: "Tools/ListenToFades",
             exclude: ["README.md"]
         ),

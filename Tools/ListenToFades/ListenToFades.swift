@@ -1,3 +1,4 @@
+import AutoHushKit
 import CoreAudio
 import Foundation
 import os
@@ -67,7 +68,7 @@ enum ListenToFades {
     /// Records the device's input to a 32-bit float WAV, and the time of its
     /// first sample next to it (`<file>.start`).
     static func record(device uid: String, seconds: Double, to path: String) {
-        guard let device = deviceID(uid: uid) else {
+        guard let device = CoreAudioProperty.device(withUID: uid) else {
             print("No audio device with UID \(uid).")
             exit(1)
         }
@@ -120,21 +121,6 @@ enum ListenToFades {
         writeWAV(samples, channels: channels, rate: format.mSampleRate, to: path)
         try? stamp.string(from: first).write(toFile: path + ".start", atomically: true, encoding: .utf8)
         print("Saved \(path): \(samples.count / channels) frames from \(stamp.string(from: first)).")
-    }
-
-    static func deviceID(uid: String) -> AudioObjectID? {
-        var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDevices, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-        var size: UInt32 = 0
-        AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size)
-        var devices = [AudioObjectID](repeating: 0, count: Int(size) / MemoryLayout<AudioObjectID>.size)
-        AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &devices)
-        return devices.first { device in
-            var address = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyDeviceUID, mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-            var name: Unmanaged<CFString>?
-            var size = UInt32(MemoryLayout<Unmanaged<CFString>?>.size)
-            guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, &name) == noErr else { return false }
-            return (name?.takeRetainedValue() as String?) == uid
-        }
     }
 
     static func writeWAV(_ samples: [Float], channels: Int, rate: Double, to path: String) {
@@ -272,19 +258,13 @@ enum ListenToFades {
 
     /// AutoHush's log over the recording, from `log show`.
     static func logShow(from start: Date, to end: Date) -> String {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/log")
         let short = DateFormatter()
         short.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        process.arguments = ["show", "--style", "compact", "--info", "--debug",
-                             "--start", short.string(from: start.addingTimeInterval(-1)), "--end", short.string(from: end.addingTimeInterval(1)),
-                             "--predicate", #"subsystem == "com.autohush.AutoHush""#]
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        do { try process.run() } catch { return "" }
-        let output = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-        process.waitUntilExit()
-        return output
+        return ToolRun(URL(fileURLWithPath: "/usr/bin/log"), [
+            "show", "--style", "compact", "--info", "--debug",
+            "--start", short.string(from: start.addingTimeInterval(-1)), "--end", short.string(from: end.addingTimeInterval(1)),
+            "--predicate", "subsystem == \"\(AutoHushLogger.subsystem)\"",
+        ]).runBlocking().text
     }
 
     /// A fade, or AutoHush taking a tap-faded player's sound over or giving

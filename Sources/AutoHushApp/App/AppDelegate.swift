@@ -33,6 +33,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Runs AutoHush's alerts (removing an added app, reopening a player,
     /// the card's info button) and returns the button pressed. Tests replace it.
     var runAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
+    /// How Reopen AutoHush opens it again once it has quit, then quits it
+    /// (`reopenAutoHush`). Tests replace them.
+    var openAfterExit: @MainActor (URL) throws -> Void = { _ = try UpdateInstaller.openAfterExit($0) }
+    var terminateToReopen: @MainActor () -> Void = { NSApp.terminate(nil) }
     /// The Settings window's content, which reads what it shows from its owners.
     private(set) var settingsModel: SettingsModel!
     var settingsWindowController: SettingsWindowController?
@@ -77,6 +81,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Update checks (menu, Settings and the daily automatic one), downloads,
     /// installs and their notifications.
     private(set) var updates: UpdateController!
+    /// Where macOS's notices of apps opening and of the Mac sleeping and
+    /// waking come: NSWorkspace's own; tests post their own.
+    let workspaceCenter: NotificationCenter
     var playerLaunchObserver: any NSObjectProtocol?
     /// The Mac going to sleep and waking up.
     var sleepObservers: [any NSObjectProtocol] = []
@@ -152,6 +159,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         installCheckDelay: Duration = .seconds(1),
         permissionCenter: PermissionCenter = PermissionCenter(),
         windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
+        workspaceCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
         clock: @escaping @MainActor () -> Date = Date.init,
         hasOpenWindow: @escaping @MainActor () -> Bool = { NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey } }
     ) {
@@ -187,6 +195,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.watchFolder = watchFolder
         self.installCheckDelay = installCheckDelay
         self.permissionCenter = permissionCenter
+        self.workspaceCenter = workspaceCenter
         self.clock = clock
         self.hasOpenWindow = hasOpenWindow
         super.init()
@@ -230,15 +239,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 // MARK: - What only AppDelegate does
 
 extension AppDelegate: AppActions {
+    /// The menu's, Settings' and the welcome window's choice: as AutoHush's
+    /// own (`AppDelegate+Player`), then the permissions read again, as the
+    /// menu stays open and its card's checks follow the new player's.
     func choosePlayer(_ bundleID: String) {
-        chooseMusicPlayer(bundleID)
-        // The menu stays open: its card's checks follow the new player's permission.
+        choosePlayer(bundleID, showsLearningWindow: true)
         Task { [weak self] in await self?.refreshPermissions() }
     }
     func openAddWebApp() { addWebApp.show() }
     func openAddApp() { addApp.open() }
-    func removeAddedApp(_ bundleID: String) { removeAddedAppAfterAsking(bundleID) }
-    func reopenPlayer() { reopenChosenPlayer() }
     func unmutePlayer() {
         guard let player else { return }
         logger.notice("\(player.name, privacy: .public) unmuted from the menu, until the other apps stop")
@@ -257,7 +266,6 @@ extension AppDelegate: AppActions {
             }
         }
     }
-    func reopenAutoHush() { reopen() }
     func openNotificationSettings() { SystemSettingsPane.notifications.open() }
 
     func moveMenuBarIconNearSystemIcons() {

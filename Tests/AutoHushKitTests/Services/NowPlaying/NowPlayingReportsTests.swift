@@ -1,5 +1,4 @@
 import Foundation
-import os
 import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
@@ -67,17 +66,11 @@ struct NowPlayingReportsTests {
         #expect(reports.latest(of: "com.example.app")?.state == nil)
     }
 
-    /// A folder of its own for a stream's script: the files it waits for, or writes.
-    private func folder() throws -> URL {
-        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("NowPlayingReportsTests-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        return folder
-    }
-
     @Test("the log followed: its past under the live lines; a stream that ends says nothing, and the next question follows it again")
     func followed() async throws {
-        let folder = try folder()
-        defer { try? FileManager.default.removeItem(at: folder) }
+        // The files the stream's script waits for.
+        let scratch = TemporaryFolder("NowPlayingReportsTests")
+        let folder = scratch.url
         let pid = getpid()
         // A web app's media process: it played as the web app, then is created again under WebKit's ID.
         var clients: [pid_t: NowPlayingReports.Client] = [:]
@@ -89,28 +82,28 @@ struct NowPlayingReportsTests {
             .map { #"{"eventMessage":"\#($0)"}"# }
         // Its first line (and one that isn't JSON), its second once "more" exists, its end once "end" does.
         let script = #"printf '%s\n' "$1" 'not JSON'; until [ -e "$3/more" ]; do sleep 0.01; done; printf '%s\n' "$2"; until [ -e "$3/end" ]; do sleep 0.01; done"#
-        let reads = OSAllocatedUnfairLock(initialState: [Date]())
-        let followed = OSAllocatedUnfairLock<NowPlayingReports?>(initialState: nil)
+        let reads = Locked([Date]())
+        let followed = Locked<NowPlayingReports?>(nil)
         let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/bin/sh", "-c", script, "sh"] + lines + [folder.path],
                                         isAdministrator: true) { since in
             // The first time, the past is read once the live line is in.
             let deadline = TestWait.deadline
-            while reads.withLock({ $0.isEmpty }), followed.withLock({ $0 })?.clientsRead[pid] == nil {
+            while reads.value.isEmpty, followed.value?.clientsRead[pid] == nil {
                 guard Date() < deadline else {
                     TestWait.timedOut(at: #_sourceLocation)
                     break
                 }
                 Thread.sleep(forTimeInterval: 0.01)
             }
-            reads.withLock { $0.append(since) }
+            reads.append(since)
             return past
         }
-        followed.withLock { $0 = reports }
+        followed.value = reports
         defer { reports.stop() }
         let webApp = "com.example.webapp"
         let since = Date(timeIntervalSinceNow: -30)
         #expect(reports.follow(since: since))
-        #expect(reads.withLock { $0 } == [since])
+        #expect(reads.value == [since])
         // The live line says only that it's there: its name, ID and report are the past's.
         #expect(reports.latest(of: webApp)?.state == .playing)
         #expect(reports.latest(of: webApp)?.name == "Web App")
@@ -120,16 +113,17 @@ struct NowPlayingReportsTests {
         try Data().write(to: folder.appendingPathComponent("end"))
         // Nothing said once it ended; that question follows it again, its past read back `lookBack`.
         await TestWait.until { reports.latest(of: webApp)?.state == nil }
-        await TestWait.until { reads.withLock { $0.count } == 2 }
-        let again = try #require(reads.withLock { $0.dropFirst().first })
+        await TestWait.until { reads.value.count == 2 }
+        let again = try #require(reads.value.dropFirst().first)
         #expect((ending...Date()).contains(again.addingTimeInterval(NowPlayingReports.firstLookBack)))
+        withExtendedLifetime(scratch) {}
     }
 
     @Test("followed until nobody asks for its idle limit, or until stop; a log that can't be opened isn't asked again")
     func idle() async throws {
-        let folder = try folder()
-        defer { try? FileManager.default.removeItem(at: folder) }
-        let file = folder.appendingPathComponent("pid").path
+        // Where the stream's script writes its pid.
+        let scratch = TemporaryFolder("NowPlayingReportsTests")
+        let file = scratch.appending(path: "pid").path
         let line = #"{"eventMessage":"[com.example.app (\#(getpid())) App ❯] PlaybackState changed from Paused to Playing"}"#
         // Its pid written, its line, then it waits.
         let reports = NowPlayingReports(idleLimit: 0.2, streamCommand: ["/bin/sh", "-c", #"echo $$ > "$1"; printf '%s\n' "$2"; exec sleep 60"#,
@@ -152,5 +146,6 @@ struct NowPlayingReportsTests {
         #expect(!closed.follow(since: Date()))
         #expect(!closed.isAvailable)
         #expect(closed.latest(of: "com.example.app")?.state == nil)
+        withExtendedLifetime(scratch) {}
     }
 }

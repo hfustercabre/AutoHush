@@ -81,11 +81,6 @@ struct ScriptSetupTests {
         #expect(setup.state == .documents(documentClass: "docu", playing: "splg"))
     }
 
-    /// A folder of its own for a test's apps; the test removes it.
-    private func appsFolder() -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("ScriptSetupTests-\(UUID().uuidString)")
-    }
-
     /// An app in `folder` holding `files` (name: text) in its resources, its Info.plist naming `named`.
     private func app(_ name: String, in folder: URL, named: String? = nil, files: [String: String]) throws -> URL {
         let info = ["CFBundleIdentifier": "com.example.\(name.lowercased())", "OSAScriptingDefinition": named].compactMapValues { $0 }
@@ -94,36 +89,36 @@ struct ScriptSetupTests {
 
     @Test("an app's dictionary is read from its bundle: the .sdef its Info.plist names")
     func readFromBundle() throws {
-        let folder = appsFolder()
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let folder = TemporaryFolder("ScriptSetupTests", create: false)
         // Named without its extension, as many apps name it; the other .sdef isn't read.
-        let spotifyApp = try app("Spotify", in: folder, named: "Spotify", files: ["Spotify.sdef": spotify, "Other.sdef": vlc])
+        let spotifyApp = try app("Spotify", in: folder.url, named: "Spotify", files: ["Spotify.sdef": spotify, "Other.sdef": vlc])
         let named = ScriptingDictionary.read(appAt: spotifyApp, isRunning: false)
         #expect(named?.suite == "spfy")
         #expect(named.map { $0.hasState && $0.namesItsSong } == true)
+        withExtendedLifetime(folder) {}
     }
 
     @Test("an app's dictionary, none named, is the first in its resources that has one")
     func firstInResources() throws {
-        let folder = appsFolder()
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let folder = TemporaryFolder("ScriptSetupTests", create: false)
         let itemNamed = vlc.replacingOccurrences(of: "</class-extension>", with: "<property name=\"name of current item\" code=\"nmci\"/></class-extension>")
-        let vlcApp = try app("VLC", in: folder, files: ["A.sdef": "<dictionary/>", "B.sdef": itemNamed])
+        let vlcApp = try app("VLC", in: folder.url, files: ["A.sdef": "<dictionary/>", "B.sdef": itemNamed])
         let found = ScriptingDictionary.read(appAt: vlcApp, isRunning: false)
         #expect(found?.hasState == true) // from its `playing` flag
         #expect(found?.currentItemName == "nmci" && found?.namesItsSong == true)
+        withExtendedLifetime(folder) {}
     }
 
     @Test("an app with only old .scriptSuite files is asked for its dictionary only while it runs")
     func oldScriptSuites() throws {
-        let folder = appsFolder()
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let folder = TemporaryFolder("ScriptSetupTests", create: false)
         // Only the running app could say, so nothing is read; running, `sdef`
         // is asked, and finds nothing either (there's no program to ask).
-        let old = try app("Old", in: folder, files: ["Old.scriptSuite": "{}"])
+        let old = try app("Old", in: folder.url, files: ["Old.scriptSuite": "{}"])
         #expect(ScriptingDictionary.isInBundle(at: old))
         #expect(ScriptingDictionary.read(appAt: old, isRunning: false) == nil)
         #expect(ScriptingDictionary.read(appAt: old, isRunning: true) == nil)
+        withExtendedLifetime(folder) {}
     }
 
     @Test("its state is read where AutoHush reads it: player state only with its three values, else its playing flag, else none; also without commands")

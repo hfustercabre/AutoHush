@@ -11,15 +11,13 @@ import AutoHushTestSupport
 struct KeyHighlightTests {
     /// A control at `x`, `y` (44 × 22), counting its presses and adjustments.
     private func control(_ keyboard: KeyHighlight, _ x: CGFloat, _ y: CGFloat, enabled: Bool = true,
-                         log: Log? = nil, name: String = "", adjusts: Bool = false) -> UUID {
+                         log: CallLog? = nil, name: String = "", adjusts: Bool = false) -> UUID {
         let id = UUID()
         keyboard.register(id, .init(frame: CGRect(x: x, y: y, width: 44, height: 22), isEnabled: enabled,
                                     press: { log?.calls.append("press \(name)") },
                                     adjust: adjusts ? { log?.calls.append("adjust \(name) \($0)") } : nil))
         return id
     }
-
-    private final class Log { var calls: [String] = [] }
 
     /// Its controls in reading order.
     private func order(_ keyboard: KeyHighlight) -> [UUID] { keyboard.rows.flatMap { $0 } }
@@ -150,7 +148,7 @@ struct KeyHighlightTests {
     @Test("Return or Space presses the highlighted control, ← and → adjust it if it takes them; with none, nothing")
     func pressing() {
         let keyboard = KeyHighlight()
-        let log = Log()
+        let log = CallLog()
         let slider = control(keyboard, 0, 0, log: log, name: "slider", adjusts: true)
         let button = control(keyboard, 0, 50, log: log, name: "button")
         #expect(!keyboard.press())

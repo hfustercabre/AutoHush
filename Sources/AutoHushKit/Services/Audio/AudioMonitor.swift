@@ -82,7 +82,20 @@ final class AudioMonitor: @unchecked Sendable {
     /// while paused, as some players do). It's tapped again once its output
     /// closes and opens again, or once it tells macOS it plays anew: one that keeps
     /// saying so in silence (a call app through a quiet stretch) isn't.
+    /// While the player plays, it's also listened to again now and then
+    /// (`quietListenInterval`).
     static let silentTapRelease: TimeInterval = 10
+    /// While the player plays (so AutoHush may have to pause it), the
+    /// processes released for their silence are listened to again this
+    /// long after their release or their last listen, for
+    /// `quietListenDuration`: one that plays again without a word to macOS
+    /// (a game, an audio app keeping its output open) is heard, and counts
+    /// as playing (the user, 2026-10-26). Never in AntiDot mode, which taps
+    /// nothing; timed by `clock`, at the ticks.
+    static let quietListenInterval: TimeInterval = 30
+    /// How long each of those listens lasts: the recording indicator shows
+    /// only meanwhile.
+    static let quietListenDuration: TimeInterval = 0.5
 
     /// Queue-confined; replaced live by `setConfiguration(_:)`.
     var configuration: AppConfiguration
@@ -131,6 +144,11 @@ final class AudioMonitor: @unchecked Sendable {
     /// Source processes whose tap was released for their silence: they don't
     /// count as playing until they're tapped again (`silentTapRelease`).
     var quietProcesses: Set<AudioObjectID> = []
+    /// When the quiet processes were last listened to, or released if not
+    /// since (`quietListenInterval`); `nil` while there are none.
+    var quietListenedAt: Date?
+    /// Until when they're listened to, while they are.
+    var quietListenUntil: Date?
     /// `nil` while the permission cannot be read (no checker, or TCC unavailable).
     var permissionStatus: AudioCapturePermission?
     var lastPermissionCheck: Date?

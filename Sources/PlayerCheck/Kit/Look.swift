@@ -1,12 +1,15 @@
 import AutoHushKit
 
-/// The signs of whether it plays, surest first: its scripted state, what it
-/// reports to Now Playing, its page's Play/Pause (while its word is current),
-/// its level (as AutoHush hears it), its keep-awake assertion (as AntiDot
-/// mode reads it), its menu's state (as AutoHush's MenuPlayer reads it).
-/// A menu's word may change late by itself (one said Play while playing,
-/// then Pause a second later, with nothing pressed), so it comes last.
-package enum SignKind: CaseIterable, Sendable { case script, report, page, level, awake, menu }
+/// The signs of whether it plays, surest first, in the order AutoHush reads
+/// an added app's (`CheckedPlayer.sureState`), so what a check approves is
+/// what AutoHush will do (the user, 2026-10-26): its scripted state, its
+/// page's Play/Pause (while its word is current), its menu's state (as
+/// AutoHush's MenuPlayer reads it), what it reports to Now Playing, then
+/// its level (as AutoHush hears it) and its keep-awake assertion (as
+/// AntiDot mode reads it). A menu's word may change late by itself (one
+/// said Play while playing, then Pause a second later, with nothing
+/// pressed); it comes before the report all the same, as in AutoHush.
+package enum SignKind: CaseIterable, Sendable { case script, page, menu, report, level, awake }
 
 /// What can be seen of whether it plays: the menu's first item, its
 /// scripted state, what it reports to Now Playing, its page's Play/Pause,
@@ -60,8 +63,9 @@ package struct Look: Sendable {
     }
     /// The surest sign that says something.
     package var surest: SignKind? { SignKind.allCases.first { says($0) != nil } }
-    /// Stopped, as its surest state tells it: its scripted state, else what
-    /// it reports to Now Playing, else its menu's item (disabled). A track
-    /// that ends leaves it so (one with a playing flag said stopped, not paused).
-    package var stopped: Bool { [SignKind.script, .report, .menu].lazy.compactMap(says).first == .stopped }
+    /// Stopped, as its surest state tells it (`SignKind`'s order): its
+    /// scripted state, else its menu's item (disabled), else what it reports
+    /// to Now Playing. A track that ends leaves it so (one with a playing
+    /// flag said stopped, not paused).
+    package var stopped: Bool { [SignKind.script, .menu, .report].lazy.compactMap(says).first == .stopped }
 }

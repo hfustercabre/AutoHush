@@ -8,7 +8,7 @@ import OSLog
 /// Private values are left out of both ("<private>").
 package struct AutoHushLogger: Sendable {
     /// The app's bundle identifier, used as the unified-logging subsystem.
-    static let subsystem = "com.autohush.AutoHush"
+    package static let subsystem = "com.autohush.AutoHush"
 
     package let category: String
     private let system: Logger

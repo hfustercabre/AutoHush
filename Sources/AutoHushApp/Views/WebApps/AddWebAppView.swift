@@ -32,71 +32,65 @@ struct AddWebAppView: View {
     static let width: CGFloat = 440
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                WindowHeader(icon: AppIcon.safari,
-                             description: Text("Paste a website that plays music, podcasts or videos. AutoHush adds it to your Dock as an app and learns its controls.",
-                                               comment: "Add a Web App window, at its top beside Safari's icon"))
-                NoteLabel(PlayerOption.webAppsWarning)
-                    .padding(.top, 8)
-                // Adding drives Safari through Accessibility: without it, the
-                // window says so first, and Continue waits until it's allowed.
-                if needsAccessibility {
-                    VStack(alignment: .leading, spacing: 8) {
-                        NoteLabel(Self.accessibilityNeeded)
-                        PermissionButton(model: settings, permission: Self.safariAccess, access: .denied, long: true)
-                    }
-                }
-                SectionHeading(Self.addressTitle)
-                    .padding(.top, 8)
-                if let sites = model.addressSites {
-                    Card {
-                        addressField
-                        CardDivider()
-                        countryRow(sites)
-                    }
-                    if model.phase == .entering {
-                        Text("\(sites.name) has its own site in some countries, and you can sign in only on your account’s.",
-                             comment: "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Amazon Music")
-                            .captionStyle()
-                    }
-                } else {
-                    Card { addressField }
-                }
-                if let problem = model.problemText, !(needsAccessibility && model.problem == .accessibilityDenied) {
-                    NoteLabel(problem)
-                    if model.problem == .accessibilityDenied {
-                        Button(Self.safariAccess.grantTitle) { model.openAccessibilitySettings() }
-                            .buttonStyle(.chip)
-                    }
-                }
-                if model.phase != .entering {
-                    SectionHeading(Self.stepsHeading).padding(.top, 8)
-                    Card { steps }
+        WindowPage(icon: AppIcon.safari,
+                   description: Text("Paste a website that plays music, podcasts or videos. AutoHush adds it to your Dock as an app and learns its controls.",
+                                     comment: "Add a Web App window, at its top beside Safari's icon"),
+                   width: Self.width) {
+            NoteLabel(PlayerOption.webAppsWarning)
+                .padding(.top, 8)
+            // Adding drives Safari through Accessibility: without it, the
+            // window says so first, and Continue waits until it's allowed.
+            if needsAccessibility {
+                VStack(alignment: .leading, spacing: 8) {
+                    NoteLabel(Self.accessibilityNeeded)
+                    PermissionButton(model: settings, permission: Self.safariAccess, access: .denied, long: true)
                 }
             }
-            .windowMargins()
-            BottomBar {
-                Spacer()
-                Button { close() } label: {
-                    if case .learning = model.phase {
-                        // The web app is added: its controls can be learned
-                        // later, from the menu's or Settings' Controls row.
-                        Text(verbatim: LaterText.title)
-                    } else {
-                        Text(verbatim: AddAppText.cancel)
-                    }
+            SectionHeading(Self.addressTitle)
+                .padding(.top, 8)
+            if let sites = model.addressSites {
+                Card {
+                    addressField
+                    CardDivider()
+                    countryRow(sites)
                 }
-                .buttonStyle(.chip)
-                .keyboardShortcut(.cancelAction)
                 if model.phase == .entering {
-                    MainButton(AddAppText.continueButton) { model.continueTapped() }
-                        .disabled(!model.canContinue || needsAccessibility)
+                    Text("\(sites.name) has its own site in some countries, and you can sign in only on your account’s.",
+                         comment: "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Amazon Music")
+                        .captionStyle()
                 }
+            } else {
+                Card { addressField }
+            }
+            if let problem = model.problemText, !(needsAccessibility && model.problem == .accessibilityDenied) {
+                NoteLabel(problem)
+                if model.problem == .accessibilityDenied {
+                    Button(Self.safariAccess.grantTitle) { model.openAccessibilitySettings() }
+                        .buttonStyle(.chip)
+                }
+            }
+            if model.phase != .entering {
+                SectionHeading(Self.stepsHeading).padding(.top, 8)
+                Card { steps }
+            }
+        } bar: {
+            Spacer()
+            Button { close() } label: {
+                if case .learning = model.phase {
+                    // The web app is added: its controls can be learned
+                    // later, from the menu's or Settings' Controls row.
+                    Text(verbatim: LaterText.title)
+                } else {
+                    Text(verbatim: ButtonText.cancel)
+                }
+            }
+            .buttonStyle(.chip)
+            .keyboardShortcut(.cancelAction)
+            if model.phase == .entering {
+                MainButton(ButtonText.continue) { model.continueTapped() }
+                    .disabled(!model.canContinue || needsAccessibility)
             }
         }
-        .frame(width: Self.width)
-        .font(.appBody)
         // VoiceOver hears why the last try failed, as it shows under the field.
         .onChange(of: model.problemText) { _, problem in
             if let problem { AccessibilityNotification.Announcement(problem).post() }

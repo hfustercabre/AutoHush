@@ -1,8 +1,9 @@
 # Checks that a pull request follows CONTRIBUTING.md: it goes into dev, from
 # a branch named as Conventional Branch (conventionalbranch.org) asks, of the
 # types contributors use: feature/…, fix/… or chore/…, then lowercase words
-# and numbers joined by single hyphens (dots for versions). Runs again when
-# the pull request is edited (a new target), so fixing it clears the check.
+# and numbers joined by single hyphens (dots for versions); Dependabot's own
+# pull requests (.github/dependabot.yml) keep its branch names. Runs again
+# when the pull request is edited (a new target), so fixing it clears the check.
 name: Pull request rules
 
 on:
@@ -23,6 +24,7 @@ jobs:
         env:
           HEAD_BRANCH: ${{ github.head_ref }}
           BASE_BRANCH: ${{ github.base_ref }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
           problems=0
           if [ "$BASE_BRANCH" != "dev" ]; then
@@ -30,7 +32,7 @@ jobs:
             problems=1
           fi
           segment='[a-z0-9]+(\.[a-z0-9]+)*'
-          if ! printf '%s\n' "$HEAD_BRANCH" | grep -Eqx "(feature|fix|chore)/$segment(-$segment)*"; then
+          if [ "$AUTHOR" != "dependabot[bot]" ] && ! printf '%s\n' "$HEAD_BRANCH" | grep -Eqx "(feature|fix|chore)/$segment(-$segment)*"; then
             echo "::error title=Branch name::Name the branch feature/…, fix/… or chore/…, in lowercase words joined by hyphens, e.g. fix/vlc-resume (see CONTRIBUTING.md)."
             problems=1
           fi

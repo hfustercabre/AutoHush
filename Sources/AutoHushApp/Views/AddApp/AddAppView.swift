@@ -29,35 +29,28 @@ struct AddAppView: View {
     static let width: CGFloat = 460
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                WindowHeader(icon: NSApp.applicationIconImage, description: Text(verbatim: AddAppText.description))
-                if model.hasHelper {
-                    SectionHeading(Text(verbatim: AddAppText.stepsHeading)).padding(.top, 8)
-                    Card {
-                        VStack(alignment: .leading, spacing: 10) {
-                            ForEach(Array(model.steps.enumerated()), id: \.element) { index, step in
-                                if index > 0 { CardDivider() }
-                                row(step)
-                            }
+        WindowPage(icon: NSApp.applicationIconImage, description: Text(verbatim: AddAppText.description), width: Self.width) {
+            if model.hasHelper {
+                SectionHeading(Text(verbatim: AddAppText.stepsHeading)).padding(.top, 8)
+                Card {
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(Array(model.steps.enumerated()), id: \.element) { index, step in
+                            if index > 0 { CardDivider() }
+                            row(step)
                         }
                     }
-                } else {
-                    NoteLabel(AddAppText.helperMissing).padding(.top, 8)
                 }
+            } else {
+                NoteLabel(AddAppText.helperMissing).padding(.top, 8)
             }
-            .windowMargins()
-            BottomBar {
-                // While a check runs, Escape is its Stop (in the check's step).
-                // Once the check is done, closing cancels nothing: it's kept.
-                Button { close() } label: { Text(verbatim: isDone ? LaterText.title : AddAppText.cancel) }
-                    .buttonStyle(.chip)
-                    .keyboardShortcut(model.stage == .checking ? nil : .cancelAction)
-                Spacer()
-            }
+        } bar: {
+            // While a check runs, Escape is its Stop (in the check's step).
+            // Once the check is done, closing cancels nothing: it's kept.
+            Button { close() } label: { Text(verbatim: isDone ? LaterText.title : ButtonText.cancel) }
+                .buttonStyle(.chip)
+                .keyboardShortcut(model.stage == .checking ? nil : .cancelAction)
+            Spacer()
         }
-        .frame(width: Self.width)
-        .font(.appBody)
         .announcesCurrentStep(announcement)
         .onChange(of: isWaitingToPlay) { _, waiting in floats(waiting) }
         .defaultFocus($focused, model.currentStep)
@@ -89,14 +82,14 @@ struct AddAppView: View {
     /// its title, then why.
     private var announcement: String? {
         let step = model.currentStep
-        let mark = model.mark(of: step)
-        guard mark == .current || mark == .failed else { return nil }
-        let why = warning(step, mark)
+        let state = model.state(of: step)
+        guard !model.isBusy(step), state == .current || state == .failed else { return nil }
+        let why = warning(step, state)
         return why.map { "\(title(step))\n\($0)" } ?? title(step)
     }
 
     /// The warning or failure a step shows, if any.
-    private func warning(_ step: AddAppModel.Step, _ mark: AddAppModel.Mark) -> String? {
+    private func warning(_ step: AddAppModel.Step, _ state: StepState) -> String? {
         let app = appName ?? ""
         switch step {
         case .choose: return model.openFailed ? AddAppText.couldNotOpen(app) : nil
@@ -104,7 +97,7 @@ struct AddAppView: View {
             : model.permissionMissingInCheck ? AddAppText.neededInCheck : nil
         case .reopen: return model.reopenFailed ? AddAppText.didNotQuit(app) : nil
         case .play:
-            guard mark == .failed else { return nil }
+            guard state == .failed else { return nil }
             return model.appNotFound ? AddAppText.appNotFound(app) : model.appQuit ? AddAppText.appQuit(app) : AddAppText.didNotPlay(app)
         case .check:
             switch model.stage {
@@ -120,7 +113,7 @@ struct AddAppView: View {
         switch step {
         case .choose: AddAppText.chooseTitle
         case .allow: AddAppText.allowTitle
-        case .reopen: AddAppText.reopenTitle(appName ?? "")
+        case .reopen: ReopenText.title(appName ?? "")
         case .play: AddAppText.playTitle(appName)
         case .check: AddAppText.checkTitle
         case .use: AddAppText.useTitle
@@ -128,14 +121,15 @@ struct AddAppView: View {
     }
 
     private func row(_ step: AddAppModel.Step) -> some View {
-        let mark = model.mark(of: step)
-        return NumberedStepRow(number: model.number(of: step), count: model.steps.count, mark: mark, title: title(step)) {
+        let state = model.state(of: step), busy = model.isBusy(step)
+        return NumberedStepRow(number: model.number(of: step), count: model.steps.count, state: state, isBusy: busy,
+                               title: title(step)) {
             switch step {
-            case .choose: chooseStep(mark)
-            case .allow: allowStep(mark)
-            case .reopen: reopenStep(mark)
-            case .play: playStep(mark)
-            case .check: checkStep(mark)
+            case .choose: chooseStep(state, busy: busy)
+            case .allow: allowStep(state)
+            case .reopen: reopenStep(state, busy: busy)
+            case .play: playStep(state, busy: busy)
+            case .check: checkStep(state, busy: busy)
             case .use: useStep()
             }
         }
@@ -154,8 +148,8 @@ struct AddAppView: View {
         }
     }
 
-    @ViewBuilder private func chooseStep(_ mark: AddAppModel.Mark) -> some View {
-        switch mark {
+    @ViewBuilder private func chooseStep(_ state: StepState, busy: Bool) -> some View {
+        switch state {
         case .done:
             StepNote(AddAppText.chosen(appName ?? "", traits: model.traits, browser: model.chosen?.browserName))
             if model.canChangeApp {
@@ -164,7 +158,7 @@ struct AddAppView: View {
                     .padding(.top, 2)
                     .focused($focused, equals: .choose)
             }
-        case .busy:
+        case .current where busy:
             StepNote(AddAppText.opening(appName ?? ""))
         default:
             StepNote(AddAppText.chooseNote)
@@ -174,8 +168,8 @@ struct AddAppView: View {
         }
     }
 
-    @ViewBuilder private func allowStep(_ mark: AddAppModel.Mark) -> some View {
-        switch mark {
+    @ViewBuilder private func allowStep(_ state: StepState) -> some View {
+        switch state {
         case .todo:
             StepNote(AddAppText.allowNote)
         case .done:
@@ -199,24 +193,24 @@ struct AddAppView: View {
                     NoteLabel(AddAppText.accessibilityNeeded(app)).padding(.top, 4)
                 } else if !missing.isEmpty, !model.accessibilityNeedsReopen {
                     NoteLabel(AddAppText.withoutWarning(missing, app: app, macMuted: model.checkMuting == .mac)).padding(.top, 4)
-                    MainButton(AddAppText.continueButton, inStep: true) { model.continueWithoutAll() }
+                    MainButton(ButtonText.continue, inStep: true) { model.continueWithoutAll() }
                         .focused($focused, equals: .allow)
                 }
             }
         }
     }
 
-    @ViewBuilder private func reopenStep(_ mark: AddAppModel.Mark) -> some View {
-        switch mark {
+    @ViewBuilder private func reopenStep(_ state: StepState, busy: Bool) -> some View {
+        switch state {
         case .done:
             StepNote(model.reopenOutcome == .skipped ? AddAppText.notReopened : AddAppText.reopened)
-        case .busy:
+        case .current where busy:
             StepNote(AddAppText.reopening(appName ?? ""))
         case .current:
-            NoteLabel(AddAppText.reopenAlertMessage(appName ?? "")).padding(.top, 2)
+            NoteLabel(ReopenText.alertMessage(appName ?? "")).padding(.top, 2)
             if model.reopenFailed { NoteLabel(AddAppText.didNotQuit(appName ?? "")).padding(.top, 2) }
             FlowingButtons {
-                MainButton(AddAppText.reopenTitle(appName ?? ""), inStep: true) { model.reopen() }
+                MainButton(ReopenText.title(appName ?? ""), inStep: true) { model.reopen() }
                     .focused($focused, equals: .reopen)
                 MainButton(AddAppText.skip, secondary: true, inStep: true) { model.skipReopen() }
             }
@@ -225,8 +219,8 @@ struct AddAppView: View {
         }
     }
 
-    @ViewBuilder private func playStep(_ mark: AddAppModel.Mark) -> some View {
-        switch (mark, model.stage) {
+    @ViewBuilder private func playStep(_ state: StepState, busy: Bool) -> some View {
+        switch (state, model.stage) {
         case (.done, _):
             StepNote(AddAppText.playingNote)
         case (.current, .waitingToPlay(let since)):
@@ -235,7 +229,7 @@ struct AddAppView: View {
                 CountdownBanner(text: AddAppText.timeToPlay(AddAppModel.playWait - context.date.timeIntervalSince(since)))
             }
             .padding(.top, 2)
-        case (.busy, _):
+        case (.current, _) where busy:
             StepNote(AddAppText.opening(appName ?? ""))
         case (.failed, _) where model.appNotFound:
             // Moved or deleted: Open can't find it, another app is chosen instead.
@@ -244,7 +238,7 @@ struct AddAppView: View {
                 .focused($focused, equals: .play)
         case (.failed, _) where model.appQuit:
             NoteLabel(AddAppText.appQuit(appName ?? "")).padding(.top, 2)
-            MainButton(AddAppText.open(appName ?? ""), inStep: true) { model.openAppAgain() }
+            MainButton(ButtonText.open(appName ?? ""), inStep: true) { model.openAppAgain() }
                 .focused($focused, equals: .play)
         case (.failed, _):
             StepNote(AddAppText.didNotPlay(appName ?? ""))
@@ -255,11 +249,11 @@ struct AddAppView: View {
         }
     }
 
-    @ViewBuilder private func checkStep(_ mark: AddAppModel.Mark) -> some View {
-        switch (mark, model.stage) {
+    @ViewBuilder private func checkStep(_ state: StepState, busy: Bool) -> some View {
+        switch (state, model.stage) {
         case (.done, _):
             StepNote(AddAppText.putBackNote)
-        case (.busy, _):
+        case (.current, _) where busy:
             StepNote(model.isStopping ? AddAppText.stopping
                      : model.isEndingLastCheck ? AddAppText.lastCheckEnding : AddAppText.stage(model.progress.stage))
             StepNote(AddAppText.stopHint)
@@ -293,7 +287,7 @@ struct AddAppView: View {
             default: StepNote(AddAppText.checkNote(appName))
             }
             if model.traits?.framework != nil { StepNote(AddAppText.switchNote) }
-            if mark == .current {
+            if state == .current {
                 MainButton(AddAppText.continueToCheck, inStep: true) { model.continueToCheck() }
                     .focused($focused, equals: .check)
             }
@@ -336,7 +330,7 @@ struct AddAppView: View {
                             .buttonStyle(.chip)
                     } else {
                         NoteLabel(AddAppText.muteNeedsAudio).padding(.top, 2)
-                        Button { model.allowMuting() } label: { Text(verbatim: AddAppText.allowButton) }
+                        Button { model.allowMuting() } label: { Text(verbatim: ButtonText.allow) }
                             .buttonStyle(.chip)
                             .accessibilityLabel(Text(verbatim: AddAppText.allowLabel(PermissionText.audioTitle)))
                     }
@@ -426,7 +420,7 @@ private struct CheckPermissionRows: View {
                         .buttonStyle(.chip)
                         .fixedSize()
                 } else {
-                    let allow = Button { model.request(permission) } label: { Text(verbatim: AddAppText.allowButton) }
+                    let allow = Button { model.request(permission) } label: { Text(verbatim: ButtonText.allow) }
                         .buttonStyle(.chip)
                         .fixedSize()
                         .accessibilityLabel(Text(verbatim: AddAppText.allowLabel(title)))
@@ -470,7 +464,7 @@ private struct WayRow: View {
                 // baseline (which the mark follows) undecided, and macOS 14
                 // crashed laying the window out again and again (2026-10-16).
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(verbatim: AddAppText.wayTitle(way.kind)).fixedSize(horizontal: false, vertical: true)
+                    Text(verbatim: WayText.title(way.kind)).fixedSize(horizontal: false, vertical: true)
                     if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true) }
                 }
                 // The recommended way's exception (it works, but not in every

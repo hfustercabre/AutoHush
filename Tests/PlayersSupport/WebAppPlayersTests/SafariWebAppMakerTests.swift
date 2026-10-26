@@ -250,9 +250,8 @@ struct SafariWebAppMakerTests {
 
     @Test("a bundle is sealed once it's signed, as Safari does last")
     func sealed() throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "Sealed-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
-        let app = try TestAppBundle.make(in: folder, name: "Web", info: [
+        let folder = TemporaryFolder("SafariWebAppMakerTests", create: false)
+        let app = try TestAppBundle.make(in: folder.url, name: "Web", info: [
             "CFBundleIdentifier": SafariWebApp.bundleIDPrefix + "TEST", "CFBundleName": "Web", "LSTemplateApplication": true,
         ])
         #expect(!SafariWebApp.isSealed(at: app))
@@ -264,6 +263,7 @@ struct SafariWebAppMakerTests {
         codesign.waitUntilExit()
         try #require(codesign.terminationStatus == 0)
         #expect(SafariWebApp.isSealed(at: app))
+        withExtendedLifetime(folder) {}
     }
 
     @Test("a website that already has a web app isn't added again")

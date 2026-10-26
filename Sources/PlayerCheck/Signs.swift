@@ -42,12 +42,12 @@ extension Look {
 }
 
 /// A look for a press's `Sign`: its level is measured (half a second) only
-/// when nothing surer shows the state, so presses stay quick.
+/// when nothing surer shows the state (`SignKind`'s order), so presses stay quick.
 @MainActor func lookForSign(_ pid: pid_t) -> Look {
     let quick = look(pid)
     // A report of a pause is checked against its level once: it may be stale.
     let reportOfPause = quick.surest == .report && quick.says(.report) != .playing
-    guard levelsAllowed, reportOfPause || [SignKind.script, .report, .page].allSatisfy({ quick.says($0) == nil }) else { return quick }
+    guard levelsAllowed, reportOfPause || [SignKind.script, .page, .menu, .report].allSatisfy({ quick.says($0) == nil }) else { return quick }
     return look(pid, level: true)
 }
 

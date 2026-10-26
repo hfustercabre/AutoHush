@@ -106,57 +106,91 @@ struct MonitoringPipelineTests {
         setup.pipeline.stop()
     }
 
-    @Test("each command reaches the arbiter: held resumes, Auto-Pause, new timings, an app ignored and counting again, the user's own pause and play, without waiting in real time")
-    func commandsReachArbiter() async {
-        // The user plays and pauses it: its observer reports the changes.
-        let mock = MockMusicPlayer(state: .playing)
-        // A minute: Auto-Pause back on pauses only after it, unless shorter timings reached the arbiter.
-        let setup = Setup(player: mock, stopGrace: 60)
+    /// Another app playing paused the player, which `setup` started.
+    private func pausedForOtherApp(_ setup: Setup, _ mock: MockMusicPlayer) async {
         await setup.pipeline.start()
         await setup.otherAppPlays()
         await TestWait.until { setup.updates.playback.last == .pausedByMonitor }
         #expect(await mock.pauseCallCount == 1)
+    }
 
-        // Held, nothing resumes, not even with Auto-Pause off (the arbiter's state, told three
-        // times: held, off, and the resume held).
-        let told = setup.updates.playback.count
+    /// Auto-Pause off brings the music back, though the app still plays;
+    /// measured again as it plays, so the next pause hears it.
+    private func autoPauseOff(_ setup: Setup, _ mock: MockMusicPlayer) async {
+        setup.pipeline.setAutoPauseEnabled(false)
+        await TestWait.until { await mock.playCallCount == 1 }
+        await setup.pipeline.waitForResume()
+        setup.processes.triggerChange()
+        await setup.pipeline.eventsDelivered()
+    }
+
+    @Test("held resumes reach the arbiter: nothing resumes, not even with Auto-Pause off, until they're let go")
+    func heldResumesReachArbiter() async {
+        let mock = MockMusicPlayer(state: .playing)
+        let setup = Setup(player: mock)
+        await pausedForOtherApp(setup, mock)
         setup.pipeline.holdResumes(true)
         setup.pipeline.setAutoPauseEnabled(false)
-        await TestWait.until { await mock.playCallCount > 0 || setup.updates.playback.count >= told + 3 }
+        await setup.pipeline.settled()
         #expect(await mock.playCallCount == 0)
         setup.pipeline.holdResumes(false)
         await TestWait.until { await mock.playCallCount == 1 }
-        await setup.pipeline.waitForResume()
-        #expect(await mock.playCallCount == 1)
-        // Measured again as it plays, so the next pause hears it.
-        setup.processes.triggerChange()
-        await setup.pipeline.eventsDelivered()
+        setup.pipeline.stop()
+    }
 
-        // Shorter timings, then Auto-Pause back on: paused again for the app still playing.
+    @Test("Auto-Pause reaches the arbiter: off, the music comes back though the app still plays; on again, it's paused again")
+    func autoPauseReachesArbiter() async {
+        let mock = MockMusicPlayer(state: .playing)
+        let setup = Setup(player: mock, stopGrace: 0)
+        await pausedForOtherApp(setup, mock)
+        await autoPauseOff(setup, mock)
+        setup.pipeline.setAutoPauseEnabled(true)
+        await TestWait.until { await mock.pauseCallCount == 2 }
+        setup.pipeline.stop()
+    }
+
+    @Test("new timings reach the arbiter: Auto-Pause back on pauses as soon as they say, not after the old minute")
+    func timingsReachArbiter() async {
+        let mock = MockMusicPlayer(state: .playing)
+        // A minute: Auto-Pause back on pauses only after it, unless shorter timings reached the arbiter.
+        let setup = Setup(player: mock, stopGrace: 60)
+        await pausedForOtherApp(setup, mock)
+        await autoPauseOff(setup, mock)
         var shorter = setup.configuration
         shorter.sourceStopGrace = 0
         setup.pipeline.setConfiguration(shorter)
         setup.pipeline.setAutoPauseEnabled(true)
-        await TestWait.until { setup.updates.playback.last == .pausedByMonitor }
-        #expect(await mock.pauseCallCount == 2)
+        await TestWait.until { await mock.pauseCallCount == 2 }
+        setup.pipeline.stop()
+    }
 
+    @Test("the user's pause reaches the arbiter: once the app ignored counts again, nothing is paused or played, the pause is theirs")
+    func usersPauseReachesArbiter() async {
+        let mock = MockMusicPlayer(state: .playing)
+        let setup = Setup(player: mock)
+        await pausedForOtherApp(setup, mock)
         // The app ignored, it no longer counts: the pause ends and the music comes back.
         setup.pipeline.setIgnoredSources([Self.otherApp.bundleID])
-        await TestWait.until { await mock.playCallCount == 2 }
+        await TestWait.until { await mock.playCallCount == 1 }
         await setup.pipeline.waitForResume()
-        // The user pauses it: its observer tells the arbiter, so once the app
-        // counts again nothing is paused or played: the pause is theirs.
+        // The user pauses it: its observer tells the arbiter.
         await mock.userSets(.paused)
         await TestWait.until { setup.updates.playback.last == .musicIdle }
         setup.pipeline.setIgnoredSources([])
         await setup.pipeline.settled()
-        #expect(await mock.pauseCallCount == 2)
-        #expect(await mock.playCallCount == 2)
+        #expect(await mock.pauseCallCount == 1)
+        #expect(await mock.playCallCount == 1)
+        setup.pipeline.stop()
+    }
 
-        // The user plays it while the app is ignored; the app counting again,
-        // it can't be paused: the menu hears why.
+    @Test("the user's play reaches the arbiter: played while the app is ignored, it can't be paused once the app counts again, and the menu hears why")
+    func usersPlayReachesArbiter() async {
+        let mock = MockMusicPlayer(state: .paused)
         await mock.setFailPause(MusicPlayerError.playerCommandFailed(.pressIgnored))
+        let setup = Setup(player: mock)
+        await setup.pipeline.start()
         setup.pipeline.setIgnoredSources([Self.otherApp.bundleID])
+        await setup.otherAppPlays()
         await mock.userSets(.playing)
         await TestWait.until { setup.updates.playback.last == .musicPlaying }
         setup.pipeline.setIgnoredSources([])

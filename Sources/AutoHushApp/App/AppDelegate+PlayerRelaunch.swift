@@ -5,7 +5,7 @@ import AutoHushKit
 extension AppDelegate {
     func registerPlayerLaunchObserver() {
         guard playerLaunchObserver == nil else { return }
-        playerLaunchObserver = NSWorkspace.shared.notificationCenter.addObserver(
+        playerLaunchObserver = workspaceCenter.addObserver(
             forName: NSWorkspace.didLaunchApplicationNotification,
             object: nil,
             queue: nil
@@ -76,7 +76,7 @@ extension AppDelegate {
     }
 
     /// The card's Reopen button.
-    func reopenChosenPlayer() {
+    func reopenPlayer() {
         guard let player else { return }
         Task { [weak self] in await self?.reopen(player, tellsIfFails: true) }
     }
@@ -121,17 +121,17 @@ extension AppDelegate {
         let alert = PlayerAlerts.confirm(
             title: String(localized: "Reopen \(name)?",
                           comment: "Alert title when a media player added through a check was chosen while opened without an option it needs; %@ is the player"),
-            message: AddAppText.reopenAlertMessage(name),
-            button: AddAppText.reopenTitle(name)
+            message: ReopenText.alertMessage(name),
+            button: ReopenText.title(name)
         )
         alert.showsSuppressionButton = true
-        alert.suppressionButton?.title = AddAppText.reopenAlways(name)
+        alert.suppressionButton?.title = ReopenText.always(name)
         return alert
     }
 
     func unregisterPlayerLaunchObserver() {
         guard let playerLaunchObserver else { return }
-        NSWorkspace.shared.notificationCenter.removeObserver(playerLaunchObserver)
+        workspaceCenter.removeObserver(playerLaunchObserver)
         self.playerLaunchObserver = nil
     }
 }

@@ -102,7 +102,7 @@ struct TextChoiceTests {
                         Row("the Mac muted", AddAppText.checkNoteMacMuted(app), namesApp: true),
                         Row("nothing muted", AddAppText.checkNoteHeard(app), namesApp: true)]
             case .wayTitle:
-                return CheckResult.WayKind.allCases.map { Row("\($0)", AddAppText.wayTitle($0)) }
+                return CheckResult.WayKind.allCases.map { Row("\($0)", WayText.title($0)) }
             case .wayNote:
                 func note(_ kind: CheckResult.WayKind, _ mark: CheckResult.Mark, failed: [CheckResult.WindowState] = []) -> String {
                     AddAppText.wayNote(.init(kind: kind, mark: mark, failedStates: failed), app: app)

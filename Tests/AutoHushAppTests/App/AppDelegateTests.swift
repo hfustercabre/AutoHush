@@ -11,8 +11,8 @@ import PlayersTestSupport
 
 @Suite("AppDelegate", .waitsTimeLimit)
 struct AppDelegateTests {
-    /// In-memory preferences, the choices kept beside them in a suite of its
-    /// own, the apps added with Add an App in memory, and a downloads folder
+    /// In-memory preferences, the choices kept beside them in memory too,
+    /// the apps added with Add an App in memory, and a downloads folder
     /// of its own, so tests never write AutoHush's preference files or touch
     /// its real Caches. Two stand-in music players to choose from, which may
     /// be controlled, which of them are installed (the second in a folder
@@ -21,8 +21,7 @@ struct AppDelegateTests {
     @MainActor
     final class Scratch {
         var preferences = Preferences(store: InMemoryPreferenceStore())
-        private let suite = TestDefaults("AppDelegateTests")
-        lazy var defaults = suite.defaults
+        let defaults: UserDefaults = MemoryDefaults()
         let addedSetups = MemorySetupStore()
         lazy var checkedPlayers = CheckedPlayers(store: addedSetups, locate: { _ in nil })
         let launchAtLogin = MockLaunchAtLoginController(isEnabled: false)
@@ -45,6 +44,8 @@ struct AppDelegateTests {
         var learningWindowsMade = 0
         let addWindow = FakeAddWebAppWindow()
         var maker = FakeWebAppMaker(.failure(.notAWebAddress))
+        /// The web apps macOS lists beside First once `makesWebApp`'s is made.
+        let webAppsFound = Locked<[any MusicPlayer]>([])
         var opened: [URL] = []
         /// The permissions as the stand-in system reports them, and what was asked of it.
         var trusted = true
@@ -56,6 +57,9 @@ struct AppDelegateTests {
         let automationGate = Gate(open: true)
         /// The clock a player's reopens are stamped by.
         let clock = ManualClock()
+        /// Where macOS's notices (apps opening, the Mac sleeping and waking)
+        /// come, as NSWorkspace's: the test posts them, and no real one comes.
+        let workspaceCenter = NotificationCenter()
         /// Whether one of AutoHush's windows is open, for an update's quiet
         /// moment: as if one were, so no test's update restarts the tests' own
         /// process, unless a test says none is.
@@ -95,16 +99,27 @@ struct AppDelegateTests {
             onFolderChange?()
         }
 
-        deinit {
-            suite.remove()
-        }
-
         /// A web app AutoHush must learn, installed and offered beside First.
         func offerWebApp(_ status: LearningStatus) -> MockLearningPlayer {
             let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: status)
             players = MusicPlayerCatalog(players: [first], found: { [webApp] })
             installed.insert(webApp.bundleID)
             return webApp
+        }
+
+        /// A web app Add a Web App makes from its address (`maker`), in
+        /// ~/Applications, installed and listed beside First once it's made
+        /// (`webAppsFound`). Returns it and where it's made.
+        func makesWebApp(named name: String, status: LearningStatus = .learning(hasPlayed: false))
+            -> (webApp: MockLearningPlayer, url: URL) {
+            let url = URL(fileURLWithPath: "/Users/test/Applications/\(name).app")
+            let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.NEW", name: name, status: status, installedURL: url)
+            let found = webAppsFound
+            players = MusicPlayerCatalog(players: [first], found: { found.value })
+            installed.insert(webApp.bundleID)
+            maker = FakeWebAppMaker(.success(MadeWebApp(bundleID: webApp.bundleID, name: name, url: url, alreadyThere: false)))
+            maker.onMake = { found.value = [webApp] }
+            return (webApp, url)
         }
     }
 
@@ -155,6 +170,7 @@ struct AppDelegateTests {
             installCheckDelay: .zero,
             permissionCenter: scratch.permissionCenter,
             windowWatchSleep: windowWatchSleep,
+            workspaceCenter: scratch.workspaceCenter,
             clock: { scratch.clock.now },
             hasOpenWindow: { scratch.windowOpen }
         )

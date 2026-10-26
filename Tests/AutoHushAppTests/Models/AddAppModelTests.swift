@@ -32,7 +32,7 @@ struct AddAppModelTests {
         model.search = "oth"
         #expect(model.shownApps.inNowPlaying.isEmpty && model.shownApps.others.map(\.name) == ["Other"])
         #expect(model.steps == [.choose, .allow, .play, .check, .use] && model.number(of: .play) == 3)
-        #expect(model.mark(of: .choose) == .current && model.mark(of: .allow) == .todo)
+        #expect(model.state(of: .choose) == .current && model.state(of: .allow) == .todo)
         #expect(!model.canChangeApp) // nothing chosen yet
 
         // In the list's order, those in Now Playing first: the only one there is picked, playing or not.
@@ -100,13 +100,13 @@ struct AddAppModelTests {
         let model = await model(world)
         model.continueWithApp()
         await TestWait.until { model.stage == .allowing && model.permissions.accessibility == false }
-        #expect(model.mark(of: .allow) == .current)
+        #expect(model.state(of: .allow) == .current)
         world.permissions.accessibility = true
         await TestWait.until { model.currentStep == .play }
-        #expect(model.mark(of: .allow) == .done)
+        #expect(model.state(of: .allow) == .done)
         world.playing = true
         await TestWait.until { model.stage == .ready }
-        #expect(model.mark(of: .check) == .current)
+        #expect(model.state(of: .check) == .current)
     }
 
     @Test("without Audio Recording it waits, then Continue goes on; without Accessibility it can't")
@@ -177,7 +177,7 @@ struct AddAppModelTests {
         await TestWait.until { model.currentStep == .play }
         world.now = world.now.addingTimeInterval(AddAppModel.playWait)
         await TestWait.until { model.stage == .playTimedOut }
-        #expect(model.mark(of: .play) == .failed)
+        #expect(model.state(of: .play) == .failed)
         let minutes = "\(Int(AddAppModel.playWait / 60)) minutes"
         #expect(AddAppText.playWaits.contains(minutes) && AddAppText.didNotPlay("Player").contains(minutes))
         world.playing = true
@@ -201,13 +201,13 @@ struct AddAppModelTests {
         model.continueToCheck()
         #expect(world.warnings == 1 && model.stage == .ready && model.canChangeApp)
         model.startCheck()
-        #expect(model.stage == .checking && model.mark(of: .check) == .busy && !model.canChangeApp)
+        #expect(model.stage == .checking && model.isBusy(.check) && !model.canChangeApp)
         await TestWait.until { world.panel == ["shown"] }
         #expect(model.progress.stage == .testing && world.taps == [true])
         world.run.finish(.finished(result))
         await TestWait.until { model.result != nil }
         #expect(world.panel == ["shown", "hidden"])
-        #expect(model.mark(of: .check) == .done && model.mark(of: .use) == .current && !model.nowPlayingHidden)
+        #expect(model.state(of: .check) == .done && model.state(of: .use) == .current && !model.nowPlayingHidden)
         model.use()
         #expect(world.used == [result] && world.closed == 1 && world.asksToReopen == [true])
     }
@@ -317,7 +317,7 @@ struct AddAppModelTests {
         await TestWait.until { world.panel == ["shown"] }
         model.stopCheck()
         await TestWait.until { model.stage == .stopped }
-        #expect(world.run.stopped && model.mark(of: .check) == .failed)
+        #expect(world.run.stopped && model.state(of: .check) == .failed)
         model.checkAgain()
         await TestWait.until { model.stage == .ready }
 
@@ -327,7 +327,7 @@ struct AddAppModelTests {
         await TestWait.until { none.panel == ["shown"] }
         none.run.finish(.finished(CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .notThere)], setup: nil)))
         await TestWait.until { empty.result != nil }
-        #expect(empty.mark(of: .use) == .failed)
+        #expect(empty.state(of: .use) == .failed)
         empty.use()
         #expect(none.used.isEmpty)
     }
@@ -474,11 +474,11 @@ struct AddAppModelTests {
         await TestWait.until { model.currentStep == .play }
         world.running = false
         await TestWait.until { model.stage == .playTimedOut }
-        #expect(model.appQuit && model.mark(of: .play) == .failed)
+        #expect(model.appQuit && model.state(of: .play) == .failed)
         world.opens = false
         model.openAppAgain()
         #expect(model.stage == .openingAgain && !model.appQuit)
-        #expect(model.mark(of: .play) == .busy && [.choose, .allow].allSatisfy { model.mark(of: $0) == .done })
+        #expect(model.isBusy(.play) && [.choose, .allow].allSatisfy { model.state(of: $0) == .done })
         await TestWait.until { model.appQuit }
         #expect(model.stage == .playTimedOut && world.opened.count == 1)
         world.opens = true
@@ -585,7 +585,7 @@ struct AddAppModelTests {
             setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                                ways: [.menu(menuName: "Playback")]))))
         await TestWait.until { model.result != nil }
-        #expect(model.offersCheckAgain && model.mark(of: .use) == .current && model.nowPlayingHidden)
+        #expect(model.offersCheckAgain && model.state(of: .use) == .current && model.nowPlayingHidden)
         model.openMenuBarSettings()
         #expect(world.menuBarSettingsOpened == 1)
         model.checkAgain()
@@ -611,7 +611,7 @@ struct AddAppModelTests {
         await TestWait.until { world.runs == 2 }
         world.run.finish(stopped ? .stopped : .failed(1))
         await TestWait.until { model.result != nil }
-        #expect(model.result == result && model.mark(of: .use) == .current)
+        #expect(model.result == result && model.state(of: .use) == .current)
 
         // Gone from the disk meanwhile: no Use for it, but why, with Change….
         world.run = FakeCheckRun()
@@ -694,7 +694,7 @@ struct AddAppModelTests {
     @Test("in AntiDot mode, neither muting nor a panel only its sound tells can be used")
     func antiDotLeavesNoWay() async {
         let (world, model) = await checkedInAntiDot()
-        #expect(!model.canMute && model.choosableWays.isEmpty && model.mark(of: .use) == .failed && model.offersCheckAgain)
+        #expect(!model.canMute && model.choosableWays.isEmpty && model.state(of: .use) == .failed && model.offersCheckAgain)
         model.use()
         #expect(world.used.isEmpty)
     }
@@ -703,7 +703,7 @@ struct AddAppModelTests {
     func antiDotTurnedOff() async {
         let (world, model) = await checkedInAntiDot()
         model.turnOffAntiDot()
-        #expect(!world.antiDot && model.choosableWays == [.panel] && model.mark(of: .use) != .failed)
+        #expect(!world.antiDot && model.choosableWays == [.panel] && model.state(of: .use) != .failed)
     }
 
     @Test("Audio Recording turned on in System Settings waits for AutoHush to reopen, which the window offers as soon as it's asked for")

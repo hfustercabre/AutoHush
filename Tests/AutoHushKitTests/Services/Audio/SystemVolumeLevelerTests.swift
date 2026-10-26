@@ -1,6 +1,5 @@
 import CoreAudio
 import Foundation
-import os
 import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
@@ -60,7 +59,7 @@ final class SystemVolumeLevelerTests {
     @Test("the glide back up stops once the user changes the volume during it, and leaves it as they set it")
     func glideYieldsToTheUser() async throws {
         let volume = MockSystemVolume([0: -10])
-        let steps = OSAllocatedUnfairLock(initialState: 0)
+        let steps = Locked(0)
         let leveler = leveler(volume, sleep: { _ in
             // The volume keys, after the glide's first step.
             if steps.withLock({ $0 += 1; return $0 }) == 1 { volume.decibels = [0: -30] }
@@ -75,7 +74,7 @@ final class SystemVolumeLevelerTests {
     @Test("a glide whose output is unplugged midway stops and forgets it; the next resume lowers the output there then")
     func glideOutputUnplugged() async throws {
         let volume = MockSystemVolume([0: -10])
-        let steps = OSAllocatedUnfairLock(initialState: 0)
+        let steps = Locked(0)
         let leveler = leveler(volume, sleep: { _ in
             if steps.withLock({ $0 += 1; return $0 }) == 1 { volume.isPlugged = false } // headphones out
         })
@@ -178,10 +177,10 @@ final class SystemVolumeLevelerTests {
         let volume = MockSystemVolume([0: -10])
         // Each step of the glide waits here, until the test lets it go on.
         let stepped = DispatchSemaphore(value: 0), goOn = DispatchSemaphore(value: 0)
-        let timedOut = OSAllocatedUnfairLock(initialState: false)
+        let timedOut = Locked(false)
         let leveler = leveler(volume, sleep: { _ in
             stepped.signal()
-            if goOn.wait(timeout: TestWait.dispatchDeadline) == .timedOut { timedOut.withLock { $0 = true } }
+            if goOn.wait(timeout: TestWait.dispatchDeadline) == .timedOut { timedOut.value = true }
         })
         let token = try #require(leveler.lower(by: -8))
         leveler.restore(over: 0.2, lowered: token) // 4 steps: -16, -14, -12, -10
@@ -202,7 +201,7 @@ final class SystemVolumeLevelerTests {
         leveler.restoreNow()
         #expect(volume.decibels == [0: -10] && !isKept)
         goOn.signal()
-        #expect(!timedOut.withLock { $0 })
+        #expect(!timedOut.value)
     }
 
     @Test("a put-back at once during the glide back up leaves a volume the user changed since its last step as they set it")

@@ -9,7 +9,8 @@ import AutoHushTestSupport
 /// ad hoc, standing in for a release. Its designated requirement plays the
 /// running app's. One test at a time: the slow ones open the same disk image
 /// (`Fixture.shared`), which macOS won't attach again while it's attached
-/// (hdiutil: “Resource busy”, 2026-10-19).
+/// (hdiutil: “Resource busy”, 2026-10-19). Another run's are its own
+/// (`Fixture.runFolder`).
 @Suite("UpdateInstaller", .serialized)
 struct UpdateInstallerTests {
     /// A folder of its own for each test, deleted afterwards.
@@ -541,21 +542,36 @@ private enum StandIn {
 /// A release's disk image in miniature, for the `.slow` tests: AutoHush.app
 /// (`/usr/bin/true` with an Info.plist), signed ad hoc as
 /// com.autohush.AutoHush, needing macOS 14.4 as releases do, on a compressed
-/// disk image. Each kind is kept between test runs, by what it's made of
-/// (B7, the full check, 2026-10-19: hdiutil takes seconds, 16 s under the
-/// parallel suite). Should codesign or hdiutil fail, the tests that need one
-/// fail; the others run.
+/// disk image. Each kind is made once per run, in the run's own folder and
+/// with a volume named for it (hdiutil takes seconds, 16 s under the
+/// parallel suite): two runs at once, as worktrees built in one VM, never
+/// open the same image, which macOS refuses while the other has it open.
+/// Should codesign or hdiutil fail, the tests that need one fail; the
+/// others run.
 private struct Fixture: Sendable {
     static let version = "1.2.0"
     /// A release's, which most tests share.
     static let shared = Result { try Fixture.kept(.needing(macOS: "14.4")) }
 
-    /// One of `imaged`, made in a folder of its own, then moved where it's
-    /// kept: another run making it at the same time keeps either.
+    /// This run's name for its images' volumes and their folder.
+    static let runID = String(UUID().uuidString.prefix(8))
+
+    /// This run's images, removed as it ends.
+    static let runFolder: URL = {
+        atexit { try? FileManager.default.removeItem(at: Fixture.folder(ofRun: Fixture.runID)) }
+        return folder(ofRun: runID)
+    }()
+
+    private static func folder(ofRun runID: String) -> URL {
+        FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(runID)")
+    }
+
+    /// One of `imaged`, made once in this run: in a folder of its own, then
+    /// moved where it's kept, so a test can't take one half made.
     static func kept(_ imaged: ImagedApp) throws -> Fixture {
         let folder = keptFolder(for: imaged)
         if let kept = try? Fixture(madeIn: folder) { return kept }
-        let made = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")
+        let made = runFolder.appending(path: UUID().uuidString)
         _ = try Fixture(imaged, in: made)
         do {
             try FileManager.default.moveItem(at: made, to: folder)
@@ -565,12 +581,10 @@ private struct Fixture: Sendable {
         return try Fixture(madeIn: folder)
     }
 
-    /// Where one of `imaged` is kept: named by it, the app's version and its
-    /// executable (bump "v1" when `make` makes it otherwise).
+    /// Where one of `imaged` is kept in this run: named by it.
     private static func keptFolder(for imaged: ImagedApp) -> URL {
-        let inputs = Data("v1 \(version) \(imaged) ".utf8) + ((try? Data(contentsOf: URL(filePath: "/usr/bin/true"))) ?? Data())
-        let key = SHA256.hash(data: inputs).prefix(8).map { String(format: "%02x", $0) }.joined()
-        return FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-kept-\(key)")
+        let key = SHA256.hash(data: Data("\(imaged)".utf8)).prefix(8).map { String(format: "%02x", $0) }.joined()
+        return runFolder.appending(path: "kept-\(key)")
     }
 
     let diskImage: URL
@@ -578,8 +592,7 @@ private struct Fixture: Sendable {
     /// The app's designated requirement (its code hash, as it's signed ad hoc).
     let requirement: String
 
-    init(_ imaged: ImagedApp = .needing(macOS: "14.4"),
-         in folder: URL = FileManager.default.temporaryDirectory.appending(path: "UpdateInstallerFixture-\(UUID().uuidString)")) throws {
+    init(_ imaged: ImagedApp = .needing(macOS: "14.4"), in folder: URL = runFolder.appending(path: UUID().uuidString)) throws {
         try Self.make(imaged, in: folder)
         try self.init(madeIn: folder)
     }
@@ -626,10 +639,10 @@ private struct Fixture: Sendable {
         let contents = folder.appending(path: "Image").path
         if case .link = imaged {
             // No signature to keep intact: a hybrid image, made at once, not in seconds.
-            try run("/usr/bin/hdiutil", ["makehybrid", "-quiet", "-hfs", "-o", diskImage.path, contents])
+            try run("/usr/bin/hdiutil", ["makehybrid", "-quiet", "-hfs", "-hfs-volume-name", "AutoHush \(runID)", "-o", diskImage.path, contents])
         } else {
             try run("/usr/bin/hdiutil", ["create", "-quiet", "-fs", "HFS+", "-format", "UDZO",
-                                         "-volname", "AutoHush", "-srcfolder", contents, diskImage.path])
+                                         "-volname", "AutoHush \(runID)", "-srcfolder", contents, diskImage.path])
         }
     }
 

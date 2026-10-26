@@ -181,17 +181,19 @@ only to the Now Playing app, which AutoHush can't choose.
 
 ## Whether it plays
 
-A pause or a play is judged by the surest sign the app showed before it: its
+A pause or a play is judged by the surest sign the app showed before it, in
+the order AutoHush reads an added app's (`CheckedPlayer`), so what the
+check approves is what AutoHush will do: its
 AppleScript state (read where AutoHush reads it: its `player state` only
 with the three standard values, else its `playing` flag, else its
 documents'; one that has said it doesn't play for a second while its
 output is open and it's heard is wrong for that app, as Apple TV's is while
 it plays a stream, so it isn't read again and AutoHush reads the app's state
-from its other signs; it's listened to for that at most every 2 seconds), what it reports to Now Playing (from macOS's log,
-administrators only), its page's word (only while current: a WebKit page's
-anywhere, a Chromium or Flutter page's only on screen), its level, its
-keep-awake assertion, its menu's state; else its menu's word changing or its
-sound. A Now Playing row that doesn't follow its app is judged by the
+from its other signs; it's listened to for that at most every 2 seconds),
+its page's word (only while current: a WebKit page's anywhere, a Chromium
+or Flutter page's only on screen), its menu's state, what it reports to Now
+Playing (from macOS's log, administrators only), its level, its keep-awake
+assertion; else its menu's word changing or its sound. A Now Playing row that doesn't follow its app is judged by the
 app's level alone. A Chromium browser's web app has no level (its sound is
 the browser's, all its pages together); its keep-awake sign counts the
 browser's "Playing audio" assertions instead (below). Its state

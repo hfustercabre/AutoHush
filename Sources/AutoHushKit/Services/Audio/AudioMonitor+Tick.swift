@@ -140,17 +140,19 @@ extension AudioMonitor {
         guard let levelMeter else { return }
         // The player is tapped only to prove the permission when TCC cannot be read.
         let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
+        // The quiet ones only while they're listened to again (`quietListenInterval`).
         var metered = shouldMeterLevels ? candidates.filter {
-            (sourceOfProcess[$0.objectID] != nil && !quietProcesses.contains($0.objectID))
+            (sourceOfProcess[$0.objectID] != nil && (!quietProcesses.contains($0.objectID) || quietListenUntil != nil))
                 || (verifiesWithPlayer && playerProcesses.contains($0.objectID))
         } : []
         let tapsPlayer = metered.contains { playerProcesses.contains($0.objectID) }
         playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
         // The music too while another app is measured: whether it's heard
         // (`playerHearing`) and, leveling the music, its loudness. Not for
-        // the music alone, so the recording indicator isn't on for it.
+        // the music alone, so the recording indicator isn't on for it, nor
+        // for a quiet app's listen alone: one heard there is measured on.
         if detectionMode == .audioLevel, !tapsPlayer,
-           metered.contains(where: { sourceOfProcess[$0.objectID] != nil }) {
+           metered.contains(where: { sourceOfProcess[$0.objectID] != nil && !quietProcesses.contains($0.objectID) }) {
             metered += candidates.filter { playerProcesses.contains($0.objectID) }
         }
         // May block while macOS shows the System Audio Recording prompt.
@@ -179,9 +181,11 @@ extension AudioMonitor {
             guard let source = sourceOfProcess[process.objectID] else { continue }
             let announcing = judgement?.verdicts[source.id] == true
             if quietProcesses.contains(process.objectID) {
-                // Released for its silence: silent until it says it plays.
-                if announcing { woken.insert(process.objectID) }
-                continue
+                // Released for its silence: silent until it says it plays,
+                // or is heard as it's listened to again (`quietListenInterval`).
+                let heard = peaks[process.objectID].map { $0 >= configuration.audibleThreshold } ?? false
+                if announcing || heard { woken.insert(process.objectID) }
+                guard heard else { continue }
             }
             let peak = detectionMode == .audioLevel ? peaks[process.objectID] : nil
             // One that says it plays stays measured through its silence (a
@@ -195,12 +199,13 @@ extension AudioMonitor {
             }
         }
 
-        if !released.isEmpty || !woken.isEmpty {
+        let tapsChanged = !released.isEmpty || !woken.isEmpty
+        if tapsChanged {
             quietProcesses.formUnion(released)
             quietProcesses.subtract(woken)
             logger.debug("[monitor] taps released for silence: \(released.count, privacy: .public), made again: \(woken.count, privacy: .public)")
-            updateMeteredProcesses(at: now)
         }
+        if updateQuietListen(at: now) || tapsChanged { updateMeteredProcesses(at: now) }
 
         // Before source events, so a pause decision in this tick sees it.
         updateLocalPlayback()
@@ -287,6 +292,31 @@ extension AudioMonitor {
             return false
         }
         silentSince[objectID] = nil
+        return true
+    }
+
+    /// Starts and ends the listens to the processes released for their
+    /// silence (`quietListenInterval`): only while the player plays and
+    /// levels are measured, so never in AntiDot mode; a listen ends early
+    /// once that's over. `true` when the taps change (one starts or ends).
+    private func updateQuietListen(at now: Date) -> Bool {
+        guard !quietProcesses.isEmpty else {
+            quietListenedAt = nil
+            quietListenUntil = nil
+            return false
+        }
+        let since = quietListenedAt ?? now // released just now
+        quietListenedAt = since
+        let listens = playerPlayingSince != nil && shouldMeterLevels && detectionMode == .audioLevel
+        if let quietListenUntil {
+            guard now >= quietListenUntil || !listens else { return false }
+            self.quietListenUntil = nil
+            quietListenedAt = now
+            return true
+        }
+        guard listens, now.timeIntervalSince(since) >= Self.quietListenInterval else { return false }
+        quietListenUntil = now.addingTimeInterval(Self.quietListenDuration)
+        logger.debug("[monitor] listening again to taps released for silence: \(quietProcesses.count, privacy: .public)")
         return true
     }
 

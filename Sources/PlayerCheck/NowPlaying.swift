@@ -139,9 +139,10 @@ let nowPlayingReports = NowPlayingReports(idleLimit: nil)
 @MainActor var reportsFollowed = false
 
 /// Whether the app plays as it reports to Now Playing, the surest sign
-/// after its AppleScript state: it holds wherever its window is (an
-/// Electron app's page on another desktop keeps the word it had, Play
-/// while it played). Read back to when the app opened, an hour at
+/// after its AppleScript state, its page's word and its menu's item
+/// (`SignKind`): it holds wherever its window is (an Electron app's page on
+/// another desktop keeps the word it had, Play while it played, so its word
+/// isn't current there). Read back to when the app opened, an hour at
 /// most. Nil for an app that can't report to Now Playing, when the log
 /// can't be read (not an administrator), or while it reported nothing since
 /// then: its latest report as the log says it ("Playing", "Paused"…), from

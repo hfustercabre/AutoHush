@@ -84,9 +84,8 @@ struct AppIconTests {
     func browserAppBadge() throws {
         // A Chromium browser's web app, added with Add an App (its browser
         // here Safari, which every Mac has).
-        let folder = FileManager.default.temporaryDirectory.appending(path: "AppIconTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
-        let browserApp = try TestAppBundle.make(in: folder, name: "SoundCloud", info: [
+        let folder = TemporaryFolder("AppIconTests", create: false)
+        let browserApp = try TestAppBundle.make(in: folder.url, name: "SoundCloud", info: [
             "CFBundleIdentifier": "com.example.browser.app.soundcloud", "CrAppModeShortcutURL": "https://soundcloud.com",
             "CrBundleIdentifier": "com.apple.Safari",
         ])
@@ -95,6 +94,7 @@ struct AppIconTests {
         #expect(color(badged, at: 20, 20) == color(own, at: 20, 20))
         #expect(color(badged, at: 78, 78) != color(own, at: 78, 78)) // its browser's over it
         #expect(AppIcon.appImage(bundlePath: calculator, size: 100) === AppIcon.image(bundlePath: calculator, size: 100))
+        withExtendedLifetime(folder) {}
     }
 
     @Test("icons are dark when the style says so, or follows a dark appearance")

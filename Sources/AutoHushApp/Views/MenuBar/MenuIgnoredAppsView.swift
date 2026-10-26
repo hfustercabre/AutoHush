@@ -20,7 +20,7 @@ struct MenuIgnoredAppsView: View {
             MenuPartTitle(Text(verbatim: Self.title))
             // None yet: "None" and what ignoring does (N1, the user's pick,
             // 2026-10-18), and its side window offers Ignore Another App….
-            MenuSideRow(title: apps.isEmpty ? Self.noneTitle : Self.names(of: apps.map(\.name)),
+            MenuSideRow(title: apps.isEmpty ? NoneText.title : Self.names(of: apps.map(\.name)),
                         subtitle: Self.subtitle(count: apps.count),
                         leadingWidth: MenuSpacing.row.picture + (apps.count > 1 ? 10 : 0), isOpen: model.showsIgnoredApps,
                         action: { model.perform(.openSide(.ignoredApps)) },
@@ -47,11 +47,6 @@ struct MenuIgnoredAppsView: View {
             String(localized: "They don’t pause your player.",
                    comment: "The menu, Ignored Apps, under the names of the ignored apps (two or more)")
         }
-    }
-
-    /// Its row while no app is ignored; Diagnostics' while none is.
-    nonisolated static var noneTitle: String {
-        String(localized: "None", comment: "Diagnostics: no apps, or no ignored apps; the menu's Ignored Apps while no app is ignored")
     }
 
     /// The part's title, over its row and atop its side window.

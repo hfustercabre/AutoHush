@@ -1,7 +1,6 @@
 import AutoHushKit
 import CoreGraphics
 import Foundation
-import os
 import Testing
 @testable import PlayerCheck
 import CheckedPlayers
@@ -9,23 +8,14 @@ import PlayerCheckKit
 import WebAppPlayers
 import AutoHushTestSupport
 
-/// Where the tool's log and caches go while it's tested, removed at the end.
-private let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckTests-\(UUID().uuidString)").path
-
-/// The tool as the tests run it: a read-only check of Calculator, with its
-/// own folders. Set once, before anything reads its command line.
-private let readOnlyRun: Void = {
-    argumentsForTests = ["/System/Applications/Calculator.app", "--read-only", "--logs", folder, "--caches", folder]
-    atexit { _ = try? FileManager.default.removeItem(atPath: folder) }
-}()
+/// Where the tool's log and caches go while it's tested (`ReadOnlyRun`).
+private let folder = testRunFolder
 
 /// One test at a time: the tool's command line and log are its process's,
-/// set once for all of them.
-@Suite("playercheck", .serialized)
+/// set once for all of them (`ReadOnlyRun`).
+@Suite("playercheck", .serialized, .readOnlyRun)
 @MainActor
 struct PlayerCheckTests {
-    init() { _ = readOnlyRun }
-
     @Test("its command line: the app, wherever it comes, its options and their values; a read-only run tests nothing and blocks nothing")
     func commandLine() {
         #expect(target == "/System/Applications/Calculator.app")
@@ -90,10 +80,10 @@ struct PlayerCheckTests {
     @Test("the run's log: named by the app and the run, every line with the home folder as ~, its oldest beyond 50 to the Trash, no other")
     func logFile() throws {
         // Noted instead of moved to the Trash: the test's folder goes at the end, the Trash wouldn't.
-        let discarded = OSAllocatedUnfairLock(initialState: [String]())
+        let discarded = Locked<[String]>([])
         let discard = runLog.discard
         defer { runLog.discard = discard }
-        runLog.discard = { url in discarded.withLock { $0.append(url.lastPathComponent) } }
+        runLog.discard = { url in discarded.append(url.lastPathComponent) }
         let logs = URL(filePath: folder)
         try FileManager.default.createDirectory(at: logs, withIntermediateDirectories: true)
         for index in 0..<51 {
@@ -104,7 +94,7 @@ struct PlayerCheckTests {
         for name in others { #expect(FileManager.default.createFile(atPath: logs.appending(path: name).path, contents: nil)) }
         startRun()
         say("music in \(NSHomeDirectory())/Music")
-        #expect(discarded.withLock { $0 } == ["2000-01-01 00.00.00.000 Old check.log", "2000-01-01 00.00.01.000 Old check.log"])
+        #expect(discarded.value == ["2000-01-01 00.00.00.000 Old check.log", "2000-01-01 00.00.01.000 Old check.log"])
         let all = try FileManager.default.contentsOfDirectory(atPath: folder)
         #expect(others.allSatisfy(all.contains))
         let names = all.filter(RunLogName.isRunLog).sorted()

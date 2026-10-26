@@ -176,10 +176,9 @@ struct MenuPlayerTests {
 
     @Test("the words are read once per copy and version of the app: the copy running, else the one Launch Services knows")
     func wordsOfApp() throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayPauseWords-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let folder = TemporaryFolder("MenuPlayerTests", create: false)
         func app(_ name: String, version: String) throws -> URL {
-            try TestAppBundle.make(in: folder, name: name, info: ["CFBundleShortVersionString": version, "CFBundleIdentifier": "com.example.\(name)"])
+            try TestAppBundle.make(in: folder.url, name: name, info: ["CFBundleShortVersionString": version, "CFBundleIdentifier": "com.example.\(name)"])
         }
         var reads: [String] = []
         func read(_ url: URL) -> PlayPauseWords? {
@@ -205,5 +204,6 @@ struct MenuPlayerTests {
         #expect(PlayPauseWords.installed(bundleID: "com.apple.TextEdit", read: read)?.play == ["TextEdit.app"])
         #expect(PlayPauseWords.installed(bundleID: "com.example.none-\(UUID().uuidString)", read: read) == nil)
         #expect(reads.count == 5)
+        withExtendedLifetime(folder) {}
     }
 }

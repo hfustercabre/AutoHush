@@ -20,7 +20,7 @@ extension AppDelegateTests {
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
         #expect(sut.isShowingPlayerChooser)
 
-        sut.chooseMusicPlayer(webApp.bundleID)
+        sut.choosePlayer(webApp.bundleID)
         #expect(sut.settingsModel.welcomeAsksPermissions)
         #expect(!scratch.learningWindow.isOpen) // waits for the welcome window
 
@@ -61,7 +61,7 @@ extension AppDelegateTests {
         await scratch.automationGate.close()
         let slow = Task { await sut.refreshPermissions() }
         await TestWait.until { await scratch.automationGate.waiting == 1 }
-        sut.chooseMusicPlayer(Players.second)
+        sut.choosePlayer(Players.second)
         await sut.refreshPermissions()
         #expect(sut.settingsModel.permissions.control == .automation(player: "Second"))
         await scratch.automationGate.open()
@@ -243,7 +243,7 @@ extension AppDelegateTests {
     @Test("once a player is chosen in the welcome window, the window watch no longer follows the players: the folder watch does")
     func watchLeavesPlayersOnceChosen() async {
         let (scratch, clock, sut) = await welcomeWatched(installed: [Players.first, Players.second])
-        sut.chooseMusicPlayer(Players.second) // it goes on to the permissions
+        sut.choosePlayer(Players.second) // it goes on to the permissions
         await TestWait.until { clock.sleeping == 1 }
         scratch.installed.remove(Players.first)
         clock.step()
@@ -255,7 +255,7 @@ extension AppDelegateTests {
     @Test("the welcome window closed while it asked for the permissions is done")
     func welcomeClosedWhileAsking() async {
         let (scratch, clock, sut) = await welcomeWatched(installed: [Players.first, Players.second])
-        sut.chooseMusicPlayer(Players.second) // it goes on to the permissions
+        sut.choosePlayer(Players.second) // it goes on to the permissions
         #expect(sut.settingsModel.welcomeAsksPermissions)
         await TestWait.until { clock.sleeping == 1 }
         scratch.chooser.close() // closed instead of Done: the same
@@ -267,10 +267,10 @@ extension AppDelegateTests {
     @Test("in the welcome window, Back then Continue on the same player goes on to what it needs again")
     func welcomeBackThenSamePlayer() async {
         let (_, _, sut) = await welcomeWatched(installed: [Players.first, Players.second])
-        sut.chooseMusicPlayer(Players.second)
+        sut.choosePlayer(Players.second)
         sut.settingsModel.showWelcomePlayers() // Back
         #expect(!sut.settingsModel.welcomeAsksPermissions)
-        sut.chooseMusicPlayer(Players.second) // Continue, the same one picked
+        sut.choosePlayer(Players.second) // Continue, the same one picked
         #expect(sut.settingsModel.welcomeAsksPermissions && sut.status.chosenPlayerID == Players.second)
     }
 
@@ -283,7 +283,7 @@ extension AppDelegateTests {
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil, windowWatchSleep: clock.sleep)
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
         await TestWait.until { clock.sleeping == 1 }
-        sut.chooseMusicPlayer(webApp.bundleID)
+        sut.choosePlayer(webApp.bundleID)
         #expect(sut.settingsModel.welcomeAsksPermissions && !scratch.learningWindow.isOpen)
         sut.settingsModel.showWelcomePlayers() // Back
         scratch.chooser.close()
@@ -320,7 +320,7 @@ extension AppDelegateTests {
         let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
         let clock = ManualSleep()
         let (sut, _) = makeSUT(scratch, windowWatchSleep: clock.sleep)
-        sut.chooseMusicPlayer(webApp.bundleID) // opens the learning window
+        sut.choosePlayer(webApp.bundleID) // opens the learning window
         #expect(scratch.learningWindow.isOpen)
         await TestWait.until { clock.sleeping == 1 }
 
@@ -342,13 +342,16 @@ extension AppDelegateTests {
             shown.calls.append(alert.messageText)
             return .alertFirstButtonReturn
         }
-        var calls: [String] = []
-        sut.reopen(openAfterExit: { calls.append("open \($0.lastPathComponent)") }, terminate: { calls.append("quit") })
-        #expect(calls == ["open \(Bundle.main.bundleURL.lastPathComponent)", "quit"])
+        let calls = CallLog()
+        sut.openAfterExit = { calls.calls.append("open \($0.lastPathComponent)") }
+        sut.terminateToReopen = { calls.calls.append("quit") }
+        sut.reopenAutoHush()
+        #expect(calls.calls == ["open \(Bundle.main.bundleURL.lastPathComponent)", "quit"])
 
-        calls = []
-        sut.reopen(openAfterExit: { _ in throw CocoaError(.fileNoSuchFile) }, terminate: { calls.append("quit") })
-        #expect(calls.isEmpty)
+        calls.calls = []
+        sut.openAfterExit = { _ in throw CocoaError(.fileNoSuchFile) }
+        sut.reopenAutoHush()
+        #expect(calls.calls.isEmpty)
         await TestWait.until { shown.calls == ["Couldn’t Reopen AutoHush"] }
     }
 }

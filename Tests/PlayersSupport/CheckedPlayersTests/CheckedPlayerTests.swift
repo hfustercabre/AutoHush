@@ -427,9 +427,9 @@ struct CheckedPlayerTests {
 
     @Test("every setup is a player, muted instead of paused when that's its way, one not installed with no place; each kept while its setup stays the same")
     func players() throws {
-        let installed = FileManager.default.temporaryDirectory.appendingPathComponent("Checked-\(UUID().uuidString).app")
+        let folder = TemporaryFolder("CheckedPlayerTests")
+        let installed = folder.appending(path: "Checked.app")
         try FileManager.default.createDirectory(at: installed, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: installed) }
         let store = MemorySetupStore()
         store.save(PlayerSetup(bundleID: "com.example.installed", name: "Installed", appURL: installed, ways: [.menu(menuName: "Play")]))
         store.save(PlayerSetup(bundleID: "com.example.gone", name: "Gone", appURL: URL(fileURLWithPath: "/nonexistent/Gone.app"),
@@ -444,19 +444,21 @@ struct CheckedPlayerTests {
         #expect(first.first { $0.bundleID == "com.example.gone" }.map { $0.installedURL == nil } == true)
         let again = players.current()
         #expect(again.first { $0.bundleID == "com.example.installed" } === first.first { $0.bundleID == "com.example.installed" })
+        withExtendedLifetime(folder) {}
     }
 
     @Test("an app moved since its check is found where it is now, and kept so")
     func moved() throws {
-        let now = FileManager.default.temporaryDirectory.appendingPathComponent("Moved-\(UUID().uuidString).app")
+        let folder = TemporaryFolder("CheckedPlayerTests")
+        let now = folder.appending(path: "Moved.app")
         try FileManager.default.createDirectory(at: now, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: now) }
         let store = MemorySetupStore()
         store.save(PlayerSetup(bundleID: "com.example.moved", name: "Moved", appURL: URL(fileURLWithPath: "/nonexistent/Moved.app"),
                                ways: [.menu(menuName: "Play")]))
         let players = CheckedPlayers(store: store, locate: { $0 == "com.example.moved" ? now : nil })
         #expect(players.current().first?.setup.appURL == now)
         #expect(store.setups().first?.appURL == now)
+        withExtendedLifetime(folder) {}
     }
 }
 

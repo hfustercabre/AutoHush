@@ -45,7 +45,7 @@ extension AppDelegate {
         case .openPlayer:
             await openingApp()
         case .reopen:
-            reopen()
+            reopenAutoHush()
         case .openSettings, .askMacOS:
             await permissionCenter.perform(request, app: app)
             // macOS applies Audio Recording switched on there only from the next launch.

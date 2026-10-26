@@ -133,7 +133,7 @@ struct StatusCardView: View {
         if status.offersReopen {
             CardChip(title: Text(verbatim: PermissionText.reopen), symbol: "arrow.clockwise") { model.perform(.reopenAutoHush) }
         } else {
-            CardChip(title: Text(verbatim: AddAppText.allowButton), symbol: "hand.raised") {
+            CardChip(title: Text(verbatim: ButtonText.allow), symbol: "hand.raised") {
                 model.perform(.resolveWarning(permission))
             }
             .accessibilityLabel(Text(verbatim: permission.grantTitle))

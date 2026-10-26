@@ -509,6 +509,77 @@ struct AudioMonitorTests {
         #expect(h.meter.lastMetered == [2])
     }
 
+    /// The player, playing (`setPlayerPlaying`).
+    private static let player = process(1, TestPlayer.bundleID)
+
+    /// A started monitor with the permission granted and the player
+    /// playing, whose radio was measured silent for 10 s beside it: its
+    /// tap released, and the player's with it.
+    private static func releasedRadioWithPlayerHarness() -> Harness {
+        let h = Harness(permission: MockAudioCapturePermission(.granted))
+        h.monitor.setPlayerPlaying(true)
+        h.start()
+        h.step([player, radio], peaks: [2: 0])
+        #expect(h.meter.lastMetered == [1, 2])
+        h.step(after: 10.1)
+        #expect(h.meter.lastMetered == [])
+        return h
+    }
+
+    @Test("while the player plays, a source released for its silence is listened to for half a second every 30 s, without the player; still silent, it stays released")
+    func quietSourceListenedToAgain() async {
+        let h = Self.releasedRadioWithPlayerHarness()
+        h.step(after: 29.5)
+        #expect(h.meter.lastMetered == [])
+        h.step(after: 0.75) // 30 s since its release
+        #expect(h.meter.lastMetered == [2])
+        h.step(after: 0.25)
+        #expect(h.meter.lastMetered == [2])
+        h.step(after: 0.3) // the half second is over
+        #expect(h.meter.lastMetered == [])
+        h.step(after: 29.5) // 30 s from that listen, not from the release
+        #expect(h.meter.lastMetered == [])
+        h.step(after: 0.75)
+        #expect(h.meter.lastMetered == [2])
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events.isEmpty)
+    }
+
+    @Test("a source heard as it's listened to again is tapped again, the player beside it, and counts as playing")
+    func quietSourceHeardAgain() async {
+        let h = Self.releasedRadioWithPlayerHarness()
+        h.step(after: 30.25)
+        #expect(h.meter.lastMetered == [2])
+        h.step(after: 0.25, peaks: [2: 0.4]) // a game's sound again
+        #expect(h.meter.lastMetered == [1, 2])
+        h.step(after: 0.5)
+        h.step(after: 0.6) // past the listen, still measured
+        #expect(h.meter.lastMetered == [1, 2])
+        await h.recorder.waitForEvents(count: 1)
+        #expect(await h.recorder.events == [.init(bundleID: "com.example.radio", isPlaying: true)])
+    }
+
+    @Test("no listen while the player doesn't play, nor in AntiDot mode; one under way ends once the player stops")
+    func quietSourceListenedToOnlyWhilePlayerPlays() {
+        let h = Self.releasedRadioWithPlayerHarness()
+        h.monitor.setPlayerPlaying(false)
+        h.step(after: 40)
+        #expect(h.meter.lastMetered == [])
+
+        h.monitor.setPlayerPlaying(true) // over 30 s since its release: listened to at once
+        h.step(after: 0.25)
+        #expect(h.meter.lastMetered == [2])
+        h.monitor.setPlayerPlaying(false)
+        h.step(after: 0.25)
+        #expect(h.meter.lastMetered == [])
+
+        h.monitor.setPlayerPlaying(true)
+        h.monitor.setDetectionMethod(.playbackSignals)
+        h.provider.flush()
+        h.step(after: 40)
+        #expect(h.meter.lastMetered == [])
+    }
+
     // MARK: - Capturing only when needed (recording indicator)
 
     @Test("nothing is captured while audio levels are not needed")
@@ -517,7 +588,7 @@ struct AudioMonitorTests {
             configuration: Self.config(startConfirmation: 0),
             permission: MockAudioCapturePermission(.granted),
             levelsNeeded: false,
-            releaseDelay: 1 // long enough to see the taps still there
+            releaseDelay: 60 // the taps still there meanwhile; the release is run by hand
         )
         h.start()
         h.step([Self.process(1, "org.videolan.vlc")], peaks: [1: 0])
@@ -533,7 +604,8 @@ struct AudioMonitorTests {
         h.monitor.setAudioLevelsNeeded(false)
         h.provider.flush()
         #expect(h.meter.lastMetered == [1]) // released only after a short delay
-        await h.meter.waitUntilMetered([])
+        // The delay's end, without waiting for it: its release run now.
+        h.monitor.queue.sync { h.monitor.audioLevelsRelease?.perform() }
         #expect(h.meter.lastMetered.isEmpty)
     }
 

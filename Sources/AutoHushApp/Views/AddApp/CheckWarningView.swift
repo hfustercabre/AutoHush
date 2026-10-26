@@ -20,55 +20,48 @@ struct CheckWarningView: View {
     static let width = AddAppView.width
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                WindowHeader(icon: AppIcon.appImage(bundlePath: app.url.path, size: 56),
-                             description: Text(verbatim: AddAppText.warningDescription(app.name)))
-                SectionHeading(Text(verbatim: AddAppText.statesHeading(app.name))).padding(.top, 8)
-                Card {
-                    VStack(spacing: 10) {
-                        // Four columns: the last row's tiles under the first row's.
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6, alignment: .top), count: 4), spacing: 10) {
-                            ForEach(CheckResult.WindowState.allCases, id: \.self, content: tile)
-                        }
-                        Text(verbatim: AddAppText.statesNote(app.name)).captionStyle()
+        WindowPage(icon: AppIcon.appImage(bundlePath: app.url.path, size: 56),
+                   description: Text(verbatim: AddAppText.warningDescription(app.name)), width: Self.width) {
+            SectionHeading(Text(verbatim: AddAppText.statesHeading(app.name))).padding(.top, 8)
+            Card {
+                VStack(spacing: 10) {
+                    // Four columns: the last row's tiles under the first row's.
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6, alignment: .top), count: 4), spacing: 10) {
+                        ForEach(CheckResult.WindowState.allCases, id: \.self, content: tile)
                     }
+                    Text(verbatim: AddAppText.statesNote(app.name)).captionStyle()
                 }
-                SectionHeading(Text(verbatim: AddAppText.movingHeading)).padding(.top, 8)
-                Card {
-                    HStack(alignment: .top, spacing: 12) {
-                        DimmedScreenPicture()
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(verbatim: AddAppText.blockedTitle).fontWeight(.semibold)
-                            Text(verbatim: AddAppText.blockedDetail).captionStyle()
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
-                }
-                HStack(spacing: 14) {
-                    Label(AddAppText.aboutThreeMinutes, systemImage: "clock")
-                    switch muting {
-                    case .app: Label(AddAppText.mutedMeanwhile(app.name), systemImage: "speaker.slash")
-                    case .mac: Label(AddAppText.macMutedMeanwhile, systemImage: "speaker.slash")
-                    case .none: Label(AddAppText.heardMeanwhile(app.name), systemImage: "speaker.wave.2")
-                    }
-                    Label(AddAppText.allPutBack, systemImage: "arrow.uturn.backward")
-                }
-                .font(.appCaption)
-                .foregroundStyle(.appSecondary)
-                .padding(.top, 2)
             }
-            .windowMargins()
-            BottomBar {
-                Button(action: cancel) { Text(verbatim: AddAppText.cancel) }
-                    .buttonStyle(.chip)
-                    .keyboardShortcut(.cancelAction)
-                Spacer()
-                MainButton(AddAppText.startCheck, action: start)
+            SectionHeading(Text(verbatim: AddAppText.movingHeading)).padding(.top, 8)
+            Card {
+                HStack(alignment: .top, spacing: 12) {
+                    DimmedScreenPicture()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(verbatim: AddAppText.blockedTitle).fontWeight(.semibold)
+                        Text(verbatim: AddAppText.blockedDetail).captionStyle()
+                    }
+                }
+                .accessibilityElement(children: .combine)
             }
+            HStack(spacing: 14) {
+                Label(AddAppText.aboutThreeMinutes, systemImage: "clock")
+                switch muting {
+                case .app: Label(AddAppText.mutedMeanwhile(app.name), systemImage: "speaker.slash")
+                case .mac: Label(AddAppText.macMutedMeanwhile, systemImage: "speaker.slash")
+                case .none: Label(AddAppText.heardMeanwhile(app.name), systemImage: "speaker.wave.2")
+                }
+                Label(AddAppText.allPutBack, systemImage: "arrow.uturn.backward")
+            }
+            .font(.appCaption)
+            .foregroundStyle(.appSecondary)
+            .padding(.top, 2)
+        } bar: {
+            Button(action: cancel) { Text(verbatim: ButtonText.cancel) }
+                .buttonStyle(.chip)
+                .keyboardShortcut(.cancelAction)
+            Spacer()
+            MainButton(AddAppText.startCheck, action: start)
         }
-        .frame(width: Self.width)
-        .font(.appBody)
     }
 
     private func tile(_ state: CheckResult.WindowState) -> some View {

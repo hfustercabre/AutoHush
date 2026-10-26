@@ -11,50 +11,44 @@ struct WelcomePermissionsView: View {
     var body: some View {
         let name = model.chosenPlayerName ?? ""
         let state = model.permissions
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                WindowHeader(icon: model.chosenPlayer?.icon(size: 56),
-                             description: Text(String(localized: "AutoHush needs these to pause and resume \(name) for you.",
-                                                      comment: "Welcome window, at the top of the page titled “Allow AutoHush to Work”, beside the media player's icon; %@ is the media player")))
-                SectionHeading(Text("Permissions", comment: "Settings → Diagnostics and the welcome window: the heading over the permissions AutoHush needs"))
-                    .padding(.top, 8)
-                Card {
-                    VStack(alignment: .leading, spacing: 10) {
-                        if let control = state.control {
-                            row(symbol: "music.note", title: PermissionText.controlTitle(name),
-                                note: PermissionText.controlNote(name, state.controlAccess), access: state.controlAccess) {
-                                PermissionButton(model: model, permission: control, access: state.controlAccess)
-                            }
-                            CardDivider()
+        WindowPage(icon: model.chosenPlayer?.icon(size: 56),
+                   description: Text(String(localized: "AutoHush needs these to pause and resume \(name) for you.",
+                                            comment: "Welcome window, at the top of the page titled “Allow AutoHush to Work”, beside the media player's icon; %@ is the media player")),
+                   width: PlayerChooserView.width) {
+            SectionHeading(Text("Permissions", comment: "Settings → Diagnostics and the welcome window: the heading over the permissions AutoHush needs"))
+                .padding(.top, 8)
+            Card {
+                VStack(alignment: .leading, spacing: 10) {
+                    if let control = state.control {
+                        row(symbol: "music.note", title: PermissionText.controlTitle(name),
+                            note: PermissionText.controlNote(name, state.controlAccess), access: state.controlAccess) {
+                            PermissionButton(model: model, permission: control, access: state.controlAccess)
                         }
-                        row(symbol: "waveform", title: PermissionText.audioTitle,
-                            note: PermissionText.audioNote(state.audio), access: state.audio) {
-                            PermissionButton(model: model, permission: .systemAudioRecording, access: state.audio)
-                        }
-                        // Not for a player that can only be muted: AntiDot mode can't mute it.
-                        if !state.audio.isSatisfied, model.antiDotUnavailableFor == nil {
-                            HStack {
-                                Spacer()
-                                Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }
-                                    .buttonStyle(.chip)
-                            }
+                        CardDivider()
+                    }
+                    row(symbol: "waveform", title: PermissionText.audioTitle,
+                        note: PermissionText.audioNote(state.audio), access: state.audio) {
+                        PermissionButton(model: model, permission: .systemAudioRecording, access: state.audio)
+                    }
+                    // Not for a player that can only be muted: AntiDot mode can't mute it.
+                    if !state.audio.isSatisfied, model.antiDotUnavailableFor == nil {
+                        HStack {
+                            Spacer()
+                            Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }
+                                .buttonStyle(.chip)
                         }
                     }
                 }
             }
-            .windowMargins()
-            BottomBar {
-                Button { model.showWelcomePlayers() } label: {
-                    Text("Back", comment: "Welcome window: button that goes back to the list of media players. Also Settings: the toolbar's arrow and the View menu's item (⌘[) that show the page shown before; macOS's own word")
-                }
-                .buttonStyle(.chip)
-                Spacer()
-                MainButton(Self.doneTitle) { model.actions?.finishWelcome() }
-                    .disabled(!state.allSatisfied)
+        } bar: {
+            Button { model.showWelcomePlayers() } label: {
+                Text("Back", comment: "Welcome window: button that goes back to the list of media players. Also Settings: the toolbar's arrow and the View menu's item (⌘[) that show the page shown before; macOS's own word")
             }
+            .buttonStyle(.chip)
+            Spacer()
+            MainButton(Self.doneTitle) { model.actions?.finishWelcome() }
+                .disabled(!state.allSatisfied)
         }
-        .frame(width: PlayerChooserView.width)
-        .font(.appBody)
     }
 
     private static var doneTitle: String {

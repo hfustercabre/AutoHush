@@ -27,7 +27,10 @@ final class FakeAppActions: AppActions {
     func finishWelcome() { log.calls.append("finishWelcome") }
     func refreshDiagnostics() { log.calls.append("refreshDiagnostics") }
     func menuWillOpen() { log.calls.append("menuWillOpen") }
-    func reopenAutoHush() { log.calls.append("reopen") }
+    func reopenAutoHush() -> Bool {
+        log.calls.append("reopen")
+        return true
+    }
     func openSettings(page: SettingsWindowController.Page?) { log.calls.append(page.map { "\($0)" } ?? "settings") }
     func showControlError() { log.calls.append("why") }
     func showLogs() { log.calls.append("showLogs") }

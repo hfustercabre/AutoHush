@@ -17,13 +17,6 @@ private actor StepGate {
     }
 }
 
-/// A fade started from inside a test's hook, for the test to await.
-private actor FadeBox {
-    private var task: Task<Bool, any Error>?
-    func set(_ task: Task<Bool, any Error>) { self.task = task }
-    func value() async throws -> Bool { try await task?.value ?? true }
-}
-
 @Suite("VolumeFader", .waitsTimeLimit)
 struct VolumeFaderTests {
     private func makeFader(
@@ -183,7 +176,8 @@ struct VolumeFaderTests {
         let fader = makeFader(player, gate: gate)
         let newerComesBack = Gate()
         let proceed = Gate()
-        let second = FadeBox()
+        // The second fade-out, started from inside a hook, for the test to await.
+        let second = Locked<Task<Bool, any Error>?>(nil)
         // The first fade-out is called off. While its comeback reads the
         // volume, another app starts (that comeback is stopped), a second
         // fade-out starts, is called off in turn, and comes back up.
@@ -192,7 +186,7 @@ struct VolumeFaderTests {
             await player.setBeforeVolumeAnswer {
                 await player.setBeforeVolumeAnswer(nil)
                 await fader.stopComeback()
-                await second.set(Task { try await fader.fadeOutAndPause() })
+                second.value = Task { try await fader.fadeOutAndPause() }
                 await newerComesBack.wait()
             }
         }
@@ -205,7 +199,7 @@ struct VolumeFaderTests {
         #expect(try await !fader.fadeOutAndPause()) // the first gave up
         await fader.stopComeback() // yet another app starts: the second comeback stops there
         await proceed.open()
-        #expect(try await !second.value())
+        #expect(try await !(second.value?.value ?? true))
         #expect(try #require(await player.volumeLevel) < 80) // not back up to the user's volume
         #expect(await player.pauseCallCount == 0)
     }
@@ -258,22 +252,17 @@ struct VolumeFaderTests {
         await player.setVolumeLevel(70)
         let gate = StepGate()
         let fader = makeFader(player, gate: gate)
-        let paused = PausedFlag()
+        let paused = Locked(false)
         await gate.at(step: 6) {
             // Another app starts playing while the music fades back in.
-            _ = Task { await paused.set(try await fader.fadeOutAndPause()) }
+            _ = Task { paused.value = try await fader.fadeOutAndPause() }
         }
 
         try await fader.playAndFadeIn()
-        await TestWait.until { await paused.value }
+        await TestWait.until { paused.value }
 
         #expect(await player.volumeLevel == 70)
     }
-}
-
-private actor PausedFlag {
-    private(set) var value = false
-    func set(_ value: Bool) { self.value = value }
 }
 
 @Suite("VolumeCurve")

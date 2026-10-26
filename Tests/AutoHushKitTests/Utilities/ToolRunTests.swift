@@ -1,5 +1,4 @@
 import Foundation
-import os
 import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
@@ -54,20 +53,20 @@ struct ToolRunTests {
 
     /// Its lines and end, as `start` gives them.
     private final class Lines: Sendable {
-        let lines = OSAllocatedUnfairLock<[String]>(initialState: [])
-        let ended = OSAllocatedUnfairLock<(lines: Int, result: ToolRun.Result)?>(initialState: nil)
+        let lines = Locked<[String]>([])
+        let ended = Locked<(lines: Int, result: ToolRun.Result)?>(nil)
 
         func start(_ run: ToolRun) throws -> ToolRun.Running {
-            try run.start(onLine: { line in self.lines.withLock { $0.append(line) } },
+            try run.start(onLine: { line in self.lines.append(line) },
                           onEnd: { result in
-                              let count = self.lines.withLock { $0.count }
-                              self.ended.withLock { $0 = (count, result) }
+                              let count = self.lines.value.count
+                              self.ended.value = (count, result)
                           })
         }
 
         func waitForEnd() async -> (lines: Int, result: ToolRun.Result)? {
-            await TestWait.until { ended.withLock { $0 } != nil }
-            return ended.withLock { $0 }
+            await TestWait.until { ended.value != nil }
+            return ended.value
         }
     }
 
@@ -76,7 +75,7 @@ struct ToolRunTests {
         let seen = Lines()
         _ = try seen.start(shell("printf 'one\\ntwo\\n'; echo three >&2; printf four", readsErrors: true))
         let end = try #require(await seen.waitForEnd())
-        #expect(seen.lines.withLock { $0 } == ["one", "two", "three", "four"])
+        #expect(seen.lines.value == ["one", "two", "three", "four"])
         #expect(end.lines == 4 && end.result.succeeded && end.result.output.isEmpty)
         #expect(throws: (any Error).self) { try ToolRun(URL(fileURLWithPath: "/nonexistent/tool")).start(onLine: { _ in }, onEnd: { _ in }) }
     }
@@ -85,7 +84,7 @@ struct ToolRunTests {
     func stop() async throws {
         let plain = Lines()
         let running = try plain.start(shell("echo started; exec sleep 10"))
-        await TestWait.until { !plain.lines.withLock { $0.isEmpty } }
+        await TestWait.until { !plain.lines.value.isEmpty }
         #expect(running.isRunning)
         running.stop()
         let stopped = try #require(await plain.waitForEnd())
@@ -94,10 +93,10 @@ struct ToolRunTests {
         // One that puts things back first, then exits as it says.
         let tidy = Lines()
         let handling = try tidy.start(shell("trap 'echo tidied; exit 5' TERM; echo started; sleep 10 >/dev/null & wait"))
-        await TestWait.until { !tidy.lines.withLock { $0.isEmpty } }
+        await TestWait.until { !tidy.lines.value.isEmpty }
         handling.stop()
         let ended = try #require(await tidy.waitForEnd())
         #expect(ended.result == ToolRun.Result(status: 5))
-        #expect(tidy.lines.withLock { $0 } == ["started", "tidied"])
+        #expect(tidy.lines.value == ["started", "tidied"])
     }
 }

@@ -14,7 +14,7 @@ struct PlayerFixButtons: View {
 
     var body: some View {
         if let reopen {
-            let reason = AddAppText.reopenReason(player)
+            let reason = ReopenText.reason(player)
             button(AppStatus.reopenPlayerTitle, symbol: "arrow.clockwise", action: reopen)
                 .help(reason)
                 .accessibilityHint(Text(verbatim: reason))

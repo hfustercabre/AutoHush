@@ -112,7 +112,7 @@ extension AppDelegate {
         // mediaremoted next writes.
         CheckedPlayer.sharedReports.stop()
         unregisterPlayerLaunchObserver()
-        sleepObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+        sleepObservers.forEach { workspaceCenter.removeObserver($0) }
         sleepObservers = []
     }
 
@@ -120,7 +120,7 @@ extension AppDelegate {
     /// `PlayerSession.setAsleep`). The screens waking count as awake too, so
     /// a wake macOS didn't announce can't leave AutoHush deciding nothing.
     func registerSleepObservers() {
-        let center = NSWorkspace.shared.notificationCenter
+        let center = workspaceCenter
         sleepObservers = [
             (NSWorkspace.willSleepNotification, true),
             (NSWorkspace.didWakeNotification, false),

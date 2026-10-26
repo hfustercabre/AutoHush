@@ -60,7 +60,7 @@ extension AppDelegate: AddAppHost {
         // (the workflow audit, 2026-10-22).
         defaults.set([Self.reopenedAtKey: clock(), Self.reopenedAppKey: addApp.model?.chosen?.url.path ?? ""],
                      forKey: Self.addAppAfterRelaunchKey)
-        if !reopen() { defaults.removeObject(forKey: Self.addAppAfterRelaunchKey) }
+        if !reopenAutoHush() { defaults.removeObject(forKey: Self.addAppAfterRelaunchKey) }
     }
 
     /// Add an App asked AutoHush to reopen (Audio Recording): when, and the
@@ -91,7 +91,7 @@ extension AppDelegate: AddAppHost {
         checkedPlayers.keep(result)
         logger.notice("Add an App: \(setup.name, privacy: .public) added, by \(setup.ways.map(\.logName).joined(separator: ", "), privacy: .public)")
         refreshPlayerOptions()
-        chooseMusicPlayer(setup.bundleID, replacing: setup.bundleID == player?.bundleID, asksToReopen: asksToReopen)
+        choosePlayer(setup.bundleID, replacing: setup.bundleID == player?.bundleID, asksToReopen: asksToReopen)
     }
 }
 

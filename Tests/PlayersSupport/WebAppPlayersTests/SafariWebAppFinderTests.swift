@@ -18,12 +18,13 @@ struct SafariWebAppFinderTests {
         #expect(SafariWebApp.shortName("Hi-Fi Radio") == "Hi-Fi Radio") // a dash without spaces is part of the name
     }
 
-    /// A folder of apps: web apps and others, as Safari makes them.
-    private static func folder() throws -> URL {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "WebApps-\(UUID().uuidString)")
-        try makeApp(in: folder, file: "YT Music", id: SafariWebApp.bundleIDPrefix + "A", name: "YT Music")
-        try makeApp(in: folder, file: "Amazon Music | Listen", id: SafariWebApp.bundleIDPrefix + "B", name: "Amazon Music | Listen")
-        try makeApp(in: folder, file: "Notes", id: "com.example.notes", name: "Notes")
+    /// A folder of apps: web apps and others, as Safari makes them. The
+    /// test keeps it to its end.
+    private static func folder() throws -> TemporaryFolder {
+        let folder = TemporaryFolder("SafariWebAppFinderTests", create: false)
+        try makeApp(in: folder.url, file: "YT Music", id: SafariWebApp.bundleIDPrefix + "A", name: "YT Music")
+        try makeApp(in: folder.url, file: "Amazon Music | Listen", id: SafariWebApp.bundleIDPrefix + "B", name: "Amazon Music | Listen")
+        try makeApp(in: folder.url, file: "Notes", id: "com.example.notes", name: "Notes")
         return folder
     }
 
@@ -36,8 +37,8 @@ struct SafariWebAppFinderTests {
 
     @Test("the finder lists the web apps by name, and notices changes; a process running one is that web app")
     func finder() throws {
-        let folder = try Self.folder()
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let scratch = try Self.folder()
+        let folder = scratch.url
         let finder = SafariWebAppFinder(folders: [folder, folder.appending(path: "missing")])
         let apps = finder.webApps()
         #expect(apps.map(\.name) == ["Amazon Music", "YT Music"])
@@ -56,12 +57,13 @@ struct SafariWebAppFinderTests {
         try FileManager.default.removeItem(at: folder.appending(path: "YT Music.app"))
         #expect(finder.webApps(maxAge: .infinity).count == 2) // a look younger than its maximum age is reused
         #expect(finder.webApps(maxAge: 0).map(\.name) == ["Amazon Music"])
+        withExtendedLifetime(scratch) {}
     }
 
     @Test("each web app keeps its player while it's installed")
     func players() throws {
-        let folder = try Self.folder()
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let scratch = try Self.folder()
+        let folder = scratch.url
         let players = SafariWebAppPlayers(finder: SafariWebAppFinder(folders: [folder])) {
             SafariWebAppPlayer(app: $0, isUntested: $1, page: FakeWebPage(), store: MemoryRecipeStore())
         }
@@ -69,6 +71,7 @@ struct SafariWebAppFinderTests {
         let second = players.current()
         #expect(first.map(\.name) == ["Amazon Music", "YT Music"])
         #expect(zip(first, second).allSatisfy { $0 === $1 })
+        withExtendedLifetime(scratch) {}
     }
 
     @Test("a suggested web app is offered until a web app opens its site, with or without www, or another of its hosts")
@@ -94,8 +97,8 @@ struct SafariWebAppFinderTests {
         #expect(TestedWebApp.notAdded(suggested, among: [app("https://music.amazon.es/")])
             == [WebAppSuggestion(name: "Deezer", address: "deezer.com"), WebAppSuggestion(name: "YT", address: "music.youtube.com")])
 
-        let folder = try Self.folder()
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let scratch = try Self.folder()
+        let folder = scratch.url
         let ytMusic = TestedWebApp(name: "YT Music", address: "ytmusic.example.com")
         let players = SafariWebAppPlayers(finder: SafariWebAppFinder(folders: [folder]), tested: [ytMusic, deezer]) {
             SafariWebAppPlayer(app: $0, isUntested: $1, page: FakeWebPage(), store: MemoryRecipeStore())
@@ -114,5 +117,6 @@ struct SafariWebAppFinderTests {
         #expect(named.map(\.name) == ["Amazon Music", "YouTube Music"])
         #expect(named.last?.bundleID == SafariWebApp.bundleIDPrefix + "A")
         #expect(zip(named, renamed.current()).allSatisfy { $0 === $1 }) // still kept between looks
+        withExtendedLifetime(scratch) {}
     }
 }

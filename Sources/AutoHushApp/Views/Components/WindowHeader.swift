@@ -2,9 +2,10 @@ import AppKit
 import SwiftUI
 
 /// The top of a window AutoHush opens (welcome and its permissions page, Add
-/// a Web App, learning, Add an App, its list of apps and its warning):
-/// an icon, then what the window is for. The window's title is in its title
-/// bar, as a Settings page's name is (`HostedWindowController`).
+/// a Web App, learning, Add an App, its list of apps and its warning; atop
+/// its `WindowPage`): an icon, then what the window is for. The window's
+/// title is in its title bar, as a Settings page's name is
+/// (`HostedWindowController`).
 struct WindowHeader: View {
     let icon: NSImage?
     let description: Text
@@ -22,15 +23,5 @@ struct WindowHeader: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-extension View {
-    /// A window's content margins: 20 pt, and right under the title bar,
-    /// so the header reads with the title. Its `BottomBar` uses the same
-    /// side margin.
-    func windowMargins() -> some View {
-        padding(.top, 2)
-            .padding([.horizontal, .bottom], HostedWindowController.margin)
     }
 }

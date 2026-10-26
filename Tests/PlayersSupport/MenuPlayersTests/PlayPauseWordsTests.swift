@@ -2,9 +2,13 @@ import Foundation
 import Testing
 @testable import MenuPlayers
 import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("PlayPauseWords of any app")
 struct PlayPauseWordsTests {
+    /// Where a test's app goes, removed after it.
+    private let scratch = TemporaryFolder("PlayPauseWordsTests", create: false)
+
     @Test("the common words: lowercase and capitalized, in a few languages")
     func common() {
         #expect(PlayPauseWords.common.play.isSuperset(of: ["play", "Play", "Reproducir", "reprodueix"]))
@@ -46,9 +50,9 @@ struct PlayPauseWordsTests {
         }
     }
 
-    /// An app of its own whose resources hold `translations`; the caller removes it.
+    /// An app of the test's own whose resources hold `translations`.
     private func makeApp(with translations: Translations) throws -> URL {
-        let app = FileManager.default.temporaryDirectory.appendingPathComponent("Words-\(UUID().uuidString).app")
+        let app = scratch.appending(path: "Words.app")
         let resources = app.appendingPathComponent("Contents/Resources")
         try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
         try translations.write(in: resources)
@@ -59,7 +63,6 @@ struct PlayPauseWordsTests {
           arguments: Translations.allCases)
     func found(_ translations: Translations) throws {
         let app = try makeApp(with: translations)
-        defer { try? FileManager.default.removeItem(at: app) }
         let found = try #require(PlayPauseWords.found(inAppAt: app))
         #expect(found.words.play == ["Play", "Reprodueix"])
         #expect(found.words.pause == ["Pause", "Posa en pausa"])
@@ -69,7 +72,6 @@ struct PlayPauseWordsTests {
     @Test("an app's own words add to the common ones", arguments: Translations.allCases)
     func merged(_ translations: Translations) throws {
         let app = try makeApp(with: translations)
-        defer { try? FileManager.default.removeItem(at: app) }
         let found = try #require(PlayPauseWords.found(inAppAt: app))
         let merged = PlayPauseWords.common.merged(with: found.words)
         #expect(merged.play.contains("Reprodueix") && merged.play.contains("lecture"))

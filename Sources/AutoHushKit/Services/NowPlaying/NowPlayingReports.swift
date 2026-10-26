@@ -50,10 +50,13 @@ package final class NowPlayingReports: @unchecked Sendable {
     private let lock = NSLock()
     private let processRuns: @Sendable (pid_t) -> Bool
     private var clients: [pid_t: Client] = [:]
-    private var buffer = Data()
     /// The `log stream` followed, and whether the past was read since it started.
-    private var stream: Process?
-    private var streamID: ObjectIdentifier?
+    private var stream: ToolRun.Running?
+    /// The followed stream's number (`streamsStarted` as it started), told
+    /// with its lines and its end: an earlier one's are dropped. `nil`
+    /// while none is followed.
+    private var streamID: Int?
+    private var streamsStarted = 0
     private var ready = false
     private var starting = false
     /// The log couldn't be opened: it isn't asked again.
@@ -163,20 +166,18 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     /// Ends the `log stream`, if it runs, and forgets what it read.
     package func stop() {
-        let (process, timer) = lock.withLock { () -> (Process?, any DispatchSourceTimer?) in
+        let (running, timer) = lock.withLock { () -> (ToolRun.Running?, any DispatchSourceTimer?) in
             defer {
                 stream = nil
                 streamID = nil
                 ready = false
                 clients = [:]
-                buffer = Data()
                 idleTimer = nil
             }
             return (stream, idleTimer)
         }
         timer?.cancel()
-        // Only while it's still that stream: once it ended, its pid may be another process's.
-        if let process, process.isRunning { process.terminate() }
+        running?.stop()
     }
 
     private func followSoon() {
@@ -191,33 +192,19 @@ package final class NowPlayingReports: @unchecked Sendable {
     }
 
     private func startFollowing(since: Date) {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: streamCommand[0])
-        process.arguments = Array(streamCommand.dropFirst())
-        let pipe = Pipe()
-        process.standardOutput = pipe
-        process.standardError = FileHandle.nullDevice
-        let id = ObjectIdentifier(process)
-        // At its end (it ended, or was stopped) the handler would be called
-        // again and again with nothing: it's removed.
-        pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
-            let data = handle.availableData
-            guard !data.isEmpty else {
-                handle.readabilityHandler = nil
-                self?.ended(id)
-                return
-            }
-            self?.take(data, from: id)
-        }
-        lock.withLock {
+        // Numbered before it starts: its first lines may come before `start` returns.
+        let id = lock.withLock { () -> Int in
+            streamsStarted += 1
             clients = [:]
-            buffer = Data()
-            stream = process
-            streamID = id
+            streamID = streamsStarted
+            return streamsStarted
         }
-        guard (try? process.run()) != nil, let past = readPast(since) else {
-            pipe.fileHandleForReading.readabilityHandler = nil
-            if process.isRunning { process.terminate() }
+        let run = ToolRun(URL(fileURLWithPath: streamCommand[0]), Array(streamCommand.dropFirst()))
+        let running = try? run.start(onLine: { [weak self] line in self?.take(line, from: id) },
+                                     onEnd: { [weak self] _ in self?.ended(id) })
+        if let running { lock.withLock { if streamID == id { stream = running } } }
+        guard let running, let past = readPast(since) else {
+            running?.stop()
             lock.withLock {
                 failed = true
                 starting = false
@@ -245,7 +232,7 @@ package final class NowPlayingReports: @unchecked Sendable {
         }
         // Stopped meanwhile: this stream isn't followed.
         guard kept else {
-            if process.isRunning { process.terminate() }
+            running.stop()
             return
         }
         watchIdle()
@@ -270,7 +257,7 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     /// The stream ended by itself: what's known may be old, so nothing is
     /// said until it's followed again (at the next question).
-    private func ended(_ id: ObjectIdentifier) {
+    private func ended(_ id: Int) {
         lock.withLock {
             guard streamID == id else { return }
             stream = nil
@@ -280,18 +267,13 @@ package final class NowPlayingReports: @unchecked Sendable {
         }
     }
 
-    /// Lines from `log stream`, one JSON object each.
-    private func take(_ data: Data, from id: ObjectIdentifier) {
+    /// A line from `log stream`, one JSON object.
+    private func take(_ line: String, from id: Int) {
+        guard let object = try? JSONSerialization.jsonObject(with: Data(line.utf8)) as? [String: Any],
+              let message = object["eventMessage"] as? String else { return }
         lock.withLock {
             guard streamID == id else { return }
-            buffer.append(data)
-            while let end = buffer.firstIndex(of: 0x0A) {
-                let line = buffer[buffer.startIndex..<end]
-                buffer.removeSubrange(buffer.startIndex...end)
-                guard let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
-                      let message = object["eventMessage"] as? String else { continue }
-                Self.apply(message, at: Date(), to: &clients)
-            }
+            Self.apply(message, at: Date(), to: &clients)
         }
     }
 

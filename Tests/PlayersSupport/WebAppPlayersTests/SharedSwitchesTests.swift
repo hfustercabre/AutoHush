@@ -1,5 +1,4 @@
 import Foundation
-import os
 import Testing
 @testable import WebAppPlayers
 import AutoHushTestSupport
@@ -8,9 +7,9 @@ import AutoHushTestSupport
 struct SharedSwitchesTests {
     /// A process's switch for assistive tools, as a page sets it.
     final class Switch: Sendable {
-        private let state = OSAllocatedUnfairLock(initialState: (on: false, turnedOn: 0))
-        var isOn: Bool { state.withLock { $0.on } }
-        var timesTurnedOn: Int { state.withLock { $0.turnedOn } }
+        private let state = Locked((on: false, turnedOn: 0))
+        var isOn: Bool { state.value.on }
+        var timesTurnedOn: Int { state.value.turnedOn }
         func turnOn() { state.withLock { $0 = (true, $0.turnedOn + 1) } }
         func turnOff() { state.withLock { $0.on = false } }
     }
@@ -68,12 +67,12 @@ struct SharedSwitchesTests {
 
     @Test("a switch on a process that quit isn't turned off on the one that has its pid now, whose own look turns its own on")
     func reusedPID() {
-        let started = OSAllocatedUnfairLock(initialState: UInt64(1))
-        let switches = SharedSwitches(startTime: { _ in started.withLock { $0 } })
+        let started = Locked(UInt64(1))
+        let switches = SharedSwitches(startTime: { _ in started.value })
         let (quit, now) = (Switch(), Switch())
         let (first, second) = (UUID(), UUID())
         look(switches, quit, by: first)
-        started.withLock { $0 = 2 } // pid 42 is another process's
+        started.value = 2 // pid 42 is another process's
         look(switches, now, by: second)
         #expect(now.isOn)
         var turnedOff: [SharedSwitches.Key] = []

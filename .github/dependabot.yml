@@ -1,0 +1,16 @@
+# Once a month, a pull request into dev for each pinned dependency that has
+# a newer release: the actions the workflows use (pinned by commit) and
+# dmgbuild with what it needs (Scripts/lib/dmgbuild-requirements.txt, pinned
+# by hash). The pull request rules let Dependabot's own branch names through.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly
+  - package-ecosystem: pip
+    directory: /Scripts/lib
+    target-branch: dev
+    schedule:
+      interval: monthly

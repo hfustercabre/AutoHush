@@ -4,7 +4,8 @@ import PlayerCheckKit
 import Foundation
 
 /// What the Add an App window (W2), the warning before its check (W6) and
-/// the check's panel say. `app` is the chosen app's name.
+/// the check's panel say. `app` is the chosen app's name. What other places
+/// say too is in `Text/` (`ButtonText`, `ReopenText`, `WayText`).
 enum AddAppText {
     // MARK: - The window
 
@@ -15,10 +16,6 @@ enum AddAppText {
 
     static var stepsHeading: String {
         String(localized: "How the Check Goes", comment: "Add an App window: the heading over its numbered steps")
-    }
-
-    static var cancel: String {
-        String(localized: "Cancel", comment: "Button that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player or to remove an app added with Add an App")
     }
 
     // MARK: Step 1: the app
@@ -124,10 +121,6 @@ enum AddAppText {
         String(localized: "No other app that can play was found.", comment: "Add an App window, instead of the list of apps when there's none to check")
     }
 
-    static var continueButton: String {
-        String(localized: "Continue", comment: "Button in the welcome window and the Add a Web App and Add an App windows: goes on with what's chosen or typed")
-    }
-
     // MARK: Step 2: permissions
 
     static var allowTitle: String {
@@ -214,10 +207,6 @@ enum AddAppText {
                comment: "Add an App window, under “Automation”: what the check uses it for")
     }
 
-    static var allowButton: String {
-        String(localized: "Allow…", comment: "Welcome window, Add an App window, the menu's card (under “Needs Automation access” and the like) and Settings → Diagnostics (beside a permission not allowed): button that asks for a permission (macOS's prompt, or System Settings)")
-    }
-
     /// The Allow step once done: what's allowed, and what the check goes
     /// without.
     static func allowedSummary(_ permissions: CheckPermissions, antiDot: Bool) -> String {
@@ -249,31 +238,6 @@ enum AddAppText {
     }
 
     // MARK: Step 3: reopening
-
-    static func reopenTitle(_ app: String) -> String {
-        String(localized: "Reopen \(app)", comment: "Add an App window: the step, and its button, that quits the app and opens it again with the option its page needs; the same button in the alert that asks for it; %@ is the app")
-    }
-
-    /// Why an app opened without its option needs reopening: the Reopen
-    /// step's warning, the alert's message, the card's button's help.
-    static func reopenReason(_ app: String) -> String {
-        String(localized: "Without an option it needs, AutoHush can pause \(app) only while its window is in view.",
-               comment: "Add an App's Reopen step (as a warning), the alert that asks to reopen the media player, and the help of the menu card's Reopen button; %@ is the app")
-    }
-
-    /// The reopen alert's message: why, and that reopening stops what it
-    /// plays, in one text (sentences joined in code read wrong in Chinese
-    /// and Japanese).
-    static func reopenAlertMessage(_ app: String) -> String {
-        String(localized: "Without an option it needs, AutoHush can pause \(app) only while its window is in view. Reopening it stops what it plays.",
-               comment: "Message of the alert that asks to reopen the media player (an app added with Add an App) with the option it needs; %@ is the app")
-    }
-
-    /// The reopen alert's checkbox: from then on, reopened without asking.
-    static func reopenAlways(_ app: String) -> String {
-        String(localized: "Always reopen \(app) this way",
-               comment: "Checkbox in the alert that asks to reopen the media player with the option it needs: from then on AutoHush reopens it so whenever it finds it opened without it, without asking; %@ is the app")
-    }
 
     static var reopenPending: String {
         String(localized: "It was opened without the option its page needs to be pressed while covered or on another desktop. AutoHush asks before reopening it.",
@@ -461,15 +425,6 @@ enum AddAppText {
         String(localized: "Use \(app)", comment: "Add an App window: button that makes the checked app the player; %@ is the app")
     }
 
-    static func wayTitle(_ way: CheckResult.WayKind) -> String {
-        switch way {
-        case .script: String(localized: "AppleScript", comment: "A way to pause and play an app added with Add an App: its AppleScript commands (the Add an App window, the check's panel, Settings → Diagnostics under “Controlled by”)")
-        case .menu: String(localized: "Its playback menu", comment: "A way to pause and play an app added with Add an App: the Play/Pause item of its menu bar's playback menu (the Add an App window, Settings → Diagnostics under “Controlled by”)")
-        case .page: String(localized: "Its page’s Play/Pause", comment: "A way to pause and play an app added with Add an App: the Play/Pause button of the page it shows (the Add an App window, Settings → Diagnostics under “Controlled by”)")
-        case .panel: String(localized: "The menu bar’s Now Playing panel", comment: "A way to pause and play an app added with Add an App: its row in macOS's Now Playing panel (the Add an App window, Settings → Diagnostics under “Controlled by”)")
-        }
-    }
-
     static func wayNote(_ way: CheckResult.WayResult, app: String) -> String {
         switch way.mark {
         case .works:
@@ -652,12 +607,6 @@ enum AddAppText {
                comment: "The check's panel, while the check blocks the mouse and keyboard")
     }
     // MARK: - When things go wrong, and the steps for VoiceOver
-
-    /// Opens an app: the media player (so macOS can ask for Automation), or
-    /// the app being checked once it quit.
-    static func open(_ app: String) -> String {
-        String(localized: "Open \(app)", comment: "Button that opens an app: the media player, so macOS can ask for Automation (Settings, the welcome window), or, in the Add an App window, the app being checked after it quit; %@ is the app")
-    }
 
     static func appNotFound(_ app: String) -> String {
         String(localized: "\(app) quit and can’t be found. Choose another app.", comment: "Add an App window, warning under the step “Play something” when the app being checked quit and is no longer where it was chosen (moved or deleted); a Change… button follows; %@ is the app")

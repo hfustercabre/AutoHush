@@ -5,11 +5,13 @@ import AutoHushTestSupport
 
 @Suite("PageAccess")
 struct PageAccessTests {
+    /// Where a test's apps go, removed after it.
+    private let scratch = TemporaryFolder("PageAccessTests", create: false)
+
     /// An app bundle with `frameworks` and an Info.plist of `info`, in a
-    /// folder of its own (removed after).
+    /// folder of its own.
     private func app(frameworks: [String] = [], info: [String: String] = [:]) throws -> URL {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "Page-\(UUID().uuidString)")
-        return try TestAppBundle.make(in: folder, name: "Page", info: info, frameworks: frameworks)
+        try TestAppBundle.make(in: scratch.appending(path: UUID().uuidString), name: "Page", info: info, frameworks: frameworks)
     }
 
     @Test("an app's interface, by the frameworks in its bundle; a Chromium web app by its launcher")
@@ -17,7 +19,6 @@ struct PageAccessTests {
         let electron = try app(frameworks: ["Electron Framework"]), cef = try app(frameworks: ["Chromium Embedded Framework"])
         let flutter = try app(frameworks: ["FlutterMacOS"]), plain = try app()
         let webApp = try app(info: ["CrAppModeShortcutURL": "https://music.youtube.com/", "CrBundleIdentifier": "com.google.Chrome"])
-        defer { [electron, cef, flutter, plain, webApp].forEach { try? FileManager.default.removeItem(at: $0.deletingLastPathComponent()) } }
         #expect(PageAccess.interface(ofAppAt: electron) == .electron)
         #expect(PageAccess.interface(ofAppAt: cef) == .cef)
         #expect(PageAccess.interface(ofAppAt: flutter) == .flutter)
@@ -28,7 +29,6 @@ struct PageAccessTests {
     @Test("Chromium inside Qt shows its page as it is, but its words are current only in sight")
     func qtWebEngine() throws {
         let qt = try app(frameworks: ["QtWebEngineCore"])
-        defer { try? FileManager.default.removeItem(at: qt.deletingLastPathComponent()) }
         #expect(PageAccess.interface(ofAppAt: qt) == .qtWebEngine)
         #expect(PageAccess.switches(for: .qtWebEngine).isEmpty)
         #expect(!PageAccess(interface: .qtWebEngine, switchAttribute: nil).wordsCurrentOutOfSight)

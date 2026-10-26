@@ -19,6 +19,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Clearer messages.** The alert after "Can't control" says why once in
   English, and Add an App's recommended way says in orange where it
   doesn't work.
+- **Quiet apps heard again.** An app that goes quiet but keeps its sound
+  open, as games and audio apps do, is heard again within 30 s while your
+  player plays.
 
 ### Fixed
 

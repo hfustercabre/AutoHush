@@ -15,7 +15,7 @@ enum PlayerAlerts {
         alert.informativeText = message
         alert.alertStyle = .warning
         alert.addButton(withTitle: button)
-        alert.addButton(withTitle: AddAppText.cancel).keyEquivalent = "\u{1b}" // Escape
+        alert.addButton(withTitle: ButtonText.cancel).keyEquivalent = "\u{1b}" // Escape
         return alert
     }
 

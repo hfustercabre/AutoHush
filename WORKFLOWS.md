@@ -142,7 +142,7 @@ flowchart TD
   OWN["The player itself,<br/>system sounds:<br/>never count"]
   IGN["An ignored app (display<br/>apps’ volume sound: ignored<br/>from their first run, and<br/>after Reset List…): listed<br/>under Playing Now, never pauses"]
   DM{"Detection"}
-  NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays (one that<br/>keeps saying so stays measured)"]
+  NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays (one that<br/>keeps saying so stays measured;<br/>while your player plays,<br/>listened to 0.5 s every 30 s)"]
   ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s (any<br/>sound 2 s, with open streams)"]
   MIC["Pause for the microphone<br/>on: its microphone on<br/>for 1 s counts, sound or<br/>not (the card: “is using<br/>the microphone”)"]
   T{"Playing<br/>for 0.5 s?"}

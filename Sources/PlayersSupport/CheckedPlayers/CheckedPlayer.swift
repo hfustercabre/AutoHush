@@ -18,8 +18,9 @@ import WebAppPlayers
 /// its level instead, listened to only when AutoHush is about to pause or
 /// play it, and read once a second by its keep-awake assertion meanwhile
 /// (the user, 2026-10-16: else macOS's recording dot stays on all day).
-/// Player Check judges by much the same signs, in its own order (the report
-/// second, its level among them).
+/// Player Check judges its presses by the same signs in this order, then by
+/// the app's level and keep-awake assertion, so what it approves is what
+/// AutoHush will do (the user, 2026-10-26).
 ///
 /// It checks its own presses: each by the way that made it, against those
 /// signs (`sureState`) and never by its output alone, which stays open for

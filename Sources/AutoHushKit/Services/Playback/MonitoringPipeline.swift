@@ -42,6 +42,9 @@ package final class MonitoringPipeline {
         case tapsAllowed(Bool)
         case retryResume
         case unmuteInstead
+        /// Nothing for the arbiter: resumed once the commands sent before it
+        /// have reached it (`settled`).
+        case delivered(CheckedContinuation<Void, Never>)
     }
 
     private let arbiter: PlaybackArbiter
@@ -185,6 +188,7 @@ package final class MonitoringPipeline {
                     case .tapsAllowed(let allowed): await arbiter.setTapsAllowed(allowed)
                     case .retryResume: await arbiter.retryResume()
                     case .unmuteInstead: await arbiter.unmuteInstead()
+                    case .delivered(let continuation): continuation.resume()
                     }
                 }
             },
@@ -312,11 +316,15 @@ package final class MonitoringPipeline {
         await monitor.eventsDelivered()
     }
 
-    /// Returns once what the monitor has seen has reached the arbiter and
-    /// the arbiter has nothing left running (`PlaybackArbiter.waitUntilIdle`);
-    /// tests use it to check that something didn't happen without waiting
-    /// out a time limit.
+    /// Returns once the commands sent before it and what the monitor has
+    /// seen have reached the arbiter, and the arbiter has nothing left
+    /// running (`PlaybackArbiter.waitUntilIdle`); tests use it to check that
+    /// something didn't happen without waiting out a time limit. Stopped,
+    /// no command reaches it, and it doesn't wait for them.
     func settled() async {
+        await withCheckedContinuation { continuation in
+            if case .terminated = arbiterCommands.yield(.delivered(continuation)) { continuation.resume() }
+        }
         await monitor.eventsDelivered()
         await arbiter.waitUntilIdle()
     }

@@ -25,10 +25,7 @@ extension AppDelegate {
     /// handing over a pause it holds; `false` when the reopening couldn't be
     /// set up (it doesn't quit then, and says so).
     @discardableResult
-    func reopen(
-        openAfterExit: (URL) throws -> Void = { _ = try UpdateInstaller.openAfterExit($0) },
-        terminate: () -> Void = { NSApp.terminate(nil) }
-    ) -> Bool {
+    func reopenAutoHush() -> Bool {
         do {
             try openAfterExit(Bundle.main.bundleURL)
         } catch {
@@ -36,7 +33,7 @@ extension AppDelegate {
             tellFailure(PlayerAlerts.couldNotReopenAutoHush)
             return false
         }
-        terminate()
+        terminateToReopen()
         return true
     }
 

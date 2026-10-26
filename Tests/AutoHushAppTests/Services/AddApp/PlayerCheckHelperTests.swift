@@ -14,8 +14,8 @@ private final class Report {
 struct PlayerCheckHelperTests {
     @Test("each question goes to the helper with its folders, its answer read; a helper that can't start or takes too long tells nothing")
     func questions() async throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let scratch = TemporaryFolder("PlayerCheckHelperTests", create: false)
+        let folder = scratch.url
         let folders = "--logs \(folder.path)/Logs --caches \(folder.path)/Caches"
         let helper = try PlayerCheckHelper.standIn(#"""
             case " $* " in *" \#(folders) "*) ;; *) exit 2 ;; esac
@@ -41,18 +41,21 @@ struct PlayerCheckHelperTests {
         #expect(await missing.canPlay([player]).isEmpty)
         #expect(await missing.runsWithLaunchOption(player) == nil)
         #expect(await !missing.reopenWithLaunchOption(player))
+        withExtendedLifetime(scratch) {}
     }
 
     /// The log the stand-in helper of `finishedCheck` writes.
     private static let checkLog = "2026-10-19 10.00.00.000 Player check.log"
 
     /// A check of Player by a stand-in helper, in a scratch folder (the
-    /// caller removes it), that writes three lines, the last the result it
-    /// leaves (`found`), and its log; the check started, not waited for.
+    /// caller keeps it to its end), that writes three lines, the last the
+    /// result it leaves (`found`), and its log; the check started, not
+    /// waited for.
     @MainActor
     private func finishedCheck() throws
-        -> (folder: URL, found: CheckResult, helper: PlayerCheckHelper, run: PlayerCheckRun, report: Report) {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
+        -> (scratch: TemporaryFolder, found: CheckResult, helper: PlayerCheckHelper, run: PlayerCheckRun, report: Report) {
+        let scratch = TemporaryFolder("PlayerCheckHelperTests", create: false)
+        let folder = scratch.url
         let found = CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .works)], setup: nil)
         let finishing = try PlayerCheckHelper.standIn(#"""
             for argument in "$@"; do
@@ -67,70 +70,69 @@ struct PlayerCheckHelperTests {
         try JSONEncoder().encode(found).write(to: folder.appending(path: "found.json"))
         let report = Report()
         let run = try finishing.check(URL(filePath: "/Applications/Player.app"), taps: false) { report.lines.append($0) }
-        return (folder, found, finishing, run, report)
+        return (scratch, found, finishing, run, report)
     }
 
     @MainActor
     @Test("a check's lines come as the helper writes them, all before its end")
     func check() async throws {
         let bench = try finishedCheck()
-        defer { try? FileManager.default.removeItem(at: bench.folder) }
         _ = await bench.run.waitForEnd()
         #expect(bench.report.lines.count == 3 && bench.report.lines.prefix(2) == ["Press Test", "  checking /Applications/Player.app, --no-taps"])
+        withExtendedLifetime(bench.scratch) {}
     }
 
     @MainActor
     @Test("a check ends with the result the helper left, which goes once read")
     func checkResult() async throws {
         let bench = try finishedCheck()
-        defer { try? FileManager.default.removeItem(at: bench.folder) }
         #expect(await bench.run.waitForEnd() == .finished(bench.found))
         #expect(bench.report.lines.last.map { !FileManager.default.fileExists(atPath: $0) } == true) // read, then removed
+        withExtendedLifetime(bench.scratch) {}
     }
 
     @MainActor
     @Test("a check's log is the newest the helper wrote")
     func checkLogIsNewest() async throws {
         let bench = try finishedCheck()
-        defer { try? FileManager.default.removeItem(at: bench.folder) }
         _ = await bench.run.waitForEnd()
         #expect(PlayerCheckHelper.newestLog(in: bench.helper.logs)?.lastPathComponent == Self.checkLog) // shown after a check that couldn't finish
+        withExtendedLifetime(bench.scratch) {}
     }
 
     @MainActor
     @Test("Stop after a check ended changes nothing")
     func stopAfterTheEnd() async throws {
         let bench = try finishedCheck()
-        defer { try? FileManager.default.removeItem(at: bench.folder) }
         _ = await bench.run.waitForEnd()
         bench.run.stop() // ended: nothing to stop
         #expect(await bench.run.waitForEnd() == .finished(bench.found))
+        withExtendedLifetime(bench.scratch) {}
     }
 
     @MainActor
     @Test("Stop ends a check once the helper has put things back")
     func stopEndsTheCheck() async throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let scratch = TemporaryFolder("PlayerCheckHelperTests", create: false)
         let waiting = try PlayerCheckHelper.standIn(#"""
             trap 'kill $! 2>/dev/null; echo "  put back"; exit 143' TERM
             echo "Press Test"
             sleep 30 &
             wait
-            """#, in: folder.appending(path: "waiting"))
+            """#, in: scratch.appending(path: "waiting"))
         let stopped = Report()
         let stopping = try waiting.check(URL(filePath: "/Applications/Player.app"), taps: true) { stopped.lines.append($0) }
         await TestWait.until { stopped.lines == ["Press Test"] }
         stopping.stop()
         #expect(await stopping.waitForEnd() == .stopped)
         #expect(stopped.lines == ["Press Test", "  put back"])
+        withExtendedLifetime(scratch) {}
     }
 
     @Test("the helper is found inside AutoHush.app, or beside the executable of a build run from .build, where it can run")
     func bundled() throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
-        defer { try? FileManager.default.removeItem(at: folder) }
-        let app = folder.appending(path: "AutoHush.app")
+        let scratch = TemporaryFolder("PlayerCheckHelperTests", create: false)
+        let app = scratch.appending(path: "AutoHush.app")
         let executable = app.appending(path: "Contents/MacOS/AutoHush")
         #expect(PlayerCheckHelper.bundled(in: app, beside: executable) == nil)
 
@@ -140,13 +142,13 @@ struct PlayerCheckHelperTests {
         #expect(PlayerCheckHelper.bundled(in: app, beside: executable) == nil)
         let beside = try PlayerCheckHelper.standIn("exit 0", in: executable.deletingLastPathComponent())
         #expect(PlayerCheckHelper.bundled(in: app, beside: executable)?.url.path == beside.url.path)
+        withExtendedLifetime(scratch) {}
     }
 
     @Test("Show Log opens the newest run's log the helper wrote, never another file there (Finder's .DS_Store, once the folder was opened)")
     func newestLog() throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "PlayerCheckHelperTests-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: folder) }
+        let scratch = TemporaryFolder("PlayerCheckHelperTests")
+        let folder = scratch.url
         #expect(PlayerCheckHelper.newestLog(in: folder) == nil)
         let names = ["2026-10-19 09.00.00.000 Player check.log", "2026-10-19 10.00.00.000 Player check.log", ".DS_Store", "notes.log", "Open Me.command"]
         for (index, name) in names.enumerated() {
@@ -155,6 +157,7 @@ struct PlayerCheckHelperTests {
             try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSinceNow: Double(index - 10) * 60)], ofItemAtPath: url.path)
         }
         #expect(PlayerCheckHelper.newestLog(in: folder)?.lastPathComponent == names[1])
+        withExtendedLifetime(scratch) {}
     }
 
     @Test("the Now Playing list: each app's bundle ID and whether it plays, apart from those removed and the active line")

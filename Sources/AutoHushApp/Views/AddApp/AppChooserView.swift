@@ -17,28 +17,21 @@ struct AppChooserView: View {
     static let width = AddAppView.width
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: 8) {
-                WindowHeader(icon: NSApp.applicationIconImage, description: Text(verbatim: AddAppText.chooserDescription))
-                SearchField(text: $model.search, focusesOnAppear: true, onSubmit: chooseSelected, onMove: moveSelection)
-                    .padding(.top, 8)
-                Card { list }
-                if let problem = model.otherAppProblem { NoteLabel(AddAppText.otherAppProblem(problem)) }
-            }
-            .windowMargins()
-            BottomBar {
-                Button(action: otherApp) { Text(verbatim: AddAppText.otherApp) }
-                    .buttonStyle(.chip)
-                Spacer()
-                Button(action: close) { Text(verbatim: AddAppText.cancel) }
-                    .buttonStyle(.chip)
-                    .keyboardShortcut(.cancelAction)
-                MainButton(AddAppText.choose, action: chooseSelected)
-                    .disabled(selected == nil)
-            }
+        WindowPage(icon: NSApp.applicationIconImage, description: Text(verbatim: AddAppText.chooserDescription), width: Self.width) {
+            SearchField(text: $model.search, focusesOnAppear: true, onSubmit: chooseSelected, onMove: moveSelection)
+                .padding(.top, 8)
+            Card { list }
+            if let problem = model.otherAppProblem { NoteLabel(AddAppText.otherAppProblem(problem)) }
+        } bar: {
+            Button(action: otherApp) { Text(verbatim: AddAppText.otherApp) }
+                .buttonStyle(.chip)
+            Spacer()
+            Button(action: close) { Text(verbatim: ButtonText.cancel) }
+                .buttonStyle(.chip)
+                .keyboardShortcut(.cancelAction)
+            MainButton(AddAppText.choose, action: chooseSelected)
+                .disabled(selected == nil)
         }
-        .frame(width: Self.width)
-        .font(.appBody)
         // VoiceOver hears why a pick on the disk can't be checked.
         .onChange(of: model.otherAppProblem) { _, problem in
             if let problem { AccessibilityNotification.Announcement(AddAppText.otherAppProblem(problem)).post() }

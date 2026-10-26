@@ -1,6 +1,5 @@
 import AppKit
 import Foundation
-import os
 import Testing
 import AutoHushKit
 
@@ -251,7 +250,7 @@ package final class StateReports {
 /// itself through a tap, which `allowTaps` turns off.
 package actor MockMutingMusicPlayer: MutingMusicPlayer {
     package let mock: MockMusicPlayer
-    private let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
+    private let tapsAllowed = Locked(true)
 
     package init(_ mock: MockMusicPlayer) {
         self.mock = mock
@@ -260,9 +259,9 @@ package actor MockMutingMusicPlayer: MutingMusicPlayer {
     package nonisolated var bundleID: String { mock.bundleID }
     package nonisolated var name: String { mock.name }
     package nonisolated var stateReportDelay: TimeInterval { mock.stateReportDelay }
-    package nonisolated var tapsAreAllowed: Bool { tapsAllowed.withLock { $0 } }
+    package nonisolated var tapsAreAllowed: Bool { tapsAllowed.value }
 
-    package nonisolated func allowTaps(_ allowed: Bool) { tapsAllowed.withLock { $0 = allowed } }
+    package nonisolated func allowTaps(_ allowed: Bool) { tapsAllowed.value = allowed }
 
     /// Runs inside every check before muting, so a test can hold one there
     /// while it changes something.
@@ -288,9 +287,10 @@ package actor MockMutingMusicPlayer: MutingMusicPlayer {
     package func volume() async -> Int? { await mock.volume() }
     package func setVolume(_ volume: Int) async throws { try await mock.setVolume(volume) }
 
+    /// Its inner mock's observer, so `userSets` on the mock reaches it too.
     @MainActor
     package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        MockStateObserver()
+        mock.makeStateObserver(onChange: onChange)
     }
 }
 

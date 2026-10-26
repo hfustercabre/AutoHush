@@ -4,7 +4,7 @@ import Testing
 @testable import ScriptablePlayers
 
 /// The check's AppleScript, chosen as AutoHush chooses it (`ScriptSetup`).
-@Suite("playercheck: its AppleScript")
+@Suite("playercheck: its AppleScript", .readOnlyRun)
 struct ScriptControlsTests {
     private func dictionary(_ xml: String) throws -> Scripting {
         try #require(Scripting.parse(XMLDocument(xmlString: xml)))

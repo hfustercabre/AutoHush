@@ -32,7 +32,7 @@ extension AppDelegateTests {
         #expect(sut.status.health == .needsPlayer("Choose a media player"))
         #expect(!sut.status.playerOptions.isEmpty && sut.status.playerOptions.allSatisfy { !$0.isInstalled })
 
-        sut.chooseMusicPlayer(Players.first)
+        sut.choosePlayer(Players.first)
         #expect(sut.player == nil)
         #expect(scratch.preferences.musicPlayer == nil)
         #expect(monitorings.made.isEmpty)
@@ -41,7 +41,7 @@ extension AppDelegateTests {
         scratch.installed = [Players.first]
         sut.refreshPlayerOptions()
         #expect(sut.status.health == .needsPlayer("Choose a media player"))
-        sut.chooseMusicPlayer(Players.first)
+        sut.choosePlayer(Players.first)
         #expect(sut.player?.bundleID == Players.first)
     }
 
@@ -51,7 +51,7 @@ extension AppDelegateTests {
         let scratch = Scratch()
         let (sut, monitorings) = makeSUT(scratch, chosenPlayer: nil)
 
-        sut.chooseMusicPlayer(Players.second)
+        sut.choosePlayer(Players.second)
         #expect(scratch.preferences.musicPlayer == Players.second)
         #expect(sut.status.playerName == "Second")
         #expect(!sut.settingsModel.playerCanFade) // its fade settings are dimmed
@@ -62,11 +62,11 @@ extension AppDelegateTests {
         await TestWait.until { sut.status.health == .ready }
         #expect(monitorings.made.map(\.bundleID) == [Players.second])
 
-        sut.chooseMusicPlayer(Players.second)
+        sut.choosePlayer(Players.second)
         await sut.session.waitUntilIdle()
         #expect(monitorings.made.count == 1)
 
-        sut.chooseMusicPlayer(Players.first)
+        sut.choosePlayer(Players.first)
         #expect(sut.status.playerName == "First")
         #expect(sut.settingsModel.playerCanFade)
         await TestWait.until { monitorings.made.count == 2 }
@@ -102,9 +102,9 @@ extension AppDelegateTests {
         scratch.preferences.detectionMethod = .playbackSignals // AntiDot mode
         let (sut, monitorings) = makeSUT(scratch)
 
-        sut.chooseMusicPlayer(Players.second)
-        sut.chooseMusicPlayer("com.example.unknown")
-        sut.chooseMusicPlayer(HeardPlayer.id)
+        sut.choosePlayer(Players.second)
+        sut.choosePlayer("com.example.unknown")
+        sut.choosePlayer(HeardPlayer.id)
         #expect(sut.player?.bundleID == Players.first)
         #expect(scratch.preferences.musicPlayer == Players.first)
         #expect(monitorings.made.isEmpty)
@@ -136,7 +136,7 @@ extension AppDelegateTests {
         #expect(sut.isShowingPlayerChooser)
         #expect(monitorings.made.isEmpty)
 
-        sut.chooseMusicPlayer(Players.second)
+        sut.choosePlayer(Players.second)
         // It goes on to what the player needs, and closes once done.
         #expect(sut.isShowingPlayerChooser)
         #expect(sut.settingsModel.welcomeAsksPermissions)
@@ -188,7 +188,7 @@ extension AppDelegateTests {
         #expect(sut.status.ignoredApps.isEmpty)
 
         // Once another player is chosen, it's an app like any other.
-        sut.chooseMusicPlayer(Players.second)
+        sut.choosePlayer(Players.second)
         #expect(sut.settingsModel.appList.apps.map(\.id) == [Players.first, "org.videolan.vlc"])
         #expect(sut.status.ignoredApps == [first])
     }
@@ -250,7 +250,7 @@ extension AppDelegateTests {
         scratch.installed.insert(setup.bundleID)
         let (sut, _) = makeSUT(scratch, chosenPlayer: setup.bundleID)
         sut.refreshDiagnostics()
-        #expect(sut.settingsModel.diagnostics?.text.contains("Controlled by: \(AddAppText.wayTitle(.menu))") == true)
+        #expect(sut.settingsModel.diagnostics?.text.contains("Controlled by: \(WayText.title(.menu))") == true)
     }
 
     @MainActor
@@ -283,7 +283,7 @@ extension AppDelegateTests {
         #expect(await scratch.first.verifyCallCount == 0)
         #expect(await scratch.second.verifyCallCount == 0)
 
-        sut.chooseMusicPlayer(Players.second) // also closes the welcome window
+        sut.choosePlayer(Players.second) // also closes the welcome window
         await TestWait.until { sut.status.health != .starting }
         #expect(sut.status.health == .ready)
         #expect(await scratch.second.verifyCallCount == 1)
@@ -448,7 +448,7 @@ extension AppDelegateTests {
         #expect(sut.status.recentSources() == [vlc])
         let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
         monitorings.made[0].send(.activeSources([safari]))
-        sut.chooseMusicPlayer(Players.second)
+        sut.choosePlayer(Players.second)
         #expect(sut.status.activeSources.isEmpty)
         #expect(sut.status.recentSources() == [safari, vlc])
     }
@@ -505,7 +505,7 @@ extension AppDelegateTests {
         let applicationFolders = Set(ApplicationFolders.all.map(\.path))
         #expect(sut.watchedFolders == applicationFolders)
 
-        sut.chooseMusicPlayer(Players.second) // in a folder inside /Applications
+        sut.choosePlayer(Players.second) // in a folder inside /Applications
         #expect(sut.watchedFolders == applicationFolders.union(["/Applications/Players"]))
 
         // Gone: the Applications folders are enough to notice it coming back.

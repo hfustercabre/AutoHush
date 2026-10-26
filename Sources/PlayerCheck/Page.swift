@@ -354,7 +354,7 @@ struct PageCheck {
 @MainActor func pageButtonToPress(pid: pid_t, pausing: Bool) -> FoundButton? {
     let wanted: PlayerState = pausing ? .playing : .paused // what its words say when it's the one to press
     // The button learned in this run, as AutoHush presses a web app's: when
-    // its words say what's wanted, or it toggles while a surer sign tells how it is.
+    // its words say what's wanted, or it toggles while its scripted state or report tells how it is.
     if let learned {
         let words = label(of: learned.element)
         let says = learned.recipe.state(of: PageButton(handle: ButtonHandle(0), label: words))

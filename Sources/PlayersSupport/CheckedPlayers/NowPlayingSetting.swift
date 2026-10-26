@@ -56,15 +56,16 @@ package enum NowPlayingSetting {
     static func isHidden(_ value: Int?) -> Bool { value.map { $0 & hiddenFlag != 0 } ?? false }
 
     /// Runs `body` with Now Playing shown in the menu bar, when the user hid
-    /// it (and its item shows within a second), then hides it again; `nil`
-    /// when it wasn't hidden or didn't show.
+    /// it (and its item shows within `wait` seconds, a second unless a test
+    /// says less), then hides it again; `nil` when it wasn't hidden or didn't
+    /// show.
     package static func whileShown<T>(defaults: UserDefaults = .standard, setting: Setting = .controlCenter,
-                                      until shown: () -> Bool, _ body: () -> T) -> T? {
+                                      waitingUpTo wait: TimeInterval = 1, until shown: () -> Bool, _ body: () -> T) -> T? {
         guard let original = setting.read(), original & hiddenFlag != 0 else { return nil }
         defaults.set(["value": original, "pid": Int(getpid())], forKey: leftKey)
         setting.write(shownWhenActive)
         defer { putBack(original, defaults: defaults, setting: setting) }
-        guard Polling.wait(seconds: 1, every: 0.05, until: shown) else { return nil }
+        guard Polling.wait(seconds: wait, every: 0.05, until: shown) else { return nil }
         return body()
     }
 
