@@ -145,7 +145,8 @@ actor PanelWay: MusicPlayer {
                 guard let row = PanelRows.row(in: rows, pausing: pausing, appName: name, otherApps: now.otherApps, texts: now.texts,
                                               remembered: remembered, holdsNowPlaying: pausing && now.holdsNowPlaying, asToggle: asToggle)
                 else { return nil }
-                guard !told || row.text == remembered
+                // Remembered without its times (`withoutTimes`), as the row is compared.
+                guard !told || remembered.map({ PanelRows.withoutTimes(row.text) == PanelRows.withoutTimes($0) }) == true
                         || !PanelRows.appRows([row], appName: name, otherApps: now.otherApps, texts: now.texts).isEmpty else {
                     declined = true
                     return nil

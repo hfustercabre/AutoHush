@@ -11,8 +11,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **Add an App** warns on every way that works only in some window
   states, not only on the recommended one.
-- **About** shows AutoHush's version once in its page: the Updates row says
-  when the last check was.
+- **About**'s Updates row says when the last check was, instead of
+  repeating AutoHush's version.
 
 ### Fixed
 

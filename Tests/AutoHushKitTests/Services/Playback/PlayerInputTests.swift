@@ -86,34 +86,19 @@ struct PlayerInputTests {
     /// Clicks in no player's window.
     private var noClicks: PlayerWindowClicks { PlayerWindowClicks { _ in false } }
 
-    /// A window as `CGWindowListCopyWindowInfo` lists it.
-    private func window(_ frame: CGRect, owner: pid_t, alpha: Double = 1) -> [String: Any] {
-        [kCGWindowBounds as String: frame.dictionaryRepresentation as NSDictionary,
-         kCGWindowOwnerPID as String: NSNumber(value: owner), kCGWindowAlpha as String: alpha]
-    }
-
-    @Test("a click lands in the frontmost window under it that can be seen")
-    func clickOwner() {
-        let menu = window(CGRect(x: 1000, y: 24, width: 200, height: 120), owner: 42)
-        let icon = window(CGRect(x: 1100, y: 0, width: 24, height: 24), owner: 42)
-        let clear = window(CGRect(x: 0, y: 0, width: 2000, height: 2000), owner: 7, alpha: 0)
-        let browser = window(CGRect(x: 0, y: 0, width: 1600, height: 1000), owner: 99)
-        let windows = [clear, menu, icon, browser]
-        #expect(PlayerWindowClicks.owner(at: CGPoint(x: 1050, y: 60), in: windows) == 42) // its menu, over the browser
-        #expect(PlayerWindowClicks.owner(at: CGPoint(x: 1110, y: 10), in: windows) == 42) // its menu bar icon
-        #expect(PlayerWindowClicks.owner(at: CGPoint(x: 300, y: 300), in: windows) == 99)
-        #expect(PlayerWindowClicks.owner(at: CGPoint(x: 1900, y: 1500), in: windows) == nil) // only the clear one
-    }
-
-    @Test("a click in the player's own window counts as the user's, the player not in front; one in another app's doesn't")
+    @Test("a click in the player's menu bar icon or menu counts as the user's, the player not in front; one in another app's, or in its ordinary window, doesn't")
     func clickInPlayersWindow() {
         let clicks = PlayerWindowClicks { $0 == 42 }
         let input = PlayerInput(bundleID: "com.example.menubarplayer", secondsSince: { _ in .infinity }, frontmost: { "com.apple.finder" },
                                 activations: NotificationCenter(), clicks: clicks)
         let before = Date().addingTimeInterval(-1)
-        let windows = [window(CGRect(x: 1100, y: 0, width: 24, height: 24), owner: 42),
-                       window(CGRect(x: 0, y: 0, width: 1600, height: 1000), owner: 99)]
+        let windows = [PlayerWindowClicksTests.window(CGRect(x: 1100, y: 0, width: 24, height: 24), owner: 42, layer: 25),
+                       PlayerWindowClicksTests.window(CGRect(x: 1200, y: 100, width: 300, height: 300), owner: 42),
+                       PlayerWindowClicksTests.window(CGRect(x: 0, y: 0, width: 1600, height: 1000), owner: 99)]
         clicks.take(at: CGPoint(x: 300, y: 300), windows: windows, date: Date()) // another app's window
+        #expect(!input.since(before))
+        // Its ordinary window: the click brings it forward, and it may play its trailer again.
+        clicks.take(at: CGPoint(x: 1300, y: 200), windows: windows, date: Date())
         #expect(!input.since(before))
         clicks.take(at: CGPoint(x: 1110, y: 10), windows: windows, date: Date()) // the player's menu bar icon
         #expect(input.since(before))

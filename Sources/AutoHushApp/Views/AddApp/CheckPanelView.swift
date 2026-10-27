@@ -96,9 +96,10 @@ struct CheckPanelView: View {
     /// The window states as segments, the one it's in, and what it does there.
     private func windowStep(_ step: CheckProgress.WindowStep) -> some View {
         let name = step.state.map(AddAppText.stateLabel) ?? ""
+        // None yet with its windows closed, where nothing is moved first.
         let activity = progress.activity.map(AddAppText.activity) ?? ""
         let stepText = AddAppText.stepOf(step.index, step.count)
         return CheckWindowStepView(index: step.index, count: step.count, name: name, stepText: stepText, activity: activity,
-                                   accessibilityText: [name, stepText, activity].joined(separator: ", "), look: Self.look)
+                                   accessibilityText: [name, stepText, activity].filter { !$0.isEmpty }.joined(separator: ", "), look: Self.look)
     }
 }

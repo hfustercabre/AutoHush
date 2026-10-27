@@ -234,6 +234,7 @@ extension PlaybackArbiter {
             pausedByUs = true
             pauseMute = .insteadOfPause
             pausePressedWhileMuted = nil
+            mutedPauseFailures = nil
             playerState = .playing
             pausedAt = clock()
             logger.info("[arbiter] \(self.player.name, privacy: .public) \(why, privacy: .public) — muted until the apps stop")

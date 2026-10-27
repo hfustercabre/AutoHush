@@ -187,6 +187,21 @@ struct PanelWayTests {
         #expect(none.pressed.isEmpty && none.openings == 1 && reads.value == 2)
     }
 
+    @Test("a remembered row, kept without its times, tells its row while it shows them, before its player bar is read")
+    func rememberedWithTimes() async throws {
+        let panel = FakePanel([PanelRow(text: "Other Song, Someone – Else 04:39 −05:21", playing: true)])
+        let reads = Locked(0)
+        let way = PanelWay(setup: setup, remembered: "Other Song, Someone – Else", store: MemorySetupStore(), panel: panel,
+                           processIdentifier: { 4242 },
+                           shown: { _ in PanelWay.Shown(titles: ["Jukebox"], otherApps: ["Finder"], holdsNowPlaying: false) },
+                           playerBar: { _ in
+                               reads.increment()
+                               return []
+                           })
+        try await way.pause()
+        #expect(panel.pressed == ["Other Song, Someone – Else 04:39 −05:21"] && panel.openings == 1 && reads.value == 0)
+    }
+
     @Test("the only row playing while it holds Now Playing is pressed once its player bar, read first, didn't tell another")
     func onlyPlayingAfterPlayerBar() async throws {
         let panel = FakePanel([PanelRow(text: "Something, Else – Entirely", playing: true)])
