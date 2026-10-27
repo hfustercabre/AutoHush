@@ -7,6 +7,8 @@ import AutoHushKit
 /// Restore Defaults.
 struct UpdatesCard: View {
     let model: SettingsModel
+    /// Opens the update pop-up from the keys.
+    @State private var popUp = PopUpOpener()
 
     var body: some View {
         Card(Text(verbatim: UpdateOffer.updatesTitle)) {
@@ -40,14 +42,19 @@ struct UpdatesCard: View {
                     .pickerStyle(.menu)
                     .buttonStyle(.borderless)
                     .fixedSize()
+                    .opened(by: popUp)
                     .disabled(model.updateInstallNote != nil)
                     .help(shown.explanation)
                     .accessibilityHint(Text(verbatim: shown.explanation))
                 }
                 if let note = model.updateInstallNote { Text(note).captionStyle() }
             }
-            // ← and → choose, while the arrow keys' highlight is on it.
-            .highlightableRow(adjust: { step in
+            // ← and → choose, while the arrow keys' highlight is on it;
+            // Return or Space shows the choices (`PopUpOpener`).
+            .highlightableRow(press: {
+                guard model.updateInstallNote == nil else { return }
+                popUp.open()
+            }, adjust: { step in
                 guard model.updateInstallNote == nil,
                       let mode = AutomaticUpdates.allCases.stepping(from: model.automaticUpdates, by: step) else { return }
                 model.updates.setMode(mode)

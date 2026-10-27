@@ -12,7 +12,7 @@ struct GeneralSettingsView: View {
     /// Under Keep icon next to system icons while the menu bar icon is hidden.
     private static var hiddenIconNote: String {
         String(localized: "The notch or other icons are hiding AutoHush’s icon in the menu bar.",
-               comment: "Settings → General, under Keep icon next to system icons, while AutoHush's menu bar icon is hidden behind the notch")
+               comment: "Settings → General, under Keep icon next to system icons, while AutoHush's menu bar icon is hidden: behind the notch, behind other apps' icons, or off the screen")
     }
 
     private static var approvalNote: String {

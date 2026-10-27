@@ -57,7 +57,7 @@ flowchart TD
   MENU --> WA
   MENU --> AA --> AU
   MENU --> SET
-  AGAIN -->|"no window of its own<br/>showing: General, saying<br/>when the notch hides the icon"| SET
+  AGAIN -->|"no window of its own<br/>showing: General, saying<br/>when the icon is hidden;<br/>one minimized comes back"| SET
   MENU --> UP
   MENU -->|"Quit"| Q
   UP -->|"install"| Q

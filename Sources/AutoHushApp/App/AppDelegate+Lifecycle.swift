@@ -8,11 +8,31 @@ extension AppDelegate {
     /// Settings → General, as other menu bar apps open their settings, and
     /// its way in when the menu bar icon is hidden, which General then says
     /// (R2 with R3's note, the user, 2026-10-26). With one of its windows
-    /// showing, AppKit brings it forward as usual.
+    /// showing, AppKit brings it forward as usual; with one only minimized,
+    /// that one comes back as it was (`minimizedWindows`).
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         guard !flag else { return true }
-        openSettings(page: .general)
+        if let bringBack = minimizedWindows.first {
+            bringBack()
+        } else {
+            openSettings(page: .general)
+        }
         return false
+    }
+
+    /// How to bring back each of AutoHush's windows that's open but not
+    /// showing (minimized), those waiting on the user first: Settings keeps
+    /// its page (N1, the user, 2026-10-27: it switched to General, and a
+    /// minimized welcome or Add an App window stayed in the Dock).
+    private var minimizedWindows: [() -> Void] {
+        var bringBack: [() -> Void] = []
+        if let chooser = playerChooser, chooser.isOpen { bringBack.append { chooser.show() } }
+        if let window = addApp?.window, window.isOpen { bringBack.append { window.show() } }
+        if addWebApp?.isOpen == true { bringBack.append { [weak self] in self?.addWebApp.show() } }
+        if let learning = learningWindow, learning.isOpen { bringBack.append { learning.show() } }
+        if settingsWindowController?.window?.isOpen == true { bringBack.append { [weak self] in self?.openSettings() } }
+        if let logs = logsWindowController, logs.window?.isOpen == true { bringBack.append { logs.show() } }
+        return bringBack
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {

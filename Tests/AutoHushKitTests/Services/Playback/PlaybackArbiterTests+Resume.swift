@@ -748,4 +748,17 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
         #expect(await player.state == .paused)
     }
+
+    @Test("Auto-Pause turned off brings the music back at once, without listening to the quiet apps")
+    func autoPauseOffSkipsQuietListen() async {
+        let player = MockMusicPlayer()
+        let listens = Locked(0)
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing,
+                                      quietAppPlaysAgain: { listens.withLock { $0 += 1 }; return true })
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await TestWait.until { await player.pauseCallCount == 1 }
+        await arbiter.setAutoPauseEnabled(false)
+        await TestWait.until { await player.playCallCount == 1 }
+        #expect(listens.value == 0)
+    }
 }

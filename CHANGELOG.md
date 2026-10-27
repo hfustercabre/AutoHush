@@ -15,16 +15,20 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Tidier Settings.** A card's **Restore Defaults** shows only once one
   of its settings differs from its default (**Launch at login** is yours:
   it doesn't count, and Restore Defaults leaves it alone), and VoiceOver
-  reads it with the card's name; **Stay paused after calls**
+  reads it with the card's name; pressed from the keyboard, the
+  highlight moves to the card's first row and VoiceOver says “Restored”;
+  **Stay paused after calls**
   sits under **Resume playback**, as a part of it; Sound Sources' list is
   headed **Apps**.
-- **Clearer messages.** The alert after "Can't control" says why once in
-  English, and Add an App's recommended way says, beside an orange
-  warning sign, where it doesn't work.
+- **Clearer messages.** The alerts behind the ⓘ ("Can't control",
+  "Couldn't pause", "Couldn't resume") say why once, in English, and Add
+  an App's recommended way says, beside an orange warning sign, where it
+  doesn't work.
 - **Quiet apps heard again.** An app that goes quiet but keeps its sound
-  open, as games and audio apps do, is heard again within 30 s while your
-  player plays, and just before AutoHush resumes it, so the music doesn't
-  come back over it. Apps you ignore aren't listened to.
+  open, as games and audio apps do, is heard again while your player plays
+  (a short listen every 30 s), and just before AutoHush resumes it, so the
+  music doesn't come back over it. Apps you ignore aren't listened to, and
+  nothing is in AntiDot mode.
 
 ### Fixed
 
@@ -35,11 +39,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **The menu's card lights up again** under the pointer after the pointer
   has been on **Change Player**.
 - **Opening AutoHush again** while it runs (from Finder, Spotlight or
-  Launchpad) opens Settings → General, which says when the notch is hiding
-  its menu bar icon. Before, nothing happened.
-- **Add an App's check** judges each pause and play by the same signs, in
-  the same order, as AutoHush then reads the app, so a way it approves
-  works the same afterwards.
+  Launchpad) opens Settings → General, which says when the notch or other
+  icons hide its menu bar icon, or brings back a window of its own you
+  minimized, Settings on its page. Before, nothing happened.
+- **About's update pop-up** opens with Return or Space once the arrow keys
+  reach it, as a pop-up does.
+- **Add an App's check** judges a pause or play through an app's script,
+  page or menu by the same signs, in the same order, as AutoHush then
+  reads the app, so a way it approves works the same afterwards.
 
 ## [1.2.0] — 2026-10-25
 

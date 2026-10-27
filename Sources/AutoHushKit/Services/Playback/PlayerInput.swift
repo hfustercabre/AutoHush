@@ -24,15 +24,20 @@ package final class PlayerInput: NSObject, Sendable {
     /// How long ago the latest input of a kind came (`UserInput.secondsSince`).
     private let secondsSince: @Sendable (CGEventType) -> Double
 
+    /// `frontmost`, the frontmost app's bundle ID, and `activations`, where
+    /// macOS says an app came forward: tests give their own (1.2.1's
+    /// review: these were never tested).
     package init(bundleID: String,
-                 secondsSince: @escaping @Sendable (CGEventType) -> Double = UserInput.secondsSince) {
+                 secondsSince: @escaping @Sendable (CGEventType) -> Double = UserInput.secondsSince,
+                 frontmost: () -> String? = { NSWorkspace.shared.frontmostApplication?.bundleIdentifier },
+                 activations: NotificationCenter = NSWorkspace.shared.notificationCenter) {
         self.bundleID = bundleID
         self.secondsSince = secondsSince
         super.init()
-        if NSWorkspace.shared.frontmostApplication?.bundleIdentifier == bundleID {
+        if frontmost() == bundleID {
             spans.withLock { $0 = [(Date(), nil)] }
         }
-        NSWorkspace.shared.notificationCenter.addObserver(
+        activations.addObserver(
             self, selector: #selector(activated(_:)), name: NSWorkspace.didActivateApplicationNotification, object: nil
         )
     }

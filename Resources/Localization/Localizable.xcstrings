@@ -135417,7 +135417,7 @@
       }
     },
     "The notch or other icons are hiding AutoHush’s icon in the menu bar." : {
-      "comment" : "Settings → General, under Keep icon next to system icons, while AutoHush's menu bar icon is hidden behind the notch",
+      "comment" : "Settings → General, under Keep icon next to system icons, while AutoHush's menu bar icon is hidden: behind the notch, behind other apps' icons, or off the screen",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

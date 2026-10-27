@@ -315,4 +315,16 @@ extension AppDelegateTests {
         #expect(sut.settingsWindowController?.window?.isVisible == true)
         #expect(sut.settingsWindowController?.window?.title == SettingsWindowController.Page.general.title)
     }
+
+    @MainActor
+    @Test("AutoHush opened again with a window of its own only minimized brings that one back, not Settings")
+    func reopenBringsBackMinimizedWindow() {
+        let (sut, _) = makeSUT()
+        let chooser = FakePlayerChooser()
+        sut.playerChooser = chooser
+        chooser.show() // open, but not showing: AppKit says no window is visible
+        #expect(!sut.applicationShouldHandleReopen(NSApplication.shared, hasVisibleWindows: false))
+        #expect(chooser.shown == 2)
+        #expect(sut.settingsWindowController == nil)
+    }
 }

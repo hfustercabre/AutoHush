@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Foundation
 import Testing
@@ -51,5 +52,34 @@ struct PlayerInputTests {
         spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.videolan.vlc",
                                   at: front.addingTimeInterval(5 + PlayerInput.spanMemory + 1))
         #expect(spans.isEmpty)
+    }
+
+    @Test("the player in front as it starts counts from then; another app in front doesn't", arguments: [true, false])
+    func frontAtStart(_ playerInFront: Bool) {
+        let input = PlayerInput(bundleID: "org.videolan.vlc", secondsSince: { _ in 0 },
+                                frontmost: { playerInFront ? "org.videolan.vlc" : "com.apple.Safari" },
+                                activations: NotificationCenter())
+        #expect(input.since(Date().addingTimeInterval(-1)) == playerInFront)
+    }
+
+    @Test("the player coming forward counts from then, as macOS says so; another app coming forward ends it")
+    func comingForward() throws {
+        // A running app with a bundle ID stands for the player: macOS hands one over.
+        let app = try #require(NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier != nil })
+        let player = try #require(app.bundleIdentifier)
+        let center = NotificationCenter()
+        let input = PlayerInput(bundleID: player, secondsSince: { _ in 0 }, frontmost: { nil }, activations: center)
+        let before = Date().addingTimeInterval(-1)
+        #expect(!input.since(before))
+        center.post(name: NSWorkspace.didActivateApplicationNotification, object: nil,
+                    userInfo: [NSWorkspace.applicationUserInfoKey: app])
+        #expect(input.since(before))
+
+        let other = try #require(NSWorkspace.shared.runningApplications.first {
+            $0.bundleIdentifier != nil && $0.bundleIdentifier != player
+        })
+        center.post(name: NSWorkspace.didActivateApplicationNotification, object: nil,
+                    userInfo: [NSWorkspace.applicationUserInfoKey: other])
+        #expect(!input.since(before)) // input now is the other app's
     }
 }
