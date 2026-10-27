@@ -24,6 +24,8 @@ final class KeyHighlight {
         /// the keys go part by part, so rows a scrolling middle hides never
         /// mix with the buttons pinned under it.
         var band = HighlightBand.middle
+        /// The card it's in (`Card`), if any.
+        var group: UUID?
         /// A dimmed one is skipped.
         var isEnabled = true
         var press: (() -> Void)?
@@ -232,8 +234,26 @@ final class KeyHighlight {
     /// Presses the highlighted control; `false` when there's none to press.
     @discardableResult func press() -> Bool {
         guard let control = highlightedControl, let press = control.press else { return false }
+        isPressing = true
+        defer { isPressing = false }
         press()
         return true
+    }
+
+    /// Whether the keys are pressing the highlighted control now (`press`):
+    /// what the press does may move the highlight on (Restore Defaults).
+    @ObservationIgnored private(set) var isPressing = false
+
+    /// The highlight on the first control of `group` that takes it (a
+    /// card's first usable row), once what the press changed is drawn: a
+    /// row it turns on or off has registered so by then.
+    func highlightFirst(in group: UUID) {
+        RunLoop.main.perform { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, let first = self.rows.joined().first(where: { self.controls[$0]?.group == group }) else { return }
+                self.highlight(first)
+            }
+        }
     }
 
     /// Delete on the highlighted control; `false` when it takes none.

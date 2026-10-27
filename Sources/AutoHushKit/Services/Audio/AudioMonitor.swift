@@ -83,7 +83,7 @@ final class AudioMonitor: @unchecked Sendable {
     /// closes and opens again, or once it tells macOS it plays anew: one that keeps
     /// saying so in silence (a call app through a quiet stretch) isn't.
     /// While the player plays, it's also listened to again now and then
-    /// (`quietListenInterval`).
+    /// (`quietListenInterval`), and once before a resume (`listenToQuietApps`).
     static let silentTapRelease: TimeInterval = 10
     /// While the player plays (so AutoHush may have to pause it), the
     /// processes released for their silence are listened to again this
@@ -91,7 +91,9 @@ final class AudioMonitor: @unchecked Sendable {
     /// `quietListenDuration`: one that plays again without a word to macOS
     /// (a game, an audio app keeping its output open) is heard, and counts
     /// as playing (the user, 2026-10-26). Never in AntiDot mode, which taps
-    /// nothing; timed by `clock`, at the ticks.
+    /// nothing, nor for an app the user ignored, which can't pause the music
+    /// (R1, the user, 2026-10-27: `quietProcessesToListen`); timed by
+    /// `clock`, at the ticks.
     static let quietListenInterval: TimeInterval = 30
     /// How long each of those listens lasts: the recording indicator shows
     /// only meanwhile.
@@ -149,6 +151,13 @@ final class AudioMonitor: @unchecked Sendable {
     var quietListenedAt: Date?
     /// Until when they're listened to, while they are.
     var quietListenUntil: Date?
+    /// The listen under way was asked for (`listenToQuietApps`), so it goes
+    /// on while the player doesn't play.
+    var quietListenAsked = false
+    /// One of them was heard, or said it plays, during the listen under way.
+    var quietListenHeard = false
+    /// Who waits for the listen under way to end (`listenToQuietApps`).
+    var quietListenWaiters: [CheckedContinuation<Bool, Never>] = []
     /// `nil` while the permission cannot be read (no checker, or TCC unavailable).
     var permissionStatus: AudioCapturePermission?
     var lastPermissionCheck: Date?
@@ -379,6 +388,7 @@ final class AudioMonitor: @unchecked Sendable {
     /// that become ignored stop for the arbiter at once, and vice versa. One
     /// no longer ignored starts without saying when it was first heard: it
     /// was playing all along, so nothing that happened meanwhile is its doing.
+    /// One ignored while it's listened to again is let go at once.
     func setIgnoredSources(_ ids: Set<String>) {
         queue.async {
             let previous = self.ignoredSourceIDs
@@ -386,6 +396,7 @@ final class AudioMonitor: @unchecked Sendable {
             for id in self.tracker.activeSources.sorted() where previous.contains(id) != ids.contains(id) {
                 self.events.yield(.source(id: id, isPlaying: previous.contains(id), heardSince: nil))
             }
+            if self.quietListenUntil != nil { self.updateMeteredProcesses(at: self.clock()) }
         }
     }
 

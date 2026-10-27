@@ -21,7 +21,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   doesn't work.
 - **Quiet apps heard again.** An app that goes quiet but keeps its sound
   open, as games and audio apps do, is heard again within 30 s while your
-  player plays.
+  player plays, and just before AutoHush resumes it, so the music doesn't
+  come back over it. Apps you ignore aren't listened to.
 
 ### Fixed
 

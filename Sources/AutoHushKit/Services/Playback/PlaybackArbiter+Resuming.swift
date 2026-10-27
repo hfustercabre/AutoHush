@@ -95,6 +95,17 @@ extension PlaybackArbiter {
     /// that and do not override their intent. Gives up when the pending
     /// resume `id` was cancelled or replaced while the player was queried.
     private func resumeNow(id: UUID, retriesLeft: Int) async {
+        // An app that went quiet with its sound kept open (a game) is
+        // listened to first: playing again, it may soon count as playing,
+        // so the resume waits as long as an app takes to count, then looks
+        // again (R2, the user, 2026-10-27). Not on a retry's way.
+        if retriesLeft == Self.resumeRetries, await quietAppPlaysAgain() {
+            guard !isShutDown, pendingResumeID == id else { return }
+            logger.info("[arbiter] resume waits — an app that went quiet plays again")
+            scheduleResume(after: startConfirmation + Self.takeOverMargin)
+            return
+        }
+        guard !isShutDown, pendingResumeID == id else { return }
         let currentState = await livePlayerState()
         guard !isShutDown, pendingResumeID == id else { return }
         if currentState == .unknown, retriesLeft > 0 {

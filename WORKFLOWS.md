@@ -142,7 +142,7 @@ flowchart TD
   OWN["The player itself,<br/>system sounds:<br/>never count"]
   IGN["An ignored app (display<br/>apps’ volume sound: ignored<br/>from their first run, and<br/>after Reset List…): listed<br/>under Playing Now, never pauses"]
   DM{"Detection"}
-  NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays (one that<br/>keeps saying so stays measured;<br/>while your player plays,<br/>listened to 0.5 s every 30 s)"]
+  NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays (one that<br/>keeps saying so stays measured;<br/>listened to 0.5 s every 30 s<br/>while your player plays, and<br/>once before it resumes; never<br/>an app you ignore)"]
   ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s (any<br/>sound 2 s, with open streams)"]
   MIC["Pause for the microphone<br/>on: its microphone on<br/>for 1 s counts, sound or<br/>not (the card: “is using<br/>the microphone”)"]
   T{"Playing<br/>for 0.5 s?"}
@@ -165,6 +165,7 @@ flowchart TD
   Q{"Every app quiet<br/>for 2 s?"}
   MORE["More apps start or<br/>play on: it stays paused"]
   RES{"Resume playback<br/>on?"}
+  QL{"An app that went quiet<br/>plays again? (listened to<br/>0.5 s, not in AntiDot mode)"}
   CHK{"Still paused as<br/>AutoHush left it?"}
   USER["Not resumed: you played,<br/>paused or quit it yourself,<br/>or it’s stopped"]
   RETRY["No answer: tried twice<br/>more, a second apart"]
@@ -214,7 +215,9 @@ flowchart TD
   Q -->|"no"| MORE --> Q
   Q -->|"yes"| RES
   RES -->|"off"| STAY
-  RES -->|"on"| CHK
+  RES -->|"on"| QL
+  QL -->|"yes: waits as long as<br/>an app takes to count"| Q
+  QL -->|"no, or none"| CHK
   CHK -->|"no"| USER
   CHK -->|"no answer"| RETRY --> CHK
   RETRY -->|"still none"| NORES["Couldn’t resume: orange,<br/>with Try Again (asks again;<br/>also in Settings, and in<br/>its alert)"]

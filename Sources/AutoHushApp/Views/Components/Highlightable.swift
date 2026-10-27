@@ -74,6 +74,7 @@ struct Highlightable: ViewModifier {
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.highlightBand) private var band
     @Environment(\.highlightRemoval) private var removal
+    @Environment(\.highlightGroup) private var group
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     /// What pressing it does as it was drawn last: registered once, its
@@ -110,7 +111,7 @@ struct Highlightable: ViewModifier {
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { keyboard.update(id, frame: $0) }
                 .onAppear {
                     let actions = actions
-                    keyboard.register(id, .init(band: band, isEnabled: enabled,
+                    keyboard.register(id, .init(band: band, group: group, isEnabled: enabled,
                                                 press: press == nil ? nil : { actions.press?() },
                                                 adjust: adjust == nil ? nil : { actions.adjust?($0) },
                                                 delete: removal == nil ? nil : { actions.delete?() },
@@ -174,6 +175,9 @@ extension EnvironmentValues {
     @Entry var highlightBand = HighlightBand.middle
     /// Set around a control Delete removes (an added app's tile).
     @Entry var highlightRemoval: HighlightRemoval?
+    /// The card a highlightable control is in (`Card`), so the highlight can
+    /// go to the card's first row (`KeyHighlight.highlightFirst(in:)`).
+    @Entry var highlightGroup: UUID?
 }
 
 /// What Delete does on a highlighted control that can be removed (an added

@@ -17,8 +17,9 @@ struct UpdatesCard: View {
             // What checks lead to only matters while they run: greyed out otherwise.
             CardDivider()
             // A pop-up menu, as System Settings has them (A4, the user's pick,
-            // 2026-10-26: chips were too much); what the choice does is its
-            // help tag and VoiceOver hint.
+            // 2026-10-26: chips were too much), borderless as every pop-up
+            // (U3, the user, 2026-10-27); what the choice does is its help
+            // tag and VoiceOver hint.
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     let title = String(localized: "When an update is found", comment: "Settings → About: lead-in to what happens when an update is found")
@@ -36,6 +37,8 @@ struct UpdatesCard: View {
                         Text(verbatim: title)
                     }
                     .labelsHidden()
+                    .pickerStyle(.menu)
+                    .buttonStyle(.borderless)
                     .fixedSize()
                     .disabled(model.updateInstallNote != nil)
                     .help(shown.explanation)

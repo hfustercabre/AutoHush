@@ -143,6 +143,7 @@ package final class MonitoringPipeline {
             volumeLeveler: volumeLeveler,
             resumeOffset: { await monitorLink.monitor?.resumeOffsetDB() },
             hearsPlayer: { since in await monitorLink.monitor?.playerHearing(since: since) ?? .unknown },
+            quietAppPlaysAgain: { await monitorLink.monitor?.listenToQuietApps() ?? false },
             inputToPlayer: readers.playerInput(player.bundleID),
             playerMute: readers.playerMute(player.bundleID) { tapsAllowed.withLock { $0 } },
             tapsAllowed: { tapsAllowed.withLock { $0 } }

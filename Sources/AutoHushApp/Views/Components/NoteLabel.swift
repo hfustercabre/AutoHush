@@ -10,10 +10,14 @@ struct NoteLabel: View {
     /// Already localized.
     let text: String
     let kind: Kind
+    /// `appCallout`, or the notes' `appCaption` under a row's title (Add an
+    /// App's recommended way, U1, 2026-10-27).
+    let font: Font
 
-    init(_ text: String, kind: Kind = .warning) {
+    init(_ text: String, kind: Kind = .warning, font: Font = .appCallout) {
         self.text = text
         self.kind = kind
+        self.font = font
     }
 
     var body: some View {
@@ -29,7 +33,7 @@ struct NoteLabel: View {
                     .foregroundStyle(.appSecondary)
             }
         }
-        .font(.appCallout)
+        .font(font)
         .foregroundStyle(kind == .info ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
         .fixedSize(horizontal: false, vertical: true)
     }

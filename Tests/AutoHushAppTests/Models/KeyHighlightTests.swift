@@ -198,6 +198,30 @@ struct KeyHighlightTests {
         keyboard.hover(first, true)
         #expect(keyboard.light(first) === one && one.isOn) // the same, kept while it's there
     }
+
+    @Test("a press from the keys that removes its control (Restore Defaults) can leave the highlight on its card's first usable row, scrolled to")
+    func pressMovesToGroupsFirst() async {
+        let keyboard = KeyHighlight()
+        let card = UUID(), other = UUID()
+        let above = UUID(), dimmed = UUID(), firstUsable = UUID(), button = UUID()
+        keyboard.register(above, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 22), group: other))
+        keyboard.register(dimmed, .init(frame: CGRect(x: 0, y: 50, width: 300, height: 22), group: card, isEnabled: false))
+        keyboard.register(firstUsable, .init(frame: CGRect(x: 0, y: 80, width: 300, height: 22), group: card))
+        let pressing = Locked<Bool?>(nil)
+        keyboard.register(button, .init(frame: CGRect(x: 200, y: 120, width: 80, height: 22), group: card, press: {
+            pressing.withLock { $0 = keyboard.isPressing }
+            keyboard.highlightFirst(in: card)
+        }))
+        keyboard.move(-1) // the button, last
+        #expect(keyboard.highlighted == button)
+        keyboard.press()
+        keyboard.remove(button) // gone once pressed
+        #expect(pressing.value == true)
+        #expect(!keyboard.isPressing)
+        await TestWait.until { keyboard.highlighted == firstUsable }
+        #expect(keyboard.highlighted == firstUsable)
+        #expect(keyboard.revealed == firstUsable)
+    }
 }
 
 /// A menu-like layout: a title, five durations in a row, four buttons in a row.

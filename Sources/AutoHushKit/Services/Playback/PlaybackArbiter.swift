@@ -98,6 +98,10 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// opening listened so until the user dropped it (K5, 2026-10-26: macOS
     /// showed the purple dot each time).
     let hearsPlayer: @Sendable (_ since: Date?) async -> PlayerHearing
+    /// Listens once to the apps that went quiet with their sound kept open
+    /// (`AudioMonitor.listenToQuietApps`): whether one plays again. Asked
+    /// just before a resume (R2, the user, 2026-10-27).
+    let quietAppPlaysAgain: @Sendable () async -> Bool
     /// When AutoHush's pause, or its mute in place of one, took
     /// (`handleRestart`).
     var pausedAt: Date?
@@ -243,6 +247,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         volumeLeveler: any ResumeLeveling? = nil,
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
         hearsPlayer: @escaping @Sendable (_ since: Date?) async -> PlayerHearing = { _ in .unknown },
+        quietAppPlaysAgain: @escaping @Sendable () async -> Bool = { false },
         inputToPlayer: @escaping @Sendable (Date) -> Bool = { _ in true },
         playerMute: (any PlayerMuting)? = nil,
         tapsAllowed: @escaping @Sendable () -> Bool = { true }
@@ -265,6 +270,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.volumeLeveler = volumeLeveler
         self.resumeOffset = resumeOffset
         self.hearsPlayer = hearsPlayer
+        self.quietAppPlaysAgain = quietAppPlaysAgain
         self.inputToPlayer = inputToPlayer
         self.playerMute = playerMute
         self.tapsAllowed = tapsAllowed
@@ -609,7 +615,7 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     /// How long an app must play, at most, before the monitor counts it, as
     /// far as known: until it says, the user's start confirmation.
-    private var startConfirmation: TimeInterval {
+    var startConfirmation: TimeInterval {
         longestStartConfirmation ?? configuration.sourceStartConfirmation
     }
 

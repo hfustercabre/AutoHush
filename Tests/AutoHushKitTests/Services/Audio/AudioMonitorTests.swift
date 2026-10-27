@@ -580,6 +580,51 @@ struct AudioMonitorTests {
         #expect(h.meter.lastMetered == [])
     }
 
+    @Test("an ignored app released for its silence isn't listened to again (R1): no recording dot for an app that can't pause the music")
+    func ignoredQuietSourceNotListenedTo() async {
+        let h = Self.releasedRadioWithPlayerHarness()
+        h.monitor.setIgnoredSources(["com.example.radio"])
+        h.step(after: 40)
+        #expect(h.meter.lastMetered == [])
+        #expect(await h.monitor.listenToQuietApps() == false) // nothing to listen to, at once
+    }
+
+    @Test("asked before a resume, the apps released for their silence are listened to once, the player paused (R2): still silent, they stay released", arguments: [false, true])
+    func quietSourcesListenedToOnRequest(heard: Bool) async {
+        let h = Self.releasedRadioWithPlayerHarness()
+        h.monitor.setPlayerPlaying(false) // paused by AutoHush: no listen every 30 s
+        h.step(after: 5)
+        let monitor = h.monitor
+        let asked = Task { await monitor.listenToQuietApps() }
+        await h.meter.waitUntilMetered([2])
+        h.step(after: 0.25, peaks: heard ? [2: 0.4] : [2: 0])
+        h.step(after: 0.3, peaks: heard ? [2: 0.4] : [:]) // the half second is over
+        #expect(await asked.value == heard)
+        // Heard, it's tapped as any app (the player too); else released again.
+        #expect(h.meter.lastMetered == (heard ? [1, 2] : []))
+    }
+
+    @Test("an app ignored while it's listened to again is let go at once")
+    func quietSourceIgnoredDuringListen() {
+        let h = Self.releasedRadioWithPlayerHarness()
+        h.step(after: 30.25)
+        #expect(h.meter.lastMetered == [2])
+        h.monitor.setIgnoredSources(["com.example.radio"])
+        h.monitor.queue.sync {} // no tick: still within the half second
+        #expect(h.meter.lastMetered == [])
+    }
+
+    @Test("a listen asked for ends unheard if the monitor stops during it, so the resume waiting on it goes on")
+    func askedListenEndsAtStop() async {
+        let h = Self.releasedRadioWithPlayerHarness()
+        h.monitor.setPlayerPlaying(false)
+        let monitor = h.monitor
+        let asked = Task { await monitor.listenToQuietApps() }
+        await h.meter.waitUntilMetered([2])
+        h.monitor.stop()
+        #expect(await asked.value == false)
+    }
+
     // MARK: - Capturing only when needed (recording indicator)
 
     @Test("nothing is captured while audio levels are not needed")

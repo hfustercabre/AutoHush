@@ -28,6 +28,8 @@ struct Card<Content: View, Footer: View>: View {
     @Environment(\.cardsAreFormSections) private var isFormSection
     /// The menu's card is highlighted: the tint over its glass, under its content.
     @Environment(\.showsKeyHighlight) private var isHighlighted
+    /// Its rows and footer, as one group for the arrow keys' highlight.
+    @State private var highlightGroup = UUID()
 
     init(_ title: Text? = nil, badge: String? = nil, note: Text? = nil, heading: AnyView? = nil,
          clearGlass: Bool = false, @ViewBuilder content: () -> Content, @ViewBuilder footer: () -> Footer) {
@@ -43,12 +45,14 @@ struct Card<Content: View, Footer: View>: View {
     @ViewBuilder var body: some View {
         if isFormSection {
             Section { content } header: { header } footer: { footer }
+                .environment(\.highlightGroup, highlightGroup)
         } else {
             VStack(alignment: .leading, spacing: 6) {
                 header.font(.appHeadline).padding(.leading, 4)
                 box
                 footer
             }
+            .environment(\.highlightGroup, highlightGroup)
         }
     }
 
