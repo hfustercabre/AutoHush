@@ -35,8 +35,8 @@ package struct CheckResult: Codable, Equatable, Sendable {
         /// Not looked for: its window was closed, and its page can be read
         /// only from one (2026-10-27).
         case noWindow
-        /// Not looked for, for another reason (the app wasn't running, had
-        /// no window, or didn't play).
+        /// Not looked for, for another reason (the app wasn't running or
+        /// didn't play).
         case notChecked
     }
 
