@@ -12,14 +12,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **A calmer About page.** AutoHush's icon sits beside its name and
   version, and **When an update is found** is a pop-up menu, so the page
   fits without scrolling.
-- **Tidier Settings.** A card's **Restore Defaults** shows only once one
-  of its settings differs from its default (**Launch at login** is yours:
-  it doesn't count, and Restore Defaults leaves it alone), and VoiceOver
-  reads it with the card's name; pressed from the keyboard, the
-  highlight moves to the card's first row and VoiceOver says “Restored”;
-  **Stay paused after calls**
-  sits under **Resume playback**, as a part of it; Sound Sources' list is
-  headed **Apps**.
+- **Tidier Settings.** **Stay paused after calls** sits under **Resume
+  playback**, as a part of it, and Sound Sources' list is headed **Apps**.
+- **Restore Defaults** under a card shows only once one of its settings
+  differs from its default. **Launch at login** is yours: it doesn't
+  count, and Restore Defaults leaves it alone. VoiceOver reads each with
+  its card's name and says “Restored” once it's pressed; pressed from the
+  keyboard, the highlight moves to the card's first row.
 - **Clearer messages.** The alerts behind the ⓘ ("Can't control",
   "Couldn't pause", "Couldn't resume") say why once, in English, and Add
   an App's recommended way says, beside an orange warning sign, where it
