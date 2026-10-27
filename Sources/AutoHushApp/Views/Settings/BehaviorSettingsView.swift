@@ -69,7 +69,7 @@ struct BehaviorSettingsView: View {
 
             Card(Self.volumeTitle) {
                 SettingsSwitchRow(model: model, kind: .levelsMusic)
-                if let reason = SettingsSwitch.levelsMusic.unavailableReason(model) {
+                if let reason = SettingsSwitch.levelingUnavailableNote(model) {
                     NoteLabel(reason, kind: .info)
                 }
                 CardDivider()

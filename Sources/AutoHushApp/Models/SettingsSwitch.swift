@@ -56,27 +56,12 @@ enum SettingsSwitch: CaseIterable {
         }
     }
 
-    /// Why it can't be changed, in a few words (Behavior's Volume note
-    /// says leveling's), without a period but for AntiDot mode's, Settings'
-    /// own sentence; `nil` while it can.
-    @MainActor func unavailableReason(_ model: SettingsModel) -> String? {
-        guard isUnavailable(model) else { return nil }
-        switch self {
-        case .antiDot:
-            // Settings' own note under the switch.
-            guard let player = model.antiDotUnavailablePlayer else { return nil }
-            return DetectionText.unavailableNote(player.name, mutes: player.pausesByMuting)
-        case .fades:
-            guard let player = model.chosenPlayerName else { return nil }
-            return String(localized: "\(player) can’t be faded",
-                          comment: "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL")
-        case .levelsMusic:
-            return model.isAntiDotMode ? AntiDotText.featureOff : Self.resumeOffNote
-        case .staysPausedAfterCalls:
-            return Self.resumeOffNote
-        case .pausesOnDisconnect, .resumesPlayback, .pausesForMicrophone:
-            return nil
-        }
+    /// Why Level the volume can't be changed, in a few words without a
+    /// period: Behavior's and Fine-Tuning's Volume note; `nil` while it can.
+    /// The other switches say why in a note of their own (U6, 2026-10-27).
+    @MainActor static func levelingUnavailableNote(_ model: SettingsModel) -> String? {
+        guard levelsMusic.isUnavailable(model) else { return nil }
+        return model.isAntiDotMode ? AntiDotText.featureOff : resumeOffNote
     }
 
     /// Off and dimmed: AntiDot mode with a player only its sound tells

@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
+@testable import AutoHushKit
 
 /// Settings' pages no other test shows, drawn as their window draws them.
 @Suite("Settings' pages, drawn")
@@ -42,6 +42,60 @@ struct SettingsPageViewTests {
         model.state.status.learning = learning
         #expect(model.canLearnControlsAgain)
         #expect(draws(.general, model))
+    }
+
+    @Test("Behavior, Fine-Tuning, General and About draw with every card changed, each with its Restore Defaults; Behavior and Fine-Tuning in AntiDot mode too", arguments: [
+        (SettingsWindowController.Page.behavior, false), (.behavior, true), (.fineTuning, false), (.fineTuning, true), (.general, false), (.about, false),
+    ])
+    func everyCardChanged(_ page: SettingsWindowController.Page, _ antiDot: Bool) {
+        let updates = FakeUpdateCommands()
+        let model = SettingsModel.forTests(actions: actions, updates: updates)
+        model.state.status.choosePlayer(named: "Jukebox")
+        // Every card of the page changed, so each draws its Restore Defaults
+        // (B4, the full check, 2026-10-27: none was drawn); Volume's and
+        // Volume Limits' only out of AntiDot mode, Modes' only in it.
+        model.setTimings(TimingSettings(startConfirmation: 2, silenceThresholdDB: -40, fadeOutDuration: 3,
+                                        fadesEnabled: page != .behavior, pausesOnOutputDisconnect: true, levelsMusic: true,
+                                        levelingMaxCutDB: 14, staysPausedAfterCalls: true))
+        if antiDot {
+            model.setAntiDotMode(true)
+            model.setDetectionMethod(.openStreams)
+        }
+        let cards: [SettingsCard] = switch page {
+        case .behavior: [.pausing, .resuming, .fades, antiDot ? .modes : .volume]
+        case .fineTuning: [.timing, .fadeLengths, .detection] + (antiDot ? [] : [.volumeLimits])
+        case .general: [.startup]
+        default: [.updates]
+        }
+        if page == .general { model.setLaunchAtLogin(true) }
+        updates.checksAutomatically = false
+        updates.mode = .notify
+        for card in cards { #expect(!model.isDefault(card), "\(card)") }
+        #expect(draws(page, model))
+    }
+
+    @Test("Behavior draws Modes' notes: Audio Recording missing, with Allow and Use AntiDot Mode, or allowed and waiting for AutoHush to reopen, AntiDot mode unavailable for the player",
+          arguments: [false, true])
+    func modesNotes(_ unavailable: Bool) async {
+        let center = PermissionCenter(system: .init(
+            isTrusted: { true },
+            promptAccessibility: {},
+            automation: { _, _ in noErr },
+            runningPID: { _ in 4242 },
+            audio: { .denied },
+            requestAudio: { _ in },
+            openPane: { _ in }
+        ))
+        await center.refresh(chosenPlayer: { nil }, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: unavailable)
+        let model = SettingsModel(settings: .inMemory(), updates: FakeUpdateCommands(), permissionCenter: center, actions: actions,
+                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Jukebox")
+        // A player only its sound tells: AntiDot mode can't be turned on with it.
+        model.state.status.playerOptions[0].pausesByMuting = unavailable
+        model.state.status.playerOptions[0].needsAudioLevels = unavailable
+        #expect(!model.isAntiDotMode && !model.permissions.audio.isSatisfied)
+        #expect(model.permissions.audio == (unavailable ? .needsReopen : .denied) && (model.antiDotUnavailableFor != nil) == unavailable)
+        #expect(draws(.behavior, model))
     }
 
     @Test("Diagnostics draws every part unfolded: how AutoHush is doing, the apps with sound or none, each section's rows with their marks and fixes",

@@ -2,12 +2,11 @@ import AppKit
 import SwiftUI
 
 /// One choice among a few, as macOS's segmented control (the user,
-/// 2026-10-17): AntiDot mode's ways of detecting, what happens when an
-/// update is found. It's AppKit's, whose segments are as wide as their
-/// words (SwiftUI's makes each as wide as the widest, which didn't fit), and
-/// it fills its row in proportion. The room it needs (`fittingWidth`) sets
-/// Settings' and the menu's least width in each language. In the menu it's
-/// the small one (`.controlSize(.small)`, C2).
+/// 2026-10-17): AntiDot mode's ways of detecting (Settings → Fine-Tuning).
+/// It's AppKit's, whose segments are as wide as their words (SwiftUI's
+/// makes each as wide as the widest, which didn't fit), and it fills its row
+/// in proportion. The room it needs (`fittingWidth`) sets Settings' least
+/// width in each language.
 struct ChoiceChips<Value: Hashable>: NSViewRepresentable {
     struct Option {
         let title: String
@@ -46,8 +45,8 @@ struct ChoiceChips<Value: Hashable>: NSViewRepresentable {
 
     /// As wide as its row, never wider: just made, it measured wider for a
     /// moment, and the menu's rows jumped aside as Detection unfolded (the
-    /// user, 2026-10-18). Its windows leave it the room it needs
-    /// (`fittingWidth`: `menuContentWidth`, Settings' least width).
+    /// user, 2026-10-18). Its window leaves it the room it needs
+    /// (`fittingWidth`: Settings' least width).
     func sizeThatFits(_ proposal: ProposedViewSize, nsView control: NSSegmentedControl, context: Context) -> CGSize? {
         Self.size(proposal, fitting: control.fittingSize)
     }

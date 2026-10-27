@@ -80,8 +80,13 @@ struct NowPlayingReportsTests {
         let lines = ["Creating nowPlayingClient com.apple.WebKit.GPU (\(pid)) ",
                      "[com.apple.WebKit.GPU/com.example.webapp (\(pid)) Web App ❯] PlaybackState changed from Playing to Paused"]
             .map { #"{"eventMessage":"\#($0)"}"# }
-        // Its first line (and one that isn't JSON), its second once "more" exists, its end once "end" does.
-        let script = #"printf '%s\n' "$1" 'not JSON'; until [ -e "$3/more" ]; do sleep 0.01; done; printf '%s\n' "$2"; until [ -e "$3/end" ]; do sleep 0.01; done"#
+        // Its first line (and one that isn't JSON), its second once "more" exists, its end once "end" does;
+        // or once the test process is gone, which then makes neither (B7, the full check, 2026-10-27:
+        // loops left by a test process that died ran in the VM for days).
+        let script = #"""
+            printf '%s\n' "$1" 'not JSON'; until [ -e "$3/more" ] || ! kill -0 $PPID 2>/dev/null; do sleep 0.01; done
+            printf '%s\n' "$2"; until [ -e "$3/end" ] || ! kill -0 $PPID 2>/dev/null; do sleep 0.01; done
+            """#
         let reads = Locked([Date]())
         let followed = Locked<NowPlayingReports?>(nil)
         let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/bin/sh", "-c", script, "sh"] + lines + [folder.path],
@@ -147,5 +152,24 @@ struct NowPlayingReportsTests {
         #expect(!closed.isAvailable)
         #expect(closed.latest(of: "com.example.app")?.state == nil)
         withExtendedLifetime(scratch) {}
+    }
+
+    @Test("a stream that keeps ending by itself soon after it starts is followed again a few times, then not at all, as a log that can't be opened")
+    func shortRuns() async {
+        let reads = Locked(0)
+        // A `log stream` that no longer takes what it's asked: it ends at once, while the past still reads.
+        let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/usr/bin/true"], isAdministrator: true) { _ in
+            reads.increment()
+            return [:]
+        }
+        defer { reports.stop() }
+        await TestWait.until {
+            _ = reports.latest(of: "com.example.app")
+            return !reports.isAvailable
+        }
+        #expect(reads.value == NowPlayingReports.shortRunsLimit)
+        #expect(!reports.follow(since: Date()))
+        #expect(reports.latest(of: "com.example.app") == nil)
+        #expect(reads.value == NowPlayingReports.shortRunsLimit)
     }
 }

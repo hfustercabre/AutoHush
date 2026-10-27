@@ -103,9 +103,14 @@ package struct DefaultsRecipeStore: PlayPauseRecipeStore {
     static let key = Preferences.webAppButtonsKey
     private let stored: KeyedDefaults
 
-    /// `suiteName`: the preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
+    /// `suiteName`: the preferences' suite; `nil` for AutoHush's own.
     package init(suiteName: String? = nil) {
         stored = KeyedDefaults(key: Self.key, suiteName: suiteName)
+    }
+
+    /// Kept in `defaults` (tests keep theirs in memory).
+    package init(defaults: UserDefaults) {
+        stored = KeyedDefaults(key: Self.key, defaults: defaults)
     }
 
     package func recipe(for bundleID: String) -> PlayPauseRecipe? {

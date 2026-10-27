@@ -103,6 +103,6 @@ enum PlayerAlerts {
     /// 2026-10-18: "Ask first"), the same way: Return chooses another app,
     /// Escape cancels.
     static func changeApp(_ app: String) -> NSAlert {
-        confirm(title: AddAppText.changeAppTitle, message: AddAppText.changeAppDiscards(app), button: AddAppText.changeAppConfirm)
+        confirm(title: ChangeAppText.title, message: ChangeAppText.discards(app), button: ChangeAppText.confirm)
     }
 }

@@ -160,8 +160,8 @@ struct DiagnosticsSettingsView: View {
         }
     }
 
-    /// A problem's fix, as the same button does elsewhere: Settings →
-    /// General's players, the card's Learn Controls…, a permission's Allow….
+    /// A problem's fix, as the same button does elsewhere: Settings → Media
+    /// Player's players, the card's Learn Controls…, a permission's Allow….
     private func perform(_ fix: DiagnosticsSnapshot.Row.Fix) {
         switch fix {
         case .choosePlayer: model.actions?.openSettings(page: .mediaPlayer)
@@ -173,7 +173,7 @@ struct DiagnosticsSettingsView: View {
     static func title(of fix: DiagnosticsSnapshot.Row.Fix) -> String {
         switch fix {
         case .choosePlayer: ChooseText.choose
-        case .learnControls: LearningText.learnButton
+        case .learnControls: LearnText.learnButton
         case .allow: ButtonText.allow
         }
     }

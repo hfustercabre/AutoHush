@@ -9,10 +9,10 @@ import SwiftUI
 /// player's tile is tinted and outlined with the accent color, even while
 /// AntiDot mode keeps it from being chosen (an app only its sound tells
 /// about).
-/// Settings → General and the welcome window show them; the menu keeps its
-/// rows. Without `maxVisibleRows` (Settings → General), each group is a card
-/// of its own, its title and note above it, as System Settings' sections
-/// (the user, 2026-10-17: H3 with H2's notes).
+/// Settings → Media Player and the welcome window show them; the menu keeps
+/// its rows. Without `maxVisibleRows` (Settings → Media Player), each group
+/// is a card of its own, its title and note above it, as System Settings'
+/// sections (the user, 2026-10-17: H3 with H2's notes).
 ///
 /// With `maxVisibleRows`, the card shows that many rows of tiles at most,
 /// counting both groups, and they scroll inside it past them (the card
@@ -254,7 +254,7 @@ struct PlayerTiles: View {
                     .font(.body.weight(.medium))
                     .frame(width: Self.iconSize, height: Self.iconSize)
                     .accessibilityHidden(true)
-                Text("Add…", comment: "The last tile of the Safari web apps and of the other apps (Settings → General, the welcome window): adds a website as a web app, or checks an app and adds it")
+                Text("Add…", comment: "The last tile of the Safari web apps and of the other apps (Settings → Media Player, the welcome window): adds a website as a web app, or checks an app and adds it")
                     .font(.appCallout)
                     .lineLimit(1)
                 Spacer(minLength: 0)

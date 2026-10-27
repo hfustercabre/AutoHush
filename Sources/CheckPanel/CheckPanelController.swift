@@ -18,8 +18,10 @@ package final class CheckPanelController {
     /// above it. Otherwise the panel floats, under menus and the Dock.
     static let shadeLevel = NSWindow.Level(rawValue: CheckPanelWindows.shadeLevel)
     static let panelLevel = NSWindow.Level(rawValue: CheckPanelWindows.dimmedLevel)
-    private var panel: NSPanel?
-    private var shades: [NSWindow] = []
+    /// The panel while it's shown, and the shades while the screen is
+    /// dimmed (tests read them: other panels may be shown in the process).
+    private(set) var panel: NSPanel?
+    private(set) var shades: [NSWindow] = []
 
     package init() {}
 

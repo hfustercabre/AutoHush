@@ -12,11 +12,11 @@ struct ControlsRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            RowTitle(Text(verbatim: LearningText.controlsTitle),
-                     subtitle: Text(verbatim: isLearned ? LearningText.learnedNote : LearningText.notLearnedNote(name)))
+            RowTitle(Text(verbatim: LearnText.controlsTitle),
+                     subtitle: Text(verbatim: isLearned ? LearnText.learnedNote : LearnText.notLearnedNote(name)))
             Spacer(minLength: 8)
             Button(action: learn) {
-                Text(verbatim: isLearned ? LearningText.learnAgainButton : LearningText.learnButton).font(buttonFont)
+                Text(verbatim: isLearned ? LearnText.learnAgainButton : LearnText.learnButton).font(buttonFont)
             }
             .buttonStyle(.chip)
             .fixedSize()

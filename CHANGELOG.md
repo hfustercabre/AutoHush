@@ -34,6 +34,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Opening AutoHush again** while it runs (from Finder, Spotlight or
   Launchpad) opens Settings → General, which says when the notch is hiding
   its menu bar icon. Before, nothing happened.
+- **Add an App's check** judges each pause and play by the same signs, in
+  the same order, as AutoHush then reads the app, so a way it approves
+  works the same afterwards.
 
 ## [1.2.0] — 2026-10-25
 

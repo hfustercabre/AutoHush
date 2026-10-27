@@ -109,7 +109,7 @@ AutoHush (executable: the entry point only)
        │                    the parts both apps draw in it (CheckRequestNote, CheckWindowStepView)
        └─ AutoHushKit       the engine, reached through MonitoringPipeline: no user interface, no specific player
 measure-volume-curve (developer tool, in Tools/) → AutoHushPlayers, AutoHushKit
-listen-to-fades (developer tool, in Tools/): records a loopback device, measures fades
+listen-to-fades (developer tool, in Tools/) → AutoHushKit: records a loopback device, measures fades
 PlayerCheckApp (Player Check, in Tools/) → PlayerCheckKit, CheckedPlayers, CheckPanel, AutoHushKit: playercheck
                             in a window, run through the same interface, panel and ToolRun as Add an App…
 playercheck (AutoHush.app's helper, in Sources/PlayerCheck) → PlayerCheckKit, ScriptablePlayers, MenuPlayers,
@@ -149,7 +149,8 @@ Sources/
                          check not used yet), OtherAppProblem (why an app picked from the disk can't be
                          checked), CopiedFeedback (a Copy button's "Copied" for 2 s), SettingsSwitch and
                          SettingsTiming (Behavior's switches and Fine-Tuning's timings: their words, ranges
-                         and when one is dimmed, which Diagnostics names too)
+                         and when one is dimmed, which Diagnostics names too), SettingsCard (the cards with
+                         a Restore Defaults; isDefault and restoreDefaults in SettingsModel+Defaults)
     Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
                          followed once a second; OtherInstances, quits the copies opened before it;
                          DockPresence, in the Dock while a window is open; MenuBarIconPlace, the icon
@@ -178,6 +179,7 @@ Sources/
     Controllers/         AppKit's window and menu controllers: StatusMenuController (with +Keys, the
                          keys as in macOS's menus, and +SideWindow, the side window), MenuPanel (the
                          menu's window, and its side window's), SettingsWindowController,
+                         SettingsToolbarDelegate (its toolbar: Back and Forward, the page's name),
                          PlayerChooserWindowController (the welcome window), AddWebAppFeature (Add a Web
                          App: its model, its window and the add under way), AddWebAppWindowController,
                          LearningWindowController, HostedWindowController (their shared base),
@@ -204,7 +206,8 @@ Sources/
                          buttons; MenuSpacing, the space around its parts; MenuRowButtonStyle,
                          MenuContentWidth, and MenuBarIcon, drawn in code),
                          Settings/ (one per page, SettingsPageView, SettingsSidebar, UpdatesCard,
-                         About's, FineTuningRow, Behavior's rows to Fine-Tuning, SettingsSwitchRow), Welcome/, WebApps/
+                         About's, FineTuningRow, Behavior's rows to Fine-Tuning, SettingsSwitchRow,
+                         TimingSliderRow, RestoreDefaultsButton), Welcome/, WebApps/
                          (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView),
                          AddApp/ (Add an App's window and its numbered steps, the app chooser, the warning
                          before a check, the check's panel, AddAppText: what only they say)
@@ -212,7 +215,8 @@ Sources/
                          from here, never from Views/): ButtonText (Cancel, Continue, Allow…, Open), PermissionText,
                          ReopenText (reopening a player with its page's option), WayText (an added app's ways),
                          AntiDotText, DetectionText, AutoPauseText, FadesText, NoneText, TryAgainText, LaterText,
-                         ChooseText, AccessibilityText, and the update choices' (AutomaticUpdates+Text)
+                         ChooseText, ChangeAppText (Add an App's Change… question), LearnText (the Controls row),
+                         IgnoredText, AccessibilityText, and the update choices' (AutomaticUpdates+Text)
     Utilities/           small helpers: AppVersion, ProjectInfo, AppIcon, InfoAlert, IgnoreAppsPicker
                          (the panel that picks apps to ignore, for Settings and the menu), …
   AutoHushKit/           the engine, by kind of code too
@@ -275,7 +279,8 @@ Sources/
                          answers whoever runs it uses, and CheckReportLine (the report's lines AutoHush and
                          Player Check follow) and CheckProgress (how far a check has got, read from them)
 Tests/                   a test module per module, mirroring its folders, plus AutoHushTestSupport (shared
-                         fakes, a value behind a lock, a gate, a sleep the test ends) and PlayersTestSupport
+                         fakes, a value behind a lock, a gate, a sleep the test ends, a manual clock,
+                         temporary folders, settings kept in memory: MemoryDefaults) and PlayersTestSupport
                          (the players' stores and a scripted app's Apple events, in memory, and the
                          suite trait that sets up Apple event coercions first); PlayerCheckTests
                          runs the helper itself as a read-only check of Calculator;

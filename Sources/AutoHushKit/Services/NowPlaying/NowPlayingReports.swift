@@ -13,6 +13,8 @@ import OSLog
 /// `log stream`, started first, and the past read once from a store opened
 /// then, so nothing falls between. It's followed from the first question
 /// on, on a queue of its own, and stops once nobody asks for `idleLimit`.
+/// A stream that keeps ending by itself soon after it starts isn't started
+/// again (`shortRunsLimit`): each start reads the past again.
 package final class NowPlayingReports: @unchecked Sendable {
     /// One app mediaremoted keeps for Now Playing: "<its bundle ID> (<its
     /// pid>) <its name>", or a web app's media process
@@ -46,6 +48,15 @@ package final class NowPlayingReports: @unchecked Sendable {
     static let firstLookBack: TimeInterval = 60 * 60
     /// How long it's followed with nobody asking.
     static let idleLimit: TimeInterval = 60
+    /// A stream that ends by itself sooner than this after its start ran
+    /// short: `log stream` may no longer take what it's asked (its wording
+    /// is macOS's), while the log still opens.
+    static let shortRun: TimeInterval = 60
+    /// After this many short runs in a row the log isn't followed again, as
+    /// one that can't be opened: each start reads `lookBack` of the past,
+    /// about half a second, and an added app's state is asked every second
+    /// (the 2026-10-27 full check's R3).
+    static let shortRunsLimit = 3
 
     private let lock = NSLock()
     private let processRuns: @Sendable (pid_t) -> Bool
@@ -57,9 +68,13 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// while none is followed.
     private var streamID: Int?
     private var streamsStarted = 0
+    /// When the followed stream started, and how many in a row ran short (`shortRun`).
+    private var streamStart = Date.distantPast
+    private var shortRuns = 0
     private var ready = false
     private var starting = false
-    /// The log couldn't be opened: it isn't asked again.
+    /// The log couldn't be opened, or its stream kept ending
+    /// (`shortRunsLimit`): it isn't asked again.
     private var failed = false
     private var lastAsked = Date.distantPast
     private var idleTimer: any DispatchSourceTimer?
@@ -197,6 +212,7 @@ package final class NowPlayingReports: @unchecked Sendable {
             streamsStarted += 1
             clients = [:]
             streamID = streamsStarted
+            streamStart = Date()
             return streamsStarted
         }
         let run = ToolRun(URL(fileURLWithPath: streamCommand[0]), Array(streamCommand.dropFirst()))
@@ -256,7 +272,8 @@ package final class NowPlayingReports: @unchecked Sendable {
     }
 
     /// The stream ended by itself: what's known may be old, so nothing is
-    /// said until it's followed again (at the next question).
+    /// said until it's followed again (at the next question). One that ran
+    /// short `shortRunsLimit` times in a row isn't followed again.
     private func ended(_ id: Int) {
         lock.withLock {
             guard streamID == id else { return }
@@ -264,6 +281,8 @@ package final class NowPlayingReports: @unchecked Sendable {
             streamID = nil
             ready = false
             clients = [:]
+            shortRuns = Date().timeIntervalSince(streamStart) < Self.shortRun ? shortRuns + 1 : 0
+            if shortRuns >= Self.shortRunsLimit { failed = true }
         }
     }
 

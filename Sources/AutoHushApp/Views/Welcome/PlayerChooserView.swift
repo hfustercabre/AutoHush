@@ -2,7 +2,7 @@ import AppKit
 import AutoHushKit
 import SwiftUI
 
-/// The media players as tiles, as in Settings → General (`PlayerTiles`): the
+/// The media players as tiles, as in Settings → Media Player (`PlayerTiles`): the
 /// apps, then the Safari web apps and the tile that adds one; the user picks
 /// one and continues.
 /// Players that aren't installed come after the installed apps, dimmed, and

@@ -27,7 +27,7 @@ struct DiagnosticsSnapshot: Equatable {
     /// workflow audit, 2026-10-22).
     struct Row: Equatable {
         enum Mark: Equatable { case ok, problem, neutral }
-        /// What its button does: choose a player (Settings → General), learn
+        /// What its button does: choose a player (Settings → Media Player), learn
         /// the web app's controls, or allow a permission.
         enum Fix: Equatable {
             case choosePlayer, learnControls

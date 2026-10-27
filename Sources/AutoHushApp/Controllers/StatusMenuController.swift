@@ -88,6 +88,8 @@ final class StatusMenuController: NSObject {
     private var spaceObserver: any NSObjectProtocol?
     /// Another window becoming key while the menu is open.
     private var keyWindowObserver: any NSObjectProtocol?
+    /// The menu bar item's window moving (`followItemMoves`).
+    private var itemMoveObserver: any NSObjectProtocol?
     /// The content's height, as last measured.
     private var contentHeight: CGFloat = 0
     /// The panel follows the content's height at the end of this pass.
@@ -119,7 +121,21 @@ final class StatusMenuController: NSObject {
     /// Removes the item from the menu bar (tests clean up with it).
     func remove() {
         close()
+        if let itemMoveObserver { notificationCenter.removeObserver(itemMoveObserver) }
+        itemMoveObserver = nil
         NSStatusBar.system.removeStatusItem(statusItem)
+    }
+
+    /// Settings → General's hidden-icon note is read again each time macOS
+    /// moves the item's window: as it places a new item, whose window has
+    /// no place for a moment (U8, 2026-10-27: `{0, 0}` with no height, read
+    /// as shown whatever came next), on a ⌘-drag, and as other apps' icons
+    /// come and go.
+    func followItemMoves() {
+        guard itemMoveObserver == nil, let window = statusItem.button?.window else { return }
+        itemMoveObserver = notificationCenter.addObserver(
+            forName: NSWindow.didMoveNotification, object: window, queue: .main
+        ) { [weak self] _ in MainActor.assumeIsolated { self?.settingsModel?.refreshMenuBarIcon() } }
     }
 
     // MARK: - Rendering

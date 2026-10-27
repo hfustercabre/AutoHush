@@ -38,7 +38,7 @@ final class SettingsModel {
     // From the app's state.
     /// The media players to choose from (also in the welcome window).
     var playerOptions: [PlayerOption] { state.playerOptions }
-    /// The players as Settings → General and the welcome window offer
+    /// The players as Settings → Media Player and the welcome window offer
     /// them: in AntiDot mode, the apps that can only be muted can't be chosen.
     var offeredPlayers: [PlayerOption] { playerOptions.inAntiDotMode(isAntiDotMode).offered }
     /// The bundle ID of the chosen player; `nil` while none is chosen.
@@ -110,6 +110,10 @@ final class SettingsModel {
     /// Why AutoHush can't install updates itself, shown under the choice;
     /// nil when it can. Then only "Notify me" is possible. Read once, at launch.
     @ObservationIgnored let updateInstallNote: String?
+    /// The choice About's pop-up shows, and explains in its help tag and
+    /// hint: a copy that can't install itself can only notify, whatever was
+    /// chosen before.
+    var shownAutomaticUpdates: AutomaticUpdates { updateInstallNote == nil ? automaticUpdates : .notify }
     /// The user turned AutoHush's notifications off in System Settings. Then
     /// the update choices that rely on them are unavailable.
     var notificationsOff: Bool { updates.notificationsOff }
@@ -252,7 +256,8 @@ final class SettingsModel {
     }
 
     /// Whether the menu bar icon is hidden, read again: as Settings opens,
-    /// and once the icon was moved.
+    /// once the switch moved the icon, and each time macOS moves its window
+    /// (`StatusMenuController.followItemMoves`).
     func refreshMenuBarIcon() {
         let hidden = actions?.menuBarIconIsHidden ?? false
         if menuBarIconHidden != hidden { menuBarIconHidden = hidden }

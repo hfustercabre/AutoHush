@@ -64,7 +64,7 @@ struct FineTuningSettingsView: View {
                     TimingSliderRow(model: model, timing: .levelingMinCut, isCurrent: isFocus(.volumeLimits))
                 }
                 .unavailable(SettingsTiming.levelingLimitsUnavailable(model))
-                if let reason = SettingsSwitch.levelsMusic.unavailableReason(model) {
+                if let reason = SettingsSwitch.levelingUnavailableNote(model) {
                     NoteLabel(reason, kind: .info)
                 } else if !model.timings.levelsMusic {
                     NoteLabel(SettingsSwitch.levelingOffNote, kind: .info)

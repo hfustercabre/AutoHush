@@ -22,11 +22,13 @@ struct UpdatesCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     let title = String(localized: "When an update is found", comment: "Settings → About: lead-in to what happens when an update is found")
+                    // The pop-up, its help tag and its hint all say the choice shown.
+                    let shown = model.shownAutomaticUpdates
                     Text(verbatim: title) // a row's title
+                        .accessibilityHidden(true) // the pop-up says it, as its label
                     Spacer(minLength: 8)
                     Picker(selection: Binding(
-                        // A copy that can't install itself can only notify.
-                        get: { model.updateInstallNote == nil ? model.automaticUpdates : .notify },
+                        get: { model.shownAutomaticUpdates },
                         set: { model.updates.setMode($0) }
                     )) {
                         ForEach(AutomaticUpdates.allCases, id: \.self) { Text(verbatim: $0.title).tag($0) }
@@ -36,8 +38,8 @@ struct UpdatesCard: View {
                     .labelsHidden()
                     .fixedSize()
                     .disabled(model.updateInstallNote != nil)
-                    .help(model.automaticUpdates.explanation)
-                    .accessibilityHint(Text(verbatim: model.automaticUpdates.explanation))
+                    .help(shown.explanation)
+                    .accessibilityHint(Text(verbatim: shown.explanation))
                 }
                 if let note = model.updateInstallNote { Text(note).captionStyle() }
             }

@@ -253,16 +253,18 @@ final class WindowTitleTests {
         #expect(log.handlers.isEmpty)
     }
 
-    /// The check's panel and its shades are windows of the whole process,
-    /// as `NSApp.windows` lists them: these tests run one at a time, so each
-    /// sees only its own.
+    /// Each test reads its panel and shades from its own controller, not
+    /// from the process's windows: other suites in the same test process
+    /// (AddAppFeature's) show check panels and shades of their own meanwhile
+    /// (B2, the full check, 2026-10-27: a test took another's panel as its
+    /// own).
     @MainActor
     @Suite("The check's panel", .serialized)
     struct CheckPanelWindows {
-        /// The shades shown now, made since `before`: another suite's, in the
-        /// same test process, may still be fading out (CheckPanelControllerTests).
-        private func shades(since before: Set<ObjectIdentifier>) -> [NSWindow] {
-            NSApp.windows.filter { !before.contains(ObjectIdentifier($0)) && $0.level == CheckPanelController.shadeLevel && $0.isVisible }
+        /// `NSApp` is set up here when this suite runs alone (B3, the full
+        /// check, 2026-10-27: it crashed, nil, with no other suite before it).
+        init() {
+            _ = NSApplication.shared
         }
 
         /// A check running on the stand-ins, its panel shown.
@@ -277,9 +279,8 @@ final class WindowTitleTests {
             model.startCheck()
             await TestWait.until { world.report != nil }
             let sut = CheckPanelController()
-            let before = Set(NSApp.windows.map(ObjectIdentifier.init))
             sut.show(world.apps[0], model: model)
-            let panel = try #require(NSApp.windows.first { !before.contains(ObjectIdentifier($0)) } as? NSPanel)
+            let panel = try #require(sut.panel)
             return (world, model, sut, panel)
         }
 
@@ -305,27 +306,28 @@ final class WindowTitleTests {
 
         @Test("only while the check blocks input does a shade under its panel dim each screen")
         func checkPanelShades() async throws {
-            let before = Set(NSApp.windows.map(ObjectIdentifier.init))
             let (world, model, sut, panel) = try await panelShown()
-            #expect(shades(since: before).isEmpty)
+            #expect(sut.shades.isEmpty)
             world.report?(CheckReportLine.blocked)
-            await TestWait.until { panel.level == CheckPanelController.panelLevel && shades(since: before).count == NSScreen.screens.count }
-            #expect(shades(since: before).allSatisfy { shade in NSScreen.screens.contains { $0.frame == shade.frame } })
-            #expect(shades(since: before).allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
+            await TestWait.until { panel.level == CheckPanelController.panelLevel && sut.shades.count == NSScreen.screens.count }
+            let shades = sut.shades
+            #expect(shades.allSatisfy { shade in shade.isVisible && NSScreen.screens.contains { $0.frame == shade.frame } })
+            #expect(shades.allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
             world.report?(CheckReportLine.free)
-            await TestWait.until { panel.level == .floating && shades(since: before).isEmpty }
+            // They fade out, then go.
+            await TestWait.until { panel.level == .floating && sut.shades.isEmpty && !shades.contains(where: \.isVisible) }
             sut.hide()
             await endCheck(world, model)
         }
 
         @Test("the check's panel hidden, it and its shades all go")
         func checkPanelHidden() async throws {
-            let before = Set(NSApp.windows.map(ObjectIdentifier.init))
             let (world, model, sut, panel) = try await panelShown()
             world.report?(CheckReportLine.blocked)
-            await TestWait.until { !shades(since: before).isEmpty }
+            await TestWait.until { !sut.shades.isEmpty }
+            let shades = sut.shades
             sut.hide()
-            #expect(!panel.isVisible && shades(since: before).isEmpty)
+            #expect(!panel.isVisible && !shades.contains(where: \.isVisible) && sut.panel == nil && sut.shades.isEmpty)
             await endCheck(world, model)
         }
     }

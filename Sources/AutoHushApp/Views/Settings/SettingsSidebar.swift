@@ -84,7 +84,7 @@ struct SettingsSidebarFoot: View {
                         .foregroundStyle(.appSecondary)
                 }
             }
-            SupportLine(compact: true)
+            SupportLine()
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)

@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import AutoHushKit
 
-// "Add a Web App…", in the menu's players, Settings → General and the
+// "Add a Web App…", in the menu's players, Settings → Media Player and the
 // welcome window (the last tile, "Add…"): the user pastes a
 // website's address, AutoHush opens it in Safari and, once the site shows
 // and the user clicks Add to Dock, makes it a Safari web app (Safari's own

@@ -472,6 +472,7 @@ private struct WayRow: View {
                 // 2026-10-26).
                 if recommended && way.mark == .some {
                     Text(verbatim: AddAppText.wayNote(way, app: app)).font(.appCaption).foregroundStyle(.appWarning)
+                        .fixedSize(horizontal: false, vertical: true) // as `captionStyle()`: on as many lines as it needs
                 } else {
                     Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle()
                 }

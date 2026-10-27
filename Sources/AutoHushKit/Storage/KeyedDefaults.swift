@@ -10,15 +10,28 @@ package struct KeyedDefaults: Sendable {
     static let lock = NSLock()
 
     let key: String
-    /// The preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
+    /// The preferences' suite; `nil` for AutoHush's own.
     private let suiteName: String?
+    /// Preferences given in place of a suite (tests keep theirs in memory):
+    /// UserDefaults can be used from several threads at once (its
+    /// documentation), though it isn't marked Sendable.
+    nonisolated(unsafe) private let given: UserDefaults?
 
     package init(key: String, suiteName: String? = nil) {
         self.key = key
         self.suiteName = suiteName
+        given = nil
     }
 
-    private var defaults: UserDefaults { suiteName.flatMap(UserDefaults.init(suiteName:)) ?? .standard }
+    /// Kept in `defaults` (B8, the full check, 2026-10-27: a suite named by
+    /// a path, as tests used, can hand back an older value).
+    package init(key: String, defaults: UserDefaults) {
+        self.key = key
+        suiteName = nil
+        given = defaults
+    }
+
+    private var defaults: UserDefaults { given ?? suiteName.flatMap(UserDefaults.init(suiteName:)) ?? .standard }
 
     /// The values as stored, by bundle ID; empty when there are none.
     package func values() -> [String: Any] {

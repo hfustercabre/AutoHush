@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A part's title in the menu ("Media Player", "Detection"), as the
-/// settings' page names over their parts.
+/// A part's title in the menu and its side windows ("Ignored Apps",
+/// "Media Player"), as the settings' page names over their parts.
 struct MenuPartTitle: View {
     let title: Text
 

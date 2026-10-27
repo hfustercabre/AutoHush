@@ -3,7 +3,6 @@ import AutoHushKit
 import CheckedPlayers
 import PlayerCheckKit
 import ScriptablePlayers
-import WebAppPlayers
 
 // MARK: - The test's results
 

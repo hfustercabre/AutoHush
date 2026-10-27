@@ -164,7 +164,7 @@ struct PlayerOption: Equatable, Identifiable {
     /// players are offered.
     static var supportedAppsHeading: String {
         String(localized: "Supported Apps",
-               comment: "Where media players are offered (the menu, Settings → General, the welcome window): heading over the players that are apps, before the “Safari Web Apps”")
+               comment: "Where media players are offered (the menu, Settings → Media Player, the welcome window): heading over the players that are apps, before the “Safari Web Apps”")
     }
 
     /// Over the Safari web apps, after the apps, wherever players are offered.
@@ -177,7 +177,7 @@ struct PlayerOption: Equatable, Identifiable {
     /// wherever players are offered.
     static var otherAppsHeading: String {
         String(localized: "Other Apps",
-               comment: "Where media players are offered (the menu, Settings → General, the welcome window): heading over the apps added through a check (Add an App…), after the “Supported Apps”")
+               comment: "Where media players are offered (the menu, Settings → Media Player, the welcome window): heading over the apps added through a check (Add an App…), after the “Supported Apps”")
     }
 
     /// After `otherAppsHeading`, as a `HeadingBadge`.
@@ -248,10 +248,10 @@ struct PlayerOption: Equatable, Identifiable {
     }
 
     /// Under an app added with Add an App that's muted instead of paused,
-    /// on its tile (Settings → General, the welcome window): a short
+    /// on its tile (Settings → Media Player, the welcome window): a short
     /// `mutedInsteadLabel`.
     static var mutedOnlyLabel: String {
-        String(localized: "Muted only", comment: "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that no way could pause, so AutoHush mutes it instead while other apps play. Keep it short (about 12 characters)")
+        String(localized: "Muted only", comment: "The tiles of media players (Settings → Media Player, the welcome window): under an app added with Add an App that no way could pause, so AutoHush mutes it instead while other apps play. Keep it short (about 12 characters)")
     }
 
     /// Under an app only its sound tells about (`needsAudioLevels`) while
@@ -261,16 +261,16 @@ struct PlayerOption: Equatable, Identifiable {
         String(localized: "Not in AntiDot mode", comment: "The menu's rows of media players: under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound (AntiDot mode, the detection that hides the purple recording indicator)")
     }
 
-    /// The same on its tile (Settings → General, the welcome window): a
+    /// The same on its tile (Settings → Media Player, the welcome window): a
     /// short `antiDotModeLabel`.
     static var antiDotModeTileLabel: String {
-        String(localized: "Not in AntiDot", comment: "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound. Keep it short (about 14 characters at most)")
+        String(localized: "Not in AntiDot", comment: "The tiles of media players (Settings → Media Player, the welcome window): under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound. Keep it short (about 14 characters at most)")
     }
 
     /// Where an app added with Add an App is removed: its tile's × (help tag,
     /// VoiceOver action) and its row's alternate in the menu (Option).
     static func removeTitle(_ name: String) -> String {
-        String(localized: "Remove \(name)…", comment: "Removes an app added with Add an App from the media players, after asking: the menu's row with Option held, and the × on its tile (Settings → General, the welcome window) as its help tag and VoiceOver action; %@ is the app")
+        String(localized: "Remove \(name)…", comment: "Removes an app added with Add an App from the media players, after asking: the menu's row with Option held, and the × on its tile (Settings → Media Player, the welcome window) as its help tag and VoiceOver action; %@ is the app")
     }
 
     /// Why it can't be chosen in AntiDot mode: the help tag and VoiceOver
@@ -298,7 +298,7 @@ struct PlayerOption: Equatable, Identifiable {
 
     /// Under a suggested web app, wherever players are offered: a click adds it.
     static var clickToAddLabel: String {
-        String(localized: "Click to add", comment: "Under a suggested Safari web app wherever media players are offered (the menu's rows; the tiles in Settings → General and the welcome window): a click adds it. Keep it short (about 12 characters): a plain “Add” is fine")
+        String(localized: "Click to add", comment: "Under a suggested Safari web app wherever media players are offered (the menu's rows; the tiles in Settings → Media Player and the welcome window): a click adds it. Keep it short (about 12 characters): a plain “Add” is fine")
     }
 
     /// Where the chosen player is shown while none is (Settings → General,

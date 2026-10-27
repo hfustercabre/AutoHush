@@ -3,7 +3,8 @@
 # to dev and to a feature/, fix/, chore/, release/ or hotfix/ branch, then
 # builds AutoHush.app with
 # Scripts/build-app.sh. It reads the code and nothing else: no secrets, no
-# writing, so a fork's pull request runs it as it is.
+# writing to the repository (only a failed run's crash reports, as the run's
+# own files), so a fork's pull request runs it as it is.
 name: Build and test
 
 on:
@@ -43,6 +44,21 @@ jobs:
           AUTOHUSH_QUICK_TESTS: "1"
           AUTOHUSH_TEST_WAIT: "90"
         run: swift test
+      - name: Keep the crash reports
+        # A test process that crashes leaves only "exited with unexpected
+        # signal code 6" in the log (run 40352208857, 2026-10-26): macOS's
+        # crash reports, with the stack, are kept with the run.
+        if: failure()
+        run: |
+          mkdir -p "$RUNNER_TEMP/crash-reports"
+          cp ~/Library/Logs/DiagnosticReports/*.ips "$RUNNER_TEMP/crash-reports/" 2>/dev/null || true
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: crash-reports
+          path: ${{ runner.temp }}/crash-reports
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Build the app
         # A debug build signed ad hoc (there's no signing identity here), to
         # check what only build-app.sh does: the helper copied into the app

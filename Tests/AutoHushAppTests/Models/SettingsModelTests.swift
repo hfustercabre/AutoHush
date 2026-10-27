@@ -185,17 +185,16 @@ struct SettingsModelTests {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.setTimings(TimingSettings(resumesPlayback: false, levelsMusic: true, staysPausedAfterCalls: true))
         #expect(SettingsSwitch.levelsMusic.isUnavailable(model) && !SettingsSwitch.levelsMusic.isOn(model))
-        #expect(SettingsSwitch.levelsMusic.unavailableReason(model) == SettingsSwitch.resumeOffNote)
+        #expect(SettingsSwitch.levelingUnavailableNote(model) == SettingsSwitch.resumeOffNote)
         #expect(SettingsSwitch.staysPausedAfterCalls.isUnavailable(model) && SettingsSwitch.staysPausedAfterCalls.isOn(model))
-        #expect(SettingsSwitch.staysPausedAfterCalls.unavailableReason(model) == SettingsSwitch.resumeOffNote)
         #expect(!SettingsSwitch.resumesPlayback.isOn(model) && !SettingsSwitch.resumesPlayback.isUnavailable(model))
         model.setAntiDotMode(true) // AntiDot mode's reason first
-        #expect(SettingsSwitch.levelsMusic.unavailableReason(model) == AntiDotText.featureOff)
+        #expect(SettingsSwitch.levelingUnavailableNote(model) == AntiDotText.featureOff)
         model.setAntiDotMode(false)
         SettingsSwitch.resumesPlayback.set(true, in: model)
         #expect(model.timings.resumesPlayback && SettingsSwitch.levelsMusic.isOn(model))
         #expect(!SettingsSwitch.staysPausedAfterCalls.isUnavailable(model))
-        #expect(SettingsSwitch.staysPausedAfterCalls.unavailableReason(model) == nil)
+        #expect(SettingsSwitch.levelingUnavailableNote(model) == nil)
     }
 
     @Test("reflects the login item's state")
@@ -620,6 +619,13 @@ struct SettingsModelTests {
         #expect(bench.model.updateInstallNote == UpdateInstallUnavailability.readOnlyLocation.explanation)
     }
 
+    @Test("a copy that can't install itself shows and explains Notify me, whatever was chosen before")
+    func updateRowsShowNotifyWhenInstallUnavailable() {
+        let bench = updateRows()
+        bench.updates.setMode(.install)
+        #expect(bench.model.automaticUpdates == .install && bench.model.shownAutomaticUpdates == .notify)
+    }
+
     @Test("the update rows follow notifications turned off")
     func updateRowsFollowNotifications() async {
         let bench = updateRows()
@@ -644,11 +650,11 @@ struct SettingsModelTests {
         #expect(!bench.model.checksForUpdatesAutomatically)
     }
 
-    @Test("the menu says why a switch can't be changed as a fragment, without a period; nothing while it can")
-    func unavailableReasons() {
+    @Test("Volume's note says why leveling can't be changed as a fragment, without a period; nothing while it can")
+    func levelingUnavailableNote() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        #expect(SettingsSwitch.allCases.allSatisfy { $0.unavailableReason(model) == nil })
+        #expect(SettingsSwitch.levelingUnavailableNote(model) == nil)
         model.setAntiDotMode(true)
-        #expect(SettingsSwitch.levelsMusic.unavailableReason(model) == "Off in AntiDot mode")
+        #expect(SettingsSwitch.levelingUnavailableNote(model) == "Off in AntiDot mode")
     }
 }

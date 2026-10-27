@@ -2,7 +2,6 @@ import AppKit
 import AutoHushKit
 import CheckedPlayers
 import PlayerCheckKit
-import ScriptablePlayers
 import WebAppPlayers
 
 /// One run of the press test (`runPressTest`): each way to control it,

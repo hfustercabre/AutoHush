@@ -6,11 +6,9 @@ import PlayersTestSupport
 
 @Suite("NowPlayingSetting")
 struct NowPlayingSettingTests {
-    /// Defaults in a suite of their own, removed after.
+    /// Defaults of their own, in memory.
     private func withDefaults(_ body: (UserDefaults) -> Void) {
-        let suite = TestDefaults("AutoHush.NowPlayingSettingTests")
-        defer { suite.remove() }
-        body(suite.defaults)
+        body(MemoryDefaults())
     }
 
     @Test("hidden by its flag 8 (8, 24), shown by any other value (2, 16, 18) or never set", arguments: [

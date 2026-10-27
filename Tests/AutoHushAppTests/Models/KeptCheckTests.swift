@@ -16,18 +16,14 @@ struct KeptCheckTests {
 
     @Test("a finished check is kept, with how its Reopen step went")
     func keeping() {
-        let suite = TestDefaults("KeptCheckTests")
-        defer { suite.remove() }
-        let store = KeptCheckStore(defaults: suite.defaults)
+        let store = KeptCheckStore(defaults: MemoryDefaults())
         store.save(kept)
         #expect(store.load(now: Date(timeIntervalSince1970: 1000 + 60)) == kept)
     }
 
     @Test("a kept check can be forgotten")
     func forgetting() {
-        let suite = TestDefaults("KeptCheckTests")
-        defer { suite.remove() }
-        let store = KeptCheckStore(defaults: suite.defaults)
+        let store = KeptCheckStore(defaults: MemoryDefaults())
         store.save(kept)
         store.forget()
         #expect(store.load(now: Date(timeIntervalSince1970: 1000)) == nil)
@@ -35,9 +31,7 @@ struct KeptCheckTests {
 
     @Test("a check is kept a day at most, then forgotten once found")
     func keptADayAtMost() {
-        let suite = TestDefaults("KeptCheckTests")
-        defer { suite.remove() }
-        let store = KeptCheckStore(defaults: suite.defaults)
+        let store = KeptCheckStore(defaults: MemoryDefaults())
         store.save(kept)
         #expect(store.load(now: Date(timeIntervalSince1970: 1000 + KeptCheck.maxAge)) == nil)
         #expect(store.defaults.data(forKey: KeptCheckStore.key) == nil)
@@ -45,9 +39,7 @@ struct KeptCheckTests {
 
     @Test("a check an earlier build kept, before the Reopen step's fields were, still opens")
     func keptByAnEarlierBuild() throws {
-        let suite = TestDefaults("KeptCheckTests")
-        defer { suite.remove() }
-        let store = KeptCheckStore(defaults: suite.defaults)
+        let store = KeptCheckStore(defaults: MemoryDefaults())
         var old = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(kept)) as? [String: Any])
         old["needsReopen"] = nil
         old["reopenOutcome"] = nil
@@ -58,9 +50,7 @@ struct KeptCheckTests {
 
     @Test("the players reopened always, by bundle ID")
     func reopenChoices() {
-        let suite = TestDefaults("KeptCheckTests")
-        defer { suite.remove() }
-        let defaults = suite.defaults
+        let defaults = MemoryDefaults()
         #expect(!ReopenChoices.reopensAlways("com.deezer.deezer-desktop", defaults: defaults))
         ReopenChoices.setReopensAlways("com.deezer.deezer-desktop", defaults: defaults)
         #expect(ReopenChoices.reopensAlways("com.deezer.deezer-desktop", defaults: defaults))

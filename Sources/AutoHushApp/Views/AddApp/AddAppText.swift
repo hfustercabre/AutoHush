@@ -5,7 +5,8 @@ import Foundation
 
 /// What the Add an App window (W2), the warning before its check (W6) and
 /// the check's panel say. `app` is the chosen app's name. What other places
-/// say too is in `Text/` (`ButtonText`, `ReopenText`, `WayText`).
+/// say too is in `Text/` (`ButtonText`, `ChangeAppText`, `ReopenText`,
+/// `WayText`).
 enum AddAppText {
     // MARK: - The window
 
@@ -51,20 +52,6 @@ enum AddAppText {
 
     static var chooseApp: String {
         String(localized: "Choose an App…", comment: "Add an App window: button under the step “Choose the app” that opens the window listing the apps")
-    }
-
-    /// The question Change… asks once the check has run (the user, 2026-10-18: "Ask first").
-    static var changeAppTitle: String {
-        String(localized: "Choose another app?", comment: "Add an App window: title of the question Change… asks once the check has run")
-    }
-
-    static func changeAppDiscards(_ app: String) -> String {
-        String(localized: "What the check found for \(app) is forgotten.",
-               comment: "Add an App window: what Change… does once the check has run, in its question; %@ is the checked app")
-    }
-
-    static var changeAppConfirm: String {
-        String(localized: "Choose Another App", comment: "Add an App window: the button that confirms Change… once the check has run, forgetting what it found")
     }
 
     static var chooserTitle: String {

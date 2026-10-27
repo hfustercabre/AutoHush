@@ -4,14 +4,10 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-/// Each test has preferences of its own, removed after it.
+/// Each test has preferences of its own, in memory.
 @Suite("SystemVolumeLeveler")
 final class SystemVolumeLevelerTests {
-    private let suite = TestDefaults("SystemVolumeLevelerTests")
-    private let defaults: UserDefaults
-
-    init() { defaults = suite.defaults }
-    deinit { suite.remove() }
+    private let defaults: UserDefaults = MemoryDefaults()
 
     /// A leveler of `volume`, with this test's preferences: its glide back
     /// up steps at once, unless `sleep` waits.

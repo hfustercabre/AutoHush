@@ -11,11 +11,10 @@ struct PlayerSetupStoreTests {
         PlayerSetup(bundleID: id, name: name, appURL: URL(fileURLWithPath: "/Applications/\(name).app"), ways: [.menu(menuName: "Play")])
     }
 
-    /// A store in a suite of its own, removed after.
+    /// A store with preferences of its own, in memory.
     private func withStore(_ body: (DefaultsPlayerSetupStore, UserDefaults) throws -> Void) rethrows {
-        let suite = TestDefaults("AutoHush.PlayerSetupStoreTests")
-        defer { suite.remove() }
-        try body(DefaultsPlayerSetupStore(suiteName: suite.suiteName), suite.defaults)
+        let defaults = MemoryDefaults()
+        try body(DefaultsPlayerSetupStore(defaults: defaults), defaults)
     }
 
     @Test("setups are kept by bundle ID, read by name; forgotten, gone")

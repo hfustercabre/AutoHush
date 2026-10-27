@@ -110,9 +110,14 @@ struct DefaultsPlayerSetupStore: PlayerSetupStore {
     static let key = "checkedPlayerSetups"
     private let stored: KeyedDefaults
 
-    /// `suiteName`: the preferences' suite; `nil` for AutoHush's own (tests use one of theirs).
+    /// `suiteName`: the preferences' suite; `nil` for AutoHush's own.
     init(suiteName: String? = nil) {
         stored = KeyedDefaults(key: Self.key, suiteName: suiteName)
+    }
+
+    /// Kept in `defaults` (tests keep theirs in memory).
+    init(defaults: UserDefaults) {
+        stored = KeyedDefaults(key: Self.key, defaults: defaults)
     }
 
     /// The setups that can be read, by name; one that can't is left out.

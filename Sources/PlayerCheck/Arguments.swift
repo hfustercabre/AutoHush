@@ -132,12 +132,29 @@ var isWebApp: Bool { bundleID.hasPrefix(SafariWebApp.bundleIDPrefix) }
     changes.appPID = running?.processIdentifier ?? 0
 }
 
-/// Whether something besides its menu's or page's word shows whether it
-/// plays: its scripted state, or what it reports to Now Playing, which only
-/// an administrator can read.
-@MainActor var hasOtherSign: Bool { scripting?.hasState == true || (canBeNowPlaying && isAdministrator) }
+/// What besides its menu's or page's word can show whether it plays: its
+/// scripted state, and what it reports to Now Playing, which only an
+/// administrator can read.
+@MainActor var otherSigns: Set<SignKind> {
+    var signs: Set<SignKind> = []
+    if scripting?.hasState == true { signs.insert(.script) }
+    if canBeNowPlaying && isAdministrator { signs.insert(.report) }
+    return signs
+}
+
+/// Whether this run reads the menu or the page (`ways`): as below, for its
+/// command line and the app's other signs.
+@MainActor func pressNeeds(_ ways: Set<Way>) -> Bool {
+    pressNeeds(ways, pressingOneWay: pressingOneWay, via: via, otherSigns: otherSigns)
+}
 
 /// A press by one way reads the menu and the page for their own way (the
-/// panel needs the page's player bar, which names the song), or when nothing
-/// else shows whether the app plays.
-@MainActor func pressNeeds(_ ways: Set<Way>) -> Bool { !pressingOneWay || via.map(ways.contains) == true || !hasOtherSign }
+/// panel needs the page's player bar, which names the song), or when no
+/// sign `SignKind` puts above them shows whether the app plays: only its
+/// scripted state. Its report to Now Playing comes after them (R25), so it
+/// doesn't spare them: the press would be judged by a sign AutoHush reads
+/// after the menu (the 2026-10-27 full check's K1).
+func pressNeeds(_ ways: Set<Way>, pressingOneWay: Bool, via: Way?, otherSigns: Set<SignKind>) -> Bool {
+    let aboveMenuAndPage = SignKind.allCases.prefix { $0 != .page && $0 != .menu }
+    return !pressingOneWay || via.map(ways.contains) == true || !otherSigns.contains { aboveMenuAndPage.contains($0) }
+}

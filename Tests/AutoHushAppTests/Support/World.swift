@@ -74,13 +74,8 @@ final class World {
     var runs = 0
     /// The running check's report, for lines after its first.
     var report: (@MainActor @Sendable (String) -> Void)?
-    /// Kept checks, in a suite of their own, removed with the world.
-    private let keptSuite = TestDefaults("AddAppModelTests")
-    lazy var kept = KeptCheckStore(defaults: keptSuite.defaults)
-
-    deinit {
-        keptSuite.remove()
-    }
+    /// Kept checks, in preferences of their own, in memory.
+    lazy var kept = KeptCheckStore(defaults: MemoryDefaults())
 }
 
 extension AddAppModel {

@@ -73,6 +73,7 @@ extension AppDelegate {
         MenuBarIconPlace(defaults: defaults).prepare()
         statusMenu = StatusMenuController(status: status, settings: userSettings, session: session,
                                           updates: updates, actions: self, settingsModel: settingsModel)
+        statusMenu?.followItemMoves()
     }
 
     /// Waits (briefly) for a fade in progress to give the player its volume

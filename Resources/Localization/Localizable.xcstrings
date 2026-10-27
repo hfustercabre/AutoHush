@@ -2541,233 +2541,6 @@
         }
       }
     },
-    "%@ can’t be faded" : {
-      "comment" : "The menu, under the dimmed Fade playback switch while the media player is one AutoHush can't fade; %@ is the player, e.g. TIDAL",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لا يمكن تطبيق التلاشي على %@"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no admet esvaïments"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "U aplikace %@ nelze použít prolínání"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ kan ikke tones ud og ind"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ kann nicht ein- und ausgeblendet werden"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Η εφαρμογή %@ δεν υποστηρίζει σταδιακή αλλαγή έντασης"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no admite fundidos"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ no admite fundidos"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appia %@ ei voi häivyttää"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ne prend pas en charge les fondus"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ ne prend pas en charge les fondus"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "לא ניתן לעמעם את %@"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ को फ़ेड नहीं किया जा सकता"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikaciju %@ nije moguće postupno utišavati"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A(z) %@ app nem halkítható fokozatosan"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ tidak dapat dipudarkan"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Non è possibile applicare dissolvenze a %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@はフェードできません"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@은(는) 페이드할 수 없습니다"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ tidak boleh dipudarkan"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ kan ikke tones ut og inn"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bij %@ is faden niet mogelijk"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplikacja %@ nie obsługuje wyciszania"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não é possível aplicar fade em %@"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não é possível aplicar fade a %@"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aplicația %@ nu poate fi estompată"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Для %@ затухание недоступно"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Apku %@ nemožno prelínať"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Za aplikacijo %@ pojemanje ni mogoče"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ kan inte tonas in och ut"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เฟด %@ ไม่ได้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ uygulamasının sesi yavaşça değiştirilemez"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Для програми %@ згасання недоступне"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Không thể giảm dần âm lượng của %@"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 無法淡入淡出"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 无法淡入淡出"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 無法淡入淡出"
-          }
-        }
-      }
-    },
     "%@ can’t be scripted" : {
       "comment" : "Add an App window, under “AppleScript”; %@ is the app",
       "localizations" : {
@@ -21204,7 +20977,7 @@
       }
     },
     "Add…" : {
-      "comment" : "The last tile of the Safari web apps and of the other apps (Settings → General, the welcome window): adds a website as a web app, or checks an app and adds it",
+      "comment" : "The last tile of the Safari web apps and of the other apps (Settings → Media Player, the welcome window): adds a website as a web app, or checks an app and adds it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37100,7 +36873,7 @@
       }
     },
     "AutoHush downloads it and lets you know. It keeps the download for 7 days." : {
-      "comment" : "Settings, under the update choice Download it and notify me",
+      "comment" : "Settings → About: help tag and VoiceOver hint of the update pop-up while Download it and notify me is chosen",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37327,7 +37100,7 @@
       }
     },
     "AutoHush installs it when it isn’t holding your player paused, and lets you know afterwards." : {
-      "comment" : "Settings, under the update choice Install it automatically",
+      "comment" : "Settings → About: help tag and VoiceOver hint of the update pop-up while Install it automatically is chosen",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -37554,7 +37327,7 @@
       }
     },
     "AutoHush lets you know. Install the update from its menu whenever you like." : {
-      "comment" : "Settings, under the update choice Notify me",
+      "comment" : "Settings → About: help tag and VoiceOver hint of the update pop-up while Notify me is chosen",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -44818,7 +44591,7 @@
       }
     },
     "Buy me a coffee" : {
-      "comment" : "Link to the developer's Buy Me a Coffee page (Settings → About and Settings' sidebar)",
+      "comment" : "Link to the developer's Buy Me a Coffee page, at the foot of Settings' sidebar",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -52536,7 +52309,7 @@
       }
     },
     "Click to add" : {
-      "comment" : "Under a suggested Safari web app wherever media players are offered (the menu's rows; the tiles in Settings → General and the welcome window): a click adds it. Keep it short (about 12 characters): a plain “Add” is fine",
+      "comment" : "Under a suggested Safari web app wherever media players are offered (the menu's rows; the tiles in Settings → Media Player and the welcome window): a click adds it. Keep it short (about 12 characters): a plain “Add” is fine",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -53898,7 +53671,7 @@
       }
     },
     "Collapsed" : {
-      "comment" : "VoiceOver: a heading or row while what it shows is hidden (Settings → Diagnostics' parts, the menu's Detection and Fades titles, the menu's Media Player and Ignored Apps rows while their side window is closed); a click shows it",
+      "comment" : "VoiceOver: a heading or row while what it shows is hidden (Settings → Diagnostics' parts, the menu card's Change Player row and the Ignored Apps row while their side window is closed); a click shows it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -64574,7 +64347,7 @@
       }
     },
     "Expanded" : {
-      "comment" : "VoiceOver: a heading or row while what it shows is open (Settings → Diagnostics' parts, the menu's Detection and Fades titles, the menu's Media Player and Ignored Apps rows while their side window is open); a click hides it",
+      "comment" : "VoiceOver: a heading or row while what it shows is open (Settings → Diagnostics' parts, the menu card's Change Player row and the Ignored Apps row while their side window is open); a click hides it",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -87728,7 +87501,7 @@
       }
     },
     "Muted only" : {
-      "comment" : "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that no way could pause, so AutoHush mutes it instead while other apps play. Keep it short (about 12 characters)",
+      "comment" : "The tiles of media players (Settings → Media Player, the welcome window): under an app added with Add an App that no way could pause, so AutoHush mutes it instead while other apps play. Keep it short (about 12 characters)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -95446,7 +95219,7 @@
       }
     },
     "Not in AntiDot" : {
-      "comment" : "The tiles of media players (Settings → General, the welcome window): under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound. Keep it short (about 14 characters at most)",
+      "comment" : "The tiles of media players (Settings → Media Player, the welcome window): under an app added with Add an App that only its sound tells about (it can only be muted, or its Now Playing row doesn't show whether it plays), dimmed while AntiDot mode is on, which hears no sound. Keep it short (about 14 characters at most)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -104980,7 +104753,7 @@
       }
     },
     "Other Apps" : {
-      "comment" : "Where media players are offered (the menu, Settings → General, the welcome window): heading over the apps added through a check (Add an App…), after the “Supported Apps”",
+      "comment" : "Where media players are offered (the menu, Settings → Media Player, the welcome window): heading over the apps added through a check (Add an App…), after the “Supported Apps”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -116790,7 +116563,7 @@
       }
     },
     "Remove %@…" : {
-      "comment" : "Removes an app added with Add an App from the media players, after asking: the menu's row with Option held, and the × on its tile (Settings → General, the welcome window) as its help tag and VoiceOver action; %@ is the app",
+      "comment" : "Removes an app added with Add an App from the media players, after asking: the menu's row with Option held, and the × on its tile (Settings → Media Player, the welcome window) as its help tag and VoiceOver action; %@ is the app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -130423,7 +130196,7 @@
       }
     },
     "Supported Apps" : {
-      "comment" : "Where media players are offered (the menu, Settings → General, the welcome window): heading over the players that are apps, before the “Safari Web Apps”",
+      "comment" : "Where media players are offered (the menu, Settings → Media Player, the welcome window): heading over the players that are apps, before the “Safari Web Apps”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -151080,7 +150853,7 @@
       }
     },
     "Would you like to support me?" : {
-      "comment" : "Settings → About and Settings' sidebar, before the Buy me a coffee link",
+      "comment" : "At the foot of Settings' sidebar, before the Buy me a coffee link",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

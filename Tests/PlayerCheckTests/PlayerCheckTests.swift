@@ -25,6 +25,19 @@ struct PlayerCheckTests {
         #expect(pressNeeds([.menu]) && forDevelopers("for developers").isEmpty)
     }
 
+    @Test("a press by one way reads the menu and the page for their own way, or unless its scripted state shows whether it plays: its report to Now Playing doesn't spare them")
+    func pressReads() {
+        #expect(pressNeeds([.menu], pressingOneWay: false, via: nil, otherSigns: [.script, .report]))
+        #expect(pressNeeds([.menu], pressingOneWay: true, via: .menu, otherSigns: [.script]))
+        #expect(pressNeeds([.page], pressingOneWay: true, via: .page, otherSigns: [.script]))
+        #expect(!pressNeeds([.menu], pressingOneWay: true, via: .panel, otherSigns: [.script, .report]))
+        #expect(!pressNeeds([.page], pressingOneWay: true, via: .script, otherSigns: [.script]))
+        // Its report comes after the menu and the page (`SignKind`): it's judged by them, as AutoHush judges it (K1).
+        #expect(pressNeeds([.menu], pressingOneWay: true, via: .panel, otherSigns: [.report]))
+        #expect(pressNeeds([.page], pressingOneWay: true, via: .script, otherSigns: [.report]))
+        #expect(pressNeeds([.menu, .page, .panel], pressingOneWay: true, via: .script, otherSigns: []))
+    }
+
     @Test("what the report writes: a button's Play or Pause word only, never what plays; menu shortcuts; script codes and errors; the switches by name")
     func words() {
         #expect(named("Pause current", ["pause"]) && named("PLAY", ["play"]) && !named("Pauses", ["pause"]))

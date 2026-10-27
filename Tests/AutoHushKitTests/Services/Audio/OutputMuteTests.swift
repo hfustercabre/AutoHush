@@ -4,16 +4,11 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-/// Each test has the outputs in memory and preferences of its own, removed
-/// after it.
+/// Each test has the outputs and preferences of its own, in memory.
 @Suite("OutputMute")
 final class OutputMuteTests {
     private let outputs = MockOutputMuting()
-    private let suite = TestDefaults("OutputMuteTests")
-    private let defaults: UserDefaults
-
-    init() { defaults = suite.defaults }
-    deinit { suite.remove() }
+    private let defaults: UserDefaults = MemoryDefaults()
 
     /// An `OutputMute` of these outputs, with this test's preferences: a
     /// new one stands for a new AutoHush.

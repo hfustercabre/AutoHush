@@ -18,7 +18,7 @@ struct SourceSwitchRow: View {
             ? Text(verbatim: PlayerOption.interruptsLabel(mutes: model.status.mutesNow))
             : saysIgnoredShortly
             ? Text("Ignored", comment: "The menu's Ignored Apps side window: under each app that is ignored (the side window's title already says what that means)")
-            : Text(verbatim: Self.ignoredLabel)
+            : Text(verbatim: IgnoredText.label)
         return MenuSwitchRow(isOn: Binding(get: { !model.status.isIgnored(source.id) },
                                            set: { model.perform(.setIgnored(source, !$0)) }),
                              label: Text(verbatim: source.name), hint: state) {
@@ -33,10 +33,5 @@ struct SourceSwitchRow: View {
                     .foregroundStyle(.appSecondary)
             }
         }
-    }
-
-    /// Under an app that's ignored, here and in Settings → Sound Sources.
-    static var ignoredLabel: String {
-        String(localized: "Ignored — your player keeps playing", comment: "The menu's Playing Now and Settings → Sound Sources: under an app that is ignored, so your player keeps playing while it plays")
     }
 }

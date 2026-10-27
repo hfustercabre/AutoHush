@@ -1,5 +1,4 @@
 import AppKit
-import AutoHushKit
 import SwiftUI
 
 /// Settings → About, A4 (the user's pick, 2026-10-26: "its too crowded"

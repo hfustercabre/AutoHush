@@ -13,7 +13,7 @@ struct AddAppFeatureTests {
     /// output is muted instead.
     private let world = World()
     private let outputs = MockOutputMuting()
-    private let suite = TestDefaults("AddAppFeatureTests")
+    private let defaults = MemoryDefaults()
 
     /// Whether the Mac's output is muted.
     private var muted: Bool { outputs.mutes[7] == true }
@@ -22,7 +22,7 @@ struct AddAppFeatureTests {
     private func opened() -> AddAppFeature {
         world.playing = true
         world.antiDot = true
-        let sut = AddAppFeature(host: world, system: .init(outputMute: OutputMute(outputs: outputs, defaults: suite.defaults),
+        let sut = AddAppFeature(host: world, system: .init(outputMute: OutputMute(outputs: outputs, defaults: defaults),
                                                            standIns: (reader: world, helper: world)),
                                 keptChecks: world.kept)
         sut.open()
@@ -42,7 +42,6 @@ struct AddAppFeatureTests {
 
     @Test("opened, it makes its model on what it's given and shows its window")
     func opens() throws {
-        defer { suite.remove() }
         let sut = opened()
         defer { sut.window?.close() }
         _ = try #require(sut.model)
@@ -52,7 +51,6 @@ struct AddAppFeatureTests {
 
     @Test("a check holds the player through its host while it runs")
     func checkThroughItsHost() async throws {
-        defer { suite.remove() }
         let sut = opened()
         defer { sut.window?.close() }
         let model = try await checking(sut)
@@ -64,7 +62,6 @@ struct AddAppFeatureTests {
 
     @Test("a check mutes the Mac's output when the app can't be muted alone, and puts it back as it ends")
     func checkMutesTheMac() async throws {
-        defer { suite.remove() }
         let sut = opened()
         defer { sut.window?.close() }
         let model = try await checking(sut)
@@ -76,7 +73,6 @@ struct AddAppFeatureTests {
 
     @Test("the Mac's output muted for a check is put back as AutoHush quits")
     func quitPutsTheOutputBack() async throws {
-        defer { suite.remove() }
         let sut = opened()
         defer { sut.window?.close() }
         let model = try await checking(sut)

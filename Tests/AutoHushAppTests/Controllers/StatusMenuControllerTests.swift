@@ -1096,6 +1096,22 @@ struct StatusMenuControllerTests {
         #expect(sut.statusItem.button?.image?.size == MenuBarIcon.size)
     }
 
+    @Test("Settings → General's hidden-icon note is read again each time the item's window moves, as when macOS places a new item (U8)")
+    func itemMoveReadsHiddenIconAgain() throws {
+        let settingsModel = SettingsModel.forTests(actions: actions, updates: updates, settings: settings)
+        let sut = makeController(settingsModel: settingsModel)
+        defer { sut.remove() }
+        sut.followItemMoves()
+        let window = try #require(sut.statusItem.button?.window)
+        actions.menuBarIconIsHidden = true // placed behind the notch
+        #expect(!settingsModel.menuBarIconHidden) // not read yet
+        center.post(name: NSWindow.didMoveNotification, object: window)
+        #expect(settingsModel.menuBarIconHidden)
+        actions.menuBarIconIsHidden = false // ⌘-dragged out
+        center.post(name: NSWindow.didMoveNotification, object: window)
+        #expect(!settingsModel.menuBarIconHidden)
+    }
+
     @Test("Retry tries again at once and keeps the menu open; VoiceOver hears how it went")
     func retry() {
         let sut = makeController()
