@@ -113,6 +113,7 @@ struct ResultWaysTests {
         #expect(worked.ways.map(\.mark) == [.notThere, .notThere, .notThere, .works])
         #expect(worked.ways.allSatisfy { $0.failedStates.isEmpty })
         #expect(worked.setup?.ways == [.panel(rememberedRow: nil)])
+        #expect(worked.windowsClosed && !onlyRuns.result().result.windowsClosed)
         let pausedOnly = panel(.pausedOnly).result().result
         #expect(pausedOnly.ways.last == CheckResult.WayResult(kind: .panel, mark: .none) && pausedOnly.setup == nil)
     }

@@ -27,7 +27,8 @@ import WebAppPlayers
     // No page at all is no page button; not read for another reason is unchecked.
     let noPage = ["no page in its windows", "no switch was taken"].contains(pageNotChecked ?? "")
     let pageUnread: CheckResult.Mark? = pageNotChecked == nil || noPage ? nil
-        : pageNotChecked == "no Accessibility permission" ? .noAccessibility : .notChecked
+        : pageNotChecked == "no Accessibility permission" ? .noAccessibility
+        : pageNotChecked == "no window open" ? .noWindow : .notChecked
     var findings = CheckFindings(bundleID: bundleID, appName: appName, appURL: appURL, ways: [
         .script: found(.script, scriptable, notChecked: scriptable && noAutomation ? .noAutomation : nil,
                        setup: scripting.flatMap(ScriptSetup.init(dictionary:)).map { setup in

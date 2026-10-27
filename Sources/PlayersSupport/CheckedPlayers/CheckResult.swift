@@ -32,6 +32,9 @@ package struct CheckResult: Codable, Equatable, Sendable {
         case noAutomation
         /// Not looked for: Accessibility isn't allowed.
         case noAccessibility
+        /// Not looked for: its window was closed, and its page can be read
+        /// only from one (2026-10-27).
+        case noWindow
         /// Not looked for, for another reason (the app wasn't running, had
         /// no window, or didn't play).
         case notChecked
@@ -70,11 +73,28 @@ package struct CheckResult: Codable, Equatable, Sendable {
     package var setup: PlayerSetup?
     /// Its page's Play/Pause, as the check learned it: kept as a web app's.
     package var pageButton: PlayPauseRecipe?
+    /// Its windows were closed: each way was tried once, as it was, in no
+    /// window state of the trip, so one that worked says so, not "in every
+    /// window state" (the user, 2026-10-27). False in a check saved before.
+    package var windowsClosed: Bool
 
-    package init(ways: [WayResult], setup: PlayerSetup?, pageButton: PlayPauseRecipe? = nil) {
+    package init(ways: [WayResult], setup: PlayerSetup?, pageButton: PlayPauseRecipe? = nil, windowsClosed: Bool = false) {
         self.ways = ways
         self.setup = setup
         self.pageButton = pageButton
+        self.windowsClosed = windowsClosed
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case ways, setup, pageButton, windowsClosed
+    }
+
+    package init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        ways = try values.decode([WayResult].self, forKey: .ways)
+        setup = try values.decodeIfPresent(PlayerSetup.self, forKey: .setup)
+        pageButton = try values.decodeIfPresent(PlayPauseRecipe.self, forKey: .pageButton)
+        windowsClosed = try values.decodeIfPresent(Bool.self, forKey: .windowsClosed) ?? false
     }
 }
 

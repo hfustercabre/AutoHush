@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Add an App, for an app checked with its windows closed** (a menu bar
+  player): a way that worked says "With its windows closed", not "In every
+  window state", since it was tried once; its page's Play/Pause says why it
+  wasn't checked (its window was closed).
+
 ## [1.2.2] — 2026-10-27
 
 ### Changed

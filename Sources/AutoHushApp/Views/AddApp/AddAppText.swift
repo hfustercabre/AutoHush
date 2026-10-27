@@ -412,8 +412,15 @@ enum AddAppText {
         String(localized: "Use \(app)", comment: "Add an App window: button that makes the checked app the player; %@ is the app")
     }
 
-    static func wayNote(_ way: CheckResult.WayResult, app: String) -> String {
+    /// `windowsClosed`: the check found them closed, and tried it once (2026-10-27).
+    static func wayNote(_ way: CheckResult.WayResult, app: String, windowsClosed: Bool = false) -> String {
         switch way.mark {
+        case .works where windowsClosed:
+            way.kind == .panel
+                ? String(localized: "With its windows closed, but it opens on screen for a moment",
+                         comment: "Add an App window, under “The menu bar’s Now Playing panel” when it worked in a check that found the app's windows closed (tried once, nothing moved)")
+                : String(localized: "With its windows closed",
+                         comment: "Add an App window, under a way that paused and played the app in a check that found its windows closed (tried once, nothing moved)")
         case .works:
             way.kind == .panel
                 ? String(localized: "In every window state, but it opens on screen for a moment",
@@ -443,6 +450,9 @@ enum AddAppText {
             String(localized: "Not checked: Automation isn’t allowed", comment: "Add an App window, under “AppleScript” when the check couldn't try it without the Automation permission")
         case .noAccessibility:
             String(localized: "Not checked: Accessibility isn’t allowed", comment: "Add an App window, under a way the check couldn't look for without the Accessibility permission")
+        case .noWindow:
+            String(localized: "Not checked: its window was closed",
+                   comment: "Add an App window, under “Its page’s Play/Pause” when the app's window was closed, so its page couldn't be read (opening it and checking again would)")
         case .notChecked:
             String(localized: "Not checked", comment: "Add an App window, under a way the check couldn't look for")
         }

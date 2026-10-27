@@ -104,6 +104,8 @@ package struct CheckFindings: Sendable {
             : PlayerSetup(bundleID: bundleID, name: appName, appURL: appURL, ways: ordered, stateNotification: stateNotification,
                           needsLaunchOption: needsLaunchOption, panelRowIsStale: panelRowIsStale && panel ? true : nil,
                           panelClues: panel ? panelClues : nil)
-        return (CheckResult(ways: marks, setup: setup, pageButton: pageButton), toggleLeftOut)
+        // Tried with its windows closed, in that state alone (2026-10-27).
+        let windowsClosed = ways.values.contains { $0.trials.contains { $0.0 == .windowsClosed } }
+        return (CheckResult(ways: marks, setup: setup, pageButton: pageButton, windowsClosed: windowsClosed), toggleLeftOut)
     }
 }

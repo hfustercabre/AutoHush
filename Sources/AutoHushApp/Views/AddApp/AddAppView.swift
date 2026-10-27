@@ -442,7 +442,7 @@ private struct WaysList: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             ForEach(result.ways, id: \.kind) { way in
-                WayRow(way: way, app: app, soundOnly: way.kind == .panel && way.worked && panelNeedsSound)
+                WayRow(way: way, app: app, windowsClosed: result.windowsClosed, soundOnly: way.kind == .panel && way.worked && panelNeedsSound)
             }
         }
     }
@@ -452,6 +452,8 @@ private struct WaysList: View {
 private struct WayRow: View {
     let way: CheckResult.WayResult
     let app: String
+    /// The check found its windows closed (`CheckResult.windowsClosed`).
+    var windowsClosed = false
     var recommended = false
     /// Its Now Playing row doesn't follow the app: only its sound tells.
     var soundOnly = false
@@ -474,9 +476,9 @@ private struct WayRow: View {
                 // chosen or not (N3b, the user's pick, 2026-10-27: the recommended
                 // one alone before).
                 if way.mark == .some {
-                    NoteLabel(AddAppText.wayNote(way, app: app), font: .appCaption)
+                    NoteLabel(AddAppText.wayNote(way, app: app, windowsClosed: windowsClosed), font: .appCaption)
                 } else {
-                    Text(verbatim: AddAppText.wayNote(way, app: app)).captionStyle()
+                    Text(verbatim: AddAppText.wayNote(way, app: app, windowsClosed: windowsClosed)).captionStyle()
                 }
                 if soundOnly {
                     Text(verbatim: AddAppText.panelSoundOnly).captionStyle()
@@ -491,7 +493,7 @@ private struct WayRow: View {
         case .works: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
         case .some: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.appWarning)
         case .none, .notThere: Image(systemName: "xmark.circle.fill").foregroundStyle(.appSecondary)
-        case .notTried, .notChecked, .noAutomation, .noAccessibility, .menuBarHidden, .toggleOnly:
+        case .notTried, .notChecked, .noWindow, .noAutomation, .noAccessibility, .menuBarHidden, .toggleOnly:
             Image(systemName: "minus.circle").foregroundStyle(.appSecondary)
         }
     }
@@ -513,7 +515,7 @@ private struct WayChoices: View {
                 if let way = result.ways.first(where: { $0.kind == kind }) { card(way, recommended: index == 0) }
             }
             ForEach(result.ways.filter { !choosable.contains($0.kind) }, id: \.kind) { way in
-                WayRow(way: way, app: app, soundOnly: soundOnly(way)).opacity(0.6).padding(.horizontal, 9).padding(.top, 2)
+                WayRow(way: way, app: app, windowsClosed: result.windowsClosed, soundOnly: soundOnly(way)).opacity(0.6).padding(.horizontal, 9).padding(.top, 2)
             }
         }
     }
@@ -521,7 +523,7 @@ private struct WayChoices: View {
     private func card(_ way: CheckResult.WayResult, recommended: Bool) -> some View {
         let isChosen = model.chosenWay == way.kind
         return Button { model.choose(way.kind) } label: {
-            WayRow(way: way, app: app, recommended: recommended, soundOnly: soundOnly(way))
+            WayRow(way: way, app: app, windowsClosed: result.windowsClosed, recommended: recommended, soundOnly: soundOnly(way))
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .chosenOutline(isChosen, outlinedOtherwise: true)

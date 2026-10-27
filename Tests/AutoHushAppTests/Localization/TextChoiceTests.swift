@@ -104,12 +104,15 @@ struct TextChoiceTests {
             case .wayTitle:
                 return CheckResult.WayKind.allCases.map { Row("\($0)", WayText.title($0)) }
             case .wayNote:
-                func note(_ kind: CheckResult.WayKind, _ mark: CheckResult.Mark, failed: [CheckResult.WindowState] = []) -> String {
-                    AddAppText.wayNote(.init(kind: kind, mark: mark, failedStates: failed), app: app)
+                func note(_ kind: CheckResult.WayKind, _ mark: CheckResult.Mark, failed: [CheckResult.WindowState] = [],
+                          windowsClosed: Bool = false) -> String {
+                    AddAppText.wayNote(.init(kind: kind, mark: mark, failedStates: failed), app: app, windowsClosed: windowsClosed)
                 }
                 return [
                     Row("works", note(.menu, .works), note(.script, .works)),
                     Row("works, the panel", note(.panel, .works)),
+                    Row("works, windows closed", note(.menu, .works, windowsClosed: true)),
+                    Row("works, the panel, windows closed", note(.panel, .works, windowsClosed: true)),
                     Row("some", note(.page, .some, failed: [.covered, .otherDesktop])),
                     Row("none", note(.menu, .none), namesApp: true),
                     Row("no script", note(.script, .notThere), namesApp: true),
@@ -121,6 +124,7 @@ struct TextChoiceTests {
                     Row("not tried", note(.page, .notTried)),
                     Row("no Automation", note(.script, .noAutomation)),
                     Row("no Accessibility", note(.menu, .noAccessibility)),
+                    Row("its window closed", note(.page, .noWindow)),
                     Row("not checked", note(.menu, .notChecked)),
                 ]
             case .stateInSentence:
@@ -255,8 +259,9 @@ struct TextChoiceTests {
     }
 
     /// What Add an App's last step says of a way the check tried.
-    private func wayNote(_ kind: CheckResult.WayKind, _ mark: CheckResult.Mark, failed: [CheckResult.WindowState] = []) -> String {
-        AddAppText.wayNote(.init(kind: kind, mark: mark, failedStates: failed), app: Self.app)
+    private func wayNote(_ kind: CheckResult.WayKind, _ mark: CheckResult.Mark, failed: [CheckResult.WindowState] = [],
+                         windowsClosed: Bool = false) -> String {
+        AddAppText.wayNote(.init(kind: kind, mark: mark, failedStates: failed), app: Self.app, windowsClosed: windowsClosed)
     }
 
     @Test("the check's notes say when AppleScript only toggles, a permission is missing, Now Playing is hidden, or which window states failed")
@@ -267,6 +272,11 @@ struct TextChoiceTests {
         #expect(wayNote(.panel, .menuBarHidden)
             == "Not tried: hidden in the menu bar; show it in \(ControlFailure.nowPlayingSettings), then check again")
         #expect(wayNote(.page, .some, failed: [.covered, .otherDesktop]) == "Not with its window covered or on another desktop")
+        // Its windows closed: tried once there, never said to work in every state (2026-10-27).
+        #expect(wayNote(.menu, .works, windowsClosed: true) == "With its windows closed")
+        #expect(wayNote(.panel, .works, windowsClosed: true) == "With its windows closed, but it opens on screen for a moment")
+        #expect(wayNote(.menu, .works) == "In every window state")
+        #expect(wayNote(.page, .noWindow) == "Not checked: its window was closed")
     }
 
     @Test("with nothing missing that the check can go without, Add an App warns of nothing")

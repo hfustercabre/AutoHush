@@ -30,7 +30,9 @@ struct CheckResultTests {
         let read = try JSONDecoder().decode(CheckResult.self, from: saved)
         #expect(read.ways == [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.otherDesktopCovered, .hidden]),
                               CheckResult.WayResult(kind: .panel, mark: .works)])
-        #expect(read.setup == nil && read.pageButton == nil)
+        #expect(read.setup == nil && read.pageButton == nil && !read.windowsClosed)
+        let found = CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .noWindow)], setup: nil, windowsClosed: true)
+        #expect(try JSONDecoder().decode(CheckResult.self, from: JSONEncoder().encode(found)) == found)
         let closed = CheckResult.WayResult(kind: .panel, mark: .some, failedStates: [.windowsClosed])
         #expect(String(decoding: try JSONEncoder().encode(closed), as: UTF8.self).contains(#""windowsClosed""#))
         #expect(try JSONDecoder().decode(CheckResult.WayResult.self, from: JSONEncoder().encode(closed)) == closed)
