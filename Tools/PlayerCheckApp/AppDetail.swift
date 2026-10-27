@@ -141,7 +141,10 @@ struct AppDetail: View {
                     ProgressView().controlSize(.small)
                     Text(report?.state == .allowing ? "Waiting for the Accessibility permission…"
                          : report?.state == .opening ? "Opening \(app.name)…" : report?.request != nil ? "Waiting for you…"
-                         : report?.windowState.map { "Checking: its window \($0)…" } ?? "Checking…")
+                         : report?.windowState.map { state in
+                             // "its window covered, 2 of 7"; "its windows closed, 1 of 1".
+                             "Checking: its \(report?.testedState?.state == .windowsClosed ? "" : "window ")\(state)…"
+                         } ?? "Checking…")
                         .foregroundStyle(.secondary)
                 }
             }

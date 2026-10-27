@@ -16,6 +16,8 @@ struct SoundSourcesSettingsView: View {
 
     /// The list's rows, order, search, selection and removals.
     private var list: AppListModel { model.appList }
+    /// Opens Sort by's pop-up from the keys.
+    @State private var sortPopUp = PopUpOpener()
 
     var body: some View {
         page
@@ -155,8 +157,11 @@ struct SoundSourcesSettingsView: View {
             .pickerStyle(.menu)
             .buttonStyle(.borderless)
             .fixedSize()
-            // ← and → choose the order, while the arrow keys' highlight is on it.
-            .modifier(Highlightable(cornerRadius: 6, outset: 3, adjust: { step in
+            .opened(by: sortPopUp)
+            // ← and → choose the order, while the arrow keys' highlight is on
+            // it; Return or Space shows the choices, as About's update pop-up
+            // (`PopUpOpener`, 2026-10-27).
+            .modifier(Highlightable(cornerRadius: 6, outset: 3, press: { sortPopUp.open() }, adjust: { step in
                 if let criterion = AppListOrder.Criterion.allCases.stepping(from: list.order.criterion, by: step) {
                     list.setOrder(AppListOrder(criterion: criterion))
                 }

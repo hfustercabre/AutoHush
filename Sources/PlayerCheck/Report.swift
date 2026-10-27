@@ -17,19 +17,24 @@ import WebAppPlayers
 /// A way's title (`CheckReportLine.wayTitle`).
 func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
 
-/// A way's results in the window states, when the test went through them:
-/// its mark, what its line adds, and a line per state it failed in (only
-/// for ⚠: a ✗ failed in all) or that wasn't tested.
+/// A way's results in the window states, when the test went through them
+/// or found its windows closed: its mark, what its line adds, and a line
+/// per state it failed in (only for ⚠: a ✗ failed in all) or that wasn't
+/// tested (with its windows closed, one for them all).
 @MainActor func stateSummary(_ key: Way) -> (mark: CheckReportLine.WayMark, suffix: String, lines: [String])? {
-    guard let windowTest, let results = stateResults[key], !results.isEmpty else { return nil }
+    guard let results = stateResults[key], !results.isEmpty else { return nil }
     let passed = results.filter { $0.result == .worked }.count
     let mark: CheckReportLine.WayMark = passed == results.count ? .works : passed == 0 ? .none : .some
-    let all = WindowState.allCases.count
+    guard let windowTest else {
+        let note = CheckReportLine.wayState(.notChecked, "window states", "not tested (\(windowStatesNote ?? "no window open"))")
+        return (mark, " (with its \(WindowState.windowsClosed.title))", [note])
+    }
+    let all = WindowState.trip.count
     let suffix = passed == results.count
         ? " (" + (passed == all ? "all \(all) window states" : passed == 1 ? "the one window state tested" : "the \(passed) window states tested") + ")"
         : passed == 0 ? " (in every window state tested)" : ", in \(passed) of \(results.count) window states"
     var lines = mark == .some ? results.filter { $0.result != .worked }.map { CheckReportLine.wayState(.none, $0.state.title, $0.why) } : []
-    for state in WindowState.allCases where !results.contains(where: { $0.state == state }) {
+    for state in WindowState.trip where !results.contains(where: { $0.state == state }) {
         let why = untestedStates[key]?[state] ?? windowTest.untested[state] ?? notTried.replacingOccurrences(of: "not tried: ", with: "")
         lines.append(CheckReportLine.wayState(.notChecked, state.title, "not tested (\(why))"))
     }

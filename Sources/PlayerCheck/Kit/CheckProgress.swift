@@ -81,7 +81,8 @@ package struct CheckProgress: Equatable, Sendable {
         if line.hasPrefix(CheckReportLine.free) { inputBlocked = false }
         if let step = CheckReportLine.windowState(in: line) {
             windowStep = WindowStep(index: step.index, count: step.count, state: step.state)
-            activity = .moving
+            // With its windows closed, nothing is moved (2026-10-27).
+            activity = step.state == .windowsClosed ? nil : .moving
         } else if let way = CheckReportLine.way(ofTrial: line) {
             activity = .pausing(way)
         } else if line.hasPrefix(CheckReportLine.afterPause), case .pausing(let way)? = activity {

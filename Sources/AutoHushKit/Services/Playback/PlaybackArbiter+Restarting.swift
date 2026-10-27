@@ -265,7 +265,8 @@ extension PlaybackArbiter {
     /// itself: a trailer in a hidden window), it's paused,
     /// AutoHush's pause from then on, still muted until it plays again
     /// (`PauseMute.keptInPause`). Still heard, its pause is
-    /// pressed again, every `mutedPauseRetry`; the user's input changes
+    /// pressed again, every `mutedPauseRetry` (less often while it fails:
+    /// `mutedPauseWait`); the user's input changes
     /// nothing then: it plays already, so nothing of theirs started it (the
     /// user, 2026-10-24: "if at any point it can be paused instead of
     /// muted, it should pause it"). Silent just after their key or click in
@@ -321,10 +322,14 @@ extension PlaybackArbiter {
             guard !isShutDown, pausedByUs, mutedInstead, !activeSources.isEmpty else { return }
             let now = clock()
             if let pressed = pausePressedWhileMuted, now.timeIntervalSince(pressed) < Self.mutedPauseRetry { return }
+            if let failed = mutedPauseFailures, now.timeIntervalSince(failed.last) < Self.mutedPauseWait(afterFailures: failed.count) { return }
             do { try await player.pauseQuietly() } catch {
-                logger.debug("[arbiter] muted \(self.player.name, privacy: .public): its pause failed: \(error)")
+                let failures = (mutedPauseFailures?.count ?? 0) + 1
+                mutedPauseFailures = (failures, now)
+                logger.debug("[arbiter] muted \(self.player.name, privacy: .public): its pause failed (\(failures, privacy: .public) in a row): \(error)")
                 return
             }
+            mutedPauseFailures = nil
             logger.debug("[arbiter] muted \(self.player.name, privacy: .public): its pause pressed in \(String(format: "%.2f", self.clock().timeIntervalSince(now)), privacy: .public) s")
             guard !isShutDown, pausedByUs, mutedInstead else { return }
             pausePressedWhileMuted = now
@@ -362,6 +367,7 @@ extension PlaybackArbiter {
         guard pauseMute != .off else { return false }
         pauseMute = .off
         pausePressedWhileMuted = nil
+        mutedPauseFailures = nil
         return true
     }
 

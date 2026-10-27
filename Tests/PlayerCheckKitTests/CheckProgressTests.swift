@@ -42,6 +42,16 @@ struct CheckProgressTests {
         #expect(progress([Line.windowState(4, of: 7, .otherDesktopCovered), "\(Line.notTested): no other desktop"]).activity == .untested)
     }
 
+    @Test("with its windows closed, its one state moves nothing: no activity until a way is pressed")
+    func windowsClosed() {
+        let closed = progress([Line.Heading.pressTest.rawValue, Line.windowState(1, of: 1, .windowsClosed)])
+        #expect(Line.windowState(1, of: 1, .windowsClosed) == "  State 1 of 1: windows closed")
+        #expect(closed.windowStep == CheckProgress.WindowStep(index: 1, count: 1, state: .windowsClosed))
+        #expect(closed.activity == nil)
+        #expect(progress([Line.windowState(1, of: 1, .windowsClosed), "  \(Line.trial(.panel)): before, reports playing"]).activity
+            == .pausing(.panel))
+    }
+
     @Test("a request lasts until it's answered or the report moves on, and lifts the block meanwhile")
     func requests() {
         let asked = progress([Line.Heading.playing.rawValue, Line.blocked + " until its window is put back",

@@ -9,7 +9,9 @@ import os
 /// keyboard, mouse and trackpad: moving the pointer doesn't count, nor
 /// events apps post (AutoHush's own presses). Media keys don't count (the
 /// user, 2026-10-25): while another app plays, macOS sends them to it, and
-/// their time can't tell Play/Pause from the volume keys.
+/// their time can't tell Play/Pause from the volume keys. A click in one of
+/// the player's own windows while it isn't in front (its menu bar icon, its
+/// menu) counts too (`PlayerWindowClicks`).
 package final class PlayerInput: NSObject, Sendable {
     private let bundleID: String
     /// When the player was the frontmost app, the last 10 minutes; an open
@@ -23,16 +25,21 @@ package final class PlayerInput: NSObject, Sendable {
     static let spanMemory: TimeInterval = 600
     /// How long ago the latest input of a kind came (`UserInput.secondsSince`).
     private let secondsSince: @Sendable (CGEventType) -> Double
+    /// Clicks in the player's own windows while another app is in front.
+    private let clicks: PlayerWindowClicks
 
-    /// `frontmost`, the frontmost app's bundle ID, and `activations`, where
-    /// macOS says an app came forward: tests give their own (1.2.1's
-    /// review: these were never tested).
+    /// `frontmost`, the frontmost app's bundle ID, `activations`, where
+    /// macOS says an app came forward, and `clicks` in its own windows
+    /// (`nil`: watched for real): tests give their own (1.2.1's review:
+    /// these were never tested).
     package init(bundleID: String,
                  secondsSince: @escaping @Sendable (CGEventType) -> Double = UserInput.secondsSince,
                  frontmost: () -> String? = { NSWorkspace.shared.frontmostApplication?.bundleIdentifier },
-                 activations: NotificationCenter = NSWorkspace.shared.notificationCenter) {
+                 activations: NotificationCenter = NSWorkspace.shared.notificationCenter,
+                 clicks: PlayerWindowClicks? = nil) {
         self.bundleID = bundleID
         self.secondsSince = secondsSince
+        self.clicks = clicks ?? PlayerWindowClicks(bundleID: bundleID)
         super.init()
         if frontmost() == bundleID {
             spans.withLock { $0 = [(Date(), nil)] }
@@ -77,7 +84,7 @@ package final class PlayerInput: NSObject, Sendable {
     /// Each kind's latest is read on its own, so a key pressed elsewhere
     /// since doesn't hide a click in the player.
     package func since(_ date: Date) -> Bool {
-        Self.played(since: date, now: Date(), spans: spans.withLock { $0 }, secondsSince: secondsSince)
+        Self.played(since: date, now: Date(), spans: spans.withLock { $0 }, secondsSince: secondsSince) || clicks.since(date)
     }
 
     /// `since`, from the spans the player was in front and each kind of

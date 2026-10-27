@@ -96,4 +96,14 @@ struct PanelRowsTests {
                                         PanelRow(text: "Other, Someone Else – Live", playing: false)])
         #expect(rows.map { $0.button["AXDescription"] } == ["Pause", "Reproducir"])
     }
+
+    @Test("a remembered row is found again though the times it shows have moved on; the times alone are left out")
+    func rememberedRowWithoutTimes() {
+        #expect(PanelRows.withoutTimes("Long Tone, Test Artist 04:39 −05:21") == "Long Tone, Test Artist")
+        #expect(PanelRows.withoutTimes("Mix, DJ – Live 1:02:03 -0:57") == "Mix, DJ – Live")
+        #expect(PanelRows.withoutTimes("Song 2, Blur – Blur") == "Song 2, Blur – Blur")
+        let rows = [PanelRow(text: "Long Tone, Test Artist 06:10 −03:50", playing: false)]
+        #expect(PanelRows.row(in: rows, pausing: false, appName: "MacMusicPlayer", otherApps: [], texts: [],
+                              remembered: "Long Tone, Test Artist 04:39 −05:21", holdsNowPlaying: false) == rows[0])
+    }
 }

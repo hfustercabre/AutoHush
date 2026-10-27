@@ -201,7 +201,7 @@ flowchart TD
   PC -->|"yes"| PA
   FAIL -.->|"the apps stop"| LEFT
   PA -.->|"heard, not just after you<br/>played it from silence: the<br/>pause didn’t take, or it<br/>started again (not one whose<br/>pause is a mute already)"| MUTED
-  PA -.->|"heard again from silence<br/>within 3 s of a key or click<br/>in it (already in front; no<br/>media keys; AntiDot mode: a<br/>play it reports, after one)"| THEIRS
+  PA -.->|"heard again from silence<br/>within 3 s of a key or click<br/>in it (already in front, or<br/>its menu bar icon; no media<br/>keys; AntiDot mode: a play<br/>it reports, after one)"| THEIRS
   PA -.->|"AntiDot mode: said to<br/>play, no key or click in it<br/>just before: paused again"| PA
   MUTED -.->|"silent (it paused itself, or<br/>its pause took: tried every<br/>2 s, never through the Now<br/>Playing panel): paused, kept<br/>muted until it plays again"| PA
   MUTED -.->|"silent within 3 s of a<br/>key or click in it: your<br/>pause, unmuted"| USER
@@ -547,7 +547,7 @@ flowchart TD
   RUN["The check runs in AutoHush’s<br/>helper; AutoHush’s own player<br/>stays as it is (Paused while<br/>a check runs)"]
   BLOCK["The screen dimmed; clicks,<br/>scrolling and keys blocked<br/>(said in orange); a panel at<br/>the bottom right: progress<br/>and Stop"]
   MUTE["The app muted meanwhile:<br/>on its own (Audio Recording,<br/>not in AntiDot mode), else<br/>the Mac’s output (and any the<br/>sound moves to), put back after"]
-  STATES["Its window in 7 states: in<br/>view, covered, on another<br/>desktop, covered there, full<br/>screen, minimized, hidden"]
+  STATES["Its window in 7 states: in<br/>view, covered, on another<br/>desktop, covered there, full<br/>screen, minimized, hidden;<br/>with its windows closed,<br/>none moved, each way once"]
   WAYS["In each state, each way<br/>pauses and plays it: its<br/>AppleScript, playback menu,<br/>page’s Play/Pause, Now<br/>Playing row"]
   ASK["It asks you, in blue on<br/>the panel, to pause it<br/>yourself (to learn its page):<br/>mouse and keyboard yours"]
   SHOW["Now Playing hidden in<br/>the menu bar: shown for<br/>the moment of a press"]

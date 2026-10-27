@@ -164,4 +164,30 @@ struct PlayerCheckTests {
         #expect(!WindowStates.isOrdinary(layer: 3, height: 600, isStandard: true))
         #expect(!WindowStates.isOrdinary(layer: nil, height: 600, isStandard: true))
     }
+
+    @Test("a window kept closed is off screen and on no desktop; a hidden, minimized or other desktop's keeps one, and unread desktops tell nothing")
+    func closedWindows() {
+        #expect(WindowStates.isClosed(onScreen: false, desktops: [])) // a menu bar player's, playing on
+        #expect(!WindowStates.isClosed(onScreen: false, desktops: [1])) // hidden, minimized, or on another desktop
+        #expect(!WindowStates.isClosed(onScreen: false, desktops: nil))
+        #expect(!WindowStates.isClosed(onScreen: true, desktops: []))
+    }
+
+    @Test("with its windows closed, a way's one run is its line's, saying so, and the window states it wasn't tested in follow under it")
+    func windowsClosedSummary() throws {
+        let note = windowStatesNote
+        defer {
+            stateResults = [:]
+            windowStatesNote = note
+        }
+        #expect(windowTest == nil)
+        windowStatesNote = "no window open"
+        stateResults[.panel] = [(.windowsClosed, .worked, "")]
+        let worked = try #require(stateSummary(.panel))
+        #expect(worked.mark == .works && worked.suffix == " (with its windows closed)")
+        #expect(worked.lines == [CheckReportLine.wayState(.notChecked, "window states", "not tested (no window open)")])
+        stateResults[.panel] = [(.windowsClosed, .pausedOnly, "it paused, but didn't play again")]
+        #expect(stateSummary(.panel)?.mark == CheckReportLine.WayMark.none)
+        #expect(stateSummary(.menu) == nil) // not tried
+    }
 }

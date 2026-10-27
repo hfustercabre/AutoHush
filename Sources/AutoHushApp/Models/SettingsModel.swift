@@ -170,6 +170,17 @@ final class SettingsModel {
         } ?? "AutoHush"
     }
 
+    /// The row's title and the line under it: what a check in this launch
+    /// found, with when the last one was; before one, only when the last one
+    /// was, since About's header has the version (I2a, the user's pick,
+    /// 2026-10-27: About showed it three times); before any check ever, this
+    /// version.
+    func updateRow(now: Date = Date()) -> (title: String, subtitle: String?) {
+        let checked = lastCheckedNote(now: now)
+        if updateStatus == nil, let checked { return (checked, nil) }
+        return (updateTitle, checked)
+    }
+
     /// Under it: "Last checked 2 hours ago"; `nil` before the first check.
     func lastCheckedNote(now: Date = Date()) -> String? {
         guard let lastUpdateCheck else { return nil }

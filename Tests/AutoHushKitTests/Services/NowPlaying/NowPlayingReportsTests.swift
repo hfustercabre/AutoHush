@@ -154,11 +154,12 @@ struct NowPlayingReportsTests {
         withExtendedLifetime(scratch) {}
     }
 
-    @Test("a stream that keeps ending by itself soon after it starts is followed again a few times, then not at all, as a log that can't be opened")
-    func shortRuns() async {
+    @Test("a stream that keeps ending by itself soon after it starts is followed again a few times, then rests, then is followed again")
+    func shortRuns() async throws {
         let reads = Locked(0)
         // A `log stream` that no longer takes what it's asked: it ends at once, while the past still reads.
-        let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/usr/bin/true"], isAdministrator: true) { _ in
+        let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/usr/bin/true"], isAdministrator: true,
+                                        shortRunsRest: 0.5) { _ in
             reads.increment()
             return [:]
         }
@@ -171,5 +172,13 @@ struct NowPlayingReportsTests {
         #expect(!reports.follow(since: Date()))
         #expect(reports.latest(of: "com.example.app") == nil)
         #expect(reads.value == NowPlayingReports.shortRunsLimit)
+
+        // Rested, it's followed again at the next question.
+        try await Task.sleep(for: .milliseconds(600))
+        #expect(reports.isAvailable)
+        await TestWait.until {
+            _ = reports.latest(of: "com.example.app")
+            return reads.value > NowPlayingReports.shortRunsLimit
+        }
     }
 }

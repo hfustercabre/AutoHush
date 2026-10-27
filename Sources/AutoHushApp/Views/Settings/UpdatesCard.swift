@@ -74,7 +74,8 @@ struct UpdatesCard: View {
             }
             CardDivider()
             HStack {
-                RowTitle(Text(model.updateTitle), subtitle: model.lastCheckedNote().map { Text($0) })
+                let row = model.updateRow()
+                RowTitle(Text(row.title), subtitle: row.subtitle.map { Text($0) })
                 Spacer(minLength: 8)
                 Button { model.updates.checkFromUser() } label: {
                     Text("Check Now", comment: "Settings → About: checks for an update now")

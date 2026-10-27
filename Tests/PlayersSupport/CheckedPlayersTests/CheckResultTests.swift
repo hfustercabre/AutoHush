@@ -23,6 +23,26 @@ struct CheckResultTests {
         #expect(result.ways.first { $0.kind == .script }?.worked == false)
     }
 
+    @Test("a check saved before windows closed reads back as it was; windows closed is saved by its own name")
+    func savedBeforeWindowsClosed() throws {
+        let saved = Data(#"{"ways":[{"kind":"page","mark":"some","failedStates":["otherDesktopCovered","hidden"]},"#.utf8)
+            + Data(#"{"kind":"panel","mark":"works","failedStates":[]}]}"#.utf8)
+        let read = try JSONDecoder().decode(CheckResult.self, from: saved)
+        #expect(read.ways == [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.otherDesktopCovered, .hidden]),
+                              CheckResult.WayResult(kind: .panel, mark: .works)])
+        #expect(read.setup == nil && read.pageButton == nil)
+        let closed = CheckResult.WayResult(kind: .panel, mark: .some, failedStates: [.windowsClosed])
+        #expect(String(decoding: try JSONEncoder().encode(closed), as: UTF8.self).contains(#""windowsClosed""#))
+        #expect(try JSONDecoder().decode(CheckResult.WayResult.self, from: JSONEncoder().encode(closed)) == closed)
+    }
+
+    @Test("a check moves a window through its 7 states, in their order; windows closed isn't one, and each has a title of its own")
+    func windowTrip() {
+        #expect(CheckResult.WindowState.trip == [.visible, .covered, .otherDesktop, .otherDesktopCovered, .fullScreen, .minimized, .hidden])
+        #expect(CheckResult.WindowState.windowsClosed.title == "windows closed")
+        #expect(Set(CheckResult.WindowState.allCases.map(\.title)).count == CheckResult.WindowState.allCases.count)
+    }
+
     @Test("keeping it keeps the setup, and its page's button as a web app's; nothing when no way worked")
     func keeping() {
         let store = MemorySetupStore()

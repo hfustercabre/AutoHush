@@ -5,6 +5,34 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Add an App** warns on every way that works only in some window
+  states, not only on the recommended one.
+- **About** shows AutoHush's version once in its page: the Updates row says
+  when the last check was.
+
+### Fixed
+
+- **macOS's power chime and Mail's sounds** no longer pause your player.
+- **A player played from its menu bar icon** (with its windows closed) is
+  yours: AutoHush no longer mutes it as if it had started by itself.
+- **Add an App's check** finds the ways that work for an app playing with
+  its windows closed (a menu bar player), trying each once without moving
+  anything; before, it read its closed window as on another desktop and
+  approved none.
+- **A muted player whose pause keeps failing** is tried less and less often,
+  at most once a minute, instead of every second.
+- **Added apps paused through the Now Playing panel** resume reliably while
+  their row shows the track's time.
+- **Sound Sources' Sort by** opens with Return or Space once the arrow
+  keys reach it, as About's update pop-up does.
+- **Added apps read through Now Playing** get it back a few minutes after
+  macOS's log stops answering for a while; before, only a restart of
+  AutoHush did.
+
 ## [1.2.1] — 2026-10-27
 
 ### Changed

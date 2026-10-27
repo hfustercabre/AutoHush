@@ -24,6 +24,8 @@ struct AppConfigurationTests {
         "systemsoundserverd",              // plays notification and alert sounds for every app
         "com.apple.systemsound",
         "com.apple.springboard",
+        "com.apple.PowerChime",            // the chime as power is plugged in
+        "com.apple.mail",                  // Mail's own sounds
         "com.apple.CoreAudio.SomeHelper",  // anything with the com.apple.CoreAudio prefix
     ])
     func rejects(bundleID: String) {

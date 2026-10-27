@@ -165,14 +165,16 @@ actor PanelWay: MusicPlayer {
             return (chosen, opened == nil && !panel.isInMenuBar())
         }
         guard let pressed else { throw MusicPlayerError.playerCommandFailed(hidden ? .nowPlayingHidden : .pressFailed) }
-        guard pressed != self.remembered else { return }
-        self.remembered = pressed
+        // Kept without its times, which change as it plays (`withoutTimes`).
+        let kept = PanelRows.withoutTimes(pressed)
+        guard kept != self.remembered else { return }
+        self.remembered = kept
         // Only its row changes, in the setup kept now (checked again since, it
         // may have other ways), and only while it's kept: a setup the user
         // removed isn't added back.
         store.update(bundleID) { setup in
             guard setup.ways.contains(where: \.isPanel) else { return }
-            setup.ways = setup.ways.map { $0.isPanel ? .panel(rememberedRow: pressed) : $0 }
+            setup.ways = setup.ways.map { $0.isPanel ? .panel(rememberedRow: kept) : $0 }
         }
     }
 

@@ -244,6 +244,31 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 3)
     }
 
+    @Test("muted, a pause whose press keeps failing is tried less often each time, not every second")
+    func mutedPauseFailingBacksOff() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
+        let arbiter = await mutedForVLC(player, clock: clock, hearing: hearing, mute: mute, published: published, scheduler: scheduler)
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        let before = await player.pauseCallCount
+        await nextLook(scheduler, arbiter, clock: clock) // pressed: failed (1)
+        #expect(await player.pauseCallCount == before + 1)
+        await nextLook(scheduler, arbiter, clock: clock) // 1 s since: waits 2 s
+        #expect(await player.pauseCallCount == before + 1)
+        await nextLook(scheduler, arbiter, clock: clock) // 2 s: pressed, failed (2)
+        #expect(await player.pauseCallCount == before + 2)
+        for _ in 0..<3 { await nextLook(scheduler, arbiter, clock: clock) } // 3 s since: waits 4 s
+        #expect(await player.pauseCallCount == before + 2)
+        await nextLook(scheduler, arbiter, clock: clock) // 4 s: pressed, failed (3)
+        #expect(await player.pauseCallCount == before + 3)
+        #expect(PlaybackArbiter.mutedPauseWait(afterFailures: 10) == 60)
+
+        await player.setFailPause(nil) // it can be paused again: pressed at the next wait's end
+        for _ in 0..<8 { await nextLook(scheduler, arbiter, clock: clock) }
+        #expect(await player.pauseCallCount == before + 4)
+        #expect(mute.unmuteCount == 0)
+    }
+
     @Test("muted, a player that doesn't state itself (Apple TV's trailers) is pressed too: its sound tells")
     func mutedNoStatePressed() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()

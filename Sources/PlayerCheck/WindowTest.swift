@@ -40,7 +40,7 @@ import PlayerCheckKit
     /// is dragged, and hides it after: an Electron app's top bar has buttons
     /// Accessibility sees only then (an account's avatar).
     var revealPage: ((Bool) -> Void)?
-    var states: [WindowState] { WindowState.allCases.filter { untested[$0] == nil } }
+    var states: [WindowState] { WindowState.trip.filter { untested[$0] == nil } }
 
     init?(app: NSRunningApplication) {
         self.app = app
@@ -214,6 +214,9 @@ import PlayerCheckKit
             why = normalize() ?? setWindow(kAXMinimizedAttribute, reads: .minimized, within: 4)
         case .hidden:
             why = normalize() ?? hide()
+        case .windowsClosed:
+            // Not on the trip: a window the user opened is never closed by the check.
+            why = "the check doesn't close its windows"
         }
         if let why { return why }
         comeHome()
@@ -310,7 +313,7 @@ import PlayerCheckKit
             case .minimized: problem = setWindow(kAXMinimizedAttribute, reads: .minimized, within: 4)
             case .hidden: problem = hide()
             case .covered: coverAgain()
-            case .visible, .otherDesktop, .otherDesktopCovered: break
+            case .visible, .otherDesktop, .otherDesktopCovered, .windowsClosed: break
             }
         }
         if let homeWindow { WindowStates.setFrame(homeWindow.element, homeWindow.frame) }
@@ -328,3 +331,7 @@ import PlayerCheckKit
 @MainActor var windowTest: WindowTest?
 /// Why there are no window states, when there aren't.
 @MainActor var windowStatesNote: String?
+/// Its windows were closed when the test came to them (no window on screen
+/// or within reach, `WindowTest` nil): each way is tried once, as it is, in
+/// that state of its own (the user, 2026-10-27).
+@MainActor var windowsClosed = false

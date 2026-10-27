@@ -111,7 +111,9 @@ isn't heard, like a muted trailer. AutoHush leaves it alone, and the menu
 says "Playing silently".
 
 **The user's play** (`PlayerInput`): a key pressed or a click while the
-player was already the frontmost app, just before it played. A play after
+player was already the frontmost app, or a click in one of its own windows
+while it isn't (its menu bar icon, its menu: `PlayerWindowClicks`), just
+before it played. A play after
 it is the user's, so AutoHush doesn't pause it again; without it, a start
 is the app's own (an autoplay, the next trailer). Media keys and events
 other apps post don't count.
@@ -167,7 +169,9 @@ _Avoid_: method.
 **Window state**: where an app's window is while a check presses it: in
 view, covered, on another desktop, covered there, full screen,
 minimized or hidden. A way that works in every state works wherever the
-user leaves the window.
+user leaves the window. **Windows closed** is a state of its own: no
+window on screen or within reach (a menu bar player's), where each way
+that needs none is tried once.
 
 **Checked app** (`AddedAppPlayer`, kind `.checkedApp`): an app added with
 Add an App, offered under "Other Apps" with its "Checked by you" badge, and

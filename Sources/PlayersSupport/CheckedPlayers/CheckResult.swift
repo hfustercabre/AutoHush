@@ -37,9 +37,13 @@ package struct CheckResult: Codable, Equatable, Sendable {
         case notChecked
     }
 
-    /// The states a player's window can be in, as the check moves it there.
+    /// The states a player's window can be in, as the check moves it there
+    /// (`trip`), and its windows closed: none on screen or within reach (a
+    /// menu bar player's, playing on), where nothing is moved and each way
+    /// is tried once, as it is (the user, 2026-10-27). Saved by their raw
+    /// values: a check saved before windows closed reads back as it was.
     package enum WindowState: String, Codable, CaseIterable, Sendable {
-        case visible, covered, otherDesktop, otherDesktopCovered, fullScreen, minimized, hidden
+        case visible, covered, otherDesktop, otherDesktopCovered, fullScreen, minimized, hidden, windowsClosed
     }
 
     /// How one way did over the window states it was tested in: its mark,
@@ -75,6 +79,10 @@ package struct CheckResult: Codable, Equatable, Sendable {
 }
 
 extension CheckResult.WindowState {
+    /// The states a check moves an app's window through, in their order (the
+    /// fewest moves): all but windows closed, where it has none to move.
+    package static let trip: [Self] = allCases.filter { $0 != .windowsClosed }
+
     /// As the check's report names it (`CheckReportLine`).
     package var title: String {
         switch self {
@@ -85,6 +93,7 @@ extension CheckResult.WindowState {
         case .fullScreen: "full screen"
         case .minimized: "minimized"
         case .hidden: "hidden"
+        case .windowsClosed: "windows closed"
         }
     }
 }

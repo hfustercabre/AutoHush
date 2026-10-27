@@ -118,6 +118,9 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// its own state said it plays again, to be unmuted once it's silent
     /// since (`lookWhileMuted`).
     var pausePressedWhileMuted: Date?
+    /// While muted in place of the pause: how many presses of its pause
+    /// failed in a row, and when the last did (`mutedPauseWait`).
+    var mutedPauseFailures: (count: Int, last: Date)?
     /// Since when the player has been heard while it says it doesn't play
     /// (`mutesHeardWhileQuiet`): still heard past a pause's tail, it's muted.
     var heardWhileQuietSince: Date?
@@ -208,6 +211,13 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// Muted in place of the pause and still heard, its pause is pressed
     /// again this often (`lookWhileMuted`).
     static let mutedPauseRetry: TimeInterval = 2
+    /// How long a failed press of its pause waits for the next, muted:
+    /// `mutedPauseRetry`, doubled with each failure in a row, at most a
+    /// minute (2026-10-27: a player whose way kept failing was pressed every
+    /// second, the menu bar's Now Playing opened each time).
+    static func mutedPauseWait(afterFailures failures: Int) -> TimeInterval {
+        min(mutedPauseRetry * pow(2, Double(max(failures - 1, 0))), 60)
+    }
     /// The user's input counts as their play only when the player is heard
     /// again within this long of it (`userPlayedJustNow`).
     static let playInputWindow: TimeInterval = 3

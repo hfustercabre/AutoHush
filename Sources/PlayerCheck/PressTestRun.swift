@@ -166,16 +166,19 @@ import WebAppPlayers
         return again
     }
 
-    /// Each window state in turn (with no window, one run as it is), each
-    /// way tried there; then its window put back, and a page switch that
-    /// was found on turned on again.
+    /// Each window state in turn (with its windows closed, that state's one
+    /// run, as it is; with no window states, one run as it is), each way
+    /// tried there; then its window put back, and a page switch that was
+    /// found on turned on again.
     func run() {
-        let states: [WindowState?] = windowTest.map { $0.states } ?? [nil]
+        let states: [WindowState?] = windowTest.map { $0.states } ?? [windowsClosed ? .windowsClosed : nil]
         for (index, next) in states.enumerated() where going {
             stopIfRequested(trialRan ? nil : "stopped: its window is put back")
             state = next
-            if let next, let windowTest {
+            if let next {
                 say(CheckReportLine.windowState(index + 1, of: states.count, next))
+            }
+            if let next, let windowTest {
                 // Off, as between two presses, before the window goes.
                 switchForPress(false)
                 stopState.setInTrial(true)
@@ -187,8 +190,8 @@ import WebAppPlayers
                     windowTest.untested[next] = why
                     continue
                 }
-                currentWindowState = next
             }
+            currentWindowState = next
             trialProblem = nil
             if let script, scriptProblem == nil, ready() {
                 // A toggle is sent for the pause only while it plays, and again to play.
@@ -288,6 +291,7 @@ import WebAppPlayers
             }
             first = false
         }
+        currentWindowState = nil
         if let windowTest {
             stopState.setInTrial(true)
             let problem = windowTest.restore()

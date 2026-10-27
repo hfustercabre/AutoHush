@@ -26,10 +26,13 @@ enum Desktops {
     }
 
     /// The desktop a window is on.
-    static func of(window: Int) -> Int? {
-        guard let connection, let spacesForWindows,
-              let spaces = spacesForWindows(connection(), 7, [window] as CFArray)?.takeRetainedValue() as? [Int] else { return nil }
-        return spaces.first
+    static func of(window: Int) -> Int? { all(ofWindow: window)?.first }
+
+    /// The desktops a window is on: none for a window closed or ordered out
+    /// (a minimized or hidden one keeps its own); nil when they can't be read.
+    static func all(ofWindow window: Int) -> [Int]? {
+        guard let connection, let spacesForWindows else { return nil }
+        return spacesForWindows(connection(), 7, [window] as CFArray)?.takeRetainedValue() as? [Int]
     }
 
     /// Where a desktop is in the main display's order.

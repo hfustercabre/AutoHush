@@ -585,6 +585,20 @@ struct SettingsModelTests {
         #expect(model.lastCheckedNote(now: now) == "Last checked \(when)")
     }
 
+    @Test("the Updates row says only when the last check was until one runs in this launch, the version being About's; then what it found, with when; the version before any check")
+    func updateRowShowsTheVersionOnce() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        updates.currentVersion = AppVersion("0.3.11")
+        #expect(model.updateRow() == ("AutoHush 0.3.11", nil))
+
+        let now = Date()
+        updates.lastCheck = now.addingTimeInterval(-2 * 3600)
+        let checked = model.lastCheckedNote(now: now)
+        #expect(model.updateRow(now: now) == (checked ?? "", nil))
+        updates.status = "AutoHush 0.3.11 is up to date."
+        #expect(model.updateRow(now: now) == ("AutoHush 0.3.11 is up to date.", checked))
+    }
+
     /// Settings' model on real updates, which find v0.3.0 and can't install
     /// it (AutoHush's folder is read-only).
     private func updateRows() -> (model: SettingsModel, updates: UpdateController, notifier: MockUpdateNotifier,

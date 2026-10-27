@@ -88,9 +88,9 @@ import ScriptablePlayers
                     setPageSwitch(attribute, on: on, pid: pid)
                 }
             }
-            say("  each way is tested with its window in each state: " + WindowState.allCases.map(\.title).joined(separator: ", ")
+            say("  each way is tested with its window in each state: " + WindowState.trip.map(\.title).joined(separator: ", ")
                 + "; it's put back as it is now: \(test.original.title)")
-            for state in WindowState.allCases { if let why = test.untested[state] { say("  \(state.title): not tested (\(why))") } }
+            for state in WindowState.trip { if let why = test.untested[state] { say("  \(state.title): not tested (\(why))") } }
             stopState.setInTrial(true)
             let why = test.putIn(.visible)
             stopState.setInTrial(false)
@@ -102,8 +102,14 @@ import ScriptablePlayers
                 say("  visible now: its page is read in view, and the test starts there")
             }
         } else {
+            // No window on screen or within reach: none open, or only one it
+            // keeps closed (a menu bar player's). Nothing to move, so the ways
+            // that need no window (the page needs one) are tried once, in a
+            // state of its own (the user, 2026-10-27).
+            windowsClosed = true
             windowStatesNote = "no window open"
-            say("  not tested: no window open (each way is tried once, as it is)")
+            say("  \(WindowState.windowsClosed.title): no window on screen or within reach, so none is moved;"
+                + " each way that needs none is tried once, as it is")
         }
     }
     guard !onlyItsPage else { return }

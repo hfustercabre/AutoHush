@@ -458,6 +458,7 @@ enum AddAppText {
         case .fullScreen: String(localized: "in full screen", comment: "Add an App window, in “Not with its window %@”: a window state")
         case .minimized: String(localized: "minimized", comment: "Add an App window, in “Not with its window %@”: a window state")
         case .hidden: String(localized: "hidden", comment: "Add an App window, in “Not with its window %@”: a window state (the app hidden)")
+        case .windowsClosed: String(localized: "closed", comment: "Add an App window, in “Not with its window %@”: a window state (no window open, as a menu bar player playing on)")
         }
     }
 
@@ -473,6 +474,7 @@ enum AddAppText {
         case .fullScreen: String(localized: "Full screen", comment: "The window states a check moves the app's window through")
         case .minimized: String(localized: "Minimized", comment: "The window states a check moves the app's window through")
         case .hidden: String(localized: "Hidden", comment: "The window states a check moves the app's window through: the app hidden")
+        case .windowsClosed: String(localized: "Windows closed", comment: "The check's panel, as its window state: the app has no window open (a menu bar player playing on), so nothing is moved")
         }
     }
 

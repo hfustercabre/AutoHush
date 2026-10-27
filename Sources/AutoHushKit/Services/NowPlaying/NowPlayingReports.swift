@@ -14,7 +14,8 @@ import OSLog
 /// then, so nothing falls between. It's followed from the first question
 /// on, on a queue of its own, and stops once nobody asks for `idleLimit`.
 /// A stream that keeps ending by itself soon after it starts isn't started
-/// again (`shortRunsLimit`): each start reads the past again.
+/// again for a while (`shortRunsLimit`, `shortRunsRest`): each start reads
+/// the past again.
 package final class NowPlayingReports: @unchecked Sendable {
     /// One app mediaremoted keeps for Now Playing: "<its bundle ID> (<its
     /// pid>) <its name>", or a web app's media process
@@ -52,11 +53,15 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// short: `log stream` may no longer take what it's asked (its wording
     /// is macOS's), while the log still opens.
     static let shortRun: TimeInterval = 60
-    /// After this many short runs in a row the log isn't followed again, as
-    /// one that can't be opened: each start reads `lookBack` of the past,
-    /// about half a second, and an added app's state is asked every second
-    /// (the 2026-10-27 full check's R3).
+    /// After this many short runs in a row the log rests (`shortRunsRest`):
+    /// each start reads `lookBack` of the past, about half a second, and an
+    /// added app's state is asked every second (the 2026-10-27 full check's R3).
     static let shortRunsLimit = 3
+    /// How long the log isn't followed after `shortRunsLimit` short runs: a
+    /// burst of ends (logd starting again) doesn't leave an added app judged
+    /// by its report without it until AutoHush restarts (1.2.1's review, C2,
+    /// the user, 2026-10-27; for good before).
+    static let shortRunsRest: TimeInterval = 5 * 60
 
     private let lock = NSLock()
     private let processRuns: @Sendable (pid_t) -> Bool
@@ -71,10 +76,12 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// When the followed stream started, and how many in a row ran short (`shortRun`).
     private var streamStart = Date.distantPast
     private var shortRuns = 0
+    /// Until when the log rests after its short runs (`shortRunsRest`).
+    private var restsUntil = Date.distantPast
+    private let shortRunsRest: TimeInterval
     private var ready = false
     private var starting = false
-    /// The log couldn't be opened, or its stream kept ending
-    /// (`shortRunsLimit`): it isn't asked again.
+    /// The log couldn't be opened: it isn't asked again.
     private var failed = false
     private var lastAsked = Date.distantPast
     private var idleTimer: any DispatchSourceTimer?
@@ -100,9 +107,11 @@ package final class NowPlayingReports: @unchecked Sendable {
     package init(lookBack: TimeInterval = NowPlayingReports.firstLookBack, idleLimit: TimeInterval? = NowPlayingReports.idleLimit,
                  streamCommand: [String] = NowPlayingReports.streamCommand,
                  isAdministrator: Bool = NowPlayingReports.isAdministrator,
+                 shortRunsRest: TimeInterval = NowPlayingReports.shortRunsRest,
                  readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:),
                  processRuns: @escaping @Sendable (pid_t) -> Bool = NowPlayingReports.stillRuns) {
         self.lookBack = lookBack
+        self.shortRunsRest = shortRunsRest
         self.processRuns = processRuns
         idle = idleLimit
         self.streamCommand = streamCommand
@@ -122,8 +131,9 @@ package final class NowPlayingReports: @unchecked Sendable {
     }
 
     /// Whether the log can be read: an administrator's account (the admin
-    /// group) can, until opening it showed otherwise. Told without opening it.
-    package var isAvailable: Bool { lock.withLock { given || (administrator && !failed) } }
+    /// group) can, until opening it showed otherwise, but not while it rests
+    /// after short runs. Told without opening it.
+    package var isAvailable: Bool { lock.withLock { given || (administrator && !failed && Date() >= restsUntil) } }
 
     /// Whether this account is an administrator's: macOS's log opens only to
     /// the admin group (80). Unknown, it's taken as one, and opening the log tells.
@@ -273,7 +283,7 @@ package final class NowPlayingReports: @unchecked Sendable {
 
     /// The stream ended by itself: what's known may be old, so nothing is
     /// said until it's followed again (at the next question). One that ran
-    /// short `shortRunsLimit` times in a row isn't followed again.
+    /// short `shortRunsLimit` times in a row rests first (`shortRunsRest`).
     private func ended(_ id: Int) {
         lock.withLock {
             guard streamID == id else { return }
@@ -282,7 +292,10 @@ package final class NowPlayingReports: @unchecked Sendable {
             ready = false
             clients = [:]
             shortRuns = Date().timeIntervalSince(streamStart) < Self.shortRun ? shortRuns + 1 : 0
-            if shortRuns >= Self.shortRunsLimit { failed = true }
+            if shortRuns >= Self.shortRunsLimit {
+                shortRuns = 0
+                restsUntil = Date().addingTimeInterval(shortRunsRest)
+            }
         }
     }
 

@@ -122,7 +122,8 @@ Each step is a section of the report, in this order:
    as it plays, up to 2 minutes; if it doesn't, the check stops, with
    nothing moved or pressed. Moving the window comes only after this.
 6. **Window States** (a test only): the window is put in the first state,
-   visible on this desktop. With `--block-input` (AutoHush's and Player
+   visible on this desktop (with its windows closed, nothing is moved:
+   below). With `--block-input` (AutoHush's and Player
    Check's), the user's clicks, scrolling and keys are blocked from here
    until the window is put back, apart from the requests; Escape stops the
    check (below).
@@ -264,8 +265,15 @@ Control-arrow), and the state is read back: one it doesn't reach is “not
 tested”, with why. At the end it's put back as it was: its state, place and
 desktop (a minimized or hidden window on its own desktop), the windows of
 other apps that covered it raised again, and the app it was run from in
-front. With no window open the ways are tried once; with one desktop, the
-two desktop states aren't tested.
+front. With one desktop, the two desktop states aren't tested.
+
+**Windows closed** is a state of its own: no window on screen or within
+reach, either none open or only one the app keeps closed (off screen and on
+no desktop, as a menu bar player keeps its own while it plays on; a
+minimized or hidden window keeps its desktop). Nothing is moved, and each
+way that needs no window (AppleScript, its menu, the Now Playing panel) is
+tried once, as it is (“State 1 of 1: windows closed”), so one that works
+windowless is found and kept.
 
 ## Blocking the mouse and keyboard (`--block-input`)
 

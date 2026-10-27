@@ -103,6 +103,20 @@ struct ResultWaysTests {
         #expect(onlyRuns.result().result.ways.map(\.mark) == [.works, .notThere, .works, .menuBarHidden])
     }
 
+    @Test("with its windows closed, a way is marked by its one run there, and one that worked is set up: a menu bar player's panel")
+    func windowsClosed() {
+        func panel(_ result: TrialResult) -> CheckFindings {
+            findings([.script: .init(isThere: false), .menu: .init(isThere: false), .page: .init(isThere: false),
+                      .panel: .init(isThere: true, trials: [(.windowsClosed, result)], first: result, setup: .panel(rememberedRow: nil))])
+        }
+        let worked = panel(.worked).result().result
+        #expect(worked.ways.map(\.mark) == [.notThere, .notThere, .notThere, .works])
+        #expect(worked.ways.allSatisfy { $0.failedStates.isEmpty })
+        #expect(worked.setup?.ways == [.panel(rememberedRow: nil)])
+        let pausedOnly = panel(.pausedOnly).result().result
+        #expect(pausedOnly.ways.last == CheckResult.WayResult(kind: .panel, mark: .none) && pausedOnly.setup == nil)
+    }
+
     @Test("a toggle with no state is kept when the page tells the app's state")
     func toggleKeptWithThePage() {
         let (result, toggleLeftOut) = onlyRuns.result()

@@ -35,7 +35,8 @@ extension CheckResult.WindowState {
     /// reached, from one look at its windows (the search for windows on
     /// other desktops takes about 70 ms, up to 1 s): its biggest ordinary one
     /// that Accessibility knows, wherever it is (a full screen window may
-    /// come with a bigger one it doesn't: an Apple player's), else its biggest.
+    /// come with a bigger one it doesn't: an Apple player's), else its
+    /// biggest not closed, else its biggest.
     static func main(of pid: pid_t) -> (info: Info, element: AXUIElement?)? {
         let known = windowElements(of: pid)
         let standard = standardWindows(in: known)
@@ -44,8 +45,23 @@ extension CheckResult.WindowState {
         func area(_ info: Info) -> CGFloat { frame(of: info).width * frame(of: info).height }
         let numbers = Set(known.map(\.number))
         guard let info = candidates.filter({ numbers.contains(number(of: $0)) }).max(by: { area($0) < area($1) })
+                ?? candidates.filter({ !isClosed($0) }).max(by: { area($0) < area($1) })
                 ?? candidates.max(by: { area($0) < area($1) }) else { return nil }
         return (info, known.first { $0.number == number(of: info) }?.element)
+    }
+
+    /// A window the app keeps closed (`isClosed(onScreen:desktops:)`).
+    static func isClosed(_ info: Info) -> Bool {
+        let onScreen = info[kCGWindowIsOnscreen as String] as? Bool == true
+        return isClosed(onScreen: onScreen, desktops: onScreen ? nil : Desktops.all(ofWindow: number(of: info)))
+    }
+
+    /// A window kept closed: off screen and on no desktop, as a menu bar
+    /// player keeps its own, playing on (2026-10-27). A minimized or hidden
+    /// window keeps its desktop, and one on another desktop has that one;
+    /// with its desktops unread, it isn't taken for closed.
+    nonisolated static func isClosed(onScreen: Bool, desktops: [Int]?) -> Bool {
+        !onScreen && desktops?.isEmpty == true
     }
 
     /// Its window in front among its ordinary ones on screen (the list goes
@@ -132,12 +148,16 @@ extension CheckResult.WindowState {
     /// screen, the window's; else where the window server has it. On another
     /// desktop, never covered there: the window list doesn't keep another
     /// desktop's order (an Electron player's, the front window there, read as covered).
-    /// A closed window an app keeps counts as none.
+    /// A closed window an app keeps counts as none, hidden or not (its
+    /// windows closed: a menu bar player's was read as on another desktop,
+    /// and every state as out of reach, 2026-10-27).
     static func state(of app: NSRunningApplication) -> WindowState? {
         let pid = app.processIdentifier
         let appElement = AXUIElement.application(pid, timeout: 1)
-        if appElement.value(kAXHiddenAttribute) as? Bool == true { return .hidden }
-        guard let (info, element) = main(of: pid) else { return nil }
+        let hidden = appElement.value(kAXHiddenAttribute) as? Bool == true
+        guard let (info, element) = main(of: pid) else { return hidden ? .hidden : nil }
+        if isClosed(info) { return nil }
+        if hidden { return .hidden }
         if element?.value(kAXMinimizedAttribute) as? Bool == true { return .minimized }
         if element?.value("AXFullScreen") as? Bool == true { return .fullScreen }
         if info[kCGWindowIsOnscreen as String] as? Bool == true { return isCovered(info) ? .covered : .visible }

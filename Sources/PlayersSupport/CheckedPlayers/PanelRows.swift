@@ -15,6 +15,14 @@ package enum PanelRows {
         text.lowercased().components(separatedBy: CharacterSet.alphanumerics.inverted).filter { !$0.isEmpty }.joined(separator: " ")
     }
 
+    /// A row's text without the times it may show, elapsed and remaining
+    /// ("04:39 −05:21"), which change as the track plays: a remembered row
+    /// is found again by the rest (2026-10-27: MacMusicPlayer's resumes
+    /// failed, its row remembered with the time it was pressed at).
+    package static func withoutTimes(_ text: String) -> String {
+        text.replacing(/\s*[−-]?\d{1,2}(?::\d{2}){1,2}/, with: "")
+    }
+
     /// What a row's song can be: its text up to each ", " ahead of
     /// " – <album>", since song and artist may both hold commas ("…(JAKE
     /// DILE REWORK), Jake Dile - Mixes, Bootlegs, Mashups – "); the whole
@@ -56,7 +64,8 @@ package enum PanelRows {
 
     /// The row to press for the app, showing Pause when `pausing`, else
     /// Play: its song's or name's; else the one it changed with before,
-    /// `remembered`; else, pausing, the only one playing when the app holds
+    /// `remembered` (its times left out: `withoutTimes`); else, pausing, the
+    /// only one playing when the app holds
     /// Now Playing. `asToggle`: whatever it shows, for a row that doesn't
     /// follow the app (`PlayerSetup.panelRowIsStale`), its song's, name's or
     /// remembered only. `nil` when that's not one row.
@@ -67,7 +76,7 @@ package enum PanelRows {
         if mine.count == 1 { return mine[0] }
         guard mine.isEmpty else { return nil }
         if let remembered {
-            let same = candidates.filter { $0.text == remembered }
+            let same = candidates.filter { withoutTimes($0.text) == withoutTimes(remembered) }
             if same.count == 1 { return same[0] }
         }
         return !asToggle && pausing && holdsNowPlaying && candidates.count == 1 ? candidates[0] : nil

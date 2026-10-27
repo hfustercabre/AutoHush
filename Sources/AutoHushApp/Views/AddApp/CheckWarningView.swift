@@ -27,7 +27,7 @@ struct CheckWarningView: View {
                 VStack(spacing: 10) {
                     // Four columns: the last row's tiles under the first row's.
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6, alignment: .top), count: 4), spacing: 10) {
-                        ForEach(CheckResult.WindowState.allCases, id: \.self, content: tile)
+                        ForEach(CheckResult.WindowState.trip, id: \.self, content: tile)
                     }
                     Text(verbatim: AddAppText.statesNote(app.name)).captionStyle()
                 }
@@ -87,6 +87,8 @@ struct CheckWarningView: View {
         case .fullScreen: "arrow.up.left.and.arrow.down.right"
         case .minimized: "dock.arrow.down.rectangle"
         case .hidden: "eye.slash"
+        // Not a tile: the panel's state for an app with no window open.
+        case .windowsClosed: "xmark.rectangle"
         }
     }
 }

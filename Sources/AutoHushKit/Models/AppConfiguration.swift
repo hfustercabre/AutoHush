@@ -97,6 +97,13 @@ package struct AppConfiguration: Sendable {
         "com.apple.controlcenter",
         "com.apple.notificationcenterui",
         "com.apple.springboard",
+        // macOS's sounds that play themselves, not through
+        // systemsoundserverd: the chime as a power adapter is plugged in, and
+        // Mail's (new, sent, scheduled, can't fetch). Calls, alarms, speech,
+        // Siri and Find My still pause (the user, 2026-10-27: "there are
+        // some that should pause the player").
+        "com.apple.PowerChime",
+        "com.apple.mail",
     ]
 
     /// Bundle ID prefixes that indicate system/infrastructure processes to exclude.

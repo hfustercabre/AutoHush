@@ -45,7 +45,8 @@ struct CheckReport {
     var windowState: String? { testedState.map { "\($0.state?.title ?? ""), \($0.index) of \($0.count)" } }
     /// What the check does in that window state: the way it's pressing and
     /// whether it's pausing or playing it again ("By its playback menu:
-    /// playing it again"), why the state isn't tested, or the move there.
+    /// playing it again"), why the state isn't tested, or the move there
+    /// (none with its windows closed).
     var stateActivity: String? {
         guard testedState != nil else { return nil }
         switch progress.activity {
@@ -54,7 +55,8 @@ struct CheckReport {
         case .untested?:
             let text = lines.last { $0.hasPrefix(CheckReportLine.notTested) }?.trimmingCharacters(in: .whitespaces) ?? ""
             return text.prefix(1).uppercased() + text.dropFirst()
-        case .moving?, nil: return "Moving its window there"
+        case .moving?: return "Moving its window there"
+        case nil: return nil
         }
     }
     var verdict: String {
