@@ -93,14 +93,9 @@ struct PlayerTiles: View {
                 ScrollView {
                     groups.coordinateSpace(.named(Self.space))
                         .onGeometryChange(for: CGFloat.self, of: \.size.height) { contentHeight = $0 }
-                        .background { MoreBelowReader.contentFrame }
-                        .mask(alignment: .top) { MoreBelow.mask(reach, moreBelow: moreBelow) }
+                        .fadesOutBelow(reach, moreBelow: moreBelow)
                 }
-                .modifier(MoreBelowReader(reach: $reach))
-                .overlay(alignment: .bottom) {
-                    if moreBelow { MoreBelow.chevron.transition(.opacity) }
-                }
-                .animation(.easeOut(duration: 0.15), value: moreBelow)
+                .showsMoreBelow($reach, moreBelow: moreBelow)
                 .frame(height: heldHeight ?? visibleHeight(rows: maxVisibleRows))
                 .onChange(of: holdsHeight) { _, holds in
                     heldHeight = holds ? visibleHeight(rows: maxVisibleRows) : nil

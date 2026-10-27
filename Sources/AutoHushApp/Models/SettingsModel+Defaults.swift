@@ -37,9 +37,11 @@ extension SettingsModel {
         case .detection:
             isAntiDotMode ? detectionMethod == .playbackSignals
                 : timings.silenceThresholdDB == TimingSettings.defaults.silenceThresholdDB
-        // Startup and Menu Bar's: launch at login off and the icon not kept
-        // beside the system's, as on a fresh install.
-        case .startup: !launchAtLoginEnabled && !keepsMenuBarIconNearSystemIcons
+        // Startup and Menu Bar's: the icon not kept beside the system's, as
+        // on a fresh install. Launch at login is the user's Mac setup, not a
+        // tuning, so it doesn't count (I1, the user, 2026-10-27: on for most
+        // people, it kept the button showing, and the button turned it off).
+        case .startup: !keepsMenuBarIconNearSystemIcons
         // Updates': checked daily and installed automatically, as on a fresh
         // install; the choice counts as default while this copy can't install
         // updates (it's greyed out then).
@@ -80,9 +82,9 @@ extension SettingsModel {
                 restored.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
                 setTimings(restored)
             }
-        // The icon no longer kept beside the system's stays where it is.
+        // The icon no longer kept beside the system's stays where it is;
+        // launch at login is left as it is.
         case .startup:
-            if launchAtLoginEnabled { setLaunchAtLogin(false) }
             if keepsMenuBarIconNearSystemIcons { setKeepsMenuBarIconNearSystemIcons(false) }
         // The choice left alone while this copy can't install updates.
         case .updates:

@@ -13,12 +13,14 @@ This project follows [Semantic Versioning](https://semver.org/).
   version, and **When an update is found** is a pop-up menu, so the page
   fits without scrolling.
 - **Tidier Settings.** A card's **Restore Defaults** shows only once one
-  of its settings differs from its default; **Stay paused after calls**
+  of its settings differs from its default (**Launch at login** is yours:
+  it doesn't count, and Restore Defaults leaves it alone), and VoiceOver
+  reads it with the card's name; **Stay paused after calls**
   sits under **Resume playback**, as a part of it; Sound Sources' list is
   headed **Apps**.
 - **Clearer messages.** The alert after "Can't control" says why once in
-  English, and Add an App's recommended way says in orange where it
-  doesn't work.
+  English, and Add an App's recommended way says, beside an orange
+  warning sign, where it doesn't work.
 - **Quiet apps heard again.** An app that goes quiet but keeps its sound
   open, as games and audio apps do, is heard again within 30 s while your
   player plays, and just before AutoHush resumes it, so the music doesn't

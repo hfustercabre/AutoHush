@@ -12,10 +12,10 @@ final class Checker {
     var runningIDs: Set<String> = []
     /// What's shown per app: its check running, else its last finished one
     /// (else a check that stopped or failed).
-    var reports: [InstalledApp.ID: Report] = [:]
+    var reports: [InstalledApp.ID: CheckReport] = [:]
     /// The last finished check per app, kept between launches: a check
     /// stopped or failed leaves it in place.
-    private(set) var finished: [InstalledApp.ID: Report] = [:]
+    private(set) var finished: [InstalledApp.ID: CheckReport] = [:]
     /// Why the last check of an app didn't finish, while its last finished
     /// check is shown instead.
     var attemptNotes: [InstalledApp.ID: String] = [:]
@@ -77,7 +77,7 @@ final class Checker {
         guard let data = try? Data(contentsOf: Self.savedReports),
               let saved = try? JSONDecoder().decode([String: SavedReport].self, from: data) else { return }
         finished = saved.filter { $0.value.version == SavedReport.currentVersion }
-            .mapValues { Report(state: .finished, lines: $0.lines, date: $0.date) }
+            .mapValues { CheckReport(state: .finished, lines: $0.lines, date: $0.date) }
         reports = finished
     }
 
@@ -313,9 +313,9 @@ final class Checker {
         permissionProblems[app.id] = nil
         refreshRunning()
         let allowing = !isTrusted
-        reports[app.id] = Report(state: allowing ? .allowing : isRunning(app) ? .checking : .opening)
+        reports[app.id] = CheckReport(state: allowing ? .allowing : isRunning(app) ? .checking : .opening)
         panel.show { resized, dimmed in
-            CheckPanelView(app: app, checker: self, resized: resized, dimmed: dimmed)
+            PlayerCheckPanelView(app: app, checker: self, resized: resized, dimmed: dimmed)
         }
         Task {
             if allowing {

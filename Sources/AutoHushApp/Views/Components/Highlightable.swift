@@ -187,3 +187,24 @@ struct HighlightRemoval {
     let remove: () -> Void
     let lit: (Bool) -> Void
 }
+
+/// Scrolls the arrow keys' highlight into view as it moves
+/// (`KeyHighlight.revealed`): every Settings page, About's too (R7, the full
+/// check, 2026-10-27: written on each before).
+struct RevealsKeyHighlight: ViewModifier {
+    let scroller: ScrollViewProxy
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+
+    func body(content: Content) -> some View {
+        content.onChange(of: keyboard?.revealed) { _, revealed in
+            if let revealed { withAnimation(.easeOut(duration: 0.15)) { scroller.scrollTo(revealed) } }
+        }
+    }
+}
+
+extension View {
+    /// Scrolls the arrow keys' highlight into view with `scroller` (`RevealsKeyHighlight`).
+    func revealsKeyHighlight(with scroller: ScrollViewProxy) -> some View {
+        modifier(RevealsKeyHighlight(scroller: scroller))
+    }
+}

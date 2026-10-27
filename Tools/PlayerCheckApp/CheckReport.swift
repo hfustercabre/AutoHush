@@ -3,7 +3,7 @@ import Foundation
 import PlayerCheckKit
 
 /// What playercheck said about one app, as it comes in.
-struct Report {
+struct CheckReport {
     /// `allowing`: waiting for the Accessibility permission, before anything runs.
     enum State: Equatable { case allowing, opening, checking, finished, stopped, failed(String) }
     var state: State

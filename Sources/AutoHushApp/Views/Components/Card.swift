@@ -4,6 +4,9 @@ extension EnvironmentValues {
     /// Inside Settings' pages, built as macOS's grouped forms
     /// (`SettingsPageScroll`): there a `Card` is the form's section.
     @Entry var cardsAreFormSections = false
+    /// The title of the card a view is in, for its footer's Restore
+    /// Defaults to name (I3, the user, 2026-10-27).
+    @Entry var cardTitle: Text?
 }
 
 /// A group of controls, drawn by macOS (the user, 2026-10-17: "use the same
@@ -46,6 +49,7 @@ struct Card<Content: View, Footer: View>: View {
         if isFormSection {
             Section { content } header: { header } footer: { footer }
                 .environment(\.highlightGroup, highlightGroup)
+                .environment(\.cardTitle, title)
         } else {
             VStack(alignment: .leading, spacing: 6) {
                 header.font(.appHeadline).padding(.leading, 4)
@@ -53,6 +57,7 @@ struct Card<Content: View, Footer: View>: View {
                 footer
             }
             .environment(\.highlightGroup, highlightGroup)
+            .environment(\.cardTitle, title)
         }
     }
 

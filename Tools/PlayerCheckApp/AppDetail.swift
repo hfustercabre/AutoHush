@@ -10,7 +10,7 @@ struct AppDetail: View {
     @State private var confirmingRelaunch = false
     @State private var showsReport = false
 
-    private var report: Report? { checker.reports[app.id] }
+    private var report: CheckReport? { checker.reports[app.id] }
     private var isChecking: Bool { checker.checkingID == app.id }
 
     var body: some View {
@@ -259,7 +259,7 @@ struct AppDetail: View {
         return parts.joined(separator: " ")
     }
 
-    @ViewBuilder private func results(_ report: Report) -> some View {
+    @ViewBuilder private func results(_ report: CheckReport) -> some View {
         if let note = checker.attemptNotes[app.id] {
             Label(note, systemImage: "exclamationmark.circle").foregroundStyle(.secondary)
         }

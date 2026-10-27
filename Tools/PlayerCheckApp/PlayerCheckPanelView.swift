@@ -12,7 +12,7 @@ import SwiftUI
 /// the window states as segments (each one filled once tested), the one
 /// it's in and the way it's pressing; and, while the mouse and keyboard are
 /// blocked, that they are.
-struct CheckPanelView: View {
+struct PlayerCheckPanelView: View {
     let app: InstalledApp
     let checker: Checker
     /// Its size, for the panel to fit it.
@@ -20,7 +20,7 @@ struct CheckPanelView: View {
     /// Whether the screen is dimmed: while input is blocked.
     let dimmed: (Bool) -> Void
 
-    private var report: Report? { checker.reports[app.id] }
+    private var report: CheckReport? { checker.reports[app.id] }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

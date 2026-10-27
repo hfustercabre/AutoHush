@@ -67,7 +67,7 @@ struct SettingsPageViewTests {
         case .general: [.startup]
         default: [.updates]
         }
-        if page == .general { model.setLaunchAtLogin(true) }
+        if page == .general { model.setKeepsMenuBarIconNearSystemIcons(true) }
         updates.checksAutomatically = false
         updates.mode = .notify
         for card in cards { #expect(!model.isDefault(card), "\(card)") }

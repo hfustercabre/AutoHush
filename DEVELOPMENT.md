@@ -194,8 +194,8 @@ Sources/
                          Card, SectionHeading, SwitchRow, ChoiceChips, BottomBar, MainButton (a window's
                          main button), WindowPage (a window's header, content and bottom bar), ChecklistStepRow,
                          StepSymbol (a step's mark, numbered or not), PermissionRow, CopyButton, NoteLabel,
-                         SearchField, PlayerTiles, …), MenuBar/ (the menu's panel:
-                         MenuPanelView; MenuScrollArea, what scrolls and whether more is below; StatusCardView, the
+                         SearchField, PlayerTiles, MoreBelow (the cue that more is below a scroll view's edge),
+                         …), MenuBar/ (the menu's panel: MenuPanelView; MenuScrollArea, what scrolls; StatusCardView, the
                          card, and CardPlayerRow, its Change Player row; MenuPlayerListView, the players
                          beside the menu; MenuIgnoredAppsView, the Ignored Apps part; MenuSideRow, its row;
                          MenuPartTitle, a part's title; MenuSidePanelView, the side window the players and

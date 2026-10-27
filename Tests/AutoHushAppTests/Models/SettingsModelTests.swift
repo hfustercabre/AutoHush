@@ -521,7 +521,7 @@ struct SettingsModelTests {
         #expect(model.detectionMethod == .playbackSignals && model.timings.silenceThresholdDB == -40 && model.isDefault(.detection))
     }
 
-    @Test("Modes' Restore Defaults turns AntiDot mode off; Startup and Menu Bar's turns launch at login off and leaves the icon where it is; Updates' checks daily and installs")
+    @Test("Modes' Restore Defaults turns AntiDot mode off; Startup and Menu Bar's no longer keeps the icon beside the system's, leaving it where it is, and leaves launch at login alone, which doesn't count; Updates' checks daily and installs")
     func restoreDefaultsOfTheOtherCards() {
         let icon = MenuBarIconPlace(defaults: UserDefaults(suiteName: "restore-\(UUID())")!)
         let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
@@ -533,11 +533,14 @@ struct SettingsModelTests {
         model.restoreDefaults(.modes)
         #expect(!model.isAntiDotMode && model.isDefault(.modes))
 
+        // Launch at login is the user's Mac setup: on, the card is still at
+        // its defaults (I1, the user, 2026-10-27).
         model.setLaunchAtLogin(true)
+        #expect(model.isDefault(.startup))
         model.setKeepsMenuBarIconNearSystemIcons(true)
         #expect(!model.isDefault(.startup))
         model.restoreDefaults(.startup)
-        #expect(!model.launchAtLoginEnabled && !model.keepsMenuBarIconNearSystemIcons && model.isDefault(.startup))
+        #expect(model.launchAtLoginEnabled && !model.keepsMenuBarIconNearSystemIcons && model.isDefault(.startup))
 
         updates.checksAutomatically = false
         updates.mode = .notify

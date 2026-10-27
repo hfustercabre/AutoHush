@@ -102,6 +102,36 @@ them. One older than a minute is ignored.
 own. It takes over a pause from the hand-over, and takes back a held pause
 when its player is chosen again.
 
+**Heard, silent** (`PlayerHearing`): what the player's own sound says,
+measured through a tap on it: heard lately, or measured long enough with
+nothing heard. In AntiDot mode nothing is measured, so neither can be told.
+
+**Playing silently** (`playsSilently`): the player says it plays here, but
+isn't heard, like a muted trailer. AutoHush leaves it alone, and the menu
+says "Playing silently".
+
+**The user's play** (`PlayerInput`): a key pressed or a click while the
+player was already the frontmost app, just before it played. A play after
+it is the user's, so AutoHush doesn't pause it again; without it, a start
+is the app's own (an autoplay, the next trailer). Media keys and events
+other apps post don't count.
+
+**Restart** (`watchRestart`, `handleRestart`): the player playing again
+while AutoHush holds its pause: the pause didn't take, or it started again
+by itself. It's muted until the pause is over (unless it's the user's
+play); one that can't be muted plays on, and its pause failed.
+
+**Muted instead of paused** (`PauseMute`): AutoHush's mute of the player,
+standing for its pause after a restart. It's lifted at the resume; once the
+player is paused under it, it's kept until the player plays again, so a
+restart by itself is never heard.
+
+**Quiet listen** (`quietProcesses`, `quietListenInterval`): an app silent
+for 10 seconds has its tap released, so it's quiet and no longer counts as
+playing. Every 30 seconds while the player plays, and once before each
+resume, AutoHush listens to the quiet apps it doesn't ignore for half a
+second, to hear whether one plays again.
+
 **Shortcuts action** (`SetAutoPauseIntent`, `TurnOffAutoPauseForIntent`,
 `GetAutoPauseIntent`): something the Shortcuts app can ask AutoHush to do
 with Auto-Pause: set it on or off or toggle it, turn it off for one of the

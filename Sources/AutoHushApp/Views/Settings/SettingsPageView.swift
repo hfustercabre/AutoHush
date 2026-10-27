@@ -28,7 +28,6 @@ struct SettingsPageView: View {
 /// drawn and spaced by macOS, and it scrolls by itself.
 struct SettingsPageScroll<Content: View>: View {
     @ViewBuilder let content: Content
-    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     var body: some View {
         ScrollViewReader { scroller in
@@ -36,9 +35,7 @@ struct SettingsPageScroll<Content: View>: View {
                 .formStyle(.grouped)
                 .environment(\.cardsAreFormSections, true)
                 // The arrow keys' highlight scrolls into view.
-                .onChange(of: keyboard?.revealed) { _, revealed in
-                    if let revealed { withAnimation(.easeOut(duration: 0.15)) { scroller.scrollTo(revealed) } }
-                }
+                .revealsKeyHighlight(with: scroller)
         }
     }
 }

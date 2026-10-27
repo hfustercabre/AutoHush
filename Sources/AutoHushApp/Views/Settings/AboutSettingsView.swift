@@ -11,8 +11,6 @@ import SwiftUI
 struct AboutSettingsView: View {
     let model: SettingsModel
 
-    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
-
     var body: some View {
         ScrollViewReader { scroller in
             ScrollView {
@@ -21,9 +19,7 @@ struct AboutSettingsView: View {
                     .frame(maxWidth: .infinity)
             }
             // The arrow keys' highlight scrolls into view, as on the other pages.
-            .onChange(of: keyboard?.revealed) { _, revealed in
-                if let revealed { withAnimation(.easeOut(duration: 0.15)) { scroller.scrollTo(revealed) } }
-            }
+            .revealsKeyHighlight(with: scroller)
         }
     }
 

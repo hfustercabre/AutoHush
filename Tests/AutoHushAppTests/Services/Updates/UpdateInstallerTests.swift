@@ -61,22 +61,24 @@ struct UpdateInstallerTests {
             return process
         }
         let app = URL(filePath: "/Applications/AutoHush.app")
+        // The loop looks every 0.02 s here: 0.1 s is five looks.
+        let look = 0.02, fiveLooks = Duration.milliseconds(100)
         let autoHush = try running()
-        _ = try UpdateInstaller.openAfterExit(app, waitingFor: autoHush.processIdentifier, opener: opener)
-        try await Task.sleep(for: .milliseconds(500)) // the loop looks every 0.2 s
+        _ = try UpdateInstaller.openAfterExit(app, waitingFor: autoHush.processIdentifier, opener: opener, lookingEvery: look)
+        try await Task.sleep(for: fiveLooks)
         #expect(openedApps() == nil) // still running
         autoHush.terminate()
         autoHush.waitUntilExit()
         await TestWait.until { openedApps() != nil }
-        try await Task.sleep(for: .milliseconds(500))
+        try await Task.sleep(for: fiveLooks)
         #expect(openedApps() == app.path + "\n") // once
 
         let again = try running()
-        let cancel = try UpdateInstaller.openAfterExit(app, waitingFor: again.processIdentifier, opener: opener)
+        let cancel = try UpdateInstaller.openAfterExit(app, waitingFor: again.processIdentifier, opener: opener, lookingEvery: look)
         cancel()
         again.terminate()
         again.waitUntilExit()
-        try await Task.sleep(for: .milliseconds(500))
+        try await Task.sleep(for: fiveLooks)
         #expect(openedApps() == app.path + "\n") // not again
         withExtendedLifetime(folder) {}
     }
