@@ -485,9 +485,20 @@ private struct WayRow: View {
                 }
             }
         }
-        .accessibilityElement(children: .combine)
-        // Its mark isn't read: a way that worked says so.
-        .accessibilityValue(way.mark == .works ? Text(verbatim: AddAppText.wayWorks) : Text(verbatim: ""))
+        // Its own label, not its texts combined: combined, a value of its
+        // own would replace their words (STYLE_GUIDE, as checklist steps).
+        // Its mark isn't read: a way that worked says so as its value.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: accessibilityWords))
+        .accessibilityValue(Text(verbatim: way.mark == .works ? AddAppText.wayWorks : ""))
+    }
+
+    /// What VoiceOver reads of it: its name, its badge, its note and the
+    /// panel's caption, as they show.
+    private var accessibilityWords: String {
+        [WayText.title(way.kind), recommended ? AddAppText.recommendedBadge : nil,
+         AddAppText.wayNote(way, app: app, windowsClosed: windowsClosed), soundOnly ? AddAppText.panelSoundOnly : nil]
+            .compactMap { $0 }.joined(separator: "\n")
     }
 
     @ViewBuilder static func symbol(_ mark: CheckResult.Mark) -> some View {
@@ -532,6 +543,8 @@ private struct WayChoices: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isChosen ? .isSelected : [])
+        // Said on the button too: its label's own value may not reach it.
+        .accessibilityValue(Text(verbatim: way.mark == .works ? AddAppText.wayWorks : ""))
     }
 
     /// The panel that worked, its row showing no state: only its sound tells.
