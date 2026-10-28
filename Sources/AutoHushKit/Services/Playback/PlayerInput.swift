@@ -39,7 +39,7 @@ package final class PlayerInput: NSObject, Sendable {
                  clicks: PlayerWindowClicks? = nil) {
         self.bundleID = bundleID
         self.secondsSince = secondsSince
-        self.clicks = clicks ?? PlayerWindowClicks(bundleID: bundleID)
+        self.clicks = clicks ?? PlayerWindowClicks(bundleID: bundleID, memory: Self.spanMemory)
         super.init()
         if frontmost() == bundleID {
             spans.withLock { $0 = [(Date(), nil)] }

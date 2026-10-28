@@ -326,12 +326,3 @@ import PlayerCheckKit
 /// The window state the test has the app in now: nil outside one (or before
 /// the first). Out of view, a Chromium page's words lag (`wordsCurrent`).
 @MainActor var currentWindowState: WindowState?
-/// The trip through the window states, for a test of an app with a window
-/// (and the Accessibility permission to move it).
-@MainActor var windowTest: WindowTest?
-/// Why there are no window states, when there aren't.
-@MainActor var windowStatesNote: String?
-/// Its windows were closed when the test came to them (no window on screen
-/// or within reach, `WindowTest` nil): each way is tried once, as it is, in
-/// that state of its own (the user, 2026-10-27).
-@MainActor var windowsClosed = false

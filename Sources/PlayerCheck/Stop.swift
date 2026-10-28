@@ -110,7 +110,7 @@ func stopNow(_ code: Int32) -> Never {
 @MainActor func stopIfRequested(_ line: String? = nil) {
     guard stopState.isRequested else { return }
     say("  " + (line ?? "stopped: \(appName) was played again first"))
-    if stopState.isWindowAway { windowTest?.restore() }
+    if stopState.isWindowAway { TestScope.windowTest?.restore() }
     if inputBlock.end() { say(CheckReportLine.free) }
     stopNow(CheckExitStatus.stop)
 }

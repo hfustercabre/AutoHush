@@ -43,10 +43,11 @@ extension CheckResult.WindowState {
         let candidates = infos(.optionAll).filter { owner(of: $0) == pid && isOrdinary($0, standard: standard) }
         guard !candidates.isEmpty else { return nil }
         func area(_ info: Info) -> CGFloat { frame(of: info).width * frame(of: info).height }
+        func largest(_ infos: [Info]) -> Info? { infos.max { area($0) < area($1) } }
         let numbers = Set(known.map(\.number))
-        guard let info = candidates.filter({ numbers.contains(number(of: $0)) }).max(by: { area($0) < area($1) })
-                ?? candidates.filter({ !isClosed($0) }).max(by: { area($0) < area($1) })
-                ?? candidates.max(by: { area($0) < area($1) }) else { return nil }
+        guard let info = largest(candidates.filter { numbers.contains(number(of: $0)) })
+                ?? largest(candidates.filter { !isClosed($0) })
+                ?? largest(candidates) else { return nil }
         return (info, known.first { $0.number == number(of: info) }?.element)
     }
 

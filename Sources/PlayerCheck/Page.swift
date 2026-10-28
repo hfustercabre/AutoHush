@@ -156,8 +156,6 @@ struct PageCheck {
     guard isElectron, let running else { return nil }
     return LaunchOption.arguments(of: running.processIdentifier).contains(LaunchOption.occludedWindows)
 }
-/// Why the page wasn't checked, for the summary.
-@MainActor var pageNotChecked: String?
 /// The switch that showed the page; nil when it showed without one.
 @MainActor var pageSwitch: String?
 /// Whether the page was read: a press by the panel reads it only when its
@@ -176,16 +174,16 @@ struct PageCheck {
 /// still there.
 @MainActor func readPage() {
     pageRead = true
-    pageNotChecked = nil
+    TestScope.pageNotChecked = nil
     guard let running else {
         say("  not checked: the app isn't running")
-        pageNotChecked = "it isn't running"
+        TestScope.pageNotChecked = "it isn't running"
         return
     }
     let pid = running.processIdentifier
     guard AXIsProcessTrusted() else {
         say("  not checked: this tool (or the app running it) needs the Accessibility permission")
-        pageNotChecked = "no Accessibility permission"
+        TestScope.pageNotChecked = "no Accessibility permission"
         return
     }
     // A press: the player bar's button where it was last time.
@@ -194,12 +192,12 @@ struct PageCheck {
         // An Electron player may keep playing with its window closed, and its page can't be
         // read then, not even through windows on other desktops.
         say("  not checked: no window open on any desktop; open it and run again (a closed window's page can't be read)")
-        pageNotChecked = "no window open"
+        TestScope.pageNotChecked = TestScope.noWindowOpen
         return
     }
     if !isWebApp, hiddenInterface == nil, !hasWebPage(pid: pid) {
         say("  none: no web page in its windows, and not built with Electron, Chromium (CEF) or Flutter")
-        pageNotChecked = "no page in its windows"
+        TestScope.pageNotChecked = "no page in its windows"
         return
     }
     let items = isFlutter ? "pressable items" : "buttons"
@@ -231,7 +229,7 @@ struct PageCheck {
         readableAlready = true
     } else if count == 0, let hidden = hiddenInterface {
         if showPage(with: hidden.switches, pid: pid, count: &count, shownAfter: &shownAfter) == nil {
-            pageNotChecked = "no switch was taken"
+            TestScope.pageNotChecked = "no switch was taken"
             return
         }
     } else if count == 0 {
@@ -282,7 +280,7 @@ struct PageCheck {
     if !pressNeeds([.page]) {
         say(via == .panel ? "  not read yet: a press by the panel reads it only when its windows' titles and current track don't tell its row"
                           : "  not read: --via \(via!.rawValue) doesn't need it")
-        pageNotChecked = "not needed for --via \(via!.rawValue)"
+        TestScope.pageNotChecked = "not needed for --via \(via!.rawValue)"
     } else {
         readPage()
     }

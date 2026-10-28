@@ -131,7 +131,7 @@ extension AudioMonitor {
     /// Taps are created only when they matter (see the type comment) and can
     /// deliver samples: with the permission granted, or when it cannot be
     /// read (then samples decide).
-    private var shouldMeterLevels: Bool {
+    var shouldMeterLevels: Bool {
         detectionMethod == .audioLevels && audioLevelsNeeded
             && (permissionStatus == nil || permissionStatus == .granted)
     }
@@ -141,7 +141,7 @@ extension AudioMonitor {
         // The player is tapped only to prove the permission when TCC cannot be read.
         let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
         // The quiet ones only while they're listened to again (`quietListenInterval`).
-        let listened = quietListenUntil == nil ? [] : quietProcessesToListen
+        let listened = quietListen.until == nil ? [] : quietProcessesToListen
         var metered = shouldMeterLevels ? candidates.filter {
             (sourceOfProcess[$0.objectID] != nil && (!quietProcesses.contains($0.objectID) || listened.contains($0.objectID)))
                 || (verifiesWithPlayer && playerProcesses.contains($0.objectID))
@@ -187,7 +187,7 @@ extension AudioMonitor {
                 let heard = peaks[process.objectID].map { $0 >= configuration.audibleThreshold } ?? false
                 if announcing || heard {
                     woken.insert(process.objectID)
-                    if quietListenUntil != nil { quietListenHeard = true }
+                    if quietListen.until != nil { quietListen.heard = true }
                 }
                 guard heard else { continue }
             }
@@ -297,80 +297,6 @@ extension AudioMonitor {
         }
         silentSince[objectID] = nil
         return true
-    }
-
-    /// The processes released for their silence that are listened to again:
-    /// not an ignored app's, which can't pause the music (R1, the user,
-    /// 2026-10-27: else macOS's recording dot showed for it every 30 s).
-    var quietProcessesToListen: Set<AudioObjectID> {
-        quietProcesses.filter { sourceOfProcess[$0].map { !ignoredSourceIDs.contains($0.id) } ?? false }
-    }
-
-    /// Starts and ends the listens to the processes released for their
-    /// silence (`quietListenInterval`): only while the player plays, or one
-    /// was asked for (`listenToQuietApps`), and levels are measured, so
-    /// never in AntiDot mode; a listen ends early once that's over. `true`
-    /// when the taps change (one starts or ends).
-    private func updateQuietListen(at now: Date) -> Bool {
-        guard !quietProcessesToListen.isEmpty else {
-            quietListenedAt = nil
-            quietListenUntil = nil
-            endQuietListenAsk()
-            return false
-        }
-        let since = quietListenedAt ?? now // released just now
-        quietListenedAt = since
-        let listens = (playerPlayingSince != nil || quietListenAsked) && shouldMeterLevels && detectionMode == .audioLevel
-        if let quietListenUntil {
-            guard now >= quietListenUntil || !listens else { return false }
-            self.quietListenUntil = nil
-            quietListenedAt = now
-            endQuietListenAsk()
-            return true
-        }
-        guard listens, now.timeIntervalSince(since) >= Self.quietListenInterval else { return false }
-        startQuietListen(at: now)
-        return true
-    }
-
-    private func startQuietListen(at now: Date) {
-        quietListenUntil = now.addingTimeInterval(Self.quietListenDuration)
-        quietListenHeard = false
-        logger.debug("[monitor] listening again to taps released for silence: \(quietProcessesToListen.count, privacy: .public)")
-    }
-
-    /// Tells whoever waits for the listen (`listenToQuietApps`) whether one
-    /// was heard, as it ends or can't go on.
-    func endQuietListenAsk() {
-        let waiters = quietListenWaiters, heard = quietListenHeard
-        quietListenWaiters = []
-        quietListenAsked = false
-        quietListenHeard = false
-        for waiter in waiters { waiter.resume(returning: heard) }
-    }
-
-    /// Listens once, now, to the processes released for their silence,
-    /// whether the player plays or not (R2, the user, 2026-10-27: before
-    /// AutoHush resumes it, so a game that plays again with its sound kept
-    /// open keeps the music paused): `true` when one is heard, or says it
-    /// plays, within `quietListenDuration`, which then counts as playing.
-    /// `false` at once with none to listen to (an ignored app's aren't), or
-    /// where levels aren't measured (AntiDot mode). One under way: its outcome.
-    func listenToQuietApps() async -> Bool {
-        await withCheckedContinuation { continuation in
-            queue.async {
-                guard !self.quietProcessesToListen.isEmpty, self.shouldMeterLevels, self.detectionMode == .audioLevel else {
-                    continuation.resume(returning: false)
-                    return
-                }
-                self.quietListenWaiters.append(continuation)
-                self.quietListenAsked = true
-                guard self.quietListenUntil == nil else { return }
-                let now = self.clock()
-                self.startQuietListen(at: now)
-                self.updateMeteredProcesses(at: now)
-            }
-        }
     }
 
     /// Whether one process of a source counts as audible in this tick: by its

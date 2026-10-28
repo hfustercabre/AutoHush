@@ -84,11 +84,11 @@ struct PlayerInputTests {
     }
 
     /// Clicks in no player's window.
-    private var noClicks: PlayerWindowClicks { PlayerWindowClicks { _ in false } }
+    private var noClicks: PlayerWindowClicks { PlayerWindowClicks(memory: PlayerInput.spanMemory) { _ in false } }
 
     @Test("a click in the player's menu bar icon or menu counts as the user's, the player not in front; one in another app's, or in its ordinary window, doesn't")
     func clickInPlayersWindow() {
-        let clicks = PlayerWindowClicks { $0 == 42 }
+        let clicks = PlayerWindowClicks(memory: PlayerInput.spanMemory) { $0 == 42 }
         let input = PlayerInput(bundleID: "com.example.menubarplayer", secondsSince: { _ in .infinity }, frontmost: { "com.apple.finder" },
                                 activations: NotificationCenter(), clicks: clicks)
         let before = Date().addingTimeInterval(-1)

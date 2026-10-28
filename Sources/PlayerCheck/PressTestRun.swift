@@ -171,14 +171,14 @@ import WebAppPlayers
     /// tried there; then its window put back, and a page switch that was
     /// found on turned on again.
     func run() {
-        let states: [WindowState?] = windowTest.map { $0.states } ?? [windowsClosed ? .windowsClosed : nil]
+        let states: [WindowState?] = TestScope.windowTest.map { $0.states } ?? [TestScope.windowsClosed ? .windowsClosed : nil]
         for (index, next) in states.enumerated() where going {
             stopIfRequested(trialRan ? nil : "stopped: its window is put back")
             state = next
             if let next {
                 say(CheckReportLine.windowState(index + 1, of: states.count, next))
             }
-            if let next, let windowTest {
+            if let next, let windowTest = TestScope.windowTest {
                 // Off, as between two presses, before the window goes.
                 switchForPress(false)
                 stopState.setInTrial(true)
@@ -292,7 +292,7 @@ import WebAppPlayers
             first = false
         }
         currentWindowState = nil
-        if let windowTest {
+        if let windowTest = TestScope.windowTest {
             stopState.setInTrial(true)
             let problem = windowTest.restore()
             stopState.setInTrial(false)

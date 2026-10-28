@@ -8,19 +8,18 @@ import SwiftUI
 /// the accent color while it's the one to do. The same in every window that
 /// shows steps.
 struct StepSymbol: View {
-    let state: StepState
-    /// AutoHush is doing it now: a spinner.
-    var isBusy = false
+    /// Where the step stands; a spinner while AutoHush is doing it.
+    let status: StepStatus
     /// A numbered step's number (`NumberedStepRow`).
     var number: Int?
     var locked = false
 
     var body: some View {
-        if isBusy {
+        if status.isBusy {
             ProgressView().controlSize(.small).frame(width: 14, height: 14)
                 .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 2 }
         } else {
-            switch state {
+            switch status.state {
             case .done: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
             case .failed: Image(systemName: "xmark.circle.fill").foregroundStyle(.appWarning)
             case .current:
@@ -35,6 +34,6 @@ struct StepSymbol: View {
 extension StepSymbol {
     /// A checklist step's (adding a web app, learning its controls).
     init(step: ChecklistStep, locked: Bool = false) {
-        self.init(state: step.state, isBusy: step.isBusy, locked: locked)
+        self.init(status: step.status, locked: locked)
     }
 }

@@ -25,8 +25,8 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     guard let results = stateResults[key], !results.isEmpty else { return nil }
     let passed = results.filter { $0.result == .worked }.count
     let mark: CheckReportLine.WayMark = passed == results.count ? .works : passed == 0 ? .none : .some
-    guard let windowTest else {
-        let note = CheckReportLine.wayState(.notChecked, "window states", "not tested (\(windowStatesNote ?? "no window open"))")
+    guard let windowTest = TestScope.windowTest else {
+        let note = CheckReportLine.wayState(.notChecked, "window states", "not tested (\(TestScope.windowStatesNote ?? TestScope.noWindowOpen))")
         return (mark, " (with its \(WindowState.windowsClosed.title))", [note])
     }
     let all = WindowState.trip.count
@@ -49,7 +49,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         summary.lines.forEach { say($0) }
     } else {
         way(result == .worked ? .works : .none, "\(title): " + (result == .worked ? worked : failed))
-        if let windowStatesNote { say(CheckReportLine.wayState(.notChecked, "window states", "not tested (\(windowStatesNote))")) }
+        if let windowStatesNote = TestScope.windowStatesNote { say(CheckReportLine.wayState(.notChecked, "window states", "not tested (\(windowStatesNote))")) }
     }
 }
 
@@ -96,7 +96,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     } else {
         way(.none, "\(wayTitle(.menu)): none with Play/Pause and Previous/Next")
     }
-    if let pageNotChecked {
+    if let pageNotChecked = TestScope.pageNotChecked {
         way(.notChecked, "\(wayTitle(.page)): not checked (\(pageNotChecked))")
     } else if let page {
         let kind = pageSwitch.map { "\(wayTitle(.page)), with \(switchName($0)) on" } ?? wayTitle(.page)

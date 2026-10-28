@@ -80,6 +80,18 @@ struct ToolRunTests {
         #expect(throws: (any Error).self) { try ToolRun(URL(fileURLWithPath: "/nonexistent/tool")).start(onLine: { _ in }, onEnd: { _ in }) }
     }
 
+    @Test("a line longer than maxLine comes in parts of at most maxLine, with every byte")
+    func longLine() async throws {
+        let seen = Lines()
+        _ = try seen.start(shell("head -c 200000 /dev/zero | tr '\\0' a"))
+        let end = try #require(await seen.waitForEnd())
+        let lines = seen.lines.value
+        #expect(ToolRun.maxLine == 64 << 10)
+        #expect(lines.count == 4 && end.lines == 4 && end.result.succeeded)
+        #expect(lines.allSatisfy { $0.utf8.count <= ToolRun.maxLine && $0.allSatisfy { $0 == "a" } })
+        #expect(lines.map(\.utf8.count).reduce(0, +) == 200_000)
+    }
+
     @Test("Stop asks it to stop: it ends by the signal, unless it handles it")
     func stop() async throws {
         let plain = Lines()

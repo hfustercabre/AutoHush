@@ -12,24 +12,6 @@ import os
 /// so neither side can see them out of order.
 @MainActor
 package final class MonitoringPipeline {
-    /// What the engine reports for the menu and Settings.
-    package enum StatusUpdate: Sendable {
-        case playback(PlaybackState)
-        case activeSources([AudioSource])
-        case detection(DetectionMode)
-        /// AntiDot mode learned how an app tells macOS it plays.
-        case learnedAssertions(String, AnnouncedAssertions)
-        /// Why the music couldn't be paused, then `nil` once that's over.
-        case pauseFailure(MusicPlayerError?)
-        /// The player is muted in place of AutoHush's pause (one that didn't
-        /// take, a start by itself, or a refused one), then `false` once the
-        /// mute is lifted.
-        case mutedInstead(Bool)
-        /// The last resume was given up (no answer, or its play failed),
-        /// then `nil` once that's over.
-        case resumeFailure(MusicPlayerError?)
-    }
-
     /// What the app tells the arbiter.
     private enum ArbiterCommand: Sendable {
         case playerState(PlayerState)
@@ -57,7 +39,7 @@ package final class MonitoringPipeline {
     private let playerObserver: any PlayerStateObserving
     private let outputDisconnects: any OutputDisconnectWatching
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
-    private let statusUpdates: AsyncStream<StatusUpdate>.Continuation
+    private let statusUpdates: AsyncStream<MonitoringStatusUpdate>.Continuation
     private let forwarders: [Task<Void, Never>]
     /// Started by `stop()`: the arbiter stopping, which sets back a faded volume.
     private var shutdown: Task<Void, Never>?
@@ -122,9 +104,9 @@ package final class MonitoringPipeline {
         learnedAssertions: [String: AnnouncedAssertions],
         volumeLeveler: any ResumeLeveling? = nil,
         readers: Readers = Readers(),
-        onStatusUpdate: @escaping @MainActor (StatusUpdate) -> Void
+        onStatusUpdate: @escaping @MainActor (MonitoringStatusUpdate) -> Void
     ) {
-        let (statusStream, statusUpdates) = AsyncStream.makeStream(of: StatusUpdate.self)
+        let (statusStream, statusUpdates) = AsyncStream.makeStream(of: MonitoringStatusUpdate.self)
         let (commandStream, arbiterCommands) = AsyncStream.makeStream(of: ArbiterCommand.self)
 
         // The arbiter decides when audio levels are needed; the monitor, created

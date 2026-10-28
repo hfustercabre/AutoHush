@@ -185,16 +185,16 @@ struct SettingsModelTests {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.setTimings(TimingSettings(resumesPlayback: false, levelsMusic: true, staysPausedAfterCalls: true))
         #expect(SettingsSwitch.levelsMusic.isUnavailable(model) && !SettingsSwitch.levelsMusic.isOn(model))
-        #expect(SettingsSwitch.levelingUnavailableNote(model) == SettingsSwitch.resumeOffNote)
+        #expect(model.levelingUnavailableNote == SettingsSwitch.resumeOffNote)
         #expect(SettingsSwitch.staysPausedAfterCalls.isUnavailable(model) && SettingsSwitch.staysPausedAfterCalls.isOn(model))
         #expect(!SettingsSwitch.resumesPlayback.isOn(model) && !SettingsSwitch.resumesPlayback.isUnavailable(model))
         model.setAntiDotMode(true) // AntiDot mode's reason first
-        #expect(SettingsSwitch.levelingUnavailableNote(model) == AntiDotText.featureOff)
+        #expect(model.levelingUnavailableNote == AntiDotText.featureOff)
         model.setAntiDotMode(false)
         SettingsSwitch.resumesPlayback.set(true, in: model)
         #expect(model.timings.resumesPlayback && SettingsSwitch.levelsMusic.isOn(model))
         #expect(!SettingsSwitch.staysPausedAfterCalls.isUnavailable(model))
-        #expect(SettingsSwitch.levelingUnavailableNote(model) == nil)
+        #expect(model.levelingUnavailableNote == nil)
     }
 
     @Test("reflects the login item's state")
@@ -670,8 +670,8 @@ struct SettingsModelTests {
     @Test("Volume's note says why leveling can't be changed as a fragment, without a period; nothing while it can")
     func levelingUnavailableNote() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        #expect(SettingsSwitch.levelingUnavailableNote(model) == nil)
+        #expect(model.levelingUnavailableNote == nil)
         model.setAntiDotMode(true)
-        #expect(SettingsSwitch.levelingUnavailableNote(model) == "Off in AntiDot mode")
+        #expect(model.levelingUnavailableNote == "Off in AntiDot mode")
     }
 }

@@ -16,13 +16,16 @@ import os
 /// starts, and only removed as it goes; the times are behind a lock.
 package final class PlayerWindowClicks: @unchecked Sendable {
     private let times = OSAllocatedUnfairLock<[Date]>(initialState: [])
+    /// How long a click is kept.
+    private let memory: TimeInterval
     /// Whether a process is the player's.
     private let isPlayer: @Sendable (pid_t) -> Bool
     private var monitor: Any?
 
-    /// Watching the clicks in the windows of the app `bundleID`.
-    package convenience init(bundleID: String) {
-        self.init { NSRunningApplication.running(bundleID)?.processIdentifier == $0 }
+    /// Watching the clicks in the windows of the app `bundleID`, each kept
+    /// for `memory`.
+    package convenience init(bundleID: String, memory: TimeInterval) {
+        self.init(memory: memory) { NSRunningApplication.running(bundleID)?.processIdentifier == $0 }
         let start: @Sendable () -> Void = { [weak self] in
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -37,7 +40,8 @@ package final class PlayerWindowClicks: @unchecked Sendable {
     }
 
     /// Not watching: tests hand it their clicks (`take`).
-    init(isPlayer: @escaping @Sendable (pid_t) -> Bool) {
+    init(memory: TimeInterval, isPlayer: @escaping @Sendable (pid_t) -> Bool) {
+        self.memory = memory
         self.isPlayer = isPlayer
     }
 
@@ -48,11 +52,11 @@ package final class PlayerWindowClicks: @unchecked Sendable {
     /// A mouse-down at `location` (global coordinates, from the top left),
     /// `windows` listed front to back as `CGWindowListCopyWindowInfo` does:
     /// kept when the window under it is the player's and above ordinary
-    /// windows (layer 0), for `spanMemory`.
+    /// windows (layer 0), for `memory`.
     func take(at location: CGPoint, windows: [[String: Any]], date: Date) {
         guard let window = Self.window(at: location, in: windows), window.layer != 0, isPlayer(window.owner) else { return }
         times.withLock { times in
-            times.removeAll { $0 < date.addingTimeInterval(-PlayerInput.spanMemory) }
+            times.removeAll { $0 < date.addingTimeInterval(-memory) }
             times.append(date)
         }
     }
@@ -65,14 +69,31 @@ package final class PlayerWindowClicks: @unchecked Sendable {
     /// The frontmost window under `point` that can be seen (not fully
     /// transparent): the process owning it, and its layer.
     static func window(at point: CGPoint, in windows: [[String: Any]]) -> (owner: pid_t, layer: Int)? {
-        for window in windows {
-            guard (window[kCGWindowAlpha as String] as? Double ?? 1) > 0,
-                  let bounds = window[kCGWindowBounds as String] as? NSDictionary,
-                  let frame = CGRect(dictionaryRepresentation: bounds as CFDictionary),
-                  frame.contains(point) else { continue }
-            guard let owner = (window[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value else { return nil }
-            return (owner, (window[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0)
+        for info in windows {
+            let window = ListedWindow(info)
+            guard window.alpha > 0, let frame = window.frame, frame.contains(point) else { continue }
+            guard let owner = window.owner else { return nil }
+            return (owner, window.layer)
         }
         return nil
+    }
+
+    /// What it reads of a window `CGWindowListCopyWindowInfo` lists, read
+    /// once.
+    private struct ListedWindow {
+        /// 1 when it isn't said.
+        let alpha: Double
+        /// `nil` when it isn't said, or can't be read.
+        let frame: CGRect?
+        let owner: pid_t?
+        /// 0 (ordinary windows) when it isn't said.
+        let layer: Int
+
+        init(_ info: [String: Any]) {
+            alpha = info[kCGWindowAlpha as String] as? Double ?? 1
+            frame = (info[kCGWindowBounds as String] as? NSDictionary).flatMap { CGRect(dictionaryRepresentation: $0 as CFDictionary) }
+            owner = (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value
+            layer = (info[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
+        }
     }
 }

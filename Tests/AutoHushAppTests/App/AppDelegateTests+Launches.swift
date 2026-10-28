@@ -179,7 +179,7 @@ extension AppDelegateTests {
     @MainActor
     private func radioChosenUnasked() async -> (scratch: Scratch, radio: MockMusicPlayer, sut: AppDelegate) {
         let (scratch, _, radio, sut) = await reopenBench(chosen: nil)
-        sut.choosePlayer(radio.bundleID, asksToReopen: false)
+        sut.switchPlayer(to: radio.bundleID, asksToReopen: false)
         await TestWait.until { sut.status.playerNeedsReopen }
         return (scratch, radio, sut)
     }
@@ -247,7 +247,7 @@ extension AppDelegateTests {
     @Test("a player opened without the option it needs, chosen without asking (reopening it was just skipped in Add an App), is left to the card")
     func reopenLeftToTheCard() async {
         let (_, _, radio, sut) = await reopenBench(chosen: nil)
-        sut.choosePlayer(radio.bundleID, asksToReopen: false)
+        sut.switchPlayer(to: radio.bundleID, asksToReopen: false)
         await TestWait.until { sut.status.playerNeedsReopen }
         #expect(await radio.reopenCount == 0)
     }
@@ -267,7 +267,7 @@ extension AppDelegateTests {
     func reopenCancelled() async {
         let (scratch, radio, sut) = await radioChosenUnasked()
         let shown = answerAlerts(sut, with: .alertSecondButtonReturn) // Cancel
-        sut.choosePlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
+        sut.switchPlayer(to: radio.bundleID, replacing: true) // checked again in Add an App, and used
         await TestWait.until { shown.calls.count == 1 }
         #expect(await radio.reopenCount == 0)
         #expect(sut.status.playerNeedsReopen)
@@ -280,7 +280,7 @@ extension AppDelegateTests {
     func reopenedAlways() async {
         let (scratch, radio, sut) = await radioChosenUnasked()
         let shown = answerAlerts(sut, with: .alertFirstButtonReturn) // Reopen
-        sut.choosePlayer(radio.bundleID, replacing: true) // checked again in Add an App, and used
+        sut.switchPlayer(to: radio.bundleID, replacing: true) // checked again in Add an App, and used
         await TestWait.until { await radio.reopenCount == 1 }
         await TestWait.until { !sut.status.playerNeedsReopen }
         #expect(shown.calls == ["Reopen Radio?"])

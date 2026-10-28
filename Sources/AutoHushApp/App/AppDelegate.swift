@@ -243,7 +243,7 @@ extension AppDelegate: AppActions {
     /// own (`AppDelegate+Player`), then the permissions read again, as the
     /// menu stays open and its card's checks follow the new player's.
     func choosePlayer(_ bundleID: String) {
-        choosePlayer(bundleID, showsLearningWindow: true)
+        switchPlayer(to: bundleID, showsLearningWindow: true)
         Task { [weak self] in await self?.refreshPermissions() }
     }
     func openAddWebApp() { addWebApp.show() }

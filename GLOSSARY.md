@@ -170,7 +170,8 @@ _Avoid_: method.
 **Window state**: where an app's window is while a check presses it: in
 view, covered, on another desktop, covered there, full screen,
 minimized or hidden. A way that works in every state works wherever the
-user leaves the window. **Windows closed** is a state of its own: no
+user leaves the window. The check's **trip** (`WindowState.trip`) moves the
+window through these 7, in the order that takes the fewest moves. **Windows closed** is a state of its own: no
 window on screen or within reach (a menu bar player's), where each way
 that needs none is tried once.
 

@@ -146,18 +146,8 @@ final class AudioMonitor: @unchecked Sendable {
     /// Source processes whose tap was released for their silence: they don't
     /// count as playing until they're tapped again (`silentTapRelease`).
     var quietProcesses: Set<AudioObjectID> = []
-    /// When the quiet processes were last listened to, or released if not
-    /// since (`quietListenInterval`); `nil` while there are none.
-    var quietListenedAt: Date?
-    /// Until when they're listened to, while they are.
-    var quietListenUntil: Date?
-    /// The listen under way was asked for (`listenToQuietApps`), so it goes
-    /// on while the player doesn't play.
-    var quietListenAsked = false
-    /// One of them was heard, or said it plays, during the listen under way.
-    var quietListenHeard = false
-    /// Who waits for the listen under way to end (`listenToQuietApps`).
-    var quietListenWaiters: [CheckedContinuation<Bool, Never>] = []
+    /// The listens to the quiet processes (`quietListenInterval`).
+    var quietListen = QuietListen()
     /// `nil` while the permission cannot be read (no checker, or TCC unavailable).
     var permissionStatus: AudioCapturePermission?
     var lastPermissionCheck: Date?
@@ -396,7 +386,7 @@ final class AudioMonitor: @unchecked Sendable {
             for id in self.tracker.activeSources.sorted() where previous.contains(id) != ids.contains(id) {
                 self.events.yield(.source(id: id, isPlaying: previous.contains(id), heardSince: nil))
             }
-            if self.quietListenUntil != nil { self.updateMeteredProcesses(at: self.clock()) }
+            if self.quietListen.until != nil { self.updateMeteredProcesses(at: self.clock()) }
         }
     }
 

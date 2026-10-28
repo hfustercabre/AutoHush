@@ -42,14 +42,14 @@ struct FineTuningSettingsView: View {
                         .background(anchor(.fadeLengths))
                     CardDivider()
                     TimingSliderRow(model: model, timing: .fadeIn, isCurrent: isFocus(.fadeLengths))
-                        .unavailable(SettingsTiming.fadeInUnused(model))
+                        .unavailable(model.fadeInUnused)
                 }
-                .unavailable(SettingsTiming.fadeLengthsUnavailable(model))
+                .unavailable(model.fadeLengthsUnavailable)
                 if !model.playerCanFade, let player = model.chosenPlayerName {
                     NoteLabel(SettingsSwitch.cantFadeNote(player), kind: .info)
                 } else if !model.timings.fadesEnabled {
                     NoteLabel(SettingsSwitch.fadesOffNote, kind: .info)
-                } else if SettingsTiming.fadeInUnused(model) {
+                } else if model.fadeInUnused {
                     NoteLabel(SettingsSwitch.resumeOffNote, kind: .info)
                 }
             } footer: {
@@ -63,8 +63,8 @@ struct FineTuningSettingsView: View {
                     CardDivider()
                     TimingSliderRow(model: model, timing: .levelingMinCut, isCurrent: isFocus(.volumeLimits))
                 }
-                .unavailable(SettingsTiming.levelingLimitsUnavailable(model))
-                if let reason = SettingsSwitch.levelingUnavailableNote(model) {
+                .unavailable(model.levelingLimitsUnavailable)
+                if let reason = model.levelingUnavailableNote {
                     NoteLabel(reason, kind: .info)
                 } else if !model.timings.levelsMusic {
                     NoteLabel(SettingsSwitch.levelingOffNote, kind: .info)

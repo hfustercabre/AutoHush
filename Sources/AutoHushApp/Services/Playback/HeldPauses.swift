@@ -96,7 +96,7 @@ final class HeldPauses {
     /// here and stays its own (the app applies the others). A kept one stops
     /// once its player is no longer paused by it. What AntiDot learned is
     /// the app's, whichever monitoring learned it.
-    func takes(_ update: MonitoringPipeline.StatusUpdate, from token: UUID) -> Bool {
+    func takes(_ update: MonitoringStatusUpdate, from token: UUID) -> Bool {
         guard let index = held.firstIndex(where: { $0.token == token }) else { return false }
         if held[index].awaitingTakeOver, case .playback(let state) = update {
             if state == .pausedByMonitor { held[index].awaitingTakeOver = false }

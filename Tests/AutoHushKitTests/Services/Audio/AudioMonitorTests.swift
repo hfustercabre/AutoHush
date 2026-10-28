@@ -589,6 +589,16 @@ struct AudioMonitorTests {
         #expect(await h.monitor.listenToQuietApps() == false) // nothing to listen to, at once
     }
 
+    @Test("levels no longer needed (Auto-Pause off), the apps released for their silence aren't listened to again, nor on request: no recording dot for nothing")
+    func quietSourceNotListenedToWithoutLevels() async {
+        let h = Self.releasedRadioWithPlayerHarness()
+        h.monitor.setAudioLevelsNeeded(false)
+        h.monitor.queue.sync { h.monitor.audioLevelsRelease?.perform() } // the release's delay over
+        h.step(after: 40)
+        #expect(h.meter.lastMetered == [])
+        #expect(await h.monitor.listenToQuietApps() == false) // no listen, at once
+    }
+
     @Test("asked before a resume, the apps released for their silence are listened to once, the player paused (R2): still silent, they stay released", arguments: [false, true])
     func quietSourcesListenedToOnRequest(heard: Bool) async {
         let h = Self.releasedRadioWithPlayerHarness()

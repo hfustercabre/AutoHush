@@ -62,12 +62,12 @@ struct BehaviorSettingsView: View {
 
             Card(Self.volumeTitle) {
                 SettingsSwitchRow(model: model, kind: .levelsMusic)
-                if let reason = SettingsSwitch.levelingUnavailableNote(model) {
+                if let reason = model.levelingUnavailableNote {
                     NoteLabel(reason, kind: .info)
                 }
                 CardDivider()
                 FineTuningRow(model: model, card: .volumeLimits, title: Self.volumeLimitsRowTitle,
-                              value: SettingsTiming.levelingLimitsUnavailable(model) ? nil : volumeLimits)
+                              value: model.levelingLimitsUnavailable ? nil : volumeLimits)
             } footer: {
                 RestoreDefaultsButton(model: model, card: .volume)
             }
@@ -83,7 +83,7 @@ struct BehaviorSettingsView: View {
 
     /// The fade-in's left out while it's greyed out (nothing resumes).
     private var fadeLengths: String {
-        SettingsTiming.fadeInUnused(model)
+        model.fadeInUnused
             ? String(localized: "\(value(.fadeOut)) out",
                      comment: "Settings → Behavior, Fades' row to Fine-Tuning while Resume playback is off: the fade-out's length; %@ is it, e.g. “1 s”")
             : String(localized: "\(value(.fadeOut)) out, \(value(.fadeIn)) in",

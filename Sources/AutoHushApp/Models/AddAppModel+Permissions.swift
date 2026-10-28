@@ -10,7 +10,7 @@ extension AddAppModel {
         guard let app = chosen, let traits else { return }
         work = Task { [weak self] in
             while let self, !Task.isCancelled, self.stage == .allowing {
-                self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
+                await self.refreshPermissions(for: app, scriptable: traits.scriptable)
                 // AutoHush read the change after all: as any missing permission.
                 if !self.permissions.neededAllowed { self.accessibilityNeedsReopen = false }
                 if self.permissions.allAllowed(antiDot: self.antiDot), !self.accessibilityNeedsReopen {
@@ -41,7 +41,7 @@ extension AddAppModel {
             guard let self else { return }
             await self.host?.requestCheckPermission(permission, app: app, current: current)
             guard self.chosen == app else { return }
-            self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
+            await self.refreshPermissions(for: app, scriptable: traits.scriptable)
         }
     }
 
@@ -64,8 +64,9 @@ extension AddAppModel {
         }
     }
 
-    /// What the check of `app` needs, as it stands now.
-    func readPermissions(_ app: CheckableApp, scriptable: Bool) async -> CheckPermissions {
-        await host?.checkPermissions(app, scriptable: scriptable) ?? CheckPermissions()
+    /// Reads what the check of `app` needs, as it stands now, into
+    /// `permissions`.
+    func refreshPermissions(for app: CheckableApp, scriptable: Bool) async {
+        permissions = await host?.checkPermissions(app, scriptable: scriptable) ?? CheckPermissions()
     }
 }

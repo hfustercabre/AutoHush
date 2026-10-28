@@ -8,90 +8,96 @@ extension SettingsModel {
     /// Defaults wouldn't change what shows, the workflow audit,
     /// 2026-10-22): its button has nothing to do.
     func isDefault(_ card: SettingsCard) -> Bool {
-        switch card {
-        // Pausing's: the microphone and an output going away off.
-        case .pausing: timings.withDefaultPausing == timings
-        // Resuming's: Resume playback on, Stay paused after calls off.
-        case .resuming: timings.withDefaultResuming == timings
-        // Fades': on, or greyed out with a player AutoHush can't fade.
-        case .fades: !playerCanFade || timings.withDefaultFades == timings
-        // Volume's: Level the volume off, or greyed out (AntiDot mode,
-        // Resume playback off).
-        case .volume: SettingsSwitch.levelsMusic.isUnavailable(self) || timings.withDefaultVolume == timings
-        // Modes': AntiDot mode off (its way, greyed out then, isn't
-        // restored), or it can't be turned on with this player.
-        case .modes: !isAntiDotMode
-        // Timing's: 0.5 s, and 2 s unless greyed out with Resume playback off.
-        case .timing:
-            timings.startConfirmation == TimingSettings.defaults.startConfirmation
-                && (!timings.resumesPlayback || timings.stopGrace == TimingSettings.defaults.stopGrace)
-        // Fade Lengths': 1 s and 2 s, or greyed out; the fade-in alone
-        // while nothing resumes.
-        case .fadeLengths:
-            SettingsTiming.fadeLengthsUnavailable(self)
-                || timings.withDefaultFadeLengths(fadeIn: !SettingsTiming.fadeInUnused(self)) == timings
-        // Volume Limits': 10 and 2 dB, or greyed out (leveling off or unavailable).
-        case .volumeLimits: SettingsTiming.levelingLimitsUnavailable(self) || timings.withDefaultVolumeLimits == timings
-        // Detection's: in AntiDot mode its way, what apps tell macOS; out
-        // of it, the silence threshold at −60 dB (each greyed out in the other).
-        case .detection:
-            isAntiDotMode ? detectionMethod == .playbackSignals
-                : timings.silenceThresholdDB == TimingSettings.defaults.silenceThresholdDB
-        // Startup and Menu Bar's: the icon not kept beside the system's, as
-        // on a fresh install. Launch at login is the user's Mac setup, not a
-        // tuning, so it doesn't count (I1, the user, 2026-10-27: on for most
-        // people, it kept the button showing, and the button turned it off).
-        case .startup: !keepsMenuBarIconNearSystemIcons
-        // Updates': checked daily and installed automatically, as on a fresh
-        // install; the choice counts as default while this copy can't install
-        // updates (it's greyed out then).
-        case .updates: checksForUpdatesAutomatically && (updateInstallNote != nil || automaticUpdates == .install)
-        }
+        restoredSettings(card) == currentSettings
     }
 
     /// Sets the card's settings back to their defaults, leaving what's
     /// greyed out as it is.
     func restoreDefaults(_ card: SettingsCard) {
+        let restored = restoredSettings(card), current = currentSettings
+        if restored.timings != current.timings { setTimings(restored.timings) }
+        if restored.detectionMethod != current.detectionMethod { setDetectionMethod(restored.detectionMethod) }
+        if restored.keepsMenuBarIconNearSystemIcons != current.keepsMenuBarIconNearSystemIcons {
+            setKeepsMenuBarIconNearSystemIcons(restored.keepsMenuBarIconNearSystemIcons)
+        }
+        if restored.checksForUpdatesAutomatically != current.checksForUpdatesAutomatically {
+            updates.setChecksAutomatically(restored.checksForUpdatesAutomatically)
+        }
+        if restored.automaticUpdates != current.automaticUpdates { updates.setMode(restored.automaticUpdates) }
+    }
+
+    /// The settings a card's Restore Defaults can change, as they are now.
+    private var currentSettings: CardSettings {
+        CardSettings(timings: timings, detectionMethod: detectionMethod,
+                     keepsMenuBarIconNearSystemIcons: keepsMenuBarIconNearSystemIcons,
+                     checksForUpdatesAutomatically: checksForUpdatesAutomatically,
+                     automaticUpdates: automaticUpdates)
+    }
+
+    /// The settings as the card's Restore Defaults leaves them: its own back
+    /// to their defaults, what's greyed out and the other cards' as they are.
+    private func restoredSettings(_ card: SettingsCard) -> CardSettings {
+        var restored = currentSettings
         switch card {
-        case .pausing: setTimings(timings.withDefaultPausing)
-        case .resuming: setTimings(timings.withDefaultResuming)
+        // Pausing's: the microphone and an output going away off.
+        case .pausing: restored.timings = timings.withDefaultPausing
+        // Resuming's: Resume playback on, Stay paused after calls off.
+        case .resuming: restored.timings = timings.withDefaultResuming
+        // Fades': on, unless greyed out with a player AutoHush can't fade.
         case .fades:
-            guard playerCanFade else { return }
-            setTimings(timings.withDefaultFades)
+            if playerCanFade { restored.timings = timings.withDefaultFades }
+        // Volume's: Level the volume off, unless greyed out (AntiDot mode,
+        // Resume playback off).
         case .volume:
-            guard !SettingsSwitch.levelsMusic.isUnavailable(self) else { return }
-            setTimings(timings.withDefaultVolume)
-        case .modes: setAntiDotMode(false)
+            if !SettingsSwitch.levelsMusic.isUnavailable(self) { restored.timings = timings.withDefaultVolume }
+        // Modes': AntiDot mode off (its way, greyed out then, isn't
+        // restored), or it can't be turned on with this player.
+        case .modes:
+            if isAntiDotMode { restored.detectionMethod = .audioLevels }
+        // Timing's: 0.5 s, and 2 s unless greyed out with Resume playback off.
         case .timing:
-            var restored = timings
-            restored.startConfirmation = TimingSettings.defaults.startConfirmation
-            if timings.resumesPlayback { restored.stopGrace = TimingSettings.defaults.stopGrace }
-            setTimings(restored)
+            restored.timings.startConfirmation = TimingSettings.defaults.startConfirmation
+            if timings.resumesPlayback { restored.timings.stopGrace = TimingSettings.defaults.stopGrace }
+        // Fade Lengths': 1 s and 2 s, unless greyed out; the fade-in alone
+        // while nothing resumes.
         case .fadeLengths:
-            guard !SettingsTiming.fadeLengthsUnavailable(self) else { return }
-            setTimings(timings.withDefaultFadeLengths(fadeIn: !SettingsTiming.fadeInUnused(self)))
+            if !fadeLengthsUnavailable { restored.timings = timings.withDefaultFadeLengths(fadeIn: !fadeInUnused) }
+        // Volume Limits': 10 and 2 dB, unless greyed out (leveling off or unavailable).
         case .volumeLimits:
-            guard !SettingsTiming.levelingLimitsUnavailable(self) else { return }
-            setTimings(timings.withDefaultVolumeLimits)
-        // AntiDot mode's way in AntiDot mode, the silence threshold out of it.
+            if !levelingLimitsUnavailable { restored.timings = timings.withDefaultVolumeLimits }
+        // Detection's: in AntiDot mode its way, what apps tell macOS; out
+        // of it, the silence threshold at −60 dB (each greyed out in the other).
         case .detection:
             if isAntiDotMode {
-                setDetectionMethod(.playbackSignals)
+                restored.detectionMethod = .playbackSignals
             } else {
-                var restored = timings
-                restored.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
-                setTimings(restored)
+                restored.timings.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
             }
-        // The icon no longer kept beside the system's stays where it is;
-        // launch at login is left as it is.
-        case .startup:
-            if keepsMenuBarIconNearSystemIcons { setKeepsMenuBarIconNearSystemIcons(false) }
-        // The choice left alone while this copy can't install updates.
+        // Startup and Menu Bar's: the icon not kept beside the system's, as
+        // on a fresh install (it stays where it is). Launch at login is the
+        // user's Mac setup, not a tuning, so it's neither counted nor
+        // restored (I1, the user, 2026-10-27: on for most people, it kept
+        // the button showing, and the button turned it off).
+        case .startup: restored.keepsMenuBarIconNearSystemIcons = false
+        // Updates': checked daily and installed automatically, as on a fresh
+        // install; the choice left alone while this copy can't install
+        // updates (it's greyed out then).
         case .updates:
-            if !checksForUpdatesAutomatically { updates.setChecksAutomatically(true) }
-            if updateInstallNote == nil, automaticUpdates != .install { updates.setMode(.install) }
+            restored.checksForUpdatesAutomatically = true
+            if updateInstallNote == nil { restored.automaticUpdates = .install }
         }
+        return restored
     }
+}
+
+/// The settings a card's Restore Defaults can change: the timings, the
+/// detection, the menu bar icon's place and the updates' choices.
+private struct CardSettings: Equatable {
+    var timings: TimingSettings
+    var detectionMethod: DetectionMethod
+    var keepsMenuBarIconNearSystemIcons: Bool
+    var checksForUpdatesAutomatically: Bool
+    var automaticUpdates: AutomaticUpdates
 }
 
 private extension TimingSettings {

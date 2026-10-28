@@ -29,7 +29,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     let debounceScheduler: any PlaybackArbiterDebounceScheduling
     /// What the app is told: the playback state, why a pause or resume
     /// failed, and whether the player is muted in place of the pause.
-    let onStatusUpdate: @Sendable (MonitoringPipeline.StatusUpdate) -> Void
+    let onStatusUpdate: @Sendable (MonitoringStatusUpdate) -> Void
     let onAudioLevelsNeededChange: @Sendable (Bool) -> Void
     /// Whether the music is paused by us now, for its loudness and the
     /// apps' (`AudioMonitor.setMusicPaused`).
@@ -251,7 +251,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         clock: @escaping @Sendable () -> Date = { Date() },
         autoPauseEnabled: Bool = true,
         resumesHeld: Bool = false,
-        onStatusUpdate: @escaping @Sendable (MonitoringPipeline.StatusUpdate) -> Void = { _ in },
+        onStatusUpdate: @escaping @Sendable (MonitoringStatusUpdate) -> Void = { _ in },
         onAudioLevelsNeededChange: @escaping @Sendable (Bool) -> Void = { _ in },
         onPausedByUsChange: @escaping @Sendable (Bool) -> Void = { _ in },
         volumeLeveler: any ResumeLeveling? = nil,

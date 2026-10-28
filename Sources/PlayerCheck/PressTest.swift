@@ -70,10 +70,10 @@ import ScriptablePlayers
         say(CheckReportLine.Heading.windowStates.rawValue)
         if playedFirst != true {
             let why = playedFirst == false ? "it didn't play" : "nothing to press"
-            windowStatesNote = why
+            TestScope.windowStatesNote = why
             say("  not tested: \(why), so its window wasn't moved")
         } else if let test = WindowTest(app: running) {
-            windowTest = test
+            TestScope.windowTest = test
             guard stopState.beginMoving() else { stopIfRequested("stopped: nothing was moved"); stopNow(CheckExitStatus.stop) }
             if blockInput {
                 say(inputBlock.start()
@@ -106,8 +106,8 @@ import ScriptablePlayers
             // keeps closed (a menu bar player's). Nothing to move, so the ways
             // that need no window (the page needs one) are tried once, in a
             // state of its own (the user, 2026-10-27).
-            windowsClosed = true
-            windowStatesNote = "no window open"
+            TestScope.windowsClosed = true
+            TestScope.windowStatesNote = TestScope.noWindowOpen
             say("  \(WindowState.windowsClosed.title): no window on screen or within reach, so none is moved;"
                 + " each way that needs none is tried once, as it is")
         }
@@ -119,7 +119,7 @@ import ScriptablePlayers
         say()
         say(CheckReportLine.Heading.page.rawValue)
         say("  not read: \(appName) didn't play, so the check stopped")
-        pageNotChecked = "it didn't play"
+        TestScope.pageNotChecked = "it didn't play"
     } else {
         readPageButtons()
     }

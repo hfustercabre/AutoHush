@@ -71,6 +71,8 @@ struct ChecklistStep: Equatable {
     var countdown: String?
     /// AutoHush is doing it now: a spinner instead of its circle.
     var isBusy = false
+    /// Where it stands, as the mark beside it shows it.
+    var status: StepStatus { StepStatus(state: state, isBusy: isBusy) }
     /// What VoiceOver says once it's the step to do now: its title, unless
     /// the step goes on in another way (“Now pause it.”).
     var announcement: String?

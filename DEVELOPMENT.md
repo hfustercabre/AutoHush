@@ -223,7 +223,8 @@ Sources/
     Models/              values and settings: AutoPauseSetting (the setting and snoozes), PlaybackState,
                          DetectionMethod, DetectionMode, ActiveAudioReport (what Diagnostics shows),
                          AppConfiguration, TimingSettings, AppListOrder, AutomaticUpdates, LogEntry,
-                         PlayerHearing (whether the player is heard)
+                         PlayerHearing (whether the player is heard), MonitoringStatusUpdate (what
+                         the engine reports for the menu and Settings)
     Services/            Audio/ (AudioMonitor, SourceActivityTracker, PlaybackSignals: AntiDot mode's judge;
                          ResumeLevel and SystemVolumeLeveler: leveling the music; OutputMute: the Mac's output
                          muted for a check; CoreAudio/: process list, taps, levels, SystemVolume and

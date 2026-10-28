@@ -122,8 +122,8 @@ struct AddAppView: View {
 
     private func row(_ step: AddAppModel.Step) -> some View {
         let state = model.state(of: step), busy = model.isBusy(step)
-        return NumberedStepRow(number: model.number(of: step), count: model.steps.count, state: state, isBusy: busy,
-                               title: title(step)) {
+        return NumberedStepRow(number: model.number(of: step), count: model.steps.count,
+                               status: StepStatus(state: state, isBusy: busy), title: title(step)) {
             switch step {
             case .choose: chooseStep(state, busy: busy)
             case .allow: allowStep(state)

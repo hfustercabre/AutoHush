@@ -99,22 +99,4 @@ enum SettingsTiming {
     static func decibels(_ value: Double) -> String {
         String(localized: "\(Int(value)) dB", comment: "A sound level in decibels")
     }
-
-    /// The fade lengths greyed out, in Settings: the fades are off, or the
-    /// player can't fade.
-    @MainActor static func fadeLengthsUnavailable(_ model: SettingsModel) -> Bool {
-        !model.timings.fadesEnabled || !model.playerCanFade
-    }
-
-    /// The fade-in greyed out on its own, in Settings: nothing
-    /// resumes, while the fades otherwise apply.
-    @MainActor static func fadeInUnused(_ model: SettingsModel) -> Bool {
-        !model.timings.resumesPlayback && model.timings.fadesEnabled && model.playerCanFade
-    }
-
-    /// Level the volume's limits greyed out, in Settings: it's
-    /// off, or can't be on.
-    @MainActor static func levelingLimitsUnavailable(_ model: SettingsModel) -> Bool {
-        !model.timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(model)
-    }
 }

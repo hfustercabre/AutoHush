@@ -14,7 +14,7 @@ extension AppDelegate {
     /// `replacing`: chosen again all the same, as an app checked again
     /// (its new setup); `asksToReopen`: false right after the user skipped
     /// reopening it in Add an App.
-    func choosePlayer(_ bundleID: String, showsLearningWindow: Bool = true, replacing: Bool = false,
+    func switchPlayer(to bundleID: String, showsLearningWindow: Bool = true, replacing: Bool = false,
                       asksToReopen: Bool = true) {
         refreshPlayerOptions()
         let option = status.playerOptions.first { $0.bundleID == bundleID }

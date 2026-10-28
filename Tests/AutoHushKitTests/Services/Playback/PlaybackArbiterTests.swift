@@ -81,7 +81,7 @@ struct PlaybackArbiterTests {
         pauseFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
         resumeFailure: @escaping @Sendable (MusicPlayerError?) -> Void = { _ in },
         mutedInstead: @escaping @Sendable (Bool) -> Void = { _ in }
-    ) -> @Sendable (MonitoringPipeline.StatusUpdate) -> Void {
+    ) -> @Sendable (MonitoringStatusUpdate) -> Void {
         { update in
             switch update {
             case .playback(let state): playback(state)

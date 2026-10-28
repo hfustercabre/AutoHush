@@ -10,7 +10,7 @@ final class FakeMonitoring: SessionMonitoring {
     /// The player it monitors, and what it started with (when the session made it).
     let bundleID: String?
     let setup: PlayerSession.MonitoringSetup?
-    private let onUpdate: (@MainActor (MonitoringPipeline.StatusUpdate) -> Void)?
+    private let onUpdate: (@MainActor (MonitoringStatusUpdate) -> Void)?
     /// Whether `start` finds the pause it's asked to take over.
     private let findsPause: Bool
 
@@ -32,7 +32,7 @@ final class FakeMonitoring: SessionMonitoring {
     var audioReport: [ActiveAudioReport.Entry] = []
 
     init(bundleID: String? = nil, setup: PlayerSession.MonitoringSetup? = nil, findsPause: Bool = false,
-         onUpdate: (@MainActor (MonitoringPipeline.StatusUpdate) -> Void)? = nil) {
+         onUpdate: (@MainActor (MonitoringStatusUpdate) -> Void)? = nil) {
         self.bundleID = bundleID
         self.setup = setup
         self.findsPause = findsPause
@@ -46,7 +46,7 @@ final class FakeMonitoring: SessionMonitoring {
         return takingOverPause && findsPause
     }
 
-    func send(_ update: MonitoringPipeline.StatusUpdate) { onUpdate?(update) }
+    func send(_ update: MonitoringStatusUpdate) { onUpdate?(update) }
 
     func beginResume() { resumeWaiters = [] }
 

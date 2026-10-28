@@ -76,7 +76,7 @@ extension AppDelegate: AddWebAppHost {
     var settingsForWindows: SettingsModel { settingsModel }
     func isPlayer(_ bundleID: String) -> Bool { players.player(bundleID: bundleID) != nil }
     func chooseWebApp(_ bundleID: String, showsLearningWindow: Bool) {
-        choosePlayer(bundleID, showsLearningWindow: showsLearningWindow)
+        switchPlayer(to: bundleID, showsLearningWindow: showsLearningWindow)
     }
     func requestSafariAccess() { requestPermission(AddWebAppModel.safariAccess) }
     func followWindows() { windowWatch.wake() }

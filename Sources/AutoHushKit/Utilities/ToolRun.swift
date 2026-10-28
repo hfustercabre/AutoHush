@@ -85,9 +85,15 @@ package struct ToolRun: Sendable {
         return result.withLock { $0 }
     }
 
+    /// The longest line `start` hands on: a longer one comes in parts of this
+    /// length, so a tool that prints without line breaks doesn't fill the
+    /// memory.
+    static let maxLine = 64 << 10
+
     /// Starts it: `onLine` gets each line it prints as it comes (the last
-    /// one too, without its line break), then `onEnd` how it ended, after
-    /// the last line. Throws when it can't start.
+    /// one too, without its line break; one longer than `maxLine` in parts),
+    /// then `onEnd` how it ended, after the last line. Throws when it can't
+    /// start.
     package func start(onLine: @escaping @Sendable (String) -> Void,
                        onEnd: @escaping @Sendable (Result) -> Void) throws -> Running {
         try launch(read: { handle in
@@ -95,9 +101,16 @@ package struct ToolRun: Sendable {
             var buffer = Self.readBuffer()
             while case let data = Self.nextBytes(handle, into: &buffer), !data.isEmpty {
                 pending.append(data)
-                while let newline = pending.firstIndex(of: UInt8(ascii: "\n")) {
-                    onLine(String(decoding: pending[..<newline], as: UTF8.self))
-                    pending.removeSubrange(...newline)
+                while true {
+                    if let newline = pending.prefix(Self.maxLine + 1).firstIndex(of: UInt8(ascii: "\n")) {
+                        onLine(String(decoding: pending[..<newline], as: UTF8.self))
+                        pending.removeSubrange(...newline)
+                    } else if pending.count > Self.maxLine {
+                        onLine(String(decoding: pending.prefix(Self.maxLine), as: UTF8.self))
+                        pending.removeFirst(Self.maxLine)
+                    } else {
+                        break
+                    }
                 }
             }
             if !pending.isEmpty { onLine(String(decoding: pending, as: UTF8.self)) }

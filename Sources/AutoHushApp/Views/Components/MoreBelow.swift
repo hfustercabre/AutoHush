@@ -77,7 +77,7 @@ struct MoreBelowReader: ViewModifier {
         reach = ScrollReach(visibleBottom: height - contentFrame.minY, contentHeight: contentFrame.height)
     }
 
-    static let space = "menuScroll"
+    static let space = "moreBelowScroll"
 
     /// Behind the scrolled content: where it is (macOS 14 only reads it).
     static var contentFrame: some View {

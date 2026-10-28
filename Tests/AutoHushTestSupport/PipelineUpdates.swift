@@ -5,7 +5,7 @@ import AutoHushKit
 /// pipelines).
 @MainActor
 package final class PipelineUpdates {
-    package var all: [MonitoringPipeline.StatusUpdate] = []
+    package var all: [MonitoringStatusUpdate] = []
 
     package nonisolated init() {}
 

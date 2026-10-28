@@ -49,10 +49,7 @@ extension AudioMonitor {
         playerTapSince = nil
         silentSince = [:]
         quietProcesses = []
-        quietListenedAt = nil
-        quietListenUntil = nil
-        quietListenHeard = false
-        endQuietListenAsk()
+        resetQuietListen()
         lastPermissionCheck = nil
         publishedLocalPlayback = nil
         publishedStartConfirmation = nil

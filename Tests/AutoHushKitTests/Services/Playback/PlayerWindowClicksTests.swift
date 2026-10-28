@@ -29,7 +29,7 @@ struct PlayerWindowClicksTests {
 
     @Test("a click is kept only in the player's windows above ordinary ones")
     func takesItsIconAndMenuOnly() {
-        let clicks = PlayerWindowClicks { $0 == 42 }
+        let clicks = PlayerWindowClicks(memory: PlayerInput.spanMemory) { $0 == 42 }
         let windows = [Self.window(CGRect(x: 1100, y: 0, width: 24, height: 24), owner: 42, layer: 25),
                        Self.window(CGRect(x: 1200, y: 100, width: 300, height: 300), owner: 42)]
         let start = Date()

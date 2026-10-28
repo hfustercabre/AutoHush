@@ -56,14 +56,6 @@ enum SettingsSwitch: CaseIterable {
         }
     }
 
-    /// Why Level the volume can't be changed, in a few words without a
-    /// period: Behavior's and Fine-Tuning's Volume note; `nil` while it can.
-    /// The other switches say why in a note of their own (U6, 2026-10-27).
-    @MainActor static func levelingUnavailableNote(_ model: SettingsModel) -> String? {
-        guard levelsMusic.isUnavailable(model) else { return nil }
-        return model.isAntiDotMode ? AntiDotText.featureOff : resumeOffNote
-    }
-
     /// Off and dimmed: AntiDot mode with a player only its sound tells
     /// about, the fades with a player AutoHush can't fade, leveling in
     /// AntiDot mode (which measures no sound); dimmed, leveling and

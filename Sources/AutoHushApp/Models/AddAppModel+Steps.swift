@@ -48,10 +48,7 @@ extension AddAppModel {
         needsReopen = kept.needsReopen
         reopenOutcome = kept.reopenOutcome
         stage = .done(kept.result)
-        Task { [weak self] in
-            guard let self else { return }
-            self.permissions = await self.readPermissions(kept.app, scriptable: traits.scriptable)
-        }
+        Task { [weak self] in await self?.refreshPermissions(for: kept.app, scriptable: traits.scriptable) }
     }
 
     /// The first step's button: the window that lists the apps.

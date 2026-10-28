@@ -81,10 +81,7 @@ extension AddAppModel {
                                                needsReopen: needsReopen, reopenOutcome: reopenOutcome))
             // What muting needs, as it stands now (the last step may offer it).
             if choosableWays.isEmpty, let traits {
-                Task { [weak self] in
-                    guard let self else { return }
-                    self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
-                }
+                Task { [weak self] in await self?.refreshPermissions(for: app, scriptable: traits.scriptable) }
             }
         case .finished(nil), .failed, .stopped:
             // A check again of an app whose result is kept (Check Again

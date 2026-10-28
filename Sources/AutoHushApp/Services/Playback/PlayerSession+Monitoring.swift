@@ -17,7 +17,7 @@ extension PlayerSession {
         }
     }
 
-    private static func isLearned(_ update: MonitoringPipeline.StatusUpdate) -> Bool {
+    private static func isLearned(_ update: MonitoringStatusUpdate) -> Bool {
         if case .learnedAssertions = update { true } else { false }
     }
 
@@ -33,7 +33,7 @@ extension PlayerSession {
         return configuration
     }
 
-    private func apply(_ update: MonitoringPipeline.StatusUpdate) {
+    private func apply(_ update: MonitoringStatusUpdate) {
         switch update {
         case .playback(let playback):
             state.playback = playback

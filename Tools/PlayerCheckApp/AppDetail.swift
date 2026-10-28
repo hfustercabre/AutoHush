@@ -12,6 +12,9 @@ struct AppDetail: View {
 
     private var report: CheckReport? { checker.reports[app.id] }
     private var isChecking: Bool { checker.checkingID == app.id }
+    /// What the window state in the progress line is of: "window " for a
+    /// window, nothing for its windows closed (a state of their own).
+    private var stateSubject: String { report?.testedState?.state == .windowsClosed ? "" : "window " }
 
     var body: some View {
         ScrollView {
@@ -143,7 +146,7 @@ struct AppDetail: View {
                          : report?.state == .opening ? "Opening \(app.name)…" : report?.request != nil ? "Waiting for you…"
                          : report?.windowState.map { state in
                              // "its window covered, 2 of 7"; "its windows closed, 1 of 1".
-                             "Checking: its \(report?.testedState?.state == .windowsClosed ? "" : "window ")\(state)…"
+                             "Checking: its \(stateSubject)\(state)…"
                          } ?? "Checking…")
                         .foregroundStyle(.secondary)
                 }

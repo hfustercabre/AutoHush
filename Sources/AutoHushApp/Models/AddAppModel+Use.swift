@@ -21,8 +21,7 @@ extension AddAppModel {
     /// Mute It Instead), and beside Use when Now Playing was hidden in the
     /// menu bar, so its panel wasn't tried (the user, 2026-10-16).
     var offersCheckAgain: Bool {
-        guard let result else { return false }
-        return choosableWays.isEmpty || result.ways.contains { $0.mark == .menuBarHidden }
+        result != nil && (choosableWays.isEmpty || nowPlayingHidden)
     }
 
     /// The way Use makes AutoHush use: the user's choice, else the recommended.
@@ -72,7 +71,7 @@ extension AddAppModel {
             await self?.host?.requestCheckPermission(.audioRecording, app: app, current: current)
             for _ in 0..<60 {
                 guard let self, self.result != nil, !self.canMute else { return }
-                self.permissions = await self.readPermissions(app, scriptable: traits.scriptable)
+                await self.refreshPermissions(for: app, scriptable: traits.scriptable)
                 await self.sleep(.seconds(1))
             }
         }

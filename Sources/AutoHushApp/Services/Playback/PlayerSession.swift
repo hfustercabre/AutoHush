@@ -61,7 +61,7 @@ final class PlayerSession {
 
     /// Makes a player's monitoring, whose updates go to the closure.
     typealias MakeMonitoring = @MainActor (
-        any MusicPlayer, MonitoringSetup, @escaping @MainActor (MonitoringPipeline.StatusUpdate) -> Void
+        any MusicPlayer, MonitoringSetup, @escaping @MainActor (MonitoringStatusUpdate) -> Void
     ) -> any SessionMonitoring
 
     /// After a failed start, starting is tried again by itself: while a

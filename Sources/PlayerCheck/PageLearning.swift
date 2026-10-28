@@ -82,7 +82,7 @@ func rememberPlace(of element: AXUIElement) {
     page = PageCheck(buttons: 1, toggle: found, withControls: true)
     barToggle = found.element
     pageRead = true
-    pageNotChecked = nil
+    TestScope.pageNotChecked = nil
     say("  its player bar's \(shown(found.label)), " + (byPlace ? "found at its learned place (its page changed since)" : "where it was last time"))
     return true
 }

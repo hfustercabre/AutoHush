@@ -175,13 +175,13 @@ struct PlayerCheckTests {
 
     @Test("with its windows closed, a way's one run is its line's, saying so, and the window states it wasn't tested in follow under it")
     func windowsClosedSummary() throws {
-        let note = windowStatesNote
+        let note = TestScope.windowStatesNote
         defer {
             stateResults = [:]
-            windowStatesNote = note
+            TestScope.windowStatesNote = note
         }
-        #expect(windowTest == nil)
-        windowStatesNote = "no window open"
+        #expect(TestScope.windowTest == nil)
+        TestScope.windowStatesNote = TestScope.noWindowOpen
         stateResults[.panel] = [(.windowsClosed, .worked, "")]
         let worked = try #require(stateSummary(.panel))
         #expect(worked.mark == .works && worked.suffix == " (with its windows closed)")
