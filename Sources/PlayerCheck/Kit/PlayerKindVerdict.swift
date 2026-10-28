@@ -23,6 +23,8 @@ package enum PlayerKindVerdict {
         package var menuTitle: String?
         package var isRunning = true
         package var pageHasPlayPause = false
+        /// The first trial of its row in the Now Playing panel, when tried.
+        package var panelResult: TrialResult?
 
         package init(bundleID: String) { self.bundleID = bundleID }
     }
@@ -107,6 +109,10 @@ package enum PlayerKindVerdict {
             say("  No usable scripting; open it and run again to look for a playback menu and a page.")
         } else if facts.pageHasPlayPause {
             say("  Neither scriptable nor with a playback menu.")
+        } else if facts.panelResult == .worked {
+            // Its row in the panel worked with no script or menu (a player in
+            // the menu bar only, V3, the user's pick, 2026-10-28).
+            say("  Neither scriptable nor with a playback menu, but its row in the Now Playing panel plays and pauses it.")
         } else {
             say("  Neither scriptable nor with a playback menu: AutoHush can't control it. If it has a website, try that as a Safari web app.")
         }

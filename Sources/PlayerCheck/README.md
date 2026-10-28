@@ -274,8 +274,9 @@ minimized or hidden window keeps its desktop). Nothing is moved, and each
 way that needs no window (AppleScript, its menu, the Now Playing panel) is
 tried once, as it is (“State 1 of 1: windows closed”), so one that works
 windowless is found and kept. Its result says so (`windowsClosed`): Add
-an App notes a way that worked “With its windows closed”, and its page's
-way “Not checked: its window was closed”.
+an App notes a way that worked “With its windows closed”, one that
+didn't “… with its windows closed”, and its page's way “Not checked: its
+windows were closed”.
 
 ## Blocking the mouse and keyboard (`--block-input`)
 

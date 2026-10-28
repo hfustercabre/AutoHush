@@ -76831,6 +76831,233 @@
         }
       }
     },
+    "It didn’t pause and play %@ with its windows closed" : {
+      "comment" : "Add an App window, under a way that was tried and didn't work in a check that found the app's windows closed (tried once, nothing moved); %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم توقف هذه الطريقة %@ مؤقتًا ولم تشغّله مع إغلاق نوافذه"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No ha posat en pausa ni reproduït %@ amb les finestres tancades"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aplikaci %@ se nepodařilo pozastavit a přehrát se zavřenými okny"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunne ikke sætte %@ på pause og afspille den med vinduerne lukket"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konnte %@ mit geschlossenen Fenstern nicht pausieren und abspielen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν έθεσε σε παύση και δεν αναπαρήγαγε την εφαρμογή %@ με τα παράθυρά της κλειστά"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No ha pausado ni reproducido %@ con sus ventanas cerradas"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No pausó ni reprodujo %@ con sus ventanas cerradas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apin %@ toistoa ei saatu keskeytettyä ja jatkettua ikkunat suljettuina"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "N’a pas pu mettre en pause et relancer %@ avec ses fenêtres fermées"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "N’a pas pu mettre en pause et relancer %@ avec ses fenêtres fermées"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "לא השהתה ולא ניגנה את %@ כשהחלונות שלה סגורים"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इसकी विंडो बंद होने पर यह %@ को पॉज़ करने और चलाने में नाकाम रहा"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nije pauzirao ni reproducirao aplikaciju %@ sa zatvorenim prozorima"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bezárt ablakokkal nem szüneteltette és nem játszotta le a(z) %@ appot"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cara ini tidak menjeda dan memutar %@ dengan jendelanya ditutup"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non ha messo in pausa né riprodotto %@ con le finestre chiuse"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ウインドウが閉じた状態で%@を一時停止・再生できませんでした"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "윈도우가 닫힌 상태에서 %@을(를) 일시 정지하고 재생하지 못했음"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cara ini tidak menjeda dan memainkan %@ dengan tetingkapnya ditutup"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klarte ikke å sette %@ på pause og spille den av med vinduene lukket"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kon %@ niet pauzeren en afspelen met de vensters gesloten"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nie udało się wstrzymać i wznowić aplikacji %@ z zamkniętymi oknami"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não pausou nem reproduziu %@ com as janelas fechadas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não pausou nem reproduziu %@ com as janelas fechadas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu a pus pe pauză și nu a redat aplicația %@ cu ferestrele închise"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не поставил %@ на паузу и не включил снова с закрытыми окнами"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apku %@ sa nepodarilo pozastaviť a prehrať so zatvorenými oknami"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ni zaustavil ne predvajal aplikacije %@ z zaprtimi okni"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kunde inte pausa och spela upp %@ med fönstren stängda"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่ได้หยุดพักและเล่น %@ เมื่อปิดหน้าต่างอยู่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pencereleri kapalıyken bu yol %@ uygulamasını duraklatıp oynatmadı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не вдалося призупинити й відтворити програму %@ із закритими вікнами"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cách này không tạm dừng và phát được %@ khi cửa sổ đã đóng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在視窗已關閉時未能暫停和播放 %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在窗口已关闭时未能暂停和播放 %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在視窗已關閉時未能暫停和播放 %@"
+          }
+        }
+      }
+    },
     "It doesn’t pause itself, so it’s ignored once you choose another player." : {
       "comment" : "Settings → Sound Sources' or the menu's Ignore Another App…: the alert when the media player was chosen to ignore (it's saved as ignored, which counts once another player is chosen)",
       "localizations" : {
@@ -95218,229 +95445,229 @@
         }
       }
     },
-    "Not checked: its window was closed" : {
-      "comment" : "Add an App window, under “Its page’s Play/Pause” when the app's window was closed, so its page couldn't be read (opening it and checking again would)",
+    "Not checked: its windows were closed" : {
+      "comment" : "Add an App window, under “Its page’s Play/Pause” when the app's windows were closed, so its page couldn't be read (opening one and checking again would)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لم يُفحص: كانت نافذته مغلقة"
+            "value" : "لم يُفحص: كانت نوافذه مغلقة"
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sense comprovar: la finestra estava tancada"
+            "value" : "Sense comprovar: les finestres estaven tancades"
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nezkontrolováno: okno bylo zavřené"
+            "value" : "Nezkontrolováno: okna byla zavřená"
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ikke kontrolleret: vinduet var lukket"
+            "value" : "Ikke kontrolleret: vinduerne var lukket"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nicht geprüft: Das Fenster war geschlossen"
+            "value" : "Nicht geprüft: Die Fenster waren geschlossen"
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Δεν ελέγχθηκε: το παράθυρό της ήταν κλειστό"
+            "value" : "Δεν ελέγχθηκε: τα παράθυρά της ήταν κλειστά"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin comprobar: su ventana estaba cerrada"
+            "value" : "Sin comprobar: sus ventanas estaban cerradas"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin verificar: su ventana estaba cerrada"
+            "value" : "Sin verificar: sus ventanas estaban cerradas"
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ei tarkistettu: ikkuna oli suljettu"
+            "value" : "Ei tarkistettu: ikkunat olivat suljettuina"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non vérifié : sa fenêtre était fermée"
+            "value" : "Non vérifié : ses fenêtres étaient fermées"
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non vérifié : sa fenêtre était fermée"
+            "value" : "Non vérifié : ses fenêtres étaient fermées"
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "לא נבדק: החלון שלה היה סגור"
+            "value" : "לא נבדק: החלונות שלה היו סגורים"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "जाँचा नहीं गया: इसकी विंडो बंद थी"
+            "value" : "जाँचा नहीं गया: इसकी विंडो बंद थीं"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nije provjereno: prozor je bio zatvoren"
+            "value" : "Nije provjereno: prozori su bili zatvoreni"
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nincs ellenőrizve: az ablaka be volt zárva"
+            "value" : "Nincs ellenőrizve: az ablakai be voltak zárva"
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tidak diperiksa: jendelanya ditutup"
+            "value" : "Tidak diperiksa: semua jendelanya ditutup"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Non verificato: la finestra era chiusa"
+            "value" : "Non verificato: le finestre erano chiuse"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未チェック：ウインドウが閉じていました"
+            "value" : "未チェック：ウインドウがすべて閉じていました"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "검사 안 됨: 윈도우가 닫혀 있었음"
+            "value" : "검사 안 됨: 윈도우가 모두 닫혀 있었음"
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tidak disemak: tetingkapnya ditutup"
+            "value" : "Tidak disemak: semua tetingkapnya ditutup"
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ikke kontrollert: vinduet var lukket"
+            "value" : "Ikke kontrollert: vinduene var lukket"
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Niet gecontroleerd: het venster was gesloten"
+            "value" : "Niet gecontroleerd: de vensters waren gesloten"
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nie sprawdzono: okno było zamknięte"
+            "value" : "Nie sprawdzono: okna były zamknięte"
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não verificado: a janela estava fechada"
+            "value" : "Não verificado: as janelas estavam fechadas"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não verificado: a janela estava fechada"
+            "value" : "Não verificado: as janelas estavam fechadas"
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Neverificat: fereastra era închisă"
+            "value" : "Neverificat: ferestrele erau închise"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не проверено: окно было закрыто"
+            "value" : "Не проверено: окна были закрыты"
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Neskontrolované: okno bolo zatvorené"
+            "value" : "Neskontrolované: okná boli zatvorené"
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ni preverjeno: okno je bilo zaprto"
+            "value" : "Ni preverjeno: okna so bila zaprta"
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Inte kontrollerat: fönstret var stängt"
+            "value" : "Inte kontrollerat: fönstren var stängda"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ไม่ได้ตรวจสอบ: หน้าต่างปิดอยู่"
+            "value" : "ไม่ได้ตรวจสอบ: หน้าต่างทั้งหมดปิดอยู่"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Denetlenmedi: penceresi kapalıydı"
+            "value" : "Denetlenmedi: tüm pencereleri kapalıydı"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не перевірено: вікно було закрите"
+            "value" : "Не перевірено: вікна були закриті"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chưa kiểm tra: cửa sổ đã đóng"
+            "value" : "Chưa kiểm tra: các cửa sổ đã đóng"
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未檢查：其視窗已關閉"
+            "value" : "未檢查：其視窗均已關閉"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未检查：其窗口已关闭"
+            "value" : "未检查：其窗口均已关闭"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "未檢查：其視窗已關閉"
+            "value" : "未檢查：其視窗均已關閉"
           }
         }
       }
@@ -152210,6 +152437,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "運作正常"
+          }
+        }
+      }
+    },
+    "Works" : {
+      "comment" : "Add an App window, VoiceOver only: the value of a way the check found working (its green mark isn't read)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعمل"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funguje"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Virker"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funktioniert"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λειτουργεί"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toimii"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fonctionne"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fonctionne"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "עובדת"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "काम करता है"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Radi"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Működik"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berfungsi"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funziona"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "機能します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "작동함"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Berfungsi"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fungerer"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Werkt"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Działa"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funciona"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funcționează"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Работает"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Funguje"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deluje"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fungerar"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้งานได้"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çalışıyor"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Працює"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoạt động"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可用"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可用"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "可用"
           }
         }
       }

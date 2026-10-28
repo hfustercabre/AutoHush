@@ -276,7 +276,10 @@ struct TextChoiceTests {
         #expect(wayNote(.menu, .works, windowsClosed: true) == "With its windows closed")
         #expect(wayNote(.panel, .works, windowsClosed: true) == "With its windows closed, but it opens on screen for a moment")
         #expect(wayNote(.menu, .works) == "In every window state")
-        #expect(wayNote(.page, .noWindow) == "Not checked: its window was closed")
+        #expect(wayNote(.page, .noWindow) == "Not checked: its windows were closed")
+        // A way that failed with its windows closed says so: it may work with one open (2026-10-28).
+        #expect(wayNote(.menu, .none, windowsClosed: true) == "It didn’t pause and play \(Self.app) with its windows closed")
+        #expect(wayNote(.menu, .none) == "It didn’t pause and play \(Self.app)")
     }
 
     @Test("with nothing missing that the check can go without, Add an App warns of nothing")

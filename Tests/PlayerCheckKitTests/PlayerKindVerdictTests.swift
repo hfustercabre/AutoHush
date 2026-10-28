@@ -97,6 +97,11 @@ struct PlayerKindVerdictTests {
         return [
             (facts(), "  Neither scriptable nor with a playback menu: AutoHush can't control it. If it has a website, try that as a Safari web app."),
             (facts { $0.pageHasPlayPause = true }, "  Neither scriptable nor with a playback menu."),
+            // Its row in the Now Playing panel worked; one that didn't changes nothing.
+            (facts { $0.panelResult = .worked },
+             "  Neither scriptable nor with a playback menu, but its row in the Now Playing panel plays and pauses it."),
+            (facts { $0.panelResult = .didNotPause },
+             "  Neither scriptable nor with a playback menu: AutoHush can't control it. If it has a website, try that as a Safari web app."),
             (facts { $0.isRunning = false }, "  No usable scripting; open it and run again to look for a playback menu and a page."),
             // Any Chromium browser's, named so; its sound is its own browser's.
             (facts { $0.webAppBrowser = "Brave Browser" }, "  A Chromium web app. Its sound is Brave Browser's, shared with its tabs:"),

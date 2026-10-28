@@ -395,6 +395,12 @@ enum AddAppText {
                comment: "Add an App window, under the last step when no way could pause the app; %@ is the app")
     }
 
+    /// What VoiceOver says of a way that worked, whose mark it doesn't read
+    /// (the 1.2.3 review's workflow note, P2, 2026-10-28).
+    static var wayWorks: String {
+        String(localized: "Works", comment: "Add an App window, VoiceOver only: the value of a way the check found working (its green mark isn't read)")
+    }
+
     static var muteItInstead: String {
         String(localized: "Mute It Instead", comment: "Add an App window: button under the last step when no way could pause the app: AutoHush will mute it while other apps play")
     }
@@ -429,6 +435,11 @@ enum AddAppText {
         case .some:
             String(localized: "Not with its window \(way.failedStates.map(stateInSentence).formatted(.list(type: .or)))",
                    comment: "Add an App window, under a way that worked in some window states; %@ lists the others, e.g. “covered or on another desktop”")
+        // Tried only with its windows closed: it may work with one open (the
+        // 1.2.3 review's workflow note, P2, the user's pick, 2026-10-28).
+        case .none where windowsClosed:
+            String(localized: "It didn’t pause and play \(app) with its windows closed",
+                   comment: "Add an App window, under a way that was tried and didn't work in a check that found the app's windows closed (tried once, nothing moved); %@ is the app")
         case .none:
             String(localized: "It didn’t pause and play \(app)", comment: "Add an App window, under a way that was tried and didn't work; %@ is the app")
         case .notThere:
@@ -451,8 +462,8 @@ enum AddAppText {
         case .noAccessibility:
             String(localized: "Not checked: Accessibility isn’t allowed", comment: "Add an App window, under a way the check couldn't look for without the Accessibility permission")
         case .noWindow:
-            String(localized: "Not checked: its window was closed",
-                   comment: "Add an App window, under “Its page’s Play/Pause” when the app's window was closed, so its page couldn't be read (opening it and checking again would)")
+            String(localized: "Not checked: its windows were closed",
+                   comment: "Add an App window, under “Its page’s Play/Pause” when the app's windows were closed, so its page couldn't be read (opening one and checking again would)")
         case .notChecked:
             String(localized: "Not checked", comment: "Add an App window, under a way the check couldn't look for")
         }

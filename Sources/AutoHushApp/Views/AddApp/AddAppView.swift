@@ -486,6 +486,8 @@ private struct WayRow: View {
             }
         }
         .accessibilityElement(children: .combine)
+        // Its mark isn't read: a way that worked says so.
+        .accessibilityValue(way.mark == .works ? Text(verbatim: AddAppText.wayWorks) : Text(verbatim: ""))
     }
 
     @ViewBuilder static func symbol(_ mark: CheckResult.Mark) -> some View {

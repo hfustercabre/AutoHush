@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Add an App, for an app checked with its windows closed:** a way that
+  didn't work says it was tried with its windows closed, the page's
+  Play/Pause says "its windows were closed", and VoiceOver says which ways
+  work.
+
 ## [1.2.3] — 2026-10-27
 
 ### Fixed

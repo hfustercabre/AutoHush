@@ -144,6 +144,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     facts.menuTitle = menu?.title
     facts.isRunning = running != nil
     facts.pageHasPlayPause = page?.toggle != nil
+    facts.panelResult = firstResults[.panel]
     PlayerKindVerdict.lines(facts, developer: developer).forEach { say($0) }
 
     // What the page showed: Add an App adds an app whose page's Play/Pause
