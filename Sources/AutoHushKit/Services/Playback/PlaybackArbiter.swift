@@ -114,20 +114,9 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// Since when other apps play, without a gap: input to the player since
     /// then makes a start the user's (`playerStartedDuringApps`).
     var appsPlayingSince: Date?
-    /// While muted in place of the pause: when its pause was pressed, once
-    /// its own state said it plays again, to be unmuted once it's silent
-    /// since (`lookWhileMuted`).
-    var pausePressedWhileMuted: Date?
-    /// While muted in place of the pause: how many presses of its pause
-    /// failed in a row, and when the last did (`mutedPauseWait`).
-    var mutedPauseFailures: (count: Int, last: Date)?
     /// Since when the player has been heard while it says it doesn't play
     /// (`mutesHeardWhileQuiet`): still heard past a pause's tail, it's muted.
     var heardWhileQuietSince: Date?
-    /// Muted while it said it doesn't play (`mutesHeardWhileQuiet`): its
-    /// mute is only lifted, never followed by a play, since nothing of it
-    /// was playing to resume.
-    var mutedWhileQuiet = false
     /// The pending look at whether the player is heard again (`watchRestart`),
     /// with its wait, and the looks called off whose tasks haven't ended
     /// (`waitUntilIdle`).
@@ -138,11 +127,11 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// AutoHush's mute of the player during its pause (`PlayerMuting`),
     /// lifted in one place (`endPauseMute`); the app is told whether it's
     /// muted in place of the pause.
-    var pauseMute = PauseMute.off {
-        didSet { if mutedInstead != (oldValue == .insteadOfPause) { onStatusUpdate(.mutedInstead(mutedInstead)) } }
+    var mute = MuteState() {
+        didSet { if mutedInstead != oldValue.isInsteadOfPause { onStatusUpdate(.mutedInstead(mutedInstead)) } }
     }
     /// Muted in place of the pause: it plays on, silent (`PauseMute.insteadOfPause`).
-    var mutedInstead: Bool { pauseMute == .insteadOfPause }
+    var mutedInstead: Bool { mute.isInsteadOfPause }
     /// The lifting of the last mute, under way (`publishPlaybackState`).
     var muteLift: Task<Void, Never>?
     /// Whether the user pressed a key or clicked in the player, while it was

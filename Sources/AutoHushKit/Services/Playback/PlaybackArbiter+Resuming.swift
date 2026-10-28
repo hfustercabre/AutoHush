@@ -115,7 +115,7 @@ extension PlaybackArbiter {
             return
         }
         // Muted while it said it doesn't play: only unmuted, never played.
-        if mutedWhileQuiet {
+        if mute.whileQuiet {
             logger.info("[arbiter] \(self.player.name, privacy: .public) unmuted, not played: it said it doesn’t play")
             pausedByUs = false // the mute is lifted as it's published
             publishPlaybackState()

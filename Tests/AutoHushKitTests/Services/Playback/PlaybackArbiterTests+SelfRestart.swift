@@ -372,6 +372,19 @@ extension PlaybackArbiterTests {
         #expect(mute.unmuteCount == 1)
     }
 
+    @Test("muted, and unmuted from the menu while a look measures it: the look then presses nothing and keeps nothing, the player the user's")
+    func unmutedDuringMutedLook() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
+        let arbiter = await mutedForVLC(player, clock: clock, hearing: hearing, mute: mute, published: published, scheduler: scheduler)
+        let pausesBefore = await player.pauseCallCount
+        hearing.beforeAnswer = { await arbiter.unmuteInstead() }
+        await nextLook(scheduler, arbiter, clock: clock)
+        #expect(await player.pauseCallCount == pausesBefore) // its pause not pressed after the Unmute
+        #expect(mute.unmuteCount == 1)
+        #expect(published.state != .pausedByMonitor)
+    }
+
     @Test("muted and still heard, the user's key press or click in the player changes nothing: it plays already, so it stays muted")
     func mutedUserInputKeepsMute() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
