@@ -44,7 +44,7 @@ final class AddAppModel {
 
     // Where adding the app stands. Its parts by topic (AddAppModel+Steps,
     // +Permissions, +Check and +Use) set it; the windows read it, and set
-    // only the search and the selection.
+    // only the search and the selection (AddAppModelGuardTests checks it).
     var stage = Stage.choosing
     var apps: [CheckableApp] = []
     var isLoadingApps = false
