@@ -1,3 +1,4 @@
+import ApplicationServices
 import AutoHushKit
 import CoreGraphics
 import Foundation
@@ -154,6 +155,13 @@ struct PlayerCheckTests {
         #expect(AppWindows.isCovered(box: box, above: [left, right]))
         #expect(!AppWindows.isCovered(box: box, above: [left]))
         #expect(!AppWindows.isCovered(box: box, above: []))
+    }
+
+    @Test("a window whose green button only zooms can't go full screen; one with a full screen button, or neither, is tried")
+    func fullScreenByButtons() {
+        #expect(!WindowTest.canGoFullScreen(buttonSubroles: [kAXCloseButtonSubrole, kAXZoomButtonSubrole, kAXMinimizeButtonSubrole, nil]))
+        #expect(WindowTest.canGoFullScreen(buttonSubroles: [kAXCloseButtonSubrole, kAXFullScreenButtonSubrole, kAXMinimizeButtonSubrole]))
+        #expect(WindowTest.canGoFullScreen(buttonSubroles: [nil, nil]))
     }
 
     @Test("an ordinary window: a document window's layer, and a standard window whatever its height, or any other at least 200 points tall")

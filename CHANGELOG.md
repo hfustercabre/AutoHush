@@ -15,6 +15,15 @@ This project follows [Semantic Versioning](https://semver.org/).
   to open one of its windows before checking again, and after **Check
   Again** AutoHush waits for a window as well as for it to play, so the
   check doesn't find them closed again.
+- **Add an App:** while it waits for the app to play after **Check
+  Again**, the keyboard focus is on **Back to Result**, not **Change…**;
+  VoiceOver says “Works” once on a way's card.
+- **The check:** an app whose window can't go full screen (its green
+  button only zooms) skips that window state at once, saying so, instead
+  of waiting 6 seconds for it. Started with the checked app in front and
+  no app to come back to, it comes back to the desktop it started on, so
+  a window moved to another desktop is tested there instead of reading as
+  on screen.
 
 ## [1.2.5] — 2026-10-29
 

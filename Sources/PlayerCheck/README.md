@@ -253,12 +253,13 @@ Each way is tried with the app's main window in each of these states:
 | covered | a window of the tool's own over it |
 | on another desktop | dragged there, as a person drags a window, with Control-→ |
 | covered on another desktop | the tool's window over it there |
-| full screen | `AXFullScreen` |
+| full screen | `AXFullScreen`; not tested when its window's green button only zooms (no `AXFullScreenButton` among its buttons): it can't go full screen |
 | minimized | `AXMinimized` |
 | hidden | the app hidden, as ⌘H hides it |
 
 Its state is read once the check has come back to the app it was run from
-(AutoHush or Player Check, or the app in front when it started), from that
+(AutoHush or Player Check, or the app in front when it started; with none,
+the checked app itself in front then, to the desktop it started on), from that
 app's desktop: whoever started the app playing may have gone to the app's
 own desktop for it. Coming back, the tool shows that desktop with
 Control-arrow when bringing the app forward doesn't. Before each state, the

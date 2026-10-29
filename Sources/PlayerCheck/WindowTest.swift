@@ -72,13 +72,35 @@ import PlayerCheckKit
             untested[.otherDesktop] = why
             untested[.otherDesktopCovered] = why
         }
+        // A window whose green button only zooms (a player's playlist window) can't go full screen:
+        // not tried, rather than waited for 6 s (2026-10-29).
+        if state != .fullScreen, let element,
+           !Self.canGoFullScreen(buttonSubroles: element.elements(kAXChildrenAttribute).map { $0.string(kAXSubroleAttribute) }) {
+            untested[.fullScreen] = "its window can't go full screen"
+        }
+    }
+
+    /// Whether a window can go full screen, by its title bar's buttons: its
+    /// green one is a full screen button, or a zoom button only. A window
+    /// with neither (a title bar of its own) is tried as before.
+    nonisolated static func canGoFullScreen(buttonSubroles: [String?]) -> Bool {
+        buttonSubroles.contains(kAXFullScreenButtonSubrole) || !buttonSubroles.contains(kAXZoomButtonSubrole)
     }
 
     private var element: AXUIElement? { AppWindows.main(of: pid)?.element }
 
     /// Back to the app the test came from (`show`).
     private func comeHome() {
-        guard let home else { return log("  back: no app to come back to; in front: \(WindowStates.frontName)") }
+        guard let home else {
+            // Started from a shell with the checked app in front: back to the
+            // desktop the test started on, or a window moved to another one
+            // reads as on screen from there (2026-10-29).
+            if let homeDesktop, homeDesktop != Desktops.all()?.current, WindowStates.showDesktop(homeDesktop) {
+                Thread.sleep(forTimeInterval: 0.8) // desktops stop sliding
+                return log("  back: no app to come back to, so to the desktop it started on; in front: \(WindowStates.frontName)")
+            }
+            return log("  back: no app to come back to; in front: \(WindowStates.frontName)")
+        }
         Self.show(home, window: homeFront)
         log("  back to \(home.localizedName ?? "the app it came from"): in front: \(WindowStates.frontName)")
     }

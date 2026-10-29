@@ -230,7 +230,8 @@ struct AddAppView: View {
                 CountdownBanner(text: AddAppText.timeToPlay(AddAppModel.playWait - context.date.timeIntervalSince(since)))
             }
             .padding(.top, 2)
-            if model.canGoBackToResult { backToResultButton }
+            // The step's only button then: the focus goes there, not to Change… above.
+            if model.canGoBackToResult { backToResultButton.focused($focused, equals: .play) }
         case (.current, _) where busy:
             StepNote(AddAppText.opening(appName ?? ""))
         case (.failed, _) where model.appNotFound:
@@ -475,8 +476,25 @@ private struct WayRow: View {
     var recommended = false
     /// Its Now Playing row doesn't follow the app: only its sound tells.
     var soundOnly = false
+    /// Inside a choice card, whose button says it (`WayChoices.card`): not
+    /// an element of its own, so "Works" is said once (2026-10-29).
+    var inCard = false
 
     var body: some View {
+        if inCard {
+            row
+        } else {
+            // Its own label, not its texts combined: combined, a value of its
+            // own would replace their words (STYLE_GUIDE, as checklist steps).
+            // Its mark isn't read: a way that worked says so as its value, one
+            // that worked in some window states too (its note says where not).
+            row.accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(verbatim: accessibilityWords))
+                .accessibilityValue(Text(verbatim: accessibilityValue))
+        }
+    }
+
+    private var row: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
             Self.symbol(way.mark).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
@@ -503,22 +521,18 @@ private struct WayRow: View {
                 }
             }
         }
-        // Its own label, not its texts combined: combined, a value of its
-        // own would replace their words (STYLE_GUIDE, as checklist steps).
-        // Its mark isn't read: a way that worked says so as its value, one
-        // that worked in some window states too (its note says where not).
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(verbatim: accessibilityWords))
-        .accessibilityValue(Text(verbatim: way.worked ? AddAppText.wayWorks : ""))
     }
 
     /// What VoiceOver reads of it: its name, its badge, its note and the
     /// panel's caption, as they show.
-    private var accessibilityWords: String {
+    var accessibilityWords: String {
         [WayText.title(way.kind), recommended ? AddAppText.recommendedBadge : nil,
          AddAppText.wayNote(way, app: app, windowsClosed: windowsClosed), soundOnly ? AddAppText.panelSoundOnly : nil]
             .compactMap { $0 }.joined(separator: "\n")
     }
+
+    /// Its value: "Works" for a way that worked, else none.
+    var accessibilityValue: String { way.worked ? AddAppText.wayWorks : "" }
 
     @ViewBuilder static func symbol(_ mark: CheckResult.Mark) -> some View {
         switch mark {
@@ -554,16 +568,18 @@ private struct WayChoices: View {
 
     private func card(_ way: CheckResult.WayResult, recommended: Bool) -> some View {
         let isChosen = model.chosenWay == way.kind
+        let row = WayRow(way: way, app: app, windowsClosed: result.windowsClosed, recommended: recommended, soundOnly: soundOnly(way), inCard: true)
         return Button { model.choose(way.kind) } label: {
-            WayRow(way: way, app: app, windowsClosed: result.windowsClosed, recommended: recommended, soundOnly: soundOnly(way))
+            row
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .chosenOutline(isChosen, outlinedOtherwise: true)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isChosen ? .isSelected : [])
-        // Said on the button too: its label's own value may not reach it.
-        .accessibilityValue(Text(verbatim: way.worked ? AddAppText.wayWorks : ""))
+        // The row's words and value, on the button alone: said once.
+        .accessibilityLabel(Text(verbatim: row.accessibilityWords))
+        .accessibilityValue(Text(verbatim: row.accessibilityValue))
     }
 
     /// The panel that worked, its row showing no state: only its sound tells.
