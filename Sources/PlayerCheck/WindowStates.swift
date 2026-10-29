@@ -19,155 +19,9 @@ extension CheckResult.WindowState {
     static let outOfView: Set<WindowState> = [.covered, .otherDesktop, .otherDesktopCovered, .fullScreen]
 }
 
-/// Reading an app's main window's state, and changing it as a person would.
+/// Changing an app's main window's state as a person would (reading it:
+/// `AppWindows`, shared with Add an App).
 @MainActor enum WindowStates {
-    typealias Info = [String: Any]
-    static func infos(_ option: CGWindowListOption) -> [Info] {
-        CGWindowListCopyWindowInfo(option, kCGNullWindowID) as? [Info] ?? []
-    }
-    static func frame(of info: Info) -> CGRect {
-        (info[kCGWindowBounds as String] as? NSDictionary).flatMap { CGRect(dictionaryRepresentation: $0 as CFDictionary) } ?? .zero
-    }
-    static func number(of info: Info) -> Int { info[kCGWindowNumber as String] as? Int ?? 0 }
-    static func owner(of info: Info) -> pid_t { info[kCGWindowOwnerPID as String] as? pid_t ?? 0 }
-
-    /// The app's main window, and its Accessibility element when it can be
-    /// reached, from one look at its windows (the search for windows on
-    /// other desktops takes about 70 ms, up to 1 s): its biggest ordinary one
-    /// that Accessibility knows, wherever it is (a full screen window may
-    /// come with a bigger one it doesn't: an Apple player's), else its
-    /// biggest not closed, else its biggest.
-    static func main(of pid: pid_t) -> (info: Info, element: AXUIElement?)? {
-        let known = windowElements(of: pid)
-        let standard = standardWindows(in: known)
-        let candidates = infos(.optionAll).filter { owner(of: $0) == pid && isOrdinary($0, standard: standard) }
-        guard !candidates.isEmpty else { return nil }
-        func area(_ info: Info) -> CGFloat { frame(of: info).width * frame(of: info).height }
-        func largest(_ infos: [Info]) -> Info? { infos.max { area($0) < area($1) } }
-        let numbers = Set(known.map(\.number))
-        guard let info = largest(candidates.filter { numbers.contains(number(of: $0)) })
-                ?? largest(candidates.filter { !isClosed($0) })
-                ?? largest(candidates) else { return nil }
-        return (info, known.first { $0.number == number(of: info) }?.element)
-    }
-
-    /// A window the app keeps closed (`isClosed(onScreen:desktops:)`).
-    static func isClosed(_ info: Info) -> Bool {
-        let onScreen = info[kCGWindowIsOnscreen as String] as? Bool == true
-        return isClosed(onScreen: onScreen, desktops: onScreen ? nil : Desktops.all(ofWindow: number(of: info)))
-    }
-
-    /// A window kept closed: off screen and on no desktop, as a menu bar
-    /// player keeps its own, playing on (2026-10-27). A minimized or hidden
-    /// window keeps its desktop, and one on another desktop has that one;
-    /// with its desktops unread, it isn't taken for closed.
-    nonisolated static func isClosed(onScreen: Bool, desktops: [Int]?) -> Bool {
-        !onScreen && desktops?.isEmpty == true
-    }
-
-    /// Its window in front among its ordinary ones on screen (the list goes
-    /// front to back), when it has one.
-    static func frontWindow(of pid: pid_t) -> Int? {
-        let standard = standardWindows(in: windowElements(of: pid))
-        return infos(.optionOnScreenOnly).first { owner(of: $0) == pid && isOrdinary($0, standard: standard) }.map(number(of:))
-    }
-
-    /// An ordinary window: a document window's layer, and either a standard
-    /// window to Accessibility, whatever its height (a movie player's for
-    /// sound alone can be about 130 points tall), or at least 200 points tall
-    /// (not a strip or a helper).
-    static func isOrdinary(_ info: Info, standard: Set<Int>) -> Bool {
-        isOrdinary(layer: info[kCGWindowLayer as String] as? Int, height: frame(of: info).height, isStandard: standard.contains(number(of: info)))
-    }
-
-    /// `isOrdinary`'s rule, on what it reads of the window.
-    nonisolated static func isOrdinary(layer: Int?, height: CGFloat, isStandard: Bool) -> Bool {
-        layer == 0 && (isStandard || height >= 200)
-    }
-
-    /// The numbers of the windows Accessibility calls standard ones, and of
-    /// the minimized ones (macOS 14.4 calls a minimized window a dialog).
-    static func standardWindows(in known: [(number: Int, element: AXUIElement)]) -> Set<Int> {
-        Set(known.filter {
-            $0.element.string(kAXSubroleAttribute) == kAXStandardWindowSubrole || $0.element.value(kAXMinimizedAttribute) as? Bool == true
-        }.map(\.number))
-    }
-
-    private typealias GetWindow = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
-    private static let getWindow = PrivateSymbol.function("_AXUIElementGetWindow", as: GetWindow.self)
-
-    /// The app's windows Accessibility knows, with their numbers: this
-    /// desktop's (minimized ones too) and every other's (`AccessibilityWindows`),
-    /// each read waiting 1 s.
-    static func windowElements(of pid: pid_t) -> [(number: Int, element: AXUIElement)] {
-        guard let getWindow else { return [] }
-        let app = AXUIElement.application(pid, timeout: 1)
-        var found: [(number: Int, element: AXUIElement)] = []
-        for element in app.elements(kAXWindowsAttribute, timeout: 1) + (AccessibilityWindows.windows(ofProcess: pid) ?? []) {
-            var id: CGWindowID = 0
-            if getWindow(element, &id) == .success, !found.contains(where: { $0.number == Int(id) }) { found.append((Int(id), element)) }
-        }
-        return found
-    }
-
-    /// A window's Accessibility element.
-    static func element(of pid: pid_t, number: Int) -> AXUIElement? {
-        windowElements(of: pid).first { $0.number == number }?.element
-    }
-
-    /// The windows on screen above `info` that overlap it, front first, with their apps.
-    static func windowsAbove(_ info: Info) -> [(pid: pid_t, window: Int, frame: CGRect)] {
-        let list = infos(.optionOnScreenOnly)
-        guard let index = list.firstIndex(where: { number(of: $0) == number(of: info) }) else { return [] }
-        let box = frame(of: info)
-        return list[..<index].filter { other in
-            other[kCGWindowLayer as String] as? Int == 0 && (other[kCGWindowAlpha as String] as? Double ?? 1) > 0
-                && frame(of: other).insetBy(dx: -0.5, dy: -0.5).intersects(box)
-        }.map { (owner(of: $0), number(of: $0), frame(of: $0)) }
-    }
-
-    /// Whether the windows on screen above it cover every point of a grid over it.
-    static func isCovered(_ info: Info) -> Bool {
-        guard infos(.optionOnScreenOnly).contains(where: { number(of: $0) == number(of: info) }) else { return false }
-        return isCovered(box: frame(of: info), above: windowsAbove(info).map(\.frame))
-    }
-
-    /// `isCovered`'s rule: whether `above` holds every point of a 9×9 grid
-    /// over `box`, edges included, a window within half a point counting.
-    nonisolated static func isCovered(box: CGRect, above: [CGRect]) -> Bool {
-        for row in 0...8 {
-            for column in 0...8 {
-                let point = CGPoint(x: box.minX + box.width * CGFloat(column) / 8, y: box.minY + box.height * CGFloat(row) / 8)
-                if !above.contains(where: { $0.insetBy(dx: -0.5, dy: -0.5).contains(point) }) { return false }
-            }
-        }
-        return true
-    }
-
-    /// The state its main window is in; nil without one. Hidden is the app's
-    /// (Accessibility answers it as it is now); then minimized and full
-    /// screen, the window's; else where the window server has it. On another
-    /// desktop, never covered there: the window list doesn't keep another
-    /// desktop's order (an Electron player's, the front window there, read as covered).
-    /// A closed window an app keeps counts as none, hidden or not (its
-    /// windows closed: a menu bar player's was read as on another desktop,
-    /// and every state as out of reach, 2026-10-27).
-    static func state(of app: NSRunningApplication) -> WindowState? {
-        let pid = app.processIdentifier
-        let appElement = AXUIElement.application(pid, timeout: 1)
-        let hidden = appElement.value(kAXHiddenAttribute) as? Bool == true
-        guard let (info, element) = main(of: pid) else { return hidden ? .hidden : nil }
-        if isClosed(info) { return nil }
-        if hidden { return .hidden }
-        if element?.value(kAXMinimizedAttribute) as? Bool == true { return .minimized }
-        if element?.value("AXFullScreen") as? Bool == true { return .fullScreen }
-        if info[kCGWindowIsOnscreen as String] as? Bool == true { return isCovered(info) ? .covered : .visible }
-        // Off screen on this very desktop: closed, as an Electron app keeps a
-        // closed window (a player's, playing on), or ordered out.
-        if let desktop = Desktops.of(window: number(of: info)), desktop == Desktops.all()?.current { return nil }
-        return .otherDesktop
-    }
-
     // SkyLight's front process, as window switchers (AltTab) read and set it:
     // from a process in the background, Accessibility's AXFrontmost and
     // NSRunningApplication.activate() answer success and change nothing, and
@@ -211,7 +65,7 @@ extension CheckResult.WindowState {
             Polling.wait(seconds: seconds, every: 0.1, lookingLate: false) {
                 let front = frontPID() == app.processIdentifier
                 let shown = window.map { number in
-                    infos(.optionOnScreenOnly).contains { WindowStates.number(of: $0) == number }
+                    AppWindows.infos(.optionOnScreenOnly).contains { AppWindows.number(of: $0) == number }
                 } ?? true
                 return front && shown
             }
@@ -225,8 +79,8 @@ extension CheckResult.WindowState {
         }
         // The process forward, then its window above the others (SkyLight's
         // call alone left an Electron player's window under Player Check's).
-        let target: (number: Int, element: AXUIElement?)? = window.map { ($0, element(of: app.processIdentifier, number: $0)) }
-            ?? main(of: app.processIdentifier).map { (number(of: $0.info), $0.element) }
+        let target: (number: Int, element: AXUIElement?)? = window.map { ($0, AppWindows.element(of: app.processIdentifier, number: $0)) }
+            ?? AppWindows.main(of: app.processIdentifier).map { (AppWindows.number(of: $0.info), $0.element) }
         if let target, setFront(app.processIdentifier, window: target.number) {
             if let element = target.element { AXUIElementPerformAction(element, kAXRaiseAction as CFString) }
             if there(within: 2) { return true }
@@ -357,14 +211,14 @@ extension CheckResult.WindowState {
 
     private static func moveOnce(_ app: NSRunningApplication, desktops steps: Int, reveal: ((Bool) -> Void)?) -> Bool {
         let pid = app.processIdentifier
-        guard steps != 0, let (info, _) = main(of: pid), let start = Desktops.of(window: number(of: info)) else { return false }
-        let shown = activate(app, showing: number(of: info))
+        guard steps != 0, let (info, _) = AppWindows.main(of: pid), let start = Desktops.of(window: AppWindows.number(of: info)) else { return false }
+        let shown = activate(app, showing: AppWindows.number(of: info))
         log("  drag: \(app.localizedName ?? "the app") brought forward: \(shown); in front: \(frontName)")
         guard shown else { return false }
         Thread.sleep(forTimeInterval: 0.6)
         reveal?(true)
         defer { reveal?(false) }
-        guard let element = element(of: pid, number: number(of: info)), let box = element.frame else { return false }
+        guard let element = AppWindows.element(of: pid, number: AppWindows.number(of: info)), let box = element.frame else { return false }
         let pointer = CGEvent(source: nil)?.location ?? .zero
         let direction: CGFloat = box.midX > (NSScreen.screens.first?.frame.midX ?? 0) ? -1 : 1
         var held = false
@@ -407,6 +261,6 @@ extension CheckResult.WindowState {
         CGAssociateMouseAndMouseCursorPosition(1)
         inputBlock.dragging = false
         Thread.sleep(forTimeInterval: 0.4)
-        return held && Desktops.of(window: number(of: info)) != start
+        return held && Desktops.of(window: AppWindows.number(of: info)) != start
     }
 }

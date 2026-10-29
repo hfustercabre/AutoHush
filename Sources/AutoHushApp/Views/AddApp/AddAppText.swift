@@ -289,6 +289,18 @@ enum AddAppText {
         }
     }
 
+    /// After Check Again with the app's windows closed, while none is open (B2, 2026-10-29).
+    static func waitsForWindow(_ app: String) -> String {
+        String(localized: "AutoHush also waits for a window of \(app) to open.",
+               comment: "Add an App window, under the step “Play something in %@” after “Check Again” following a check that found the app's windows closed, while none is open; %@ is the app")
+    }
+
+    /// The wait ended with no window open (B2, 2026-10-29).
+    static func noWindowOpened(_ app: String) -> String {
+        String(localized: "No window of \(app) opened within 2 minutes.",
+               comment: "Add an App window, under the step “Play something in %@” once the wait after “Check Again” ended with none of the app's windows open; %@ is the app")
+    }
+
     static func didNotPlay(_ app: String) -> String {
         String(localized: "\(app) didn’t play within 2 minutes.", comment: "Add an App window, under the step “Play something in %@” once the wait ended; %@ is the app")
     }
@@ -400,6 +412,18 @@ enum AddAppText {
     /// 2026-10-28; in some, the 1.2.4 review's, 2026-10-29).
     static var wayWorks: String {
         String(localized: "Works", comment: "Add an App window, VoiceOver only: the value of a way the check found working, in every window state or in some (its mark isn't read)")
+    }
+
+    /// Beside the steps after Check Again, until the new check starts (A1, 2026-10-29).
+    static var backToResult: String {
+        String(localized: "Back to Result", comment: "Add an App window: button in the steps after “Check Again”, until the new check starts: shows the last check's result again, with its Use button")
+    }
+
+    /// Above Check Again when a way didn't work, or wasn't checked, with the
+    /// app's windows closed (B, 2026-10-29).
+    static func openWindowFirst(_ app: String) -> String {
+        String(localized: "To check again, open a window of \(app) first",
+               comment: "Add an App window, above “Check Again” in the last step, after a check that found the app's windows closed and a way that didn't work or couldn't be checked without a window; %@ is the app")
     }
 
     static var muteItInstead: String {

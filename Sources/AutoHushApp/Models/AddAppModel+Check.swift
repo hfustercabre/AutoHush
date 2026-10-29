@@ -76,6 +76,8 @@ extension AddAppModel {
                 stage = .failed
                 return
             }
+            resultBeforeCheckAgain = nil
+            waitsForWindow = false
             stage = .done(result)
             keptChecks.save(KeptCheck(app: app, result: result, at: now(),
                                                needsReopen: needsReopen, reopenOutcome: reopenOutcome))
@@ -124,9 +126,34 @@ extension AddAppModel {
     func checkAgain() {
         switch stage {
         case .stopped, .failed, .playTimedOut: waitForPlaying()
-        case .done where offersCheckAgain: waitForPlaying()
+        case .done where offersCheckAgain:
+            resultBeforeCheckAgain = keptChecks.load(now: now())
+            // Checked again with its windows still closed, it would find
+            // them closed again (the 1.2.5 review's workflow note, B2).
+            waitsForWindow = closedWaysMayWork
+            waitForPlaying()
         default: break
         }
+    }
+
+    /// Check Again beside Use was pressed, and the new check hasn't started:
+    /// Back to Result can bring the last one back, Use with it (the 1.2.5
+    /// review's workflow note, A1, the user's pick, 2026-10-29).
+    var canGoBackToResult: Bool {
+        guard resultBeforeCheckAgain != nil else { return false }
+        return switch stage {
+        case .waitingToPlay, .playTimedOut, .ready: true
+        default: false
+        }
+    }
+
+    /// Back to Result: the last step as Check Again left it.
+    func backToResult() {
+        guard canGoBackToResult, let kept = resultBeforeCheckAgain, kept.app.bundleID == chosen?.bundleID,
+              reader.appExists(at: kept.app.url) else { return }
+        stopWork()
+        presenter?.closeWarning() // its Start was for the check again
+        restore(kept)
     }
 
     /// There's a check's log to show.

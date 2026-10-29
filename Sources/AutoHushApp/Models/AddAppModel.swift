@@ -94,6 +94,14 @@ final class AddAppModel {
     var isStopping = false
     /// The way the user chose among those that worked (`chosenWay`).
     var pickedWay: CheckResult.WayKind?
+    /// The result Check Again left beside Use: Back to Result brings it back
+    /// until the new check starts (`canGoBackToResult`).
+    var resultBeforeCheckAgain: KeptCheck?
+    /// After Check Again with the app's windows closed, the play step waits
+    /// for a window the check can reach too (`waitForPlaying`; B2, 2026-10-29).
+    var waitsForWindow = false
+    /// While it waits for one: none is open yet.
+    var windowMissing = false
     /// How many times AntiDot mode was turned off from here.
     var antiDotChanges = 0
     /// Whether the Mac's output could be muted, as last read: as the

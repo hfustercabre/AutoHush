@@ -49,17 +49,17 @@ import PlayerCheckKit
         let front = frontAtStart ?? WindowStates.frontPID().flatMap { NSRunningApplication(processIdentifier: $0) }
         let home = parent?.activationPolicy == .regular ? parent : front?.processIdentifier == pid ? nil : front
         self.home = home
-        homeFront = home.flatMap { WindowStates.frontWindow(of: $0.processIdentifier) }
+        homeFront = home.flatMap { AppWindows.frontWindow(of: $0.processIdentifier) }
         // Read from the home app's desktop: whoever started the app playing
         // may have gone to its desktop for it, and from there its window read
         // as visible, that desktop was taken for home, and the first state
         // was never reached.
         if let home { Self.show(home, window: homeFront) }
-        guard let state = WindowStates.state(of: app), let (info, element) = WindowStates.main(of: pid) else { return nil }
+        guard let state = AppWindows.state(of: app), let (info, element) = AppWindows.main(of: pid) else { return nil }
         original = state
-        originalFrame = element?.frame ?? WindowStates.frame(of: info)
-        ownDesktop = state == .fullScreen ? nil : Desktops.of(window: WindowStates.number(of: info))
-        coverers = state != .covered ? [] : WindowStates.windowsAbove(info)
+        originalFrame = element?.frame ?? AppWindows.frame(of: info)
+        ownDesktop = state == .fullScreen ? nil : Desktops.of(window: AppWindows.number(of: info))
+        coverers = state != .covered ? [] : AppWindows.windowsAbove(info)
             .filter { ![pid, home?.processIdentifier ?? 0, getpid()].contains($0.pid) }
             .map { ($0.pid, $0.window) }
         let desktops = Desktops.all()
@@ -74,7 +74,7 @@ import PlayerCheckKit
         }
     }
 
-    private var element: AXUIElement? { WindowStates.main(of: pid)?.element }
+    private var element: AXUIElement? { AppWindows.main(of: pid)?.element }
 
     /// Back to the app the test came from (`show`).
     private func comeHome() {
@@ -90,11 +90,11 @@ import PlayerCheckKit
     /// GetProcessForPID is gone), so its desktop is then shown with
     /// Control-arrow, as a person would, and it's brought forward there.
     private static func show(_ home: NSRunningApplication, window front: Int?) {
-        let window = front.flatMap { number in WindowStates.infos(.optionAll).contains { WindowStates.number(of: $0) == number } ? number : nil }
-            ?? WindowStates.main(of: home.processIdentifier).map { WindowStates.number(of: $0.info) }
+        let window = front.flatMap { number in AppWindows.infos(.optionAll).contains { AppWindows.number(of: $0) == number } ? number : nil }
+            ?? AppWindows.main(of: home.processIdentifier).map { AppWindows.number(of: $0.info) }
         func shown() -> Bool {
             guard let window else { return true }
-            return WindowStates.infos(.optionOnScreenOnly).contains { WindowStates.number(of: $0) == window }
+            return AppWindows.infos(.optionOnScreenOnly).contains { AppWindows.number(of: $0) == window }
         }
         WindowStates.activate(home, showing: window)
         Thread.sleep(forTimeInterval: 0.8) // desktops stop sliding
@@ -121,8 +121,8 @@ import PlayerCheckKit
         // as any other. Bringing that app forward didn't show that desktop (some of
         // its hidden windows are on this one), so the desktop is shown with
         // Control-arrow, as a person would.
-        if let (info, element) = WindowStates.main(of: pid), element == nil, info[kCGWindowIsOnscreen as String] as? Bool != true,
-           let there = Desktops.of(window: WindowStates.number(of: info)), there != Desktops.all()?.current {
+        if let (info, element) = AppWindows.main(of: pid), element == nil, info[kCGWindowIsOnscreen as String] as? Bool != true,
+           let there = Desktops.of(window: AppWindows.number(of: info)), there != Desktops.all()?.current {
             guard WindowStates.showDesktop(there), Polling.wait(seconds: 3, every: 0.1, until: { self.element != nil }) else {
                 comeHome()
                 return "its window can't be reached, even with its desktop shown"
@@ -143,7 +143,7 @@ import PlayerCheckKit
             }
             Thread.sleep(forTimeInterval: 1.2)
         }
-        let there = WindowStates.main(of: pid).flatMap { Desktops.of(window: WindowStates.number(of: $0.info)) }
+        let there = AppWindows.main(of: pid).flatMap { Desktops.of(window: AppWindows.number(of: $0.info)) }
         if homeDesktop == nil { homeDesktop = there }
         if firstTrip, original == .minimized || original == .hidden { ownDesktop = there ?? homeDesktop }
         firstTrip = false
@@ -160,11 +160,11 @@ import PlayerCheckKit
     /// again; when the home app's window still covers it, that one is moved
     /// aside, put back at the end.
     private func showVisible() -> String? {
-        guard let info = WindowStates.main(of: pid)?.info else { return "its window is gone" }
-        guard WindowStates.isCovered(info) else { return nil }
-        WindowStates.activate(app, showing: WindowStates.number(of: info))
+        guard let info = AppWindows.main(of: pid)?.info else { return "its window is gone" }
+        guard AppWindows.isCovered(info) else { return nil }
+        WindowStates.activate(app, showing: AppWindows.number(of: info))
         comeHome()
-        guard let again = WindowStates.main(of: pid)?.info, WindowStates.isCovered(again) else { return nil }
+        guard let again = AppWindows.main(of: pid)?.info, AppWindows.isCovered(again) else { return nil }
         guard let home else { return "it's covered" }
         let homeApp = AXUIElement.application(home.processIdentifier, timeout: 1)
         guard let window = homeApp.element(kAXFocusedWindowAttribute, timeout: 1) ?? homeApp.element(kAXMainWindowAttribute, timeout: 1),
@@ -172,7 +172,7 @@ import PlayerCheckKit
         if homeWindow == nil { homeWindow = (window, frame) }
         // Aside towards the side with room, leaving 160 pt of the app's window
         // in view; narrower when the screen is too small.
-        let target = WindowStates.frame(of: again)
+        let target = AppWindows.frame(of: again)
         let screen = NSScreen.screens.first?.visibleFrame ?? .zero
         var moved = frame
         if target.midX >= frame.midX {
@@ -187,7 +187,7 @@ import PlayerCheckKit
         }
         WindowStates.setFrame(window, moved)
         Thread.sleep(forTimeInterval: 0.5)
-        guard let after = WindowStates.main(of: pid)?.info, !WindowStates.isCovered(after) else {
+        guard let after = AppWindows.main(of: pid)?.info, !AppWindows.isCovered(after) else {
             return "it's covered by \(home.localizedName ?? "the app in front")'s window, which couldn't be moved aside"
         }
         return nil
@@ -206,7 +206,7 @@ import PlayerCheckKit
         case .otherDesktop:
             why = normalize() ?? toOtherDesktop()
         case .otherDesktopCovered:
-            let there = WindowStates.state(of: app) == .otherDesktop
+            let there = AppWindows.state(of: app) == .otherDesktop
             why = (there ? nil : normalize() ?? toOtherDesktop()) ?? coverOnItsDesktop()
         case .fullScreen:
             why = normalize() ?? setWindow("AXFullScreen", reads: .fullScreen, within: 6)
@@ -220,19 +220,19 @@ import PlayerCheckKit
         }
         if let why { return why }
         comeHome()
-        let now = WindowStates.state(of: app)
+        let now = AppWindows.state(of: app)
         // Covered on its desktop by this tool's window, there with it (the
         // window list can't tell covered there: `state(of:)`).
         if state == .otherDesktopCovered, now == .otherDesktop, let number = cover.number,
-           let info = WindowStates.main(of: pid)?.info, Desktops.of(window: number) == Desktops.of(window: WindowStates.number(of: info)) {
+           let info = AppWindows.main(of: pid)?.info, Desktops.of(window: number) == Desktops.of(window: AppWindows.number(of: info)) {
             return nil
         }
         return now == state ? nil : "it reads as " + (now?.title ?? "having no window")
     }
 
     private func coverIt() -> String? {
-        guard let info = WindowStates.main(of: pid)?.info else { return "its window is gone" }
-        cover.show(over: WindowStates.frame(of: info), naming: appName)
+        guard let info = AppWindows.main(of: pid)?.info else { return "its window is gone" }
+        cover.show(over: AppWindows.frame(of: info), naming: appName)
         return nil
     }
 
@@ -250,8 +250,8 @@ import PlayerCheckKit
     }
 
     private func coverOnItsDesktop() -> String? {
-        guard let info = WindowStates.main(of: pid)?.info else { return "its window is gone" }
-        let number = WindowStates.number(of: info)
+        guard let info = AppWindows.main(of: pid)?.info else { return "its window is gone" }
+        let number = AppWindows.number(of: info)
         // Brought forward there; else that desktop shown with Control-arrow
         // (an app's coming forward didn't show it: `normalize`).
         if !WindowStates.activate(app, showing: number) {
@@ -264,11 +264,11 @@ import PlayerCheckKit
     private func setWindow(_ attribute: String, reads state: WindowState, within seconds: Double) -> String? {
         guard let element else { return "its window can't be reached" }
         WindowStates.set(element, attribute, true)
-        guard Polling.wait(seconds: seconds, every: 0.1, until: { WindowStates.state(of: app) == state }) else { return "it didn't go \(state.title)" }
+        guard Polling.wait(seconds: seconds, every: 0.1, until: { AppWindows.state(of: app) == state }) else { return "it didn't go \(state.title)" }
         if state == .fullScreen {
             // Its own desktop slides in for about a second: coming home meanwhile
             // leaves that desktop shown (and the menu bar hidden with it).
-            let window = WindowStates.main(of: pid).map { WindowStates.number(of: $0.info) }
+            let window = AppWindows.main(of: pid).map { AppWindows.number(of: $0.info) }
             Polling.wait(seconds: 3, every: 0.1, until: { window.flatMap(Desktops.of(window:)) == Desktops.all()?.current })
             Thread.sleep(forTimeInterval: 1)
         } else {

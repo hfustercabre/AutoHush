@@ -45,6 +45,8 @@ final class World {
     var runsWithOption: Bool?
     var permissions = CheckPermissions(accessibility: true, audio: .allowed)
     var playing = false
+    /// Whether the app has a window the check can reach (`hasWindowWithinReach`).
+    var windowOpen = true
     var now = Date(timeIntervalSince1970: 1000)
     var opened: [(String, Bool)] = []
     var reopened = 0
@@ -112,6 +114,7 @@ extension World: AppReading {
     }
 
     func isPlaying(_ app: CheckableApp, traits: CheckedAppTraits) async -> Bool { playing }
+    func hasWindowWithinReach(_ app: CheckableApp) async -> Bool { windowOpen }
 }
 
 /// The check's helper.

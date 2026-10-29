@@ -610,6 +610,79 @@ struct AddAppModelTests {
         if offered { await TestWait.until { model.stage == .ready } } else { #expect(model.stage == .done(model.result!)) }
     }
 
+    @Test("after Check Again beside Use, Back to Result brings the last result back until the new check starts: while it waits to play, and once it's ready")
+    func backToResult() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        let closed = CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: .none), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.panel(rememberedRow: nil)]),
+            windowsClosed: true)
+        world.run.finish(.finished(closed))
+        await TestWait.until { model.result != nil }
+        #expect(!model.canGoBackToResult)
+
+        world.playing = false
+        model.checkAgain()
+        #expect(model.result == nil && model.canGoBackToResult) // waiting for it to play
+        model.backToResult()
+        #expect(model.result == closed && !model.canGoBackToResult && model.state(of: .use) == .current)
+
+        world.playing = true
+        model.checkAgain()
+        await TestWait.until { model.stage == .ready }
+        #expect(model.canGoBackToResult)
+        model.startCheck() // the new check started: no going back but by Stop
+        #expect(!model.canGoBackToResult)
+    }
+
+    @Test("after Check Again following a check with its windows closed, the play step waits for a window too; Back to Result forgets the wait")
+    func checkAgainWaitsForWindow() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .page, mark: .noWindow), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.panel(rememberedRow: nil)]),
+            windowsClosed: true)))
+        await TestWait.until { model.result != nil }
+
+        world.playing = true
+        world.windowOpen = false
+        model.checkAgain()
+        await TestWait.until { model.windowMissing }
+        #expect(model.stage != .ready) // playing, but no window yet
+        world.windowOpen = true
+        await TestWait.until { model.stage == .ready }
+        #expect(!model.windowMissing)
+
+        model.backToResult()
+        #expect(!model.waitsForWindow)
+    }
+
+    @Test("Check Again beside Use for Now Playing hidden (windows open) doesn't wait for a window")
+    func checkAgainNoWindowWait() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: .works), CheckResult.WayResult(kind: .panel, mark: .menuBarHidden)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.menu(menuName: "Playback")]))))
+        await TestWait.until { model.result != nil }
+        world.playing = true
+        world.windowOpen = false
+        model.checkAgain()
+        await TestWait.until { model.stage == .ready }
+        #expect(!model.waitsForWindow && !model.windowMissing)
+    }
+
     @Test("Check Again beside Use that doesn't finish (stopped, or failed) brings the kept result back, Use with it", arguments: [true, false])
     func checkAgainUnfinished(stopped: Bool) async {
         let world = World()

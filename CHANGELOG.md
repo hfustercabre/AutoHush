@@ -5,6 +5,17 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Add an App, after Check Again:** **Back to Result** brings the last
+  result back, with **Use**, until the new check starts.
+- **Add an App, for an app checked with its windows closed:** a note says
+  to open one of its windows before checking again, and after **Check
+  Again** AutoHush waits for a window as well as for it to play, so the
+  check doesn't find them closed again.
+
 ## [1.2.5] — 2026-10-29
 
 ### Fixed

@@ -19,4 +19,7 @@ protocol AppReading {
     func open(_ app: CheckableApp, withLaunchOption: Bool) async -> Bool
     /// Whether it plays now, as the check judges it (`AppPlaying`).
     func isPlaying(_ app: CheckableApp, traits: CheckedAppTraits) async -> Bool
+    /// Whether it has a window the check can reach, as the check tells it
+    /// (`AppWindows.hasWindowWithinReach`).
+    func hasWindowWithinReach(_ app: CheckableApp) async -> Bool
 }

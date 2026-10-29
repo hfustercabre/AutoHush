@@ -52,6 +52,18 @@ struct AppReader: AppReading {
         return await playing.plays(pid)
     }
 
+    func hasWindowWithinReach(_ app: CheckableApp) async -> Bool {
+        guard let pid = NSRunningApplication.running(app.bundleID)?.processIdentifier else { return false }
+        return await Self.windowWithinReach(pid)
+    }
+
+    /// Off the main actor: a look at the windows on other desktops takes
+    /// about 70 ms, up to 1 s.
+    @concurrent
+    private nonisolated static func windowWithinReach(_ pid: pid_t) async -> Bool {
+        NSRunningApplication(processIdentifier: pid).map(AppWindows.hasWindowWithinReach) ?? false
+    }
+
     /// An app picked on the disk (Other App…), named as the list names it,
     /// unless AutoHush supports it already (`supported`) or it's AutoHush.
     static func checkableApp(at url: URL, supported: [PlayerOption]) -> Result<CheckableApp, OtherAppProblem> {

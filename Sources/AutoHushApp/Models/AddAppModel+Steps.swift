@@ -37,6 +37,9 @@ extension AddAppModel {
         failureReason = nil
         progress = CheckProgress()
         isStopping = false
+        resultBeforeCheckAgain = nil
+        waitsForWindow = false
+        windowMissing = false
     }
 
     /// The check's result as it was kept: its app chosen, the last step.
@@ -47,6 +50,8 @@ extension AddAppModel {
         self.traits = traits
         needsReopen = kept.needsReopen
         reopenOutcome = kept.reopenOutcome
+        resultBeforeCheckAgain = nil
+        waitsForWindow = false
         stage = .done(kept.result)
         Task { [weak self] in await self?.refreshPermissions(for: kept.app, scriptable: traits.scriptable) }
     }
@@ -164,6 +169,7 @@ extension AddAppModel {
         appQuit = false
         appNotFound = false
         failureReason = nil
+        windowMissing = false
         stage = .waitingToPlay(since: since)
         work = Task { [weak self] in
             while let self, !Task.isCancelled, self.stage == .waitingToPlay(since: since) {
@@ -171,7 +177,11 @@ extension AddAppModel {
                     self.quit(app)
                     return
                 }
-                if await self.reader.isPlaying(app, traits: traits), self.stage == .waitingToPlay(since: since) {
+                // After Check Again with its windows closed: a window first.
+                let windowOpen = self.waitsForWindow ? await self.reader.hasWindowWithinReach(app) : true
+                guard self.stage == .waitingToPlay(since: since) else { return }
+                self.windowMissing = !windowOpen
+                if windowOpen, await self.reader.isPlaying(app, traits: traits), self.stage == .waitingToPlay(since: since) {
                     self.stage = .ready
                     return
                 }

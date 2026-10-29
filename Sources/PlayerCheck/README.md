@@ -56,10 +56,13 @@ players are”), and only the names of the app it checks, as read from it.
 The code is split by
 subject: `main.swift` runs the steps in the report's order, and each
 file holds one subject (`Scripting`, `Menu`, `Page`, `WindowStates`,
-`Signs`, `PressTest`, `Report`, …). `Kit/` is PlayerCheckKit, the parts
-that need no app to check (its command line, an app's binaries, what the
-log leaves out, what's kept, how a press is judged, how a stop is handled,
-what the check found made into its result), so tests reach them.
+`Signs`, `PressTest`, `Report`, …). `WindowStates` moves the app's window;
+reading its windows is CheckedPlayers' `AppWindows`, shared with Add an
+App, which waits for a window the check can reach after Check Again.
+`Kit/` is PlayerCheckKit, the parts that need no app to check (its
+command line, an app's binaries, what the log leaves out, what's kept, how
+a press is judged, how a stop is handled, what the check found made into
+its result), so tests reach them.
 `Tests/PlayerCheckTests` tests the tool itself, run as a read-only check
 of Calculator (`argumentsForTests`): its command line, its report's words,
 the apps' interfaces and its log. What reads, moves or presses another app

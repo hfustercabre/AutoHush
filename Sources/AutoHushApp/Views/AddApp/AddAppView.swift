@@ -225,10 +225,12 @@ struct AddAppView: View {
             StepNote(AddAppText.playingNote)
         case (.current, .waitingToPlay(let since)):
             StepNote(AddAppText.playNow(appName ?? ""))
+            if model.windowMissing { StepNote(AddAppText.waitsForWindow(appName ?? "")) }
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 CountdownBanner(text: AddAppText.timeToPlay(AddAppModel.playWait - context.date.timeIntervalSince(since)))
             }
             .padding(.top, 2)
+            if model.canGoBackToResult { backToResultButton }
         case (.current, _) where busy:
             StepNote(AddAppText.opening(appName ?? ""))
         case (.failed, _) where model.appNotFound:
@@ -241,9 +243,12 @@ struct AddAppView: View {
             MainButton(ButtonText.open(appName ?? ""), inStep: true) { model.openAppAgain() }
                 .focused($focused, equals: .play)
         case (.failed, _):
-            StepNote(AddAppText.didNotPlay(appName ?? ""))
-            MainButton(AddAppText.tryAgain, inStep: true) { model.waitForPlaying() }
-                .focused($focused, equals: .play)
+            StepNote(model.windowMissing ? AddAppText.noWindowOpened(appName ?? "") : AddAppText.didNotPlay(appName ?? ""))
+            FlowingButtons {
+                MainButton(AddAppText.tryAgain, inStep: true) { model.waitForPlaying() }
+                    .focused($focused, equals: .play)
+                if model.canGoBackToResult { backToResultButton }
+            }
         default:
             StepNote(AddAppText.playWaits)
         }
@@ -288,10 +293,20 @@ struct AddAppView: View {
             }
             if model.traits?.framework != nil { StepNote(AddAppText.switchNote) }
             if state == .current {
-                MainButton(AddAppText.continueToCheck, inStep: true) { model.continueToCheck() }
-                    .focused($focused, equals: .check)
+                FlowingButtons {
+                    MainButton(AddAppText.continueToCheck, inStep: true) { model.continueToCheck() }
+                        .focused($focused, equals: .check)
+                    if model.canGoBackToResult { backToResultButton }
+                }
             }
         }
+    }
+
+    /// After Check Again, until the new check starts: the last result again
+    /// (A1, 2026-10-29). No key: Escape stays the window's Cancel, which
+    /// keeps the result too.
+    private var backToResultButton: some View {
+        MainButton(AddAppText.backToResult, secondary: true, inStep: true) { model.backToResult() }
     }
 
     /// Why no way can be used: none worked, or only one AntiDot mode can't
@@ -335,6 +350,7 @@ struct AddAppView: View {
                             .accessibilityLabel(Text(verbatim: AddAppText.allowLabel(PermissionText.audioTitle)))
                     }
                 }
+                if model.closedWaysMayWork { StepNote(AddAppText.openWindowFirst(app)).padding(.top, 4) }
                 FlowingButtons {
                     // The focus goes to Check Again while Mute It Instead can't be pressed.
                     let mute = MainButton(AddAppText.muteItInstead, inStep: true) { model.useMuting() }.disabled(!model.canMute)
@@ -351,6 +367,7 @@ struct AddAppView: View {
                 // Now Playing hidden in the menu bar: once it's shown, its
                 // panel can be tried (the user, 2026-10-16); checked with its
                 // windows closed: with one open, the ways that didn't work may.
+                if model.closedWaysMayWork { StepNote(AddAppText.openWindowFirst(app)).padding(.top, 4) }
                 FlowingButtons {
                     MainButton(AddAppText.use(app), inStep: true) { model.use() }
                         .focused($focused, equals: .use)

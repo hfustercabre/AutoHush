@@ -110,7 +110,7 @@ typealias AppQuery = CommandLineOptions.AppQuery
         }
         exit(LaunchOption.relaunch(app, url: url, with: needed, tell: tell) ? CheckExitStatus.done : CheckExitStatus.failed)
     case .windowState:
-        let answer: WindowStateAnswer = app.map { WindowStates.state(of: $0).map { .state($0) } ?? .noWindow } ?? .notRunning
+        let answer: WindowStateAnswer = app.map { AppWindows.state(of: $0).map { .state($0) } ?? .noWindow } ?? .notRunning
         print(answer.line)
         exit(CheckExitStatus.done)
     }
