@@ -18,20 +18,21 @@ extension PlaybackArbiter {
     }
 
     /// Where AutoHush's mute of the player stands, and what its looks
-    /// (`lookWhileMuted`) keep about it.
+    /// (`lookWhileMuted`) keep about it: changed only through its methods,
+    /// so each step resets what it must.
     struct MuteState: Sendable {
-        var kind = PauseMute.off
+        private(set) var kind = PauseMute.off
         /// While muted in place of the pause: when its pause was pressed,
         /// once its own state said it plays again, to be unmuted once it's
         /// silent since (`lookWhileMuted`).
-        var pausePressed: Date?
+        private(set) var pausePressed: Date?
         /// While muted in place of the pause: how many presses of its pause
         /// failed in a row, and when the last did (`mutedPauseWait`).
-        var pauseFailures: (count: Int, last: Date)?
+        private(set) var pauseFailures: (count: Int, last: Date)?
         /// Muted while it said it doesn't play (`mutesHeardWhileQuiet`): its
         /// mute is only lifted, never followed by a play, since nothing of
         /// it was playing to resume. Kept until AutoHush's pause is over.
-        var whileQuiet = false
+        private(set) var whileQuiet = false
 
         var isInsteadOfPause: Bool { kind == .insteadOfPause }
 
@@ -55,7 +56,23 @@ extension PlaybackArbiter {
             return failures
         }
 
+        /// A press of its pause went through: no failures in a row.
+        mutating func notePauseWorked() {
+            pauseFailures = nil
+        }
+
+        /// Its pause was pressed at `date`.
+        mutating func notePausePressed(at date: Date) {
+            pausePressed = date
+        }
+
+        /// Muted while it said it doesn't play, or not (its pause over).
+        mutating func noteWhileQuiet(_ quiet: Bool) {
+            whileQuiet = quiet
+        }
+
         /// Not muted by AutoHush any more, saying whether it was.
+        @discardableResult
         mutating func end() -> Bool {
             guard kind != .off else { return false }
             kind = .off

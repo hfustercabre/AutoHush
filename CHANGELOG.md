@@ -23,6 +23,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   didn't work says it was tried with its windows closed, the page's
   Play/Pause says "its windows were closed", and VoiceOver says "Works"
   for a way that worked.
+- **PlayerCheck:** for an app with no AppleScript and no playback menu,
+  its verdict names its row in the Now Playing panel when that row paused
+  and played it, instead of saying AutoHush can't control it.
 
 ## [1.2.3] — 2026-10-27
 

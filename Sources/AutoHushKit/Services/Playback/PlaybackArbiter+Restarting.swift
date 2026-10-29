@@ -226,7 +226,7 @@ extension PlaybackArbiter {
                 // Asleep, or the output gone: no pause held, so no mute either
                 // (what's shown changed with them).
                 outputGoneDuringPause = false
-                mute.kind = .off
+                mute.end()
                 await playerMute.unmute()
                 return true
             }
@@ -250,7 +250,7 @@ extension PlaybackArbiter {
             }
             return true
         }
-        if keptMute { mute.kind = .off } // a relaunched process heard: no mute stands
+        if keptMute { mute.end() } // a relaunched process heard: no mute stands
         logger.info("[arbiter] \(self.player.name, privacy: .public) \(why, privacy: .public) and can’t be muted — it plays on")
         pausedByUs = false
         if !activeSources.isEmpty { pauseFailure = failure }
@@ -292,7 +292,6 @@ extension PlaybackArbiter {
             // unmuted, as it says (no pause of AutoHush's to resume).
             if mute.whileQuiet {
                 logger.info("[arbiter] \(self.player.name, privacy: .public) is silent now — unmuted, as it says it doesn’t play")
-                mute.pausePressed = nil
                 playerState = .paused
                 pausedByUs = false // the mute is lifted as it's published
                 publishPlaybackState()
@@ -326,10 +325,10 @@ extension PlaybackArbiter {
                 logger.debug("[arbiter] muted \(self.player.name, privacy: .public): its pause failed (\(failures, privacy: .public) in a row): \(error)")
                 return
             }
-            mute.pauseFailures = nil
+            mute.notePauseWorked()
             logger.debug("[arbiter] muted \(self.player.name, privacy: .public): its pause pressed in \(String(format: "%.2f", self.clock().timeIntervalSince(now)), privacy: .public) s")
             guard muteStillStands else { return }
-            mute.pausePressed = now
+            mute.notePausePressed(at: now)
         case .measuring, .unknown:
             return // looked at again at the next look
         }

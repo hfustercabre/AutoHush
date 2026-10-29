@@ -5,7 +5,8 @@ import Testing
 /// set its state; the windows read it and set only the search and the
 /// selection. Swift's `private(set)` holds only within one file, so with
 /// the model split by topic this test keeps the rule instead (the user,
-/// 2026-10-28).
+/// 2026-10-28); extensions of it live in its own files too, since theirs
+/// set it without naming it.
 @Suite("AddAppModel's state is set only by its own files")
 struct AddAppModelGuardTests {
     private static let models = PackagePaths.root.appending(path: "Sources/AutoHushApp/Models")
@@ -35,12 +36,17 @@ struct AddAppModelGuardTests {
         let files = Self.otherFiles()
         try #require(files.count > 100, "Sources/ not found in \(PackagePaths.root.path)")
         let names = properties.joined(separator: "|")
-        // `x.stage = …`, `x.permissions.audio = …`, `+=`, `.toggle()`, `.append(…)`, `.remove…(…)`, or `$x.stage`
-        // (not a closure's `$0.stage`).
-        let write = try Regex("\\.(\(names))(?:\\.\\w+)*\\s*(?:[-+]?=(?!=)|\\.toggle\\(|\\.append|\\.remove)")
+        // `x.stage = …`, `x.permissions.audio = …`, `x.list[i] = …`, `+=`, `.toggle()`, `.append(…)`, `.insert(…)`,
+        // `.remove…(…)`, or `$x.stage` (not a closure's `$0.stage`).
+        let write = try Regex("\\.(\(names))(?:\\.\\w+|\\[[^\\]]*\\])*\\s*(?:[-+]?=(?!=)|\\.toggle\\(|\\.append|\\.insert|\\.remove)")
         let binding = try Regex("\\$[A-Za-z_]\\w*\\.(\(names))\\b")
+        // An extension elsewhere would set them without naming the model.
+        let extensionOfIt = /^\s*(?:\w+\s+)*extension\s+AddAppModel\b/
         for file in files {
             let lines = try String(contentsOf: file, encoding: .utf8).split(separator: "\n", omittingEmptySubsequences: false)
+            for (index, line) in lines.enumerated() where line.contains(extensionOfIt) {
+                Issue.record("\(file.lastPathComponent):\(index + 1) extends AddAppModel outside its files")
+            }
             for (index, line) in lines.enumerated() where line.contains(write) || line.contains(binding) {
                 Issue.record("\(file.lastPathComponent):\(index + 1) sets AddAppModel's state: \(line.trimmingCharacters(in: .whitespaces))")
             }

@@ -106,8 +106,9 @@ package struct ToolRun: Sendable {
                         onLine(String(decoding: pending[..<newline], as: UTF8.self))
                         pending.removeSubrange(...newline)
                     } else if pending.count > Self.maxLine {
-                        onLine(String(decoding: pending.prefix(Self.maxLine), as: UTF8.self))
-                        pending.removeFirst(Self.maxLine)
+                        let cut = Self.partLength(of: pending)
+                        onLine(String(decoding: pending.prefix(cut), as: UTF8.self))
+                        pending.removeFirst(cut)
                     } else {
                         break
                     }
@@ -116,6 +117,15 @@ package struct ToolRun: Sendable {
             if !pending.isEmpty { onLine(String(decoding: pending, as: UTF8.self)) }
             return Data()
         }, onEnd: onEnd)
+    }
+
+    /// How much of a line longer than `maxLine` goes in its next part:
+    /// `maxLine` bytes, less a character the cut would split (UTF-8's
+    /// continuation bytes are 0b10xxxxxx), so neither part gets a “�”.
+    static func partLength(of line: Data) -> Int {
+        var cut = maxLine
+        while cut > maxLine - 3, line[line.startIndex + cut] & 0xC0 == 0x80 { cut -= 1 }
+        return cut
     }
 
     /// What `handle` gives until its end, up to `maxOutput`.

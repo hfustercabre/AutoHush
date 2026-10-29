@@ -323,6 +323,9 @@ import PlayerCheckKit
     }
 }
 
-/// The window state the test has the app in now: nil outside one (or before
-/// the first). Out of view, a Chromium page's words lag (`wordsCurrent`).
-@MainActor var currentWindowState: WindowState?
+extension WindowTest {
+    /// The window state the test has the app in now: nil outside one (or
+    /// before the first). Out of view, a Chromium page's words lag
+    /// (`wordsCurrent`).
+    static var currentState: WindowState?
+}

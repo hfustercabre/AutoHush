@@ -59,9 +59,9 @@ import PlayerCheckKit
             tried.append("AppleScript \(command.name) sent, but it didn't change in 6 s")
         case .page:
             guard page?.toggle != nil else {
-                tried.append((pageOutOfView ? "its page didn't show with "
+                tried.append((PageState.outOfView ? "its page didn't show with "
                     + (hiddenInterface?.switches.map { switchName($0) }.joined(separator: " or ") ?? "the switch") + " on" : "no Play/Pause button on its page")
-                    + (pageOutOfView ? pagePressHint() : ""))
+                    + (PageState.outOfView ? pagePressHint() : ""))
                 continue
             }
             // As it reports to Now Playing, else as its page's button says
@@ -80,7 +80,7 @@ import PlayerCheckKit
             if within(done) {
                 learnFromPress(button, before: button.label, pausing: pausing)
                 say("\(pausing ? "Paused" : "Played") it with its page's \(shown(button.label)) button"
-                    + (pageSwitch.map { ", \(switchName($0)) on" } ?? "")
+                    + (PageState.shownBySwitch.map { ", \(switchName($0)) on" } ?? "")
                     + (broughtForward ? " (brought forward a moment: Chromium and Flutter apps may build it only while their window can be seen)." : "."))
                 finish(CheckExitStatus.done)
             }

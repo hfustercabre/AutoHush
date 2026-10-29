@@ -28,7 +28,7 @@ final class Checker {
     private var attempt: UUID?
     var isTrusted = AXIsProcessTrusted()
     /// macOS's own Now Playing list, by bundle ID; why it couldn't be read.
-    var clients: [String: NowPlayingClient] = [:]
+    var clients: [String: NowPlayingListLine] = [:]
     var clientsProblem: String?
     var isReadingClients = false
     /// When the list was last read: the next read asks only for what changed
@@ -235,7 +235,7 @@ final class Checker {
                 for line in output.split(separator: "\n") {
                     if let pid = NowPlayingListLine.active(in: line) {
                         active = pid
-                    } else if let client = NowPlayingClient(line: line) {
+                    } else if let client = NowPlayingListLine(line: line) {
                         if client.state == NowPlayingListLine.removed {
                             if updated[client.bundleID]?.pid == client.pid { updated[client.bundleID] = nil }
                         } else if client.state == NowPlayingListLine.registered, updated[client.bundleID]?.pid == client.pid {
@@ -274,7 +274,7 @@ final class Checker {
 
     /// Its entry in macOS's Now Playing list, while it runs (a list kept up
     /// to date by changes only may still hold an app that quit).
-    func client(of app: InstalledApp) -> NowPlayingClient? {
+    func client(of app: InstalledApp) -> NowPlayingListLine? {
         guard isRunning(app) else { return nil }
         return app.bundleID.flatMap { clients[$0] }
     }
@@ -432,12 +432,7 @@ final class Checker {
     }
 }
 
-/// An app mediaremoted keeps in Now Playing now, as `playercheck
-/// --now-playing-list` reads it from macOS's log (administrators only): its
-/// last state (Playing, Paused, Stopped…), or Registered: ready for Now
-/// Playing, never said it plays; Removed, gone (`--since` only).
-typealias NowPlayingClient = NowPlayingListLine
-
+/// What the list says of an app's line in Now Playing.
 extension NowPlayingListLine {
     var summary: String { isActive ? "Now Playing (\(state))" : "In Now Playing: \(state)" }
 }

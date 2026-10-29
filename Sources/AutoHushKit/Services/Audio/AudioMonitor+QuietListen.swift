@@ -17,8 +17,25 @@ extension AudioMonitor {
         var asked = false
         /// One of them was heard, or said it plays, during the listen under way.
         var heard = false
-        /// Who waits for the listen under way to end (`listenToQuietApps`).
-        var waiters: [CheckedContinuation<Bool, Never>] = []
+        /// Who waits for the listen under way to end (`listenToQuietApps`):
+        /// only `endAsk()` takes them, so each is told once.
+        private var waiters: [CheckedContinuation<Bool, Never>] = []
+
+        /// `waiter` waits for the listen under way, which is now asked for.
+        mutating func wait(_ waiter: CheckedContinuation<Bool, Never>) {
+            waiters.append(waiter)
+            asked = true
+        }
+
+        /// Ends the ask: who waited, to be told whether one was heard.
+        mutating func endAsk() -> (waiters: [CheckedContinuation<Bool, Never>], heard: Bool) {
+            defer {
+                waiters = []
+                asked = false
+                heard = false
+            }
+            return (waiters, heard)
+        }
     }
 
     /// Levels are measured, so the quiet processes can be listened to:
@@ -68,10 +85,7 @@ extension AudioMonitor {
     /// Tells whoever waits for the listen (`listenToQuietApps`) whether one
     /// was heard, as it ends or can't go on.
     func endQuietListenAsk() {
-        let waiters = quietListen.waiters, heard = quietListen.heard
-        quietListen.waiters = []
-        quietListen.asked = false
-        quietListen.heard = false
+        let (waiters, heard) = quietListen.endAsk()
         for waiter in waiters { waiter.resume(returning: heard) }
     }
 
@@ -89,8 +103,7 @@ extension AudioMonitor {
                     continuation.resume(returning: false)
                     return
                 }
-                self.quietListen.waiters.append(continuation)
-                self.quietListen.asked = true
+                self.quietListen.wait(continuation)
                 guard self.quietListen.until == nil else { return }
                 let now = self.clock()
                 self.startQuietListen(at: now)

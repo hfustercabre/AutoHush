@@ -103,7 +103,7 @@ func waitForFullerMode(pid: pid_t) {
         }
     }
     guard !taken.isEmpty else { return nil }
-    if shown == nil, action != nil { pageOutOfView = true }
+    if shown == nil, action != nil { PageState.outOfView = true }
     if shown == nil, action == nil {
         shown = inFront(pid: pid) {
             for (attribute, ours) in taken {
@@ -122,7 +122,7 @@ func waitForFullerMode(pid: pid_t) {
     guard let (attribute, waited) = shown else { return false }
     count = waited.count
     shownAfter = waited.after
-    pageSwitch = attribute
+    PageState.shownBySwitch = attribute
     return true
 }
 
