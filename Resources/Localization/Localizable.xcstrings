@@ -139729,187 +139729,187 @@
         }
       }
     },
-    "To check again, open a window of %@ first" : {
+    "To check again, open a window of %@ first." : {
       "comment" : "Add an App window, above “Check Again” in the last step, after a check that found the app's windows closed and a way that didn't work or couldn't be checked without a window; %@ is the app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لإعادة الفحص، افتح أولًا نافذة من %@"
+            "value" : "لإعادة الفحص، افتح أولًا نافذة من %@."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Per tornar a comprovar, obre abans una finestra de %@"
+            "value" : "Per tornar a comprovar, obre abans una finestra de %@."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Před novou kontrolou otevřete okno aplikace %@"
+            "value" : "Před novou kontrolou otevřete okno aplikace %@."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Åbn først et vindue i %@ for at kontrollere igen"
+            "value" : "Åbn først et vindue i %@ for at kontrollere igen."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Öffne zuerst ein Fenster von %@, um erneut zu prüfen"
+            "value" : "Öffne zuerst ein Fenster von %@, um erneut zu prüfen."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Για νέο έλεγχο, ανοίξτε πρώτα ένα παράθυρο της εφαρμογής %@"
+            "value" : "Για νέο έλεγχο, ανοίξτε πρώτα ένα παράθυρο της εφαρμογής %@."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Para volver a comprobar, abre antes una ventana de %@"
+            "value" : "Para volver a comprobar, abre antes una ventana de %@."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Para volver a verificar, abre antes una ventana de %@"
+            "value" : "Para volver a verificar, abre antes una ventana de %@."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Avaa ensin apin %@ ikkuna, jotta voit tarkistaa uudelleen"
+            "value" : "Avaa ensin apin %@ ikkuna, jotta voit tarkistaa uudelleen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pour vérifier à nouveau, ouvrez d’abord une fenêtre de %@"
+            "value" : "Pour vérifier à nouveau, ouvrez d’abord une fenêtre de %@."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pour vérifier à nouveau, ouvrez d’abord une fenêtre de %@"
+            "value" : "Pour vérifier à nouveau, ouvrez d’abord une fenêtre de %@."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "כדי לבדוק שוב, יש לפתוח קודם חלון של %@"
+            "value" : "כדי לבדוק שוב, יש לפתוח קודם חלון של %@."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "फिर से जाँचने के लिए, पहले %@ की कोई विंडो खोलें"
+            "value" : "फिर से जाँचने के लिए, पहले %@ की कोई विंडो खोलें।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Za ponovnu provjeru najprije otvorite prozor aplikacije %@"
+            "value" : "Za ponovnu provjeru najprije otvorite prozor aplikacije %@."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Az újbóli ellenőrzéshez előbb nyisson meg egy ablakot a(z) %@ appban"
+            "value" : "Az újbóli ellenőrzéshez előbb nyisson meg egy ablakot a(z) %@ appban."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Untuk memeriksa lagi, buka dulu jendela %@"
+            "value" : "Untuk memeriksa lagi, buka dulu jendela %@."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Per verificare di nuovo, apri prima una finestra di %@"
+            "value" : "Per verificare di nuovo, apri prima una finestra di %@."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "もう一度チェックするには、先に%@のウインドウを開いてください"
+            "value" : "もう一度チェックするには、先に%@のウインドウを開いてください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "다시 검사하려면 먼저 %@의 윈도우를 여십시오"
+            "value" : "다시 검사하려면 먼저 %@의 윈도우를 여십시오."
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Untuk menyemak lagi, buka tetingkap %@ dahulu"
+            "value" : "Untuk menyemak lagi, buka tetingkap %@ dahulu."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Åpne først et vindu i %@ for å kontrollere igjen"
+            "value" : "Åpne først et vindu i %@ for å kontrollere igjen."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Open eerst een venster van %@ om opnieuw te controleren"
+            "value" : "Open eerst een venster van %@ om opnieuw te controleren."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aby sprawdzić ponownie, najpierw otwórz okno aplikacji %@"
+            "value" : "Aby sprawdzić ponownie, najpierw otwórz okno aplikacji %@."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Para verificar novamente, abra antes uma janela de %@"
+            "value" : "Para verificar novamente, abra antes uma janela de %@."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Para verificar novamente, abra primeiro uma janela de %@"
+            "value" : "Para verificar novamente, abra primeiro uma janela de %@."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pentru a verifica din nou, deschideți mai întâi o fereastră a aplicației %@"
+            "value" : "Pentru a verifica din nou, deschideți mai întâi o fereastră a aplicației %@."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Чтобы проверить снова, сначала откройте окно приложения %@"
+            "value" : "Чтобы проверить снова, сначала откройте окно приложения %@."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Pred novou kontrolou otvorte okno apky %@"
+            "value" : "Pred novou kontrolou otvorte okno apky %@."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Za ponovno preverjanje najprej odprite okno aplikacije %@"
+            "value" : "Za ponovno preverjanje najprej odprite okno aplikacije %@."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Öppna först ett fönster i %@ för att kontrollera igen"
+            "value" : "Öppna först ett fönster i %@ för att kontrollera igen."
           }
         },
         "th" : {
@@ -139921,37 +139921,37 @@
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yeniden denetlemek için önce %@ uygulamasının bir penceresini açın"
+            "value" : "Yeniden denetlemek için önce %@ uygulamasının bir penceresini açın."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Щоб перевірити ще раз, спочатку відкрийте вікно програми %@"
+            "value" : "Щоб перевірити ще раз, спочатку відкрийте вікно програми %@."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Để kiểm tra lại, hãy mở một cửa sổ của %@ trước"
+            "value" : "Để kiểm tra lại, hãy mở một cửa sổ của %@ trước."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "如要再次檢查，請先打開 %@ 的視窗"
+            "value" : "如要再次檢查，請先打開 %@ 的視窗。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "要再次检查，请先打开 %@ 的窗口"
+            "value" : "要再次检查，请先打开 %@ 的窗口。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "若要再次檢查，請先打開 %@ 的視窗"
+            "value" : "若要再次檢查，請先打開 %@ 的視窗。"
           }
         }
       }

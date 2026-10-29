@@ -510,7 +510,7 @@ flowchart TD
   REO["3 · Reopen it (what it plays<br/>stops), or Skip: then paused<br/>only while its window<br/>can be seen"]
   PLAY["4 · Play something in it<br/>(heard by its sound; without<br/>Audio Recording or in AntiDot<br/>mode, by an open output)"]
   PL{"Playing within<br/>2 minutes?"}
-  NOPL["It didn’t play, or quit:<br/>Try Again, or open it again;<br/>moved or deleted: Change…"]
+  NOPL["It didn’t play (or, after<br/>Check Again, no window<br/>opened), or quit: Try Again,<br/>or open it again; moved or<br/>deleted: Change…"]
   CHK["5 · The check: Continue…<br/>shows the warning first"]
 
   ST --> KEPT
@@ -563,7 +563,7 @@ flowchart TD
   USE["Use: added under Other<br/>Apps, Checked by you, made<br/>the media player"]
   NPH["Now Playing couldn’t be<br/>shown: Open Menu Bar<br/>Settings…, then Check Again"]
   CLW["Checked with its windows<br/>closed, a way didn’t work<br/>or wasn’t checked for want<br/>of a window: a note to open<br/>one, Check Again beside Use"]
-  AGN["After Check Again: 4 · Play<br/>something, with a window<br/>open too (its windows were<br/>closed); Back to Result until<br/>the new check starts"]
+  AGN["After Check Again: 4 · Play<br/>something (a window open<br/>too, if its windows were<br/>closed); Back to Result until<br/>the new check starts"]
   MUT{"Audio Recording<br/>allowed, AntiDot<br/>mode off?"}
   MII["Mute It Instead: added<br/>as Muted only, made<br/>the media player"]
   ANTI["Turn Off AntiDot Mode,<br/>or allow Audio Recording;<br/>or Check Again"]
@@ -590,6 +590,10 @@ flowchart TD
   CARDS -.->|"Now Playing not shown"| NPH
   CARDS -.->|"windows closed"| CLW
   CLW -->|"Check Again"| AGN
+  NPH -->|"Check Again"| AGN
+  MUT -.->|"Check Again"| AGN
+  AGN -->|"Back to Result"| ANY
+  AGN -->|"it plays: 5 · Continue…"| WARN
   ANY -->|"no"| MUT
   MUT -->|"yes"| MII
   MUT -->|"no"| ANTI

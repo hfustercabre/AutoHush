@@ -139,8 +139,10 @@ extension AddAppModel {
     /// Check Again beside Use was pressed, and the new check hasn't started:
     /// Back to Result can bring the last one back, Use with it (the 1.2.5
     /// review's workflow note, A1, the user's pick, 2026-10-29).
+    /// Not for an app gone from where it was: Use couldn't work.
     var canGoBackToResult: Bool {
-        guard resultBeforeCheckAgain != nil else { return false }
+        guard let kept = resultBeforeCheckAgain, kept.app.bundleID == chosen?.bundleID,
+              reader.appExists(at: kept.app.url) else { return false }
         return switch stage {
         case .waitingToPlay, .playTimedOut, .ready: true
         default: false
@@ -149,8 +151,7 @@ extension AddAppModel {
 
     /// Back to Result: the last step as Check Again left it.
     func backToResult() {
-        guard canGoBackToResult, let kept = resultBeforeCheckAgain, kept.app.bundleID == chosen?.bundleID,
-              reader.appExists(at: kept.app.url) else { return }
+        guard canGoBackToResult, let kept = resultBeforeCheckAgain else { return }
         stopWork()
         presenter?.closeWarning() // its Start was for the check again
         restore(kept)

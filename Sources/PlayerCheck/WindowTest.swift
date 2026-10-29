@@ -75,7 +75,7 @@ import PlayerCheckKit
         // A window whose green button only zooms (a player's playlist window) can't go full screen:
         // not tried, rather than waited for 6 s (2026-10-29).
         if state != .fullScreen, let element,
-           !Self.canGoFullScreen(buttonSubroles: element.elements(kAXChildrenAttribute).map { $0.string(kAXSubroleAttribute) }) {
+           !Self.canGoFullScreen(buttonSubroles: element.children(timeout: 1).map { $0.string(kAXSubroleAttribute) }) {
             untested[.fullScreen] = "its window can't go full screen"
         }
     }

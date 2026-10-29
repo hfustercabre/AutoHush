@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 
 /// macOS's desktops (Spaces), read through SkyLight's read-only calls, as
 /// window managers read them. Only the main display's. Player Check moves

@@ -81,8 +81,9 @@ extension AddAppModel {
         }
     }
 
-    /// Change… forgets a check that has run (about 3 minutes), so it asks first.
-    var changeAppForgetsCheck: Bool { result != nil }
+    /// Change… forgets a check that has run (about 3 minutes), so it asks
+    /// first: also the one Back to Result can bring back after Check Again.
+    var changeAppForgetsCheck: Bool { result != nil || resultBeforeCheckAgain != nil }
 
     /// The first step's Change…: from the first step again, its list open.
     /// A kept result is forgotten.

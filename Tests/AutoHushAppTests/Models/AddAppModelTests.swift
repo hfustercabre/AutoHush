@@ -639,6 +639,30 @@ struct AddAppModelTests {
         #expect(!model.canGoBackToResult)
     }
 
+    @Test("after Check Again beside Use, Change… asks before forgetting the result Back to Result would bring back; Back to Result is gone with the app moved, and stays once it quits")
+    func backToResultEdges() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: .none), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.panel(rememberedRow: nil)]),
+            windowsClosed: true)))
+        await TestWait.until { model.result != nil }
+
+        world.playing = false
+        model.checkAgain()
+        #expect(model.result == nil && model.changeAppForgetsCheck)
+        world.exists = false
+        #expect(!model.canGoBackToResult)
+        world.exists = true
+        world.running = false
+        await TestWait.until { model.appQuit }
+        #expect(model.stage == .playTimedOut && model.canGoBackToResult)
+    }
+
     @Test("after Check Again following a check with its windows closed, the play step waits for a window too; Back to Result forgets the wait")
     func checkAgainWaitsForWindow() async {
         let world = World()

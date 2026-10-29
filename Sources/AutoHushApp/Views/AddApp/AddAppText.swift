@@ -422,7 +422,7 @@ enum AddAppText {
     /// Above Check Again when a way didn't work, or wasn't checked, with the
     /// app's windows closed (B, 2026-10-29).
     static func openWindowFirst(_ app: String) -> String {
-        String(localized: "To check again, open a window of \(app) first",
+        String(localized: "To check again, open a window of \(app) first.",
                comment: "Add an App window, above “Check Again” in the last step, after a check that found the app's windows closed and a way that didn't work or couldn't be checked without a window; %@ is the app")
     }
 

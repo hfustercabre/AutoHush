@@ -97,8 +97,11 @@ struct AddAppView: View {
             : model.permissionMissingInCheck ? AddAppText.neededInCheck : nil
         case .reopen: return model.reopenFailed ? AddAppText.didNotQuit(app) : nil
         case .play:
+            // After Check Again: the wait for a window too, said as it shows.
+            if state == .current, isWaitingToPlay, model.windowMissing { return AddAppText.waitsForWindow(app) }
             guard state == .failed else { return nil }
-            return model.appNotFound ? AddAppText.appNotFound(app) : model.appQuit ? AddAppText.appQuit(app) : AddAppText.didNotPlay(app)
+            return model.appNotFound ? AddAppText.appNotFound(app) : model.appQuit ? AddAppText.appQuit(app)
+                : model.windowMissing ? AddAppText.noWindowOpened(app) : AddAppText.didNotPlay(app)
         case .check:
             switch model.stage {
             case .stopped: return AddAppText.stoppedNote
@@ -241,8 +244,11 @@ struct AddAppView: View {
                 .focused($focused, equals: .play)
         case (.failed, _) where model.appQuit:
             NoteLabel(AddAppText.appQuit(appName ?? "")).padding(.top, 2)
-            MainButton(ButtonText.open(appName ?? ""), inStep: true) { model.openAppAgain() }
-                .focused($focused, equals: .play)
+            FlowingButtons {
+                MainButton(ButtonText.open(appName ?? ""), inStep: true) { model.openAppAgain() }
+                    .focused($focused, equals: .play)
+                if model.canGoBackToResult { backToResultButton }
+            }
         case (.failed, _):
             StepNote(model.windowMissing ? AddAppText.noWindowOpened(appName ?? "") : AddAppText.didNotPlay(appName ?? ""))
             FlowingButtons {
