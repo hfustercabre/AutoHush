@@ -592,6 +592,24 @@ struct AddAppModelTests {
         await TestWait.until { model.stage == .ready }
     }
 
+    @Test("checked with its windows closed, Check Again is offered beside Use only while a way didn't work or wasn't checked",
+          arguments: [(CheckResult.Mark.none, true), (.noWindow, true), (.notThere, false)])
+    func windowsClosed(other: CheckResult.Mark, offered: Bool) async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: other), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.panel(rememberedRow: nil)]),
+            windowsClosed: true)))
+        await TestWait.until { model.result != nil }
+        #expect(model.state(of: .use) == .current && model.offersCheckAgain == offered)
+        model.checkAgain()
+        if offered { await TestWait.until { model.stage == .ready } } else { #expect(model.stage == .done(model.result!)) }
+    }
+
     @Test("Check Again beside Use that doesn't finish (stopped, or failed) brings the kept result back, Use with it", arguments: [true, false])
     func checkAgainUnfinished(stopped: Bool) async {
         let world = World()

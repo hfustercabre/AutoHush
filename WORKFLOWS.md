@@ -562,6 +562,7 @@ flowchart TD
   CARDS["6 · Cards of the ways that<br/>worked, Recommended first;<br/>those that didn’t, with why"]
   USE["Use: added under Other<br/>Apps, Checked by you, made<br/>the media player"]
   NPH["Now Playing couldn’t be<br/>shown: Open Menu Bar<br/>Settings…, then Check Again"]
+  CLW["Checked with its windows<br/>closed, a way didn’t work<br/>or wasn’t checked: Check<br/>Again beside Use"]
   MUT{"Audio Recording<br/>allowed, AntiDot<br/>mode off?"}
   MII["Mute It Instead: added<br/>as Muted only, made<br/>the media player"]
   ANTI["Turn Off AntiDot Mode,<br/>or allow Audio Recording;<br/>or Check Again"]
@@ -586,12 +587,13 @@ flowchart TD
   HOW -->|"stopped"| STOPPED
   ANY -->|"yes"| CARDS --> USE
   CARDS -.->|"Now Playing not shown"| NPH
+  CARDS -.->|"windows closed"| CLW
   ANY -->|"no"| MUT
   MUT -->|"yes"| MII
   MUT -->|"no"| ANTI
 
   class USE,MII ref
-  class FAIL,STOPPED,PERM,NPH,ANTI warn
+  class FAIL,STOPPED,PERM,NPH,CLW,ANTI warn
   classDef ref fill:#f1e7fc,stroke:#8a3fd1,stroke-width:1.5px,stroke-dasharray: 5 3,color:#1d1b22
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```

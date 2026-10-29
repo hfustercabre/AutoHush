@@ -349,7 +349,8 @@ struct AddAppView: View {
                 }
             } else {
                 // Now Playing hidden in the menu bar: once it's shown, its
-                // panel can be tried (the user, 2026-10-16).
+                // panel can be tried (the user, 2026-10-16); checked with its
+                // windows closed: with one open, the ways that didn't work may.
                 FlowingButtons {
                     MainButton(AddAppText.use(app), inStep: true) { model.use() }
                         .focused($focused, equals: .use)
@@ -487,10 +488,11 @@ private struct WayRow: View {
         }
         // Its own label, not its texts combined: combined, a value of its
         // own would replace their words (STYLE_GUIDE, as checklist steps).
-        // Its mark isn't read: a way that worked says so as its value.
+        // Its mark isn't read: a way that worked says so as its value, one
+        // that worked in some window states too (its note says where not).
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: accessibilityWords))
-        .accessibilityValue(Text(verbatim: way.mark == .works ? AddAppText.wayWorks : ""))
+        .accessibilityValue(Text(verbatim: way.worked ? AddAppText.wayWorks : ""))
     }
 
     /// What VoiceOver reads of it: its name, its badge, its note and the
@@ -544,7 +546,7 @@ private struct WayChoices: View {
         .buttonStyle(.plain)
         .accessibilityAddTraits(isChosen ? .isSelected : [])
         // Said on the button too: its label's own value may not reach it.
-        .accessibilityValue(Text(verbatim: way.mark == .works ? AddAppText.wayWorks : ""))
+        .accessibilityValue(Text(verbatim: way.worked ? AddAppText.wayWorks : ""))
     }
 
     /// The panel that worked, its row showing no state: only its sound tells.

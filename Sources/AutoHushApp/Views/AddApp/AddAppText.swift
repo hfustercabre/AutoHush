@@ -395,8 +395,9 @@ enum AddAppText {
                comment: "Add an App window, under the last step when no way could pause the app; %@ is the app")
     }
 
-    /// What VoiceOver says of a way that worked, whose mark it doesn't read
-    /// (the 1.2.3 review's workflow note, P2, 2026-10-28).
+    /// What VoiceOver says of a way that worked, in every window state or in
+    /// some, whose mark it doesn't read (the 1.2.3 review's workflow note, P2,
+    /// 2026-10-28; in some, the 1.2.4 review's, 2026-10-29).
     static var wayWorks: String {
         String(localized: "Works", comment: "Add an App window, VoiceOver only: the value of a way the check found working (its green mark isn't read)")
     }

@@ -19,9 +19,18 @@ extension AddAppModel {
 
     /// Check Again is offered in the last step: with nothing to use (beside
     /// Mute It Instead), and beside Use when Now Playing was hidden in the
-    /// menu bar, so its panel wasn't tried (the user, 2026-10-16).
+    /// menu bar, so its panel wasn't tried (the user, 2026-10-16), or when a
+    /// way failed or wasn't checked with the app's windows closed.
     var offersCheckAgain: Bool {
-        result != nil && (choosableWays.isEmpty || nowPlayingHidden)
+        result != nil && (choosableWays.isEmpty || nowPlayingHidden || closedWaysMayWork)
+    }
+
+    /// The check found the app's windows closed, and a way didn't work or
+    /// wasn't checked then: with a window open, it may (the 1.2.4 review's
+    /// workflow note, the user's pick, 2026-10-29).
+    var closedWaysMayWork: Bool {
+        guard let result, result.windowsClosed else { return false }
+        return result.ways.contains { $0.mark == .none || $0.mark == .noWindow }
     }
 
     /// The way Use makes AutoHush use: the user's choice, else the recommended.
