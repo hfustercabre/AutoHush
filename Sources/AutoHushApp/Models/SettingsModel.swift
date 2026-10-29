@@ -107,6 +107,15 @@ final class SettingsModel {
     var checksForUpdatesAutomatically: Bool { updates.checksAutomatically }
     /// What automatic checks lead to: notify, download or install.
     var automaticUpdates: AutomaticUpdates { updates.mode }
+    /// Checks look for release candidates too.
+    var getsReleaseCandidates: Bool { updates.getsReleaseCandidates }
+    /// Under Get release candidates, off while a release candidate runs:
+    /// the latest release is offered instead (R5, the user, 2026-10-29).
+    var releaseCandidateNote: String? {
+        guard !getsReleaseCandidates, let version = updates.currentVersion, version.isReleaseCandidate else { return nil }
+        return String(localized: "You’re on \(version.description), a release candidate: AutoHush offers the latest release instead.",
+                      comment: "Settings → About, under “Get release candidates” while it's off and a release candidate runs; %@ is its version, e.g. “1.2.7 RC 1”")
+    }
     /// Why AutoHush can't install updates itself, shown under the choice;
     /// nil when it can. Then only "Notify me" is possible. Read once, at launch.
     @ObservationIgnored let updateInstallNote: String?
@@ -178,6 +187,13 @@ final class SettingsModel {
     func updateRow(now: Date = Date()) -> (title: String, subtitle: String?) {
         let checked = lastCheckedNote(now: now)
         if updateStatus == nil, let checked { return (checked, nil) }
+        // A release candidate found: which release it's a test of, first (R5).
+        if let candidate = updates.availableUpdate?.version, candidate.isReleaseCandidate {
+            let release = AppVersion(components: candidate.components).description
+            let test = String(localized: "A test version of \(release)",
+                              comment: "Settings → About, under “AutoHush 1.2.7 RC 1 is available”, before “Last checked…”; %@ is the version it's a release candidate of, e.g. “1.2.7”")
+            return (updateTitle, [test, checked].compactMap { $0 }.joined(separator: " · "))
+        }
         return (updateTitle, checked)
     }
 

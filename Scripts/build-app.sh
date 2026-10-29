@@ -7,6 +7,8 @@
 #   SIGNING_KEYCHAIN  keychain that holds the identity (default: the keychain search list)
 #   VERSION           CFBundleShortVersionString for this bundle (default: Resources/Info.plist)
 #   BUILD_NUMBER      CFBundleVersion for this bundle (default: Resources/Info.plist)
+#   RELEASE_CANDIDATE n: the bundle is release candidate n of VERSION
+#                     (AutoHushReleaseCandidate, which the app's updater reads)
 #   KEEP_PERMISSIONS=1  skip the privacy-permission reset of ad-hoc builds
 #   KEEP_SYMBOLS=1    keep a release's symbols in dist/dSYMs (release.sh sets it)
 set -euo pipefail
@@ -65,6 +67,10 @@ if [[ -n "${VERSION:-}" ]]; then
 fi
 if [[ -n "${BUILD_NUMBER:-}" ]]; then
     /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_BUNDLE/Contents/Info.plist"
+fi
+if [[ -n "${RELEASE_CANDIDATE:-}" ]]; then
+    [[ "$RELEASE_CANDIDATE" =~ ^[1-9][0-9]*$ ]] || fail "RELEASE_CANDIDATE must be a number from 1"
+    /usr/libexec/PlistBuddy -c "Add :AutoHushReleaseCandidate integer $RELEASE_CANDIDATE" "$APP_BUNDLE/Contents/Info.plist"
 fi
 note "version $(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleShortVersionString)" \
      "($(plist_value "$APP_BUNDLE/Contents/Info.plist" CFBundleVersion))"

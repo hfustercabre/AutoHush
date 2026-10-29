@@ -6,9 +6,10 @@
 #
 # A release candidate (rc.1, rc.2… counted from the tags) is built the same
 # way, as dist/AutoHush-<version>-rc.<n>.dmg with its notes from
-# [Unreleased]; Resources/Info.plist and the CHANGELOG don't change. It's
-# published as a GitHub pre-release, which installed copies never see: they
-# ask GitHub for the latest release, and that is never a pre-release.
+# [Unreleased]; Resources/Info.plist and the CHANGELOG don't change, and its
+# app carries its number (AutoHushReleaseCandidate). It's published as a
+# GitHub pre-release, which only copies with Get release candidates on are
+# offered: the others ask GitHub for the latest release, never a pre-release.
 #
 # Steps:
 #   1. builds the app with the new version (build number + 1), signed with
@@ -87,7 +88,12 @@ fi
 # its own Info.plist); Resources/Info.plist and the CHANGELOG change only
 # once it's built.
 BUILD_NUMBER=$(( $(plist_value "$INFO_PLIST" CFBundleVersion) + 1 ))
-SIGNING_IDENTITY="$IDENTITY" BUILD_NUMBER="$BUILD_NUMBER" KEEP_SYMBOLS=1 bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
+# A release candidate's app says which it is (AutoHushReleaseCandidate), so
+# its updater offers the release that follows it.
+CANDIDATE=""
+(( RC )) && CANDIDATE="$RC"
+SIGNING_IDENTITY="$IDENTITY" BUILD_NUMBER="$BUILD_NUMBER" RELEASE_CANDIDATE="$CANDIDATE" KEEP_SYMBOLS=1 \
+    bash "$PROJECT_DIR/Scripts/build-dmg.sh" "$VERSION"
 # A release candidate's app is the version itself; only its image says which.
 (( RC )) && mv -f "$DIST_DIR/$APP_NAME-$VERSION.dmg" "$DMG_PATH"
 # The team the built app is signed with: anything but $RELEASE_TEAM stops the
@@ -108,7 +114,7 @@ SHA256="$(shasum -a 256 "$DMG_PATH" | awk '{ print $1 }')"
 step "Writing the release notes"
 if (( RC )); then
     heading="## [Unreleased]"
-    printf '%s\n\n' "Release candidate $RC of AutoHush $VERSION, for testing before its release. Installed copies don't update to it, and Homebrew doesn't install it." > "$NOTES_PATH"
+    printf '%s\n\n' "Release candidate $RC of AutoHush $VERSION, for testing before its release. Only copies with Get release candidates on (Settings → About) are offered it, and Homebrew doesn't install it." > "$NOTES_PATH"
 else
     heading="## [$VERSION]"
     : > "$NOTES_PATH"

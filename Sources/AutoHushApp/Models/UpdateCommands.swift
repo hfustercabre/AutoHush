@@ -17,6 +17,8 @@ protocol UpdateCommands: AnyObject {
     func setChecksAutomatically(_ enabled: Bool)
     /// What automatic checks lead to: notify, download or install.
     func setMode(_ mode: AutomaticUpdates)
+    /// Whether checks look for release candidates too.
+    func setGetsReleaseCandidates(_ enabled: Bool)
 
     /// This copy's version; `nil` when unknown.
     var currentVersion: AppVersion? { get }
@@ -24,6 +26,10 @@ protocol UpdateCommands: AnyObject {
     var checksAutomatically: Bool { get }
     /// What automatic checks lead to.
     var mode: AutomaticUpdates { get }
+    /// Whether checks look for release candidates too.
+    var getsReleaseCandidates: Bool { get }
+    /// The update the last check found, if any.
+    var availableUpdate: AppRelease? { get }
     /// Why this copy of AutoHush can't install updates, or nil when it can.
     var installUnavailability: UpdateInstallUnavailability? { get }
     /// The last check's, download's or install's outcome in one line, e.g.

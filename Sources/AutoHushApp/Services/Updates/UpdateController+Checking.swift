@@ -41,7 +41,7 @@ extension UpdateController {
         logger.info("Checking for updates (\(resultWanted ? "asked for" : "automatic", privacy: .public))")
         showStatus(UpdateOffer.checkingTitle)
         do {
-            let result = try await checker.check(currentVersion: currentVersion)
+            let result = try await checker.check(currentVersion: currentVersion, releaseCandidates: getsReleaseCandidates)
             lastCheck = now()
             switch result {
             case .available(let release):

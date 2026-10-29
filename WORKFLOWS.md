@@ -676,10 +676,11 @@ An app added with Add an App is paused and played only the one way chosen at Use
 flowchart TD
   AUTO(["An automatic check:<br/>GitHub, once a day"])
   ASK(["Updates in the menu,<br/>or Check Now in Settings"])
-  NEW{"A newer<br/>version?"}
+  NEW{"A newer version? (Get<br/>release candidates on: the<br/>newest release or release<br/>candidate; off while one<br/>runs: the latest release)"}
   UTD["Up to date, or it<br/>couldn’t check: said<br/>only when you asked"]
   CAN{"Can this copy<br/>install it?"}
   HAND["By hand: Homebrew, or Open<br/>Release Page (a folder it can’t<br/>write to, or a copy signed<br/>with another certificate); the<br/>menu says AutoHush X Is Available…"]
+  RC{"A release candidate,<br/>or back to the latest<br/>release from one?"}
   MODE{"Settings → About,<br/>Updates: when an<br/>update is found"}
   NOT["A notification; the icon’s<br/>arrow, Updates in the accent<br/>color, Install AutoHush in<br/>the menu"]
   DL["Downloaded (not in<br/>Low Data Mode), kept<br/>up to 7 days"]
@@ -700,7 +701,9 @@ flowchart TD
   NEW -->|"yes"| CAN
   CAN -->|"no"| HAND
   CAN -->|"yes, you asked"| OFFER
-  CAN -->|"yes, automatic"| MODE
+  CAN -->|"yes, automatic"| RC
+  RC -->|"yes: only offered"| NOT
+  RC -->|"no"| MODE
   MODE -->|"Notify me"| NOT
   MODE -->|"Download it and notify me"| DL --> NOT
   MODE -->|"Install it automatically (default)"| AI --> PREP
@@ -719,7 +722,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-Updates, in Settings → About, sets what happens when an update is found, and can turn the automatic checks off. Notifications are optional: without them every choice still works and the menu bar icon shows the update. Settings, permissions and any pause AutoHush held carry over to the new version.
+Updates, in Settings → About, sets what happens when an update is found, and can turn the automatic checks off. With **Get release candidates** on, checks find release candidates too (versions to test before a release); one is only ever offered, never downloaded or installed by itself. Turned off while one runs, the latest release is offered instead, even an older one. Notifications are optional: without them every choice still works and the menu bar icon shows the update. Settings, permissions and any pause AutoHush held carry over to the new version.
 
 ## Problems: when the player can’t start
 

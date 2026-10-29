@@ -66,11 +66,14 @@ final class FakeUpdateCommands: UpdateCommands {
     func presentAvailableUpdate() { log.calls.append("update") }
     func setChecksAutomatically(_ enabled: Bool) { log.calls.append("autoUpdate \(enabled)") }
     func setMode(_ mode: AutomaticUpdates) { log.calls.append("updates \(mode.rawValue)") }
+    func setGetsReleaseCandidates(_ enabled: Bool) { log.calls.append("releaseCandidates \(enabled)") }
 
     // What Settings shows of the updates, as the test sets it.
     var currentVersion: AppVersion?
     var checksAutomatically = true
     var mode = AutomaticUpdates.install
+    var getsReleaseCandidates = false
+    var availableUpdate: AppRelease?
     var installUnavailability: UpdateInstallUnavailability?
     var status: String?
     var lastCheck: Date?

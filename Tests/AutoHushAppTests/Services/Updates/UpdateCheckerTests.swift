@@ -107,6 +107,38 @@ struct UpdateCheckerTests {
         }
     }
 
+    @Test("with release candidates, GitHub's list is read and the newest release or candidate is offered, with its disk image")
+    func releaseCandidates() async throws {
+        let checker = UpdateChecker.releases([("v0.3.0-rc.2", true), ("v0.3.0-rc.1", true), ("v0.2.0", false)]) { request in
+            #expect(request.url?.absoluteString == "https://api.github.com/repos/hfustercabre/AutoHush/releases?per_page=30")
+        }
+        let result = try await checker.check(currentVersion: AppVersion("0.2.0")!, releaseCandidates: true)
+        guard case .available(let release) = result else { Issue.record("no update: \(result)"); return }
+        #expect(release.version == AppVersion("0.3.0-rc.2"))
+        #expect(release.diskImage?.url.lastPathComponent == "AutoHush-0.3.0-rc.2.dmg")
+    }
+
+    @Test("a release beats its own candidates; a pre-release not tagged as a candidate, or a candidate not marked a pre-release, is skipped")
+    func releaseCandidateRules() async throws {
+        let released = try await UpdateChecker.releases([("v0.3.0", false), ("v0.3.0-rc.2", true)])
+            .check(currentVersion: AppVersion("0.3.0-rc.2")!, releaseCandidates: true)
+        #expect(released.availableVersion == AppVersion("0.3.0"))
+        let odd = try await UpdateChecker.releases([("v0.4.0-beta.1", true), ("v0.3.1-rc.1", false), ("v0.2.0", false)])
+            .check(currentVersion: AppVersion("0.1.0")!, releaseCandidates: true)
+        #expect(odd.availableVersion == AppVersion("0.2.0"))
+        let newest = try await UpdateChecker.releases([("v0.3.0-rc.1", true), ("v0.2.0", false)])
+            .check(currentVersion: AppVersion("0.3.0-rc.1")!, releaseCandidates: true)
+        #expect(newest == .upToDate(latest: AppVersion("0.3.0-rc.1")!))
+    }
+
+    @Test("without release candidates, a candidate running is offered the latest release, even an older one")
+    func backFromReleaseCandidate() async throws {
+        let older = try await checker(status: 200, body: release030).check(currentVersion: AppVersion("0.4.0-rc.1")!)
+        #expect(older.availableVersion == AppVersion("0.3.0"))
+        let newer = try await checker(status: 200, body: release030).check(currentVersion: AppVersion("0.3.0-rc.1")!)
+        #expect(newer.availableVersion == AppVersion("0.3.0"))
+    }
+
     @Test("the same or an older release is up to date")
     func upToDate() async throws {
         let result = try await checker(status: 200, body: release030).check(currentVersion: AppVersion("0.3.0")!)
@@ -136,3 +168,11 @@ struct UpdateCheckerTests {
         }
     }
 }
+
+private extension UpdateCheckResult {
+    /// The version offered, if any.
+    var availableVersion: AppVersion? {
+        if case .available(let release) = self { release.version } else { nil }
+    }
+}
+

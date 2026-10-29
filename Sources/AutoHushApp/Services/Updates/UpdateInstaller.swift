@@ -302,7 +302,8 @@ struct UpdateInstaller: UpdateInstalling {
     private func check(_ app: URL, isVersion version: AppVersion) throws {
         guard let requirement, Self.isSigned(app, satisfying: requirement) else { throw UpdateInstallError.notGenuine }
         let info = NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist"))
-        guard let found = (info?["CFBundleShortVersionString"] as? String).flatMap(AppVersion.init), found == version
+        // A release candidate's number is its own key (`AppVersion(info:)`).
+        guard let found = (info as? [String: Any]).flatMap(AppVersion.init(info:)), found == version
         else { throw UpdateInstallError.wrongVersion }
         // Swapped in, an app that needs a newer macOS wouldn't open.
         if let minimum = info?["LSMinimumSystemVersion"] as? String,

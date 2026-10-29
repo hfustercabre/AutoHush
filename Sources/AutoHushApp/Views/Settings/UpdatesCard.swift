@@ -3,8 +3,8 @@ import AutoHushKit
 
 /// Settings → About's Updates (a page of their own until W1, the user,
 /// 2026-10-25): the daily check, what it leads to as a pop-up menu (A4,
-/// 2026-10-26; with a note while notifications are off), Check Now, and its
-/// Restore Defaults.
+/// 2026-10-26; with a note while notifications are off), release candidates
+/// (R5, 2026-10-29), Check Now, and its Restore Defaults.
 struct UpdatesCard: View {
     let model: SettingsModel
     /// Opens the update pop-up from the keys.
@@ -72,6 +72,17 @@ struct UpdatesCard: View {
                         .buttonStyle(.chip)
                 }
             }
+            // Checks by hand use it too: never greyed out (R5, the user's pick, 2026-10-29).
+            CardDivider()
+            SwitchRow(Text("Get release candidates",
+                           comment: "Settings → About: switch for update checks that also find release candidates, the versions published to test before a release"),
+                      subtitle: Text("Try the next version before its release. It may have bugs.",
+                                     comment: "Settings → About, under “Get release candidates”"),
+                      isOn: Binding(
+                          get: { model.getsReleaseCandidates },
+                          set: { model.updates.setGetsReleaseCandidates($0) }
+                      ))
+            if let note = model.releaseCandidateNote { NoteLabel(note, kind: .info) }
             CardDivider()
             HStack {
                 let row = model.updateRow()

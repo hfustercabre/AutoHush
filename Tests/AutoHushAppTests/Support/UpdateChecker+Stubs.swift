@@ -31,6 +31,21 @@ extension UpdateChecker {
         latestRelease({ tag }, diskImage: diskImage, notes: notes)
     }
 
+    /// Answers GitHub's list of releases with `tags`, newest first, those
+    /// marked pre-releases, each with its disk image; `onRequest` sees each request.
+    static func releases(_ tags: [(tag: String, prerelease: Bool)],
+                         onRequest: @escaping @Sendable (URLRequest) -> Void = { _ in }) -> UpdateChecker {
+        UpdateChecker { request in
+            onRequest(request)
+            let items = tags.map { tag, prerelease in
+                let file = "AutoHush-\(tag.dropFirst()).dmg"
+                return #"{"tag_name": "\#(tag)", "prerelease": \#(prerelease), "html_url": "https://github.com/hfustercabre/AutoHush/releases/tag/\#(tag)", "assets": [{"name": "\#(file)", "browser_download_url": "https://github.com/hfustercabre/AutoHush/releases/download/\#(tag)/\#(file)"}]}"#
+            }
+            let body = "[" + items.joined(separator: ",") + "]"
+            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        }
+    }
+
     /// A Mac without a network.
     static let offline = UpdateChecker { _ in throw URLError(.notConnectedToInternet) }
 }

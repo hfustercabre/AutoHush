@@ -24,9 +24,11 @@ enum UpdateCheckError: LocalizedError, LoggableError, Equatable {
     }
 }
 
-/// Asks GitHub for the latest published release. Only `api.github.com` is
-/// contacted, and only the release's tag, page URL, notes and disk image are
-/// read.
+/// Asks GitHub for the latest published release, or, for someone who gets
+/// release candidates, the newest of the releases and the candidates (a
+/// GitHub pre-release tagged `v<version>-rc.<n>`). Only `api.github.com` is
+/// contacted, and only each release's tag, page URL, notes and disk image
+/// are read.
 /// The page URL is the only thing AutoHush ever opens from an answer, so it
 /// must be one of this repository's release pages on github.com; the disk
 /// image must be one of its release downloads, or the release has none.
@@ -39,8 +41,13 @@ struct UpdateChecker: Sendable {
         self.fetch = fetch
     }
 
-    func check(currentVersion: AppVersion) async throws -> UpdateCheckResult {
-        var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(ProjectInfo.repository)/releases/latest")!)
+    /// What's newer than `currentVersion`. With `releaseCandidates`, the
+    /// newest release or candidate; without, the latest release, also when
+    /// it's older than a candidate running (the user, 2026-10-29: turned
+    /// off, AutoHush offers the latest release).
+    func check(currentVersion: AppVersion, releaseCandidates: Bool = false) async throws -> UpdateCheckResult {
+        let path = releaseCandidates ? "releases?per_page=30" : "releases/latest"
+        var request = URLRequest(url: URL(string: "https://api.github.com/repos/\(ProjectInfo.repository)/\(path)")!)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 15
 
@@ -49,32 +56,53 @@ struct UpdateChecker: Sendable {
         if status == 404 { return .noReleases }
         guard status == 200 else { throw UpdateCheckError.badResponse(status) }
 
-        /// The fields read from GitHub's answer.
-        struct Release: Decodable {
-            struct Asset: Decodable {
-                let name: String
-                let browser_download_url: URL
-                /// E.g. "sha256:3734f1d8…"; missing from older answers.
-                let digest: String?
-            }
-            let tag_name: String
-            let html_url: URL
-            /// The release notes, in Markdown.
-            let body: String?
-            let assets: [Asset]?
+        let newest: AppRelease
+        if releaseCandidates {
+            guard let releases = try? JSONDecoder().decode([Release].self, from: data) else { throw UpdateCheckError.unreadableRelease }
+            // A pre-release counts only as a release candidate, and a
+            // candidate only as a pre-release: anything else is skipped.
+            guard let found = releases.compactMap({ $0.appRelease(candidateExpected: $0.prerelease == true) })
+                .max(by: { $0.version < $1.version })
+            else { return .noReleases }
+            newest = found
+        } else {
+            guard let release = try? JSONDecoder().decode(Release.self, from: data),
+                  let found = release.appRelease(candidateExpected: false)
+            else { throw UpdateCheckError.unreadableRelease }
+            newest = found
         }
-        guard let release = try? JSONDecoder().decode(Release.self, from: data),
-              let latest = AppVersion(release.tag_name),
-              Self.isReleasePage(release.html_url)
-        else { throw UpdateCheckError.unreadableRelease }
+        guard newest.version > currentVersion || !releaseCandidates && currentVersion.isReleaseCandidate
+        else { return .upToDate(latest: newest.version) }
+        return .available(newest)
+    }
 
-        guard latest > currentVersion else { return .upToDate(latest: latest) }
-        let diskImage = release.assets?
-            .first { $0.name == "AutoHush-\(latest).dmg" && Self.isReleaseDownload($0.browser_download_url) }
-            .map { AppRelease.DiskImage(url: $0.browser_download_url, sha256: Self.sha256(fromDigest: $0.digest)) }
-        let notes = release.body?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return .available(AppRelease(version: latest, pageURL: release.html_url, diskImage: diskImage,
-                                     notes: notes?.isEmpty == false ? notes : nil))
+    /// The fields read from GitHub's answer.
+    private struct Release: Decodable {
+        struct Asset: Decodable {
+            let name: String
+            let browser_download_url: URL
+            /// E.g. "sha256:3734f1d8…"; missing from older answers.
+            let digest: String?
+        }
+        let tag_name: String
+        let html_url: URL
+        /// The release notes, in Markdown.
+        let body: String?
+        let assets: [Asset]?
+        /// A pre-release: a release candidate's.
+        let prerelease: Bool?
+
+        /// The release, when its tag is a version (a candidate's when
+        /// expected, else a release's) and its page is this repository's.
+        func appRelease(candidateExpected: Bool) -> AppRelease? {
+            guard let version = AppVersion(tag_name), version.isReleaseCandidate == candidateExpected,
+                  UpdateChecker.isReleasePage(html_url) else { return nil }
+            let diskImage = assets?
+                .first { $0.name == "AutoHush-\(version.tagName).dmg" && UpdateChecker.isReleaseDownload($0.browser_download_url) }
+                .map { AppRelease.DiskImage(url: $0.browser_download_url, sha256: UpdateChecker.sha256(fromDigest: $0.digest)) }
+            let notes = body?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return AppRelease(version: version, pageURL: html_url, diskImage: diskImage, notes: notes?.isEmpty == false ? notes : nil)
+        }
     }
 
     /// True for a release page of this repository on github.com, over HTTPS:

@@ -24,6 +24,9 @@ extension SettingsModel {
             updates.setChecksAutomatically(restored.checksForUpdatesAutomatically)
         }
         if restored.automaticUpdates != current.automaticUpdates { updates.setMode(restored.automaticUpdates) }
+        if restored.getsReleaseCandidates != current.getsReleaseCandidates {
+            updates.setGetsReleaseCandidates(restored.getsReleaseCandidates)
+        }
     }
 
     /// The settings a card's Restore Defaults can change, as they are now.
@@ -31,7 +34,7 @@ extension SettingsModel {
         CardSettings(timings: timings, detectionMethod: detectionMethod,
                      keepsMenuBarIconNearSystemIcons: keepsMenuBarIconNearSystemIcons,
                      checksForUpdatesAutomatically: checksForUpdatesAutomatically,
-                     automaticUpdates: automaticUpdates)
+                     automaticUpdates: automaticUpdates, getsReleaseCandidates: getsReleaseCandidates)
     }
 
     /// The settings as the card's Restore Defaults leaves them: its own back
@@ -79,12 +82,13 @@ extension SettingsModel {
         // restored (I1, the user, 2026-10-27: on for most people, it kept
         // the button showing, and the button turned it off).
         case .startup: restored.keepsMenuBarIconNearSystemIcons = false
-        // Updates': checked daily and installed automatically, as on a fresh
-        // install; the choice left alone while this copy can't install
-        // updates (it's greyed out then).
+        // Updates': checked daily and installed automatically, without
+        // release candidates, as on a fresh install; the choice left alone
+        // while this copy can't install updates (it's greyed out then).
         case .updates:
             restored.checksForUpdatesAutomatically = true
             if updateInstallNote == nil { restored.automaticUpdates = .install }
+            restored.getsReleaseCandidates = false
         }
         return restored
     }
@@ -98,6 +102,7 @@ private struct CardSettings: Equatable {
     var keepsMenuBarIconNearSystemIcons: Bool
     var checksForUpdatesAutomatically: Bool
     var automaticUpdates: AutomaticUpdates
+    var getsReleaseCandidates: Bool
 }
 
 private extension TimingSettings {

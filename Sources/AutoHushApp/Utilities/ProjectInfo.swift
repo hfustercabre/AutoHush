@@ -10,7 +10,7 @@ enum ProjectInfo {
 
     /// The GitHub page of the release of `version`, with its notes.
     static func releasePage(for version: AppVersion) -> URL {
-        homepage.appending(path: "releases/tag/v\(version)")
+        homepage.appending(path: "releases/tag/v\(version.tagName)")
     }
 
     /// What's New in Settings → About: the notes of the version running, or

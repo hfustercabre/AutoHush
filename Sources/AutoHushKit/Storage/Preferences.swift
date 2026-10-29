@@ -25,6 +25,7 @@ package final class Preferences {
         static let timings = "timings"
         static let checksForUpdates = "checksForUpdatesAutomatically"
         static let automaticUpdates = "automaticUpdates"
+        static let getsReleaseCandidates = "getsReleaseCandidates"
         /// Earlier on/off switch; `false` maps to `.notify`.
         static let legacyInstallsUpdates = "installsUpdatesAutomatically"
         static let lastUpdateCheck = "lastUpdateCheck"
@@ -219,6 +220,12 @@ package final class Preferences {
     package var checksForUpdatesAutomatically: Bool {
         get { defaults.object(forKey: Key.checksForUpdates) as? Bool ?? true }
         set { defaults.set(newValue, forKey: Key.checksForUpdates) }
+    }
+
+    /// Update checks look for release candidates too (off by default).
+    package var getsReleaseCandidates: Bool {
+        get { defaults.object(forKey: Key.getsReleaseCandidates) as? Bool ?? false }
+        set { defaults.set(newValue, forKey: Key.getsReleaseCandidates) }
     }
 
     /// What happens when an automatic check finds a newer version. Before the

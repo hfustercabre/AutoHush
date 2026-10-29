@@ -465,6 +465,34 @@ struct UpdateControllerTests {
         #expect(h.notifier.announced.isEmpty) // the new version says so
     }
 
+    @Test("a release candidate found is only offered, never installed by itself, whatever was chosen (the user, 2026-10-29)")
+    func releaseCandidateOnlyOffered() async {
+        let h = Harness(checker: .releases([("v0.3.0-rc.1", true), ("v0.2.0", false)]))
+        h.preferences.getsReleaseCandidates = true
+        await h.controller.runAutomaticTasks()
+        #expect(h.installer.calls.isEmpty && h.quits == 0)
+        #expect(h.notifier.announced == [.available(AppVersion("0.3.0-rc.1")!, running: AppVersion("0.2.0")!)])
+        #expect(h.offer?.release.version == AppVersion("0.3.0-rc.1"))
+    }
+
+    @Test("a release candidate running without them is offered the latest release to go back to, never installed by itself")
+    func backFromReleaseCandidateOnlyOffered() async {
+        let h = Harness(checker: .latestRelease("v0.2.0"), currentVersion: AppVersion("0.3.0-rc.1"))
+        await h.controller.runAutomaticTasks()
+        #expect(h.installer.calls.isEmpty && h.quits == 0)
+        #expect(h.notifier.announced == [.available(AppVersion("0.2.0")!, running: AppVersion("0.3.0-rc.1")!)])
+    }
+
+    @Test("turning release candidates on is stored and checks at once, with automatic checks on")
+    func turningReleaseCandidatesOn() async {
+        let h = Harness(checker: .releases([("v0.3.0-rc.1", true), ("v0.2.0", false)]))
+        h.controller.setGetsReleaseCandidates(true)
+        #expect(h.preferences.getsReleaseCandidates)
+        await TestWait.until { h.controller.availableUpdate != nil }
+        #expect(h.controller.availableUpdate?.version == AppVersion("0.3.0-rc.1"))
+        #expect(h.installer.calls.isEmpty)
+    }
+
     @Test("while AutoHush is busy the update waits, and installs at the next quiet run")
     func waitsForQuietMoment() async {
         let h = Harness(checker: .latestRelease("v0.3.0"), quiet: Locked(false))

@@ -137,6 +137,18 @@ final class UpdateController {
         }
     }
 
+    /// Checks look for release candidates too: offered, never installed or
+    /// downloaded by themselves (the user, 2026-10-29: "Always ask first").
+    var getsReleaseCandidates: Bool {
+        get {
+            access(keyPath: \.getsReleaseCandidates)
+            return preferences.getsReleaseCandidates
+        }
+        set {
+            withMutation(keyPath: \.getsReleaseCandidates) { preferences.getsReleaseCandidates = newValue }
+        }
+    }
+
     /// When updates were last checked for, by hand or automatically.
     var lastCheck: Date? {
         get {

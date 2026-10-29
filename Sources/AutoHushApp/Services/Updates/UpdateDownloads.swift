@@ -94,6 +94,6 @@ final class UpdateDownloads {
     }
 
     private func file(for version: AppVersion) -> URL {
-        folder.appending(path: "AutoHush-\(version).dmg")
+        folder.appending(path: "AutoHush-\(version.tagName).dmg")
     }
 }

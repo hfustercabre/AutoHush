@@ -547,6 +547,13 @@ struct SettingsModelTests {
         #expect(!model.isDefault(.updates))
         model.restoreDefaults(.updates)
         #expect(updates.log.calls.suffix(2) == ["autoUpdate true", "updates install"])
+
+        updates.checksAutomatically = true
+        updates.mode = .install
+        updates.getsReleaseCandidates = true
+        #expect(!model.isDefault(.updates))
+        model.restoreDefaults(.updates)
+        #expect(updates.log.calls.last == "releaseCandidates false")
     }
 
     @Test("a card greyed out has nothing for Restore Defaults to change: the fades with a player AutoHush can't fade, Volume in AntiDot mode or with Resume playback off")
@@ -597,6 +604,24 @@ struct SettingsModelTests {
         #expect(model.updateRow(now: now) == (checked ?? "", nil))
         updates.status = "AutoHush 0.3.11 is up to date."
         #expect(model.updateRow(now: now) == ("AutoHush 0.3.11 is up to date.", checked))
+    }
+
+    @Test("a release candidate running with Get release candidates off says the latest release is offered instead; found, a candidate says what it's a test of")
+    func releaseCandidateNotes() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        updates.currentVersion = AppVersion("1.2.6")
+        #expect(model.releaseCandidateNote == nil)
+        updates.currentVersion = AppVersion("1.2.7-rc.1")
+        #expect(model.releaseCandidateNote == "You’re on 1.2.7 RC 1, a release candidate: AutoHush offers the latest release instead.")
+        updates.getsReleaseCandidates = true
+        #expect(model.releaseCandidateNote == nil)
+
+        let now = Date()
+        updates.lastCheck = now.addingTimeInterval(-2 * 3600)
+        updates.status = "AutoHush 1.2.7 RC 2 is available."
+        updates.availableUpdate = AppRelease(version: AppVersion("1.2.7-rc.2")!, pageURL: URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v1.2.7-rc.2")!)
+        let checked = model.lastCheckedNote(now: now) ?? ""
+        #expect(model.updateRow(now: now) == ("AutoHush 1.2.7 RC 2 is available.", "A test version of 1.2.7 · \(checked)"))
     }
 
     /// Settings' model on real updates, which find v0.3.0 and can't install

@@ -46,7 +46,10 @@ extension UpdateController {
 
     private func followUp() async {
         guard checksAutomatically, let release = availableUpdate, let currentVersion, !isInstalling else { return }
-        switch canInstall(release) ? mode : .notify {
+        // A release candidate, or the latest release offered to go back to
+        // from one, is only offered (the user, 2026-10-29).
+        let onlyOffered = release.version.isReleaseCandidate || release.version < currentVersion
+        switch canInstall(release) && !onlyOffered ? mode : .notify {
         case .notify:
             announce(.available(release.version, running: currentVersion))
         case .download:

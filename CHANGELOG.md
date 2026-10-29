@@ -5,6 +5,17 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Release candidates:** turn on **Get release candidates** (Settings →
+  About → Updates) to be offered the versions published to test the next
+  release before it's out. One is never downloaded or installed by
+  itself, only offered, and AutoHush moves on to the release that follows.
+  Turned off while you're on one, AutoHush offers the latest release
+  instead. A release candidate shows as, for example, “1.2.7 RC 1”.
+
 ## [1.2.6] — 2026-10-29
 
 ### Fixed
