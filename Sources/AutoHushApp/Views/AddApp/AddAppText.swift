@@ -399,7 +399,7 @@ enum AddAppText {
     /// some, whose mark it doesn't read (the 1.2.3 review's workflow note, P2,
     /// 2026-10-28; in some, the 1.2.4 review's, 2026-10-29).
     static var wayWorks: String {
-        String(localized: "Works", comment: "Add an App window, VoiceOver only: the value of a way the check found working (its green mark isn't read)")
+        String(localized: "Works", comment: "Add an App window, VoiceOver only: the value of a way the check found working, in every window state or in some (its mark isn't read)")
     }
 
     static var muteItInstead: String {

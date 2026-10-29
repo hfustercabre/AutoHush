@@ -85,9 +85,9 @@ package struct ToolRun: Sendable {
         return result.withLock { $0 }
     }
 
-    /// The longest line `start` hands on: a longer one comes in parts of this
-    /// length, so a tool that prints without line breaks doesn't fill the
-    /// memory.
+    /// The longest line `start` hands on: a longer one comes in parts of at
+    /// most this length (cut between characters, `partLength(of:)`), so a
+    /// tool that prints without line breaks doesn't fill the memory.
     static let maxLine = 64 << 10
 
     /// Starts it: `onLine` gets each line it prints as it comes (the last

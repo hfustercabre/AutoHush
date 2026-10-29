@@ -36,12 +36,13 @@ struct AddAppModelGuardTests {
         let files = Self.otherFiles()
         try #require(files.count > 100, "Sources/ not found in \(PackagePaths.root.path)")
         let names = properties.joined(separator: "|")
-        // `x.stage = …`, `x.permissions.audio = …`, `x.list[i] = …`, `+=`, `.toggle()`, `.append(…)`, `.insert(…)`,
-        // `.remove…(…)`, or `$x.stage` (not a closure's `$0.stage`).
-        let write = try Regex("\\.(\(names))(?:\\.\\w+|\\[[^\\]]*\\])*\\s*(?:[-+]?=(?!=)|\\.toggle\\(|\\.append|\\.insert|\\.remove)")
+        // `x.stage = …`, `x.permissions.audio = …`, `x.list[i] = …`, `+=` (`-=`, `*=`, `/=`), `.toggle()`, `.append(…)`,
+        // `.insert(…)`, `.remove…(…)`, or `$x.stage` (not a closure's `$0.stage`).
+        let write = try Regex("\\.(\(names))(?:\\.\\w+|\\[[^\\]]*\\])*\\s*(?:[-+*/]?=(?!=)|\\.toggle\\(|\\.append|\\.insert|\\.remove)")
         let binding = try Regex("\\$[A-Za-z_]\\w*\\.(\(names))\\b")
         // An extension elsewhere would set them without naming the model.
-        let extensionOfIt = /^\s*(?:\w+\s+)*extension\s+AddAppModel\b/
+        // Attributes and modifiers before it (`@MainActor`); not a type nested in it (`AddAppModel.Stage`).
+        let extensionOfIt = /^\s*(?:@?\w+\s+)*extension\s+AddAppModel\b(?!\.)/
         for file in files {
             let lines = try String(contentsOf: file, encoding: .utf8).split(separator: "\n", omittingEmptySubsequences: false)
             for (index, line) in lines.enumerated() where line.contains(extensionOfIt) {

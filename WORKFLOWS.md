@@ -562,7 +562,7 @@ flowchart TD
   CARDS["6 · Cards of the ways that<br/>worked, Recommended first;<br/>those that didn’t, with why"]
   USE["Use: added under Other<br/>Apps, Checked by you, made<br/>the media player"]
   NPH["Now Playing couldn’t be<br/>shown: Open Menu Bar<br/>Settings…, then Check Again"]
-  CLW["Checked with its windows<br/>closed, a way didn’t work<br/>or wasn’t checked: Check<br/>Again beside Use"]
+  CLW["Checked with its windows<br/>closed, a way didn’t work<br/>or wasn’t checked for want<br/>of a window: Check Again<br/>beside Use"]
   MUT{"Audio Recording<br/>allowed, AntiDot<br/>mode off?"}
   MII["Mute It Instead: added<br/>as Muted only, made<br/>the media player"]
   ANTI["Turn Off AntiDot Mode,<br/>or allow Audio Recording;<br/>or Check Again"]

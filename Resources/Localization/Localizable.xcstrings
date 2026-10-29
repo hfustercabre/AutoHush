@@ -152442,7 +152442,7 @@
       }
     },
     "Works" : {
-      "comment" : "Add an App window, VoiceOver only: the value of a way the check found working (its green mark isn't read)",
+      "comment" : "Add an App window, VoiceOver only: the value of a way the check found working, in every window state or in some (its mark isn't read)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

@@ -10,8 +10,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Add an App, for an app checked with its windows closed:** when a way
-  didn't work or wasn't checked, **Check Again** shows beside **Use**, to
-  check it with a window open.
+  didn't work, or wasn't checked for want of a window, **Check Again**
+  shows beside **Use**, to check the app again with a window open.
 - **Add an App:** VoiceOver says “Works” for a way that worked in some
   window states too.
 
