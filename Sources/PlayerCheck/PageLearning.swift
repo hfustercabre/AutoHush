@@ -78,10 +78,10 @@ func rememberPlace(of element: AXUIElement) {
 /// Electron, CEF or Flutter app needs, so the page stays up to date).
 @MainActor func useRememberedBar(pid: pid_t) -> Bool {
     guard let (found, byPlace) = rememberedBarButton(pid: pid) else { return false }
-    if let hidden = hiddenInterface { pageSwitch = hidden.switches.first { turnOn($0, pid: pid, pageReadable: true) } }
+    if let hidden = hiddenInterface { PageState.shownBySwitch = hidden.switches.first { turnOn($0, pid: pid, pageReadable: true) } }
     page = PageCheck(buttons: 1, toggle: found, withControls: true)
     barToggle = found.element
-    pageRead = true
+    PageState.read = true
     TestScope.pageNotChecked = nil
     say("  its player bar's \(shown(found.label)), " + (byPlace ? "found at its learned place (its page changed since)" : "where it was last time"))
     return true

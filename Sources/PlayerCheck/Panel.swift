@@ -302,7 +302,7 @@ enum PanelPress { case already, changed, pressed, notPressed }
     quiet = true
     defer { quiet = wasQuiet }
     // The remembered player bar, when it's there, costs a few reads.
-    if !pageRead { _ = useRememberedBar(pid: pid) }
+    if !PageState.read { _ = useRememberedBar(pid: pid) }
     var read = PanelRead(pid, pausing: pausing, heard: nil)
     let remembered = keptPanelRow()
     return withOpenPanel(failing: PanelPress.notPressed) { item, rows in
@@ -311,7 +311,7 @@ enum PanelPress { case already, changed, pressed, notPressed }
         var own = read.row(in: rows.map(\.row), pausing: pausing, remembered: remembered, asToggle: true)
         // None told by its song or by memory: its page's player bar may show its song.
         @MainActor func toldByIt(_ row: PanelRow) -> Bool { read.showsApp(row) || row.text == remembered }
-        if own == nil, row.map({ toldByIt($0) }) != true, !pageRead, isWebApp || hiddenInterface != nil || hasWebPage(pid: pid) {
+        if own == nil, row.map({ toldByIt($0) }) != true, !PageState.read, isWebApp || hiddenInterface != nil || hasWebPage(pid: pid) {
             closePanel(item)
             readPage()
             read.texts.bar = playerBarTexts(pid)

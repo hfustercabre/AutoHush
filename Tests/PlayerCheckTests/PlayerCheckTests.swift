@@ -177,16 +177,16 @@ struct PlayerCheckTests {
     func windowsClosedSummary() throws {
         let note = TestScope.windowStatesNote
         defer {
-            stateResults = [:]
+            TestResults.byState = [:]
             TestScope.windowStatesNote = note
         }
         #expect(TestScope.windowTest == nil)
         TestScope.windowStatesNote = TestScope.noWindowOpen
-        stateResults[.panel] = [(.windowsClosed, .worked, "")]
+        TestResults.byState[.panel] = [(.windowsClosed, .worked, "")]
         let worked = try #require(stateSummary(.panel))
         #expect(worked.mark == .works && worked.suffix == " (with its windows closed)")
         #expect(worked.lines == [CheckReportLine.wayState(.notChecked, "window states", "not tested (no window open)")])
-        stateResults[.panel] = [(.windowsClosed, .pausedOnly, "it paused, but didn't play again")]
+        TestResults.byState[.panel] = [(.windowsClosed, .pausedOnly, "it paused, but didn't play again")]
         #expect(stateSummary(.panel)?.mark == CheckReportLine.WayMark.none)
         #expect(stateSummary(.menu) == nil) // not tried
     }

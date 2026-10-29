@@ -6,16 +6,20 @@ import ScriptablePlayers
 
 // MARK: - The test's results
 
-/// Each way's result in the first window state tested (visible), or in the
-/// only run when there were no states.
-@MainActor var firstResults: [Way: TrialResult] = [:]
-/// Each way's result in each window state, and why it failed there, for
-/// "Ways to Control It".
-@MainActor var stateResults: [Way: [(state: WindowState, result: TrialResult, why: String)]] = [:]
-/// The window states a way couldn't be tried in, and why: the Now Playing
-/// item missing from the menu bar in one state while there in others says
-/// nothing about the app, so that state isn't counted against the panel.
-@MainActor var untestedStates: [Way: [WindowState: String]] = [:]
+/// Each way's results, for the report and the result file.
+@MainActor enum TestResults {
+    /// Each way's result in the first window state tested (visible), or in
+    /// the only run when there were no states.
+    static var first: [Way: TrialResult] = [:]
+    /// Each way's result in each window state, and why it failed there, for
+    /// "Ways to Control It".
+    static var byState: [Way: [(state: WindowState, result: TrialResult, why: String)]] = [:]
+    /// The window states a way couldn't be tried in, and why: the Now
+    /// Playing item missing from the menu bar in one state while there in
+    /// others says nothing about the app, so that state isn't counted
+    /// against the panel.
+    static var untested: [Way: [WindowState: String]] = [:]
+}
 /// Why a way wasn't tried, for "Ways to Control It".
 @MainActor var notTried = readOnly ? "not tried: read only" : "not tried"
 
@@ -84,7 +88,7 @@ import ScriptablePlayers
             if let hidden = hiddenInterface {
                 let pid = running.processIdentifier
                 test.revealPage = { on in
-                    guard let attribute = pageSwitch ?? hidden.switches.first else { return }
+                    guard let attribute = PageState.shownBySwitch ?? hidden.switches.first else { return }
                     setPageSwitch(attribute, on: on, pid: pid)
                 }
             }
@@ -98,7 +102,7 @@ import ScriptablePlayers
             if let why {
                 say("  not visible: \(why); its page is read as it is")
             } else {
-                currentWindowState = .visible
+                WindowTest.currentState = .visible
                 say("  visible now: its page is read in view, and the test starts there")
             }
         } else {
@@ -119,7 +123,7 @@ import ScriptablePlayers
         say()
         say(CheckReportLine.Heading.page.rawValue)
         say("  not read: \(appName) didn't play, so the check stopped")
-        TestScope.pageNotChecked = "it didn't play"
+        TestScope.pageNotChecked = .didntPlay
     } else {
         readPageButtons()
     }

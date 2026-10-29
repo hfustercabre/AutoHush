@@ -22,7 +22,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
 /// per state it failed in (only for ⚠: a ✗ failed in all) or that wasn't
 /// tested (with its windows closed, one for them all).
 @MainActor func stateSummary(_ key: Way) -> (mark: CheckReportLine.WayMark, suffix: String, lines: [String])? {
-    guard let results = stateResults[key], !results.isEmpty else { return nil }
+    guard let results = TestResults.byState[key], !results.isEmpty else { return nil }
     let passed = results.filter { $0.result == .worked }.count
     let mark: CheckReportLine.WayMark = passed == results.count ? .works : passed == 0 ? .none : .some
     guard let windowTest = TestScope.windowTest else {
@@ -35,7 +35,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         : passed == 0 ? " (in every window state tested)" : ", in \(passed) of \(results.count) window states"
     var lines = mark == .some ? results.filter { $0.result != .worked }.map { CheckReportLine.wayState(.none, $0.state.title, $0.why) } : []
     for state in WindowState.trip where !results.contains(where: { $0.state == state }) {
-        let why = untestedStates[key]?[state] ?? windowTest.untested[state] ?? notTried.replacingOccurrences(of: "not tried: ", with: "")
+        let why = TestResults.untested[key]?[state] ?? windowTest.untested[state] ?? notTried.replacingOccurrences(of: "not tried: ", with: "")
         lines.append(CheckReportLine.wayState(.notChecked, state.title, "not tested (\(why))"))
     }
     return (mark, suffix, lines)
@@ -66,7 +66,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         let fits = scripting?.fitsScriptablePlayer == true
         let kind = fits ? ", as the supported scriptable players do"
             : " (\(scripting?.playsDocuments == true ? "on its documents, " : "")in a way of its own, unlike the supported scriptable players)"
-        if let result = firstResults[.script] {
+        if let result = TestResults.first[.script] {
             triedWay(.script, wayTitle(.script), result, worked: "“\(script.pause.name)” and “\(script.play.name)” paused and played it\(kind)",
                      failed: result == .pausedOnly ? "“\(script.pause.name)” paused it, but “\(script.play.name)” didn't play it again"
                                                    : scriptProblem ?? "“\(script.pause.name)” didn't pause it")
@@ -88,7 +88,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         way(.notChecked, "\(wayTitle(.menu)): not checked (no Accessibility permission)")
     } else if let menu {
         let found = "\(wayTitle(.menu)) “\(menu.title)”" + (menu.arrows == "⌘← ⌘→" ? "" : " (found by its first item on Space, its arrows \(menu.arrows))")
-        if let result = firstResults[.menu] {
+        if let result = TestResults.first[.menu] {
             resultLine(.menu, found, result)
         } else {
             way(.notTried, "\(found): first item \(shown(menu.toggleTitle)) (\(notTried))")
@@ -97,13 +97,13 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         way(.none, "\(wayTitle(.menu)): none with Play/Pause and Previous/Next")
     }
     if let pageNotChecked = TestScope.pageNotChecked {
-        way(.notChecked, "\(wayTitle(.page)): not checked (\(pageNotChecked))")
+        way(.notChecked, "\(wayTitle(.page)): not checked (\(pageNotChecked.text))")
     } else if let page {
-        let kind = pageSwitch.map { "\(wayTitle(.page)), with \(switchName($0)) on" } ?? wayTitle(.page)
+        let kind = PageState.shownBySwitch.map { "\(wayTitle(.page)), with \(switchName($0)) on" } ?? wayTitle(.page)
         if let toggle = page.toggle {
             let found = "\(kind): " + (learned.map { "\(shown($0.recipe.pauseLabel)) / \(shown($0.recipe.playLabel)), learned as AutoHush learns it" }
                                        ?? shown(toggle.label) + (page.withControls ? "" : ", but no player bar around it"))
-            if let result = firstResults[.page] {
+            if let result = TestResults.first[.page] {
                 resultLine(.page, found, result)
             } else {
                 way(.notTried, "\(found) (\(notTried))")
@@ -112,7 +112,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
             way(.none, "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
         }
     }
-    if let result = firstResults[.panel], canBeNowPlaying {
+    if let result = TestResults.first[.panel], canBeNowPlaying {
         triedWay(.panel, wayTitle(.panel), result, worked: "pressing its row (\(panelRowSaid ?? "the row")) paused and played it",
                  failed: panelProblem ?? (result == .pausedOnly ? "it paused, but didn't play again" : "pressing its row changed nothing"))
     } else if running == nil {
@@ -138,25 +138,25 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     let stateNotes = notifications?.seen.filter { $0.value.contains("Player State") }.keys.sorted() ?? []
     facts.stateNotification = announcingNotification.map { .announced($0) }
         ?? (!stateNotes.isEmpty ? .seen(stateNotes) : notifications == nil ? .notFollowed : .noneSeen)
-    facts.scriptResult = firstResults[.script]
+    facts.scriptResult = TestResults.first[.script]
     facts.scriptStateWrong = scriptStateWrong
-    facts.menuResult = firstResults[.menu]
+    facts.menuResult = TestResults.first[.menu]
     facts.menuTitle = menu?.title
     facts.isRunning = running != nil
     facts.pageHasPlayPause = page?.toggle != nil
-    facts.panelResult = firstResults[.panel]
+    facts.panelResult = TestResults.first[.panel]
     PlayerKindVerdict.lines(facts, developer: developer).forEach { say($0) }
 
     // What the page showed: Add an App adds an app whose page's Play/Pause
     // works, pressed there (`PlayerSetup.Way.page`) as a Safari web app's is.
     guard let page else { return }
     let pageWord = isFlutter ? "interface" : "page"
-    let its = pageSwitch.map { "With \(switchName($0)) on, its \(pageWord)" } ?? "Its \(pageWord)"
+    let its = PageState.shownBySwitch.map { "With \(switchName($0)) on, its \(pageWord)" } ?? "Its \(pageWord)"
     if page.buttons == 0 {
         say(hiddenInterface != nil ? "  No switch showed its \(pageWord): its buttons can't be read that way."
                                    : "  Its page showed no buttons: is the site loaded?")
     } else if let toggle = page.toggle {
-        switch firstResults[.page] {
+        switch TestResults.first[.page] {
         case .worked?:
             if isWebApp {
                 say("  Its page's Play/Pause works.")
@@ -171,7 +171,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         case nil:
             say("  \(its) has Play/Pause (\(shown(toggle.label))): confirm by testing it while it plays.")
         }
-        if let results = stateResults[.page], let summary = stateSummary(.page), summary.mark == .some {
+        if let results = TestResults.byState[.page], let summary = stateSummary(.page), summary.mark == .some {
             let worked = results.filter { $0.result == .worked }.map(\.state.title)
             let failed = results.filter { $0.result != .worked }.map(\.state.title)
             say("  It works with its window " + worked.joined(separator: ", ") + "; not " + failed.joined(separator: ", ") + ".")

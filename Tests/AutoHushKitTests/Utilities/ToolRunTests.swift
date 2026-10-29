@@ -92,6 +92,18 @@ struct ToolRunTests {
         #expect(lines.map(\.utf8.count).reduce(0, +) == 200_000)
     }
 
+    @Test("a long line's parts are cut between characters, never inside one")
+    func longLineCharacters() async throws {
+        let seen = Lines()
+        // 3-byte characters: maxLine (65,536 bytes) would cut one.
+        _ = try seen.start(shell("yes € | head -n 70000 | tr -d '\\n'"))
+        let end = try #require(await seen.waitForEnd())
+        let lines = seen.lines.value
+        #expect(end.result.succeeded && lines.count > 1)
+        #expect(lines.allSatisfy { $0.utf8.count <= ToolRun.maxLine && $0.allSatisfy { $0 == "€" } })
+        #expect(lines.map(\.count).reduce(0, +) == 70000)
+    }
+
     @Test("Stop asks it to stop: it ends by the signal, unless it handles it")
     func stop() async throws {
         let plain = Lines()

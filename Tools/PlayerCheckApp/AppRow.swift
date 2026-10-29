@@ -1,10 +1,11 @@
 import AppKit
+import PlayerCheckKit
 import SwiftUI
 
 struct AppRow: View {
     let app: InstalledApp
     let isRunning: Bool
-    let client: NowPlayingClient?
+    let client: NowPlayingListLine?
     let isChecked: Bool
 
     var body: some View {

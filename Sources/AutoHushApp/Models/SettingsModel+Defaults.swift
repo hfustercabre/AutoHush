@@ -49,7 +49,7 @@ extension SettingsModel {
         // Volume's: Level the volume off, unless greyed out (AntiDot mode,
         // Resume playback off).
         case .volume:
-            if !SettingsSwitch.levelsMusic.isUnavailable(self) { restored.timings = timings.withDefaultVolume }
+            if !levelingUnavailable { restored.timings = timings.withDefaultVolume }
         // Modes': AntiDot mode off (its way, greyed out then, isn't
         // restored), or it can't be turned on with this player.
         case .modes:

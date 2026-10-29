@@ -50,7 +50,7 @@ import WebAppPlayers
         self.script = script
         let pid = running.processIdentifier
         self.pid = pid
-        let pressSwitch = pageSwitch.flatMap { $0 == manualAccessibility || changes.switchesOn.contains($0) ? $0 : nil }
+        let pressSwitch = PageState.shownBySwitch.flatMap { $0 == manualAccessibility || changes.switchesOn.contains($0) ? $0 : nil }
         self.pressSwitch = pressSwitch
         pressSwitchLeftOn = pressSwitch.map(changes.wasFoundOn) ?? false
         panelReachable = canBeNowPlaying && AXIsProcessTrusted()
@@ -69,7 +69,7 @@ import WebAppPlayers
             let shown = !(pageButtons(pid: pid) ?? []).isEmpty
             say("    " + (shown ? "no button in sight to press" : "its page didn't show"))
             trialProblem = shown ? "its page showed no Play/Pause to press"
-                : "its page didn't show" + (pageSwitch.map { " with \(switchName($0)) on" } ?? "")
+                : "its page didn't show" + (PageState.shownBySwitch.map { " with \(switchName($0)) on" } ?? "")
             return false
         }
         var why: String?
@@ -92,8 +92,8 @@ import WebAppPlayers
 
     /// Whether a way worked in this window state (with no window, in the one run).
     private func workedHere(_ way: Way) -> Bool {
-        guard let state else { return firstResults[way] == .worked }
-        return stateResults[way]?.contains { $0.state == state && $0.result == .worked } == true
+        guard let state else { return TestResults.first[way] == .worked }
+        return TestResults.byState[way]?.contains { $0.state == state && $0.result == .worked } == true
     }
 
     /// A way that left it paused, or a track that ended: before anyone is
@@ -140,8 +140,8 @@ import WebAppPlayers
     }
 
     private func record(_ way: Way, _ result: TrialResult) {
-        if first { firstResults[way] = result }
-        if let state { stateResults[way, default: []].append((state, result, whyFailed(way, in: state, result))) }
+        if first { TestResults.first[way] = result }
+        if let state { TestResults.byState[way, default: []].append((state, result, whyFailed(way, in: state, result))) }
         trialProblem = nil
         trialRan = true
         lastWay = way
@@ -191,7 +191,7 @@ import WebAppPlayers
                     continue
                 }
             }
-            currentWindowState = next
+            WindowTest.currentState = next
             trialProblem = nil
             if let script, scriptProblem == nil, ready() {
                 // A toggle is sent for the pause only while it plays, and again to play.
@@ -215,7 +215,7 @@ import WebAppPlayers
             // No other way paused it and no button is named Play or Pause: as
             // AutoHush asks ("It's Paused"), whoever runs the check pauses it, and
             // the button whose words changed is learned.
-            let pausedByAnother = [firstResults[.script], firstResults[.menu]].contains { $0 == .worked || $0 == .pausedOnly }
+            let pausedByAnother = [TestResults.first[.script], TestResults.first[.menu]].contains { $0 == .worked || $0 == .pausedOnly }
             if first, learned == nil, !pausedByAnother, page?.toggle == nil, page?.buttons ?? 0 > 0, ready() {
                 if !learner.hasPlayed {
                     // Its page is out of sight, where its words can't be learned: nobody is asked.
@@ -255,7 +255,7 @@ import WebAppPlayers
                 if first {
                     panelProblem = panelNotNowPlaying
                     say("  the Now Playing panel: not pressed: \(notNowPlaying)")
-                    firstResults[.panel] = .didNotPause
+                    TestResults.first[.panel] = .didNotPause
                 }
             } else if !AXIsProcessTrusted() {
                 if first { say("  the Now Playing panel: not pressed: \(noPanelItem)") }
@@ -279,7 +279,7 @@ import WebAppPlayers
                 if result != .didNotPause { rememberPanelRow() }
                 if let state, !first, result == .didNotPause, panelProblem == noPanelItem {
                     // Not found in this state only: the panel wasn't tried here.
-                    untestedStates[.panel, default: [:]][state] = "its item wasn't found in the menu bar then"
+                    TestResults.untested[.panel, default: [:]][state] = "its item wasn't found in the menu bar then"
                     say("    not counted: the panel isn't tested in this state")
                     trialProblem = nil
                     trialRan = true
@@ -291,12 +291,12 @@ import WebAppPlayers
             }
             first = false
         }
-        currentWindowState = nil
+        WindowTest.currentState = nil
         if let windowTest = TestScope.windowTest {
             stopState.setInTrial(true)
             let problem = windowTest.restore()
             stopState.setInTrial(false)
-            currentWindowState = nil
+            WindowTest.currentState = nil
             if inputBlock.end() { say(CheckReportLine.free) }
             // Read again: another app's windows that covered it may be behind it now.
             let now = WindowStates.state(of: running)

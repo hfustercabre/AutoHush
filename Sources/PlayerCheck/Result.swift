@@ -16,8 +16,8 @@ import WebAppPlayers
     func found(_ kind: CheckResult.WayKind, _ isThere: Bool, notChecked: CheckResult.Mark?, setup: PlayerSetup.Way?) -> CheckFindings.Way {
         let way = Way(rawValue: kind.rawValue)
         return CheckFindings.Way(isThere: isThere, notChecked: notChecked,
-                                 trials: way.map { (stateResults[$0] ?? []).map { ($0.state, $0.result) } } ?? [],
-                                 first: way.flatMap { firstResults[$0] }, setup: isThere ? setup : nil)
+                                 trials: way.map { (TestResults.byState[$0] ?? []).map { ($0.state, $0.result) } } ?? [],
+                                 first: way.flatMap { TestResults.first[$0] }, setup: isThere ? setup : nil)
     }
     let unread: CheckResult.Mark? = running == nil ? .notChecked : !AXIsProcessTrusted() ? .noAccessibility : nil
     // Not allowed to script it (--partial): its AppleScript wasn't tried.
@@ -25,10 +25,12 @@ import WebAppPlayers
     let scriptable = scriptControls() != nil
     let noAutomation = automationAnswer == .denied || (partial && automationAnswer != .allowed)
     // No page at all is no page button; not read for another reason is unchecked.
-    let noPage = ["no page in its windows", "no switch was taken"].contains(TestScope.pageNotChecked ?? "")
-    let pageUnread: CheckResult.Mark? = TestScope.pageNotChecked == nil || noPage ? nil
-        : TestScope.pageNotChecked == "no Accessibility permission" ? .noAccessibility
-        : TestScope.pageNotChecked == TestScope.noWindowOpen ? .noWindow : .notChecked
+    let pageUnread: CheckResult.Mark? = switch TestScope.pageNotChecked {
+    case nil, .noPage, .noSwitch: nil
+    case .noAccessibility: .noAccessibility
+    case .noWindowOpen: .noWindow
+    case .notRunning, .didntPlay, .notNeeded: .notChecked
+    }
     var findings = CheckFindings(bundleID: bundleID, appName: appName, appURL: appURL, ways: [
         .script: found(.script, scriptable, notChecked: scriptable && noAutomation ? .noAutomation : nil,
                        setup: scripting.flatMap(ScriptSetup.init(dictionary:)).map { setup in
@@ -39,7 +41,7 @@ import WebAppPlayers
                        }),
         .menu: found(.menu, menu != nil, notChecked: unread, setup: menu.map { .menu(menuName: $0.title) }),
         .page: found(.page, page?.toggle != nil, notChecked: unread ?? pageUnread,
-                     setup: .page(PageAccess(interface: pageAccess.interface, switchAttribute: pageSwitch))),
+                     setup: .page(PageAccess(interface: pageAccess.interface, switchAttribute: PageState.shownBySwitch))),
         .panel: found(.panel, canBeNowPlaying, notChecked: canBeNowPlaying ? unread : nil, setup: .panel(rememberedRow: panelRowText)),
     ])
     findings.nowPlayingHidden = !panelItemSeen && panelItemMissing
@@ -67,7 +69,7 @@ import WebAppPlayers
         guard found.withControls, let toggle = found.toggle else { return nil }
         let recipe = learned?.recipe ?? savedRecipe
         let labels = (recipe.map { [$0.pauseLabel, $0.playLabel] } ?? []) + [toggle.label]
-        return PanelClues.Page(access: PageAccess(interface: pageAccess.interface, switchAttribute: pageSwitch),
+        return PanelClues.Page(access: PageAccess(interface: pageAccess.interface, switchAttribute: PageState.shownBySwitch),
                                labels: labels.reduce(into: []) { if !$0.contains($1) { $0.append($1) } })
     }
     let scriptClue = automationAnswer == .allowed && !scriptRefused ? scripting.flatMap(ScriptedSong.init(dictionary:)) : nil

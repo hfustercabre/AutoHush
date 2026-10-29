@@ -16,17 +16,21 @@ extension SettingsModel {
         !timings.resumesPlayback && timings.fadesEnabled && playerCanFade
     }
 
+    /// Level the volume can't be changed (its switch's rule,
+    /// `SettingsSwitch.isUnavailable(_:)`): AntiDot mode, or Resume playback off.
+    var levelingUnavailable: Bool { SettingsSwitch.levelsMusic.isUnavailable(self) }
+
     /// Level the volume's limits greyed out, in Settings: it's
     /// off, or can't be on.
     var levelingLimitsUnavailable: Bool {
-        !timings.levelsMusic || SettingsSwitch.levelsMusic.isUnavailable(self)
+        !timings.levelsMusic || levelingUnavailable
     }
 
     /// Why Level the volume can't be changed, in a few words without a
     /// period: Behavior's and Fine-Tuning's Volume note; `nil` while it can.
     /// The other switches say why in a note of their own (U6, 2026-10-27).
     var levelingUnavailableNote: String? {
-        guard SettingsSwitch.levelsMusic.isUnavailable(self) else { return nil }
+        guard levelingUnavailable else { return nil }
         return isAntiDotMode ? AntiDotText.featureOff : SettingsSwitch.resumeOffNote
     }
 }
