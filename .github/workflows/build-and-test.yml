@@ -1,24 +1,23 @@
-# Builds AutoHush with warnings as errors and runs its tests on every pull
-# request into dev, as CONTRIBUTING.md asks of each change, and on every push
-# to dev and to a feature/, fix/, chore/, release/ or hotfix/ branch, then
-# builds AutoHush.app with
-# Scripts/build-app.sh. It reads the code and nothing else: no secrets, no
+# Builds AutoHush with warnings as errors and runs its tests on every push
+# to stg (where dev's changes go together before a release) and to a
+# release/ or hotfix/ branch, then builds AutoHush.app with
+# Scripts/build-app.sh. Nothing runs on dev, on the task branches or on pull
+# requests: changes are tested before they're merged into dev, and together
+# once they reach stg. It reads the code and nothing else: no secrets, no
 # writing to the repository (only a failed run's crash reports, as the run's
-# own files), so a fork's pull request runs it as it is.
+# own files).
 name: Build and test
 
 on:
-  pull_request:
-    branches: [dev]
   push:
-    branches: [dev, 'feature/**', 'fix/**', 'chore/**', 'release/**', 'hotfix/**']
+    branches: [stg, 'release/**', 'hotfix/**']
 
 permissions:
   contents: read
 
-# A new push to the pull request, or to the branch, stops the run for the one before.
+# A new push to the branch stops the run for the one before.
 concurrency:
-  group: build-and-test-${{ github.event.pull_request.number || github.ref }}
+  group: build-and-test-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

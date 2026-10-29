@@ -18,7 +18,11 @@ privately, as [SECURITY.md](SECURITY.md) says.
 
 - **`main`** holds the latest release. It only moves when a new version is
   published.
-- **`dev`** is where development happens. Every change goes there first.
+- **`stg`** (staging) is what the next release will be: `dev`'s changes,
+  built and tested together. Releases, and release candidates for testing,
+  are made from it.
+- **`dev`** is where development happens. Every change goes there first,
+  then to `stg`, then to `main`.
 - Every other branch follows [Conventional Branch](https://conventionalbranch.org/):
   `<type>/<description>`, the description in lowercase letters and numbers
   joined by single hyphens (dots only in versions). The types are
@@ -44,9 +48,10 @@ privately, as [SECURITY.md](SECURITY.md) says.
 
 A check on every pull request flags one whose branch name or target doesn't
 follow these rules; a wrong target can be fixed by editing the pull
-request. Another builds it with warnings as errors and runs the tests, on
-Xcode 27. I review each pull request before approving and merging it, and it
-reaches `main` with the next release. By opening one, you agree that your
+request. The build with warnings as errors and the tests, on Xcode 27, run
+once a change reaches `stg`, not on the pull request: check yours before
+opening it. I review each pull request before approving and merging it, and
+it reaches `main` with the next release. By opening one, you agree that your
 contribution is licensed under the project's license, the GNU GPL version 3
 or later (GPL-3.0-or-later).
 
