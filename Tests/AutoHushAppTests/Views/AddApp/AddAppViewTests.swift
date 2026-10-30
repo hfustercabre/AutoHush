@@ -17,14 +17,6 @@ struct AddAppViewTests {
         _ = NSApplication.shared
     }
 
-    /// A model at its first step, its window open, its apps read.
-    private func model(_ world: World) async -> AddAppModel {
-        let model = AddAppModel(world)
-        model.reset()
-        await model.loadApps()
-        return model
-    }
-
     /// The window's content drawn at the model's step.
     private func draws(_ model: AddAppModel) -> Bool {
         drawn(AddAppView(model: model, close: {}), width: AddAppView.width, height: 1000).height > 0
@@ -37,7 +29,7 @@ struct AddAppViewTests {
         world.antiDot = antiDot
         world.traits.scriptable = scriptable
         world.permissions = CheckPermissions(accessibility: false, audio: .denied)
-        let model = await model(world)
+        let model = await AddAppModel.opened(on: world)
         defer { model.windowClosed() } // its watch ends
         model.continueWithApp()
         await TestWait.until { model.stage == .allowing && model.permissions.audio == .denied }
@@ -53,7 +45,7 @@ struct AddAppViewTests {
         let world = World()
         world.permissions = CheckPermissions(accessibility: true, audio: .denied)
         world.heldSleep = ManualSleep() // the permissions read again only after the request
-        let model = await model(world)
+        let model = await AddAppModel.opened(on: world)
         defer { model.windowClosed() } // its watch ends
         model.continueWithApp()
         await TestWait.until { model.stage == .allowing && model.permissions.audio == .denied }
@@ -68,7 +60,7 @@ struct AddAppViewTests {
         world.traits.needsLaunchOption = true
         world.runsWithOption = false
         world.reopens = false // it didn't quit
-        let model = await model(world)
+        let model = await AddAppModel.opened(on: world)
         defer { model.windowClosed() }
         model.continueWithApp()
         await TestWait.until { model.stage == .reopenAsked }
@@ -91,7 +83,7 @@ struct AddAppViewTests {
         let none = CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .none)], setup: nil)
         let world = World()
         world.playing = true
-        let model = await model(world)
+        let model = await AddAppModel.opened(on: world)
         defer { model.windowClosed() }
         model.continueWithApp()
         await TestWait.until { model.stage == .ready }

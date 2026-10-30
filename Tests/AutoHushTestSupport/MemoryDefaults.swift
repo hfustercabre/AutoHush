@@ -1,5 +1,4 @@
 import Foundation
-import Testing
 
 /// UserDefaults kept in memory, for code that takes a `UserDefaults`: no
 /// file and no preferences daemon, so what's saved or removed is read back
@@ -25,14 +24,7 @@ package final class MemoryDefaults: UserDefaults, @unchecked Sendable {
 
     override package func set(_ value: Any?, forKey key: String) {
         guard let value else { return removeObject(forKey: key) }
-        let kept: Any
-        do {
-            let data = try PropertyListSerialization.data(fromPropertyList: value, format: .binary, options: 0)
-            kept = try PropertyListSerialization.propertyList(from: data, format: nil)
-        } catch {
-            Issue.record("\(key) isn't a property list, which UserDefaults can't store: \(value)")
-            kept = value
-        }
+        let kept = propertyListCopy(value, forKey: key)
         lock.withLock { values[key] = kept }
     }
 

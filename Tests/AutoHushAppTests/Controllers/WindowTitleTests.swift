@@ -285,12 +285,7 @@ final class WindowTitleTests {
         /// A check running on the stand-ins, its panel shown.
         private func panelShown() async throws -> (world: World, model: AddAppModel, sut: CheckPanelController, panel: NSPanel) {
             let world = World()
-            world.playing = true
-            let model = AddAppModel(world)
-            model.reset()
-            await model.loadApps()
-            model.continueWithApp()
-            await TestWait.until { model.stage == .ready }
+            let model = await AddAppModel.ready(on: world)
             model.startCheck()
             await TestWait.until { world.report != nil }
             let sut = CheckPanelController()
