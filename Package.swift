@@ -177,7 +177,7 @@ let package = Package(
         ),
         .testTarget(
             name: "VLCSupportTests",
-            dependencies: ["VLCSupport", "ScriptablePlayers", "AutoHushKit", "PlayersTestSupport"],
+            dependencies: ["VLCSupport", "ScriptablePlayers", "AutoHushKit", "AutoHushTestSupport", "PlayersTestSupport"],
             path: "Tests/PlayersSupport/VLCSupportTests"
         ),
         .testTarget(
@@ -198,7 +198,7 @@ let package = Package(
             ],
             path: "Tests/PlayerCheckKitTests"
         ),
-        .testTarget(name: "CheckPanelTests", dependencies: ["CheckPanel", "PlayerCheckKit"]),
+        .testTarget(name: "CheckPanelTests", dependencies: ["CheckPanel", "PlayerCheckKit", "AutoHushTestSupport"]),
         .testTarget(
             name: "AutoHushAppTests",
             dependencies: [

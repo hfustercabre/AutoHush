@@ -6,6 +6,7 @@ import AutoHushKit
 import PlayersTestSupport
 @testable import ScriptablePlayers
 @testable import VLCSupport
+import AutoHushTestSupport
 
 /// VLC as its Apple events show it, without VLC: what it answers, and what
 /// it was sent.
@@ -68,7 +69,7 @@ private final class FakeVLC: FakeAppleEventApp {
     }
 }
 
-@Suite("VLCPlayer", .appleEventCoercions)
+@Suite("VLCPlayer", .appleEventCoercions, .waitsTimeLimit)
 struct VLCPlayerTests {
     // Never sent: building descriptors does not contact the target process.
     private let pid: pid_t = 4242

@@ -2,11 +2,12 @@ import AppKit
 import SwiftUI
 import Testing
 @testable import CheckPanel
+import AutoHushTestSupport
 
 /// The parts both apps' check panels draw (Add an App's and Player
 /// Check's), drawn as the panel draws them: no test runs a check to the
 /// step that shows them.
-@Suite("The check panel's parts, drawn")
+@Suite("The check panel's parts, drawn", .application)
 @MainActor
 struct CheckPanelPartsTests {
     /// Player Check's look (AutoHush's is made of its own colors, in its app).
@@ -43,13 +44,6 @@ struct CheckPanelPartsTests {
     /// would (its text wraps there): a view that can't be drawn fails the
     /// test. Its size, as it fits.
     private func drawn(_ view: some View, width: CGFloat) -> NSSize {
-        _ = NSApplication.shared
-        let hosting = NSHostingView(rootView: view.frame(width: width))
-        hosting.frame = NSRect(x: 0, y: 0, width: width, height: 400)
-        hosting.layoutSubtreeIfNeeded()
-        if let bitmap = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) {
-            hosting.cacheDisplay(in: hosting.bounds, to: bitmap)
-        }
-        return hosting.fittingSize
+        AutoHushTestSupport.drawn(view.frame(width: width), width: width, height: 400)
     }
 }
