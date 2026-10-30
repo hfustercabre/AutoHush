@@ -5,7 +5,7 @@ import AutoHushKit
 /// The window shown before a check starts (W6): its Start runs the check.
 @MainActor
 final class CheckWarningWindowController: HostedWindowController {
-    init(app: CheckableApp, muting: AddAppModel.CheckMuting, desktopShortcutsOff: Bool = !DesktopShortcuts.areOn,
+    init(app: CheckableApp, muting: AddAppModel.CheckMuting, desktopShortcutsOff: Bool,
          openKeyboardSettings: @escaping () -> Void = { SystemSettingsPane.keyboard.open() },
          start: @escaping @MainActor () -> Void) {
         let hosting = Self.sizedToFit(CheckWarningView(app: app, muting: muting, desktopShortcutsOff: desktopShortcutsOff,

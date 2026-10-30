@@ -18,6 +18,9 @@ final class AddAppFeature {
         /// `nil`: `AppReader` and AutoHush's own helper, found as the model
         /// is first made.
         var standIns: (reader: any AppReading, helper: any CheckHelping)?
+        /// Whether Mission Control's desktop shortcuts are on, read as the
+        /// warning before a check opens (`DesktopShortcuts`); tests say.
+        var desktopShortcutsOn: () -> Bool = { DesktopShortcuts.areOn }
     }
 
     private weak var host: any AddAppHost?
@@ -87,7 +90,8 @@ extension AddAppFeature: AddAppPresenting {
     func showWarning() {
         guard let model, let app = model.chosen else { return }
         warningWindow?.close()
-        let window = CheckWarningWindowController(app: app, muting: model.checkMuting) { [weak model] in model?.startCheck() }
+        let window = CheckWarningWindowController(app: app, muting: model.checkMuting,
+                                                  desktopShortcutsOff: !system.desktopShortcutsOn()) { [weak model] in model?.startCheck() }
         warningWindow = window
         window.show()
     }

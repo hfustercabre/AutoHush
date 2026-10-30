@@ -149,7 +149,7 @@ struct AppDelegateTests {
             players: scratch.players,
             checkedPlayers: scratch.checkedPlayers,
             addAppSystem: AddAppFeature.System(outputMute: OutputMute(outputs: scratch.outputs, defaults: scratch.defaults),
-                                               standIns: addApp.map { (reader: $0, helper: $0) }),
+                                               standIns: addApp.map { (reader: $0, helper: $0) }, desktopShortcutsOn: { true }),
             volumeLeveler: SystemVolumeLeveler(volume: scratch.volume, defaults: scratch.defaults, sleep: { _ in }),
             nowPlayingDefaults: scratch.defaults,
             nowPlayingSetting: scratch.nowPlaying.setting,

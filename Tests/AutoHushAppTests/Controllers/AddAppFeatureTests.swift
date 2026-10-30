@@ -23,7 +23,7 @@ struct AddAppFeatureTests {
         world.playing = true
         world.antiDot = true
         let sut = AddAppFeature(host: world, system: .init(outputMute: OutputMute(outputs: outputs, defaults: defaults),
-                                                           standIns: (reader: world, helper: world)),
+                                                           standIns: (reader: world, helper: world), desktopShortcutsOn: { true }),
                                 keptChecks: world.kept)
         sut.open()
         return sut

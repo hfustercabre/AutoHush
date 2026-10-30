@@ -72,7 +72,7 @@ final class WindowTitleTests {
             PlayerChooserWindowController(model: model, tallestPage: 600).window,
             AddAppWindowController(model: addApp).window,
             AppChooserWindowController(model: addApp).window,
-            CheckWarningWindowController(app: world.apps[0], muting: .none) {}.window,
+            CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: false) {}.window,
             AddWebAppWindowController(model: AddWebAppModel(), settings: model).window,
             LearningWindowController(model: model).window,
         ]
@@ -93,7 +93,7 @@ final class WindowTitleTests {
         return (world, [
             AddAppWindowController(model: addApp),
             AppChooserWindowController(model: addApp),
-            CheckWarningWindowController(app: world.apps[0], muting: .none) {},
+            CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: false) {},
         ])
     }
 
@@ -167,7 +167,7 @@ final class WindowTitleTests {
         let world = World()
         let started = CallLog()
         var warningWindow: NSWindow?
-        let warning = CheckWarningWindowController(app: world.apps[0], muting: .none) {
+        let warning = CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: false) {
             started.calls.append(warningWindow?.isVisible == false ? "started, closed" : "started, open")
         }
         warningWindow = warning.window
