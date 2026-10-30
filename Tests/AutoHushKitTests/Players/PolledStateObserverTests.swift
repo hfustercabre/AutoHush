@@ -30,22 +30,33 @@ struct PolledStateObserverTests {
     func changes() async throws {
         #expect(PolledStateObserver.reportDelay == 1.5) // the interval, and a menu read's 0.5 s
         let player = FakeState(.playing)
+        let sleep = ManualSleep()
         var states: [PlayerState] = []
-        let observer = PolledStateObserver(interval: .milliseconds(20), read: { player.read() }) { states.append($0) }
+        let observer = PolledStateObserver(read: { player.read() }, sleep: sleep.sleep) { states.append($0) }
         observer.start()
-        await TestWait.until { !states.isEmpty }
+        // Each round: a read, then a sleep the test ends with step().
+        await TestWait.until { sleep.sleeping == 1 }
+        #expect(states == [.playing])
         player.state = .unknown // a read that failed
-        let reads = player.reads
-        await TestWait.until { player.reads >= reads + 2 } // read twice since: a read of it was delivered
+        sleep.step()
+        await TestWait.until { player.reads == 2 && sleep.sleeping == 1 }
+        #expect(states == [.playing])
         player.state = .paused
+        sleep.step()
         await TestWait.until { states.count >= 2 }
         player.state = .notRunning // quit
+        sleep.step()
         await TestWait.until { states.count >= 3 }
         #expect(states == [.playing, .paused, .notRunning])
+        #expect(sleep.durations.allSatisfy { $0 == PolledStateObserver.interval })
 
+        await TestWait.until { sleep.sleeping == 1 }
+        let polling = try #require(observer.polling)
+        let reads = player.reads
         observer.stop()
         player.state = .playing
-        try await Task.sleep(for: .milliseconds(100))
+        await ends(polling) // the loop ended on its cancelled sleep
+        #expect(player.reads == reads)
         #expect(states == [.playing, .paused, .notRunning])
     }
 
@@ -53,16 +64,28 @@ struct PolledStateObserverTests {
     func released() async throws {
         let player = FakeState(.paused)
         let gate = Gate()
-        var observer: PolledStateObserver? = PolledStateObserver(interval: .milliseconds(10), read: {
+        let sleep = ManualSleep()
+        var observer: PolledStateObserver? = PolledStateObserver(read: {
             let state = player.read()
             await gate.wait()
             return state
-        }) { _ in }
+        }, sleep: sleep.sleep) { _ in }
         observer?.start()
         await TestWait.until { player.reads > 0 } // its first read, held
+        let polling = try #require(observer?.polling)
         observer = nil
         await gate.open()
-        try await Task.sleep(for: .milliseconds(100))
+        await ends(polling) // it ended without sleeping or reading again
         #expect(player.reads == 1)
+        #expect(sleep.durations.isEmpty)
+    }
+
+    /// Waits for the reading loop to end: a loop that goes on fails the
+    /// test at the wait's limit instead of hanging the run (`Task.value`
+    /// ignores the test's time limit).
+    private func ends(_ polling: Task<Void, Never>) async {
+        let ended = Locked(false)
+        Task { await polling.value; ended.withLock { $0 = true } }
+        await TestWait.until { ended.value }
     }
 }

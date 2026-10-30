@@ -21,17 +21,22 @@ package final class PolledStateObserver: PlayerStateObserving {
 
     private let read: @Sendable () async -> PlayerState
     private let interval: Duration
+    /// The wait between reads: `Task.sleep`, or a test's, which it steps.
+    private let sleep: @Sendable (Duration) async -> Void
     private let onChange: @MainActor (PlayerState) -> Void
-    private var polling: Task<Void, Never>?
+    /// The reading loop while observing; a test awaits its end.
+    private(set) var polling: Task<Void, Never>?
     private var lastState: PlayerState?
 
     package init(
         interval: Duration = PolledStateObserver.interval,
         read: @escaping @Sendable () async -> PlayerState,
+        sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         onChange: @escaping @MainActor (PlayerState) -> Void
     ) {
         self.read = read
         self.interval = interval
+        self.sleep = sleep
         self.onChange = onChange
     }
 
@@ -39,13 +44,14 @@ package final class PolledStateObserver: PlayerStateObserving {
         guard polling == nil else { return }
         let read = read
         let interval = interval
+        let sleep = sleep
         polling = Task { [weak self] in
             while !Task.isCancelled {
                 let state = await read()
                 // Gone without stop(): nothing more to read for.
                 guard !Task.isCancelled, self != nil else { return }
                 self?.deliver(state)
-                try? await Task.sleep(for: interval)
+                await sleep(interval)
             }
         }
     }
