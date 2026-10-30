@@ -147,6 +147,7 @@ else
     echo "  git commit -m \"release: $VERSION\" && git tag -a $TAG -m \"AutoHush $VERSION\"   (on release/$TAG, or the hotfix/ branch)"
     echo "  git switch main && git merge --ff-only $BRANCH; git switch stg && git merge --ff-only $BRANCH; git switch dev && git merge --ff-only $BRANCH   (a hotfix: git merge it into stg and dev)"
     echo "  git push origin dev stg main $TAG; git branch -d $BRANCH   (and git push origin --delete $BRANCH if it was pushed)"
+    echo "  Wait for CI on the release commit (stg's run: gh run watch), then:"
     echo "  Create the GitHub release $TAG (titled $TAG), upload $(basename "$DMG_PATH") and paste the release notes."
     echo "  bash Scripts/update-tap.sh $VERSION   (points the Homebrew tap at the published release)"
 fi
