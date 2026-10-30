@@ -104,6 +104,15 @@ package final class CheckPanelController {
                 if !on { shown.forEach { $0.orderOut(nil) } }
             }
         }
+        // Faded out, they go even when the animation's end isn't told (its
+        // completion waits for the main run loop; a test once waited 30 s for
+        // it, 2026-10-30): just after the fade's length, whichever is first.
+        if !on {
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.5))
+                shown.forEach { $0.orderOut(nil) }
+            }
+        }
     }
 
     private static func shade(_ screen: NSScreen) -> NSWindow {

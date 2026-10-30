@@ -318,8 +318,9 @@ final class WindowTitleTests {
             #expect(shades.allSatisfy { shade in shade.isVisible && NSScreen.screens.contains { $0.frame == shade.frame } })
             #expect(shades.allSatisfy { $0.ignoresMouseEvents && $0.collectionBehavior.contains(.canJoinAllSpaces) && $0.level.rawValue < panel.level.rawValue })
             world.report?(CheckReportLine.free)
-            // They fade out, then go.
-            await TestWait.until { panel.level == .floating && sut.shades.isEmpty && !shades.contains(where: \.isVisible) }
+            // Undimmed at once, then they fade out and go.
+            await TestWait.until { panel.level == .floating && sut.shades.isEmpty }
+            await TestWait.until { !shades.contains(where: \.isVisible) }
             sut.hide()
             await endCheck(world, model)
         }
