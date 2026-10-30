@@ -132,7 +132,7 @@ struct PlaybackSignalsTests {
         let webKit = AnnouncedAssertions(system: [Self.webKitHidden.name], display: [Self.webKitVisible.name])
         var signals = PlaybackSignals(powerAssertions: nil, learned: ["safari": webKit])
         let judgement = signals.judge(
-            present: ["chrome", "chromeAudio", "safari", "quicktime"],
+            present: ["chrome", "chromeAudio", "safari", "player"],
             holding: ["chrome": [Self.playingAudio, Self.videoWakeLock], "chromeAudio": [Self.playingAudio],
                       "safari": [Self.webKitHidden]],
             at: Date(timeIntervalSinceReferenceDate: 0)
