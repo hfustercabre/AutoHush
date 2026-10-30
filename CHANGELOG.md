@@ -63,6 +63,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Add an App, after Check Again with the app's windows closed:** the
   wait for a window looks at the window list first, so it does much less
   work until a window opens.
+- **Add an App's check, in Chrome:** a page using Chrome's own media
+  controls is pressed in the first window state too, so its way isn't
+  marked as not working with the window in view; the check's verdict
+  judges the page by every window state.
+- **Release candidates:** turning **Get release candidates** on or off
+  while a check runs asks again once it ends; a release candidate offered
+  again after the switch went off and on is announced again.
+- **The Logs window:** Level the volume's loudness measurements are filed
+  under Player too.
 - **Player Check:** the switches it turned back on are reported so, and it
   brings the right app back to the front after a page check.
 
