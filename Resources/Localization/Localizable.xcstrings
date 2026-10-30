@@ -2082,7 +2082,7 @@
       }
     },
     "%@ asks something before showing %@ (cookies, signing in…). AutoHush goes on once it shows." : {
-      "comment" : "Add a Web App window, under the step “Answer the site in Safari”; the first %@ is the site Safari shows instead (e.g. consent.youtube.com), the second the one typed (e.g. music.youtube.com)",
+      "comment" : "Add a Web App window, under the step “Answer the site in Safari”; the first %@ is the site Safari shows instead (e.g. consent.example.com), the second the one typed (e.g. music.example.com)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -3904,7 +3904,7 @@
       }
     },
     "%@ doesn’t answer. Check the address and your connection." : {
-      "comment" : "Add a Web App window; %@ is the website, e.g. music.youtube.com",
+      "comment" : "Add a Web App window; %@ is the website, e.g. music.example.com",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -5039,7 +5039,7 @@
       }
     },
     "%@ has its own site in some countries, and you can sign in only on your account’s." : {
-      "comment" : "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Amazon Music",
+      "comment" : "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Jukebox",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -6628,7 +6628,7 @@
       }
     },
     "%@ isn’t installed" : {
-      "comment" : "Status line; %@ is the media player, e.g. Spotify",
+      "comment" : "Status line; %@ is the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -6855,7 +6855,7 @@
       }
     },
     "%@ isn’t responding" : {
-      "comment" : "Status line; %@ is the media player, e.g. Spotify",
+      "comment" : "Status line; %@ is the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -7309,7 +7309,7 @@
       }
     },
     "%@ isn’t running" : {
-      "comment" : "Status line; %@ is the media player, e.g. Spotify",
+      "comment" : "Status line; %@ is the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -8677,7 +8677,7 @@
       }
     },
     "%@ pauses and resumes without fading: AutoHush can’t change its volume." : {
-      "comment" : "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player, e.g. TIDAL",
+      "comment" : "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -9585,7 +9585,7 @@
       }
     },
     "%@ says this page doesn’t exist. Check the address." : {
-      "comment" : "Add a Web App window; %@ is the website, e.g. music.youtube.com",
+      "comment" : "Add a Web App window; %@ is the website, e.g. music.example.com",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -11192,7 +11192,7 @@
       }
     },
     "%@, %@ web app" : {
-      "comment" : "VoiceOver, where media players are offered: an app added with Add an App that's a web app made by Chrome or another Chromium browser (its icon carries the browser's); the first %@ is its name, e.g. SoundCloud, the second the browser, e.g. Google Chrome",
+      "comment" : "VoiceOver, where media players are offered: an app added with Add an App that's a web app made by Chrome or another Chromium browser (its icon carries the browser's); the first %@ is its name, the second the browser, e.g. Google Chrome",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -11425,7 +11425,7 @@
       }
     },
     "%@, Safari web app" : {
-      "comment" : "VoiceOver, where media players are offered: a Safari web app whose name is also an app's, told apart from it; %@ is its name, e.g. Spotify",
+      "comment" : "VoiceOver, where media players are offered: a Safari web app whose name is also an app's, told apart from it; %@ is its name",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -12793,7 +12793,7 @@
       }
     },
     "%@, update available" : {
-      "comment" : "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Spotify isn’t running” or “Updates”",
+      "comment" : "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Jukebox isn’t running” or “Updates”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -18707,7 +18707,7 @@
       }
     },
     "Accessibility for %@" : {
-      "comment" : "Diagnostics: the permission to control the media player, e.g. “Accessibility for TIDAL”",
+      "comment" : "Diagnostics: the permission to control the media player, e.g. “Accessibility for Jukebox”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -20750,7 +20750,7 @@
       }
     },
     "Adding %@ instead stops adding it." : {
-      "comment" : "Message of the alert when a suggested web app is clicked while Add a Web App adds another web app; %@ is the address of the one clicked, e.g. soundcloud.com",
+      "comment" : "Message of the alert when a suggested web app is clicked while Add a Web App adds another web app; %@ is the address of the one clicked, e.g. music.example.com",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -22793,7 +22793,7 @@
       }
     },
     "Allow %@ Automation Access…" : {
-      "comment" : "Menu item; %@ is the media player, e.g. Spotify",
+      "comment" : "Menu item; %@ is the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -23247,7 +23247,7 @@
       }
     },
     "Allow Accessibility Access…" : {
-      "comment" : "Menu item: lets AutoHush control a media player through its menu, e.g. TIDAL",
+      "comment" : "Menu item: lets AutoHush control a media player through its menu",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -23474,7 +23474,7 @@
       }
     },
     "Allow Accessibility access to control %@" : {
-      "comment" : "Status line; %@ is the media player, e.g. TIDAL",
+      "comment" : "The learning window: the step that asks for Accessibility before the web app's controls can be learned; %@ is the web app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -24154,233 +24154,6 @@
         }
       }
     },
-    "Allow Audio Recording access" : {
-      "comment" : "Status line",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اسمح بالوصول إلى تسجيل الصوت"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permet l’accés a la gravació d’àudio"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Povolte přístup k nahrávání zvuku"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillad adgang til lydoptagelse"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erlaube den Zugriff auf Audioaufnahme"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Επιτρέψτε την πρόσβαση στην εγγραφή ήχου"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite el acceso a la grabación de audio"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite el acceso a la grabación de audio"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Salli äänen tallennuksen käyttö"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l’accès à l’enregistrement audio"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l’accès à l’enregistrement audio"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "יש לתת הרשאת הקלטת שמע"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ऑडियो रिकॉर्डिंग ऐक्सेस की अनुमति दें"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dozvolite pristup snimanju zvuka"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Engedélyezze a hozzáférést a hangfelvételhez"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Izinkan akses Rekaman Audio"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Consenti l’accesso alla registrazione audio"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オーディオ録音へのアクセスを許可してください"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오디오 녹음 접근을 허용하십시오"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Benarkan akses Rakaman Audio"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillat tilgang til lydopptak"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sta toegang tot audio-opname toe"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pozwól na dostęp do nagrywania dźwięku"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permita acesso à gravação de áudio"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permita acesso à gravação de áudio"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permiteți accesul la înregistrarea audio"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Разрешите доступ к записи звука"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Povoľte prístup k nahrávaniu zvuku"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dovolite dostop do snemanja zvoka"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillåt åtkomst till ljudinspelning"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "อนุญาตการบันทึกเสียง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ses kaydı erişimine izin verin"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Дозвольте доступ до записування звуку"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hãy cho phép truy cập ghi âm thanh"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請允許錄音權限"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请允许录音权限"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請允許錄音權限"
-          }
-        }
-      }
-    },
     "Allow AutoHush to Work" : {
       "comment" : "Welcome window: the title (in its title bar) of the page that asks for the permissions AutoHush needs",
       "localizations" : {
@@ -24604,233 +24377,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "允許 AutoHush 運作"
-          }
-        }
-      }
-    },
-    "Allow Automation access to control %@" : {
-      "comment" : "Status line; %@ is the media player, e.g. Spotify",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اسمح بالوصول إلى التحكم التلقائي للتحكم في %@"
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permet l’accés a Automatització per controlar %@"
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Povolte Automatizaci pro aplikaci %@"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillad adgang til Automatisering for at styre %@"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erlaube den Zugriff auf „Automation“, um %@ zu steuern"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Επιτρέψτε την πρόσβαση στην Αυτοματοποίηση για τον έλεγχο του %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite el acceso a Automatización para controlar %@"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permite el acceso a Automatización para controlar %@"
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Salli Automaatio-pääsy apille %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l’accès « Automatisation » pour contrôler %@"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisez l’accès « Automatisation » pour contrôler %@"
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "יש לתת הרשאת אוטומציה כדי לשלוט ב-%@"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ को नियंत्रित करने के लिए ऑटोमेशन ऐक्सेस की अनुमति दें"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dozvolite Automatizaciju za aplikaciju %@"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Engedélyezze az Automatizálást: %@"
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Izinkan akses Automasi untuk mengontrol %@"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Consenti l’accesso ad Automazione per controllare %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@を制御するには、オートメーションへのアクセスを許可してください"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@을(를) 제어하려면 자동화 접근을 허용하십시오"
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Benarkan akses Automasi untuk mengawal %@"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillat tilgang til Automatisering for å styre %@"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sta toegang tot Automatisering toe om %@ te bedienen"
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pozwól na Automatyzację dla aplikacji %@"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permita acesso de Automação para controlar %@"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permita acesso de Automação para controlar %@"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permiteți accesul la Automatizare pentru a controla %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Разрешите доступ к «Автоматизации», чтобы управлять %@"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Povoľte Automatizáciu pre apku %@"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dovolite avtomatizacijo za aplikacijo %@"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillåt åtkomst till Automatisering för att styra %@"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "อนุญาตการทำงานอัตโนมัติเพื่อควบคุม %@"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ için Otomasyon erişimine izin verin"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Дозвольте доступ до «Автоматизації», щоб керувати %@"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hãy cho phép truy cập Tự động hóa để điều khiển %@"
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請允許「自動化」權限以控制 %@"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请允许“自动化”权限以控制 %@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "請允許「自動化」權限以控制 %@"
           }
         }
       }
@@ -34143,7 +33689,7 @@
       }
     },
     "AutoHush can only mute %@, and muting needs Audio Recording, which AntiDot mode doesn’t use." : {
-      "comment" : "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the menu; and Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; %@ is the player",
+      "comment" : "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the menu; Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; and the help tag and VoiceOver hint of its row and tile where media players are offered, dimmed while AntiDot mode is on; %@ is the player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -34365,233 +33911,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush 只能將 %@ 靜音，而靜音需要錄音權限，AntiDot 模式不使用它。"
-          }
-        }
-      }
-    },
-    "AutoHush can only mute it, and muting needs Audio Recording, which AntiDot mode doesn’t use." : {
-      "comment" : "Help tag and VoiceOver hint of an app added with Add an App that can only be muted, where media players are offered, dimmed while AntiDot mode is on",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يمكن لـ AutoHush كتم صوته فقط، ويحتاج الكتم إلى تسجيل الصوت، الذي لا يستخدمه وضع AntiDot."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L’AutoHush només pot silenciar-lo, i per silenciar-lo necessita la gravació d’àudio, que el mode AntiDot no fa servir."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush ji může jen ztlumit a ztlumení vyžaduje nahrávání zvuku, které režim AntiDot nepoužívá."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush kan kun slå lyden fra for den, og det kræver lydoptagelse, som AntiDot-tilstand ikke bruger."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush kann die App nur stummschalten, und dafür braucht es die Audioaufnahme, die der AntiDot-Modus nicht nutzt."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Το AutoHush μπορεί μόνο να θέσει την εφαρμογή σε σίγαση, και η σίγαση χρειάζεται εγγραφή ήχου, την οποία η λειτουργία AntiDot δεν χρησιμοποιεί."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush solo puede silenciarlo, y para silenciarlo necesita la grabación de audio, que el modo AntiDot no usa."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush solo puede silenciarlo, y para silenciarlo necesita la grabación de audio, que el modo AntiDot no usa."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush voi vain mykistää sen, ja mykistys vaatii äänen tallennuksen, jota AntiDot-tila ei käytä."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush peut seulement couper son son, et pour cela il faut l’enregistrement audio, que le mode AntiDot n’utilise pas."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush peut seulement couper son son, et pour cela il faut l’enregistrement audio, que le mode AntiDot n’utilise pas."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush יכול רק להשתיק אותה, והשתקה דורשת הקלטת שמע, שמצב AntiDot לא משתמש בה."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush इसे सिर्फ़ म्यूट कर सकता है, और म्यूट करने के लिए ऑडियो रिकॉर्डिंग चाहिए, जिसे AntiDot मोड इस्तेमाल नहीं करता।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush je može samo utišati, a utišavanje zahtijeva snimanje zvuka, koje način rada AntiDot ne koristi."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Az AutoHush csak némítani tudja, a némításhoz pedig hangfelvétel kell, amelyet az AntiDot mód nem használ."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush hanya dapat membisukannya, dan membisukan memerlukan Rekaman audio, yang tidak digunakan Mode AntiDot."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush può solo silenziarlo, e per silenziarlo serve la registrazione audio, che la modalità AntiDot non usa."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHushはこのAppを消音することしかできず、消音にはオーディオ録音が必要です（AntiDotモードでは使いません）。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush는 이 앱을 음소거만 할 수 있으며, 음소거하려면 AntiDot 모드에서 사용하지 않는 오디오 녹음이 필요합니다."
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush hanya boleh menyenyapkannya, dan penyenyapan memerlukan Rakaman Audio, yang tidak digunakan oleh mod AntiDot."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush kan bare dempe den, og demping krever lydopptak, som AntiDot-modus ikke bruker."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush kan de app alleen dempen, en dempen vereist audio-opname, die de AntiDot-modus niet gebruikt."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush może ją tylko wyciszać, a wyciszanie wymaga nagrywania dźwięku, którego tryb AntiDot nie używa."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O AutoHush só pode silenciá-lo, e silenciar exige Gravação de áudio, que o modo AntiDot não usa."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O AutoHush só pode silenciá-la, e silenciar requer a gravação de áudio, que o modo AntiDot não usa."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush poate doar să-i dezactiveze sunetul, iar pentru asta are nevoie de înregistrarea audio, pe care modul AntiDot nu o folosește."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush может только выключать его звук, а для этого нужна запись звука, которую режим AntiDot не использует."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush ju môže iba stlmiť a stlmenie vyžaduje nahrávanie zvuku, ktoré režim AntiDot nepoužíva."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush jo lahko samo utiša, utišanje pa zahteva snemanje zvoka, ki ga način AntiDot ne uporablja."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush kan bara stänga av ljudet för den, och det kräver ljudinspelning, som AntiDot-läget inte använder."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush ทำได้เพียงปิดเสียงแอปนี้ และการปิดเสียงต้องใช้การบันทึกเสียง ซึ่งโหมด AntiDot ไม่ได้ใช้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush onun yalnızca sesini kapatabilir ve bunun için AntiDot modunun kullanmadığı ses kaydı gerekir."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush може лише вимикати її звук, а для цього потрібне записування звуку, яке режим AntiDot не використовує."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush chỉ có thể tắt tiếng ứng dụng, và việc tắt tiếng cần Ghi âm thanh, điều mà chế độ AntiDot không dùng."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush 只能將它靜音，而靜音需要錄音權限，AntiDot 模式不使用它。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush 只能将它静音，而静音需要录音权限，AntiDot 模式不使用它。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AutoHush 只能將它靜音，而靜音需要錄音權限，AntiDot 模式不使用它。"
           }
         }
       }
@@ -35051,7 +34370,7 @@
       }
     },
     "AutoHush can’t find Play/Pause in %@’s menus." : {
-      "comment" : "Why the media player couldn't be controlled: an update may have changed its menus; %@ is the player, e.g. TIDAL",
+      "comment" : "Why the media player couldn't be controlled: an update may have changed its menus; %@ is the player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -38689,7 +38008,7 @@
       }
     },
     "AutoHush needs Audio Recording to hear whether %@ is playing." : {
-      "comment" : "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the menu; and Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; %@ is the player",
+      "comment" : "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the menu; Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; and the help tag and VoiceOver hint of its row and tile where media players are offered, dimmed while AntiDot mode is on; %@ is the player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -41186,7 +40505,7 @@
       }
     },
     "AutoHush: %@" : {
-      "comment" : "VoiceOver label of the menu bar icon while something needs the user, the media player is closed or Auto-Pause is off; %@ is the menu's status line, e.g. “Spotify isn’t running”, “Choose a media player” or “Auto-Pause is off until 15:30”",
+      "comment" : "VoiceOver label of the menu bar icon while something needs the user, the media player is closed or Auto-Pause is off; %@ is the menu's status line, e.g. “Jukebox isn’t running”, “Choose a media player” or “Auto-Pause is off until 15:30”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -44137,7 +43456,7 @@
       }
     },
     "Automation for %@" : {
-      "comment" : "Diagnostics: the permission to control the media player, e.g. “Automation for Spotify”",
+      "comment" : "Diagnostics: the permission to control the media player, e.g. “Automation for Jukebox”",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -46407,7 +45726,7 @@
       }
     },
     "Can’t control %@ right now" : {
-      "comment" : "Status line when the media player couldn't be controlled; an info symbol after it opens an alert that says why; %@ is the media player, e.g. TIDAL",
+      "comment" : "Status line when the media player couldn't be controlled; an info symbol after it opens an alert that says why; %@ is the media player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -52309,7 +51628,7 @@
       }
     },
     "Choose…" : {
-      "comment" : "Settings → Diagnostics' button beside “Player” while none is chosen or it's not installed, and Settings → General's beside “No player chosen”, which open Settings' Media Player page",
+      "comment" : "Settings → Diagnostics' button beside “Player” while none is chosen or it's not installed, and Settings → General's beside “None chosen”, which open Settings' Media Player page",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -66844,7 +66163,7 @@
       }
     },
     "Fade playback is off" : {
-      "comment" : "Settings → Behavior, under the fades' lengths, dimmed while the Fade playback switch is off",
+      "comment" : "Settings → Fine-Tuning, under the fades' lengths, dimmed while the Fade playback switch (Settings → Behavior) is off",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -78420,233 +77739,6 @@
         }
       }
     },
-    "It needs Audio Recording, which AntiDot mode doesn’t use." : {
-      "comment" : "Help tag and VoiceOver hint of an app added with Add an App whose Now Playing row doesn't show whether it plays, where media players are offered, dimmed while AntiDot mode is on",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يحتاج إلى تسجيل الصوت، الذي لا يستخدمه وضع AntiDot."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Necessita la gravació d’àudio, que el mode AntiDot no fa servir."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vyžaduje nahrávání zvuku, které režim AntiDot nepoužívá."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Den kræver lydoptagelse, som AntiDot-tilstand ikke bruger."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die App erfordert die Audioaufnahme, die der AntiDot-Modus nicht nutzt."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Χρειάζεται εγγραφή ήχου, την οποία η λειτουργία AntiDot δεν χρησιμοποιεί."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Necesita la grabación de audio, que el modo AntiDot no usa."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Necesita la grabación de audio, que el modo AntiDot no usa."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se vaatii äänen tallennuksen, jota AntiDot-tila ei käytä."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elle nécessite l’enregistrement audio, que le mode AntiDot n’utilise pas."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elle nécessite l’enregistrement audio, que le mode AntiDot n’utilise pas."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "נדרשת הקלטת שמע, שמצב AntiDot לא משתמש בה."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "इसके लिए ऑडियो रिकॉर्डिंग चाहिए, जिसे AntiDot मोड इस्तेमाल नहीं करता।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Potrebno joj je snimanje zvuka, koje način rada AntiDot ne koristi."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hangfelvétel kell hozzá, amelyet az AntiDot mód nem használ."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App ini memerlukan rekaman audio, yang tidak digunakan Mode AntiDot."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Richiede la registrazione audio, che la modalità AntiDot non usa."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オーディオ録音が必要です（AntiDotモードでは使いません）。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AntiDot 모드에서 사용하지 않는 오디오 녹음이 필요합니다."
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ia memerlukan Rakaman Audio, yang tidak digunakan oleh mod AntiDot."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Den krever lydopptak, som AntiDot-modus ikke bruker."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "De app vereist audio-opname, die de AntiDot-modus niet gebruikt."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wymaga nagrywania dźwięku, którego tryb AntiDot nie używa."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Precisa da gravação de áudio, que o modo AntiDot não usa."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Requer a gravação de áudio, que o modo AntiDot não usa."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Necesită înregistrarea audio, pe care modul AntiDot nu o folosește."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нужна запись звука, которую режим AntiDot не использует."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vyžaduje nahrávanie zvuku, ktoré režim AntiDot nepoužíva."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Potrebuje snemanje zvoka, ki ga način AntiDot ne uporablja."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Den kräver ljudinspelning, som AntiDot-läget inte använder."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ต้องใช้การบันทึกเสียง ซึ่งโหมด AntiDot ไม่ได้ใช้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AntiDot modunun kullanmadığı ses kaydını gerektirir."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Потрібне записування звуку, яке режим AntiDot не використовує."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ứng dụng cần quyền ghi âm thanh, điều mà chế độ AntiDot không dùng."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "它需要錄音權限，AntiDot 模式不使用它。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "它需要录音权限，AntiDot 模式不使用它。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "它需要錄音權限，AntiDot 模式不使用它。"
-          }
-        }
-      }
-    },
     "It plays" : {
       "comment" : "Add an App window, under the step “Play something in %@” once done",
       "localizations" : {
@@ -83642,7 +82734,7 @@
       }
     },
     "Learning %@’s controls again stops adding it." : {
-      "comment" : "Message of the alert when Learn Again is clicked while Add a Web App adds another web app; %@ is the chosen web app, e.g. YouTube Music",
+      "comment" : "Message of the alert when Learn Again is clicked while Add a Web App adds another web app; %@ is the chosen web app, e.g. Jukebox",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -84550,7 +83642,7 @@
       }
     },
     "Level the volume is off" : {
-      "comment" : "Settings → Behavior, under Volume's limits, dimmed while the Level the volume switch is off",
+      "comment" : "Settings → Fine-Tuning, under the volume's limits, dimmed while the Level the volume switch (Settings → Behavior) is off",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -92722,7 +91814,7 @@
       }
     },
     "No fades" : {
-      "comment" : "Settings → General and the foot of the menu's card, under the media player: AutoHush can't fade this player (TIDAL, Apple Podcasts, web apps)",
+      "comment" : "Settings → General and the foot of the menu's card, under the media player: AutoHush can't fade this player (some apps, web apps)",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -100894,7 +99986,7 @@
       }
     },
     "Off in AntiDot mode" : {
-      "comment" : "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): the menu and Settings → Behavior",
+      "comment" : "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): Settings → Behavior, and Fine-Tuning's volume limits",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -102256,7 +101348,7 @@
       }
     },
     "Once %@ shows in Safari (answer anything it asks first), click Add to Dock." : {
-      "comment" : "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.youtube.com",
+      "comment" : "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.example.com",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -107023,7 +106115,7 @@
       }
     },
     "Other Countries" : {
-      "comment" : "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries (Amazon Music): every country without a site of its own",
+      "comment" : "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries: every country without a site of its own",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -112704,7 +111796,7 @@
       }
     },
     "Play/Pause words read" : {
-      "comment" : "Diagnostics: whether AutoHush could read, from the media player's app, its own words for Play and Pause (TIDAL, Apple Podcasts), which tell its state apart",
+      "comment" : "Diagnostics: whether AutoHush could read, from the media player's app, its own words for Play and Pause, which tell its state apart",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -113612,7 +112704,7 @@
       }
     },
     "Playing on another device" : {
-      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player, e.g. through Spotify Connect",
+      "comment" : "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player, e.g. on a speaker or a phone it streams to",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -119067,7 +118159,7 @@
       }
     },
     "Reopen" : {
-      "comment" : "Button in the menu's card and on Settings → General's player card, under the status line that says the media player needs reopening (“Deezer needs reopening”): quits it (an app added with Add an App) and opens it again with the option it needs",
+      "comment" : "Button in the menu's card and on Settings → General's player card, under the status line that says the media player needs reopening (“Jukebox needs reopening”): quits it (an app added with Add an App) and opens it again with the option it needs",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -131331,7 +130423,7 @@
       }
     },
     "Stop Adding %@?" : {
-      "comment" : "Alert title when Learn Again (the chosen web app's controls), or a suggested web app, is clicked while Add a Web App adds another; %@ is the address being added, e.g. music.youtube.com",
+      "comment" : "Alert title when Learn Again (the chosen web app's controls), or a suggested web app, is clicked while Add a Web App adds another; %@ is the address being added, e.g. music.example.com",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -133828,7 +132920,7 @@
       }
     },
     "That isn’t a web address. Try one like %@." : {
-      "comment" : "Add a Web App window, under the address field; %@ is a music website's address, e.g. music.youtube.com",
+      "comment" : "Add a Web App window, under the address field; %@ is a music website's address, e.g. music.example.com",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -156755,7 +155847,7 @@
       }
     },
     "Your account’s country" : {
-      "comment" : "Add a Web App window: the row under the address of a service with its own site in some countries (Amazon Music), before the pop-up of countries; the site changes with the country",
+      "comment" : "Add a Web App window: the row under the address of a service with its own site in some countries, before the pop-up of countries; the site changes with the country",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
