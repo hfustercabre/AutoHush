@@ -165,6 +165,12 @@ package enum AppWindows {
     /// desktop): Player Check's `WindowTest(app:)` rule. Without one, the
     /// check runs with its windows closed (each way tried once).
     package static func hasWindowWithinReach(_ app: NSRunningApplication) -> Bool {
+        // The window list alone first (a few ms): with no document window of
+        // the app's in it, `main(of:)` finds none either, so the look at
+        // every desktop's windows (up to 1 s) is spared while the user opens
+        // one (Add an App's wait asks every 0.5 s).
+        let pid = app.processIdentifier
+        guard infos(.optionAll).contains(where: { owner(of: $0) == pid && ListedWindow($0).layer == 0 }) else { return false }
         guard let (state, main) = stateAndMain(of: app) else { return false }
         // Hidden is the app's: it may have no main window then.
         return state != .hidden || main != nil

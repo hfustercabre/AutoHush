@@ -189,7 +189,7 @@ extension PlaybackArbiter {
                   !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return false }
             let handled = await muteInsteadOfPause("is heard while it says it’s \(state.rawValue)",
                                                    failure: .playerCommandFailed(.pressIgnored))
-            if pausedByUs, mutedInstead { mute.noteWhileQuiet(true) }
+            if pausedByUs, mutedInstead { mute.noteMutedWhileQuiet() }
             return handled
         }
         guard await hearsPlayer(nil) == .heard, !isShutDown, autoPauseEnabled, !activeSources.isEmpty else { return false }

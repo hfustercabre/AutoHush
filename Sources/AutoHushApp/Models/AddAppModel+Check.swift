@@ -79,8 +79,7 @@ extension AddAppModel {
                 }
                 return
             }
-            resultBeforeCheckAgain = nil
-            waitsForWindow = false
+            checkAgainState = nil
             stage = .done(result)
             keptChecks.save(KeptCheck(app: app, result: result, at: now(),
                                                needsReopen: needsReopen, reopenOutcome: reopenOutcome))
@@ -138,10 +137,9 @@ extension AddAppModel {
         switch stage {
         case .stopped, .failed, .playTimedOut: waitForPlaying()
         case .done where offersCheckAgain:
-            resultBeforeCheckAgain = keptChecks.load(now: now())
             // Checked again with its windows still closed, it would find
             // them closed again (the 1.2.5 review's workflow note, B2).
-            waitsForWindow = closedWaysMayWork
+            checkAgainState = CheckAgainState(resultBefore: keptChecks.load(now: now()), waitsForWindow: closedWaysMayWork)
             waitForPlaying()
         default: break
         }

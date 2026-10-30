@@ -94,14 +94,22 @@ final class AddAppModel {
     var isStopping = false
     /// The way the user chose among those that worked (`chosenWay`).
     var pickedWay: CheckResult.WayKind?
-    /// The result Check Again left beside Use: Back to Result brings it back
-    /// until the new check starts (`canGoBackToResult`).
-    var resultBeforeCheckAgain: KeptCheck?
-    /// After Check Again with the app's windows closed, the play step waits
-    /// for a window the check can reach too (`waitForPlaying`; B2, 2026-10-29).
-    var waitsForWindow = false
-    /// While it waits for one: none is open yet.
-    var windowMissing = false
+    /// What Check Again beside Use left until the new check ends, the app
+    /// changes or Back to Result: one value, so none is left half set.
+    struct CheckAgainState {
+        /// The result it left beside Use: Back to Result brings it back
+        /// until the new check starts (`canGoBackToResult`).
+        let resultBefore: KeptCheck?
+        /// Its windows were closed: the play step waits for a window the
+        /// check can reach too (`waitForPlaying`; B2, 2026-10-29).
+        let waitsForWindow: Bool
+        /// While it waits for one: none is open yet.
+        var windowMissing = false
+    }
+    var checkAgainState: CheckAgainState?
+    var resultBeforeCheckAgain: KeptCheck? { checkAgainState?.resultBefore }
+    var waitsForWindow: Bool { checkAgainState?.waitsForWindow ?? false }
+    var windowMissing: Bool { checkAgainState?.windowMissing ?? false }
     /// How many times AntiDot mode was turned off from here.
     var antiDotChanges = 0
     /// Whether the Mac's output could be muted, as last read: as the

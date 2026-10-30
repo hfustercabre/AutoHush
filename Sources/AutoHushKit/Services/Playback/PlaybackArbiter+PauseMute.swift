@@ -68,9 +68,14 @@ extension PlaybackArbiter {
             pausePressed = date
         }
 
-        /// Muted while it said it doesn't play, or not (its pause over).
-        mutating func noteWhileQuiet(_ quiet: Bool) {
-            whileQuiet = quiet
+        /// Muted while it said it doesn't play (`mutesHeardWhileQuiet`).
+        mutating func noteMutedWhileQuiet() {
+            whileQuiet = true
+        }
+
+        /// AutoHush's pause is over: so is what a mute while quiet kept.
+        mutating func notePauseOver() {
+            whileQuiet = false
         }
 
         /// Not muted by AutoHush any more, saying whether it was.

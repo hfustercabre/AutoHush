@@ -12,7 +12,7 @@ extension PlaybackArbiter {
         }
         if pausedByUs != publishedPausedByUs {
             publishedPausedByUs = pausedByUs
-            if !pausedByUs { callDuringPause = false; heldByMute = false; mute.noteWhileQuiet(false) } // that pause is over
+            if !pausedByUs { callDuringPause = false; heldByMute = false; mute.notePauseOver() } // that pause is over
             // A mute standing for it, or kept through it, is lifted: the
             // player plays on, heard, or can be played.
             if !pausedByUs, endPauseMute() {

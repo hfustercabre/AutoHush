@@ -56,6 +56,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   main thread (a pause of the window with a large app).
 - **The Logs window:** the player's mute, Pause on disconnect and Level
   the volume's lines are filed under Player.
+- **Add an App, after Check Again with the app's windows closed:** the
+  wait for a window looks at the window list first, so it does much less
+  work until a window opens.
 - **Player Check:** the switches it turned back on are reported so, and it
   brings the right app back to the front after a page check.
 
