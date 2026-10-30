@@ -15,6 +15,49 @@ This project follows [Semantic Versioning](https://semver.org/).
   itself, only offered, and AutoHush moves on to the release that follows.
   Turned off while you're on one, AutoHush offers the latest release
   instead. A release candidate shows as, for example, “1.2.7 RC 1”.
+  Turned off while one is offered, the offer goes at once.
+
+### Fixed
+
+- **Level the volume:** the Mac's volume now goes back up once your
+  player is paused, not as it starts fading out, so a pause called off
+  (the other apps stopped during the fade-out) or one that fails keeps
+  the music at the volume it was playing at.
+- **Resuming:** an app that's ignored no longer delays the resume when it
+  says it plays during the quiet listen; a player whose state is read
+  once a second is asked again after its resume even if another app
+  played and stopped meanwhile; a player that starts as AutoHush starts
+  shows as playing at once.
+- **A web app muted during an ad** while the Mac fell asleep no longer
+  leaves the next pause taken for a mute.
+- **Opening a second copy of AutoHush** while the first holds your
+  player paused: the new copy waits for the old one to hand the pause
+  over before it starts, so the music comes back.
+- **Add a Web App:** a web app whose adding you stopped (choosing another
+  site, or Learn Again) no longer becomes your player anyway.
+- **The menu's card:** after a resume that gave up, turning Auto-Pause
+  off keeps “Couldn’t resume” with its Try Again, which still works; the
+  highlight goes back to the card when the Try Again under the pointer
+  goes away.
+- **Add an App:** a Check Again that ends because the app quit brings the
+  earlier result back, with **Use**; the permissions shown are always the
+  chosen app's; the warning before **Change…** opens in front.
+- **An app added with Add an App controlled through the Now Playing
+  panel:** a press the panel refuses counts as failed, so AutoHush tries
+  the next way or mutes it, instead of taking it for done; pausing and
+  playing no longer listen first when every way checks its own presses
+  (up to half a second sooner); the AppleScript command and properties
+  kept are chosen the same way at each check.
+- **Error alerts** say their text once when AutoHush has no words of its
+  own for the error.
+- **The welcome window:** with many players, the tiles keep the height
+  they have while you type in the search.
+- **Settings → Diagnostics** no longer reads a menu player's words on the
+  main thread (a pause of the window with a large app).
+- **The Logs window:** the player's mute, Pause on disconnect and Level
+  the volume's lines are filed under Player.
+- **Player Check:** the switches it turned back on are reported so, and it
+  brings the right app back to the front after a page check.
 
 ## [1.2.6] — 2026-10-29
 
