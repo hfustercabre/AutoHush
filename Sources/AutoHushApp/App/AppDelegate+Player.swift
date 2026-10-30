@@ -6,7 +6,7 @@ extension AppDelegate {
     /// Makes `bundleID` the player AutoHush controls and starts over with it.
     /// A player that isn't installed, or is chosen already, is ignored, as
     /// is one only its sound tells about while AntiDot mode is on (its tile
-    /// and row are dimmed then). Music that AutoHush holds paused in the
+    /// and row are dimmed then). What AutoHush holds paused in the
     /// previous player stays paused: the user is moving to another one. A
     /// player AutoHush must learn opens the learning window, unless another
     /// window shows the steps. A suggested web app opens "Add a Web App",

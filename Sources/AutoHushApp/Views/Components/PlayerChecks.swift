@@ -14,7 +14,7 @@ struct PlayerChecks: View {
                     check(Self.allowedTitle(control), done: true)
                 }
                 if !model.playerCanFade {
-                    check(String(localized: "No fades", comment: "Settings → General and the foot of the menu's card, under the media player: AutoHush can't fade this player (TIDAL, Apple Podcasts, web apps)"), done: false)
+                    check(String(localized: "No fades", comment: "Settings → General and the foot of the menu's card, under the media player: AutoHush can't fade this player (some apps, web apps)"), done: false)
                 } else if model.timings.fadesEnabled {
                     check(FadesText.title, done: true)
                 } else {

@@ -59,7 +59,7 @@ struct AddWebAppView: View {
                 }
                 if model.phase == .entering {
                     Text("\(sites.name) has its own site in some countries, and you can sign in only on your account’s.",
-                         comment: "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Amazon Music")
+                         comment: "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Jukebox")
                         .captionStyle()
                 }
             } else {
@@ -148,7 +148,7 @@ struct AddWebAppView: View {
             Picker(selection: Binding(get: { model.country(in: sites) }, set: { model.chooseCountry($0, in: sites) })) {
                 ForEach(model.countries(of: sites), id: \.code) { Text(verbatim: $0.name).tag($0.code) }
                 Divider()
-                Text("Other Countries", comment: "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries (Amazon Music): every country without a site of its own")
+                Text("Other Countries", comment: "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries: every country without a site of its own")
                     .tag("")
             } label: {
                 Self.countryLabel
@@ -167,7 +167,7 @@ struct AddWebAppView: View {
     }
 
     private static var countryLabel: Text {
-        Text("Your account’s country", comment: "Add a Web App window: the row under the address of a service with its own site in some countries (Amazon Music), before the pop-up of countries; the site changes with the country")
+        Text("Your account’s country", comment: "Add a Web App window: the row under the address of a service with its own site in some countries, before the pop-up of countries; the site changes with the country")
     }
 
 

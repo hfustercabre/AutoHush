@@ -47,7 +47,7 @@ enum PlayerAlerts {
         confirm(
             title: stopAddingTitle(site),
             message: String(localized: "Learning \(player)’s controls again stops adding it.",
-                            comment: "Message of the alert when Learn Again is clicked while Add a Web App adds another web app; %@ is the chosen web app, e.g. YouTube Music"),
+                            comment: "Message of the alert when Learn Again is clicked while Add a Web App adds another web app; %@ is the chosen web app, e.g. Jukebox"),
             button: stopAddingButton)
     }
 
@@ -58,13 +58,13 @@ enum PlayerAlerts {
         confirm(
             title: stopAddingTitle(site),
             message: String(localized: "Adding \(newSite) instead stops adding it.",
-                            comment: "Message of the alert when a suggested web app is clicked while Add a Web App adds another web app; %@ is the address of the one clicked, e.g. soundcloud.com"),
+                            comment: "Message of the alert when a suggested web app is clicked while Add a Web App adds another web app; %@ is the address of the one clicked, e.g. music.example.com"),
             button: stopAddingButton)
     }
 
     private static func stopAddingTitle(_ site: String) -> String {
         String(localized: "Stop Adding \(site)?",
-               comment: "Alert title when Learn Again (the chosen web app's controls), or a suggested web app, is clicked while Add a Web App adds another; %@ is the address being added, e.g. music.youtube.com")
+               comment: "Alert title when Learn Again (the chosen web app's controls), or a suggested web app, is clicked while Add a Web App adds another; %@ is the address being added, e.g. music.example.com")
     }
 
     private static var stopAddingButton: String {
