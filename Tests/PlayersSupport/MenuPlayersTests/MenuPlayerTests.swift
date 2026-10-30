@@ -57,7 +57,7 @@ private final class FakeMenu: PlaybackMenu, @unchecked Sendable {
     }
 }
 
-@Suite("MenuPlayer")
+@Suite("MenuPlayer", .waitsTimeLimit)
 struct MenuPlayerTests {
     private static let words = PlayPauseWords(play: ["Play", "Reproducir"], pause: ["Pause", "Pausa"])
     private static let profile = MenuPlayerProfile(

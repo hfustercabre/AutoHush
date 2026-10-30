@@ -4,7 +4,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("UserSettings")
+@Suite("UserSettings", .waitsTimeLimit)
 @MainActor
 struct UserSettingsTests {
     private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")

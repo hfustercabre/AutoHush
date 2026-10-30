@@ -36,7 +36,7 @@ final class FakePanel: NowPlayingPanel, @unchecked Sendable {
     func isInMenuBar() -> Bool { inMenuBar }
 }
 
-@Suite("PanelWay")
+@Suite("PanelWay", .waitsTimeLimit)
 struct PanelWayTests {
     private let setup = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"),
                                     ways: [.menu(menuName: "Play"), .panel(rememberedRow: nil)])

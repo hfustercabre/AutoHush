@@ -10,7 +10,7 @@ import PlayerCheckKit
 /// The logs window and Settings keep their place under a name of their
 /// own, which AppKit gives one window at a time: tests run at once, each
 /// with its own, removed after.
-@Suite("Windows")
+@Suite("Windows", .waitsTimeLimit)
 @MainActor
 final class WindowTitleTests {
     private let actions = FakeAppActions()

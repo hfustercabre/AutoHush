@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("LogFile")
+@Suite("LogFile", .waitsTimeLimit)
 struct LogFileTests {
     /// A log in a folder of its own, at a clock the test moves.
     final class Scratch: Sendable {

@@ -5,7 +5,7 @@ import Testing
 import AutoHushTestSupport
 
 /// Each test has preferences of its own, in memory.
-@Suite("SystemVolumeLeveler")
+@Suite("SystemVolumeLeveler", .waitsTimeLimit)
 final class SystemVolumeLevelerTests {
     private let defaults: UserDefaults = MemoryDefaults()
 

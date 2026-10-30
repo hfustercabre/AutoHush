@@ -4,7 +4,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("AudioMonitor")
+@Suite("AudioMonitor", .waitsTimeLimit)
 struct AudioMonitorTests {
 
     /// Hysteresis matches production defaults; timers are effectively disabled

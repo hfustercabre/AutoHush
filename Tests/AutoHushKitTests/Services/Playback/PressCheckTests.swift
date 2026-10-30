@@ -3,7 +3,7 @@ import Testing
 import AutoHushTestSupport
 @testable import AutoHushKit
 
-@Suite("PressCheck")
+@Suite("PressCheck", .waitsTimeLimit)
 struct PressCheckTests {
     private func check(_ player: any MusicPlayer) -> PressCheck {
         PressCheck(player: player, sleep: { _ in })

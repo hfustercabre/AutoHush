@@ -1,12 +1,13 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
 /// On defaults of its own, never the user's.
 @Suite("MenuBarIconPlace")
 @MainActor
 struct MenuBarIconPlaceTests {
-    private let defaults = UserDefaults(suiteName: "MenuBarIconPlaceTests-\(UUID().uuidString)")!
+    private let defaults: UserDefaults = MemoryDefaults()
     private var place: MenuBarIconPlace { MenuBarIconPlace(defaults: defaults) }
     private var position: Double? { defaults.object(forKey: MenuBarIconPlace.positionKey) as? Double }
 

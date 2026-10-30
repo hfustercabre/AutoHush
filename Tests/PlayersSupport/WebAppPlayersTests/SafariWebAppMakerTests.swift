@@ -5,7 +5,7 @@ import Testing
 @testable import WebAppPlayers
 import AutoHushTestSupport
 
-@Suite("Adding a web app")
+@Suite("Adding a web app", .waitsTimeLimit)
 struct SafariWebAppMakerTests {
     @Test("what's typed becomes a web address, https added; anything else isn't one",
           arguments: [
@@ -89,9 +89,14 @@ struct SafariWebAppMakerTests {
         let listener = try NWListener(using: .tcp, on: .any)
         let queue = DispatchQueue(label: "SafariWebAppMakerTests.listener")
         let port = Locked<UInt16?>(nil)
+        let cancelled = Locked(false)
         listener.newConnectionHandler = { $0.cancel() }
-        listener.stateUpdateHandler = { [port] state in
-            if case .ready = state { port.withLock { $0 = listener.port?.rawValue } }
+        listener.stateUpdateHandler = { [port, cancelled] state in
+            switch state {
+            case .ready: port.withLock { $0 = listener.port?.rawValue }
+            case .cancelled: cancelled.withLock { $0 = true }
+            default: break
+            }
         }
         listener.start(queue: queue)
         await TestWait.until { port.value != nil }
@@ -99,7 +104,7 @@ struct SafariWebAppMakerTests {
         let site = URL(string: "http://localhost:\(listening)/")!
         #expect(await WebAddress.connects(to: site, timeout: 5))
         listener.cancel()
-        try await Task.sleep(for: .milliseconds(200))
+        await TestWait.until { cancelled.value }
         #expect(await WebAddress.connects(to: site, timeout: 5) == false)
     }
 

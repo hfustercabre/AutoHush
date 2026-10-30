@@ -5,7 +5,7 @@ import AutoHushKit
 import AutoHushTestSupport
 
 /// The kept download, in a folder of its own for each test.
-@Suite("UpdateDownloads")
+@Suite("UpdateDownloads", .waitsTimeLimit)
 @MainActor
 struct UpdateDownloadsTests {
     @MainActor

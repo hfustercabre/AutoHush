@@ -5,7 +5,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("PlayerStateObserver")
+@Suite("PlayerStateObserver", .waitsTimeLimit)
 struct PlayerStateObserverTests {
     private static let bundleID = "com.example.jukebox"
 

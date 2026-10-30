@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("ProcessPlayerMute")
+@Suite("ProcessPlayerMute", .waitsTimeLimit)
 struct ProcessPlayerMuteTests {
     private func playerMute(running pid: Locked<pid_t?>, muter: FakeMuter, taps: Bool = true,
                             recording: Bool = true) -> ProcessPlayerMute {

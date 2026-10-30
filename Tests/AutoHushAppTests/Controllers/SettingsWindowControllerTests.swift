@@ -7,7 +7,7 @@ import AutoHushTestSupport
 
 /// Each window keeps its place under a name of its own, which AppKit gives
 /// one window at a time: tests run at once, each with its own, removed after.
-@Suite("SettingsWindowController")
+@Suite("SettingsWindowController", .waitsTimeLimit)
 @MainActor
 final class SettingsWindowControllerTests {
     private let actions = FakeAppActions()

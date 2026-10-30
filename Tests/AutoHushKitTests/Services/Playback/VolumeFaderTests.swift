@@ -265,7 +265,7 @@ struct VolumeFaderTests {
     }
 }
 
-@Suite("VolumeCurve")
+@Suite("VolumeCurve", .waitsTimeLimit)
 struct VolumeCurveTests {
     @Test("a cube law puts half volume at about −18 dB, and converts back")
     func cubic() {

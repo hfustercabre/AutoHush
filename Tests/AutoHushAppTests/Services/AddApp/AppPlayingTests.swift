@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("AppPlaying")
+@Suite("AppPlaying", .waitsTimeLimit)
 struct AppPlayingTests {
     private func playing(output: Bool, measured: Bool, audible: Bool) -> AppPlaying {
         AppPlaying(outputRunning: { _ in output }, levelMeasured: { measured }, audible: { _ in audible })

@@ -7,7 +7,7 @@ import AutoHushKit
 import AutoHushTestSupport
 @testable import ScriptablePlayers
 
-@Suite("ScriptedAppPlayer", .appleEventCoercions)
+@Suite("ScriptedAppPlayer", .appleEventCoercions, .waitsTimeLimit)
 struct ScriptedAppPlayerTests {
     private func player(_ setup: ScriptSetup, app: FakeScriptedApp) -> ScriptedAppPlayer {
         ScriptedAppPlayer(bundleID: "com.example.jukebox", name: "Jukebox", setup: setup, channel: app)

@@ -5,7 +5,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("SettingsModel")
+@Suite("SettingsModel", .waitsTimeLimit)
 @MainActor
 struct SettingsModelTests {
     /// What Settings asked of AppDelegate and the updates; the user's
@@ -52,7 +52,7 @@ struct SettingsModelTests {
 
     @Test("keeping the menu bar icon beside the system's icons moves it there at once; letting it go doesn't move it")
     func menuBarIconKept() {
-        let defaults = UserDefaults(suiteName: "SettingsModelTests-\(UUID().uuidString)")!
+        let defaults = MemoryDefaults()
         let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
                                   launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
                                   menuBarIcon: MenuBarIconPlace(defaults: defaults))
@@ -67,7 +67,7 @@ struct SettingsModelTests {
 
     @Test("General says the menu bar icon is hidden as it's read again (Settings opening), and no longer once it was moved beside the system's icons")
     func menuBarIconHidden() {
-        let defaults = UserDefaults(suiteName: "SettingsModelTests-\(UUID().uuidString)")!
+        let defaults = MemoryDefaults()
         let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
                                   launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
                                   menuBarIcon: MenuBarIconPlace(defaults: defaults))
@@ -523,7 +523,7 @@ struct SettingsModelTests {
 
     @Test("Modes' Restore Defaults turns AntiDot mode off; Startup and Menu Bar's no longer keeps the icon beside the system's, leaving it where it is, and leaves launch at login alone, which doesn't count; Updates' checks daily and installs")
     func restoreDefaultsOfTheOtherCards() {
-        let icon = MenuBarIconPlace(defaults: UserDefaults(suiteName: "restore-\(UUID())")!)
+        let icon = MenuBarIconPlace(defaults: MemoryDefaults())
         let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
                                   launchAtLoginController: MockLaunchAtLoginController(isEnabled: false), menuBarIcon: icon)
         #expect(model.isDefault(.modes) && model.isDefault(.startup) && model.isDefault(.updates))

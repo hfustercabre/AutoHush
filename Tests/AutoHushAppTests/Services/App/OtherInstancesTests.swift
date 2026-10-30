@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("OtherInstances")
+@Suite("OtherInstances", .waitsTimeLimit)
 struct OtherInstancesTests {
     /// Stand-in processes: which are running, which quit when asked, and the
     /// signals they got.

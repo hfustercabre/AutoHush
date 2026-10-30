@@ -11,7 +11,7 @@ import AutoHushTestSupport
 /// (`Fixture.shared`), which macOS won't attach again while it's attached
 /// (hdiutil: “Resource busy”, 2026-10-19). Another run's are its own
 /// (`Fixture.runFolder`).
-@Suite("UpdateInstaller", .serialized)
+@Suite("UpdateInstaller", .serialized, .waitsTimeLimit)
 struct UpdateInstallerTests {
     /// A folder of its own for each test, deleted afterwards.
     private final class Scratch {

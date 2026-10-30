@@ -5,7 +5,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("AutoPauseIntents")
+@Suite("AutoPauseIntents", .waitsTimeLimit)
 @MainActor
 struct AutoPauseIntentsTests {
     /// A moment well ahead of the real one, so the settings never clear a

@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("NowPlayingReports")
+@Suite("NowPlayingReports", .waitsTimeLimit)
 struct NowPlayingReportsTests {
     @Test("the daemon's lines: each client created, its state changes, removed")
     func lines() {

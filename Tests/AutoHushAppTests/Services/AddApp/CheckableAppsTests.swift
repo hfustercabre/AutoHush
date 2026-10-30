@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("CheckableApps")
+@Suite("CheckableApps", .waitsTimeLimit)
 struct CheckableAppsTests {
     /// An app bundle in `folder` with `id` and, optionally, a display name.
     private func app(_ name: String, id: String, displayName: String? = nil, in folder: URL) throws -> URL {

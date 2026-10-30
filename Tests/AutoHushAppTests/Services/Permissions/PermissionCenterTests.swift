@@ -5,7 +5,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("PermissionCenter")
+@Suite("PermissionCenter", .waitsTimeLimit)
 @MainActor
 struct PermissionCenterTests {
     /// A stand-in system: Accessibility, Automation and Audio Recording as set.

@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import AutoHushKit
+import AutoHushTestSupport
 
 /// A player that opts into both: no volume, read now and then.
 private struct MenuLikePlayer: FadelessMusicPlayer, PolledMusicPlayer {
@@ -29,7 +30,7 @@ private struct ScriptedLikePlayer: MusicPlayer {
     }
 }
 
-@Suite("MusicPlayer's defaults")
+@Suite("MusicPlayer's defaults", .waitsTimeLimit)
 struct MusicPlayerDefaultsTests {
     @Test("a fadeless player can't fade and has no volume; a polled one is read now and then, and says a change may come a read late")
     @MainActor

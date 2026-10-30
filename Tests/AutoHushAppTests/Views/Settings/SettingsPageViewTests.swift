@@ -3,9 +3,10 @@ import SwiftUI
 import Testing
 @testable import AutoHushApp
 @testable import AutoHushKit
+import AutoHushTestSupport
 
 /// Settings' pages no other test shows, drawn as their window draws them.
-@Suite("Settings' pages, drawn")
+@Suite("Settings' pages, drawn", .waitsTimeLimit)
 @MainActor
 struct SettingsPageViewTests {
     private let actions = FakeAppActions()

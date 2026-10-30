@@ -10,7 +10,7 @@ private final class Report {
     var lines: [String] = []
 }
 
-@Suite("PlayerCheckHelper")
+@Suite("PlayerCheckHelper", .waitsTimeLimit)
 struct PlayerCheckHelperTests {
     @Test("each question goes to the helper with its folders, its answer read; a helper that can't start or takes too long tells nothing")
     func questions() async throws {
