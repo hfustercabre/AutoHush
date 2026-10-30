@@ -1,5 +1,5 @@
+import AutoHushKit
 import Foundation
-import IOKit.pwr_mgt
 
 /// The pages a Chromium browser plays now: it holds one "Playing audio"
 /// assertion per playing page, all on its own process (Chrome and Brave,
@@ -9,10 +9,7 @@ import IOKit.pwr_mgt
 /// what tells whether the web app itself plays (Player Check's sign).
 package enum PlayingPages {
     package static func count(ofBrowser pid: pid_t) -> Int {
-        var byProcess: Unmanaged<CFDictionary>?
-        guard IOPMCopyAssertionsByProcess(&byProcess) == kIOReturnSuccess,
-              let all = byProcess?.takeRetainedValue() as? [NSNumber: [[String: Any]]] else { return 0 }
-        return count(in: all[NSNumber(value: pid)] ?? [])
+        count(in: IOKitPowerAssertionReader.rawAssertionsByProcess()[NSNumber(value: pid)] ?? [])
     }
 
     /// The "Playing audio" assertions the process holds itself.

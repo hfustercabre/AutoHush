@@ -162,7 +162,7 @@ window. _Avoid_: test (that's the code's tests), scan.
 **Way** (`PlayerSetup.Way`, `CheckResult.WayKind`): one means of pausing
 and playing an app: its script, its menu, its page or the panel; or, when
 none works and the user chooses it, muting it while other apps play
-(`.mute`, its state kept by `MuteState`). A check says how each did: in
+(`.mute`, its state kept by `MutedAppState`). A check says how each did: in
 every window state, in some, in none (or with its windows closed), not
 there, not tried or not checked.
 _Avoid_: method.

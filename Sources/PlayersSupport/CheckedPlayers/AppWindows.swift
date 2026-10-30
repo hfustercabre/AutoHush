@@ -13,11 +13,10 @@ package enum AppWindows {
     package static func infos(_ option: CGWindowListOption) -> [Info] {
         CGWindowListCopyWindowInfo(option, kCGNullWindowID) as? [Info] ?? []
     }
-    package static func frame(of info: Info) -> CGRect {
-        (info[kCGWindowBounds as String] as? NSDictionary).flatMap { CGRect(dictionaryRepresentation: $0 as CFDictionary) } ?? .zero
-    }
-    package static func number(of info: Info) -> Int { info[kCGWindowNumber as String] as? Int ?? 0 }
-    package static func owner(of info: Info) -> pid_t { info[kCGWindowOwnerPID as String] as? pid_t ?? 0 }
+    // Each field read as `ListedWindow` reads it, the engine's one reading.
+    package static func frame(of info: Info) -> CGRect { ListedWindow(info).frame ?? .zero }
+    package static func number(of info: Info) -> Int { ListedWindow(info).number }
+    package static func owner(of info: Info) -> pid_t { ListedWindow(info).owner ?? 0 }
 
     /// The app's main window, and its Accessibility element when it can be
     /// reached, from one look at its windows (the search for windows on
@@ -41,7 +40,7 @@ package enum AppWindows {
 
     /// A window the app keeps closed (`isClosed(onScreen:desktops:)`).
     package static func isClosed(_ info: Info) -> Bool {
-        let onScreen = info[kCGWindowIsOnscreen as String] as? Bool == true
+        let onScreen = ListedWindow(info).isOnScreen
         return isClosed(onScreen: onScreen, desktops: onScreen ? nil : Desktops.all(ofWindow: number(of: info)))
     }
 
@@ -65,7 +64,7 @@ package enum AppWindows {
     /// sound alone can be about 130 points tall), or at least 200 points tall
     /// (not a strip or a helper).
     package static func isOrdinary(_ info: Info, standard: Set<Int>) -> Bool {
-        isOrdinary(layer: info[kCGWindowLayer as String] as? Int, height: frame(of: info).height, isStandard: standard.contains(number(of: info)))
+        isOrdinary(layer: ListedWindow(info).layer, height: frame(of: info).height, isStandard: standard.contains(number(of: info)))
     }
 
     /// `isOrdinary`'s rule, on what it reads of the window.
@@ -109,7 +108,8 @@ package enum AppWindows {
         guard let index = list.firstIndex(where: { number(of: $0) == number(of: info) }) else { return [] }
         let box = frame(of: info)
         return list[..<index].filter { other in
-            other[kCGWindowLayer as String] as? Int == 0 && (other[kCGWindowAlpha as String] as? Double ?? 1) > 0
+            let window = ListedWindow(other)
+            return window.layer == 0 && window.alpha > 0
                 && frame(of: other).insetBy(dx: -0.5, dy: -0.5).intersects(box)
         }.map { (owner(of: $0), number(of: $0), frame(of: $0)) }
     }
@@ -153,7 +153,7 @@ package enum AppWindows {
         if hidden { return .hidden }
         if element?.value(kAXMinimizedAttribute) as? Bool == true { return .minimized }
         if element?.value("AXFullScreen") as? Bool == true { return .fullScreen }
-        if info[kCGWindowIsOnscreen as String] as? Bool == true { return isCovered(info) ? .covered : .visible }
+        if ListedWindow(info).isOnScreen { return isCovered(info) ? .covered : .visible }
         // Off screen on this very desktop: closed, as an Electron app keeps a
         // closed window (a player's, playing on), or ordered out.
         if let desktop = Desktops.of(window: number(of: info)), desktop == Desktops.all()?.current { return nil }
