@@ -38,7 +38,7 @@ struct GeneralSettingsView: View {
         SettingsPageScroll {
             playerCard
             Card(Text("Startup and Menu Bar", comment: "Settings → General: heading over the last section, with Launch at login and Keep icon next to system icons")) {
-                SwitchRow(Text("Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), isOn: Binding(
+                SwitchRow(Text(verbatim: AutoHushText.launchAtLogin), isOn: Binding(
                     get: { model.launchAtLoginEnabled },
                     set: { model.setLaunchAtLogin($0) }
                 ))

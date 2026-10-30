@@ -56,7 +56,7 @@ extension DiagnosticsReport {
         if let error = status.controlError {
             // In the user's language, then as the log has it, for a bug report.
             rows.append(Row(label: String(localized: "Last error", comment: "Diagnostics: why the media player couldn't be controlled, the last time it couldn't"),
-                            value: "\(error.text)\n\(error.detail)", mark: .problem))
+                            value: [error.text, error.ownDetail].compactMap { $0 }.joined(separator: "\n"), mark: .problem))
         }
         return .init(kind: .player, title: title, summary: "\(player.name) · \(state)", rows: rows)
     }
@@ -171,7 +171,7 @@ extension DiagnosticsReport {
         let summary = rows.contains { $0.mark == .problem }
             ? String(localized: "Something’s missing", comment: "Diagnostics: a permission isn't granted")
             : String(localized: "All allowed", comment: "Diagnostics: every permission AutoHush needs is granted")
-        return .init(kind: .permissions, title: String(localized: "Permissions", comment: "Settings → Diagnostics and the welcome window: the heading over the permissions AutoHush needs"),
+        return .init(kind: .permissions, title: PermissionText.heading,
                      summary: summary, rows: rows)
     }
 
@@ -194,12 +194,12 @@ extension DiagnosticsReport {
             return formatter.localizedString(for: $0, relativeTo: facts.now)
         } ?? String(localized: "Never", comment: "Diagnostics: updates were never checked")
         return .init(kind: .autoHush, title: "AutoHush",
-                     summary: String(localized: "Version \(facts.appVersion)", comment: "Settings → About, Settings' sidebar and Diagnostics; %@ is AutoHush's version"),
+                     summary: AutoHushText.version(facts.appVersion),
                      rows: [
                         Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
                         Row(label: AutoPauseText.title, value: autoPause),
                         Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
-                        Row(label: String(localized: "Launch at login", comment: "Settings → General and Diagnostics: whether AutoHush opens when you log in"), value: facts.launchAtLogin ? on : off),
+                        Row(label: AutoHushText.launchAtLogin, value: facts.launchAtLogin ? on : off),
                         Row(label: MenuBarIconPlace.title, value: facts.keepsMenuBarIconNearSystemIcons ? on : off),
                         Row(label: UpdateOffer.updatesTitle, value: updates),
                         Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),

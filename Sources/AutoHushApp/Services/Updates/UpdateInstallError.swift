@@ -51,8 +51,7 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
         case .noDiskImage:
             return String(localized: "This release has no disk image to install from.", comment: "Update install error")
         case .badResponse(let status):
-            return String(localized: "GitHub answered with HTTP status \(status).",
-                          comment: "Update check error; %lld is an HTTP status code")
+            return UpdateCheckError.badResponse(status).errorDescription
         case .damaged:
             return String(localized: "The download is damaged.", comment: "Update install error")
         case .notGenuine:
@@ -74,7 +73,7 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
         case .unavailable(.notSignedWithCertificate): "This copy isn't signed with AutoHush's certificate, so it can't update itself."
         case .unavailable(.readOnlyLocation): "AutoHush can't write to the folder it's in, so it can't update itself."
         case .noDiskImage: "The release has no disk image to install from."
-        case .badResponse(let status): "GitHub answered with HTTP status \(status)."
+        case .badResponse(let status): UpdateCheckError.badResponse(status).logDescription
         case .damaged: "The download is damaged."
         case .notGenuine: "The download isn't signed by AutoHush's developer."
         case .wrongVersion: "The download doesn't contain the version GitHub announced."

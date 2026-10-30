@@ -7,7 +7,7 @@ struct SettingsNavigationTests {
     @Test("each page shown can be gone back to; Forward undoes Back until another page is shown")
     func history() {
         let sut = SettingsNavigation()
-        var shown: [SettingsWindowController.Page] = []
+        var shown: [SettingsPage] = []
         sut.onChange = { shown.append($0) }
         sut.page = .behavior
         sut.page = .fineTuning

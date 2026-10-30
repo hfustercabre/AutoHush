@@ -8,7 +8,7 @@ import Observation
 @MainActor
 @Observable
 final class SettingsNavigation {
-    var page = SettingsWindowController.Page.general {
+    var page = SettingsPage.general {
         didSet {
             guard page != oldValue else { return }
             if !isWalkingHistory {
@@ -19,9 +19,9 @@ final class SettingsNavigation {
         }
     }
     /// The pages Back goes to, the last first; Forward's, the next last.
-    private(set) var back: [SettingsWindowController.Page] = []
-    private(set) var forward: [SettingsWindowController.Page] = []
-    @ObservationIgnored var onChange: ((SettingsWindowController.Page) -> Void)?
+    private(set) var back: [SettingsPage] = []
+    private(set) var forward: [SettingsPage] = []
+    @ObservationIgnored var onChange: ((SettingsPage) -> Void)?
     @ObservationIgnored private var isWalkingHistory = false
 
     var canGoBack: Bool { !back.isEmpty }
@@ -44,7 +44,7 @@ final class SettingsNavigation {
         forward.removeAll()
     }
 
-    private func walk(to page: SettingsWindowController.Page) {
+    private func walk(to page: SettingsPage) {
         isWalkingHistory = true
         defer { isWalkingHistory = false }
         self.page = page

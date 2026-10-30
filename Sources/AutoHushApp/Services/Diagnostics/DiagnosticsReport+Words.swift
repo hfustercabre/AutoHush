@@ -21,13 +21,13 @@ extension DiagnosticsReport {
     /// instead of paused.
     static func describe(_ playback: PlaybackState, mutes: Bool) -> String {
         switch playback {
-        case .musicPlaying:     return String(localized: "Playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
+        case .musicPlaying:     return PlaybackState.playingLine
         case .pausedByMonitor where mutes:
             return String(localized: "Muted by AutoHush", comment: "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted, or a player muted in place of a pause that didn't take)")
         case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the media player's state")
-        case .musicIdle:        return String(localized: "Not playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: nothing plays")
-        case .playingElsewhere: return String(localized: "Playing on another device", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player, e.g. through Spotify Connect")
-        case .playingSilently:  return String(localized: "Playing silently", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it")
+        case .musicIdle:        return PlaybackState.notPlayingLine
+        case .playingElsewhere: return PlaybackState.playingElsewhereLine
+        case .playingSilently:  return PlaybackState.playingSilentlyLine
         case .pauseFailed:      return String(localized: "Playing: couldn’t pause it", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
         case .unknown:          return unknown
         }

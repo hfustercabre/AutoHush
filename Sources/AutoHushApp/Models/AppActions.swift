@@ -41,7 +41,7 @@ protocol AppActions: AnyObject {
     /// be set up (it stays open, and says so).
     @discardableResult func reopenAutoHush() -> Bool
     /// Settings, on `page` (the one shown last when `nil`).
-    func openSettings(page: SettingsWindowController.Page?)
+    func openSettings(page: SettingsPage?)
     /// Why the media player couldn't be controlled, in an alert.
     func showControlError()
     /// The window with AutoHush's logs (Settings → Diagnostics' Show Logs…).

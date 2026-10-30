@@ -3,6 +3,11 @@ import Foundation
 /// What the permission pieces say (`PermissionButton` and the windows that
 /// ask), and Diagnostics' rows.
 enum PermissionText {
+    /// The heading over the permissions (Diagnostics, the welcome window).
+    static var heading: String {
+        String(localized: "Permissions", comment: "Settings → Diagnostics and the welcome window: the heading over the permissions AutoHush needs")
+    }
+
     static func controlTitle(_ player: String) -> String {
         String(localized: "Control \(player)",
                comment: "Welcome window, the permission AutoHush needs to pause and resume the media player; %@ is the player")

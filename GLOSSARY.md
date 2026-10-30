@@ -73,7 +73,7 @@ list's order) here, the rest from the app state. _Avoid_: preferences
 (that's where they're stored, `Preferences`).
 
 **Sound Sources** (`SoundSourcesSettingsView`, the page
-`SettingsWindowController.Page.soundSources`, its list `AppListModel`):
+`SettingsPage.soundSources`, its list `AppListModel`):
 Settings' page of the apps heard playing sound, each switched to pause
 the chosen player or to be ignored, in the order the user chose
 (`AppListOrder`). In the menu, the same apps are under Playing Now,

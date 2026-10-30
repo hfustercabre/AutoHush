@@ -57,7 +57,7 @@ struct AboutSettingsView: View {
                     Text(verbatim: "AutoHush")
                         .font(.appAboutTitle)
                     if let version = model.fullVersion {
-                        Text("Version \(version)", comment: "Settings → About, Settings' sidebar and Diagnostics; %@ is AutoHush's version")
+                        Text(verbatim: AutoHushText.version(version))
                             .foregroundStyle(.appSecondary)
                             .textSelection(.enabled)
                     }

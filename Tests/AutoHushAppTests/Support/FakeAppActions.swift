@@ -31,7 +31,7 @@ final class FakeAppActions: AppActions {
         log.calls.append("reopen")
         return true
     }
-    func openSettings(page: SettingsWindowController.Page?) { log.calls.append(page.map { "\($0)" } ?? "settings") }
+    func openSettings(page: SettingsPage?) { log.calls.append(page.map { "\($0)" } ?? "settings") }
     func showControlError() { log.calls.append("why") }
     func showLogs() { log.calls.append("showLogs") }
     func openNotificationSettings() { log.calls.append("notificationSettings") }

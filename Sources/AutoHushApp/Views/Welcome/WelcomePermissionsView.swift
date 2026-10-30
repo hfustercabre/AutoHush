@@ -15,7 +15,7 @@ struct WelcomePermissionsView: View {
                    description: Text(String(localized: "AutoHush needs these to pause and resume \(name) for you.",
                                             comment: "Welcome window, at the top of the page titled “Allow AutoHush to Work”, beside the media player's icon; %@ is the media player")),
                    width: PlayerChooserView.width) {
-            SectionHeading(Text("Permissions", comment: "Settings → Diagnostics and the welcome window: the heading over the permissions AutoHush needs"))
+            SectionHeading(Text(verbatim: PermissionText.heading))
                 .padding(.top, 8)
             Card {
                 VStack(alignment: .leading, spacing: 10) {
@@ -42,7 +42,7 @@ struct WelcomePermissionsView: View {
             }
         } bar: {
             Button { model.showWelcomePlayers() } label: {
-                Text("Back", comment: "Welcome window: button that goes back to the list of media players. Also Settings: the toolbar's arrow and the View menu's item (⌘[) that show the page shown before; macOS's own word")
+                Text(verbatim: ButtonText.back)
             }
             .buttonStyle(.chip)
             Spacer()

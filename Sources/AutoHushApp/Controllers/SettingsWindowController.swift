@@ -9,9 +9,6 @@ import AutoHushKit
 /// was left, the first time at `initialSize`, centered.
 @MainActor
 final class SettingsWindowController: PlacedWindowController {
-    /// The window's pages (`SettingsPage`), by the name they had here.
-    typealias Page = SettingsPage
-
     /// The sidebar's width, whatever the window's.
     static let sidebarWidth: CGFloat = 235
     /// The page between 480 and 640 pt wide, wider when a choice needs it
@@ -163,7 +160,7 @@ final class SettingsWindowController: PlacedWindowController {
 
     /// Back's and Forward's names: the toolbar's arrows and the View menu.
     static var backTitle: String {
-        String(localized: "Back", comment: "Welcome window: button that goes back to the list of media players. Also Settings: the toolbar's arrow and the View menu's item (⌘[) that show the page shown before; macOS's own word")
+        ButtonText.back
     }
 
     static var forwardTitle: String {

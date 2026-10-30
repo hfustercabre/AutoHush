@@ -13,7 +13,7 @@ struct SettingsSidebar: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(SettingsWindowController.Page.groups.enumerated()), id: \.offset) { index, group in
+                    ForEach(Array(SettingsPage.groups.enumerated()), id: \.offset) { index, group in
                         if index > 0 { Spacer().frame(height: 14) }
                         if let title = group.title { heading(title, note: group.note) }
                         ForEach(group.pages, id: \.self) { row($0) }
@@ -44,7 +44,7 @@ struct SettingsSidebar: View {
         .padding(.bottom, 4)
     }
 
-    private func row(_ page: SettingsWindowController.Page) -> some View {
+    private func row(_ page: SettingsPage) -> some View {
         let isShown = navigation.page == page
         return Button { navigation.page = page } label: {
             HStack(spacing: 12) {
@@ -79,7 +79,7 @@ struct SettingsSidebarFoot: View {
             VStack(spacing: 1) {
                 Text(verbatim: "AutoHush").font(.appSidebarName)
                 if let version = model.currentVersion {
-                    Text("Version \(version)", comment: "Settings → About, Settings' sidebar and Diagnostics; %@ is AutoHush's version")
+                    Text(verbatim: AutoHushText.version(version))
                         .font(.appCaption)
                         .foregroundStyle(.appSecondary)
                 }

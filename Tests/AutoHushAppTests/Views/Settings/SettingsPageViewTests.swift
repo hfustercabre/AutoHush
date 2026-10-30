@@ -11,8 +11,8 @@ struct SettingsPageViewTests {
     private let actions = FakeAppActions()
 
     @Test("About (with Updates), Behavior, Fine-Tuning, Media Player and Diagnostics draw, Diagnostics with every part unfolded",
-          arguments: [SettingsWindowController.Page.about, .behavior, .fineTuning, .mediaPlayer, .diagnostics])
-    func page(_ page: SettingsWindowController.Page) {
+          arguments: [SettingsPage.about, .behavior, .fineTuning, .mediaPlayer, .diagnostics])
+    func page(_ page: SettingsPage) {
         let updates = FakeUpdateCommands()
         updates.currentVersion = AppVersion("0.2.0")
         let model = SettingsModel.forTests(actions: actions, updates: updates)
@@ -45,9 +45,9 @@ struct SettingsPageViewTests {
     }
 
     @Test("Behavior, Fine-Tuning, General and About draw with every card changed, each with its Restore Defaults; Behavior and Fine-Tuning in AntiDot mode too", arguments: [
-        (SettingsWindowController.Page.behavior, false), (.behavior, true), (.fineTuning, false), (.fineTuning, true), (.general, false), (.about, false),
+        (SettingsPage.behavior, false), (.behavior, true), (.fineTuning, false), (.fineTuning, true), (.general, false), (.about, false),
     ])
-    func everyCardChanged(_ page: SettingsWindowController.Page, _ antiDot: Bool) {
+    func everyCardChanged(_ page: SettingsPage, _ antiDot: Bool) {
         let updates = FakeUpdateCommands()
         let model = SettingsModel.forTests(actions: actions, updates: updates)
         model.state.status.choosePlayer(named: "Jukebox")
@@ -131,7 +131,7 @@ struct SettingsPageViewTests {
     }
 
     /// `page` drawn as Settings' window draws it.
-    private func draws(_ page: SettingsWindowController.Page, _ model: SettingsModel, height: CGFloat = 600) -> Bool {
+    private func draws(_ page: SettingsPage, _ model: SettingsModel, height: CGFloat = 600) -> Bool {
         let navigation = SettingsNavigation()
         navigation.page = page
         let keys = SettingsKeys()

@@ -154,6 +154,6 @@ extension PlayerSession {
     /// The wait before starting again after `failedStarts` failed starts in a
     /// row: the range's lower bound, doubling up to its upper bound.
     nonisolated static func retryDelay(afterFailedStarts failedStarts: Int, delays: ClosedRange<TimeInterval>) -> TimeInterval {
-        min(delays.lowerBound * pow(2, Double(max(failedStarts - 1, 0))), delays.upperBound)
+        Backoff.doubling(afterFailures: failedStarts, within: delays)
     }
 }

@@ -20,7 +20,7 @@ struct MenuToolbarView: View {
                    spoken: model.status.updateOffer == nil || model.isCheckingForUpdates ? nil : AppStatus.withUpdate(updates)) { .updates }
                 // Dimmed while the update installs, as its row above.
                 .disabled(model.status.updateOffer?.state == .installing)
-            button(Text(verbatim: SettingsWindowController.Page.about.title), symbol: "info.circle") { .showAbout }
+            button(Text(verbatim: SettingsPage.about.title), symbol: "info.circle") { .showAbout }
             button(Text("Quit", comment: "Menu: button at the bottom; quits AutoHush"), symbol: "power") { .quit }
         }
         .padding(.horizontal, 8)
