@@ -1,26 +1,5 @@
 import Foundation
 
-/// How Safari's Add to Dock dialog ended.
-package enum AddToDockResult: Equatable, Sendable {
-    /// It didn't open: Safari's menu item or its dialog wasn't there.
-    case unavailable
-    /// The user closed it, with Add or with Cancel: the new web app, or none,
-    /// tells which.
-    case closed
-    /// The add was cancelled in AutoHush meanwhile: the dialog was cancelled.
-    case cancelled
-}
-
-/// The tab `SafariDriving` opened a website in, to close it afterwards.
-package struct SafariTab: @unchecked Sendable {
-    /// Its page's Accessibility element (a number in tests).
-    let page: AnyHashable
-
-    init(page: AnyHashable) {
-        self.page = page
-    }
-}
-
 /// What `SafariWebAppMaker` does in Safari. A protocol, so tests stand in.
 package protocol SafariDriving: Sendable {
     func isTrusted(prompt: Bool) async -> Bool

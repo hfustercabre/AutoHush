@@ -277,7 +277,9 @@ Sources/
                          toggle's state, and a stale row's sound), MutedAppState, and the Now Playing panel
                          (NowPlayingPanel, AccessibilityNowPlayingPanel, PanelRows, PanelWay: the last way,
                          its row told by the clues its check found, PanelClues; NowPlayingSetting: showing it
-                         for a press while hidden)
+                         for a press while hidden). ScriptablePlayers, MenuPlayers, WebAppPlayers and
+                         CheckedPlayers are by kind of code too: Models/, Players/, Services/ (in WebAppPlayers by
+                         area: Page/, Learning/, Safari/), Storage/ (setups and learned buttons kept), Utilities/
   CheckPanel/            CheckPanelController: a check's progress at the bottom right of every desktop, and the
                          screen's shade, for Add an App… and Player Check (each shows its own view in it)
   PlayerCheck/           playercheck: how AutoHush can control an app. build-app.sh puts it in the app, as
