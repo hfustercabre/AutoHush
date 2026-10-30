@@ -34,6 +34,21 @@ struct SettingsPageViewTests {
         #expect(draws(.general, model))
     }
 
+    @Test("General draws Try Again after a given-up resume, as the menu's card has it")
+    func generalTryAgainAfterGivenUpResume() {
+        let model = SettingsModel.forTests(actions: actions, updates: FakeUpdateCommands())
+        model.state.status.choosePlayer(named: "Jukebox")
+        model.state.status.setHealth(.ready)
+        model.state.status.resumeError = ControlError(MusicPlayerError.playerNotResponding, player: "Jukebox")
+        #expect(model.showsResumeFailure)
+        let givenUp = drawn(pageView(.general, model), width: Self.pageWidth).height
+        model.state.status.resumeError = nil
+        let button = drawn(PlayerFixButtons.tryAgain(inCard: false) {}, width: Self.pageWidth).height
+        let plain = drawn(pageView(.general, model), width: Self.pageWidth).height
+        // Taller by the button's row at least.
+        #expect(givenUp >= plain + button, "\(givenUp) given up, \(plain) without, the button \(button)")
+    }
+
     @Test("General draws a web app's controls, learned or not, with the button that learns them", arguments: [
         LearningStatus.learned, .learning(hasPlayed: false),
     ])
@@ -133,11 +148,16 @@ struct SettingsPageViewTests {
 
     /// `page` drawn as Settings' window draws it.
     private func draws(_ page: SettingsPage, _ model: SettingsModel, height: CGFloat = 600) -> Bool {
+        drawn(pageView(page, model), width: Self.pageWidth, height: height).height > 0
+    }
+
+    /// `page` as Settings' window shows it, beside its sidebar.
+    private func pageView(_ page: SettingsPage, _ model: SettingsModel) -> some View {
         let navigation = SettingsNavigation()
         navigation.page = page
-        let keys = SettingsKeys()
-        let width = SettingsWindowController.initialSize.width - SettingsWindowController.sidebarWidth
-        let size = drawn(SettingsPageView(model: model, navigation: navigation).environment(keys.page), width: width, height: height)
-        return size.height > 0
+        return SettingsPageView(model: model, navigation: navigation).environment(SettingsKeys().page)
     }
+
+    /// How wide Settings' pages are, as its window opens.
+    private static let pageWidth = SettingsWindowController.initialSize.width - SettingsWindowController.sidebarWidth
 }

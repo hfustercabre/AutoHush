@@ -26,16 +26,20 @@ extension AudioMonitor {
         levels.map { $0 * $0 }.reduce(0, +).squareRoot()
     }
 
+    /// The leveler's logger: its measurements go with its own lines (under
+    /// Player in the Logs window), not with the monitor's.
+    private static let levelLogger = AutoHushLogger(category: "VolumeLeveler")
+
     /// Whether the music is paused by AutoHush: its loudness just before
     /// is noted, and the apps' during the pause (with `levelsMusic`).
     func setMusicPaused(_ paused: Bool) {
         queue.async {
             if !paused, let apps = self.resumeLevel.appsLevel {
-                self.logger.info("[level] the apps’ loudness during the pause: \(Self.dBFS(apps), privacy: .public) dBFS")
+                Self.levelLogger.info("[level] the apps’ loudness during the pause: \(Self.dBFS(apps), privacy: .public) dBFS")
             }
             self.resumeLevel.setMusicPaused(paused, at: self.clock())
             if paused, let reference = self.resumeLevel.reference {
-                self.logger.info("[level] the music’s loudness at the pause: \(Self.dBFS(reference), privacy: .public) dBFS")
+                Self.levelLogger.info("[level] the music’s loudness at the pause: \(Self.dBFS(reference), privacy: .public) dBFS")
             }
         }
     }

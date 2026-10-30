@@ -45,6 +45,8 @@ struct MenuPanelViewTests {
         case playingSilently
         /// A web app whose controls are learned: the card's Learn Again.
         case learnedControls
+        /// A resume given up: the card's Try Again.
+        case resumeGivenUp
     }
 
     private func status(_ state: State) -> AppStatus {
@@ -77,6 +79,9 @@ struct MenuPanelViewTests {
             status.chosenPlayerID = players.last?.bundleID // the web app
             status.learning = .learned
             status.playback = .musicPlaying
+        case .resumeGivenUp:
+            status.playback = .musicIdle
+            status.resumeError = ControlError(MusicPlayerError.playerNotResponding, player: players[0].name)
         case .playing, .noPlayer:
             status.playback = .musicPlaying
         }
@@ -110,8 +115,22 @@ struct MenuPanelViewTests {
             if state == .fixes { #expect(sut.status.playerNeedsReopen && sut.status.isReady && sut.status.offersUnmute) }
             if state == .playingSilently { #expect(sut.status.statusLine == "Playing silently") }
             if state == .learnedControls { #expect(sut.status.canLearnControlsAgain) }
+            if state == .resumeGivenUp { #expect(sut.status.showsResumeFailure && !sut.status.canRetry) }
             let size = drawn(MenuPanelView(model: sut.model, settings: settingsModel, onHeight: { _ in }), width: menuContentWidth)
             #expect(size.height > 0)
+        }
+    }
+
+    @Test("after a given-up resume, the card draws Try Again under its line")
+    func tryAgainAfterGivenUpResume() {
+        withMenu(.resumeGivenUp) { sut, settingsModel in
+            @MainActor func cardHeight() -> CGFloat { drawn(StatusCardView(model: sut.model, settings: settingsModel), width: menuContentWidth).height }
+            let givenUp = cardHeight()
+            sut.status.resumeError = nil
+            let chip = drawn(PlayerFixButtons.tryAgain(inCard: true) {}, width: menuContentWidth).height
+            let plain = cardHeight()
+            // Taller by the chip at least: its longer line may wrap too.
+            #expect(givenUp >= plain + chip, "\(givenUp) given up, \(plain) without, the chip \(chip)")
         }
     }
 

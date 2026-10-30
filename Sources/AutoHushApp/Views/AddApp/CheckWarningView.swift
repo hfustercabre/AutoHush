@@ -35,6 +35,7 @@ struct CheckWarningView: View {
                         ForEach(CheckResult.WindowState.trip, id: \.self, content: tile)
                     }
                     Text(verbatim: AddAppText.statesNote(app.name)).captionStyle()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     if desktopShortcutsOff {
                         NoteLabel(AddAppText.desktopShortcutsOff(app.name), font: .appCaption)
                             .frame(maxWidth: .infinity, alignment: .leading)

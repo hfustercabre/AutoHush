@@ -36,19 +36,15 @@ extension PlaybackArbiter {
     }
 
     /// The task of the pending resume or pause `id` ends: it's no longer
-    /// one called off, nor left behind as the pending one (a resume with no
-    /// pause to end, say), so nothing takes it for one still to come.
+    /// one called off, nor left behind as the pending resume (one with no
+    /// pause to end, say), so nothing takes it for one still to come. A
+    /// pending pause clears itself as it runs (`pauseIfStillPending`).
     func pendingTaskEnded(_ id: UUID) {
         calledOff[id] = nil
         if pendingResumeID == id {
             pendingResumeTask = nil
             pendingResumeWait = nil
             pendingResumeID = nil
-        }
-        if pendingPauseID == id {
-            pendingPauseTask = nil
-            pendingPauseWait = nil
-            pendingPauseID = nil
         }
     }
 

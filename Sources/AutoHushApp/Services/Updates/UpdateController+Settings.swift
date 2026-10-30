@@ -16,8 +16,8 @@ extension UpdateController {
     /// Looks for release candidates too, or not. On, it checks again at once
     /// while checks are automatic: a candidate may be offered. Off, a
     /// candidate offered is withdrawn at once, with no check: the next one
-    /// finds the latest release (B1, the user, 2026-10-30); a check under way
-    /// asks again without them (`runCheck`).
+    /// finds the latest release (B1, the user, 2026-10-30). Either way, a
+    /// check under way asks again as the switch is now (`runCheck`).
     func setGetsReleaseCandidates(_ enabled: Bool) {
         guard enabled != getsReleaseCandidates else { return }
         AutoHushLogger.settings.info("Get release candidates: \(enabled ? "on" : "off", privacy: .public)")
@@ -32,12 +32,14 @@ extension UpdateController {
 
     /// The release candidate offered, if any, is no longer: the menu,
     /// Settings and its notification stop offering it, and Settings says
-    /// when the last check was. One being installed goes on.
+    /// when the last check was. Its notice is forgotten too, so offered
+    /// again it's announced again. One being installed goes on.
     private func withdrawReleaseCandidate() {
         guard let offered = availableUpdate, offered.version.isReleaseCandidate, !isInstalling else { return }
         logger.info("Release candidates off: \(offered.version.description, privacy: .public) is no longer offered")
         availableUpdate = nil
         withdrawOffer()
+        if preferences.lastUpdateNotice?.hasSuffix(" \(offered.version)") == true { preferences.lastUpdateNotice = nil }
         showStatus(nil)
     }
 
