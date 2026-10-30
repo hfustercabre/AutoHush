@@ -59,12 +59,12 @@ final class WindowWatch {
     }
 
     /// A window opened: the watch starts over at once, and runs while any
-    /// window is open.
+    /// window is open. The round under way gives up, so two never interleave.
     func wake() {
         loop?.cancel()
         loop = Task { [weak self] in
             while !Task.isCancelled, let self, let needs = self.openWindowsNeeds() {
-                for need in needs.sorted() { await self.refresh(need) }
+                for need in needs.sorted() where !Task.isCancelled { await self.refresh(need) }
                 self.everyTick()
                 await self.sleep(self.interval)
             }

@@ -4,6 +4,11 @@ import AutoHushKit
 // PlayerSession: starting the player's monitoring.
 extension PlayerSession {
     func requestStart(retries: Int = 0) {
+        // Before launch, it waits for it (`hasLaunched`).
+        guard hasLaunched else {
+            startRetriesAtLaunch = max(startRetriesAtLaunch, retries)
+            return
+        }
         let id = UUID()
         startTasks[id] = Task {
             await start(retriesLeft: retries)

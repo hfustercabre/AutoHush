@@ -140,7 +140,7 @@ struct AppDelegateTests {
         addApp: World? = nil
     ) -> (AppDelegate, FakeMonitorings) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
-        let sut = AppDelegate(
+        let sut = AppDelegate(system: .init(
             preferences: scratch.preferences,
             defaults: scratch.defaults,
             launchAtLoginController: scratch.launchAtLogin,
@@ -173,7 +173,7 @@ struct AppDelegateTests {
             workspaceCenter: scratch.workspaceCenter,
             clock: { scratch.clock.now },
             hasOpenWindow: { scratch.windowOpen }
-        )
+        ))
         return (sut, scratch.monitorings)
     }
 

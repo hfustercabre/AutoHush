@@ -3,7 +3,7 @@ import AutoHushKit
 
 // AppDelegate: what the menu's items do.
 extension AppDelegate {
-    func openSettings(page: SettingsWindowController.Page? = nil) {
+    func openSettings(page: SettingsPage? = nil) {
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(model: settingsModel)
         }
@@ -37,7 +37,7 @@ extension AppDelegate {
     /// What Settings needs followed while it's open, on `page`: the
     /// notifications, launch at login and the permissions, Diagnostics while
     /// its page shows, and the players while none is chosen.
-    static func settingsNeeds(page: SettingsWindowController.Page?, hasPlayer: Bool) -> Set<WindowWatch.Refresh> {
+    static func settingsNeeds(page: SettingsPage?, hasPlayer: Bool) -> Set<WindowWatch.Refresh> {
         var needs: Set<WindowWatch.Refresh> = [.notifications, .launchAtLogin, .permissions]
         if page == .diagnostics { needs.insert(.diagnostics) }
         if !hasPlayer { needs.insert(.players) }
@@ -110,7 +110,7 @@ enum FindTarget: Equatable {
     /// otherwise), the welcome window on its players while they're many
     /// enough for a search, the logs window, or Add an App's list of apps;
     /// `nil` anywhere else.
-    init?(window: Window, settingsPage: SettingsWindowController.Page?, hasApps: Bool,
+    init?(window: Window, settingsPage: SettingsPage?, hasApps: Bool,
           welcomeShowsPlayers: Bool, playersSearchable: Bool) {
         switch window {
         case .settings where settingsPage == .soundSources && hasApps: self = .soundSourcesSearch

@@ -203,6 +203,21 @@ final class WindowTitleTests {
         }
     }
 
+    @Test("a floating window keeps its top edge only while it's open: closed, its watch ends, and shown again, it starts again")
+    func floatingWatchEndsAtClose() async throws {
+        let floating = AddWebAppWindowController(model: AddWebAppModel(), settings: makeModel())
+        let screen = try #require(NSScreen.screens.last)
+        floating.cornerScreen = { screen }
+        floating.show()
+        #expect(!floating.edgeObservers.isEmpty)
+        floating.close()
+        await TestWait.until { !floating.isOpen && floating.edgeObservers.isEmpty }
+        #expect(floating.edgeObservers.isEmpty) // each Learn Again's new window left the old one's behind
+        floating.show()
+        defer { floating.close() }
+        #expect(!floating.edgeObservers.isEmpty)
+    }
+
     @Test("the logs window keeps its place and size under its name")
     func logsWindow() {
         let logs = makeLogs()

@@ -5,10 +5,12 @@ import AutoHushKit
 extension PlayerSession {
     /// At launch, once the copies of AutoHush opened before this one have
     /// quit: the players they held paused get their monitoring again, then
-    /// the chosen player starts.
+    /// the chosen player starts, as a start asked for meanwhile would have.
     func launch(now: Date = Date()) {
+        hasLaunched = true
         startHeldPauses(handedOverHeldPlayers(now: now))
-        if player != nil { requestStart() }
+        if player != nil { requestStart(retries: startRetriesAtLaunch) }
+        startRetriesAtLaunch = 0
     }
 
     /// The user chose `newPlayer`: a pause AutoHush holds on the player it
@@ -27,6 +29,8 @@ extension PlayerSession {
         }
         let leaving = player
         holdPause(for: newPlayer.bundleID)
+        // Chosen again while its pause was held: it keeps what it turned on.
+        leftPlayers[newPlayer.bundleID] = nil
         player = newPlayer
         if let leaving { releaseLeft(leaving) }
         failedStarts = 0

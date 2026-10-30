@@ -1,17 +1,6 @@
 import AppKit
 import SwiftUI
 
-/// What `AppDelegate` needs of the learning window; tests stand in for it,
-/// so they never put a window on screen.
-@MainActor
-protocol LearningWindowPresenting: AnyObject {
-    var isOpen: Bool { get }
-    /// When it closes: Later, its close button, or once learned.
-    var onClose: (@MainActor () -> Void)? { get set }
-    func show()
-    func close()
-}
-
 /// Opens when a player that must learn is chosen: it asks the user to play
 /// and pause it once, ticks each step as it's seen, and closes by itself
 /// once AutoHush has learned. "Later" closes it; the Controls row of the
@@ -24,8 +13,8 @@ final class LearningWindowController: HostedWindowController, LearningWindowPres
     init(model: SettingsModel) {
         // Later closes the window, which exists only once this has run.
         let hosting = Self.sizedToFit(LearningWindowView(model: model, later: {}))
-        super.init(content: hosting, title: Self.title(model.chosenPlayer?.name))
-        floatsInCorner = true // the web app comes in front while it's played and paused
+        // Floating: the web app comes in front while it's played and paused.
+        super.init(content: hosting, title: Self.title(model.chosenPlayer?.name), floatsInCorner: true)
         hosting.rootView = LearningWindowView(model: model) { [weak self] in self?.close() }
         followTitle { Self.title(model.chosenPlayer?.name) }
         window?.delegate = self

@@ -1,8 +1,8 @@
 import AppKit
 
 /// AutoHush is in the Dock (a regular app) while one of its windows is open:
-/// Settings, the welcome, Add a Web App or learning window. Otherwise it's
-/// only in the menu bar (an accessory app).
+/// Settings, the welcome, Add a Web App, Add an App, learning or logs
+/// window. Otherwise it's only in the menu bar (an accessory app).
 ///
 /// macOS brings back the last active app with a Dock icon when the user
 /// returns to a desktop, and raises its windows: an accessory app's window

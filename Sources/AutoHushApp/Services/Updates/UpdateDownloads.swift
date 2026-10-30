@@ -12,10 +12,7 @@ final class UpdateDownloads {
 
     /// `~/Library/Caches/<bundle identifier>/Updates`.
     static var defaultFolder: URL {
-        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        return caches
-            .appending(path: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush", directoryHint: .isDirectory)
-            .appending(path: "Updates", directoryHint: .isDirectory)
+        ProjectInfo.cachesFolder.appending(path: "Updates", directoryHint: .isDirectory)
     }
 
     let folder: URL

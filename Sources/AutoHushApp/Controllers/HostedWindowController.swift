@@ -16,31 +16,35 @@ class HostedWindowController: NSWindowController {
     /// The content's side and bottom margins (`windowMargins`).
     static let margin: CGFloat = 20
 
-    init(content: NSViewController, title: String) {
+    /// `floatsInCorner`: whether it floats in the top-right corner, above
+    /// other apps' windows.
+    init(content: NSViewController, title: String, floatsInCorner: Bool = false) {
         let window = NSWindow(contentViewController: content)
         window.title = title
         Self.styleTitleBar(of: window)
-        // No AutoHush window goes full screen: the green button, ⌃⌘F and the
-        // Window menu leave it as it is.
-        window.collectionBehavior.insert(.fullScreenNone)
+        if floatsInCorner {
+            window.level = .floating
+            // Over another app's full-screen window too (Safari, the web
+            // app); an auxiliary window doesn't go full screen itself.
+            window.collectionBehavior.insert(.fullScreenAuxiliary)
+        } else {
+            // No AutoHush window goes full screen: the green button, ⌃⌘F and the
+            // Window menu leave it as it is.
+            window.collectionBehavior.insert(.fullScreenNone)
+        }
         window.isReleasedWhenClosed = false
+        self.floatsInCorner = floatsInCorner
         super.init(window: window)
     }
 
-    /// Settings' title bar: without its band or line, over the window's own
-    /// background, and an empty toolbar shows the title in bold. The content
+    /// Settings' title bar, with an empty toolbar. The content
     /// starts below it, not under it: with it under the title bar, SwiftUI
     /// follows the title bar's inset, and on macOS 14 and 15 each resize to
     /// the content changed that inset and asked for layout again, until
     /// AppKit threw (Add an App's window as its check started, 2026-10-20).
     private static func styleTitleBar(of window: NSWindow) {
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.titlebarAppearsTransparent = true
-        window.titlebarSeparatorStyle = .none
-        let toolbar = NSToolbar(identifier: "AutoHushWindow")
-        toolbar.displayMode = .iconOnly
-        window.toolbar = toolbar
-        window.toolbarStyle = .unified
+        window.useAutoHushTitleBar(NSToolbar(identifier: "AutoHushWindow"))
     }
 
     /// How much of the window's height the title bar takes (its toolbar's
@@ -69,23 +73,13 @@ class HostedWindowController: NSWindowController {
     /// which come in front and would hide it while the user works there. The
     /// corner keeps it off Safari's dialog and a web app's player bar. It
     /// keeps its top edge as its steps come and go.
-    var floatsInCorner = false {
-        didSet {
-            guard let window else { return }
-            window.level = floatsInCorner ? .floating : .normal
-            // Over another app's full-screen window too (Safari, the web
-            // app); an auxiliary window doesn't go full screen itself.
-            if floatsInCorner {
-                window.collectionBehavior.remove(.fullScreenNone)
-                window.collectionBehavior.insert(.fullScreenAuxiliary)
-            }
-            watchTopEdge(floatsInCorner)
-        }
-    }
+    let floatsInCorner: Bool
 
     /// The top edge kept while it floats; the user moving it moves it.
     private var pinnedTop: CGFloat?
-    private var edgeObservers: [any NSObjectProtocol] = []
+    /// What keeps the top edge, from when it floats on screen until it
+    /// closes (`watchTopEdge`).
+    private(set) var edgeObservers: [any NSObjectProtocol] = []
     static let cornerMargin: CGFloat = 16
     /// The screen it floats on: the one the user is on, with the pointer
     /// (tests pick one).
@@ -117,6 +111,7 @@ class HostedWindowController: NSWindowController {
                                                         y: area.maxY - Self.cornerMargin))
                 }
                 pinnedTop = window.frame.maxY
+                watchTopEdge()
             } else {
                 window.center()
             }
@@ -126,10 +121,11 @@ class HostedWindowController: NSWindowController {
 
     /// While it floats, a change of size keeps its top edge where it was, so
     /// it never grows off the top of the screen; a move by the user is kept.
-    private func watchTopEdge(_ watch: Bool) {
-        edgeObservers.forEach(NotificationCenter.default.removeObserver)
-        edgeObservers = []
-        guard watch, let window else { return }
+    /// Until it closes: each Learn Again makes a new window, and the closed
+    /// one's watch would stay behind.
+    private func watchTopEdge() {
+        stopWatchingTopEdge()
+        guard let window else { return }
         let center = NotificationCenter.default
         edgeObservers = [
             center.addObserver(forName: NSWindow.didResizeNotification, object: window, queue: .main) { [weak self] _ in
@@ -144,7 +140,15 @@ class HostedWindowController: NSWindowController {
                     self.pinnedTop = window.frame.maxY
                 }
             },
+            center.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.stopWatchingTopEdge() }
+            },
         ]
+    }
+
+    private func stopWatchingTopEdge() {
+        edgeObservers.forEach(NotificationCenter.default.removeObserver)
+        edgeObservers = []
     }
 
     /// Brings it in front of other apps' windows, on the desktop the user is

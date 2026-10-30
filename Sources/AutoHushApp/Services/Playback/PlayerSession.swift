@@ -142,6 +142,14 @@ final class PlayerSession {
     var resumesHeld = false
     /// AutoHush is quitting: nothing starts any more (see `quit`).
     var hasQuit = false
+    /// `launch()` ran, once the copies of AutoHush opened before this one
+    /// quit: before, a start asked for (a player chosen, opened, Try Again)
+    /// waits for it, so no monitoring runs beside theirs or takes a pause
+    /// over before they hand theirs over.
+    var hasLaunched = false
+    /// The startup checks a start asked for before `launch()` wants
+    /// (`requestStart`), for the start it then makes.
+    var startRetriesAtLaunch = 0
     /// The last start found the chosen player not running: until it opens,
     /// its monitoring runs only to list the apps playing, while Auto-Pause
     /// is on (`listenUntilPlayerOpens`).

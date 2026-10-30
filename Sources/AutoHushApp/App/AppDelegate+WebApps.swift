@@ -44,8 +44,10 @@ extension AppDelegate {
             window.close()
         }
         learningWindow = nil // a new one, not the old one's last state
-        // Add a Web App floats in the same corner: it goes, an add under way
-        // with it (cancelled, as its Cancel does).
+        // Add a Web App floats in the same corner: it goes, and an add under
+        // way stops, as the alert said, even once its web app is made (its
+        // window's close stops one only until then).
+        addWebApp.cancel()
         addWebApp.close()
         Task { [weak self] in
             guard let self, await self.learning.learnAgain() else { return }

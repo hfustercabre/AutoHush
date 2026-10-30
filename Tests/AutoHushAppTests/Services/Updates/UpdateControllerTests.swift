@@ -493,6 +493,55 @@ struct UpdateControllerTests {
         #expect(h.installer.calls.isEmpty)
     }
 
+    @Test("turning release candidates off withdraws one offered at once, its notification too, with no check")
+    func turningReleaseCandidatesOff() async {
+        let requests = Locked(0)
+        let h = Harness(checker: .releases([("v0.3.0-rc.1", true), ("v0.2.0", false)], onRequest: { _ in requests.value += 1 }),
+                        mode: .notify)
+        h.preferences.getsReleaseCandidates = true
+        await h.controller.runAutomaticTasks()
+        #expect(h.offer?.release.version == AppVersion("0.3.0-rc.1"))
+        #expect(h.notifier.announced.count == 1)
+
+        h.controller.setGetsReleaseCandidates(false)
+        #expect(!h.preferences.getsReleaseCandidates)
+        #expect(h.controller.availableUpdate == nil && h.offer == nil)
+        #expect(h.notifier.withdrawals == 1)
+        #expect(h.controller.status == nil) // Settings says when the last check was
+        #expect(h.controller.checking == nil && requests.value == 1)
+    }
+
+    @Test("a check under way as release candidates are turned off asks again without them: none is offered")
+    func releaseCandidatesOffDuringCheck() async {
+        let gate = Gate()
+        let h = Harness(checker: Self.heldCandidate(at: gate, latest: "v0.2.1"))
+        h.preferences.getsReleaseCandidates = true
+        let checking = Task { await h.controller.check(userInitiated: true) }
+        await TestWait.until { await gate.waiting == 1 } // asked with release candidates
+        h.controller.setGetsReleaseCandidates(false)
+        await gate.open()
+        await checking.value
+        #expect(h.controller.availableUpdate?.version == AppVersion("0.2.1"))
+        #expect(h.offers.allSatisfy { $0?.release.version.isReleaseCandidate != true })
+        #expect(h.alerts.map(\.messageText).allSatisfy { !$0.contains("RC") })
+    }
+
+    /// GitHub with a release candidate, its list held at `gate`, newer than
+    /// the `latest` release.
+    private static func heldCandidate(at gate: Gate, latest: String) -> UpdateChecker {
+        UpdateChecker { request in
+            let page = "https://github.com/\(ProjectInfo.repository)/releases/tag/"
+            let body: String
+            if request.url?.path().hasSuffix("/releases") == true {
+                await gate.wait()
+                body = #"[{"tag_name": "v0.3.0-rc.1", "prerelease": true, "html_url": "\#(page)v0.3.0-rc.1", "assets": []}]"#
+            } else {
+                body = #"{"tag_name": "\#(latest)", "html_url": "\#(page)\#(latest)", "assets": []}"#
+            }
+            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!)
+        }
+    }
+
     @Test("while AutoHush is busy the update waits, and installs at the next quiet run")
     func waitsForQuietMoment() async {
         let h = Harness(checker: .latestRelease("v0.3.0"), quiet: Locked(false))

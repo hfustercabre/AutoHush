@@ -26,7 +26,7 @@ final class AddWebAppFeature {
     private let learnedWindowDelay: Duration
     /// Between two looks for a web app just made that isn't listed yet.
     private let madeWebAppWait: Duration
-    private let logger = AutoHushLogger(category: "AppDelegate")
+    private let logger = AutoHushLogger(category: "AddWebApp")
 
     init(host: any AddWebAppHost, maker: any WebAppMaking,
          makeWindow: @escaping @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting,
@@ -58,8 +58,8 @@ final class AddWebAppFeature {
         host?.followWindows() // follows Accessibility, which adding needs
     }
 
-    /// Closes the window, an add under way with it (cancelled, as its
-    /// Cancel does).
+    /// Closes the window, and an add under way with it until its web app is
+    /// made (cancelled, as its Cancel does).
     func close() {
         if let window, window.isOpen { window.close() }
     }
@@ -116,7 +116,8 @@ final class AddWebAppFeature {
                       model.attempt == attempt, !Task.isCancelled {
                     lookups += 1
                     try? await Task.sleep(for: self.madeWebAppWait)
-                    guard host.chosenPlayerID == before else { break }
+                    // Cancelled meanwhile (the sleep ends at once then), or another chosen.
+                    guard model.attempt == attempt, !Task.isCancelled, host.chosenPlayerID == before else { break }
                     host.chooseWebApp(made.bundleID, showsLearningWindow: fromWelcome)
                 }
                 guard model.attempt == attempt, !Task.isCancelled else { return }

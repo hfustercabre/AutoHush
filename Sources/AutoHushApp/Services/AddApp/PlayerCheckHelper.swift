@@ -31,11 +31,10 @@ struct PlayerCheckHelper: Sendable {
     }
 
     /// Where its checks' logs go: beside AutoHush's own.
-    static let logsFolder = FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library/Logs/AutoHush/Checks")
+    static let logsFolder = ProjectInfo.logsFolder.appending(path: "Checks")
     /// What it learns about apps (their page's button, their words), in
     /// AutoHush's caches.
-    static let cachesFolder = FileManager.default.homeDirectoryForCurrentUser
-        .appending(path: "Library/Caches/\(Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush")/PlayerCheck")
+    static let cachesFolder = ProjectInfo.cachesFolder.appending(path: "PlayerCheck")
     /// The folders every run is given.
     var folderArguments: [String] { CommandLineOptions.folders(logs: logs.path, caches: caches.path) }
 

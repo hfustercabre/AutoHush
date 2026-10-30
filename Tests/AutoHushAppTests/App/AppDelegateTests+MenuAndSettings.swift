@@ -313,7 +313,7 @@ extension AppDelegateTests {
         }
         #expect(!sut.applicationShouldHandleReopen(NSApplication.shared, hasVisibleWindows: false))
         #expect(sut.settingsWindowController?.window?.isVisible == true)
-        #expect(sut.settingsWindowController?.window?.title == SettingsWindowController.Page.general.title)
+        #expect(sut.settingsWindowController?.window?.title == SettingsPage.general.title)
     }
 
     @MainActor

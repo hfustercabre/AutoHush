@@ -41,7 +41,13 @@ extension UpdateController {
         logger.info("Checking for updates (\(resultWanted ? "asked for" : "automatic", privacy: .public))")
         showStatus(UpdateOffer.checkingTitle)
         do {
-            let result = try await checker.check(currentVersion: currentVersion, releaseCandidates: getsReleaseCandidates)
+            var result = try await checker.check(currentVersion: currentVersion, releaseCandidates: getsReleaseCandidates)
+            // Release candidates turned off while it ran: asked again without
+            // them, so none is offered (B1, the user, 2026-10-30).
+            if case .available(let release) = result, release.version.isReleaseCandidate, !getsReleaseCandidates {
+                logger.info("Release candidates were turned off during the check: checking again without them")
+                result = try await checker.check(currentVersion: currentVersion, releaseCandidates: false)
+            }
             lastCheck = now()
             switch result {
             case .available(let release):
