@@ -614,6 +614,26 @@ struct AudioMonitorTests {
         #expect(h.meter.lastMetered == (heard ? [1, 2] : []))
     }
 
+    @Test("asked before a resume, an ignored app released for its silence that says it plays meanwhile isn't heard: it can't pause the music")
+    func ignoredQuietSourceAnnouncingDuringAskedListen() async {
+        let assertions = MockPowerAssertions()
+        let h = Harness(permission: MockAudioCapturePermission(.granted), ignored: ["com.example.game"], assertions: assertions)
+        h.monitor.setPlayerPlaying(true)
+        h.start()
+        h.step([Self.player, Self.radio, Self.process(3, "com.example.game")], peaks: [2: 0, 3: 0])
+        h.step(after: 10.1) // both released for their silence
+        #expect(h.meter.lastMetered == [])
+        h.monitor.setPlayerPlaying(false) // paused by AutoHush
+        h.step(after: 5)
+        let monitor = h.monitor
+        let asked = Task { await monitor.listenToQuietApps() }
+        await h.meter.waitUntilMetered([2]) // the radio only
+        assertions.held = [1003: MockPowerAssertions.playing] // the ignored game says it plays
+        h.step(after: 0.25, peaks: [2: 0])
+        h.step(after: 0.3) // the half second is over
+        #expect(await asked.value == false)
+    }
+
     @Test("an app ignored while it's listened to again is let go at once")
     func quietSourceIgnoredDuringListen() {
         let h = Self.releasedRadioWithPlayerHarness()

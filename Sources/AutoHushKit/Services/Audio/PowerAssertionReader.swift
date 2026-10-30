@@ -60,11 +60,17 @@ package struct IOKitPowerAssertionReader: PowerAssertionReading {
     ]
 
     package func assertionsByProcess() -> [pid_t: Set<PowerAssertion>] {
+        Self.assertionsByProcess(in: Self.rawAssertionsByProcess())
+    }
+
+    /// Every assertion, as IOKit lists them (`IOPMCopyAssertionsByProcess`),
+    /// by the ID of the process holding it; none when they can't be read.
+    package static func rawAssertionsByProcess() -> [NSNumber: [[String: Any]]] {
         var byProcess: Unmanaged<CFDictionary>?
         guard IOPMCopyAssertionsByProcess(&byProcess) == kIOReturnSuccess,
               let assertions = byProcess?.takeRetainedValue() as? [NSNumber: [[String: Any]]]
         else { return [:] }
-        return Self.assertionsByProcess(in: assertions)
+        return assertions
     }
 
     /// Keeps only assertions a process holds itself: those created on its

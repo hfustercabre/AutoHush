@@ -8,7 +8,7 @@ import os
 package enum WebAddress {
     /// The web address in `text`: http or https, with a host that has a dot
     /// (or is localhost), and no spaces. Without a scheme at its start,
-    /// "https://" is added: "music.youtube.com" is https://music.youtube.com,
+    /// "https://" is added: "music.example.com" is https://music.example.com,
     /// even with an address in its query ("radio.example.com/?next=https://…").
     package static func url(from text: String) -> URL? {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -43,7 +43,7 @@ package final class ProcessTapMuter: AudioMuting {
     private let recheck: TimeInterval
     private let timer = OSAllocatedUnfairLock<any DispatchSourceTimer?>(initialState: nil)
     private let failures = OSAllocatedUnfairLock(initialState: false)
-    private let logger = AutoHushLogger(category: "AudioMonitor")
+    private let logger = AutoHushLogger(category: "PlayerMute")
 
     package init(recheckInterval: TimeInterval = ProcessTapMuter.recheckInterval) {
         recheck = recheckInterval

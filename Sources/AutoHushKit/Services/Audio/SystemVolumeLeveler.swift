@@ -80,7 +80,7 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
     /// What the volume read after the glide's latest step (what it was
     /// lowered to, before the first): if it reads otherwise, the user changed it.
     private var glidedTo: [AudioObjectPropertyElement: Float] = [:]
-    private let logger = AutoHushLogger(category: "PlaybackArbiter")
+    private let logger = AutoHushLogger(category: "VolumeLeveler")
 
     package init(volume: any SystemVolumeControlling = CoreAudioSystemVolume(), defaults: UserDefaults = .standard,
                  sleep: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) },

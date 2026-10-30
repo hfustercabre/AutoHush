@@ -51,6 +51,31 @@ extension PlaybackArbiterTests {
         #expect(published.state == expected)
     }
 
+    @Test("a polled player is asked again after a resume though an app played and stopped meanwhile: the resume that came of it, with no pause to end, is over")
+    func resumeConfirmedAfterAppCameAndWent() async {
+        let player = MockMusicPlayer(stateReportDelay: 1) // read once a second
+        let scheduler = ManualDebounceScheduler()
+        let published = LastPublished()
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      onStatusUpdate: statuses(playback: { published.set($0) }))
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await TestWait.until { await player.pauseCallCount == 1 }
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await TestWait.until { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        // Stopped right after, unannounced, its output closed; then an app
+        // plays and stops before it's asked again: nothing to pause or resume.
+        await player.setState(.paused)
+        await arbiter.handleLocalPlaybackChange(false)
+        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true)
+        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: false)
+        await arbiter.waitUntilIdle()
+        #expect(published.state == .playingElsewhere) // as it was shown
+        await scheduler.completeNext()
+        await TestWait.until { published.state == .musicIdle }
+        #expect(published.state == .musicIdle)
+    }
+
     /// The playback state last published.
     final class LastPublished: @unchecked Sendable {
         // Read and written only under `lock`.
@@ -325,15 +350,31 @@ extension PlaybackArbiterTests {
         return (leveler.log, await player.playCallCount)
     }
 
-    /// Lowered before each resume, and put back as the music fades out for the next app.
+    /// Lowered before each resume, and put back once the music is paused for the next app.
     private static var levelingCycle: [String] {
         ["lower -6.0", "restore over \(AppConfiguration.testing.fadeOutDuration)", "lower -6.0"]
     }
 
-    @Test("with Level the volume on, the volume is lowered by the monitor's offset before each resume, put back as the music fades out and as monitoring stops")
+    @Test("with Level the volume on, the volume is lowered by the monitor's offset before each resume, put back once the music is paused and as monitoring stops")
     func levelsMusic() async {
         let run = await levelingLog(levels: true, offset: -6)
         #expect(run.log == Self.levelingCycle + ["restore now"] && run.plays == 2)
+    }
+
+    @Test("with Level the volume on, a pause that fails keeps the Mac's volume lowered: the music plays on at it, as it was")
+    func failedPauseKeepsLevel() async {
+        let player = MockMusicPlayer()
+        let leveler = RecordingVolumeLeveler()
+        let arbiter = makeLevelingArbiter(player, leveler: leveler)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false) // resumed, lowered 6 dB
+        await TestWait.until { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        await player.setFailPause(StubError.failed)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.waitUntilIdle()
+        #expect(await player.state == .playing)
+        #expect(leveler.log == ["lower -6.0"])
     }
 
     @Test("turning Level the volume off puts back whatever is lowered, leaving monitoring's stop nothing of its own to put back")

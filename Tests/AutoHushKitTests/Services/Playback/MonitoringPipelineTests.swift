@@ -223,6 +223,24 @@ struct MonitoringPipelineTests {
         setup.pipeline.stop()
     }
 
+    @Test("a play its observer reports while the pipeline asks the player's state, as it starts, stands: the monitor knows it plays")
+    func reportWhileStartingStands() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setUnansweredStateQueries(1) // busy as it starts: no answer
+        let answers = ManualSleep()
+        await player.setBeforeStateAnswer { await answers.sleep(.zero) }
+        let setup = Setup(player: player)
+        let starting = Task { await setup.pipeline.start() }
+        await TestWait.until { answers.sleeping == 1 }
+        await player.setBeforeStateAnswer(nil)
+        await player.userSets(.playing) // its observer says so
+        answers.step()
+        _ = await starting.value
+        let monitor = setup.pipeline.monitor
+        #expect(await monitor.queue.run { monitor.playerPlayingSince != nil })
+        setup.pipeline.stop()
+    }
+
     @Test("stopping stops watching the audio processes and their levels; stopped while it starts, it never watches them")
     func stopEndsMonitoring() async {
         let setup = Setup(player: MockMusicPlayer(state: .playing))

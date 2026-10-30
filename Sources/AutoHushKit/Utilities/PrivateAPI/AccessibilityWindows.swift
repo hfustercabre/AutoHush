@@ -135,12 +135,8 @@ package enum AccessibilityWindows {
     static func hasWindowOutOfSight(pid: pid_t) -> Bool {
         guard let list = CGWindowListCopyWindowInfo(.optionAll, kCGNullWindowID) as? [[String: Any]] else { return true }
         return list.contains { info in
-            guard info[kCGWindowOwnerPID as String] as? pid_t == pid,
-                  info[kCGWindowLayer as String] as? Int == 0,
-                  info[kCGWindowIsOnscreen as String] as? Bool != true,
-                  let bounds = info[kCGWindowBounds as String] as? NSDictionary,
-                  let frame = CGRect(dictionaryRepresentation: bounds as CFDictionary)
-            else { return false }
+            let window = ListedWindow(info)
+            guard window.owner == pid, window.layer == 0, !window.isOnScreen, let frame = window.frame else { return false }
             return frame.width >= 200 && frame.height >= 200
         }
     }

@@ -13,7 +13,8 @@ import os
 /// which need no Screen Recording.
 ///
 /// `@unchecked Sendable`: `monitor` is set once, on the main thread, as it
-/// starts, and only removed as it goes; the times are behind a lock.
+/// starts, and only removed as it goes, on the main thread too; the times
+/// are behind a lock.
 package final class PlayerWindowClicks: @unchecked Sendable {
     private let times = OSAllocatedUnfairLock<[Date]>(initialState: [])
     /// How long a click is kept.
@@ -46,7 +47,15 @@ package final class PlayerWindowClicks: @unchecked Sendable {
     }
 
     deinit {
-        if let monitor { NSEvent.removeMonitor(monitor) }
+        guard let monitor else { return }
+        // Removed on the main thread, where AppKit's event monitors live.
+        // Nothing else holds the token once this is gone, so it's sent there.
+        nonisolated(unsafe) let token = monitor
+        if Thread.isMainThread {
+            NSEvent.removeMonitor(token)
+        } else {
+            DispatchQueue.main.async { NSEvent.removeMonitor(token) }
+        }
     }
 
     /// A mouse-down at `location` (global coordinates, from the top left),
@@ -76,24 +85,5 @@ package final class PlayerWindowClicks: @unchecked Sendable {
             return (owner, window.layer)
         }
         return nil
-    }
-
-    /// What it reads of a window `CGWindowListCopyWindowInfo` lists, read
-    /// once.
-    private struct ListedWindow {
-        /// 1 when it isn't said.
-        let alpha: Double
-        /// `nil` when it isn't said, or can't be read.
-        let frame: CGRect?
-        let owner: pid_t?
-        /// 0 (ordinary windows) when it isn't said.
-        let layer: Int
-
-        init(_ info: [String: Any]) {
-            alpha = info[kCGWindowAlpha as String] as? Double ?? 1
-            frame = (info[kCGWindowBounds as String] as? NSDictionary).flatMap { CGRect(dictionaryRepresentation: $0 as CFDictionary) }
-            owner = (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value
-            layer = (info[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
-        }
     }
 }

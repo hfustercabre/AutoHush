@@ -55,7 +55,8 @@ package final class ProcessTapLevelMeter: AudioLevelMetering, @unchecked Sendabl
     private let logger = AutoHushLogger(category: "LevelMeter")
     private let ioQueue = DispatchQueue(label: "AutoHush.LevelMeter.io", qos: .userInitiated)
     private var taps: [AudioObjectID: ProcessTap] = [:]
-    /// Processes whose tap failed to start; not retried until they disappear.
+    /// Processes whose tap failed to start: not retried while they're to be
+    /// metered, only once they're metered again after a call without them.
     private var failed: Set<AudioObjectID> = []
 
     package func setMeteredProcesses(_ objectIDs: Set<AudioObjectID>) {
