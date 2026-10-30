@@ -9,7 +9,16 @@ struct OtherAppsHeading: View {
     var isEmpty = false
 
     var body: some View {
-        BadgedHeading(title: PlayerOption.otherAppsHeading, badge: isEmpty ? nil : PlayerOption.checkedByYouBadge,
-                      note: isEmpty ? PlayerOption.otherAppsEmptyNote : PlayerOption.otherAppsNote)
+        BadgedHeading(title: PlayerOption.otherAppsHeading, badge: Self.badge(isEmpty: isEmpty), note: Self.note(isEmpty: isEmpty))
+    }
+
+    /// Its badge, also on Settings' card of them: none while none was added.
+    static func badge(isEmpty: Bool) -> String? {
+        isEmpty ? nil : PlayerOption.checkedByYouBadge
+    }
+
+    /// Its note, also on Settings' card of them: what Add… does while none was added.
+    static func note(isEmpty: Bool) -> String {
+        isEmpty ? PlayerOption.otherAppsEmptyNote : PlayerOption.otherAppsNote
     }
 }

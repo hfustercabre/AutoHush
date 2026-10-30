@@ -1,4 +1,6 @@
+import AppKit
 import CoreGraphics
+import SwiftUI
 import Testing
 @testable import AutoHushApp
 
@@ -35,5 +37,42 @@ struct PlayerTilesTests {
         #expect(cut(6).isEqual(to: 500)) // every row: all of them
         #expect(cut(5, content: 300).isEqual(to: 300)) // never more than they are
         #expect(cut(5, content: 0).isZero) // not measured yet
+    }
+
+    @Test("in the welcome window, a search keeps the tiles' card as tall as it was before, however few tiles it leaves")
+    func searchKeepsHeight() async {
+        let apps = (1...18).map { PlayerOption(bundleID: "com.example.player\($0)", name: "Player \($0)",
+                                              appURL: URL(fileURLWithPath: "/Applications/Player \($0).app")) }
+        func tiles(_ options: [PlayerOption], search: String = "", rows: Int = PlayerChooserView.visibleTileRows) -> PlayerTiles {
+            PlayerTiles(options: options, selection: nil, onSelect: { _ in }, onAddWebApp: {},
+                        maxVisibleRows: rows, holdsHeight: !search.isEmpty, search: search)
+        }
+        func hosting(_ tiles: PlayerTiles) -> NSHostingView<PlayerTiles> {
+            let hosting = NSHostingView(rootView: tiles)
+            hosting.frame = NSRect(x: 0, y: 0, width: PlayerChooserView.width, height: 1200)
+            return hosting
+        }
+        let all = await settledHeight(hosting(tiles(apps, rows: 20)))
+        let welcome = hosting(tiles(apps))
+        let shown = await settledHeight(welcome)
+        #expect(shown < all) // more rows than show: they scroll
+        welcome.rootView = tiles(apps.filter { $0.name == "Player 7" }, search: "Player 7")
+        let searched = await settledHeight(welcome)
+        #expect(searched.isEqual(to: shown), "\(searched) after the search, \(shown) before")
+    }
+
+    /// `hosting`'s height once it stops changing: the tiles' measures come
+    /// back a layout later.
+    private func settledHeight(_ hosting: NSView) async -> CGFloat {
+        var last: CGFloat = -1
+        var same = 0
+        for _ in 0..<100 where same < 3 {
+            hosting.layoutSubtreeIfNeeded()
+            try? await Task.sleep(for: .milliseconds(10))
+            let height = hosting.fittingSize.height
+            same = height == last ? same + 1 : 0
+            last = height
+        }
+        return last
     }
 }

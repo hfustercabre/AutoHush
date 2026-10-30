@@ -49,7 +49,10 @@ struct PlayerTiles: View {
     @State private var otherAppsTop: CGFloat = 0
     @State private var webAppsTop: CGFloat = 0
     @State private var contentHeight: CGFloat = 0
-    @State private var heldHeight: CGFloat?
+    /// The tiles' height as last shown while not held: the one a search
+    /// keeps (`holdsHeight`). Worked out again then, it would mix the
+    /// narrowed counts with the last layout's measures.
+    @State private var shownHeight: CGFloat?
     /// How far down the welcome window's tiles show (`MoreBelow`).
     @State private var reach: ScrollReach?
 
@@ -61,7 +64,7 @@ struct PlayerTiles: View {
     private enum Adds { case app, webApp }
 
     var body: some View {
-        if maxVisibleRows == nil { sections } else { card }
+        if let maxVisibleRows { card(rows: maxVisibleRows) } else { sections }
     }
 
     /// Each group in a card of its own (in Settings, a section of its form),
@@ -73,8 +76,8 @@ struct PlayerTiles: View {
         if !apps.isEmpty {
             Card(Text(verbatim: PlayerOption.supportedAppsHeading)) { grid(apps, adds: nil) }
         }
-        Card(Text(verbatim: PlayerOption.otherAppsHeading), badge: checkedApps.isEmpty ? nil : PlayerOption.checkedByYouBadge,
-             note: Text(verbatim: checkedApps.isEmpty ? PlayerOption.otherAppsEmptyNote : PlayerOption.otherAppsNote)) {
+        Card(Text(verbatim: PlayerOption.otherAppsHeading), badge: OtherAppsHeading.badge(isEmpty: checkedApps.isEmpty),
+             note: Text(verbatim: OtherAppsHeading.note(isEmpty: checkedApps.isEmpty))) {
             grid(checkedApps, adds: .app)
         }
         Card(Text(verbatim: PlayerOption.webAppsHeading), badge: PlayerOption.experimentalBadge,
@@ -83,26 +86,21 @@ struct PlayerTiles: View {
         }
     }
 
-    /// All the groups in one card, scrolling past `maxVisibleRows` (the welcome window).
-    private var card: some View {
+    /// All the groups in one card, scrolling past `rows` rows of tiles (the welcome window).
+    private func card(rows: Int) -> some View {
         Card {
-            if let maxVisibleRows {
-                // Past its rows, the last ones fade over a chevron while more
-                // is below, as in the menu (U4, the user, 2026-10-20).
-                let moreBelow = reach?.moreBelow == true
-                ScrollView {
-                    groups.coordinateSpace(.named(Self.space))
-                        .onGeometryChange(for: CGFloat.self, of: \.size.height) { contentHeight = $0 }
-                        .fadesOutBelow(reach, moreBelow: moreBelow)
-                }
-                .showsMoreBelow($reach, moreBelow: moreBelow)
-                .frame(height: heldHeight ?? visibleHeight(rows: maxVisibleRows))
-                .onChange(of: holdsHeight) { _, holds in
-                    heldHeight = holds ? visibleHeight(rows: maxVisibleRows) : nil
-                }
-            } else {
-                groups
+            // Past its rows, the last ones fade over a chevron while more
+            // is below, as in the menu (U4, the user, 2026-10-20).
+            let moreBelow = reach?.moreBelow == true
+            let visible = visibleHeight(rows: rows)
+            ScrollView {
+                groups.coordinateSpace(.named(Self.space))
+                    .onGeometryChange(for: CGFloat.self, of: \.size.height) { contentHeight = $0 }
+                    .fadesOutBelow(reach, moreBelow: moreBelow)
             }
+            .showsMoreBelow($reach, moreBelow: moreBelow)
+            .frame(height: holdsHeight ? shownHeight ?? visible : visible)
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { if !holdsHeight { shownHeight = $0 } }
         }
     }
 
