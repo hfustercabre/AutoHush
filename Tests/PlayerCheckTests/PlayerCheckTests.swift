@@ -56,6 +56,14 @@ struct PlayerCheckTests {
         #expect(switchName(enhancedUserInterface, of: nil) == "VoiceOver's switch")
     }
 
+    @Test("a switch set back is said as it was: off, or on for one found on")
+    func switchesSetBack() {
+        #expect(switchBackLine(manualAccessibility, foundOn: false, stuck: false) == "(Electron's switch set back to off, as it was.)")
+        #expect(switchBackLine(enhancedUserInterface, foundOn: true, stuck: false) == "(VoiceOver's switch set back to on, as it was.)")
+        #expect(switchBackLine(enhancedUserInterface, foundOn: true, stuck: true) == "(Couldn't set VoiceOver's switch back to on.)")
+        #expect(switchBackLine(manualAccessibility, foundOn: false, stuck: true) == "(Couldn't set Electron's switch back to off.)")
+    }
+
     @Test("why a trial failed: what its press said, else what the trial saw; why no Now Playing row was the app's")
     func whyItFailed() {
         #expect(whyFailed(.menu, in: .covered, .pausedOnly) == "it paused, but didn't play again")
@@ -117,6 +125,28 @@ struct PlayerCheckTests {
         #expect(newest.hasSuffix(" Calculator read-only.log"))
         let text = try String(contentsOfFile: logs.appending(path: newest).path, encoding: .utf8)
         #expect(text.contains("Calculator ") && text.contains("music in ~/Music") && !text.contains(NSHomeDirectory()))
+    }
+
+    @Test("a log line that can't be written is left out, and the run goes on (no exception under the log's lock)")
+    func logLineNotWritten() throws {
+        let log = RunLog()
+        log.discard = { _ in } // the other tests' logs stay
+        let app = "Unwritable \(UUID().uuidString)"
+        log.start(app: app, doing: RunLogName.doing(nil, via: nil, readOnly: true))
+        // Its file found by its open descriptor, which is then made read-only: every write fails.
+        func openPath(of descriptor: Int32) -> String? {
+            var buffer = [UInt8](repeating: 0, count: Int(MAXPATHLEN))
+            guard fcntl(descriptor, F_GETPATH, &buffer) != -1 else { return nil }
+            return String(decoding: buffer.prefix { $0 != 0 }, as: UTF8.self)
+        }
+        let descriptor = try #require((0..<getdtablesize()).first { openPath(of: $0)?.hasSuffix(" \(app) read-only.log") == true })
+        let path = try #require(openPath(of: descriptor))
+        defer { try? FileManager.default.removeItem(atPath: path) } // not counted with the other tests' logs
+        let readOnly = open("/dev/null", O_RDONLY)
+        defer { close(readOnly) }
+        #expect(dup2(readOnly, descriptor) == descriptor)
+        log.write("a line it can't write")
+        #expect(try !String(contentsOfFile: path, encoding: .utf8).contains("a line it can't write"))
     }
     @Test("a trial: paused and played again, it works; not paused, the press is undone; a play that took late, only when pressed again, or not at all works only half; a track that ended meanwhile says so")
     func trialVerdicts() {

@@ -26,7 +26,7 @@ func forDevelopers(_ text: String) -> String { developer ? text : "" }
 func fail(_ line: String) -> Never {
     let line = PrivateText.redacted(line)
     log("playercheck: \(line)")
-    FileHandle.standardError.write(Data("playercheck: \(line)\n".utf8))
+    try? FileHandle.standardError.write(contentsOf: Data("playercheck: \(line)\n".utf8))
     exit(CheckExitStatus.failed)
 }
 
@@ -66,7 +66,8 @@ final class RunLog: Sendable {
         let line = PrivateText.redacted(line)
         state.withLock {
             if progress { $0.last = Date() }
-            $0.file?.write(Data("\(time.string(from: Date()))  \(line)\n".utf8))
+            // Throws on failure (a full disk), where `write(_:)` raises an exception.
+            try? $0.file?.write(contentsOf: Data("\(time.string(from: Date()))  \(line)\n".utf8))
         }
     }
 

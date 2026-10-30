@@ -50,8 +50,8 @@ struct CheckReport {
     var stateActivity: String? {
         guard testedState != nil else { return nil }
         switch progress.activity {
-        case .pausing(let way)?: return "By \(AppDetail.wayName(way)): pausing it"
-        case .playingAgain(let way)?: return "By \(AppDetail.wayName(way)): playing it again"
+        case .pausing(let way)?: return "By \(way.inSentence): pausing it"
+        case .playingAgain(let way)?: return "By \(way.inSentence): playing it again"
         case .untested?:
             let text = lines.last { $0.hasPrefix(CheckReportLine.notTested) }?.trimmingCharacters(in: .whitespaces) ?? ""
             return text.prefix(1).uppercased() + text.dropFirst()

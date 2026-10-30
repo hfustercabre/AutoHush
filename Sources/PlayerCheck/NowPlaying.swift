@@ -19,13 +19,10 @@ func nowPlayingPID() -> pid_t {
     }
 }
 
-/// Whether the app (or a helper that plays for it) is the Now Playing one;
-/// else which app is (or that MediaRemote didn't answer).
-func nowPlayingHolder(_ pid: pid_t) -> (isThisApp: Bool, other: String) {
-    let holder = nowPlayingPID()
-    let other = holder < 0 ? "MediaRemote didn't answer" : holder == 0 ? "no app is"
-        : (NSRunningApplication(processIdentifier: responsible(holder))?.localizedName ?? "pid \(holder)") + " is"
-    return (holder > 0 && (holder == pid || responsible(holder) == pid), other)
+/// Whether the app (or a helper that plays for it) is the Now Playing one:
+/// `holder`, the process in Now Playing (`nowPlayingPID`).
+func isNowPlaying(_ pid: pid_t, holder: pid_t = nowPlayingPID()) -> Bool {
+    holder > 0 && (holder == pid || responsible(holder) == pid)
 }
 
 // MARK: - The apps in Now Playing (--now-playing-list)
@@ -52,7 +49,7 @@ func printNowPlayingList() -> Never {
     var boot = timeval()
     var size = MemoryLayout<timeval>.size
     sysctlbyname("kern.boottime", &boot, &size, nil, 0)
-    let rest = Array(CommandLine.arguments.dropFirst(2))
+    let rest = Array(arguments.dropFirst())
     // --since: only what changed since then (a caller that read the whole list
     // before keeps it up to date this way, without reading days of log again).
     let since = CommandLineOptions.value(of: CommandLineOptions.since, in: rest).flatMap(Double.init)
@@ -90,12 +87,13 @@ func printNowPlayingList() -> Never {
 /// rule. The paths are the arguments that are no option (nor --logs' or
 /// --caches' folder).
 func printNowPlayingReasons() -> Never {
-    for path in CommandLineOptions.operands(in: Array(CommandLine.arguments.dropFirst(2))) {
+    for path in CommandLineOptions.operands(in: Array(arguments.dropFirst())) {
         let url = URL(fileURLWithPath: path)
         let hidden = HiddenInterface.of(url)
         print(NowPlayingReasonsLine(path: path, reason: NowPlayingReason.of(appAt: url, bundleID: Bundle(url: url)?.bundleIdentifier),
                                     interface: hidden?.name,
-                                    switches: hidden?.switches.map { switchName($0, of: hidden) }.joined(separator: ", else ")).line)
+                                    switches: hidden?.switches.map { switchName($0, of: hidden) }.joined(separator: ", else "),
+                                    kind: hidden?.kind, browser: hidden?.browser).line)
     }
     exit(CheckExitStatus.done)
 }

@@ -154,7 +154,7 @@ struct PageCheck {
 /// page needs to take presses out of view (`LaunchOption`).
 @MainActor var launchedWithOption: Bool? {
     guard isElectron, let running else { return nil }
-    return LaunchOption.arguments(of: running.processIdentifier).contains(LaunchOption.occludedWindows)
+    return ProcessArguments.of(running.processIdentifier).contains(LaunchOption.occludedWindows)
 }
 /// How the page was found.
 @MainActor enum PageState {

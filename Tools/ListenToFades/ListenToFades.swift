@@ -16,12 +16,11 @@ import os
 ///
 /// `analyze` takes the fades' times from AutoHush's own log, removes the
 /// test beep (523 Hz) and, for every fade, prints the music's level every
-/// 50 ms next to an ideal straight-line fade, the level every 5 ms around the
-/// moments AutoHush starts and stops playing the sound itself, and any
-/// dropouts or jumps. AutoHush gives macOS's log its lines at the debug
-/// level only, which macOS keeps only for a live `log stream`: capture one
-/// during the test and pass it with `--log` (compact style), else `log show`
-/// is asked, which finds none.
+/// 50 ms next to an ideal straight-line fade, and any dropouts or jumps.
+/// AutoHush gives macOS's log its lines at the debug level only, which
+/// macOS keeps only for a live `log stream`: capture one during the test and
+/// pass it with `--log` (compact style), else `log show` is asked, which
+/// finds none.
 @main
 enum ListenToFades {
     static let defaultDevice = "AutoHushLoopback_UID"
@@ -57,8 +56,12 @@ enum ListenToFades {
         exit(2)
     }
 
+    /// The times of the log's lines and of the recording's start, read and
+    /// written alike whatever the Mac's language and calendar (QA1480).
     static let stamp: DateFormatter = {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
         return formatter
     }()
@@ -142,7 +145,7 @@ enum ListenToFades {
 
     struct Event {
         enum Kind: String {
-            case fadeOut = "fade out", fadeIn = "fade in", routed = "AutoHush plays it", unmuted = "its own sound back", direct = "straight to the speakers"
+            case fadeOut = "fade out", fadeIn = "fade in"
         }
         let time: Date
         let kind: Kind
@@ -170,9 +173,9 @@ enum ListenToFades {
         let end = start.addingTimeInterval(Double(frames) / rate)
         let events = (log.flatMap { try? String(contentsOfFile: $0, encoding: .utf8) } ?? logShow(from: start, to: end))
             .split(separator: "\n").compactMap(event).filter { $0.time >= start && $0.time <= end }
-        print(String(format: "%@: %.1f s at %.0f Hz from %@; %d fades in AutoHush's log", path, Double(frames) / rate, rate, stamp.string(from: start), events.filter { $0.kind == .fadeOut || $0.kind == .fadeIn }.count))
+        print(String(format: "%@: %.1f s at %.0f Hz from %@; %d fades in AutoHush's log", path, Double(frames) / rate, rate, stamp.string(from: start), events.count))
 
-        for fade in events where fade.kind == .fadeOut || fade.kind == .fadeIn {
+        for fade in events {
             let out = fade.kind == .fadeOut
             let duration = out ? fadeOut : fadeIn
             let t0 = fade.time.timeIntervalSince(start)
@@ -188,14 +191,6 @@ enum ListenToFades {
                 let bar = String(repeating: "█", count: max(0, Int((heard + 60) / 2)))
                 print(String(format: "  %6.2f  %6.1f  %6.1f   %@", t, heard, max(ideal, -99), bar))
                 t += 0.05
-            }
-            // The moments AutoHush takes the sound over and hands it back, every 5 ms.
-            for moment in events where (moment.kind == .routed || moment.kind == .unmuted || moment.kind == .direct)
-                && moment.time.timeIntervalSince(fade.time) > -0.2 && moment.time.timeIntervalSince(fade.time) < duration + 1 {
-                let m = moment.time.timeIntervalSince(start)
-                let until = moment.kind == .unmuted ? 0.3 : 0.1
-                let levels = stride(from: -0.04, to: until, by: 0.005).map { String(format: "%.0f", meter.level(from: m + $0, to: m + $0 + 0.005) - full) }
-                print("  \(moment.kind.rawValue) at \(String(format: "%+.3f", m - t0)) s, every 5 ms from −40 ms: " + levels.joined(separator: " "))
             }
             let flags = meter.flags(from: t0 - 0.3, to: t0 + duration + 0.6, origin: t0)
             print("  dropouts and jumps: " + (flags.isEmpty ? "none" : flags.prefix(16).joined(separator: "; ")))
@@ -259,6 +254,8 @@ enum ListenToFades {
     /// AutoHush's log over the recording, from `log show`.
     static func logShow(from start: Date, to end: Date) -> String {
         let short = DateFormatter()
+        short.locale = Locale(identifier: "en_US_POSIX")
+        short.calendar = Calendar(identifier: .gregorian)
         short.dateFormat = "yyyy-MM-dd HH:mm:ss"
         return ToolRun(URL(fileURLWithPath: "/usr/bin/log"), [
             "show", "--style", "compact", "--info", "--debug",
@@ -267,16 +264,12 @@ enum ListenToFades {
         ]).runBlocking().text
     }
 
-    /// A fade, or AutoHush taking a tap-faded player's sound over or giving
-    /// it back, from one line of its log (compact style).
+    /// A fade, from one line of AutoHush's log (compact style).
     static func event(_ line: Substring) -> Event? {
         guard line.count > 23, let time = stamp.date(from: String(line.prefix(23))) else { return nil }
         let kind: Event.Kind
         if line.contains("[fade] out from") { kind = .fadeOut }
         else if line.contains("[fade] in to") { kind = .fadeIn }
-        else if line.contains("played through AutoHush") { kind = .routed }
-        else if line.contains("plays straight to the speakers again") { kind = .direct }
-        else if line.contains("its own sound unmuted") { kind = .unmuted }
         else { return nil }
         return Event(time: time, kind: kind)
     }

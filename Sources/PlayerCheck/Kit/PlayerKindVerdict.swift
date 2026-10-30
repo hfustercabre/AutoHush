@@ -66,7 +66,8 @@ package enum PlayerKindVerdict {
             }
             say("  " + (scripting.hasVolume ? "It has a volume, so it can fade." : "No volume: it pauses without fading."))
             if scripting.hasVolume {
-                sayForDevelopers("  Measure its volume's curve: swift run measure-volume-curve \(facts.bundleID).")
+                // The tool measures built-in players only (`SupportedPlayers`).
+                sayForDevelopers("  Once it's built in, measure its volume's curve: swift run measure-volume-curve \(facts.bundleID).")
             }
             switch facts.stateNotification {
             case .announced(let name):

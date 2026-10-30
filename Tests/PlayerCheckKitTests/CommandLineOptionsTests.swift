@@ -14,12 +14,14 @@ struct CommandLineOptionsTests {
         #expect(CommandLineOptions.app(in: ["--read-only"]) == nil)
     }
 
-    @Test("a query's operands leave out the folders AutoHush passes")
+    @Test("a query's operands leave out the folders AutoHush passes, and --since's time")
     func operands() {
         let reasons = ["/Applications/A.app", "/Applications/B.app", "--logs", "/Users/x/Library/Logs/AutoHush/Checks",
                        "--caches", "/Users/x/Library/Caches/com.autohush.AutoHush/PlayerCheck"]
         #expect(CommandLineOptions.operands(in: reasons) == ["/Applications/A.app", "/Applications/B.app"])
         #expect(CommandLineOptions.operands(in: ["24", "--logs", "/l", "--caches", "/c"]) == ["24"])
+        let since = Array(CommandLineOptions.nowPlayingList(since: Date(timeIntervalSince1970: 1_760_180_000)).dropFirst())
+        #expect(CommandLineOptions.operands(in: since + ["--logs", "/l"]).isEmpty)
         #expect(CommandLineOptions.developer == "--developer")
         #expect(!CommandLineOptions.withValues.contains(CommandLineOptions.developer))
         #expect(CommandLineOptions.value(of: "--caches", in: reasons) == "/Users/x/Library/Caches/com.autohush.AutoHush/PlayerCheck")

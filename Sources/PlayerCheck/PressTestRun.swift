@@ -16,7 +16,7 @@ import WebAppPlayers
     /// The window state the trials run in, and whether it's the first
     /// tested (learning the page's button and the volume check happen there).
     private var state: WindowState?
-    private var first = true
+    private var firstState = true
     /// Whether the trial's pause pressed the player's own button (learned,
     /// or with a player's slider around it), so a pause that didn't take
     /// was the site's refusal, not a wrong button.
@@ -86,7 +86,7 @@ import WebAppPlayers
     }
 
     private func switchForPress(_ on: Bool) {
-        guard let pressSwitch, !first else { return }
+        guard let pressSwitch, !firstState else { return }
         setPageSwitch(pressSwitch, on: on, pid: pid)
     }
 
@@ -124,15 +124,15 @@ import WebAppPlayers
     private func ready() -> Bool {
         guard going else { return false }
         if trialRan, !isPlaying(pid), playAgain() {
-            if first { noteLearningPlaying(pid: pid) }
+            if firstState { noteLearningPlaying(pid: pid) }
             return true
         }
         going = waitUntilPlaying(pid)
         stopIfRequested(going ? nil : "stopped while waiting for \(appName) to play")
         if !going {
-            notTried = "not tried: it didn't play"
+            TestResults.notTried = "not tried: it didn't play"
             say("  stopped: \(appName) didn't play within 2 minutes")
-        } else if first {
+        } else if firstState {
             // Its page while it plays, to learn its Play/Pause from the first pause.
             noteLearningPlaying(pid: pid)
         }
@@ -140,7 +140,7 @@ import WebAppPlayers
     }
 
     private func record(_ way: Way, _ result: TrialResult) {
-        if first { TestResults.first[way] = result }
+        if firstState { TestResults.first[way] = result }
         if let state { TestResults.byState[way, default: []].append((state, result, whyFailed(way, in: state, result))) }
         trialProblem = nil
         trialRan = true
@@ -198,7 +198,7 @@ import WebAppPlayers
                 record(.script, trialAgainIfEnded(.script) {
                     trial(CheckReportLine.trial(.script, detail: "\(script.pause.name), \(script.play.name)"), pid: pid,
                           pause: { _ in sendScript(script.pause) }, play: { _ in sendScript(script.play) },
-                          whilePaused: first ? { [self] in checkVolume(); learnPageButton(pid: pid) } : nil)
+                          whilePaused: firstState ? { [self] in checkVolume(); learnPageButton(pid: pid) } : nil)
                 })
                 stopIfRequested()
                 RunLoop.main.run(until: Date().addingTimeInterval(1))
@@ -207,7 +207,7 @@ import WebAppPlayers
                 record(.menu, trialAgainIfEnded(.menu) {
                     trial(CheckReportLine.trial(.menu), pid: pid,
                           pause: { _ in pressMenuToggle(pid: pid) }, play: { _ in pressMenuToggle(pid: pid) },
-                          whilePaused: first ? { [self] in learnPageButton(pid: pid) } : nil)
+                          whilePaused: firstState ? { [self] in learnPageButton(pid: pid) } : nil)
                 })
                 stopIfRequested()
                 RunLoop.main.run(until: Date().addingTimeInterval(1))
@@ -216,7 +216,7 @@ import WebAppPlayers
             // AutoHush asks ("It's Paused"), whoever runs the check pauses it, and
             // the button whose words changed is learned.
             let pausedByAnother = [TestResults.first[.script], TestResults.first[.menu]].contains { $0 == .worked || $0 == .pausedOnly }
-            if first, learned == nil, !pausedByAnother, page?.toggle == nil, page?.buttons ?? 0 > 0, ready() {
+            if firstState, learned == nil, !pausedByAnother, page?.toggle == nil, page?.buttons ?? 0 > 0, ready() {
                 if !learner.hasPlayed {
                     // Its page is out of sight, where its words can't be learned: nobody is asked.
                     learnPageButton(pid: pid)
@@ -241,7 +241,7 @@ import WebAppPlayers
                                  pause: { _ in switchForPress(true); return pressPage(pausing: true) },
                                  play: { _ in switchForPress(true); return pressPage(pausing: false) },
                                  undo: { [self] in switchForPress(false) },
-                                 whilePaused: first ? { [self] in learnPageButton(pid: pid) } : { [self] in switchForPress(false) })
+                                 whilePaused: firstState ? { [self] in learnPageButton(pid: pid) } : { [self] in switchForPress(false) })
                 }
                 switchForPress(false)
                 if result == .didNotPause, pressedPlayersPause, (state ?? .visible) == .visible {
@@ -252,13 +252,9 @@ import WebAppPlayers
                 RunLoop.main.run(until: Date().addingTimeInterval(1))
             }
             if !canBeNowPlaying {
-                if first {
-                    panelProblem = panelNotNowPlaying
-                    say("  the Now Playing panel: not pressed: \(notNowPlaying)")
-                    TestResults.first[.panel] = .didNotPause
-                }
+                if firstState { say("  the Now Playing panel: not pressed: \(notNowPlaying)") }
             } else if !AXIsProcessTrusted() {
-                if first { say("  the Now Playing panel: not pressed: \(noPanelItem)") }
+                if firstState { say("  the Now Playing panel: not pressed: \(noPanelItem)") }
             } else if ready() {
                 let result = trialAgainIfEnded(.panel) {
                     panelProblem = nil
@@ -268,7 +264,7 @@ import WebAppPlayers
                                      // The row pressed may have been another app's: pressed again, that app plays on.
                                      if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, choice: .lastOnly) }
                                  },
-                                 whilePaused: first ? { [self] in learnPageButton(pid: pid) } : nil)
+                                 whilePaused: firstState ? { [self] in learnPageButton(pid: pid) } : nil)
                 }
                 if let panelProblem {
                     say("    \(panelProblem)")
@@ -277,7 +273,7 @@ import WebAppPlayers
                 }
                 // It paused with that row: its own, for later presses.
                 if result != .didNotPause { rememberPanelRow() }
-                if let state, !first, result == .didNotPause, panelProblem == noPanelItem {
+                if let state, !firstState, result == .didNotPause, panelProblem == noPanelItem {
                     // Not found in this state only: the panel wasn't tried here.
                     TestResults.untested[.panel, default: [:]][state] = "its item wasn't found in the menu bar then"
                     say("    not counted: the panel isn't tested in this state")
@@ -289,7 +285,7 @@ import WebAppPlayers
                 }
                 stopIfRequested()
             }
-            first = false
+            firstState = false
         }
         WindowTest.currentState = nil
         if let windowTest = TestScope.windowTest {

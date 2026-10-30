@@ -227,7 +227,7 @@ package enum CheckReportLine {
 
     /// "      ✗ covered: why", "      – hidden: not tested (why)": under a
     /// way's line, a window state it failed in (✗), or wasn't tested in (–,
-    /// "window states" for all of them).
+    /// `allWindowStates` for all of them).
     package static func wayState(_ mark: WayMark, _ state: String, _ why: String) -> String {
         "\(wayStateIndent)\(mark.rawValue) \(state): \(why)"
     }
@@ -243,6 +243,9 @@ package enum CheckReportLine {
     }
 
     private static let wayStateIndent = "      "
+
+    /// What a way's state line names for all the window states, when none was tested.
+    package static let allWindowStates = "window states"
 
     /// What the AppleScript line says of commands not of the supported
     /// scriptable players' kind: the Player Check app offers no press by

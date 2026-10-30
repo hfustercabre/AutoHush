@@ -167,7 +167,7 @@ struct PanelRead {
         texts = songTexts(pid)
         otherApps = otherAppNames()
         self.heard = heard ?? audible(pid)
-        holdsNowPlaying = pausing && nowPlayingHolder(pid).isThisApp
+        holdsNowPlaying = pausing && isNowPlaying(pid)
     }
 
     /// Whether `row` shows the app's song or its name.

@@ -56,7 +56,10 @@ players are”), and only the names of the app it checks, as read from it.
 The code is split by
 subject: `main.swift` runs the steps in the report's order, and each
 file holds one subject (`Scripting`, `Menu`, `Page`, `WindowStates`,
-`Signs`, `PressTest`, `Report`, …). `WindowStates` moves the app's window;
+`Signs`, `PressTest`, `Report`, …). AppleScript has four: `Scripting` (its
+dictionary, its commands and its volume), `AppleEvents` (sending them, as
+AutoHush sends them), `ScriptedState` (its state and its song) and
+`NotificationLog` (its state notifications). `WindowStates` moves the app's window;
 reading its windows is CheckedPlayers' `AppWindows`, shared with Add an
 App, which waits for a window the check can reach after Check Again.
 `Kit/` is PlayerCheckKit, the parts that need no app to check (its
@@ -382,8 +385,9 @@ log: only administrators can read it, and its wording isn't an API.
 `--now-playing-reasons` gives, per app, why it can be in Now Playing (the
 frameworks its binaries link: MediaPlayer, through Electron or CEF too;
 MediaRemote; AVKit; WebKit; Chromium, for a browser's web app), the
-framework that hides its interface, and the switches a check turns on, so
-Player Check lists apps by the same rule.
+framework that hides its interface (by name and kind, and a web app's
+browser), and the switches a check turns on, so Player Check lists apps by
+the same rule.
 
 ## Example
 
@@ -439,7 +443,7 @@ Verdict
   A scriptable player, as the supported scriptable players are: its own pause and play, and its state.
   As a built-in player: a ScriptablePlayerProfile with suite fourCharCode("spfy").
   It has a volume, so it can fade.
-  Measure its volume's curve: swift run measure-volume-curve com.spotify.client.
+  Once it's built in, measure its volume's curve: swift run measure-volume-curve com.spotify.client.
   State notification: com.spotify.client.PlaybackStateChanged, which announced each pause and play (the profile's stateNotification).
   …
 ```

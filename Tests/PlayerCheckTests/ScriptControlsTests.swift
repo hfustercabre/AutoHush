@@ -37,4 +37,15 @@ struct ScriptControlsTests {
             """)) == nil)
         #expect(scriptControls(of: nil) == nil)
     }
+
+    @Test("its volume checked: its sound volume, else its audio volume, the first by code when two are named so, whatever the dictionary's order")
+    func volume() {
+        var scripting = Scripting()
+        scripting.properties = ["zzzzVol2": "audio volume", "pVol": "sound volume", "aVol": "sound volume", "pPlS": "player state"]
+        #expect(volumeProperty(of: scripting).map { [$0.code, $0.name] } == ["aVol", "sound volume"])
+        scripting.properties = ["zzzzVol2": "audio volume", "bbbbVol1": "audio volume"]
+        #expect(volumeProperty(of: scripting).map { [$0.code, $0.name] } == ["bbbbVol1", "audio volume"])
+        scripting.properties = ["pPlS": "player state"]
+        #expect(volumeProperty(of: scripting) == nil)
+    }
 }

@@ -59,7 +59,7 @@ package enum CommandLineOptions {
     }
 
     /// The options followed by a value of their own.
-    static let withValues: Set<String> = [via, result, logs, caches]
+    static let withValues: Set<String> = [via, result, logs, caches, since]
 
     /// The value after `option` in `arguments`, if it's given.
     package static func value(of option: String, in arguments: [String]) -> String? {

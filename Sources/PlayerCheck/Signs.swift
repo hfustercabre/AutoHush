@@ -27,7 +27,7 @@ extension Look {
     let state = scriptedState()
     let toggle = menu == nil ? nil : menuToggle(pid: pid)
     // A browser's web app's sound is its browser's (its launcher has none).
-    let sounding = !soundProcesses(of: soundOwner(pid)).isEmpty
+    let sounding = !soundProcesses(of: switchTarget(pid)).isEmpty
     let heard = level ? audible(pid) : nil
     var reported = state == nil && !barShowsState ? reportedState() : nil
     if heard == true {

@@ -36,21 +36,21 @@ struct InstalledApp: Identifiable, Hashable {
     /// VoiceOver's switch"), as playercheck tells them (--now-playing-reasons).
     let hiddenInterface: String?
     let switches: String?
+    /// The kind of `hiddenInterface`, and a Chromium browser's web app's
+    /// browser ("Google Chrome"; nil otherwise), as playercheck tells them.
+    let interfaceKind: NowPlayingReasonsLine.InterfaceKind?
+    let webAppBrowser: String?
     /// Why it can be in Now Playing, from what it's built with; nil when
     /// nothing shows it can (playercheck --now-playing-reasons).
     let nowPlayingReason: String?
     var id: String { url.path }
 
+    /// Built with Electron: it opens with the launch option its page needs.
+    var isElectron: Bool { interfaceKind == .electron }
+
     /// For the check's confirmation, as playercheck does it: the switch it
     /// turns on to read the app's interface, which one it leaves on, and
     /// that it may bring the app forward a moment to have its page built.
-    /// A Chromium browser's web app's browser ("Google Chrome"), from the
-    /// interface playercheck names ("Google Chrome web app"); nil otherwise.
-    var webAppBrowser: String? {
-        guard let hiddenInterface, hiddenInterface.hasSuffix(" web app") else { return nil }
-        return String(hiddenInterface.dropLast(" web app".count))
-    }
-
     var switchNote: String? {
         guard let switches else { return nil }
         if let browser = webAppBrowser {
@@ -58,7 +58,7 @@ struct InstalledApp: Identifiable, Hashable {
                 + " it back off after, unless VoiceOver had it on: then it's left on. Each Play or Pause by its page does the same,"
                 + " about 2 seconds longer."
         }
-        let page = hiddenInterface == "Flutter" ? "interface" : "page"
+        let page = interfaceKind == .flutter ? "interface" : "page"
         return "To read its \(page), the check turns on an accessibility switch (\(switches)) and turns it back off after,"
             + " unless it may have been on already (its \(page) was readable before, or VoiceOver had it on): then it's left on."
             + " If its window is out of sight, \(name) may be brought forward a moment, to its desktop and back, for its \(page) to be built."
@@ -81,8 +81,9 @@ struct InstalledApp: Identifiable, Hashable {
         return found.map { app in
             let line = told[app.url.path]
             return InstalledApp(url: app.url, name: app.name, bundleID: app.bundleID, root: app.root, subfolder: app.subfolder,
-                                isSafariWebApp: app.bundleID?.hasPrefix("com.apple.Safari.WebApp.") == true,
-                                hiddenInterface: line?.interface, switches: line?.switches, nowPlayingReason: line?.reason)
+                                isSafariWebApp: app.bundleID?.hasPrefix(BundleNames.safariWebAppPrefix) == true,
+                                hiddenInterface: line?.interface, switches: line?.switches, interfaceKind: line?.kind,
+                                webAppBrowser: line?.browser, nowPlayingReason: line?.reason)
         }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
