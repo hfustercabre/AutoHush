@@ -79,7 +79,7 @@ package actor CheckedPlayer: AddedAppPlayer {
     private let pressSleep: VolumeFader.Sleep
     private let logger = AutoHushLogger(category: "CheckedPlayer")
     /// Whether one told by its level plays, read once a second (`polledState`).
-    private var assertions: PlaybackAssertions
+    private let assertions: PlaybackAssertions
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     /// Whether Audio Recording lets a tap hear it (`AudioCapturePermission.allowsTaps`).
     private let audioRecordingAllowed: @Sendable () -> Bool
@@ -254,14 +254,8 @@ package actor CheckedPlayer: AddedAppPlayer {
         // tells, and between decisions its keep-awake assertion.
         if parts.hearing != nil {
             if polled {
-                let soundOn = soundOn, current = assertions
-                let (state, read) = await Self.probeQueue.run { () -> (PlayerState, PlaybackAssertions) in
-                    var assertions = current
-                    let state = assertions.state(of: pid, soundOn: { soundOn(pid) })
-                    return (state, assertions)
-                }
-                assertions = read
-                return state
+                let soundOn = soundOn, assertions = assertions
+                return await Self.probeQueue.run { assertions.state(of: pid, soundOn: { soundOn(pid) }) }
             }
             return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
         }
@@ -290,8 +284,9 @@ package actor CheckedPlayer: AddedAppPlayer {
         guard !polled, state != .playing, client.changed != reportHeardAt, tapsAllowed.withLock({ $0 }) else { return state }
         guard await soundOnNow(pid) else { return state }
         reportHeardAt = client.changed
-        let probe = levelProbe
-        guard await Self.probeQueue.run({ probe.isAudible(appPID: pid) }) else { return state }
+        // Audio Recording asked on the probe's queue too, as `heardNow` asks it.
+        let probe = levelProbe, allowed = audioRecordingAllowed
+        guard await Self.probeQueue.run({ allowed() && probe.isAudible(appPID: pid) }) else { return state }
         reportIsStale = true
         logger.notice("\(self.name, privacy: .public)’s Now Playing report says \(client.reported ?? "", privacy: .public) while it’s heard: its reports count no more")
         return nil
@@ -320,11 +315,14 @@ package actor CheckedPlayer: AddedAppPlayer {
         var firstError: any Error?
         // A sign that says nothing now (a Now Playing report of Unknown:
         // Apple TV's trailers) would only be waited on: not checked then.
-        var checkable = !parts.signs.isEmpty || reports != nil
-        if checkable { checkable = await sureState() != .unknown }
+        // Asked once, at the first way that doesn't check its own presses.
+        var checkable: Bool?
         for way in parts.ways where !(quietly && way is PanelWay) {
             do {
-                if way.checksItsPresses || !checkable {
+                if !way.checksItsPresses, checkable == nil {
+                    checkable = (!parts.signs.isEmpty || reports != nil) ? await sureState() != .unknown : false
+                }
+                if way.checksItsPresses || checkable != true {
                     if target == .playing { try await way.play() } else { try await way.pause() }
                 } else {
                     try await PressCheck(name: "\(name) (\(type(of: way)))",
@@ -363,14 +361,15 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// way's, or the one its panel way reads), or its page's mute.
     package nonisolated var releasesOnQuit: Bool { parts.page != nil || parts.cluePage != nil }
 
-    /// Turns back off the switch its page needed and lifts its page's mute,
-    /// without playing anything: as AutoHush quits, or once another player
-    /// is chosen and AutoHush holds no pause in it. Chosen again, its page's
-    /// switch goes back on at its next look.
+    /// Lifts its page's mute in place of a pause, without playing anything.
     package func releaseMute() async {
         await parts.page?.releaseMute()
     }
 
+    /// Turns back off the switch its page needed and lifts its page's mute,
+    /// without playing anything: as AutoHush quits, or once another player
+    /// is chosen and AutoHush holds no pause in it. Chosen again, its page's
+    /// switch goes back on at its next look.
     package func release() async {
         await parts.page?.releaseMute()
         await parts.page?.releasePage()

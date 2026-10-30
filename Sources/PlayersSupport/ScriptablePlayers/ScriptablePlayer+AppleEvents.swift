@@ -56,18 +56,29 @@ extension ScriptablePlayer {
 
     /// `get <property>` of the application — a `core/getd` event.
     package static func makeGetPropertyEvent(_ property: DescType, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
-        let event = coreEvent(Code.getData, processIdentifier: pid)
-        event.setParam(propertySpecifier(property), forKeyword: Code.directObject)
-        return event
+        makeGetDataEvent(propertySpecifier(property), processIdentifier: pid)
     }
 
     /// `set <property> to <value>` of the application — a `core/setd` event.
     package static func makeSetPropertyEvent(
         _ property: DescType, to value: Int, processIdentifier pid: pid_t
     ) -> NSAppleEventDescriptor {
+        makeSetDataEvent(propertySpecifier(property), to: NSAppleEventDescriptor(int32: Int32(value)), processIdentifier: pid)
+    }
+
+    /// `get` of what `specifier` names — a `core/getd` event.
+    package static func makeGetDataEvent(_ specifier: NSAppleEventDescriptor, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
+        let event = coreEvent(Code.getData, processIdentifier: pid)
+        event.setParam(specifier, forKeyword: Code.directObject)
+        return event
+    }
+
+    /// `set` of what `specifier` names to `value` — a `core/setd` event.
+    static func makeSetDataEvent(_ specifier: NSAppleEventDescriptor, to value: NSAppleEventDescriptor,
+                                 processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
         let event = coreEvent(Code.setData, processIdentifier: pid)
-        event.setParam(propertySpecifier(property), forKeyword: Code.directObject)
-        event.setParam(NSAppleEventDescriptor(int32: Int32(value)), forKeyword: Code.setDataValue)
+        event.setParam(specifier, forKeyword: Code.directObject)
+        event.setParam(value, forKeyword: Code.setDataValue)
         return event
     }
 
@@ -94,13 +105,14 @@ extension ScriptablePlayer {
         )
     }
 
-    /// Object specifier for `property <code> of application`.
-    package static func propertySpecifier(_ property: DescType) -> NSAppleEventDescriptor {
+    /// Object specifier for `property <code> of <container>`: of the
+    /// application by default.
+    package static func propertySpecifier(_ property: DescType, of container: NSAppleEventDescriptor = .null()) -> NSAppleEventDescriptor {
         let record = NSAppleEventDescriptor.record()
         record.setDescriptor(NSAppleEventDescriptor(typeCode: Code.property), forKeyword: Code.desiredClass)
         record.setDescriptor(NSAppleEventDescriptor(enumCode: Code.property), forKeyword: Code.keyForm)
         record.setDescriptor(NSAppleEventDescriptor(typeCode: property), forKeyword: Code.keyData)
-        record.setDescriptor(NSAppleEventDescriptor.null(), forKeyword: Code.container)
+        record.setDescriptor(container, forKeyword: Code.container)
         return record.coerce(toDescriptorType: Code.objectSpecifier) ?? record
     }
 

@@ -26,18 +26,13 @@ extension ScriptedAppPlayer {
 
     /// `get` of what `specifier` names (a document's property).
     package static func makeGetDataEvent(_ specifier: NSAppleEventDescriptor, processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
-        let event = ScriptablePlayer.makeCommandEvent(suite: Code.coreSuite, Code.getData, processIdentifier: pid)
-        event.setParam(specifier, forKeyword: Code.directObject)
-        return event
+        ScriptablePlayer.makeGetDataEvent(specifier, processIdentifier: pid)
     }
 
     /// `set` of what `specifier` names (a document's property) to `value`.
     static func makeSetDataEvent(_ specifier: NSAppleEventDescriptor, to value: NSAppleEventDescriptor,
                                  processIdentifier pid: pid_t) -> NSAppleEventDescriptor {
-        let event = ScriptablePlayer.makeCommandEvent(suite: Code.coreSuite, Code.setData, processIdentifier: pid)
-        event.setParam(specifier, forKeyword: Code.directObject)
-        event.setParam(value, forKeyword: Code.setDataValue)
-        return event
+        ScriptablePlayer.makeSetDataEvent(specifier, to: value, processIdentifier: pid)
     }
 
     /// The object specifier for the app's documents of class `documentClass`:
@@ -64,11 +59,6 @@ extension ScriptedAppPlayer {
 
     /// The object specifier for the property `property` of `container`.
     package static func propertySpecifier(_ property: String, of container: NSAppleEventDescriptor) -> NSAppleEventDescriptor {
-        let record = NSAppleEventDescriptor.record()
-        record.setDescriptor(NSAppleEventDescriptor(typeCode: Code.property), forKeyword: Code.desiredClass)
-        record.setDescriptor(NSAppleEventDescriptor(enumCode: Code.property), forKeyword: Code.keyForm)
-        record.setDescriptor(NSAppleEventDescriptor(typeCode: code(property)), forKeyword: Code.keyData)
-        record.setDescriptor(container, forKeyword: Code.container)
-        return record.coerce(toDescriptorType: Code.objectSpecifier) ?? record
+        ScriptablePlayer.propertySpecifier(code(property), of: container)
     }
 }

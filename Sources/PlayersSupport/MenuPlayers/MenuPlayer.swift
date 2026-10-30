@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import os
 import AutoHushKit
 
 /// What AutoHush needs to know about a music app it controls through its
@@ -58,18 +59,27 @@ package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
     /// It's controlled through its menu, which needs Accessibility.
     package nonisolated var controlPermission: Permission { .accessibility(player: name) }
     /// Whether its words for Play and Pause could be read from its app (read
-    /// once per copy and version).
-    package nonisolated var ownWordsRead: Bool? { words() != nil }
+    /// once per copy and version), as last read; `nil` before the first read.
+    /// Diagnostics asks on the main thread, so they're read again on its
+    /// queue, never there: the first read of a copy can take a while (an
+    /// app.asar of tens of MB).
+    package nonisolated var ownWordsRead: Bool? {
+        let last = wordsRead.withLock { $0 }
+        queue.async { _ = self.readWords() }
+        return last
+    }
 
     private let menu: any PlaybackMenu
     private let processIdentifier: @Sendable () -> pid_t?
-    private let words: @Sendable () -> PlayPauseWords?
+    private nonisolated let words: @Sendable () -> PlayPauseWords?
+    /// Whether the last read of its words found them (`ownWordsRead`).
+    private nonisolated let wordsRead = OSAllocatedUnfairLock<Bool?>(initialState: nil)
     /// macOS's request for Accessibility is shown once per launch, not at
     /// every check.
     private var hasAskedForAccess = false
     private let logger = AutoHushLogger(category: "MenuPlayer")
     /// Accessibility calls block: they run here, one at a time.
-    private let queue: DispatchQueue
+    private nonisolated let queue: DispatchQueue
 
     package init(
         profile: MenuPlayerProfile,
@@ -108,8 +118,16 @@ package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
               let toggle = await queue.run({ menu.toggle(pid: pid) })
         else { return .unknown }
         guard toggle.isEnabled else { return .stopped } // nothing to play
-        guard let words = await queue.run(words) else { return .unknown }
+        guard let words = await queue.run({ self.readWords() }) else { return .unknown }
         return Self.state(of: toggle, words: words)
+    }
+
+    /// Its words, read on its queue, and whether they were found kept for
+    /// `ownWordsRead`.
+    private nonisolated func readWords() -> PlayPauseWords? {
+        let found = words()
+        wordsRead.withLock { $0 = found != nil }
+        return found
     }
 
     package func pause() async throws {

@@ -141,10 +141,14 @@ package enum AppWindows {
     /// windows closed: a menu bar player's was read as on another desktop,
     /// and every state as out of reach, 2026-10-27).
     package static func state(of app: NSRunningApplication) -> CheckResult.WindowState? {
-        let pid = app.processIdentifier
-        let appElement = AXUIElement.application(pid, timeout: 1)
+        state(of: app, main: main(of: app.processIdentifier))
+    }
+
+    /// `state(of:)`, its main window found already (`main(of:)`).
+    private static func state(of app: NSRunningApplication, main: (info: Info, element: AXUIElement?)?) -> CheckResult.WindowState? {
+        let appElement = AXUIElement.application(app.processIdentifier, timeout: 1)
         let hidden = appElement.value(kAXHiddenAttribute) as? Bool == true
-        guard let (info, element) = main(of: pid) else { return hidden ? .hidden : nil }
+        guard let (info, element) = main else { return hidden ? .hidden : nil }
         if isClosed(info) { return nil }
         if hidden { return .hidden }
         if element?.value(kAXMinimizedAttribute) as? Bool == true { return .minimized }
@@ -161,8 +165,10 @@ package enum AppWindows {
     /// desktop): Player Check's `WindowTest(app:)` rule. Without one, the
     /// check runs with its windows closed (each way tried once).
     package static func hasWindowWithinReach(_ app: NSRunningApplication) -> Bool {
-        guard let state = state(of: app) else { return false }
+        // One look at its windows, for its state and its main window.
+        let found = main(of: app.processIdentifier)
+        guard let state = state(of: app, main: found) else { return false }
         // Hidden is the app's: it may have no main window then.
-        return state != .hidden || main(of: app.processIdentifier) != nil
+        return state != .hidden || found != nil
     }
 }

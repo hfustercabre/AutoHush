@@ -192,9 +192,15 @@ package struct AccessibilityWebPage: WebPage {
     /// description), else its title; a Flutter app's item, else its value
     /// (a pressable text keeps its words there).
     package static func label(of element: AXUIElement, access: PageAccess) -> String {
-        [element.string(kAXDescriptionAttribute), element.string(kAXTitleAttribute),
-         access.pageIsWindow ? element.string(kAXValueAttribute) : nil]
-            .compactMap { $0 }.first { !$0.isEmpty } ?? ""
+        label(of: element, access: access, description: element.string(kAXDescriptionAttribute))
+    }
+
+    /// `label(of:access:)`, its description read already; the others are
+    /// read only while it says nothing.
+    private static func label(of element: AXUIElement, access: PageAccess, description: String?) -> String {
+        func said(_ text: String?) -> String? { text.flatMap { $0.isEmpty ? nil : $0 } }
+        return said(description) ?? said(element.string(kAXTitleAttribute))
+            ?? (access.pageIsWindow ? said(element.string(kAXValueAttribute)) : nil) ?? ""
     }
 
     package func button(_ handle: ButtonHandle) -> PageButton? {
@@ -204,7 +210,7 @@ package struct AccessibilityWebPage: WebPage {
         case .invalidUIElement, .cannotComplete: return nil // gone, or not answering
         default: break
         }
-        let label = (description as? String).flatMap { $0.isEmpty ? nil : $0 } ?? Self.label(of: element, access: access)
+        let label = Self.label(of: element, access: access, description: description as? String)
         // Only one that says so is disabled: a Flutter item may not say.
         let enabled = element.value(kAXEnabledAttribute) as? Bool ?? true
         return PageButton(handle: handle, label: label, isEnabled: enabled)
@@ -254,16 +260,13 @@ package struct AccessibilityWebPage: WebPage {
     /// The texts of the player's bar around the page's button saying one of
     /// `labels` (its Play/Pause's words): the song and the artist, where the
     /// window's title may not name them. The bar is the nearest element
-    /// around the button holding a slider or a progress bar, as `standing`
-    /// looks for one; its texts are read at most `barTextDepth` deep. None
+    /// around the button holding a slider or a progress bar
+    /// (`playerBar(around:)`, as `standing` looks for one); its texts are read at most `barTextDepth` deep. None
     /// without such a button or bar. `PanelWay` tells the app's row in the
     /// Now Playing panel by them, as its check did (2026-10-19).
     package func playerBarTexts(pid: pid_t, labels: Set<String>) -> [String] {
         for button in buttons(pid: pid) ?? [] where labels.contains(button.label) {
-            guard let element = Self.element(of: button.handle) else { continue }
-            var reads = Self.controlsReadLimit
-            guard let bar = Self.surroundings(of: element).inPage.prefix(Self.controlsLevels)
-                .first(where: { Self.holdsSlider($0.element, depth: 0, reads: &reads) })?.element else { continue }
+            guard let element = Self.element(of: button.handle), let bar = Self.playerBar(around: element) else { continue }
             var texts: [String] = []
             Self.walk(from: bar, limit: Self.controlsReadLimit, maxDepth: Self.barTextDepth) { element, _ in
                 texts += [kAXTitleAttribute, kAXValueAttribute, kAXDescriptionAttribute].compactMap { element.string($0) }.filter { !$0.isEmpty }

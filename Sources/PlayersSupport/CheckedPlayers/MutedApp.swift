@@ -25,7 +25,7 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     /// The mute, and what it stands for.
     private var hush = MuteState()
     private var mutedPID: pid_t?
-    private var assertions: PlaybackAssertions
+    private let assertions: PlaybackAssertions
     /// What a stop is timed by (`MuteState.stopTime`).
     private let clock: @Sendable () -> Date
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
@@ -104,18 +104,14 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     /// Whether it plays now: its keep-awake assertion once it has held one,
     /// else its sound output (open while it plays, and for some apps paused too).
     private func playsNow(_ pid: pid_t) async -> Bool {
-        let soundOn = soundOn, current = assertions
-        let (playing, read) = await queue.run { () -> (Bool, PlaybackAssertions) in
-            var assertions = current
-            let playing = switch assertions.state(of: pid, soundOn: { soundOn(pid) }) {
+        let soundOn = soundOn, assertions = assertions
+        return await queue.run { () -> Bool in
+            switch assertions.state(of: pid, soundOn: { soundOn(pid) }) {
             case .playing: true
             case .paused: false
             default: soundOn(pid)
             }
-            return (playing, assertions)
         }
-        assertions = read
-        return playing
     }
 
     private func liftMute() async {
