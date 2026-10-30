@@ -20,147 +20,6 @@ extension AudioMonitor {
         lastHALChange.map { now.timeIntervalSince($0) < Self.postChangeRefreshWindow } ?? false
     }
 
-    private func refreshCandidates(at now: Date) {
-        needsRefresh = false
-        lastRefresh = now
-        let ownPID = getpid()
-        let processes = snapshotProvider.activeProcesses(includingInputOnly: configuration.pausesForMicrophone)
-            .filter { $0.pid != ownPID }
-        candidates = processes.filter(\.isRunningOutput)
-        playerProcesses = Set(candidates.filter { configuration.isMusicPlayer($0.bundleID) }.map(\.objectID))
-        sourceOfProcess = [:]
-        // A process without a bundle ID (a command-line player) counts as
-        // the app that owns it, e.g. Terminal; one no app owns (a system
-        // daemon) is left with an empty ID and doesn't count.
-        for process in candidates {
-            guard let source = owningSource(of: process) else { continue }
-            if configuration.isMusicPlayer(source.id) { playerProcesses.insert(process.objectID) }
-            // An excluded owner (e.g. the media player's helper) excludes its processes too.
-            guard configuration.isMediaSource(source.id) else { continue }
-            sourceOfProcess[process.objectID] = source
-            knownSources[source.id] = source
-        }
-        presentSourceIDs = Set(sourceOfProcess.values.map(\.id))
-        updateMicrophoneSources(among: processes)
-        // A released process whose output closed is tapped again when it opens.
-        let present = Set(candidates.map(\.objectID))
-        quietProcesses = quietProcesses.filter { present.contains($0) }
-        updateCalls()
-        updateMeteredProcesses(at: now)
-    }
-
-    /// The apps with their microphone on, among `processes` (the media
-    /// player's aside), as their sound's owner is found.
-    private func updateMicrophoneSources(among processes: [AudioProcessInfo]) {
-        microphoneSourceIDs = []
-        for process in processes where process.isRunningInput {
-            // Only its microphone on: its owner, found as for a playing one.
-            guard let source = sourceOfProcess[process.objectID] ?? owningSource(of: process),
-                  configuration.isMediaSource(source.id) else { continue }
-            microphoneSourceIDs.insert(source.id)
-            knownSources[source.id] = source
-        }
-    }
-
-    /// The app that owns `process` (`sourceIdentifier`), or its own bundle
-    /// ID; `nil` when that ID already rules it out (the media player's, an
-    /// app that never counts). The owner may be ruled out still.
-    private func owningSource(of process: AudioProcessInfo) -> AudioSource? {
-        guard process.bundleID.isEmpty || configuration.isMediaSource(process.bundleID) else { return nil }
-        return sourceIdentifier?.source(for: process) ?? AudioSource(id: process.bundleID, name: process.bundleID)
-    }
-
-    /// Tells the arbiter which apps have their microphone on (calls): only
-    /// playing ones while Pause for the microphone is off.
-    private func updateCalls() {
-        let calls = microphoneSourceIDs.subtracting(ignoredSourceIDs)
-        for id in calls.subtracting(callSourceIDs).sorted() { events.yield(.call(id: id, inCall: true)) }
-        for id in callSourceIDs.subtracting(calls).sorted() { events.yield(.call(id: id, inCall: false)) }
-        callSourceIDs = calls
-    }
-
-    /// Re-reads the System Audio Recording permission (at most every few
-    /// seconds) and derives the detection mode from it when it is known.
-    private func checkPermission(at now: Date) {
-        guard detectionMethod == .audioLevels else {
-            setDetectionMode(detectionMethod == .playbackSignals ? .playbackSignals : .disabled)
-            return
-        }
-        guard let permission else { return }
-        if let lastPermissionCheck,
-           now.timeIntervalSince(lastPermissionCheck) < Self.permissionRecheckInterval { return }
-        lastPermissionCheck = now
-
-        let status = permission.status()
-        let changed = status != permissionStatus
-        permissionStatus = status
-        switch status {
-        case .granted:
-            setDetectionMode(.audioLevel)
-        case .denied:
-            setDetectionMode(.unavailable)
-        case .notDetermined:
-            setDetectionMode(.pending)
-            requestPermissionOnce(permission)
-        case nil:
-            break
-        }
-        if changed {
-            let said = switch status {
-            case .granted: "allowed"
-            case .denied: "denied"
-            case .notDetermined: "not asked yet"
-            case nil: "unknown"
-            }
-            logger.info("[monitor] System Audio Recording permission: \(said, privacy: .public)")
-            updateMeteredProcesses(at: now)
-        }
-    }
-
-    private func requestPermissionOnce(_ permission: any AudioCapturePermissionChecking) {
-        guard !hasRequestedPermission else { return }
-        hasRequestedPermission = true
-        permission.request { [weak self] _ in
-            guard let monitor = self else { return }
-            monitor.queue.async {
-                monitor.lastPermissionCheck = nil // re-read right away
-                monitor.tick()
-            }
-        }
-    }
-
-    /// Taps are created only when they matter (see the type comment) and can
-    /// deliver samples: with the permission granted, or when it cannot be
-    /// read (then samples decide).
-    var shouldMeterLevels: Bool {
-        detectionMethod == .audioLevels && audioLevelsNeeded
-            && (permissionStatus == nil || permissionStatus == .granted)
-    }
-
-    func updateMeteredProcesses(at now: Date) {
-        guard let levelMeter else { return }
-        // The player is tapped only to prove the permission when TCC cannot be read.
-        let verifiesWithPlayer = permissionStatus == nil && detectionMode != .audioLevel
-        // The quiet ones only while they're listened to again (`quietListenInterval`).
-        let listened = quietListen.until == nil ? [] : quietProcessesToListen
-        var metered = shouldMeterLevels ? candidates.filter {
-            (sourceOfProcess[$0.objectID] != nil && (!quietProcesses.contains($0.objectID) || listened.contains($0.objectID)))
-                || (verifiesWithPlayer && playerProcesses.contains($0.objectID))
-        } : []
-        let tapsPlayer = metered.contains { playerProcesses.contains($0.objectID) }
-        playerTapSince = tapsPlayer ? (playerTapSince ?? now) : nil
-        // The music too while another app is measured: whether it's heard
-        // (`playerHearing`) and, leveling the music, its loudness. Not for
-        // the music alone, so the recording indicator isn't on for it, nor
-        // for a quiet app's listen alone: one heard there is measured on.
-        if detectionMode == .audioLevel, !tapsPlayer,
-           metered.contains(where: { sourceOfProcess[$0.objectID] != nil && !quietProcesses.contains($0.objectID) }) {
-            metered += candidates.filter { playerProcesses.contains($0.objectID) }
-        }
-        // May block while macOS shows the System Audio Recording prompt.
-        levelMeter.setMeteredProcesses(Set(metered.map(\.objectID)))
-    }
-
     private func evaluate(at now: Date) {
         let measured = levelMeter?.drainLevels() ?? [:]
         let peaks = measured.mapValues(\.peak)
@@ -268,24 +127,6 @@ extension AudioMonitor {
         publishReport(audible: audible, levels: levels, verdicts: verdicts)
     }
 
-    /// Notes since when the player's processes are measured and when it was
-    /// last heard (`playerHearing`); forgotten once they aren't measured.
-    private func notePlayerHearing(levels: [AudioObjectID: AudioLevel], at now: Date) {
-        let peaks = playerProcesses.compactMap { levels[$0]?.peak }
-        guard detectionMode == .audioLevel, !peaks.isEmpty else {
-            playerMeasuredSince = nil
-            playerMeasuredAt = nil
-            playerHeardAt = nil
-            return
-        }
-        let wasHeard = playerHeardAt.map { now.timeIntervalSince($0) < Self.playerSilenceWindow } ?? false
-        playerMeasuredSince = playerMeasuredSince ?? now
-        playerMeasuredAt = now
-        guard peaks.contains(where: { $0 >= configuration.audibleThreshold }) else { return }
-        playerHeardAt = now
-        if !wasHeard { events.yield(.playerHeard) } // heard again: the arbiter looks at once
-    }
-
     /// Notes a tapped source process's level: `true` once it has been silent
     /// for `silentTapRelease`, when its tap is to be released.
     private func noteSilence(of objectID: AudioObjectID, peak: Float, at now: Date) -> Bool {
@@ -331,20 +172,6 @@ extension AudioMonitor {
         return judgement
     }
 
-    /// Infers the permission from samples; only used when TCC cannot be read.
-    private func updateDetectionMode(peaks: [AudioObjectID: Float], at now: Date) {
-        guard permissionStatus == nil else { return }
-        if detectionMode != .audioLevel, peaks.values.contains(where: { $0 > 0 }) {
-            setDetectionMode(.audioLevel)
-            updateMeteredProcesses(at: now) // verification taps on the player are no longer needed
-        } else if detectionMode == .pending,
-                  let playingSince = playerPlayingSince,
-                  let tapSince = playerTapSince,
-                  now.timeIntervalSince(max(playingSince, tapSince)) >= Self.verificationWindow {
-            setDetectionMode(.unavailable)
-        }
-    }
-
     /// The player plays on this Mac when a process of its own has output
     /// running. Its output is not tapped: that would keep the recording
     /// indicator on for as long as the music plays.
@@ -370,13 +197,6 @@ extension AudioMonitor {
         guard longest != publishedStartConfirmation else { return }
         publishedStartConfirmation = longest
         events.yield(.startConfirmation(longest))
-    }
-
-    func setDetectionMode(_ mode: DetectionMode) {
-        guard mode != detectionMode else { return }
-        detectionMode = mode
-        logger.info("[monitor] detection: \(String(describing: mode), privacy: .public)")
-        onDetectionModeChange(mode)
     }
 
     private func rescheduleTimer(at now: Date) {

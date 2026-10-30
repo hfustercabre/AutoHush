@@ -25,4 +25,32 @@ extension AudioMonitor {
     private static func combined(_ levels: [Float]) -> Float {
         levels.map { $0 * $0 }.reduce(0, +).squareRoot()
     }
+
+    /// Whether the music is paused by AutoHush: its loudness just before
+    /// is noted, and the apps' during the pause (with `levelsMusic`).
+    func setMusicPaused(_ paused: Bool) {
+        queue.async {
+            if !paused, let apps = self.resumeLevel.appsLevel {
+                self.logger.info("[level] the apps’ loudness during the pause: \(Self.dBFS(apps), privacy: .public) dBFS")
+            }
+            self.resumeLevel.setMusicPaused(paused, at: self.clock())
+            if paused, let reference = self.resumeLevel.reference {
+                self.logger.info("[level] the music’s loudness at the pause: \(Self.dBFS(reference), privacy: .public) dBFS")
+            }
+        }
+    }
+
+    /// How far (dB, below 0) to lower the Mac's volume as the music
+    /// resumes: `nil` unless the apps it was paused for were quieter, or
+    /// with `levelsMusic` off or levels unmeasured (AntiDot mode).
+    func resumeOffsetDB() async -> Float? {
+        await queue.run {
+            guard self.configuration.levelsMusic, self.detectionMode == .audioLevel else { return nil }
+            return self.resumeLevel.offsetDB(maxCut: self.configuration.levelingMaxCutDB, minCut: self.configuration.levelingMinCutDB)
+        }
+    }
+
+    private static func dBFS(_ rms: Float) -> String {
+        String(format: "%.1f", 20 * log10(max(rms, 0.0001)))
+    }
 }

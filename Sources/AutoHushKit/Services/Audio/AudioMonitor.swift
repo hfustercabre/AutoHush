@@ -323,57 +323,6 @@ final class AudioMonitor: @unchecked Sendable {
         }
     }
 
-    /// Whether the music is paused by AutoHush: its loudness just before
-    /// is noted, and the apps' during the pause (with `levelsMusic`).
-    func setMusicPaused(_ paused: Bool) {
-        queue.async {
-            if !paused, let apps = self.resumeLevel.appsLevel {
-                self.logger.info("[level] the apps’ loudness during the pause: \(Self.dBFS(apps), privacy: .public) dBFS")
-            }
-            self.resumeLevel.setMusicPaused(paused, at: self.clock())
-            if paused, let reference = self.resumeLevel.reference {
-                self.logger.info("[level] the music’s loudness at the pause: \(Self.dBFS(reference), privacy: .public) dBFS")
-            }
-        }
-    }
-
-    /// Whether the media player is heard, from the levels measured while
-    /// another app plays (the player is tapped alongside it): instant, so
-    /// a pause waits for nothing. `.unknown` when levels aren't measured
-    /// (AntiDot mode, Open audio streams only, no Audio Recording) or the
-    /// player's processes aren't yet; `.silent` with no output of its own.
-    /// With `since`, only its sound after then counts (what came before
-    /// AutoHush's pause doesn't), and its silence is measured from then.
-    func playerHearing(since: Date? = nil) async -> PlayerHearing {
-        await queue.run { self.currentPlayerHearing(since: since) }
-    }
-
-    private func currentPlayerHearing(since: Date? = nil) -> PlayerHearing {
-        guard detectionMethod == .audioLevels, detectionMode == .audioLevel else { return .unknown }
-        guard !playerProcesses.isEmpty else { return .silent }
-        // As of the latest look: what was measured, however long ago it ran.
-        guard let playerMeasuredSince, let playerMeasuredAt else { return .unknown }
-        let from = max(playerMeasuredSince, since ?? .distantPast)
-        if let playerHeardAt, playerHeardAt >= from,
-           playerMeasuredAt.timeIntervalSince(playerHeardAt) < Self.playerSilenceWindow { return .heard }
-        let measured = playerMeasuredAt.timeIntervalSince(from)
-        return measured >= Self.playerSilenceWindow ? .silent : .measuring(remaining: Self.playerSilenceWindow - measured)
-    }
-
-    /// How far (dB, below 0) to lower the Mac's volume as the music
-    /// resumes: `nil` unless the apps it was paused for were quieter, or
-    /// with `levelsMusic` off or levels unmeasured (AntiDot mode).
-    func resumeOffsetDB() async -> Float? {
-        await queue.run {
-            guard self.configuration.levelsMusic, self.detectionMode == .audioLevel else { return nil }
-            return self.resumeLevel.offsetDB(maxCut: self.configuration.levelingMaxCutDB, minCut: self.configuration.levelingMinCutDB)
-        }
-    }
-
-    private static func dBFS(_ rms: Float) -> String {
-        String(format: "%.1f", 20 * log10(max(rms, 0.0001)))
-    }
-
     /// Replaces the sources that must never pause the music. Playing sources
     /// that become ignored stop for the arbiter at once, and vice versa. One
     /// no longer ignored starts without saying when it was first heard: it
