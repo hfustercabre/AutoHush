@@ -125,7 +125,7 @@ extension PlayerSession {
         }
     }
 
-    /// Music AutoHush paused stays paused after the Mac sleeps: the
+    /// What AutoHush paused stays paused after the Mac sleeps: the
     /// arbiter forgets the pause as the Mac falls asleep, when the other
     /// apps' sound stops too, and decides nothing until it's awake.
     func setAsleep(_ asleep: Bool) {

@@ -44,14 +44,14 @@ extension AddWebAppView {
             return ([check, opened,
                     ChecklistStep(title: answerStep,
                                   notes: [String(localized: "\(shown) asks something before showing \(site) (cookies, signing in…). AutoHush goes on once it shows.",
-                                                 comment: "Add a Web App window, under the step “Answer the site in Safari”; the first %@ is the site Safari shows instead (e.g. consent.youtube.com), the second the one typed (e.g. music.youtube.com)")],
+                                                 comment: "Add a Web App window, under the step “Answer the site in Safari”; the first %@ is the site Safari shows instead (e.g. consent.example.com), the second the one typed (e.g. music.example.com)")],
                                   state: .current),
                     ChecklistStep(title: addStep, state: .todo), learnLater], [])
         case .readyToAdd(let site):
             return ([check, opened] + answered
                 + [ChecklistStep(title: addStep,
                                  notes: [String(localized: "Once \(site) shows in Safari (answer anything it asks first), click Add to Dock.",
-                                                comment: "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.youtube.com")],
+                                                comment: "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.example.com")],
                                  state: .current, button: .addToDock,
                                  warning: closedWithoutAdding
                                     ? String(localized: "Safari’s window was closed without adding it. Click Add to Dock to open it again.",

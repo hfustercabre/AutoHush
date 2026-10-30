@@ -50,7 +50,7 @@ extension DiagnosticsReport {
         }
         if let read = facts.playerWordsRead {
             rows.append(Row(label: String(localized: "Play/Pause words read",
-                                          comment: "Diagnostics: whether AutoHush could read, from the media player's app, its own words for Play and Pause (TIDAL, Apple Podcasts), which tell its state apart"),
+                                          comment: "Diagnostics: whether AutoHush could read, from the media player's app, its own words for Play and Pause, which tell its state apart"),
                             value: read ? yes : no, mark: read ? .ok : .problem))
         }
         if let error = status.controlError {
@@ -150,9 +150,9 @@ extension DiagnosticsReport {
         // One muted instead of paused needs only Audio Recording: its row above.
         let control: String? = switch facts.playerPermission {
         case .automation(let player)?:
-            String(localized: "Automation for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Automation for Spotify”")
+            String(localized: "Automation for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Automation for Jukebox”")
         case .accessibility(let player)?:
-            String(localized: "Accessibility for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Accessibility for TIDAL”")
+            String(localized: "Accessibility for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Accessibility for Jukebox”")
         case .systemAudioRecording?, nil:
             nil
         }
