@@ -48,7 +48,8 @@ func webAreas(in window: AXUIElement) -> [AXUIElement] { AccessibilityWebPage.we
 func playerBar(of element: AXUIElement) -> AXUIElement? { AccessibilityWebPage.playerBar(around: element) }
 
 /// Whether nothing on its page sits over the button's middle: macOS's hit
-/// test there (within the app) finds the button or something inside it.
+/// test there (within the app) finds the button or something inside it, or
+/// the player's bar around it (`hitShowsUncovered`).
 /// Song tiles scrolled under a player bar (an Electron app's, a web app's) are in
 /// the window, lower than the bar's own button, but covered. One hit test:
 /// `playerButton` asks Chromium's approximate misses again. The hit test
@@ -60,11 +61,34 @@ func isUncovered(_ button: FoundButton, pid: pid_t) -> Bool {
     guard let frame = button.element.frame else { return false }
     var hit: AXUIElement?
     guard AXUIElementCopyElementAtPosition(AXUIElement.application(pid, timeout: 1), Float(frame.midX), Float(frame.midY), &hit) == .success,
-          var node = hit?.waiting(AccessibilityWebPage.timeout) else { return true } // can't tell: keep it
+          let found = hit?.waiting(AccessibilityWebPage.timeout) else { return true } // can't tell: keep it
+    return hitShowsUncovered(button.element, hit: found,
+                             parent: { $0.element(kAXParentAttribute, timeout: AccessibilityWebPage.timeout) },
+                             bar: { playerBar(of: button.element) })
+}
+
+/// Whether a hit test at a button's middle that answered `hit` shows nothing
+/// over it: `hit` is the button or inside it (its parents, 8 levels up,
+/// reach it), or one of the button's first three parents (as far as a
+/// player's bar is looked for) while a player's bar is around it (`bar`,
+/// read only then; a song tile has none). Chromium answers its own media
+/// controls' buttons (an audio or video element's) with that element, their
+/// parent and bar, once its first, approximate answer is gone (L1,
+/// 2026-10-30: Play/Pause found by the page's read, "no button in sight" at
+/// the press).
+func hitShowsUncovered(_ button: AXUIElement, hit: AXUIElement, parent: (AXUIElement) -> AXUIElement?,
+                       bar: () -> AXUIElement?) -> Bool {
+    var node = hit
     for _ in 0..<8 {
-        if CFEqual(node, button.element) { return true }
-        guard let parent = node.element(kAXParentAttribute, timeout: AccessibilityWebPage.timeout) else { return false }
-        node = parent
+        if CFEqual(node, button) { return true }
+        guard let next = parent(node) else { break }
+        node = next
+    }
+    var up = button
+    for _ in 0..<3 {
+        guard let next = parent(up) else { return false }
+        if CFEqual(next, hit) { return bar() != nil }
+        up = next
     }
     return false
 }
