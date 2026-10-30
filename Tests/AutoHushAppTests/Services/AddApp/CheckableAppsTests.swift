@@ -18,21 +18,21 @@ struct CheckableAppsTests {
         let folder = scratch.url
         let deeper = folder.appending(path: "Utilities/More") // two levels down: not looked in
         try FileManager.default.createDirectory(at: deeper, withIntermediateDirectories: true)
-        _ = try app("Deezer", id: "com.deezer.deezer-desktop", displayName: "Deezer Music", in: folder)
-        _ = try app("Spotify", id: "com.spotify.client", in: folder)
+        _ = try app("Discs", id: "com.example.discs", displayName: "Discs Music", in: folder)
+        _ = try app("Streamer", id: "com.example.streamer", in: folder)
         _ = try app("AutoHush", id: "com.autohush.AutoHush", in: folder)
-        _ = try app("YouTube Music", id: "com.apple.Safari.WebApp.ABC", in: folder)
-        let tv = try app("TV", id: "com.apple.TV", in: deeper)
+        _ = try app("Yodel Music", id: "com.apple.Safari.WebApp.ABC", in: folder)
+        let tv = try app("TV", id: "com.example.tv", in: deeper)
         let link = folder.appending(path: "TV link.app")
         try FileManager.default.createSymbolicLink(at: link, withDestinationURL: tv)
         #expect(lchflags(link.path, UInt32(UF_HIDDEN)) == 0) // as Safari's link into the system's cryptex
         try FileManager.default.createDirectory(at: folder.appending(path: "Not An App"), withIntermediateDirectories: true)
 
-        let apps = CheckableApps.installedApps(in: [folder], excluding: ["com.spotify.client"])
-        #expect(Set(apps.map(\.bundleID)) == ["com.deezer.deezer-desktop", "com.apple.TV"])
+        let apps = CheckableApps.installedApps(in: [folder], excluding: ["com.example.streamer"])
+        #expect(Set(apps.map(\.bundleID)) == ["com.example.discs", "com.example.tv"])
         // Finder's name, not the bundle's own (the user, 2026-10-20: one name everywhere).
-        #expect(apps.first { $0.bundleID == "com.deezer.deezer-desktop" }?.name == "Deezer")
-        #expect(apps.first { $0.bundleID == "com.apple.TV" }?.url.path == tv.resolvingSymlinksInPath().path)
+        #expect(apps.first { $0.bundleID == "com.example.discs" }?.name == "Discs")
+        #expect(apps.first { $0.bundleID == "com.example.tv" }?.url.path == tv.resolvingSymlinksInPath().path)
         withExtendedLifetime(scratch) {}
     }
 
@@ -43,13 +43,13 @@ struct CheckableAppsTests {
         let scratch = TemporaryFolder("CheckableAppsTests", create: false)
         let applications = scratch.appending(path: "Applications")
         try FileManager.default.createDirectory(at: applications, withIntermediateDirectories: true)
-        for (name, id) in [("Music", "com.apple.Music"), ("TV", "com.apple.TV"), ("Notes", "com.apple.Notes")] {
+        for (name, id) in [("Music", "com.example.library"), ("TV", "com.example.tv"), ("Notes", "com.apple.Notes")] {
             _ = try app(name, id: id, in: applications)
         }
         let helper = try PlayerCheckHelper.standIn(#"""
             case "$1" in
             --now-playing-reasons) shift; for app in "$@"; do case "$app" in */Music.app|*/TV.app) printf '%s\tits bundle reports\t\t\n' "$app" ;; esac; done ;;
-            --now-playing-list) printf 'com.apple.TV\t300\tPaused\t0\tTV\ncom.apple.Music\t412\tPlaying\t1\tMusic\n#active\t412\n' ;;
+            --now-playing-list) printf 'com.example.tv\t300\tPaused\t0\tTV\ncom.example.library\t412\tPlaying\t1\tMusic\n#active\t412\n' ;;
             esac
             """#, in: scratch.appending(path: "Helper"))
         return (scratch, applications, helper)
@@ -67,7 +67,7 @@ struct CheckableAppsTests {
     @Test("the list leaves out the apps excluded")
     func findExcluding() async throws {
         let (scratch, applications, helper) = try appsAndHelper()
-        #expect(await CheckableApps.find(helper: helper, excluding: ["com.apple.TV"], in: [applications]).map(\.name) == ["Music"])
+        #expect(await CheckableApps.find(helper: helper, excluding: ["com.example.tv"], in: [applications]).map(\.name) == ["Music"])
         withExtendedLifetime(scratch) {}
     }
 
@@ -99,12 +99,12 @@ struct CheckableAppsTests {
     func otherApp() throws {
         let scratch = TemporaryFolder("CheckableAppsTests")
         let folder = scratch.url
-        let qobuz = try app("Qobuz.app Player", id: "com.qobuz.QobuzDesktop", displayName: "Qobuz", in: folder)
-        let spotify = try app("Spotify", id: "com.spotify.client", in: folder)
+        let quartet = try app("Quartet.app Player", id: "com.example.quartet", displayName: "Quartet", in: folder)
+        let streamer = try app("Streamer", id: "com.example.streamer", in: folder)
         let autoHush = try app("AutoHush Test", id: "com.autohush.Test", in: folder)
-        let supported = [PlayerOption(bundleID: "com.spotify.client", name: "Spotify", appURL: spotify)]
-        #expect(try AppReader.checkableApp(at: qobuz, supported: supported).get().name == "Qobuz.app Player") // as Finder shows it
-        #expect(AppReader.checkableApp(at: spotify, supported: supported) == .failure(.supported("Spotify")))
+        let supported = [PlayerOption(bundleID: "com.example.streamer", name: "Streamer", appURL: streamer)]
+        #expect(try AppReader.checkableApp(at: quartet, supported: supported).get().name == "Quartet.app Player") // as Finder shows it
+        #expect(AppReader.checkableApp(at: streamer, supported: supported) == .failure(.supported("Streamer")))
         #expect(AppReader.checkableApp(at: autoHush, supported: supported) == .failure(.autoHush))
         #expect(AppReader.checkableApp(at: folder, supported: supported) == .failure(.notAnApp))
         withExtendedLifetime(scratch) {}

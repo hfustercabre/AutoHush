@@ -69,7 +69,7 @@ struct LogsModelTests {
     @Test("the problems only, and a search over the lines and their areas")
     func filters() async {
         let log = FakeLog()
-        log.entries = [entry(hoursAgo: 1, "Spotify paused"), entry(hoursAgo: 1, "Update check failed", level: .error, category: "Updates"),
+        log.entries = [entry(hoursAgo: 1, "Streamer paused"), entry(hoursAgo: 1, "Update check failed", level: .error, category: "Updates"),
                        entry(hoursAgo: 1, "Web app ready", category: "WebAppPlayer")]
         let model = LogsModel(source: log, launch: now.addingTimeInterval(-3600 * 2), now: { [now] in now })
         model.open()
@@ -80,13 +80,13 @@ struct LogsModelTests {
         model.search = "web apps" // the area
         #expect(model.shown.map(\.message) == ["Web app ready"])
         model.search = "PAUSED"
-        #expect(model.shown.map(\.message) == ["Spotify paused"])
-        #expect(model.text.hasSuffix("Notice  Player  Spotify paused"))
+        #expect(model.shown.map(\.message) == ["Streamer paused"])
+        #expect(model.text.hasSuffix("Notice  Player  Streamer paused"))
         // A new line shows only if it matches too.
-        log.log(entry(hoursAgo: 0, "Spotify paused again"))
+        log.log(entry(hoursAgo: 0, "Streamer paused again"))
         log.log(entry(hoursAgo: 0, "Update installed", category: "Updates"))
         await TestWait.until { model.entries.count == 5 }
-        #expect(model.shown.map(\.message) == ["Spotify paused", "Spotify paused again"])
+        #expect(model.shown.map(\.message) == ["Streamer paused", "Streamer paused again"])
     }
 
     @Test("the search and the levels start again each time the window opens")

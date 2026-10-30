@@ -22,7 +22,7 @@ struct StatePresentationTests {
 
     @Test("describes playing apps in natural language")
     func describePlaying() {
-        #expect(PlaybackState.describePlaying(["VLC"]) == "VLC is playing")
+        #expect(PlaybackState.describePlaying(["Viewer"]) == "Viewer is playing")
         #expect(PlaybackState.describePlaying(["A", "B"]) == "A and B are playing")
         #expect(PlaybackState.describePlaying(["A", "B", "C", "D"]) == "A and 3 other apps are playing")
         // One app with its microphone on that made no sound yet (Pause for the microphone).

@@ -115,12 +115,12 @@ extension StatusMenuControllerTests {
 
     /// The players open in the menu: First, and two apps added through a
     /// check: Gone, chosen and no longer installed, and a Chromium browser's
-    /// web app, SoundCloud.
+    /// web app, Sounds.
     private func menuWithCheckedApps() -> StatusMenuController {
         let sut = makeController()
         var status = readyStatus()
-        var chromeApp = PlayerOption(bundleID: "com.google.Chrome.app.sc", name: "SoundCloud",
-                                     appURL: URL(fileURLWithPath: "/Users/test/Applications/Chrome Apps.localized/SoundCloud.app"),
+        var chromeApp = PlayerOption(bundleID: "com.google.Chrome.app.sc", name: "Sounds",
+                                     appURL: URL(fileURLWithPath: "/Users/test/Applications/Chrome Apps.localized/Sounds.app"),
                                      kind: .checkedApp)
         chromeApp.browserName = "Google Chrome"
         status.playerOptions = [
@@ -139,7 +139,7 @@ extension StatusMenuControllerTests {
     func uninstalledCheckedApp() throws {
         let sut = menuWithCheckedApps()
         defer { sut.remove() }
-        #expect(playerRows(sut) == ["[Supported]", "First", "[Other]", "SoundCloud", "Gone"])
+        #expect(playerRows(sut) == ["[Supported]", "First", "[Other]", "Sounds", "Gone"])
         let gone = try row("Gone", in: sut)
         #expect(!gone.isEnabled && gone.isChosen)
         #expect(gone.subtitle == "Not installed")
@@ -149,9 +149,9 @@ extension StatusMenuControllerTests {
     func browserAppRow() throws {
         let sut = menuWithCheckedApps()
         defer { sut.remove() }
-        let soundCloud = try row("SoundCloud", in: sut)
+        let soundCloud = try row("Sounds", in: sut)
         #expect(soundCloud.isEnabled)
-        #expect(soundCloud.accessibilityLabel == "SoundCloud, Google Chrome web app")
+        #expect(soundCloud.accessibilityLabel == "Sounds, Google Chrome web app")
     }
 
     @Test("an app that can only be muted says so; in AntiDot mode it's dimmed, saying why, and stays checked when chosen")
@@ -191,7 +191,7 @@ extension StatusMenuControllerTests {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
-        let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))
+        let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Discs", address: "discs.example"))
         status.playerOptions = [
             Self.first,
             suggestion,
@@ -201,10 +201,10 @@ extension StatusMenuControllerTests {
         reopen(sut)
 
         sut.perform(.openSide(.players))
-        #expect(playerRows(sut) == ["[Supported]", "First", "[Other]", "[Web]", "Deezer"])
-        let deezer = try row("Deezer", in: sut)
-        #expect(deezer.isEnabled)
-        #expect(deezer.subtitle == "Click to add") // as its tile says
+        #expect(playerRows(sut) == ["[Supported]", "First", "[Other]", "[Web]", "Discs"])
+        let discs = try row("Discs", in: sut)
+        #expect(discs.isEnabled)
+        #expect(discs.subtitle == "Click to add") // as its tile says
     }
 
     @Test("a web app's controls are learned from the card's Controls row; nothing else in the menu is about learning")
@@ -212,7 +212,7 @@ extension StatusMenuControllerTests {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
-        let webApp = PlayerOption(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
+        let webApp = PlayerOption(bundleID: "com.apple.Safari.WebApp.TEST", name: "Yodel Music",
                                   appURL: URL(fileURLWithPath: "/Applications/Safari.app"), kind: .safariWebApp)
         status.playerOptions = [
             Self.first,
@@ -245,8 +245,8 @@ extension StatusMenuControllerTests {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
-        var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.U", name: "SoundCloud",
-                                    appURL: URL(fileURLWithPath: "/Applications/SoundCloud.app"), kind: .safariWebApp)
+        var untested = PlayerOption(bundleID: "com.apple.Safari.WebApp.U", name: "Sounds",
+                                    appURL: URL(fileURLWithPath: "/Applications/Sounds.app"), kind: .safariWebApp)
         untested.isUntested = true
         var named = PlayerOption(bundleID: "com.apple.Safari.WebApp.M", name: "First",
                                  appURL: URL(fileURLWithPath: "/Applications/First Web.app"), kind: .safariWebApp)
@@ -255,26 +255,26 @@ extension StatusMenuControllerTests {
             Self.first,
             untested,
             named,
-            .suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com")),
+            .suggestion(WebAppSuggestion(name: "Discs", address: "discs.example")),
         ]
         sut.status = status
         reopen(sut)
         sut.perform(.openSide(.players))
         let web = sut.model.players.webApps
-        #expect(web.map(\.option.name) == ["Deezer", "SoundCloud", "First"])
-        #expect(web[1].accessibilityLabel == "SoundCloud, Untested")
+        #expect(web.map(\.option.name) == ["Discs", "Sounds", "First"])
+        #expect(web[1].accessibilityLabel == "Sounds, Untested")
         #expect(web[2].accessibilityLabel == "First, Safari web app, Untested")
         #expect(sut.model.players.supportedApps[0].accessibilityLabel == "First")
     }
 
-    /// The menu open with the first `count` of eight players, Deezer not
+    /// The menu open with the first `count` of eight players, Discs not
     /// installed, their list open beside it.
     private func menuWithManyPlayers(_ count: Int = 8) -> StatusMenuController {
         let sut = makeController()
-        let names = ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL", "Qobuz", "Deezer", "Música"].prefix(count)
+        let names = ["Streamer", "Acme Music", "Viewer", "Acme Podcasts", "Tides", "Quartet", "Discs", "Música"].prefix(count)
         var status = readyStatus()
         status.playerOptions = names.map {
-            PlayerOption(bundleID: "com.example.\($0)", name: $0, appURL: $0 == "Deezer" ? nil : URL(fileURLWithPath: "/Applications/\($0).app"))
+            PlayerOption(bundleID: "com.example.\($0)", name: $0, appURL: $0 == "Discs" ? nil : URL(fileURLWithPath: "/Applications/\($0).app"))
         }
         sut.status = status
         reopen(sut)
@@ -286,8 +286,8 @@ extension StatusMenuControllerTests {
     func playerSearch() {
         let sut = menuWithManyPlayers()
         defer { sut.remove() }
-        #expect(playerRows(sut).prefix(10) == ["search", "[Supported]", "Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL",
-                                               "Qobuz", "Música", "Deezer"])
+        #expect(playerRows(sut).prefix(10) == ["search", "[Supported]", "Streamer", "Acme Music", "Viewer", "Acme Podcasts", "Tides",
+                                               "Quartet", "Música", "Discs"])
     }
 
     @Test("the players' search narrows them down, or says none match")
@@ -296,7 +296,7 @@ extension StatusMenuControllerTests {
         defer { sut.remove() }
         sut.perform(.searchPlayers("MUSI"))
         #expect(sut.model.playerSearch == "MUSI")
-        #expect(playerRows(sut) == ["search", "[Supported]", "Apple Music", "Música"])
+        #expect(playerRows(sut) == ["search", "[Supported]", "Acme Music", "Música"])
         sut.perform(.searchPlayers("zz"))
         #expect(playerRows(sut) == ["search", "No players match “zz”."])
     }
@@ -311,7 +311,7 @@ extension StatusMenuControllerTests {
         sut.perform(.searchPlayers("music"))
         sut.perform(.chooseHighlighted)
         await wait(for: 2, in: log)
-        #expect(log.calls == ["menuWillOpen", "player com.example.Apple Music"])
+        #expect(log.calls == ["menuWillOpen", "player com.example.Acme Music"])
     }
 
     @Test("among the players, Space presses the highlighted one, not typing, until something is typed; then it's a space in the search")

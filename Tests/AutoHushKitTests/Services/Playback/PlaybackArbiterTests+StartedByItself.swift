@@ -4,13 +4,13 @@ import Testing
 import AutoHushTestSupport
 
 extension PlaybackArbiterTests {
-    @Test("the player starting by itself while another app plays (Apple TV's autoplay) is paused, as at the app's start")
+    @Test("the player starting by itself while another app plays (a TV app's autoplay) is paused, as at the app's start")
     func startedDuringAppsPaused() async {
         let player = MockMusicPlayer(state: .paused), published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onStatusUpdate: statuses(playback: { published.set($0) }), hearsPlayer: { _ in .heard },
                                       inputToPlayer: { _ in false })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
         #expect(await player.pauseCallCount == 0) // nothing to pause yet
         await player.setState(.playing)
@@ -26,7 +26,7 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onStatusUpdate: statuses(playback: { published.set($0) }), hearsPlayer: { _ in .heard },
                                       inputToPlayer: { _ in true })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
         await player.setState(.playing)
         await arbiter.handlePlayerStateChange(.playing)
@@ -54,7 +54,7 @@ extension PlaybackArbiterTests {
         await TestWait.until { await arbiter.calledOffWatches.isEmpty }
     }
 
-    @Test("a player that says it plays but wasn't heard through the pause (Apple TV's trailers, which report nothing) is resumed")
+    @Test("a player that says it plays but wasn't heard through the pause (a TV app's trailers, which report nothing) is resumed")
     func unheardPlayingResumed() async {
         let player = MockMusicPlayer(), clock = ManualClock(), published = LastPublished()
         let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
@@ -63,7 +63,7 @@ extension PlaybackArbiterTests {
         await firstLook(scheduler, arbiter, clock: clock) // measured silent
         hearing.now = .unknown // the app's output closed: nothing measured
         await player.overrideState(.playing) // its open output reads as playing
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         for _ in 0..<2 { await scheduler.completeNext() } // the watch, then the resume's wait, if any
         await TestWait.until { await player.playCallCount == 1 }
     }
@@ -77,7 +77,7 @@ extension PlaybackArbiterTests {
         await reportsPlaying(player, arbiter, clock: clock) // a report of playing, not heard
         #expect(published.state == .pausedByMonitor)
         hearing.now = .unknown
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         for _ in 0..<2 { await scheduler.completeNext() } // the watch, then the resume's wait, if any
         await TestWait.until { await player.playCallCount == 1 }
     }
@@ -91,7 +91,7 @@ extension PlaybackArbiterTests {
         await firstLook(scheduler, arbiter, clock: clock)
         await arbiter.handlePlayerHeard()
         #expect(published.state == .pausedByMonitor)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         for _ in 0..<2 { await scheduler.completeNext() } // the watch, then the resume's wait, if any
         await TestWait.until { await player.playCallCount == 1 }
     }
@@ -145,7 +145,7 @@ extension PlaybackArbiterTests {
                                       inputToPlayer: { _ in false })
         await arbiter.refreshPlaybackState()
         await arbiter.handleLocalPlaybackChange(false)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.pauseCallCount == 0) // playing elsewhere: left alone
         await arbiter.handleLocalPlaybackChange(true)
         await TestWait.until { await player.pauseCallCount == 1 }

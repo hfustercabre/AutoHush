@@ -46,13 +46,13 @@ extension PlayerSessionTests {
 
         monitoring.send(.playback(.pausedByMonitor))
         monitoring.send(.detection(.audioLevel))
-        monitoring.send(.activeSources([Self.vlc]))
-        monitoring.send(.learnedAssertions(Self.vlc.id, AnnouncedAssertions(system: ["Playing audio"])))
+        monitoring.send(.activeSources([Self.viewer]))
+        monitoring.send(.learnedAssertions(Self.viewer.id, AnnouncedAssertions(system: ["Playing audio"])))
         #expect(session.state.playback == .pausedByMonitor)
         #expect(session.state.detection == .audioLevel)
-        #expect(session.state.activeSources == [Self.vlc])
-        #expect(bench.preferences.seenApps.map(\.id) == [Self.vlc.id])
-        #expect(bench.preferences.playbackAssertions[Self.vlc.id] == AnnouncedAssertions(system: ["Playing audio"]))
+        #expect(session.state.activeSources == [Self.viewer])
+        #expect(bench.preferences.seenApps.map(\.id) == [Self.viewer.id])
+        #expect(bench.preferences.playbackAssertions[Self.viewer.id] == AnnouncedAssertions(system: ["Playing audio"]))
         #expect(bench.changes.count == 3)
         #expect(session.isHoldingPause)
     }
@@ -113,7 +113,7 @@ extension PlayerSessionTests {
         let bench = Bench()
         let session = await bench.secondNotRunning()
         session.playerLaunched(Players.first)
-        session.playerLaunched("org.videolan.vlc")
+        session.playerLaunched("org.example.viewer")
         await session.waitUntilIdle()
         #expect(session.state.health == .playerClosed("Second isn’t running"))
         #expect(await bench.second.verifyCallCount == 1) // not asked again
@@ -179,8 +179,8 @@ extension PlayerSessionTests {
         #expect(session.state.health == .playerClosed("Second isn’t running"))
         let listening = bench.monitorings.of(Players.second)
         #expect(listening.count == 1 && listening[0].starts.map(\.takingOverPause) == [false])
-        listening[0].send(.activeSources([Self.vlc]))
-        #expect(session.state.activeSources == [Self.vlc]) // listed
+        listening[0].send(.activeSources([Self.viewer]))
+        #expect(session.state.activeSources == [Self.viewer]) // listed
         #expect(session.state.health == .playerClosed("Second isn’t running")) // still says so
     }
 
@@ -190,7 +190,7 @@ extension PlayerSessionTests {
         let bench = Bench()
         let session = await bench.secondNotRunning()
         let listening = bench.monitorings.of(Players.second)
-        listening[0].send(.activeSources([Self.vlc]))
+        listening[0].send(.activeSources([Self.viewer]))
 
         var off = session.settings
         off.autoPause = false
@@ -345,9 +345,9 @@ extension PlayerSessionTests {
         // What the stopped monitoring still had on its way arrives late: only what AntiDot learned counts.
         bench.monitorings.made[0].send(.playback(.pausedByMonitor))
         bench.monitorings.made[0].send(.pauseFailure(.playerCommandFailed(.pressIgnored)))
-        bench.monitorings.made[0].send(.learnedAssertions(Self.vlc.id, AnnouncedAssertions(system: ["Playing audio"])))
+        bench.monitorings.made[0].send(.learnedAssertions(Self.viewer.id, AnnouncedAssertions(system: ["Playing audio"])))
         #expect(session.state.controlError == nil)
-        #expect(bench.preferences.playbackAssertions[Self.vlc.id] == AnnouncedAssertions(system: ["Playing audio"]))
+        #expect(bench.preferences.playbackAssertions[Self.viewer.id] == AnnouncedAssertions(system: ["Playing audio"]))
         #expect(session.state.playback == .unknown)
         #expect(session.state.detection == .pending)
         #expect(!session.isHoldingPause)

@@ -13,9 +13,9 @@ extension PlaybackArbiterTests {
         let listens = Locked(0)
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       quietAppPlaysAgain: { listens.withLock { $0 += 1; return $0 == 1 } })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         let wait = await arbiter.startConfirmation + PlaybackArbiter.takeOverMargin
         await TestWait.until { scheduler.scheduledDelays.contains(wait) }
         #expect(await player.playCallCount == 0)
@@ -35,9 +35,9 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       quietAppPlaysAgain: { true })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { !scheduler.scheduledDelays.isEmpty }
         await arbiter.sourceChanged("com.example.game", playing: true) // counted now
         await scheduler.completeNext()
@@ -52,7 +52,7 @@ extension PlaybackArbiterTests {
         let listens = Locked(0)
         let arbiter = PlaybackArbiter(player: player, configuration: .testing,
                                       quietAppPlaysAgain: { listens.withLock { $0 += 1 }; return true })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         await arbiter.setAutoPauseEnabled(false)
         await TestWait.until { await player.playCallCount == 1 }

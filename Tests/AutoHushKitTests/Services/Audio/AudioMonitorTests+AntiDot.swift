@@ -14,13 +14,13 @@ extension AudioMonitorTests {
                         assertions: MockPowerAssertions())
         h.monitor.setDetectionMethod(.playbackSignals)
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc"), Self.process(2, "com.example.game")])
+        h.step([Self.process(1, "org.example.viewer"), Self.process(2, "com.example.game")])
         await h.recorder.waitForEvents(count: 2)
 
         // Neither has told macOS anything yet, so both count by their open stream.
         #expect(await h.recorder.events == [
             .init(bundleID: "com.example.game", isPlaying: true),
-            .init(bundleID: "org.videolan.vlc", isPlaying: true),
+            .init(bundleID: "org.example.viewer", isPlaying: true),
         ])
         #expect(h.meter.lastMetered.isEmpty)
         #expect(permission.requestCount == 0)
@@ -110,25 +110,25 @@ extension AudioMonitorTests {
         #expect(await h.recorder.events == [.init(bundleID: "com.example.player", isPlaying: true)])
     }
 
-    @Test("while levels aren't measured, an app known to tell macOS counts as paused once it stops, though its stream stays open (VLC)")
+    @Test("while levels aren't measured, an app known to tell macOS counts as paused once it stops, though its stream stays open (a video player)")
     func assertionsWhileNotMeasuring() async {
         let assertions = MockPowerAssertions()
         let h = Harness(configuration: Self.config(startConfirmation: 0, stopGrace: 0),
                         permission: MockAudioCapturePermission(.granted), levelsNeeded: false, assertions: assertions)
         h.start()
-        assertions.held = [1001: [PowerAssertion(.system, "VLC media playback")]]
-        h.step([Self.process(1, "org.videolan.vlc")]) // pid 1001
+        assertions.held = [1001: [PowerAssertion(.system, "Viewer media playback")]]
+        h.step([Self.process(1, "org.example.viewer")]) // pid 1001
         await h.recorder.waitForEvents(count: 1)
         #expect(h.meter.lastMetered.isEmpty)
-        #expect(h.learned.value == ["org.videolan.vlc"])
-        #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, evidence: .announcing)])
+        #expect(h.learned.value == ["org.example.viewer"])
+        #expect(h.monitor.activeAudioReport() == [.init(id: "org.example.viewer", state: .playing, evidence: .announcing)])
 
         // Paused: its stream stays open, without the assertion.
         assertions.held = [:]
         h.step(after: 0.25)
         await h.recorder.waitForEvents(count: 2)
-        #expect(await h.recorder.events.last == .init(bundleID: "org.videolan.vlc", isPlaying: false))
-        #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .silent, evidence: .notAnnouncing)])
+        #expect(await h.recorder.events.last == .init(bundleID: "org.example.viewer", isPlaying: false))
+        #expect(h.monitor.activeAudioReport() == [.init(id: "org.example.viewer", state: .silent, evidence: .notAnnouncing)])
     }
 
     @Test("measured levels win over what apps tell macOS")
@@ -301,7 +301,7 @@ extension AudioMonitorTests {
         let h = Harness(permission: permission)
         h.monitor.setDetectionMethod(.openStreams)
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")])
+        h.step([Self.process(1, "org.example.viewer")])
         h.step(after: 6)
         #expect(permission.requestCount == 0)
         #expect(h.meter.lastMetered.isEmpty)

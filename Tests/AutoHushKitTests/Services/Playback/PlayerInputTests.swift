@@ -45,20 +45,20 @@ struct PlayerInputTests {
 
     @Test("the player coming forward opens a span, another app closes it, and spans ended over 10 minutes ago are forgotten")
     func spansFollowActivations() {
-        var spans = PlayerInput.spans([], afterActivating: "org.videolan.vlc", player: "org.videolan.vlc", at: front)
-        spans = PlayerInput.spans(spans, afterActivating: "org.videolan.vlc", player: "org.videolan.vlc", at: front.addingTimeInterval(1))
+        var spans = PlayerInput.spans([], afterActivating: "org.example.viewer", player: "org.example.viewer", at: front)
+        spans = PlayerInput.spans(spans, afterActivating: "org.example.viewer", player: "org.example.viewer", at: front.addingTimeInterval(1))
         #expect(spans.count == 1) // still the open one
-        spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.videolan.vlc", at: front.addingTimeInterval(5))
+        spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.example.viewer", at: front.addingTimeInterval(5))
         #expect(spans.first?.to == front.addingTimeInterval(5))
-        spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.videolan.vlc",
+        spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.example.viewer",
                                   at: front.addingTimeInterval(5 + PlayerInput.spanMemory + 1))
         #expect(spans.isEmpty)
     }
 
     @Test("the player in front as it starts counts from then; another app in front doesn't", arguments: [true, false])
     func frontAtStart(_ playerInFront: Bool) {
-        let input = PlayerInput(bundleID: "org.videolan.vlc", secondsSince: { _ in 0 },
-                                frontmost: { playerInFront ? "org.videolan.vlc" : "com.apple.Safari" },
+        let input = PlayerInput(bundleID: "org.example.viewer", secondsSince: { _ in 0 },
+                                frontmost: { playerInFront ? "org.example.viewer" : "com.apple.Safari" },
                                 activations: NotificationCenter(), clicks: noClicks)
         #expect(input.since(Date().addingTimeInterval(-1)) == playerInFront)
     }

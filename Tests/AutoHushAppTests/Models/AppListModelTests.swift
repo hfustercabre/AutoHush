@@ -51,40 +51,40 @@ struct AppListModelTests {
     @Test("the apps list merges seen and ignored apps, the most recent first, then those that never played")
     func appsList() {
         let model = makeList()
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer", bundlePath: "/Applications/Viewer.app")
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
         let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
-        show(seen: [vlc, chrome], ignored: [AudioSource(id: vlc.id, name: "VLC"), zoom])
+        show(seen: [viewer, chrome], ignored: [AudioSource(id: viewer.id, name: "Viewer"), zoom])
 
-        #expect(model.apps.map(\.source.name) == ["VLC", "Google Chrome", "zoom.us"])
+        #expect(model.apps.map(\.source.name) == ["Viewer", "Google Chrome", "zoom.us"])
         #expect(model.apps.map(\.isIgnored) == [true, false, true])
         #expect(model.apps.map(\.playedRank) == [0, 1, nil])
-        #expect(model.apps[0].source.bundlePath == "/Applications/VLC.app") // the seen entry keeps its icon
+        #expect(model.apps[0].source.bundlePath == "/Applications/Viewer.app") // the seen entry keeps its icon
     }
 
     @Test("the apps can be ordered by last played, name or on/off, each either way round")
     func appsOrder() {
         let model = makeList()
         let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
         let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us")
         let arc = AudioSource(id: "company.thebrowser.Browser", name: "Arc")
-        // Played most recently: Safari, VLC, Chrome, Arc; zoom was ignored without playing.
-        show(seen: [safari, vlc, chrome, arc], ignored: [vlc, zoom])
+        // Played most recently: Safari, Viewer, Chrome, Arc; zoom was ignored without playing.
+        show(seen: [safari, viewer, chrome, arc], ignored: [viewer, zoom])
         /// What Sort by says of the way round, then the apps in that order.
         func names(_ criterion: AppListOrder.Criterion, reversed: Bool = false) -> [String] {
             model.setOrder(AppListOrder(criterion: criterion, isReversed: reversed))
             return [model.order.directionTitle] + model.apps.map(\.source.name)
         }
 
-        #expect(names(.lastPlayed) == ["Newest first", "Safari", "VLC", "Google Chrome", "Arc", "zoom.us"])
-        #expect(names(.lastPlayed, reversed: true) == ["Oldest first", "zoom.us", "Arc", "Google Chrome", "VLC", "Safari"])
-        #expect(names(.name) == ["A to Z", "Arc", "Google Chrome", "Safari", "VLC", "zoom.us"])
-        #expect(names(.name, reversed: true) == ["Z to A", "zoom.us", "VLC", "Safari", "Google Chrome", "Arc"])
+        #expect(names(.lastPlayed) == ["Newest first", "Safari", "Viewer", "Google Chrome", "Arc", "zoom.us"])
+        #expect(names(.lastPlayed, reversed: true) == ["Oldest first", "zoom.us", "Arc", "Google Chrome", "Viewer", "Safari"])
+        #expect(names(.name) == ["A to Z", "Arc", "Google Chrome", "Safari", "Viewer", "zoom.us"])
+        #expect(names(.name, reversed: true) == ["Z to A", "zoom.us", "Viewer", "Safari", "Google Chrome", "Arc"])
         // Each group stays A to Z; reversed, only the groups swap.
-        #expect(names(.state) == ["Apps that pause playback first", "Arc", "Google Chrome", "Safari", "VLC", "zoom.us"])
-        #expect(names(.state, reversed: true) == ["Ignored apps first", "VLC", "zoom.us", "Arc", "Google Chrome", "Safari"])
+        #expect(names(.state) == ["Apps that pause playback first", "Arc", "Google Chrome", "Safari", "Viewer", "zoom.us"])
+        #expect(names(.state, reversed: true) == ["Ignored apps first", "Viewer", "zoom.us", "Arc", "Google Chrome", "Safari"])
 
         // New apps arrive in the chosen order.
         model.setOrder(AppListOrder(criterion: .name, isReversed: true))

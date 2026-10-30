@@ -10,7 +10,7 @@ import AutoHushTestSupport
 @MainActor
 struct StatusMenuControllerTests {
     let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
-    let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+    let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
     /// What the menu asked of AppDelegate and the updates, in order; the
     /// user's settings and the player session show their own changes.
     let log = CallLog()
@@ -110,12 +110,12 @@ struct StatusMenuControllerTests {
         #expect(parts(sut) == ["card", "snooze", "ignoredApps", "toolbar"])
 
         var status = readyStatus()
-        status.ignoredApps = [vlc]
-        status.setActiveSources([vlc, chrome])
+        status.ignoredApps = [viewer]
+        status.setActiveSources([viewer, chrome])
         sut.status = status
         reopen(sut)
         #expect(parts(sut) == ["card", "snooze", "playingNow", "ignoredApps", "toolbar"])
-        #expect(sut.model.listedSources == [chrome, vlc])
+        #expect(sut.model.listedSources == [chrome, viewer])
 
         let withSettings = makeController(settingsModel: SettingsModel.forTests(actions: actions, updates: updates, settings: settings))
         defer { withSettings.remove() }
@@ -129,22 +129,22 @@ struct StatusMenuControllerTests {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
-        status.setActiveSources([vlc, chrome])
+        status.setActiveSources([viewer, chrome])
         status.setActiveSources([chrome])
         sut.status = status
         reopen(sut)
         #expect(parts(sut) == ["card", "snooze", "playingNow", "recentlyPlayed", "ignoredApps", "toolbar"])
-        #expect(sut.model.listedRecentSources == [vlc])
+        #expect(sut.model.listedRecentSources == [viewer])
 
         status.setActiveSources([])
         sut.status = status
         reopen(sut)
         #expect(parts(sut) == ["card", "snooze", "recentlyPlayed", "ignoredApps", "toolbar"])
-        #expect(sut.model.listedRecentSources == [chrome, vlc])
+        #expect(sut.model.listedRecentSources == [chrome, viewer])
 
-        // VLC chosen as the player meanwhile: its switch would only store it as ignored.
-        status.playerOptions.append(PlayerOption(bundleID: vlc.id, name: "VLC", appURL: URL(fileURLWithPath: "/Applications/VLC.app")))
-        status.chosenPlayerID = vlc.id
+        // Viewer chosen as the player meanwhile: its switch would only store it as ignored.
+        status.playerOptions.append(PlayerOption(bundleID: viewer.id, name: "Viewer", appURL: URL(fileURLWithPath: "/Applications/Viewer.app")))
+        status.chosenPlayerID = viewer.id
         sut.status = status
         reopen(sut)
         #expect(sut.model.listedRecentSources == [chrome])
@@ -155,16 +155,16 @@ struct StatusMenuControllerTests {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
-        status.setActiveSources([vlc])
-        status.setActiveSources([]) // VLC played: under Recently Played
+        status.setActiveSources([viewer])
+        status.setActiveSources([]) // Viewer played: under Recently Played
         sut.status = status
         reopen(sut)
 
-        status.setActiveSources([vlc, chrome]) // VLC plays again, and Chrome
+        status.setActiveSources([viewer, chrome]) // Viewer plays again, and Chrome
         sut.status = status
         #expect(sut.model.status == status)              // the card shows it
         #expect(sut.model.listedSources.isEmpty)         // no row moves under the pointer
-        #expect(sut.model.listedRecentSources == [vlc])
+        #expect(sut.model.listedRecentSources == [viewer])
         #expect(!parts(sut).contains("playingNow"))
 
         sut.close()

@@ -22,25 +22,25 @@ struct ActiveAudioReportTests {
     @Test("each app's state, sorted by ID, named when its name differs from its ID")
     func states() {
         let entries = report(
-            present: ["org.videolan.vlc", "com.google.Chrome", "com.apple.Safari"],
+            present: ["org.example.viewer", "com.google.Chrome", "com.apple.Safari"],
             playing: ["com.google.Chrome"],
-            audible: ["com.google.Chrome", "org.videolan.vlc"],
+            audible: ["com.google.Chrome", "org.example.viewer"],
             ignored: ["com.apple.Safari"],
             sources: [
                 "com.google.Chrome": AudioSource(id: "com.google.Chrome", name: "Google Chrome"),
-                "org.videolan.vlc": AudioSource(id: "org.videolan.vlc", name: "org.videolan.vlc"),
+                "org.example.viewer": AudioSource(id: "org.example.viewer", name: "org.example.viewer"),
             ]
         )
         #expect(entries == [
             .init(id: "com.apple.Safari", state: .silent, isIgnored: true),
             .init(id: "com.google.Chrome", name: "Google Chrome", state: .playing),
-            .init(id: "org.videolan.vlc", state: .starting),
+            .init(id: "org.example.viewer", state: .starting),
         ])
     }
 
     @Test("an app counted as playing is listed after its output closed")
     func playingWithoutOutput() {
-        #expect(report(playing: ["org.videolan.vlc"]) == [.init(id: "org.videolan.vlc", state: .playing)])
+        #expect(report(playing: ["org.example.viewer"]) == [.init(id: "org.example.viewer", state: .playing)])
     }
 
     @Test("a measured level is the evidence")

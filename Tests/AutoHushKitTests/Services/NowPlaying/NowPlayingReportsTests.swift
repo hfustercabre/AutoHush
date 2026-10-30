@@ -8,31 +8,31 @@ struct NowPlayingReportsTests {
     @Test("the daemon's lines: each client created, its state changes, removed")
     func lines() {
         var clients: [pid_t: NowPlayingReports.Client] = [:]
-        NowPlayingReports.apply("Creating nowPlayingClient com.deezer.deezer-desktop (812) Deezer", to: &clients)
-        NowPlayingReports.apply("[com.deezer.deezer-desktop (812) Deezer ❯] PlaybackState changed from Paused to Playing", to: &clients)
+        NowPlayingReports.apply("Creating nowPlayingClient com.example.discs (812) Discs", to: &clients)
+        NowPlayingReports.apply("[com.example.discs (812) Discs ❯] PlaybackState changed from Paused to Playing", to: &clients)
         #expect(clients[812]?.state == .playing)
-        #expect(clients[812]?.appID == "com.deezer.deezer-desktop")
-        NowPlayingReports.apply("[com.apple.WebKit.GPU/com.apple.Safari.WebApp.ABC (723) YT Music ❯] PlaybackState changed from Playing to Paused",
+        #expect(clients[812]?.appID == "com.example.discs")
+        NowPlayingReports.apply("[com.apple.WebKit.GPU/com.apple.Safari.WebApp.ABC (723) Yodel Music ❯] PlaybackState changed from Playing to Paused",
                                 to: &clients)
         #expect(clients[723]?.appID == "com.apple.Safari.WebApp.ABC")
         #expect(clients[723]?.state == .paused)
-        NowPlayingReports.apply("Removing nowPlayingClient com.deezer.deezer-desktop (812) Deezer", to: &clients)
+        NowPlayingReports.apply("Removing nowPlayingClient com.example.discs (812) Discs", to: &clients)
         #expect(clients[812]?.removed == true)
         #expect(NowPlayingReports.state(reported: "Interrupted") == .paused)
         #expect(NowPlayingReports.state(reported: "Stopped") == .stopped)
-        NowPlayingReports.apply("PlaybackState changed from Paused to Unknown for [com.apple.TV (299) TV ❯]", to: &clients)
+        NowPlayingReports.apply("PlaybackState changed from Paused to Unknown for [com.example.tv (299) TV ❯]", to: &clients)
         #expect(clients[299]?.reported == "Unknown")
-        #expect(clients[299]?.state == nil) // says nothing (Apple TV's trailers)
+        #expect(clients[299]?.state == nil) // says nothing (a TV app's trailers)
     }
 
     @Test("a client keeps its name, its report as the log says it, and when it came")
     func reports() {
         var clients: [pid_t: NowPlayingReports.Client] = [:]
         let at = Date(timeIntervalSince1970: 1_000)
-        NowPlayingReports.apply("[com.qobuz.QobuzDesktop (90) Qobuz ❯] PlaybackState changed from Playing to Interrupted", at: at, to: &clients)
+        NowPlayingReports.apply("[com.example.quartet (90) Quartet ❯] PlaybackState changed from Playing to Interrupted", at: at, to: &clients)
         #expect(clients[90]?.reported == "Interrupted")
         #expect(clients[90]?.state == .paused)
-        #expect(clients[90]?.name == "Qobuz")
+        #expect(clients[90]?.name == "Quartet")
         #expect(clients[90]?.pid == 90)
         #expect(clients[90]?.changed == at)
     }

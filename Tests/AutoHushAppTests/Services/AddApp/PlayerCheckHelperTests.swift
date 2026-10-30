@@ -163,19 +163,19 @@ struct PlayerCheckHelperTests {
     @Test("the Now Playing list: each app's bundle ID and whether it plays, apart from those removed and the active line")
     func nowPlayingList() {
         let output = """
-        com.deezer.deezer-desktop\t412\tPlaying\t1\tDeezer
-        com.apple.TV\t300\tPaused\t0\tTV
+        com.example.discs\t412\tPlaying\t1\tDiscs
+        com.example.tv\t300\tPaused\t0\tTV
         com.example.gone\t12\tRemoved\t0\tGone
         \t13\tPlaying\t0\tNameless
         #active\t412
         """
-        #expect(PlayerCheckHelper.nowPlaying(fromList: output) == ["com.deezer.deezer-desktop": true, "com.apple.TV": false])
+        #expect(PlayerCheckHelper.nowPlaying(fromList: output) == ["com.example.discs": true, "com.example.tv": false])
     }
 
     @Test("the apps that can play are those with a reason")
     func canPlay() {
-        let output = "/Applications/Deezer.app\tits bundle reports\telectron\tAXManualAccessibility\n/Applications/Notes.app\t\t\t\n"
-        #expect(PlayerCheckHelper.canPlay(fromReasons: output) == ["/Applications/Deezer.app"])
+        let output = "/Applications/Discs.app\tits bundle reports\telectron\tAXManualAccessibility\n/Applications/Notes.app\t\t\t\n"
+        #expect(PlayerCheckHelper.canPlay(fromReasons: output) == ["/Applications/Discs.app"])
     }
 
     @Test("the launch option's answer: yes, no, or nothing to tell")
@@ -188,11 +188,11 @@ struct PlayerCheckHelperTests {
 
     @Test("a check's arguments: the app, the block, partial, its result, AutoHush's folders, and no taps in AntiDot mode")
     func checkArguments() {
-        let app = URL(filePath: "/Applications/Deezer.app")
+        let app = URL(filePath: "/Applications/Discs.app")
         let result = URL(filePath: "/tmp/result.json")
         let helper = PlayerCheckHelper(url: URL(filePath: "/usr/bin/true"))
         let arguments = helper.checkArguments(app, result: result, taps: true)
-        #expect(Array(arguments.prefix(5)) == ["/Applications/Deezer.app", "--block-input", "--partial", "--result", "/tmp/result.json"])
+        #expect(Array(arguments.prefix(5)) == ["/Applications/Discs.app", "--block-input", "--partial", "--result", "/tmp/result.json"])
         #expect(Array(arguments.dropFirst(5)) == ["--logs", PlayerCheckHelper.logsFolder.path, "--caches", PlayerCheckHelper.cachesFolder.path])
         #expect(helper.checkArguments(app, result: result, taps: false).last == "--no-taps")
     }

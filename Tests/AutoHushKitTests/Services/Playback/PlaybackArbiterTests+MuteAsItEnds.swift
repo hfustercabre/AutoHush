@@ -12,7 +12,7 @@ extension PlaybackArbiterTests {
         await player.setState(.playing) // its pause didn't take
         // The app stops while the tap is made, and its resume runs then (it plays: nothing to resume).
         mute.whileMuting = {
-            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            await arbiter.sourceChanged("org.example.viewer", playing: false)
             if let resume = await arbiter.pendingResumeTask { await resume.value }
         }
         await firstLook(scheduler, arbiter, clock: clock)
@@ -69,7 +69,7 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.mutedInstead == false)
         #expect(published.state == .pausedByMonitor) // still AutoHush's pause
         #expect(scheduler.scheduledDelays.last != PlaybackArbiter.silentRecheckInterval) // not watched in AntiDot mode
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
     }
 
@@ -83,7 +83,7 @@ extension PlaybackArbiterTests {
         mute.whileMuting = {
             taps.value = false
             await arbiter.setTapsAllowed(false)
-            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            await arbiter.sourceChanged("org.example.viewer", playing: false)
             if let resume = await arbiter.pendingResumeTask { await resume.value }
         }
         await firstLook(scheduler, arbiter, clock: clock)
@@ -122,7 +122,7 @@ extension PlaybackArbiterTests {
         let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published, scheduler: scheduler)
         mute.whileUnmuting = { playsAtUnmute.append(await player.playCallCount) }
         await player.setState(.paused)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         #expect(playsAtUnmute.value == [0])
@@ -135,7 +135,7 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       clock: { clock.now }, onStatusUpdate: statuses(playback: { published.set($0) }),
                                       hearsPlayer: { _ in .heard }, inputToPlayer: { inputAsked.append($0); return false })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
         clock.advance(by: 20)
         await player.setState(.playing)
@@ -151,7 +151,7 @@ extension PlaybackArbiterTests {
         await player.setMutedForPause(true)
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       hearsPlayer: { _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await mock.pauseCallCount == 1 }
         await arbiter.waitForPause()
         #expect(!scheduler.scheduledDelays.contains(PlaybackArbiter.restartWatchDelay)) // not watched
@@ -168,7 +168,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(pausesByMuting: true), mute = FakeMute(), scheduler = ManualDebounceScheduler()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       hearsPlayer: { _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         await arbiter.waitForPause()
         #expect(!scheduler.scheduledDelays.contains(PlaybackArbiter.restartWatchDelay))
@@ -189,7 +189,7 @@ extension PlaybackArbiterTests {
         await nextLook(scheduler, arbiter, clock: clock)
         #expect(mute.unmuteCount == 1)
         #expect(published.state == .musicIdle)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }

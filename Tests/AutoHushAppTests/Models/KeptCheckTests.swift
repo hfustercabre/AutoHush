@@ -51,10 +51,10 @@ struct KeptCheckTests {
     @Test("the players reopened always, by bundle ID")
     func reopenChoices() {
         let defaults = MemoryDefaults()
-        #expect(!ReopenChoices.reopensAlways("com.deezer.deezer-desktop", defaults: defaults))
-        ReopenChoices.setReopensAlways("com.deezer.deezer-desktop", defaults: defaults)
-        #expect(ReopenChoices.reopensAlways("com.deezer.deezer-desktop", defaults: defaults))
-        ReopenChoices.setReopensAlways("com.deezer.deezer-desktop", false, defaults: defaults)
-        #expect(!ReopenChoices.reopensAlways("com.deezer.deezer-desktop", defaults: defaults))
+        #expect(!ReopenChoices.reopensAlways("com.example.discs", defaults: defaults))
+        ReopenChoices.setReopensAlways("com.example.discs", defaults: defaults)
+        #expect(ReopenChoices.reopensAlways("com.example.discs", defaults: defaults))
+        ReopenChoices.setReopensAlways("com.example.discs", false, defaults: defaults)
+        #expect(!ReopenChoices.reopensAlways("com.example.discs", defaults: defaults))
     }
 }

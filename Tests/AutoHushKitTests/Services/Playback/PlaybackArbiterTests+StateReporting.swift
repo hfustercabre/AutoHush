@@ -12,10 +12,10 @@ extension PlaybackArbiterTests {
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(player: player, stream: stateStream)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         _ = await nextState(from: stateStream.stream) // drain .pausedByMonitor
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         #expect(await nextState(from: stateStream.stream) == .musicPlaying)
     }
 
@@ -25,7 +25,7 @@ extension PlaybackArbiterTests {
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(player: player, stream: stateStream)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
 
         let state = await nextState(from: stateStream.stream)
         #expect(state == .pausedByMonitor)
@@ -64,7 +64,7 @@ extension PlaybackArbiterTests {
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(player: player, stream: stateStream)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         _ = await nextState(from: stateStream.stream)  // drain .pausedByMonitor
 
         // User resumes the player; the player reports that it plays.
@@ -74,7 +74,7 @@ extension PlaybackArbiterTests {
         #expect(await nextState(from: stateStream.stream) == .musicPlaying)
 
         // When the source stops, the arbiter must not touch the player.
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
@@ -86,14 +86,14 @@ extension PlaybackArbiterTests {
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(player: player, stream: stateStream)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         _ = await nextState(from: stateStream.stream) // drain .pausedByMonitor
 
         await player.overrideState(reported)
         await arbiter.handlePlayerStateChange(reported)
         #expect(await nextState(from: stateStream.stream) == .musicIdle)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
@@ -103,9 +103,9 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .playing)
         let arbiter = makeArbiter(player: player)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.handlePlayerStateChange(.paused)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
 
@@ -117,13 +117,13 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .playing)
         let arbiter = makeArbiter(player: player)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
         #expect(await player.state == .paused)
         // Right after our pause, the player reports its previous state, then the new one.
         await arbiter.handlePlayerStateChange(.playing)
         await arbiter.handlePlayerStateChange(.paused)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
     }
 
@@ -132,11 +132,11 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .playing)
         let arbiter = makeArbiter(player: player)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
         await player.setUnansweredStateQueries(1)
         await arbiter.handlePlayerStateChange(.playing)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
 
         #expect(await player.playCallCount == 0)
@@ -148,7 +148,7 @@ extension PlaybackArbiterTests {
         let stateStream = StateStream()
         let arbiter = makeArbiterWithStream(player: player, stream: stateStream)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         _ = await nextState(from: stateStream.stream) // drain .pausedByMonitor
         await player.setUnansweredStateQueries(1)
         await arbiter.handlePlayerStateChange(.playing)
@@ -161,9 +161,9 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .playing)
         let arbiter = makeArbiter(player: player)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.handlePlayerStateChange(.unknown)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
 
@@ -192,7 +192,7 @@ extension PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player)
 
         await arbiter.handleLocalPlaybackChange(false)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
 
         #expect(await player.pauseCallCount == 0)
         #expect(await player.stateQueryCount == 0)
@@ -204,8 +204,8 @@ extension PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player)
 
         await arbiter.handleLocalPlaybackChange(false)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.handleLocalPlaybackChange(true)
         await arbiter.sourceChanged("com.apple.Safari", playing: true)
 
@@ -222,7 +222,7 @@ extension PlaybackArbiterTests {
         #expect(await nextState(from: stateStream.stream) == .musicPlaying)
         await arbiter.handleLocalPlaybackChange(false)
         #expect(await nextState(from: stateStream.stream) == .playingElsewhere)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await nextState(from: stateStream.stream) == .playingElsewhere)
     }
 }

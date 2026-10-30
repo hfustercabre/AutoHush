@@ -14,7 +14,7 @@ struct MenuPanelViewTests {
     private let actions = FakeAppActions()
     private let settings = UserSettings.inMemory()
     private let session = PlayerSession.noPlayer()
-    private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+    private let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
     private let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
 
@@ -25,8 +25,8 @@ struct MenuPanelViewTests {
                                    appURL: $0 == 8 ? nil : URL(fileURLWithPath: "/Applications/Player \($0).app")) }
             + [PlayerOption(bundleID: "com.example.added", name: "Added", appURL: URL(fileURLWithPath: "/Applications/Added.app"),
                             kind: .checkedApp),
-               PlayerOption(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
-                            appURL: URL(fileURLWithPath: "/Users/test/Applications/YT Music.app"), kind: .safariWebApp)]
+               PlayerOption(bundleID: "com.apple.Safari.WebApp.TEST", name: "Yodel Music",
+                            appURL: URL(fileURLWithPath: "/Users/test/Applications/Yodel Music.app"), kind: .safariWebApp)]
     }
 
     /// What the menu shows.
@@ -59,7 +59,7 @@ struct MenuPanelViewTests {
         switch state {
         case .paused:
             status.setActiveSources([safari])
-            status.setActiveSources([vlc, chrome]) // Safari played before
+            status.setActiveSources([viewer, chrome]) // Safari played before
             status.ignoredApps = [chrome]
             status.playback = .pausedByMonitor
             let release = AppRelease.github("0.3.0", diskImage: false)
@@ -69,7 +69,7 @@ struct MenuPanelViewTests {
         case .fixes:
             status.playerOptions[0].pausesByMuting = true
             status.playerNeedsReopen = true
-            status.setActiveSources([vlc])
+            status.setActiveSources([viewer])
             status.playback = .pausedByMonitor
         case .playingSilently:
             status.playback = .playingSilently

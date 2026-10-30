@@ -7,7 +7,7 @@ import AutoHushTestSupport
 @Suite("UserSettings", .waitsTimeLimit)
 @MainActor
 struct UserSettingsTests {
-    private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+    private let viewer = AudioSource(id: "org.example.viewer", name: "Viewer", bundlePath: "/Applications/Viewer.app")
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome", bundlePath: "/Applications/Google Chrome.app")
 
     @Test("toggling Auto-Pause switches it off and on again, and persists")
@@ -75,12 +75,12 @@ struct UserSettingsTests {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let settings = UserSettings(preferences: preferences)
 
-        settings.setIgnored(vlc, true)
-        #expect(settings.state.ignoredApps == [AudioSource(id: vlc.id, name: "VLC")])
-        #expect(preferences.ignoredApps.map(\.id) == [vlc.id])
-        #expect(settings.state.monitoring.ignored == [vlc.id])
+        settings.setIgnored(viewer, true)
+        #expect(settings.state.ignoredApps == [AudioSource(id: viewer.id, name: "Viewer")])
+        #expect(preferences.ignoredApps.map(\.id) == [viewer.id])
+        #expect(settings.state.monitoring.ignored == [viewer.id])
 
-        settings.setIgnored(vlc, false)
+        settings.setIgnored(viewer, false)
         #expect(settings.state.ignoredApps.isEmpty)
         #expect(preferences.ignoredApps.isEmpty)
         #expect(settings.state.monitoring.ignored.isEmpty)
@@ -89,23 +89,23 @@ struct UserSettingsTests {
     @Test("switching an app keeps its place in the order apps played")
     func ignoringKeepsPlayedOrder() {
         let preferences = Preferences(store: InMemoryPreferenceStore())
-        preferences.recordSeen([vlc])
+        preferences.recordSeen([viewer])
         preferences.recordSeen([chrome])
         let settings = UserSettings(preferences: preferences)
-        #expect(settings.state.seenApps == [chrome, vlc])
+        #expect(settings.state.seenApps == [chrome, viewer])
 
-        settings.setIgnored(vlc, true)
-        #expect(preferences.seenApps == [chrome, vlc])
-        #expect(settings.state.seenApps == [chrome, vlc])
+        settings.setIgnored(viewer, true)
+        #expect(preferences.seenApps == [chrome, viewer])
+        #expect(settings.state.seenApps == [chrome, viewer])
     }
 
     @Test("forgetting an ignored app un-ignores it and removes it from the list")
     func forgetApp() {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let settings = UserSettings(preferences: preferences)
-        settings.setIgnored(vlc, true)
+        settings.setIgnored(viewer, true)
 
-        settings.forget(vlc)
+        settings.forget(viewer)
         #expect(settings.state.ignoredApps.isEmpty)
         #expect(settings.state.seenApps.isEmpty)
         #expect(preferences.seenApps.isEmpty)
@@ -136,10 +136,10 @@ struct UserSettingsTests {
     func ignoreByDefaultAlreadyIgnored() {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let settings = UserSettings(preferences: preferences)
-        settings.setIgnored(vlc, true)
-        settings.ignoreByDefault(vlc)
-        #expect(settings.state.ignoredApps.map(\.id) == [vlc.id])
-        #expect(preferences.appsIgnoredByDefault == [vlc.id])
+        settings.setIgnored(viewer, true)
+        settings.ignoreByDefault(viewer)
+        #expect(settings.state.ignoredApps.map(\.id) == [viewer.id])
+        #expect(preferences.appsIgnoredByDefault == [viewer.id])
     }
 
     @Test("resetting the list forgets every app and ignores none")
@@ -147,7 +147,7 @@ struct UserSettingsTests {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         preferences.recordSeen([chrome])
         let settings = UserSettings(preferences: preferences)
-        settings.setIgnored(vlc, true)
+        settings.setIgnored(viewer, true)
         #expect(settings.state.seenApps.count == 2)
 
         settings.forgetAll()

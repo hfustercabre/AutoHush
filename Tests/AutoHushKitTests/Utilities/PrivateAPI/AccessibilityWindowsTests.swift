@@ -39,7 +39,7 @@ struct AccessibilityWindowsTests {
         #expect(result.tried.max() == AccessibilityWindows.elementLimit - 1)
     }
 
-    @Test("with none below and one out of sight, the numbers above are tried: Deezer's window made again")
+    @Test("with none below and one out of sight, the numbers above are tried: an app's window made again")
     func windowMadeAgain() {
         #expect(search(windowsAt: [1189]).found == [1189])
         #expect(search(windowsAt: [2353, 2355]).found == [2353, 2355])
@@ -59,7 +59,7 @@ struct AccessibilityWindowsTests {
         #expect(result.found == [5200])
         #expect(!result.tried.contains { (AccessibilityWindows.elementLimit..<5000).contains($0) })
 
-        // Deezer's window #2353 found; then macOS gives its pid to a later
+        // an app's window #2353 found; then macOS gives its pid to a later
         // process, whose own window is #1189: searched for from the limit.
         let kept = AccessibilityWindows.FarStart(processStart: 1_000, number: 2353)
         #expect(kept.number(inProcessStartedAt: 1_000) == 2353)

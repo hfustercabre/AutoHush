@@ -24,7 +24,7 @@ extension AppDelegateTests {
 
     @MainActor
     @Test("another app's launch, or one without a bundle identifier, doesn't change the health or start again",
-          arguments: ["org.videolan.vlc", nil] as [String?])
+          arguments: ["org.example.viewer", nil] as [String?])
     func otherAppLaunchDoesNothing(bundleID: String?) async {
         let (sut, monitorings) = makeSUT()
         await start(sut)
@@ -58,7 +58,7 @@ extension AppDelegateTests {
         let (sut, monitorings) = makeSUT()
         await start(sut)
         let betterDisplay = AudioSource(id: "pro.betterdisplay.BetterDisplay", name: "BetterDisplay")
-        sut.ignoreVolumeSoundApps([betterDisplay, AudioSource(id: "org.videolan.vlc", name: "VLC")])
+        sut.ignoreVolumeSoundApps([betterDisplay, AudioSource(id: "org.example.viewer", name: "Viewer")])
         #expect(sut.userSettings.state.ignoredApps.map(\.id) == [betterDisplay.id])
         #expect(sut.status.ignoredApps.map(\.id) == [betterDisplay.id]) // in the menu's Ignored Apps
         #expect(monitorings.made[0].ignored == [betterDisplay.id]) // the monitoring ignores it

@@ -85,8 +85,8 @@ struct AppIconTests {
         // A Chromium browser's web app, added with Add an App (its browser
         // here Safari, which every Mac has).
         let folder = TemporaryFolder("AppIconTests", create: false)
-        let browserApp = try TestAppBundle.make(in: folder.url, name: "SoundCloud", info: [
-            "CFBundleIdentifier": "com.example.browser.app.soundcloud", "CrAppModeShortcutURL": "https://soundcloud.com",
+        let browserApp = try TestAppBundle.make(in: folder.url, name: "Sounds", info: [
+            "CFBundleIdentifier": "com.example.browser.app.sounds", "CrAppModeShortcutURL": "https://sounds.example",
             "CrBundleIdentifier": "com.apple.Safari",
         ])
         let own = render(AppIcon.image(bundlePath: browserApp.path, size: 100))

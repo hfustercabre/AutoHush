@@ -12,10 +12,10 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
-        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true)
+        await arbiter.sourceChanged("com.example.movies", playing: true)
         #expect(await player.pauseCallCount == 1)
         await arbiter.setAsleep(true)
-        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: false) // its sound stops as the Mac falls asleep
+        await arbiter.sourceChanged("com.example.movies", playing: false) // its sound stops as the Mac falls asleep
         await arbiter.setAsleep(false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
@@ -33,7 +33,7 @@ extension PlaybackArbiterTests {
                                       onAudioLevelsNeededChange: { needs.append($0) },
                                       onPausedByUsChange: { told.append($0) })
 
-        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true)
+        await arbiter.sourceChanged("com.example.movies", playing: true)
         #expect(states.value.last == .pausedByMonitor)
         await arbiter.setAsleep(true)
         #expect(told.value == [true, false])
@@ -48,7 +48,7 @@ extension PlaybackArbiterTests {
 
         await arbiter.setAsleep(false, change: 2) // the wake, told second, arrives first
         await arbiter.setAsleep(true, change: 1)  // the sleep, told first, arrives late
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.pauseCallCount == 1) // awake: it pauses
     }
 
@@ -58,7 +58,7 @@ extension PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player)
 
         await arbiter.setAsleep(true, change: 1)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.pauseCallCount == 0) // asleep
         await arbiter.setAsleep(false, change: 2)
         await arbiter.waitForPause()
@@ -73,8 +73,8 @@ extension PlaybackArbiterTests {
         await arbiter.setAsleep(true)
         await arbiter.takeOverPause()
         await arbiter.setAsleep(false)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
@@ -85,7 +85,7 @@ extension PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player)
 
         await arbiter.setAsleep(true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.pauseCallCount == 0)
 
         await arbiter.setAsleep(false)
@@ -100,10 +100,10 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
                                       debounceScheduler: ManualDebounceScheduler())
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.commandLog == ["mute"])
         await arbiter.setAsleep(true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         #expect(await player.commandLog == ["mute"]) // told once awake, when it can act
         await arbiter.setAsleep(false)
         await arbiter.waitUntilIdle()
@@ -120,7 +120,7 @@ extension PlaybackArbiterTests {
                                       debounceScheduler: ManualDebounceScheduler(),
                                       fadeSleep: { _ in await started.open(); await fading.wait() })
 
-        await arbiter.handleSourceChange(sourceID: "com.apple.QuickTimePlayerX", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "com.example.movies", isPlaying: true)
         await started.wait() // the fade-out is under way
         await arbiter.setAsleep(true)
         await fading.open()
@@ -128,7 +128,7 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 1)
         await arbiter.setAsleep(false)
         // Its sound stopped as the Mac fell asleep; the monitor reports it once awake.
-        await arbiter.handleSourceChange(sourceID: "com.apple.QuickTimePlayerX", isPlaying: false)
+        await arbiter.handleSourceChange(sourceID: "com.example.movies", isPlaying: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
         #expect(await player.state == .paused)
@@ -154,13 +154,13 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: await Self.slowMuting(player, started: started, gate: muting),
                                       configuration: .testing, debounceScheduler: ManualDebounceScheduler())
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await started.wait() // it's being listened to
         await arbiter.setAsleep(true)
         await muting.open()
         await arbiter.waitForPause()
         #expect(await player.commandLog == ["mute"])
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
         await arbiter.setAsleep(false)
         await TestWait.until { await player.commandLog.count >= 2 }
         await arbiter.waitUntilIdle()
@@ -176,12 +176,12 @@ extension PlaybackArbiterTests {
         let muting = await Self.slowMuting(player, started: started, gate: gate)
         let arbiter = PlaybackArbiter(player: muting, configuration: .testing, debounceScheduler: ManualDebounceScheduler())
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await started.wait() // it's being listened to
         await arbiter.setAsleep(true)
         await gate.open()
         await arbiter.waitForPause()
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
         await arbiter.setAsleep(false) // forgotten: paused for real, unmuted
         await arbiter.waitUntilIdle()
         #expect(await player.commandLog == ["mute", "forgetPause"])
@@ -199,12 +199,12 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: await Self.slowMuting(player, started: started, gate: muting),
                                       configuration: .testing, debounceScheduler: ManualDebounceScheduler())
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await started.wait() // it's being listened to
         if autoPauseGoesOff {
             await arbiter.setAutoPauseEnabled(false)
         } else {
-            await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+            await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
         }
         await muting.open()
         await arbiter.waitForPause()
@@ -221,10 +221,10 @@ extension PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player)
         let answer = Gate()
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         let pauseQueries = await player.stateQueryCount // its check, and its press's
         await player.setBeforeStateAnswer { await answer.wait() }
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
         await TestWait.until { await player.stateQueryCount > pauseQueries } // the resume is asking the player
         await arbiter.shutdown()
         await answer.open()
@@ -241,8 +241,8 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
                                       debounceScheduler: scheduler, autoPauseEnabled: false)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.setAutoPauseEnabled(true) // waits for VLC to be measured again
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.setAutoPauseEnabled(true) // waits for Viewer to be measured again
         await arbiter.shutdown()
         await scheduler.completeNext() // that wait ends
         await arbiter.waitUntilIdle()
@@ -257,7 +257,7 @@ extension PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player)
 
         await arbiter.shutdown()
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
 
         #expect(await player.pauseCallCount == 0)
     }
@@ -268,7 +268,7 @@ extension PlaybackArbiterTests {
         await player.setPlaysAnyway(true) // a web app's ad
         let muting = MockMutingMusicPlayer(player)
         let arbiter = PlaybackArbiter(player: muting, configuration: .testing, debounceScheduler: ManualDebounceScheduler())
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.commandLog == ["mute"])
 
         await arbiter.shutdown()
@@ -284,7 +284,7 @@ extension PlaybackArbiterTests {
         let muting = await Self.slowMuting(player, started: started, gate: gate)
         let arbiter = PlaybackArbiter(player: muting, configuration: .testing, debounceScheduler: ManualDebounceScheduler())
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await started.wait() // it's being listened to
         await arbiter.shutdown()
         await gate.open()

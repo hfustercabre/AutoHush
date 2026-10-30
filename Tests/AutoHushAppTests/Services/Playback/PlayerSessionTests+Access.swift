@@ -14,17 +14,17 @@ extension PlayerSessionTests {
         let session = await bench.started()
         let monitoring = bench.monitorings.made[0]
 
-        monitoring.send(.activeSources([Self.vlc]))
+        monitoring.send(.activeSources([Self.viewer]))
         await TestWait.until { await bench.first.verifyCallCount == 2 }
         // Still playing: not checked again.
-        monitoring.send(.activeSources([Self.safari, Self.vlc]))
+        monitoring.send(.activeSources([Self.safari, Self.viewer]))
         await session.waitUntilIdle()
         #expect(await bench.first.verifyCallCount == 2)
         #expect(session.state.health == .ready)
 
         monitoring.send(.activeSources([]))
         await bench.first.setFailVerify(MusicPlayerError.automationPermissionDenied)
-        monitoring.send(.activeSources([Self.vlc]))
+        monitoring.send(.activeSources([Self.viewer]))
         await TestWait.until { session.state.health == .needsPermission(.automation(player: "First")) }
         #expect(monitoring.isStopped)
         #expect(session.state.activeSources.isEmpty)

@@ -90,12 +90,12 @@ extension StatusMenuControllerTests {
         #expect(log.calls == ["menuWillOpen", "player com.example.First"])
     }
 
-    /// The menu open, with Ignored Apps listing VLC, and two rows its views
+    /// The menu open, with Ignored Apps listing Viewer, and two rows its views
     /// registered (what they pressed in `presses`): a slider, then the row that opens Ignored Apps' side
     /// window. The keys work as in macOS's menus, whatever the keyboard
     /// navigation setting.
     private func menuWithRows() -> (sut: StatusMenuController, presses: CallLog, slider: UUID, sideRow: UUID) {
-        let sut = menuIgnoringVLC()
+        let sut = menuIgnoringAnApp()
         let presses = CallLog()
         let slider = UUID(), sideRow = UUID()
         sut.model.keyboard.register(slider, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 20), adjust: { presses.calls.append("adjust \($0)") }))

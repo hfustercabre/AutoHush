@@ -43,10 +43,10 @@ struct PlayerOptionTests {
 
     @Test("Safari web apps come after every app, under their heading")
     func webAppsLast() {
-        var webApp = option("YT Music", installed: true)
+        var webApp = option("Yodel Music", installed: true)
         webApp.kind = .safariWebApp
         let options = [webApp, option("A", installed: false), option("B", installed: true)]
-        #expect(options.offered.map(\.name) == ["B", "A", "YT Music"])
+        #expect(options.offered.map(\.name) == ["B", "A", "Yodel Music"])
         #expect(!PlayerOption.webAppsHeading.isEmpty)
         #expect(PlayerOption.experimentalBadge == "Experimental")
         #expect(PlayerOption.webAppsWarning.hasPrefix("Experimental:"))
@@ -54,12 +54,12 @@ struct PlayerOptionTests {
 
     @Test("apps added through a check come after the supported apps and before the web apps, under their heading")
     func checkedAppsBetween() {
-        var webApp = option("YT Music", installed: true)
+        var webApp = option("Yodel Music", installed: true)
         webApp.kind = .safariWebApp
-        var checked = option("Deezer", installed: true)
+        var checked = option("Discs", installed: true)
         checked.kind = .checkedApp
         let options = [webApp, checked, option("A", installed: false), option("B", installed: true)]
-        #expect(options.offered.map(\.name) == ["B", "A", "Deezer", "YT Music"])
+        #expect(options.offered.map(\.name) == ["B", "A", "Discs", "Yodel Music"])
         #expect(PlayerOption.checkedByYouBadge == "Checked by you")
         #expect(PlayerOption.addAppTitle == "Add an App…")
     }
@@ -68,14 +68,14 @@ struct PlayerOptionTests {
     func uninstalledCheckedApp() {
         var gone = option("Gone", installed: false)
         gone.kind = .checkedApp
-        var deezer = option("Deezer", installed: true)
-        deezer.kind = .checkedApp
-        var webApp = option("YT Music", installed: true)
+        var discs = option("Discs", installed: true)
+        discs.kind = .checkedApp
+        var webApp = option("Yodel Music", installed: true)
         webApp.kind = .safariWebApp
-        let options = [gone, webApp, deezer, option("A", installed: true)]
-        #expect(options.offered.map(\.name) == ["A", "Deezer", "Gone", "YT Music"])
+        let options = [gone, webApp, discs, option("A", installed: true)]
+        #expect(options.offered.map(\.name) == ["A", "Discs", "Gone", "Yodel Music"])
         #expect(!gone.isInstalled && !gone.isClickable && gone.webAddress == nil)
-        #expect(deezer.isClickable)
+        #expect(discs.isClickable)
     }
 
     /// A player, an app that can only be muted, one paused another way, a
@@ -91,7 +91,7 @@ struct PlayerOptionTests {
         var soundOnly = option("Sound Only", installed: true)
         soundOnly.kind = .checkedApp
         soundOnly.needsAudioLevels = true
-        let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Deezer", address: "deezer.com"))
+        let suggestion = PlayerOption.suggestion(WebAppSuggestion(name: "Discs", address: "discs.example"))
         return ([option("A", installed: true), muted, paused, suggestion, soundOnly], muted, soundOnly)
     }
 
@@ -133,28 +133,28 @@ struct PlayerOptionTests {
 
     @Test("VoiceOver says a web app is one only when an app has its name")
     func spokenName() {
-        let app = PlayerOption(bundleID: "com.example.spotify", name: "Spotify", appURL: URL(fileURLWithPath: "/Applications/Spotify.app"))
-        var webApp = option("spotify", installed: true)
+        let app = PlayerOption(bundleID: "com.example.streamer", name: "Streamer", appURL: URL(fileURLWithPath: "/Applications/Streamer.app"))
+        var webApp = option("streamer", installed: true)
         webApp.kind = .safariWebApp
-        var other = option("YT Music", installed: true)
+        var other = option("Yodel Music", installed: true)
         other.kind = .safariWebApp
         let options = [app, webApp, other]
-        #expect(webApp.spokenName(among: options) == "spotify, Safari web app")
-        #expect(app.spokenName(among: options) == "Spotify")
-        #expect(other.spokenName(among: options) == "YT Music")
-        #expect(webApp.spokenName(among: [webApp, other]) == "spotify")
+        #expect(webApp.spokenName(among: options) == "streamer, Safari web app")
+        #expect(app.spokenName(among: options) == "Streamer")
+        #expect(other.spokenName(among: options) == "Yodel Music")
+        #expect(webApp.spokenName(among: [webApp, other]) == "streamer")
     }
 
     @Test("VoiceOver says whose web app an app added through a check is, when a Chromium browser made it, as its icon's badge shows")
     func spokenBrowserWebApp() {
-        var chromeApp = option("SoundCloud", installed: true)
+        var chromeApp = option("Sounds", installed: true)
         chromeApp.kind = .checkedApp
         chromeApp.browserName = "Google Chrome"
-        var plain = option("Deezer", installed: true)
+        var plain = option("Discs", installed: true)
         plain.kind = .checkedApp
         let options = [chromeApp, plain]
-        #expect(chromeApp.spokenName(among: options) == "SoundCloud, Google Chrome web app")
-        #expect(plain.spokenName(among: options) == "Deezer")
+        #expect(chromeApp.spokenName(among: options) == "Sounds, Google Chrome web app")
+        #expect(plain.spokenName(among: options) == "Discs")
         var unbadged = chromeApp
         unbadged.browserName = nil
         #expect(chromeApp != unbadged) // the browser tells them apart
@@ -164,57 +164,57 @@ struct PlayerOptionTests {
     func suggestions() {
         let catalog = MusicPlayerCatalog(
             players: [MockMusicPlayer(bundleID: "com.example.first", name: "First")],
-            found: { [MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.A", name: "YT Music", status: .learned)] },
-            suggested: { [WebAppSuggestion(name: "Deezer", address: "deezer.com")] }
+            found: { [MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.A", name: "Yodel Music", status: .learned)] },
+            suggested: { [WebAppSuggestion(name: "Discs", address: "discs.example")] }
         )
         let options = PlayerOption.list(catalog) { $0.hasPrefix("com.") ? URL(fileURLWithPath: "/Applications/\($0).app") : nil }
-        #expect(options.offered.map(\.name) == ["First", "YT Music", "Deezer"])
-        let deezer = options[2]
-        #expect(deezer.bundleID == PlayerOption.suggestionID("deezer.com"))
-        #expect(deezer.webAddress == "deezer.com")
-        #expect(deezer.kind == .safariWebApp)
-        #expect(!deezer.isInstalled && deezer.isClickable)
-        #expect(deezer.icon(size: 16).isTemplate)
-        #expect(drawsSomething(deezer.icon(size: 32)))
+        #expect(options.offered.map(\.name) == ["First", "Yodel Music", "Discs"])
+        let discs = options[2]
+        #expect(discs.bundleID == PlayerOption.suggestionID("discs.example"))
+        #expect(discs.webAddress == "discs.example")
+        #expect(discs.kind == .safariWebApp)
+        #expect(!discs.isInstalled && discs.isClickable)
+        #expect(discs.icon(size: 16).isTemplate)
+        #expect(drawsSomething(discs.icon(size: 32)))
         #expect(options.map(\.isClickable) == [true, true, true])
         #expect(!PlayerOption(bundleID: "com.example.gone", name: "Gone", appURL: nil).isClickable)
     }
 
     @Test("web apps: tested sites' first, then the tested sites not added, then untested ones; suggestions don't count for the search")
     func webAppOrder() {
-        let untested = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.U", name: "SoundCloud", status: .learned,
-                                          installedURL: URL(fileURLWithPath: "/Users/test/Applications/SoundCloud.app"),
+        let untested = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.U", name: "Sounds", status: .learned,
+                                          installedURL: URL(fileURLWithPath: "/Users/test/Applications/Sounds.app"),
                                           isUntested: true)
-        let tested = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.T", name: "YT Music", status: .learned,
-                                        installedURL: URL(fileURLWithPath: "/Users/test/Applications/YT Music.app"))
+        let tested = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.T", name: "Yodel Music", status: .learned,
+                                        installedURL: URL(fileURLWithPath: "/Users/test/Applications/Yodel Music.app"))
         let catalog = MusicPlayerCatalog(
             players: (1...6).map { MockMusicPlayer(bundleID: "com.example.\($0)", name: "App \($0)") },
             found: { [untested, tested] },
-            suggested: { [WebAppSuggestion(name: "Spotify", address: "open.spotify.com"),
-                          WebAppSuggestion(name: "Deezer", address: "deezer.com")] }
+            suggested: { [WebAppSuggestion(name: "Streamer", address: "open.streamer.example"),
+                          WebAppSuggestion(name: "Discs", address: "discs.example")] }
         )
         let options = PlayerOption.list(catalog) { _ in nil } // macOS knows none: web apps say where they are
-        #expect(options.offered.map(\.name).suffix(4) == ["YT Music", "Spotify", "Deezer", "SoundCloud"])
-        #expect(options.first { $0.name == "SoundCloud" }?.isUntested == true)
-        #expect(options.first { $0.name == "YT Music" }.map { $0.isInstalled && !$0.isUntested } == true)
+        #expect(options.offered.map(\.name).suffix(4) == ["Yodel Music", "Streamer", "Discs", "Sounds"])
+        #expect(options.first { $0.name == "Sounds" }?.isUntested == true)
+        #expect(options.first { $0.name == "Yodel Music" }.map { $0.isInstalled && !$0.isUntested } == true)
         #expect(options.count == 10)
         #expect(options.isSearchable) // 6 apps and 2 web apps: 8
-        #expect(!options.filter { $0.name != "SoundCloud" }.isSearchable) // the 2 suggestions don't count
+        #expect(!options.filter { $0.name != "Sounds" }.isSearchable) // the 2 suggestions don't count
         #expect(PlayerOption.untestedBadge == "Untested")
     }
 
     @Test("from eight players on, they can be searched by name, ignoring case and accents")
     func search() {
-        let names = ["Spotify", "Apple Music", "VLC", "Apple Podcasts", "TIDAL", "Qobuz", "Música"]
+        let names = ["Streamer", "Acme Music", "Viewer", "Acme Podcasts", "Tides", "Quartet", "Música"]
         let seven = names.map { option($0, installed: true) }
         #expect(!seven.isSearchable)
-        #expect((seven + [option("Deezer", installed: false)]).isSearchable)
+        #expect((seven + [option("Discs", installed: false)]).isSearchable)
         #expect(PlayerOption.searchThreshold == 8)
 
         #expect(seven.matching("").map(\.name) == names)
         #expect(seven.matching("  ").map(\.name) == names)
-        #expect(seven.matching(" musi ").map(\.name) == ["Apple Music", "Música"])
-        #expect(seven.matching("APPLE P").map(\.name) == ["Apple Podcasts"])
+        #expect(seven.matching(" musi ").map(\.name) == ["Acme Music", "Música"])
+        #expect(seven.matching("ACME P").map(\.name) == ["Acme Podcasts"])
         #expect(seven.matching("zz").isEmpty)
         #expect(PlayerOption.noMatchNote("zz") == "No players match “zz”.")
     }

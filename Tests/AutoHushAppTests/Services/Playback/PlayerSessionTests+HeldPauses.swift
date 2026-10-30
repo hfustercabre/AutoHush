@@ -29,7 +29,7 @@ extension PlayerSessionTests {
         let bench = Bench()
         let session = await bench.holdingFirst()
         let held = bench.monitorings.of(Players.first)[0]
-        held.send(.activeSources([Self.vlc])) // its own: not the session's state
+        held.send(.activeSources([Self.viewer])) // its own: not the session's state
         #expect(session.state.activeSources.isEmpty)
         held.send(.playback(.musicPlaying))
         await TestWait.until { held.isStopped }

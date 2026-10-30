@@ -3,7 +3,7 @@ import Testing
 
 @Suite("CountrySites")
 struct CountrySitesTests {
-    /// A made-up service with Amazon Music's shape: two countries share a
+    /// A made-up service shaped as some stores' are: two countries share a
     /// site, the United States has the one for everywhere else.
     private let sites = CountrySites(
         name: "Some Music",
@@ -28,7 +28,7 @@ struct CountrySitesTests {
         #expect(sites.covers(address: "https://www.music.some.de/home?x=1"))
         #expect(sites.covers(address: " Music.Some.COM "))
         #expect(!sites.covers(address: "www.some.es"))
-        #expect(!sites.covers(address: "music.youtube.com"))
+        #expect(!sites.covers(address: "music.yodel.example"))
         #expect(!sites.covers(address: ""))
     }
 

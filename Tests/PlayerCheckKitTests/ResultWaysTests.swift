@@ -24,7 +24,7 @@ struct ResultWaysTests {
     @Test("a toggle with no state is kept only with another sign of the app's state; a pause and a play always")
     func toggles() {
         #expect(ResultWays.canRun(script, besides: [], reportsReadable: false))
-        // A state found wrong (Apple TV's) is left out: its pause and play still run.
+        // A state found wrong (a TV app's) is left out: its pause and play still run.
         var stateless = script
         stateless.state = nil
         #expect(ResultWays.canRun(stateless, besides: [], reportsReadable: false))

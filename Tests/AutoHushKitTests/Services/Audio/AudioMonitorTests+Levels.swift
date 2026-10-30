@@ -87,10 +87,10 @@ extension AudioMonitorTests {
     func unverifiedTapsFallBackToStreams() async {
         let h = Harness()
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")], peaks: [1: 0])
+        h.step([Self.process(1, "org.example.viewer")], peaks: [1: 0])
         h.step(after: 1.0)
         await h.recorder.waitForEvents(count: 1)
-        #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
+        #expect(await h.recorder.events == [.init(bundleID: "org.example.viewer", isPlaying: true)])
         #expect(h.modes.value.isEmpty)
     }
 
@@ -178,11 +178,11 @@ extension AudioMonitorTests {
             releaseDelay: 60 // the taps still there meanwhile; the release is run by hand
         )
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")], peaks: [1: 0])
+        h.step([Self.process(1, "org.example.viewer")], peaks: [1: 0])
         await h.recorder.waitForEvents(count: 1)
         #expect(h.meter.lastMetered.isEmpty)
         // Without levels the open stream counts as playing.
-        #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
+        #expect(await h.recorder.events == [.init(bundleID: "org.example.viewer", isPlaying: true)])
 
         h.monitor.setAudioLevelsNeeded(true)
         h.provider.flush()
@@ -200,7 +200,7 @@ extension AudioMonitorTests {
     func briefGapKeepsTaps() async {
         let h = Harness(permission: MockAudioCapturePermission(.granted))
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")])
+        h.step([Self.process(1, "org.example.viewer")])
         #expect(h.meter.lastMetered == [1])
 
         h.monitor.setAudioLevelsNeeded(false)

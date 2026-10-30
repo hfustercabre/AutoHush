@@ -57,9 +57,9 @@ extension AudioMonitorTests {
     func playerLocalStatusPrecedesSourceEvents() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
         h.start()
-        h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "org.videolan.vlc")])
+        h.step([Self.process(1, TestPlayer.bundleID), Self.process(2, "org.example.viewer")])
         await h.recorder.waitForEvents(count: 1)
-        #expect(await h.recorder.log == ["playerLocal false", "playerLocal true", "+org.videolan.vlc"])
+        #expect(await h.recorder.log == ["playerLocal false", "playerLocal true", "+org.example.viewer"])
     }
 
     // MARK: - Owning apps and ignored apps
@@ -140,31 +140,31 @@ extension AudioMonitorTests {
 
     @Test("an ignored app is published as playing but never reaches the arbiter")
     func ignoredAppIsPublishedNotForwarded() async {
-        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, ignored: ["org.videolan.vlc"])
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false, ignored: ["org.example.viewer"])
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")])
+        h.step([Self.process(1, "org.example.viewer")])
         h.step(after: 0.25)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
-        #expect(h.activeSources.value.last?.map(\.id) == ["org.videolan.vlc"])
-        #expect(h.monitor.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, isIgnored: true)])
+        #expect(h.activeSources.value.last?.map(\.id) == ["org.example.viewer"])
+        #expect(h.monitor.activeAudioReport() == [.init(id: "org.example.viewer", state: .playing, isIgnored: true)])
     }
 
     @Test("ignoring a playing app stops it for the arbiter; un-ignoring starts it again")
     func togglingIgnoreEmitsEvents() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc"), Self.process(2, "com.apple.Safari")])
+        h.step([Self.process(1, "org.example.viewer"), Self.process(2, "com.apple.Safari")])
         await h.recorder.waitForEvents(count: 2)
 
-        h.monitor.setIgnoredSources(["org.videolan.vlc"])
+        h.monitor.setIgnoredSources(["org.example.viewer"])
         await h.recorder.waitForEvents(count: 3)
         h.monitor.setIgnoredSources([])
         await h.recorder.waitForEvents(count: 4)
 
         #expect(Array(await h.recorder.events.suffix(2)) == [
-            .init(bundleID: "org.videolan.vlc", isPlaying: false),
-            .init(bundleID: "org.videolan.vlc", isPlaying: true),
+            .init(bundleID: "org.example.viewer", isPlaying: false),
+            .init(bundleID: "org.example.viewer", isPlaying: true),
         ])
         // It played all along: not heard just now, so its start says nothing of when.
         #expect(Array(await h.recorder.heardSince.suffix(2)) == [nil, nil])
@@ -172,9 +172,9 @@ extension AudioMonitorTests {
 
     @Test("an ignored app that stops playing sends nothing to the arbiter")
     func ignoredAppStoppingIsSilent() async {
-        let h = Harness(configuration: Self.config(startConfirmation: 0, stopGrace: 0), meter: false, ignored: ["org.videolan.vlc"])
+        let h = Harness(configuration: Self.config(startConfirmation: 0, stopGrace: 0), meter: false, ignored: ["org.example.viewer"])
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")])
+        h.step([Self.process(1, "org.example.viewer")])
         h.step(after: 0.25, [])
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)

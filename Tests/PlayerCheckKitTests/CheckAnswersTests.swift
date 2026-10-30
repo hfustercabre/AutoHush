@@ -22,7 +22,7 @@ struct CheckAnswersTests {
 
     @Test("why an app can be in Now Playing: its reason, the interface a switch shows, the switches, the interface's kind, a web app's browser; each empty when none")
     func nowPlayingReasons() {
-        let electron = NowPlayingReasonsLine(path: "/Applications/Deezer.app", reason: "MediaPlayer, through Electron",
+        let electron = NowPlayingReasonsLine(path: "/Applications/Discs.app", reason: "MediaPlayer, through Electron",
                                              interface: "Electron 38.4.0", switches: "Electron's switch", kind: .electron)
         #expect(NowPlayingReasonsLine(line: electron.line) == electron)
         let webApp = NowPlayingReasonsLine(path: "/Users/someone/Applications/Chrome Apps.localized/Music.app",

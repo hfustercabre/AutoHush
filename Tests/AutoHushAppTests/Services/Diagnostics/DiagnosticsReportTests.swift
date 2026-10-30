@@ -16,7 +16,7 @@ struct DiagnosticsReportTests {
         status.detection = .audioLevel
         status.playback = .pausedByMonitor
         status.setActiveSources([AudioSource(id: "com.google.Chrome", name: "Google Chrome")])
-        status.ignoredApps = [AudioSource(id: "org.videolan.vlc", name: "VLC")]
+        status.ignoredApps = [AudioSource(id: "org.example.viewer", name: "Viewer")]
         return status
     }
 
@@ -73,7 +73,7 @@ struct DiagnosticsReportTests {
             AutoHush
             Version: 0.6.1 (19)
             Auto-Pause: On
-            Ignored apps: VLC
+            Ignored apps: Viewer
             Launch at login: On
             Keep icon next to system icons: Off
             Updates: Install it automatically
@@ -87,7 +87,7 @@ struct DiagnosticsReportTests {
 
     @Test("the tab gets each app with its icon and judgement, a summary for each part, and the sections in order")
     func snapshot() {
-        let activeAudio = [chrome, ActiveAudioReport.Entry(id: "org.videolan.vlc", state: .silent, isIgnored: true)]
+        let activeAudio = [chrome, ActiveAudioReport.Entry(id: "org.example.viewer", state: .silent, isIgnored: true)]
         let snapshot = DiagnosticsReport.snapshot(
             activeAudio: activeAudio, status: workingStatus(), facts: facts(),
             bundlePath: { $0 == "com.google.Chrome" ? "/Applications/Google Chrome.app" : nil }
@@ -97,10 +97,10 @@ struct DiagnosticsReportTests {
         #expect(snapshot.apps == [
             .init(id: "com.google.Chrome", name: "Google Chrome", bundlePath: "/Applications/Google Chrome.app",
                   judgement: "Playing", evidence: "-20 dBFS"),
-            .init(id: "org.videolan.vlc", name: "org.videolan.vlc", bundlePath: nil,
+            .init(id: "org.example.viewer", name: "org.example.viewer", bundlePath: nil,
                   judgement: "Output open, silent, ignored", evidence: nil),
         ])
-        #expect(snapshot.appsSummary == "Google Chrome, org.videolan.vlc")
+        #expect(snapshot.appsSummary == "Google Chrome, org.example.viewer")
         #expect(snapshot.sections.map(\.kind) == [.player, .behavior, .detection, .permissions, .autoHush, .mac])
         let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
         #expect(snapshot.sections.map(\.summary) == [
@@ -349,7 +349,7 @@ struct DiagnosticsReportTests {
     }
 
     @Test("each app's line says how AutoHush judges it, and why", arguments: [
-        (ActiveAudioReport.Entry(id: "org.videolan.vlc", state: .starting), "org.videolan.vlc — starting"),
+        (ActiveAudioReport.Entry(id: "org.example.viewer", state: .starting), "org.example.viewer — starting"),
         (.init(id: "com.example.d", state: .starting, isIgnored: true), "com.example.d — starting, ignored"),
         (.init(id: "com.apple.Safari", name: "Safari", state: .silent, isIgnored: true, evidence: .level(0)),
          "Safari (com.apple.Safari) — output open, silent, ignored (silence)"),

@@ -49,12 +49,12 @@ extension AudioMonitorTests {
     func detectionMethodSwitchRereads() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
         h.start()
-        h.provider.processes = [Self.process(1, "org.videolan.vlc")] // no HAL change says so
+        h.provider.processes = [Self.process(1, "org.example.viewer")] // no HAL change says so
         h.clock.advance(by: 2)
         h.monitor.setDetectionMethod(.openStreams)
         h.provider.flush()
         await h.monitor.eventsDelivered()
-        #expect(await h.recorder.events == [.init(bundleID: "org.videolan.vlc", isPlaying: true)])
+        #expect(await h.recorder.events == [.init(bundleID: "org.example.viewer", isPlaying: true)])
     }
 
     @Test("a permission undecided again (reset in System Settings) puts level detection back to waiting for it")
@@ -62,7 +62,7 @@ extension AudioMonitorTests {
         let permission = MockAudioCapturePermission(.granted)
         let h = Harness(permission: permission)
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")], peaks: [1: 0.3])
+        h.step([Self.process(1, "org.example.viewer")], peaks: [1: 0.3])
         #expect(h.modes.value == [.audioLevel])
 
         permission.current = .notDetermined
@@ -100,7 +100,7 @@ extension AudioMonitorTests {
     func calledOffReleaseCancelled() {
         let h = Harness(permission: MockAudioCapturePermission(.granted), releaseDelay: 60)
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")])
+        h.step([Self.process(1, "org.example.viewer")])
         h.monitor.setAudioLevelsNeeded(false)
         let release = h.monitor.queue.sync { h.monitor.audioLevelsRelease }
         #expect(release != nil)

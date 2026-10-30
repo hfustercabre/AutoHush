@@ -7,7 +7,7 @@ extension PlaybackArbiterTests {
     // MARK: - Resume behaviour
 
     @Test("resumes the player as soon as the other app stops", arguments: [
-        "org.videolan.vlc",
+        "org.example.viewer",
         "com.google.Chrome.helper", // a browser's helper process
     ])
     func resumesAfterSourceStops(sourceID: String) async {
@@ -31,14 +31,14 @@ extension PlaybackArbiterTests {
         let published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       onStatusUpdate: statuses(playback: { published.set($0) }))
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         #expect(scheduler.scheduledDelays.last == PlaybackArbiter.resumeConfirmDelay)
         // Stopped right after, unannounced: its last read was the pause's, so its
-        // observer has no change to report (Apple TV, its window closed during
+        // observer has no change to report (a TV app, its window closed during
         // the fade-in), and its output closes.
         if !keepsPlaying {
             await player.setState(.paused)
@@ -58,17 +58,17 @@ extension PlaybackArbiterTests {
         let published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       onStatusUpdate: statuses(playback: { published.set($0) }))
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         // Stopped right after, unannounced, its output closed; then an app
         // plays and stops before it's asked again: nothing to pause or resume.
         await player.setState(.paused)
         await arbiter.handleLocalPlaybackChange(false)
-        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: true)
-        await arbiter.sourceChanged("com.apple.QuickTimePlayerX", playing: false)
+        await arbiter.sourceChanged("com.example.movies", playing: true)
+        await arbiter.sourceChanged("com.example.movies", playing: false)
         await arbiter.waitUntilIdle()
         #expect(published.state == .playingElsewhere) // as it was shown
         await scheduler.completeNext()
@@ -88,15 +88,15 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         #expect(!scheduler.scheduledDelays.contains(PlaybackArbiter.resumeConfirmDelay))
     }
 
     /// How many times the music is played once the apps stop, with Stay
-    /// paused after calls `staysPaused`: after a pause for VLC that `call`
+    /// paused after calls `staysPaused`: after a pause for Viewer that `call`
     /// joins, or one that began for the call (`callFirst`).
     private func playsAfterPause(staysPaused: Bool, call: String?, callFirst: Bool = false) async -> Int {
         var configuration = AppConfiguration.testing
@@ -107,7 +107,7 @@ extension PlaybackArbiterTests {
             await arbiter.handleCallChange(sourceID: call, inCall: true) // the pause begins for it
             await arbiter.sourceChanged(call, playing: true)
         } else {
-            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+            await arbiter.sourceChanged("org.example.viewer", playing: true)
             if let call {
                 await arbiter.handleCallChange(sourceID: call, inCall: true)
                 await arbiter.sourceChanged(call, playing: true)
@@ -117,7 +117,7 @@ extension PlaybackArbiterTests {
             await arbiter.handleCallChange(sourceID: call, inCall: false) // ended before the apps stop
             await arbiter.sourceChanged(call, playing: false)
         }
-        if !callFirst { await arbiter.sourceChanged("org.videolan.vlc", playing: false) }
+        if !callFirst { await arbiter.sourceChanged("org.example.viewer", playing: false) }
         if !(staysPaused && call != nil) { await TestWait.until { await player.playCallCount == 1 } }
         await arbiter.waitUntilIdle()
         return await player.playCallCount
@@ -174,9 +174,9 @@ extension PlaybackArbiterTests {
         await arbiter.waitUntilIdle()
         #expect(await player.state == .playing) // never paused
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.state == .paused)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
     }
 
@@ -257,8 +257,8 @@ extension PlaybackArbiterTests {
 
         await player.overrideState(.playing)
         await arbiter.handlePlayerStateChange(.playing) // the user plays it again
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
     }
 
@@ -298,8 +298,8 @@ extension PlaybackArbiterTests {
 
         configuration.staysPausedAfterCalls = false
         await arbiter.setConfiguration(configuration)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
@@ -311,18 +311,18 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onPausedByUsChange: { told.append($0) })
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.sourceChanged("com.apple.Safari", playing: true) // still paused
         await arbiter.sourceChanged("com.apple.Safari", playing: false)
         #expect(told.value == [true])
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         #expect(told.value == [true, false])
     }
 
-    /// What the volume leveler is asked through two pauses for VLC and their
+    /// What the volume leveler is asked through two pauses for Viewer and their
     /// resumes, then monitoring's stop, with Level the volume `levels` (turned
     /// off before the stop when `turnsOff`) and the monitor's `offset`; and
     /// how many times the music was played.
@@ -334,8 +334,8 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
                                       fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { offset })
         for plays in 1...2 {
-            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            await arbiter.sourceChanged("org.example.viewer", playing: true)
+            await arbiter.sourceChanged("org.example.viewer", playing: false)
             await TestWait.until { await player.playCallCount == plays }
             await arbiter.waitUntilIdle()
         }
@@ -364,12 +364,12 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer()
         let leveler = RecordingVolumeLeveler()
         let arbiter = makeLevelingArbiter(player, leveler: leveler)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false) // resumed, lowered 6 dB
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false) // resumed, lowered 6 dB
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         await player.setFailPause(StubError.failed)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitUntilIdle()
         #expect(await player.state == .playing)
         #expect(leveler.log == ["lower -6.0"])
@@ -399,11 +399,11 @@ extension PlaybackArbiterTests {
         let other = leveler.lower(by: -4) // the player chosen now, as it resumed
         let player = MockMusicPlayer()
         let arbiter = makeLevelingArbiter(player, leveler: leveler)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.shutdown()
         #expect(other != nil)
         #expect(leveler.log == ["lower -4.0", "lower -6.0"]) // lowered already: nothing of its own to put back
@@ -416,9 +416,9 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await player.setUnansweredStateQueries(1)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { scheduler.scheduledDelays.count == 1 } // the retry, a second later
         #expect(await player.playCallCount == 0)
 
@@ -433,10 +433,10 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         let pauseQueries = await player.stateQueryCount // its check, and its press's
         await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await TestWait.until { scheduler.scheduledDelays.count == attempt }
             await scheduler.completeNext()
@@ -456,10 +456,10 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       onStatusUpdate: statuses(resumeFailure: { failures.append($0) }),
                                       onPausedByUsChange: { pausedByUs.append($0) })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
         await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await TestWait.until { scheduler.scheduledDelays.count == attempt }
             await scheduler.completeNext()
@@ -483,10 +483,10 @@ extension PlaybackArbiterTests {
             let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
             let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                           onStatusUpdate: statuses(resumeFailure: { failures.append($0) }))
-            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+            await arbiter.sourceChanged("org.example.viewer", playing: true)
             await arbiter.waitForPause()
             await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
-            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            await arbiter.sourceChanged("org.example.viewer", playing: false)
             for attempt in 1...PlaybackArbiter.resumeRetries {
                 await TestWait.until { scheduler.scheduledDelays.count == attempt }
                 await scheduler.completeNext()
@@ -508,9 +508,9 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler(), failures = Locked<[MusicPlayerError?]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       onStatusUpdate: statuses(resumeFailure: { failures.append($0) }))
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await TestWait.until { scheduler.scheduledDelays.count == attempt }
             await scheduler.completeNext()
@@ -523,10 +523,10 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(), scheduler = ManualDebounceScheduler(), byUs = Locked<[Bool]>([])
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       onPausedByUsChange: { byUs.append($0) })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
         await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await TestWait.until { scheduler.scheduledDelays.count == attempt }
             await scheduler.completeNext()
@@ -542,9 +542,9 @@ extension PlaybackArbiterTests {
                 await second.sourceChanged("com.apple.Safari", playing: true) // an app starts meanwhile
             }
         }
-        await second.sourceChanged("org.videolan.vlc", playing: true)
+        await second.sourceChanged("org.example.viewer", playing: true)
         await second.waitForPause()
-        await second.sourceChanged("org.videolan.vlc", playing: false)
+        await second.sourceChanged("org.example.viewer", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await TestWait.until { other.scheduledDelays.count == attempt }
             await other.completeNext()
@@ -560,7 +560,7 @@ extension PlaybackArbiterTests {
         let published = LastPublished()
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
                                       onStatusUpdate: statuses(playback: { published.set($0) }, resumeFailure: { failures.append($0) }))
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitForPause()
         await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
         await arbiter.setAutoPauseEnabled(false) // resumed at once, the app still playing
@@ -583,9 +583,9 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { scheduler.scheduledDelays.count == 1 } // the retry, a second later
         #expect(await player.playCallCount == 1)
 
@@ -602,9 +602,9 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = makeArbiter(player: player, scheduler: scheduler)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await TestWait.until { scheduler.scheduledDelays.count == attempt }
             await scheduler.completeNext()

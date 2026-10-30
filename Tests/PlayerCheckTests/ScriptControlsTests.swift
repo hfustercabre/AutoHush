@@ -13,13 +13,13 @@ struct ScriptControlsTests {
     @Test("pause and play in its own suite, by code, named as its dictionary names them")
     func ownSuite() throws {
         let scripting = try dictionary("""
-            <dictionary><suite name="Spotify Suite" code="spfy">
-              <command name="pause" code="spfyPaus"/><command name="play" code="spfyPlay"/><command name="playpause" code="spfyPlPs"/>
+            <dictionary><suite name="Streamer Suite" code="strm">
+              <command name="pause" code="strmPaus"/><command name="play" code="strmPlay"/><command name="playpause" code="strmPlPs"/>
             </suite></dictionary>
             """)
         let controls = try #require(scriptControls(of: scripting))
-        #expect(controls.pause == ScriptCommand(code: "spfyPaus", name: "pause", pauses: true))
-        #expect(controls.play == ScriptCommand(code: "spfyPlay", name: "play", pauses: false))
+        #expect(controls.pause == ScriptCommand(code: "strmPaus", name: "pause", pauses: true))
+        #expect(controls.play == ScriptCommand(code: "strmPlay", name: "play", pauses: false))
         #expect(!controls.toggles)
     }
 

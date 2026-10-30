@@ -8,7 +8,7 @@ import AutoHushTestSupport
 struct PlayerSessionTests {
     typealias Players = TestPlayers
 
-    static let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+    static let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
     static let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
     static let settings = MonitoringSettings(autoPause: true, ignored: [], timings: TimingSettings(),
                                              detection: .audioLevels)

@@ -11,8 +11,8 @@ struct PowerAssertionReaderTests {
             // Chrome: "Playing audio" keeps the Mac awake, "Video Wake Lock" the display.
             50680: [["AssertType": "NoIdleSleepAssertion", "AssertName": "Playing audio"],
                     ["AssertType": "NoDisplaySleepAssertion", "AssertName": "Video Wake Lock"]],
-            // VLC: its own playback assertion.
-            84715: [["AssertType": "PreventUserIdleSystemSleep", "AssertName": "VLC media playback"]],
+            // Viewer: its own playback assertion.
+            84715: [["AssertType": "PreventUserIdleSystemSleep", "AssertName": "Viewer media playback"]],
             // WebKit: a visible video keeps only the display awake.
             90026: [["AssertType": "PreventUserIdleDisplaySleep", "AssertName": "com.apple.WebCore: HTMLMediaElement playback"]],
             // coreaudiod: one per running stream, on behalf of the app — ignored.
@@ -26,7 +26,7 @@ struct PowerAssertionReaderTests {
         ]
         #expect(IOKitPowerAssertionReader.assertionsByProcess(in: assertions) == [
             50680: [PowerAssertion(.system, "Playing audio"), PowerAssertion(.display, "Video Wake Lock")],
-            84715: [PowerAssertion(.system, "VLC media playback")],
+            84715: [PowerAssertion(.system, "Viewer media playback")],
             90026: [PowerAssertion(.display, "com.apple.WebCore: HTMLMediaElement playback")],
         ])
     }

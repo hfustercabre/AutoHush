@@ -6,8 +6,8 @@ import AutoHushTestSupport
 
 extension StatusMenuControllerTests {
     @Test("Ignored Apps names one or two apps, then the first two and how many more", arguments: [
-        ([String](), ""), (["VLC"], "VLC"), (["VLC", "Messages"], ListFormatter.localizedString(byJoining: ["VLC", "Messages"])),
-        (["VLC", "Messages", "Chrome"], "VLC, Messages and 1 more"), (["VLC", "Messages", "Chrome", "Mail"], "VLC, Messages and 2 more"),
+        ([String](), ""), (["Viewer"], "Viewer"), (["Viewer", "Messages"], ListFormatter.localizedString(byJoining: ["Viewer", "Messages"])),
+        (["Viewer", "Messages", "Chrome"], "Viewer, Messages and 1 more"), (["Viewer", "Messages", "Chrome", "Mail"], "Viewer, Messages and 2 more"),
     ])
     func ignoredAppsNames(names: [String], expected: String) {
         #expect(MenuIgnoredAppsView.names(of: names) == expected)
@@ -21,11 +21,11 @@ extension StatusMenuControllerTests {
         #expect(MenuIgnoredAppsView.subtitle(count: 5) == "They don’t pause your player.")
     }
 
-    /// The menu open, Ignored Apps listing VLC.
-    func menuIgnoringVLC() -> StatusMenuController {
+    /// The menu open, Ignored Apps listing Viewer.
+    func menuIgnoringAnApp() -> StatusMenuController {
         let sut = makeController()
         var status = readyStatus()
-        status.ignoredApps = [vlc]
+        status.ignoredApps = [viewer]
         sut.status = status
         reopen(sut)
         return sut
@@ -33,7 +33,7 @@ extension StatusMenuControllerTests {
 
     @Test("the pointer passing over a row doesn't open its side window")
     func sideWindowsOnHover() async {
-        let sut = menuIgnoringVLC()
+        let sut = menuIgnoringAnApp()
         defer { sut.remove() }
         sut.perform(.hoverSideRow(.players, true))
         sut.perform(.hoverSideRow(.players, false)) // only passing over it
@@ -43,7 +43,7 @@ extension StatusMenuControllerTests {
 
     @Test("the pointer resting on a row opens its side window")
     func sideWindowOpensOnRest() async {
-        let sut = menuIgnoringVLC()
+        let sut = menuIgnoringAnApp()
         defer { sut.remove() }
         sut.perform(.hoverSideRow(.players, true))
         await sut.sideOpenTask?.value
@@ -52,7 +52,7 @@ extension StatusMenuControllerTests {
 
     @Test("a side window stays open with the pointer on its own part, or back on it within a moment")
     func sideWindowStaysOnItsPart() async {
-        let sut = menuIgnoringVLC()
+        let sut = menuIgnoringAnApp()
         defer { sut.remove() }
         sut.perform(.hoverSideRow(.players, true))
         await sut.sideOpenTask?.value
@@ -65,7 +65,7 @@ extension StatusMenuControllerTests {
 
     @Test("the pointer resting on the rest of the card closes the players' side window, as on another part")
     func playersCloseOnTheCard() async {
-        let sut = menuIgnoringVLC()
+        let sut = menuIgnoringAnApp()
         defer { sut.remove() }
         sut.perform(.hoverSideRow(.players, true))
         await sut.sideOpenTask?.value
@@ -78,7 +78,7 @@ extension StatusMenuControllerTests {
 
     @Test("the pointer on another part closes the side window after a moment")
     func sideWindowClosesOnAnotherPart() async {
-        let sut = menuIgnoringVLC()
+        let sut = menuIgnoringAnApp()
         defer { sut.remove() }
         sut.perform(.hoverSideRow(.players, true))
         await sut.sideOpenTask?.value
@@ -90,16 +90,16 @@ extension StatusMenuControllerTests {
 
     @Test("a click on a row opens its side window, and never closes it")
     func sideWindowOpensOnClick() {
-        let sut = menuIgnoringVLC()
+        let sut = menuIgnoringAnApp()
         defer { sut.remove() }
         sut.perform(.openSide(.ignoredApps))
         sut.perform(.openSide(.ignoredApps)) // a click on its row again: still open
-        #expect(sut.model.openSide == .ignoredApps && sut.model.listedIgnoredApps == [vlc])
+        #expect(sut.model.openSide == .ignoredApps && sut.model.listedIgnoredApps == [viewer])
     }
 
     @Test("the pointer resting on another row opens that row's side window instead")
     func sideWindowSwitchesRows() async {
-        let sut = menuIgnoringVLC()
+        let sut = menuIgnoringAnApp()
         defer { sut.remove() }
         sut.perform(.openSide(.ignoredApps))
         sut.perform(.hoverSideRow(.players, true)) // the other row
@@ -152,18 +152,18 @@ extension StatusMenuControllerTests {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
-        status.setActiveSources([vlc, chrome])
+        status.setActiveSources([viewer, chrome])
         sut.status = status
         reopen(sut)
         #expect(parts(sut).contains("ignoredApps")) // none yet: the first is added from it
     }
 
-    /// The menu open with VLC and Chrome playing, VLC ignored.
-    private func menuWithVLCIgnored() -> (sut: StatusMenuController, status: AppStatus) {
+    /// The menu open with Viewer and Chrome playing, Viewer ignored.
+    private func menuWithAnAppIgnored() -> (sut: StatusMenuController, status: AppStatus) {
         let sut = makeController()
         var status = readyStatus()
-        status.setActiveSources([vlc, chrome])
-        status.ignoredApps = [vlc]
+        status.setActiveSources([viewer, chrome])
+        status.ignoredApps = [viewer]
         sut.status = status
         reopen(sut)
         return (sut, status)
@@ -171,39 +171,39 @@ extension StatusMenuControllerTests {
 
     @Test("Ignored Apps' row opens its side window, listing the apps ignored")
     func ignoredAppsSideWindow() {
-        let (sut, _) = menuWithVLCIgnored()
+        let (sut, _) = menuWithAnAppIgnored()
         defer { sut.remove() }
         #expect(parts(sut) == ["card", "snooze", "playingNow", "ignoredApps", "toolbar"])
         #expect(sut.model.openSide == nil)
         sut.perform(.openSide(.ignoredApps))
-        #expect(sut.model.openSide == .ignoredApps && sut.model.listedIgnoredApps == [vlc])
+        #expect(sut.model.openSide == .ignoredApps && sut.model.listedIgnoredApps == [viewer])
     }
 
     @Test("an app's switch in Ignored Apps stops ignoring it, the menu staying open")
     func ignoredAppSwitchedOn() {
-        let (sut, _) = menuWithVLCIgnored()
+        let (sut, _) = menuWithAnAppIgnored()
         defer { sut.remove() }
         sut.perform(.openSide(.ignoredApps))
-        settings.setIgnored(vlc, true)
-        sut.perform(.setIgnored(vlc, false)) // as its switch sends it
+        settings.setIgnored(viewer, true)
+        sut.perform(.setIgnored(viewer, false)) // as its switch sends it
         #expect(settings.state.ignoredApps.isEmpty && sut.isMenuOpen)
     }
 
     @Test("an app no longer ignored keeps its row in Ignored Apps' side window while it's open, and Ignored Apps stays")
     func ignoredAppKeepsItsRow() {
-        let (sut, ignoring) = menuWithVLCIgnored()
+        let (sut, ignoring) = menuWithAnAppIgnored()
         defer { sut.remove() }
         sut.perform(.openSide(.ignoredApps))
         var status = ignoring
         status.ignoredApps = []
         sut.status = status
-        #expect(sut.model.listedIgnoredApps == [vlc]) // its side window keeps its row
+        #expect(sut.model.listedIgnoredApps == [viewer]) // its side window keeps its row
         #expect(parts(sut).contains("ignoredApps"))
     }
 
     @Test("one side window at a time: the players' opens instead of Ignored Apps'")
     func oneSideWindowAtATime() {
-        let (sut, _) = menuWithVLCIgnored()
+        let (sut, _) = menuWithAnAppIgnored()
         defer { sut.remove() }
         sut.perform(.openSide(.ignoredApps))
         sut.perform(.openSide(.players)) // the players' instead
@@ -212,7 +212,7 @@ extension StatusMenuControllerTests {
 
     @Test("a side window is closed each time the menu opens")
     func sideWindowClosedAsTheMenuOpens() {
-        let (sut, _) = menuWithVLCIgnored()
+        let (sut, _) = menuWithAnAppIgnored()
         defer { sut.remove() }
         sut.perform(.openSide(.players))
         reopen(sut)

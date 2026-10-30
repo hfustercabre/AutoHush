@@ -9,7 +9,7 @@ import AutoHushTestSupport
 struct LearningSessionTests {
     /// A web app AutoHush must learn, whose learning the test moves along.
     private func webApp(_ status: LearningStatus = .learning(hasPlayed: false), id: String = "com.apple.Safari.WebApp.TEST",
-                        name: String = "YT Music") -> MockLearningPlayer {
+                        name: String = "Yodel Music") -> MockLearningPlayer {
         MockLearningPlayer(bundleID: id, name: name, status: status)
     }
 
@@ -165,7 +165,7 @@ struct LearningSessionTests {
     @Test("another chosen player: what the last one was told goes, and its learning shows as it is")
     func anotherPlayer() async {
         let first = webApp()
-        let second = webApp(.learned, id: "com.apple.Safari.WebApp.OTHER", name: "Deezer")
+        let second = webApp(.learned, id: "com.apple.Safari.WebApp.OTHER", name: "Discs")
         let session = LearningSession()
         session.follow(first)
         first.answer(playing: .notHeard)
@@ -179,7 +179,7 @@ struct LearningSessionTests {
     @Test("answers and updates about the player chosen before change nothing for the one chosen now")
     func answersAfterAnotherIsChosen() async {
         let first = webApp()
-        let second = webApp(id: "com.apple.Safari.WebApp.OTHER", name: "Deezer")
+        let second = webApp(id: "com.apple.Safari.WebApp.OTHER", name: "Discs")
         let session = LearningSession()
         session.follow(first)
         first.answer(playing: .notHeard)

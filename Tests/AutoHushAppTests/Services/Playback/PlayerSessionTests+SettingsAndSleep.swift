@@ -17,8 +17,8 @@ extension PlayerSessionTests {
 
         session.settings.autoPause = false
         #expect(current.autoPause == false && held.autoPause == false)
-        session.settings.ignored = [Self.vlc.id]
-        #expect(current.ignored == [Self.vlc.id] && held.ignored == [Self.vlc.id])
+        session.settings.ignored = [Self.viewer.id]
+        #expect(current.ignored == [Self.viewer.id] && held.ignored == [Self.viewer.id])
         session.settings.timings = TimingSettings(stopGrace: 4)
         #expect(current.configurations.map(\.musicPlayerBundleID) == [Players.second])
         #expect(current.configurations.first?.sourceStopGrace == 4)

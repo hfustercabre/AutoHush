@@ -25,7 +25,7 @@ struct LogFileTests {
     func roundTrip() async {
         let scratch = Scratch()
         let log = scratch.file()
-        let first = entry(scratch.now, "Spotify paused")
+        let first = entry(scratch.now, "Streamer paused")
         // Left as it is, a closing "\r" would join the next line ("\r\n" is one Character).
         let second = entry(scratch.now.addingTimeInterval(1), "ends in a carriage return\r")
         let third = entry(scratch.now.addingTimeInterval(1), "two\nlines\twith a tab \\ and a backslash", level: .error)

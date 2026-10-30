@@ -9,7 +9,7 @@ struct AppPlayingTests {
         AppPlaying(outputRunning: { _ in output }, levelMeasured: { measured }, audible: { _ in audible })
     }
 
-    @Test("a paused app that keeps its output open, silent, doesn't play (Qobuz); heard, it does")
+    @Test("a paused app that keeps its output open, silent, doesn't play (Quartet); heard, it does")
     func openSilentOutput() async {
         #expect(await playing(output: true, measured: true, audible: false).plays(42) == false)
         #expect(await playing(output: true, measured: true, audible: true).plays(42))

@@ -26,25 +26,25 @@ struct AppHealthStateTests {
 
     @Test("each failure is said in words, with the log's English for a bug report; Now Playing hidden offers its settings")
     @MainActor func controlErrorWords() {
-        let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "TIDAL")
-        #expect(menu.text == "AutoHush can’t find Play/Pause in TIDAL’s menus.")
+        let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "Tides")
+        #expect(menu.text == "AutoHush can’t find Play/Pause in Tides’s menus.")
         #expect(menu.detail == "Controlling the media player failed: its Play/Pause menu item wasn’t found.")
-        #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708)), player: "Spotify").text
-                == "Spotify answered with an error (-1708).")
-        #expect(ControlError(MusicPlayerError.playerNotResponding, player: "VLC").text == "VLC isn’t responding.")
-        #expect(ControlError(MusicPlayerError.automationPermissionDenied, player: "VLC").text == "AutoHush may no longer control VLC.")
+        #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708)), player: "Streamer").text
+                == "Streamer answered with an error (-1708).")
+        #expect(ControlError(MusicPlayerError.playerNotResponding, player: "Viewer").text == "Viewer isn’t responding.")
+        #expect(ControlError(MusicPlayerError.automationPermissionDenied, player: "Viewer").text == "AutoHush may no longer control Viewer.")
         #expect(ControlError(StubError.failed, player: "Jukebox").text == "stub failed") // any other error: in its own words
         for failure: ControlFailure in [.stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed, .pressIgnored] {
-            #expect(failure.text(player: "YT Music").contains("YT Music"))
+            #expect(failure.text(player: "Yodel Music").contains("Yodel Music"))
         }
         // Only Now Playing hidden in the menu bar opens the pane where it's shown.
-        #expect(ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Qobuz").opensMenuBarSettings)
+        #expect(ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Quartet").opensMenuBarSettings)
         #expect(!menu.opensMenuBarSettings)
         #expect(SystemSettingsPane.menuBar.url.absoluteString == "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")
 
         // Its alert: the button first (Return), OK after it (Escape), the pane opened by the first.
         var buttons: [(String, String)] = [], opened = 0
-        InfoAlert.show("Couldn’t Pause Qobuz", "…", action: (ControlFailure.openMenuBarSettings, { opened += 1 })) { alert in
+        InfoAlert.show("Couldn’t Pause Quartet", "…", action: (ControlFailure.openMenuBarSettings, { opened += 1 })) { alert in
             buttons = alert.buttons.map { ($0.title, $0.keyEquivalent) }
             return .alertFirstButtonReturn
         }

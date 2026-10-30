@@ -6,7 +6,7 @@ import AutoHushTestSupport
 extension PlaybackArbiterTests {
     // MARK: - Heard during the pause, muted in its place
 
-    /// An arbiter whose player another app (VLC, as a sample) paused, heard as
+    /// An arbiter whose player another app (Viewer, as a sample) paused, heard as
     /// `hearing` says, the user having played it since a moment as `userPlayed` says.
     func pausedForAnotherApp(_ player: MockMusicPlayer, clock: ManualClock, userPlayed: Locked<Bool> = Locked(false),
                              hearing: Hearing = Hearing(.heard), mute: FakeMute? = FakeMute(), published: LastPublished,
@@ -19,7 +19,7 @@ extension PlaybackArbiterTests {
                                       hearsPlayer: { await hearing.answer(since: $0) },
                                       inputToPlayer: { inputAsked?.append($0); return userPlayed.value }, playerMute: mute,
                                       tapsAllowed: { tapsAllowed.value })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         await arbiter.waitUntilIdle()
         return arbiter
@@ -39,7 +39,7 @@ extension PlaybackArbiterTests {
         await arbiter.waitUntilIdle()
     }
 
-    @Test("still heard at the first look after the pause (it didn't take: Apple TV's trailers play on), the player is muted at once until the apps stop, then unmuted, not played")
+    @Test("still heard at the first look after the pause (it didn't take: a TV app's trailers play on), the player is muted at once until the apps stop, then unmuted, not played")
     func pauseNotTakenMuted() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let mutedInstead = Locked<[Bool]>([]), hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
@@ -55,7 +55,7 @@ extension PlaybackArbiterTests {
         #expect(mutedInstead.value == [true]) // the menu says Muted
         #expect(hearing.since.last == paused.addingTimeInterval(PlaybackArbiter.pauseTail)) // its sound since the pause only
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { mute.unmuteCount == 1 }
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0) // it plays already: only unmuted
@@ -108,7 +108,7 @@ extension PlaybackArbiterTests {
         #expect(published.state == .musicPlaying)
         await arbiter.handlePlayerHeard() // heard again: still theirs
         #expect(await player.pauseCallCount == 1)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
@@ -167,7 +167,7 @@ extension PlaybackArbiterTests {
                                       clock: { clock.now },
                                       onStatusUpdate: statuses(playback: { published.set($0) }, mutedInstead: { mutedInstead.append($0) }),
                                       hearsPlayer: { _ in .heard }, inputToPlayer: { _ in false }, playerMute: mute)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { mute.muteCount == 1 }
         await arbiter.waitForPause()
         #expect(published.state == .pausedByMonitor)
@@ -177,7 +177,7 @@ extension PlaybackArbiterTests {
         let other = PlaybackArbiter(player: stubborn, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                     onStatusUpdate: statuses(playback: { unmutable.set($0) }), hearsPlayer: { _ in .heard },
                                     playerMute: FakeMute(works: false))
-        await other.sourceChanged("org.videolan.vlc", playing: true)
+        await other.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { unmutable.state == .pauseFailed }
     }
 

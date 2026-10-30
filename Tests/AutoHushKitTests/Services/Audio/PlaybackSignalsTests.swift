@@ -30,23 +30,23 @@ struct PlaybackSignalsTests {
     @Test("an app's assertions are gathered from all its processes, for apps with their sound on only")
     func gathering() {
         let signals = PlaybackSignals(powerAssertions: FixedAssertions(byProcess: [
-            10: [Self.playingAudio], 11: [Self.videoWakeLock], 20: [PowerAssertion(.system, "VLC media playback")],
+            10: [Self.playingAudio], 11: [Self.videoWakeLock], 20: [PowerAssertion(.system, "Viewer media playback")],
             30: [Self.playingAudio],
         ]), learned: [:])
-        let owners: [pid_t: String] = [10: "com.google.Chrome", 11: "com.google.Chrome", 20: "org.videolan.vlc", 30: "com.example.absent"]
+        let owners: [pid_t: String] = [10: "com.google.Chrome", 11: "com.google.Chrome", 20: "org.example.viewer", 30: "com.example.absent"]
 
-        let holding = signals.assertions(among: ["com.google.Chrome", "org.videolan.vlc", "com.apple.Safari"]) { owners[$0] }
+        let holding = signals.assertions(among: ["com.google.Chrome", "org.example.viewer", "com.apple.Safari"]) { owners[$0] }
 
         #expect(holding == [
             "com.google.Chrome": [Self.playingAudio, Self.videoWakeLock],
-            "org.videolan.vlc": [PowerAssertion(.system, "VLC media playback")],
+            "org.example.viewer": [PowerAssertion(.system, "Viewer media playback")],
         ])
     }
 
     @Test("without an assertion reader nothing is held")
     func noReader() {
         let signals = PlaybackSignals(powerAssertions: nil, learned: [:])
-        #expect(signals.assertions(among: ["org.videolan.vlc"]) { _ in "org.videolan.vlc" }.isEmpty)
+        #expect(signals.assertions(among: ["org.example.viewer"]) { _ in "org.example.viewer" }.isEmpty)
     }
 
     @Test("an app keeping the Mac awake plays, and counts as paused once it stops; apps that never did get no verdict")

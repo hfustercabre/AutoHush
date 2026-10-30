@@ -39,7 +39,7 @@ extension PlaybackArbiterTests {
         #expect(published.state == .pausedByMonitor)
         #expect(mute.relaunchLookCount == 2) // a relaunched player muted again at each look
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         #expect(mute.unmuteCount == 1)
     }
@@ -91,7 +91,7 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == before + 6)
     }
 
-    @Test("muted, a player that doesn't state itself (Apple TV's trailers) is pressed too: its sound tells")
+    @Test("muted, a player that doesn't state itself (a TV app's trailers) is pressed too: its sound tells")
     func mutedNoStatePressed() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let scheduler = ManualDebounceScheduler()
@@ -102,7 +102,7 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 2)
     }
 
-    @Test("muted, a player silent since the mute (it paused itself: Apple TV's trailers in a hidden window) is AutoHush's pause unpressed, the menu no longer saying Muted, unmuted as it's resumed with the apps")
+    @Test("muted, a player silent since the mute (it paused itself: a TV app's trailers in a hidden window) is AutoHush's pause unpressed, the menu no longer saying Muted, unmuted as it's resumed with the apps")
     func mutedSilentByItselfPaused() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler(), mutedInstead = Locked<[Bool]>([])
@@ -117,16 +117,16 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 1) // not pressed
         #expect(published.state == .pausedByMonitor)
         await player.setState(.paused)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         #expect(mute.unmuteCount == 1)
     }
 
     /// An arbiter whose player was muted, then went silent: paused, still muted.
-    private func pausedMutedForVLC(_ player: MockMusicPlayer, clock: ManualClock, userPlayed: Locked<Bool> = Locked(false),
-                                   hearing: Hearing, mute: FakeMute, published: LastPublished,
-                                   configuration: AppConfiguration = .testing, mutedInstead: Locked<[Bool]>? = nil,
-                                   scheduler: ManualDebounceScheduler) async -> PlaybackArbiter {
+    private func pausedMutedForAnotherApp(_ player: MockMusicPlayer, clock: ManualClock, userPlayed: Locked<Bool> = Locked(false),
+                                          hearing: Hearing, mute: FakeMute, published: LastPublished,
+                                          configuration: AppConfiguration = .testing, mutedInstead: Locked<[Bool]>? = nil,
+                                          scheduler: ManualDebounceScheduler) async -> PlaybackArbiter {
         let arbiter = await mutedForAnotherApp(player, clock: clock, userPlayed: userPlayed, hearing: hearing, mute: mute,
                                         published: published, configuration: configuration, mutedInstead: mutedInstead,
                                         scheduler: scheduler)
@@ -141,8 +141,8 @@ extension PlaybackArbiterTests {
     func keptMuteRestartMutedAgain() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler(), mutedInstead = Locked<[Bool]>([])
-        let arbiter = await pausedMutedForVLC(player, clock: clock, hearing: hearing, mute: mute, published: published,
-                                              mutedInstead: mutedInstead, scheduler: scheduler)
+        let arbiter = await pausedMutedForAnotherApp(player, clock: clock, hearing: hearing, mute: mute, published: published,
+                                                     mutedInstead: mutedInstead, scheduler: scheduler)
         let looked = mute.relaunchLookCount
         clock.advance(by: 5)
         hearing.now = .heard
@@ -152,7 +152,7 @@ extension PlaybackArbiterTests {
         #expect(mute.relaunchLookCount == looked + 1) // a relaunched process muted, if any
         #expect(mutedInstead.value == [true, false, true])
         #expect(published.state == .pausedByMonitor)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { mute.unmuteCount == 1 }
     }
 
@@ -160,8 +160,8 @@ extension PlaybackArbiterTests {
     func keptMuteUserPlayUnmuted() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let userPlayed = Locked(false), hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
-        let arbiter = await pausedMutedForVLC(player, clock: clock, userPlayed: userPlayed, hearing: hearing, mute: mute,
-                                              published: published, scheduler: scheduler)
+        let arbiter = await pausedMutedForAnotherApp(player, clock: clock, userPlayed: userPlayed, hearing: hearing, mute: mute,
+                                                     published: published, scheduler: scheduler)
         userPlayed.value = true
         hearing.now = .heard
         await arbiter.handlePlayerHeard()
@@ -175,9 +175,9 @@ extension PlaybackArbiterTests {
         configuration.resumesPlayback = false
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
-        let arbiter = await pausedMutedForVLC(player, clock: clock, hearing: hearing, mute: mute, published: published,
-                                              configuration: configuration, scheduler: scheduler)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        let arbiter = await pausedMutedForAnotherApp(player, clock: clock, hearing: hearing, mute: mute, published: published,
+                                                     configuration: configuration, scheduler: scheduler)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { mute.unmuteCount == 1 }
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
@@ -188,8 +188,8 @@ extension PlaybackArbiterTests {
     func keptMuteLiftedAtShutdown() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
-        let arbiter = await pausedMutedForVLC(player, clock: clock, hearing: hearing, mute: mute, published: published,
-                                              scheduler: scheduler)
+        let arbiter = await pausedMutedForAnotherApp(player, clock: clock, hearing: hearing, mute: mute, published: published,
+                                                     scheduler: scheduler)
         await arbiter.shutdown()
         #expect(mute.unmuteCount == 1)
     }
@@ -223,7 +223,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(), clock = ManualClock(), published = LastPublished()
         let scheduler = ManualDebounceScheduler()
         let arbiter = await pausedForAnotherApp(player, clock: clock, mute: nil, published: published, scheduler: scheduler)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await reportsPlaying(player, arbiter, clock: clock)
         await player.setState(.paused)
         await arbiter.handlePlayerStateChange(.paused)
@@ -269,7 +269,7 @@ extension PlaybackArbiterTests {
         let scheduler = ManualDebounceScheduler()
         let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published,
                                         configuration: configuration, scheduler: scheduler)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { mute.unmuteCount == 1 }
         #expect(await player.pauseCallCount == 2) // and once more for real
         #expect(await player.state == .paused)

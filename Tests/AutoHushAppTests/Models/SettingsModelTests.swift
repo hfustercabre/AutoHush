@@ -259,15 +259,15 @@ struct SettingsModelTests {
     @Test("what the menu shows too comes from the app's state, and follows it")
     func readsTheAppState() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        let spotify = PlayerOption(bundleID: "com.spotify.client", name: "Spotify",
-                                   appURL: URL(fileURLWithPath: "/Applications/Spotify.app"), kind: .app)
-        model.state.status.playerOptions = [spotify]
-        model.state.status.chosenPlayerID = spotify.bundleID
-        #expect(model.playerOptions == [spotify])
-        #expect(model.chosenPlayerID == spotify.bundleID && model.chosenPlayerName == "Spotify")
+        let streamer = PlayerOption(bundleID: "com.example.streamer", name: "Streamer",
+                                    appURL: URL(fileURLWithPath: "/Applications/Streamer.app"), kind: .app)
+        model.state.status.playerOptions = [streamer]
+        model.state.status.chosenPlayerID = streamer.bundleID
+        #expect(model.playerOptions == [streamer])
+        #expect(model.chosenPlayerID == streamer.bundleID && model.chosenPlayerName == "Streamer")
         #expect(!model.canLearnControlsAgain)
 
-        model.state.status.setHealth(.needsPermission(.automation(player: "Spotify")))
+        model.state.status.setHealth(.needsPermission(.automation(player: "Streamer")))
         #expect(!model.statusLine.isEmpty && model.statusLine == model.state.status.statusLine)
         #expect(model.statusNeedsAttention)
 
@@ -286,15 +286,15 @@ struct SettingsModelTests {
                                  kind: .checkedApp)
         muted.pausesByMuting = true
         muted.needsAudioLevels = true
-        let spotify = PlayerOption(bundleID: "com.spotify.client", name: "Spotify",
-                                   appURL: URL(fileURLWithPath: "/Applications/Spotify.app"), kind: .app)
-        model.state.status.playerOptions = [muted, spotify]
-        #expect(model.offeredPlayers.map(\.name) == ["Spotify", "Muted"])
+        let streamer = PlayerOption(bundleID: "com.example.streamer", name: "Streamer",
+                                    appURL: URL(fileURLWithPath: "/Applications/Streamer.app"), kind: .app)
+        model.state.status.playerOptions = [muted, streamer]
+        #expect(model.offeredPlayers.map(\.name) == ["Streamer", "Muted"])
         #expect(model.offeredPlayers.map(\.isClickable) == [true, true])
 
         model.setAntiDotMode(true)
         #expect(model.offeredPlayers.map(\.isClickable) == [true, false])
-        #expect(model.playerOptions == [muted, spotify]) // as the app's state has them
+        #expect(model.playerOptions == [muted, streamer]) // as the app's state has them
     }
 
     @Test("the player card offers Reopen and Unmute as the menu's card does, following the status as it changes")
@@ -323,14 +323,14 @@ struct SettingsModelTests {
         #expect(!model.offersUnmute)
     }
 
-    private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+    private let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
 
-    /// Settings' model with VLC among the apps, the player ready, and the
+    /// Settings' model with Viewer among the apps, the player ready, and the
     /// music paused for Chrome if `paused`.
-    private func showingVLC(paused: Bool) -> SettingsModel {
+    private func showingAnApp(paused: Bool) -> SettingsModel {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        show(model, seen: [vlc], ignored: [])
+        show(model, seen: [viewer], ignored: [])
         model.state.status.setHealth(.ready)
         if paused {
             model.state.status.playback = .pausedByMonitor
@@ -341,7 +341,7 @@ struct SettingsModelTests {
 
     @Test("a window showing the apps isn't told of the music's state")
     func followsPartByPart() {
-        let model = showingVLC(paused: false)
+        let model = showingAnApp(paused: false)
         let apps = Locked(0)
         withObservationTracking { _ = model.appList.apps } onChange: { apps.increment() }
         model.state.status.playback = .pausedByMonitor
@@ -351,10 +351,10 @@ struct SettingsModelTests {
 
     @Test("a window showing the status line isn't told of the apps, only of the music's state")
     func statusLineLeavesTheApps() {
-        let model = showingVLC(paused: true)
+        let model = showingAnApp(paused: true)
         let line = Locked(0)
         withObservationTracking { _ = model.statusLine } onChange: { line.increment() }
-        show(model, seen: [vlc, chrome], ignored: [vlc])
+        show(model, seen: [viewer, chrome], ignored: [viewer])
         #expect(line.value == 0)
         model.state.status.playback = .musicPlaying
         #expect(line.value == 1)
@@ -362,24 +362,24 @@ struct SettingsModelTests {
 
     @Test("a window showing the apps is told as they change")
     func appsFollowed() {
-        let model = showingVLC(paused: true)
+        let model = showingAnApp(paused: true)
         let apps = Locked(0)
         withObservationTracking { _ = model.appList.apps } onChange: { apps.increment() }
-        show(model, seen: [vlc, chrome], ignored: [vlc])
+        show(model, seen: [viewer, chrome], ignored: [viewer])
         #expect(apps.value == 1)
-        #expect(model.appList.apps.map(\.id) == [vlc.id, chrome.id])
+        #expect(model.appList.apps.map(\.id) == [viewer.id, chrome.id])
     }
 
     @Test("the apps are ordered again as their order changes")
     func appsOrderedAgain() {
-        let model = showingVLC(paused: true)
-        show(model, seen: [vlc, chrome], ignored: [vlc])
+        let model = showingAnApp(paused: true)
+        show(model, seen: [viewer, chrome], ignored: [viewer])
         model.state.status.playback = .musicPlaying
         let order = Locked(0)
         withObservationTracking { _ = model.appList.apps } onChange: { order.increment() }
         model.appList.setOrder(AppListOrder(criterion: .name))
         #expect(order.value == 1)
-        #expect(model.appList.apps.map(\.id) == [chrome.id, vlc.id])
+        #expect(model.appList.apps.map(\.id) == [chrome.id, viewer.id])
     }
 
     @Test("Settings' own setters store through the user's settings, the timings clamped first")

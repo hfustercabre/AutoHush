@@ -80,7 +80,7 @@ struct PressCheckTests {
     func toggle() async throws {
         let player = MockMusicPlayer(state: .paused)
         let clock = ManualClock(start: Date(timeIntervalSince1970: 0))
-        // Heard 5 s after its press, as Qobuz buffering.
+        // Heard 5 s after its press, as a player buffering.
         let heardAt = Date(timeIntervalSince1970: 5)
         let toggle = { (shows: Bool) in
             PressCheck(name: "Jukebox", isToggle: true, press: { _ in try await player.play() },

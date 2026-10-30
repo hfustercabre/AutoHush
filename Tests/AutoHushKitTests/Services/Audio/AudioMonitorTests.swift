@@ -93,14 +93,14 @@ struct AudioMonitorTests {
     func startSaysWhenFirstHeard() async {
         let h = Harness(meter: false)
         h.start()
-        h.step(after: 2, [Self.process(1, "org.videolan.vlc")]) // first heard
+        h.step(after: 2, [Self.process(1, "org.example.viewer")]) // first heard
         let heard = h.clock.now
         h.step(after: 0.5)
         await h.monitor.eventsDelivered()
         #expect(await h.recorder.events.isEmpty)
         h.step(after: 0.5) // counts as playing
         await h.recorder.waitForEvents(count: 1)
-        #expect(h.activeSources.value.last?.map(\.id) == ["org.videolan.vlc"])
+        #expect(h.activeSources.value.last?.map(\.id) == ["org.example.viewer"])
 
         #expect(await h.recorder.events.map(\.isPlaying) == [true])
         #expect(await h.recorder.heardSince == [heard])
@@ -110,12 +110,12 @@ struct AudioMonitorTests {
     func gapWithinStopGraceKeepsSource() async {
         let h = Harness(meter: false)
         h.start()
-        h.step(after: 2, [Self.process(1, "org.videolan.vlc")])
+        h.step(after: 2, [Self.process(1, "org.example.viewer")])
         h.step(after: 1) // counts as playing
         await h.recorder.waitForEvents(count: 1)
 
         h.step(after: 0.25, [])
-        h.step(after: 1.5, [Self.process(2, "org.videolan.vlc")]) // the next track's stream
+        h.step(after: 1.5, [Self.process(2, "org.example.viewer")]) // the next track's stream
         h.step(after: 0.25, [])
         h.step(after: 1.5)
         await h.monitor.eventsDelivered()
@@ -126,7 +126,7 @@ struct AudioMonitorTests {
     func silentForStopGraceStops() async {
         let h = Harness(meter: false)
         h.start()
-        h.step(after: 2, [Self.process(1, "org.videolan.vlc")]) // first heard
+        h.step(after: 2, [Self.process(1, "org.example.viewer")]) // first heard
         let heard = h.clock.now
         h.step(after: 1) // counts as playing
         await h.recorder.waitForEvents(count: 1)
@@ -136,7 +136,7 @@ struct AudioMonitorTests {
         h.step(after: 0.5)
         await h.recorder.waitForEvents(count: 2)
         // Heard again: a new start, from then.
-        h.step(after: 1, [Self.process(1, "org.videolan.vlc")])
+        h.step(after: 1, [Self.process(1, "org.example.viewer")])
         let heardAgain = h.clock.now
         h.step(after: 1)
         await h.recorder.waitForEvents(count: 3)
@@ -164,10 +164,10 @@ struct AudioMonitorTests {
     func activeAudioReport() async {
         let h = Harness()
         h.start()
-        h.step([Self.process(1, "com.apple.Safari"), Self.process(2, "org.videolan.vlc")], peaks: [1: 0.1, 2: 0])
+        h.step([Self.process(1, "com.apple.Safari"), Self.process(2, "org.example.viewer")], peaks: [1: 0.1, 2: 0])
         #expect(h.monitor.activeAudioReport() == [
             .init(id: "com.apple.Safari", state: .starting, evidence: .level(0.1)),
-            .init(id: "org.videolan.vlc", state: .silent, evidence: .level(0)),
+            .init(id: "org.example.viewer", state: .silent, evidence: .level(0)),
         ])
     }
 
@@ -176,7 +176,7 @@ struct AudioMonitorTests {
         let h = Harness(configuration: Self.config(startConfirmation: 0, stopGrace: 0), meter: false)
         h.start()
         for _ in 0..<20 {
-            h.step(after: 0.25, [Self.process(1, "org.videolan.vlc")])
+            h.step(after: 0.25, [Self.process(1, "org.example.viewer")])
             h.step(after: 0.25, [])
         }
         await h.recorder.waitForEvents(count: 40)
@@ -189,7 +189,7 @@ struct AudioMonitorTests {
     func stopIsIdempotent() throws {
         let h = Harness(configuration: Self.config(startConfirmation: 0))
         h.start()
-        h.step([Self.process(1, "org.videolan.vlc")])
+        h.step([Self.process(1, "org.example.viewer")])
         let timer = try #require(h.monitor.queue.sync { h.monitor.timer })
         h.monitor.stop()
         h.monitor.stop()
@@ -221,7 +221,7 @@ struct AudioMonitorTests {
     func timerDrivesEvaluation() async {
         let recorder = ArbiterEventRecorder()
         let provider = MockAudioProcessSnapshotProvider()
-        provider.processes = [Self.process(1, "org.videolan.vlc")]
+        provider.processes = [Self.process(1, "org.example.viewer")]
         var configuration = AppConfiguration(timings: TimingSettings(startConfirmation: 0.05))
         configuration.sourceStopGrace = 0.05
         configuration.activeSampleInterval = 0.01
@@ -239,8 +239,8 @@ struct AudioMonitorTests {
         provider.processes = []
         await recorder.waitForEvents(count: 2)
         #expect(await recorder.events == [
-            .init(bundleID: "org.videolan.vlc", isPlaying: true),
-            .init(bundleID: "org.videolan.vlc", isPlaying: false),
+            .init(bundleID: "org.example.viewer", isPlaying: true),
+            .init(bundleID: "org.example.viewer", isPlaying: false),
         ])
         monitor.stop()
     }
