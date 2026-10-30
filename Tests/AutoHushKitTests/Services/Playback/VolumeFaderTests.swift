@@ -3,24 +3,10 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-/// Counts fade steps and can run something at a given step, so tests can
-/// interrupt a fade halfway without waiting for real time.
-private actor StepGate {
-    private(set) var steps = 0
-    private var actions: [Int: @Sendable () async -> Void] = [:]
-
-    func at(step: Int, _ action: @escaping @Sendable () async -> Void) { actions[step] = action }
-
-    func tick() async {
-        steps += 1
-        if let action = actions.removeValue(forKey: steps) { await action() }
-    }
-}
-
 @Suite("VolumeFader", .waitsTimeLimit)
 struct VolumeFaderTests {
     private func makeFader(
-        _ player: MockMusicPlayer, fadeOut: TimeInterval = 2, fadeIn: TimeInterval = 3, gate: StepGate = StepGate()
+        _ player: MockMusicPlayer, fadeOut: TimeInterval = 2, fadeIn: TimeInterval = 3, gate: FaderStepGate = FaderStepGate()
     ) -> VolumeFader {
         VolumeFader(player: player, fadeOut: fadeOut, fadeIn: fadeIn, sleep: { _ in await gate.tick() })
     }
@@ -82,7 +68,7 @@ struct VolumeFaderTests {
     func separateDurations() async throws {
         let player = MockMusicPlayer(state: .playing)
         await player.setVolumeLevel(60)
-        let gate = StepGate()
+        let gate = FaderStepGate()
         let fader = makeFader(player, fadeOut: 2, fadeIn: 3, gate: gate)
 
         #expect(try await fader.fadeOutAndPause())
@@ -137,7 +123,7 @@ struct VolumeFaderTests {
     func cancelledFadeOut() async throws {
         let player = MockMusicPlayer(state: .playing)
         await player.setVolumeLevel(80)
-        let gate = StepGate()
+        let gate = FaderStepGate()
         let fader = makeFader(player, gate: gate)
         await gate.at(step: 8) { await fader.cancel() }
 
@@ -150,7 +136,7 @@ struct VolumeFaderTests {
     func comebackStoppedWhileReadingVolume() async throws {
         let player = MockMusicPlayer(state: .playing)
         await player.setVolumeLevel(80)
-        let gate = StepGate()
+        let gate = FaderStepGate()
         let fader = makeFader(player, gate: gate)
         // Called off halfway; the next volume read is the comeback's, and
         // another app starts during it.
@@ -172,7 +158,7 @@ struct VolumeFaderTests {
     func olderComebackLeavesNewerStoppable() async throws {
         let player = MockMusicPlayer(state: .playing)
         await player.setVolumeLevel(80)
-        let gate = StepGate()
+        let gate = FaderStepGate()
         let fader = makeFader(player, gate: gate)
         let newerComesBack = Gate()
         let proceed = Gate()
@@ -208,7 +194,7 @@ struct VolumeFaderTests {
     func cancelAfterPause() async throws {
         let player = MockMusicPlayer(state: .playing, volumeCurve: .cubic)
         await player.setVolumeLevel(60)
-        let gate = StepGate()
+        let gate = FaderStepGate()
         let fader = makeFader(player, gate: gate)
         // 20 fade-out steps, then the wait between pausing and setting the volume back.
         await gate.at(step: 21) { await fader.cancel() }
@@ -222,7 +208,7 @@ struct VolumeFaderTests {
     func instantPauseDuringFadeIn() async throws {
         let player = MockMusicPlayer(state: .paused, volumeCurve: .cubic)
         await player.setVolumeLevel(70)
-        let gate = StepGate()
+        let gate = FaderStepGate()
         let fader = makeFader(player, fadeOut: 0, fadeIn: 3, gate: gate)
         // Another app starts mid fade-in; with no fade-out it pauses at once.
         await gate.at(step: 6) { _ = try? await fader.fadeOutAndPause() }
@@ -237,7 +223,7 @@ struct VolumeFaderTests {
     func abandon() async throws {
         let player = MockMusicPlayer(state: .playing, volumeCurve: .cubic)
         await player.setVolumeLevel(80)
-        let gate = StepGate()
+        let gate = FaderStepGate()
         let fader = makeFader(player, gate: gate)
         await gate.at(step: 5) { await fader.abandon() }
 
@@ -250,7 +236,7 @@ struct VolumeFaderTests {
     func interruptedFadeIn() async throws {
         let player = MockMusicPlayer(state: .paused)
         await player.setVolumeLevel(70)
-        let gate = StepGate()
+        let gate = FaderStepGate()
         let fader = makeFader(player, gate: gate)
         let fadeOut = Locked<Task<Bool, any Error>?>(nil)
         await gate.at(step: 6) {

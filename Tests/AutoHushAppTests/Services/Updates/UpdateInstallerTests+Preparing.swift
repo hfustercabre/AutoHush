@@ -39,14 +39,14 @@ extension UpdateInstallerTests {
     /// Prepares the fixture's update, opening its disk image with `tools`,
     /// and checks the result.
     private func expectPrepared(openingWith tools: [DiskImageTool]) async throws {
-        let fixture = try Fixture.shared.get()
+        let fixture = try UpdateFixture.shared.get()
         let scratch = try Scratch()
         let update = try await installer(scratch, requirement: fixture.requirement, serving: fixture.diskImage, diskImageTools: tools)
             .prepare(release(sha256: fixture.sha256), image: nil, allowsConstrainedNetwork: true)
 
-        #expect(update.version == AppVersion(Fixture.version))
+        #expect(update.version == AppVersion(UpdateFixture.version))
         let info = NSDictionary(contentsOf: update.app.appending(path: "Contents/Info.plist"))
-        #expect(info?["CFBundleShortVersionString"] as? String == Fixture.version)
+        #expect(info?["CFBundleShortVersionString"] as? String == UpdateFixture.version)
         #expect(UpdateInstaller.isSigned(update.app, satisfying: fixture.requirement))
         // Only the app is left: the download is deleted and the image detached.
         let contents = try FileManager.default.contentsOfDirectory(atPath: update.folder.path)
@@ -60,7 +60,7 @@ extension UpdateInstallerTests {
 
     @Test("an app signed by anyone else is refused, and nothing is left behind", .slow)
     func refusesOtherSigners() async throws {
-        let fixture = try Fixture.shared.get()
+        let fixture = try UpdateFixture.shared.get()
         let scratch = try Scratch()
         let autoHush = #"identifier "com.autohush.AutoHush" and certificate leaf = H"085edf2752c4f31bcdff25dbe14636958d50cdf6""#
         await #expect(throws: UpdateInstallError.notGenuine) {
@@ -125,12 +125,12 @@ extension UpdateInstallerTests {
     @Test("a disk image is refused, leaving nothing behind, when its app isn't the version announced or needs a newer macOS, or AutoHush.app is a link",
           .slow, arguments: [
             (ImagedApp.needing(macOS: "14.4"), "9.9.9", UpdateInstallError.wrongVersion),
-            (.needing(macOS: "99.0"), Fixture.version, .needsNewerMacOS("99.0")),
-            (.link(to: "/System/Applications/Calculator.app"), Fixture.version, .damaged),
+            (.needing(macOS: "99.0"), UpdateFixture.version, .needsNewerMacOS("99.0")),
+            (.link(to: "/System/Applications/Calculator.app"), UpdateFixture.version, .damaged),
           ])
     func refusesUnfitImage(imaged: ImagedApp, announced: String, refusal: UpdateInstallError) async throws {
         let scratch = try Scratch()
-        let fixture = try Fixture.kept(imaged)
+        let fixture = try UpdateFixture.kept(imaged)
         await #expect(throws: refusal) {
             try await installer(scratch, requirement: fixture.requirement, serving: fixture.diskImage)
                 .prepare(release(announced, sha256: fixture.sha256), image: nil, allowsConstrainedNetwork: true)

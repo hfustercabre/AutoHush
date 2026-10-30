@@ -148,15 +148,3 @@ final class FakeWebPage: WebPage, @unchecked Sendable {
         }
     }
 }
-
-/// Places used by the tests: a player bar at the bottom, the page's main part higher up.
-enum Places {
-    static let playerBar = ButtonPlace(path: ["AXGroup", "AXGroup:AXLandmarkComplementary"], distanceFromBottom: 40)
-    static let main = ButtonPlace(path: ["AXGroup", "AXGroup:AXLandmarkMain"], distanceFromBottom: 600)
-    static let fullScreen = ButtonPlace(path: ["AXGroup", "AXGroup:AXLandmarkMain", "AXGroup"], distanceFromBottom: 300)
-}
-
-extension ManualClock {
-    /// The web app tests' clock, from a date in 2026.
-    static func webAppTests() -> ManualClock { ManualClock(start: Date(timeIntervalSinceReferenceDate: 800_000_000)) }
-}

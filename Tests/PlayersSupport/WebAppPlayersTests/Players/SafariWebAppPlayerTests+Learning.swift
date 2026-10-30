@@ -85,7 +85,7 @@ extension SafariWebAppPlayerTests {
             1: .init(label: "Pause current", place: bar, withControls: true),
             2: .init(label: "Pause", place: ButtonPlace(path: ["AXGroup"], distanceFromBottom: -77), outOfSight: true),
         ]
-        for number in 3..<14 { buttons[number] = .init(label: "Item \(number)", place: Places.main) }
+        for number in 3..<14 { buttons[number] = .init(label: "Item \(number)", place: ButtonPlaces.main) }
         setup.page.buttonsByNumber = buttons
         setup.page.sound = true
         #expect(await setup.player.markPlaying() == .noted)
@@ -250,7 +250,7 @@ extension SafariWebAppPlayerTests {
 
         // A window macOS restored at login: buttons, but without their words.
         setup.page.hasWindow = true
-        setup.page.buttonsByNumber = Dictionary(uniqueKeysWithValues: (1...20).map { ($0, FakeWebPage.Button(label: "", place: Places.main)) })
+        setup.page.buttonsByNumber = Dictionary(uniqueKeysWithValues: (1...20).map { ($0, FakeWebPage.Button(label: "", place: ButtonPlaces.main)) })
         #expect(await setup.player.markPlaying() == .cantSeePage)
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
 
@@ -275,9 +275,9 @@ extension SafariWebAppPlayerTests {
     func smallPage() async {
         let setup = Setup()
         setup.page.sound = true
-        setup.page.buttonsByNumber = [1: .init(label: "Pause", place: Places.playerBar),
-                                      2: .init(label: "Volume", place: Places.playerBar),
-                                      3: .init(label: "", place: Places.main)]
+        setup.page.buttonsByNumber = [1: .init(label: "Pause", place: ButtonPlaces.playerBar),
+                                      2: .init(label: "Volume", place: ButtonPlaces.playerBar),
+                                      3: .init(label: "", place: ButtonPlaces.main)]
         #expect(await setup.player.markPlaying() == .noted)
         setup.page.set(1, label: "Play")
         #expect(await setup.player.markPaused() == .noted)

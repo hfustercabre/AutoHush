@@ -9,7 +9,7 @@ import PlayersTestSupport
 struct SafariWebAppPlayerTests {
     static let app = SafariWebApp(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music",
                                   url: URL(fileURLWithPath: "/Users/test/Applications/YT Music.app"))
-    static let learned = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [Places.playerBar])
+    static let learned = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [ButtonPlaces.playerBar])
 
     struct Setup {
         let page = FakeWebPage()
@@ -37,10 +37,10 @@ struct SafariWebAppPlayerTests {
         /// higher up, and filler.
         func showPage(_ bar: String = "Play") {
             var buttons: [Int: FakeWebPage.Button] = [
-                1: .init(label: bar, place: Places.playerBar),
-                2: .init(label: "Play", place: Places.main),
+                1: .init(label: bar, place: ButtonPlaces.playerBar),
+                2: .init(label: "Play", place: ButtonPlaces.main),
             ]
-            for number in 3..<14 { buttons[number] = .init(label: "Item \(number)", place: Places.main) }
+            for number in 3..<14 { buttons[number] = .init(label: "Item \(number)", place: ButtonPlaces.main) }
             page.buttonsByNumber = buttons
         }
 
@@ -49,9 +49,9 @@ struct SafariWebAppPlayerTests {
         func showTwoWindows(_ first: String, _ second: String) {
             showPage(first)
             var buttons = page.buttonsByNumber
-            buttons[21] = .init(label: second, place: Places.playerBar)
-            buttons[22] = .init(label: "Play", place: Places.main)
-            for number in 23..<34 { buttons[number] = .init(label: "Item \(number)", place: Places.main) }
+            buttons[21] = .init(label: second, place: ButtonPlaces.playerBar)
+            buttons[22] = .init(label: "Play", place: ButtonPlaces.main)
+            for number in 23..<34 { buttons[number] = .init(label: "Item \(number)", place: ButtonPlaces.main) }
             page.buttonsByNumber = buttons
         }
     }

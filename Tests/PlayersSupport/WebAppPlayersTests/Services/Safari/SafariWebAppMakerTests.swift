@@ -32,9 +32,9 @@ struct SafariWebAppMakerTests {
 
     /// A session where `url` answers each HTTP method with `answers`.
     private static func session(_ answers: [String: Int], for url: URL) -> URLSession {
-        StubProtocol.answers.withLock { $0[url] = answers }
+        StubURLProtocol.answers.withLock { $0[url] = answers }
         let configuration = URLSessionConfiguration.ephemeral
-        configuration.protocolClasses = [StubProtocol.self]
+        configuration.protocolClasses = [StubURLProtocol.self]
         return URLSession(configuration: configuration)
     }
 
@@ -427,95 +427,4 @@ struct SafariWebAppMakerTests {
         #expect(Self.existing.opens(URL(string: "https://www.music.youtube.com")!))
         #expect(!Self.existing.opens(URL(string: "https://youtube.com")!))
     }
-}
-
-/// Safari, in memory. Its `var`s are set by the test before the maker
-/// runs (the task it starts sees them), and only read meanwhile; what both
-/// change is `Locked`.
-final class FakeSafari: SafariDriving, @unchecked Sendable {
-    let log = Locked<[String]>([])
-    var trusted = true
-    /// Whether it opens an address, and has its Add to Dock (`false`: its menu item or dialog wasn't found).
-    var opens = true
-    var addsToDock = true
-    var loads = true
-    var onAdd: (@Sendable () -> Void)?
-    /// As the dialog closes, with Add or Cancel.
-    var onClosed: (@Sendable () -> Void)?
-
-    func isTrusted(prompt: Bool) async -> Bool { log.append("trusted"); return trusted }
-    func open(_ url: URL) async -> Bool { log.append("open \(url.absoluteString)"); return opens }
-    /// The dialog stays open until the task is cancelled.
-    var holdsDialog = false
-
-    /// The page keeps loading until the task is cancelled.
-    var holdsPage = false
-
-    func waitForPage() async -> SafariTab? {
-        log.append("wait")
-        while holdsPage, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
-        return loads && !Task.isCancelled ? SafariTab(page: 1) : nil
-    }
-    /// The front page's address at each look, the last one staying; none:
-    /// it can't be read.
-    let pages = Locked<[URL]>([])
-    /// The tab in front once the site shows after asking something: the same
-    /// one, unless the test says the page changed (`frontTabPage`).
-    let frontTabPage = Locked<Int>(1)
-    func frontTab() async -> SafariTab? { log.append("front tab"); return SafariTab(page: frontTabPage.value) }
-
-    func frontPageURL() async -> URL? {
-        log.append("page")
-        return pages.withLock { pages in
-            defer { if pages.count > 1 { pages.removeFirst() } }
-            return pages.first
-        }
-    }
-    /// Whether each time the dialog opens the user clicks Add (`true`) or
-    /// Cancel there; the last one stays.
-    let adds = Locked<[Bool]>([true])
-
-    func addToDock(_ url: URL) async -> AddToDockResult {
-        log.append("add \(url.absoluteString)")
-        guard addsToDock else { return .unavailable }
-        while holdsDialog, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
-        guard !Task.isCancelled else {
-            log.append("cancel dialog")
-            return .cancelled
-        }
-        let added = adds.withLock { adds in
-            defer { if adds.count > 1 { adds.removeFirst() } }
-            return adds.first ?? true
-        }
-        if added { onAdd?() }
-        onClosed?()
-        return .closed
-    }
-    func closeTab(_ tab: SafariTab) async { log.append("close tab \(tab.page)") }
-}
-
-/// Answers each HTTP method with a status, by address; a method without one
-/// gets no answer.
-final class StubProtocol: URLProtocol {
-    static let answers = Locked<[URL: [String: Int]]>([:])
-
-    override class func canInit(with request: URLRequest) -> Bool { true }
-    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
-    override func startLoading() {
-        let method = request.httpMethod ?? "GET"
-        guard let url = request.url, let status = Self.answers.value[url]?[method] else {
-            client?.urlProtocol(self, didFailWithError: URLError(.cannotFindHost))
-            return
-        }
-        // Below 0: that URLError instead of an answer.
-        if status < 0 {
-            client?.urlProtocol(self, didFailWithError: URLError(URLError.Code(rawValue: status)))
-            return
-        }
-        client?.urlProtocol(self, didReceive: HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)!,
-                            cacheStoragePolicy: .notAllowed)
-        client?.urlProtocol(self, didLoad: Data())
-        client?.urlProtocolDidFinishLoading(self)
-    }
-    override func stopLoading() {}
 }

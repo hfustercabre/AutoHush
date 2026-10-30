@@ -6,7 +6,7 @@ import AutoHushTestSupport
 
 @Suite("PlayPauseRecipe")
 struct PlayPauseRecipeTests {
-    private let recipe = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [Places.playerBar])
+    private let recipe = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [ButtonPlaces.playerBar])
 
     @Test("the button's words tell the state")
     func state() {
@@ -18,10 +18,10 @@ struct PlayPauseRecipeTests {
     @Test("it's found at its place, the nearest to its distance from the bottom; never elsewhere")
     func find() {
         let places: [Int: ButtonPlace] = [
-            1: Places.main,
-            2: ButtonPlace(path: Places.playerBar.path, distanceFromBottom: 90),
-            3: ButtonPlace(path: Places.playerBar.path, distanceFromBottom: 45),
-            4: Places.playerBar,
+            1: ButtonPlaces.main,
+            2: ButtonPlace(path: ButtonPlaces.playerBar.path, distanceFromBottom: 90),
+            3: ButtonPlace(path: ButtonPlaces.playerBar.path, distanceFromBottom: 45),
+            4: ButtonPlaces.playerBar,
         ]
         let buttons = [
             PageButton(handle: ButtonHandle(1), label: "Play"),
@@ -36,28 +36,28 @@ struct PlayPauseRecipeTests {
 
     @Test("learning again with the same words adds the place; other words replace it")
     func merging() {
-        let fullScreen = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [Places.fullScreen])
-        #expect(recipe.merging(fullScreen).places == [Places.fullScreen, Places.playerBar])
-        #expect(recipe.merging(recipe).places == [Places.playerBar])
+        let fullScreen = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [ButtonPlaces.fullScreen])
+        #expect(recipe.merging(fullScreen).places == [ButtonPlaces.fullScreen, ButtonPlaces.playerBar])
+        #expect(recipe.merging(recipe).places == [ButtonPlaces.playerBar])
         let many = (0..<5).reduce(recipe) { kept, number in
             kept.merging(PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause",
                                          places: [ButtonPlace(path: ["\(number)"], distanceFromBottom: 1)]))
         }
         #expect(many.places.count == PlayPauseRecipe.placeLimit)
         #expect(many.places.first?.path == ["4"])
-        let spanish = PlayPauseRecipe(playLabel: "Reproducir", pauseLabel: "Pausar", places: [Places.main])
+        let spanish = PlayPauseRecipe(playLabel: "Reproducir", pauseLabel: "Pausar", places: [ButtonPlaces.main])
         #expect(recipe.merging(spanish) == spanish)
     }
 
     @Test("it's kept as a property list, in the preferences by web app: each one's saved and forgotten alone")
     func storage() {
-        let stored = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [Places.playerBar, Places.main])
+        let stored = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [ButtonPlaces.playerBar, ButtonPlaces.main])
         #expect(PlayPauseRecipe(propertyList: stored.propertyList) == stored)
         #expect(PlayPauseRecipe(propertyList: ["play": "Play"]) == nil)
 
         let defaults = MemoryDefaults()
         let store = DefaultsRecipeStore(defaults: defaults)
-        let spanish = PlayPauseRecipe(playLabel: "Reproducir", pauseLabel: "Pausar", places: [Places.main])
+        let spanish = PlayPauseRecipe(playLabel: "Reproducir", pauseLabel: "Pausar", places: [ButtonPlaces.main])
         store.save(stored, for: "com.example.a")
         store.save(spanish, for: "com.example.b")
         #expect(store.recipe(for: "com.example.a") == stored)

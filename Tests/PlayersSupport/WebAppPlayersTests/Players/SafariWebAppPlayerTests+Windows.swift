@@ -143,7 +143,7 @@ extension SafariWebAppPlayerTests {
         let setup = Setup(recipe: Self.learned)
         setup.showPage()
         // The site shows another layout, its Play/Pause elsewhere, and plays.
-        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.fullScreen)
+        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: ButtonPlaces.fullScreen)
         setup.page.sound = true
         #expect(await setup.player.playerState() == .unknown)
         setup.clock.advance(by: WebAppControl.missingBeforeLearning)
@@ -156,7 +156,7 @@ extension SafariWebAppPlayerTests {
         #expect(await setup.player.markPaused() == .noted)
         #expect(await setup.player.playerState() == .paused)
         #expect(setup.player.learningStatus == .learned)
-        #expect(setup.store.recipe(for: Self.app.bundleID)?.places == [Places.fullScreen, Places.playerBar])
+        #expect(setup.store.recipe(for: Self.app.bundleID)?.places == [ButtonPlaces.fullScreen, ButtonPlaces.playerBar])
 
         // Missing again, and It's Playing taken: Learn Again starts that learning over.
         setup.page.buttonsByNumber[1] = nil
@@ -173,13 +173,13 @@ extension SafariWebAppPlayerTests {
     func buttonBack() async {
         let setup = Setup(recipe: Self.learned)
         setup.showPage()
-        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.fullScreen)
+        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: ButtonPlaces.fullScreen)
         setup.page.sound = true
         _ = await setup.player.playerState()
         setup.clock.advance(by: WebAppControl.missingBeforeLearning)
         _ = await setup.player.playerState()
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
-        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.playerBar)
+        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: ButtonPlaces.playerBar)
         #expect(await setup.player.playerState() == .playing)
         #expect(setup.player.learningStatus == .learned)
     }
@@ -190,7 +190,7 @@ extension SafariWebAppPlayerTests {
         setup.showPage()
         await setup.player.learnAgain()
         #expect(setup.player.learningStatus == .relearning)
-        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.fullScreen)
+        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: ButtonPlaces.fullScreen)
         setup.page.sound = true
         _ = await setup.player.playerState()
         setup.clock.advance(by: WebAppControl.missingBeforeLearning)
@@ -198,7 +198,7 @@ extension SafariWebAppPlayerTests {
         #expect(setup.player.learningStatus == .learning(hasPlayed: false))
 
         await setup.player.keepLearned()
-        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.playerBar)
+        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: ButtonPlaces.playerBar)
         #expect(await setup.player.playerState() == .playing)
         #expect(setup.player.learningStatus == .learned)
         #expect(await setup.player.markPlaying() == .notLearning) // nothing asked any more
@@ -246,7 +246,7 @@ extension SafariWebAppPlayerTests {
         _ = await setup.player.polledPlayerState()
         #expect(setup.page.looks > looks)
 
-        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: Places.playerBar)
+        setup.page.buttonsByNumber[1] = .init(label: "Pause", place: ButtonPlaces.playerBar)
         setup.page.sound = true
         #expect(await setup.player.polledPlayerState() == .playing)
     }
@@ -254,7 +254,7 @@ extension SafariWebAppPlayerTests {
     @Test("a page still loading (few buttons) never starts learning again")
     func loading() async {
         let setup = Setup(recipe: Self.learned)
-        setup.page.buttonsByNumber = [1: .init(label: "Sign In", place: Places.main)]
+        setup.page.buttonsByNumber = [1: .init(label: "Sign In", place: ButtonPlaces.main)]
         _ = await setup.player.playerState()
         setup.clock.advance(by: WebAppControl.missingBeforeLearning * 2)
         #expect(await setup.player.playerState() == .unknown)

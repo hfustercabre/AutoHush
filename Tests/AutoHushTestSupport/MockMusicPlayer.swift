@@ -234,17 +234,3 @@ package actor MockMusicPlayer: MusicPlayer {
         releases += 1
     }
 }
-
-/// What a `MockMusicPlayer`'s observer reports to, once made.
-@MainActor
-package final class StateReports {
-    var onChange: (@MainActor (PlayerState) -> Void)?
-    nonisolated init() {}
-}
-
-@MainActor
-package final class MockStateObserver: PlayerStateObserving {
-    package init() {}
-    package func start() {}
-    package func stop() {}
-}

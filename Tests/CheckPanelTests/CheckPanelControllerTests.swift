@@ -5,12 +5,6 @@ import Testing
 @testable import PlayerCheckKit
 import AutoHushTestSupport
 
-/// What a panel's content was given: its size and dim callbacks.
-@MainActor
-private final class Callbacks {
-    var dimmed: ((Bool) -> Void)?
-}
-
 /// Reads the controller's own panel and shades, not NSApp.windows: another
 /// suite's, in the same test process, may still be fading out
 /// (WindowTitleTests' check panel).
@@ -20,7 +14,7 @@ struct CheckPanelControllerTests {
     @Test("at the levels the check lets clicks through on: floating, above the shade while dimmed; the shade under it; hidden, they all go")
     func levels() async throws {
         let sut = CheckPanelController()
-        let callbacks = Callbacks()
+        let callbacks = CheckPanelCallbacks()
         sut.show { _, dimmed in
             callbacks.dimmed = dimmed
             return Text(verbatim: "Checking")
@@ -40,7 +34,7 @@ struct CheckPanelControllerTests {
     @Test("a dim that comes once the panel is hidden puts up no shade with no panel over it")
     func dimAfterHide() throws {
         let sut = CheckPanelController()
-        let callbacks = Callbacks()
+        let callbacks = CheckPanelCallbacks()
         sut.show { _, dimmed in
             callbacks.dimmed = dimmed
             return Text(verbatim: "Checking")

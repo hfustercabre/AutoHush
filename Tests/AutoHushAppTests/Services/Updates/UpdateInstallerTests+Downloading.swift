@@ -13,8 +13,8 @@ extension UpdateInstallerTests {
         let scratch = try Scratch()
         let file = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
         let digest = try await installer(scratch).download(release(), to: file, allowsConstrainedNetwork: true)
-        #expect(digest == StandIn.sha256)
-        #expect(UpdateInstaller.sha256(of: file) == StandIn.sha256)
+        #expect(digest == UpdateStandIn.sha256)
+        #expect(UpdateInstaller.sha256(of: file) == UpdateStandIn.sha256)
     }
 
     @Test("a download that doesn't match GitHub's checksum is deleted")
@@ -40,8 +40,8 @@ extension UpdateInstallerTests {
     /// The fixture's update prepared from a copy of its disk image kept in
     /// the scratch folder, marked as a browser marks a download.
     private func preparedFromKeptImage() async throws
-        -> (fixture: Fixture, scratch: Scratch, kept: URL, requests: Locked<[URLRequest]>, sut: UpdateInstaller, update: PreparedUpdate) {
-        let fixture = try Fixture.shared.get()
+        -> (fixture: UpdateFixture, scratch: Scratch, kept: URL, requests: Locked<[URLRequest]>, sut: UpdateInstaller, update: PreparedUpdate) {
+        let fixture = try UpdateFixture.shared.get()
         let scratch = try Scratch()
         let kept = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
         try FileManager.default.copyItem(at: fixture.diskImage, to: kept)
@@ -92,7 +92,7 @@ extension UpdateInstallerTests {
         let kept = scratch.folder.appending(path: "AutoHush-1.2.0.dmg")
         try Data("not the download".utf8).write(to: kept)
         await #expect(throws: UpdateInstallError.damaged) {
-            try await installer(scratch).prepare(release(), image: KeptImage(file: kept, sha256: StandIn.sha256),
+            try await installer(scratch).prepare(release(), image: KeptImage(file: kept, sha256: UpdateStandIn.sha256),
                                          allowsConstrainedNetwork: true)
         }
     }

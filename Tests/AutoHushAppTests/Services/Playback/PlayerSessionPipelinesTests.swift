@@ -87,15 +87,3 @@ struct PlayerSessionPipelinesTests {
         #expect(leveler.restores == 2) // one from each, no more
     }
 }
-
-/// Counts the volume leveler's put-backs at once, whatever was lowered or
-/// not (it lowers nothing).
-private final class CountingLeveler: ResumeLeveling {
-    private let count = Locked(0)
-    var restores: Int { count.value }
-
-    func lower(by decibels: Float) -> UUID? { nil }
-    func restore(over duration: TimeInterval, lowered token: UUID) {}
-    func restoreNow(lowered token: UUID) { count.increment() }
-    func restoreNow() { count.increment() }
-}

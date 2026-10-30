@@ -4,12 +4,6 @@ import Testing
 import AutoHushTestSupport
 import CheckedPlayers
 
-/// A check's lines, as they come.
-@MainActor
-private final class Report {
-    var lines: [String] = []
-}
-
 @Suite("PlayerCheckHelper", .waitsTimeLimit)
 struct PlayerCheckHelperTests {
     @Test("each question goes to the helper with its folders, its answer read; a helper that can't start or takes too long tells nothing")
@@ -53,7 +47,7 @@ struct PlayerCheckHelperTests {
     /// waited for.
     @MainActor
     private func finishedCheck() throws
-        -> (scratch: TemporaryFolder, found: CheckResult, helper: PlayerCheckHelper, run: PlayerCheckRun, report: Report) {
+        -> (scratch: TemporaryFolder, found: CheckResult, helper: PlayerCheckHelper, run: PlayerCheckRun, report: HelperReport) {
         let scratch = TemporaryFolder("PlayerCheckHelperTests", create: false)
         let folder = scratch.url
         let found = CheckResult(ways: [CheckResult.WayResult(kind: .menu, mark: .works)], setup: nil)
@@ -68,7 +62,7 @@ struct PlayerCheckHelperTests {
             echo "its log" > "$logs/\#(Self.checkLog)"
             """#, in: folder)
         try JSONEncoder().encode(found).write(to: folder.appending(path: "found.json"))
-        let report = Report()
+        let report = HelperReport()
         let run = try finishing.check(URL(filePath: "/Applications/Player.app"), taps: false) { report.lines.append($0) }
         return (scratch, found, finishing, run, report)
     }
@@ -120,7 +114,7 @@ struct PlayerCheckHelperTests {
             sleep 30 &
             wait
             """#, in: scratch.appending(path: "waiting"))
-        let stopped = Report()
+        let stopped = HelperReport()
         let stopping = try waiting.check(URL(filePath: "/Applications/Player.app"), taps: true) { stopped.lines.append($0) }
         await TestWait.until { stopped.lines == ["Press Test"] }
         stopping.stop()

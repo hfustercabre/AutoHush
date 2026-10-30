@@ -38,7 +38,7 @@ struct PlayPauseLearnerTests {
         // The song itself plays (the user waited for the ad to end): the bar says Pause.
         learner.notePlaying(look([1: "Pause", 2: "Pause Song"]), at: start)
         let candidates = learner.candidates(paused: look([1: "Play", 2: "Play Song"]))
-        let places = [1: Places.playerBar, 2: ButtonPlace(path: ["AXGroup"], distanceFromBottom: 407)]
+        let places = [1: ButtonPlaces.playerBar, 2: ButtonPlace(path: ["AXGroup"], distanceFromBottom: 407)]
         let (recipe, handle) = try #require(PlayPauseLearner.recipe(amongAlike: candidates.map {
             ($0, places[$0.handle.element.base as! Int]!)
         }))
@@ -64,10 +64,10 @@ struct PlayPauseLearnerTests {
         let song = PlayPauseLearner.Candidate(handle: ButtonHandle(3), playLabel: "Play Mix", pauseLabel: "Pause Mix")
         let lowSong = ButtonPlace(path: ["AXRow"], distanceFromBottom: 5)
         let (recipe, handle) = try #require(PlayPauseLearner.recipe(amongAlike: [
-            (page, Places.main), (song, lowSong), (bar, Places.playerBar),
+            (page, ButtonPlaces.main), (song, lowSong), (bar, ButtonPlaces.playerBar),
         ]))
         #expect(handle == ButtonHandle(1))
-        #expect(recipe == PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [Places.playerBar]))
+        #expect(recipe == PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [ButtonPlaces.playerBar]))
         #expect(PlayPauseLearner.recipe(amongAlike: []) == nil)
     }
 
@@ -98,12 +98,12 @@ struct PlayPauseLearnerTests {
         let outOfSight = ButtonStanding(isInWindow: false)
         let (_, handle) = try #require(PlayPauseLearner.recipe(from: [
             (song, ButtonPlace(path: ["AXRow"], distanceFromBottom: -5), outOfSight),
-            (bar, Places.playerBar, outOfSight),
+            (bar, ButtonPlaces.playerBar, outOfSight),
         ]))
         #expect(handle == ButtonHandle(1))
         // In sight beats out of sight even with the barer words out of sight.
         let (_, shown) = try #require(PlayPauseLearner.recipe(from: [
-            (song, Places.main, ButtonStanding()), (bar, Places.playerBar, outOfSight),
+            (song, ButtonPlaces.main, ButtonStanding()), (bar, ButtonPlaces.playerBar, outOfSight),
         ]))
         #expect(shown == ButtonHandle(2))
     }
