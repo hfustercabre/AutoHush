@@ -39,8 +39,7 @@ struct MenuPanelView: View {
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { topHeight = $0; report() }
             // The arrow keys go through it before what scrolls.
             .environment(\.highlightBand, .top)
-            MenuScrollArea(isCapped: model.isCappedByScreen, revealed: model.keyboard.revealed,
-                           onHeight: { middleHeight = $0; report() }) {
+            MenuScrollArea(isCapped: model.isCappedByScreen, onHeight: { middleHeight = $0; report() }) {
                 VStack(spacing: 0) {
                     let middle = sections.filter { $0.section != .card && $0.section != .toolbar }
                     // Identified by what they are: one that comes leaves the others be.
@@ -110,8 +109,8 @@ struct MenuPanelView: View {
         case .useAntiDot:
             actionRow(PermissionText.useAntiDot, symbol: nil, .useAntiDotMode)
         case .snooze: SnoozeBarView(model: model)
-        case .playingNow: PlayingAppsView(model: model, list: .playingNow)
-        case .recentlyPlayed: PlayingAppsView(model: model, list: .recentlyPlayed)
+        case .playingNow: PlayingAppsView(model: model, kind: .playingNow)
+        case .recentlyPlayed: PlayingAppsView(model: model, kind: .recentlyPlayed)
         case .ignoredApps: MenuIgnoredAppsView(model: model)
         case .update: updateRow
         case .toolbar: MenuToolbarView(model: model)

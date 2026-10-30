@@ -28,7 +28,7 @@ struct CheckPanelView: View {
                     .resizable().frame(width: 34, height: 34)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {
-                    // Two lines at most: “Deezer wird geprüft” didn't fit in one.
+                    // Two lines at most: in German, “… wird geprüft” didn't fit in one.
                     Text(verbatim: AddAppText.checking(app.name)).font(.appHeadline).lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(verbatim: stopping ? AddAppText.stopping : progress.request == nil ? AddAppText.stage(progress.stage) : AddAppText.waitingForYou)

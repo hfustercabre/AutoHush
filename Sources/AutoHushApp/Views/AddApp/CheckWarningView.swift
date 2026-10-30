@@ -87,7 +87,7 @@ struct CheckWarningView: View {
         case .fullScreen: "arrow.up.left.and.arrow.down.right"
         case .minimized: "dock.arrow.down.rectangle"
         case .hidden: "eye.slash"
-        // Not a tile: the panel's state for an app with no window open.
+        // Never a tile: an app with no window open, whose window isn't moved.
         case .windowsClosed: "xmark.rectangle"
         }
     }

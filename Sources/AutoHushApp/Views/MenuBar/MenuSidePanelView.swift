@@ -14,7 +14,7 @@ struct MenuSidePanelView: View {
     static let width: CGFloat = 300
 
     var body: some View {
-        MenuScrollArea(isCapped: model.isSideCappedByScreen, revealed: model.sideKeyboard.revealed, onHeight: onHeight) {
+        MenuScrollArea(isCapped: model.isSideCappedByScreen, onHeight: onHeight) {
             VStack(alignment: .leading, spacing: 0) {
                 switch model.openSide {
                 // Each title as far over its first row as Playing Now's is (the user, 2026-10-18).

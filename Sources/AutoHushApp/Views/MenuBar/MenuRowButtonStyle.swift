@@ -39,14 +39,6 @@ struct MenuRowButtonStyle: ButtonStyle {
 extension EnvironmentValues {
     /// Inside a lit `MenuRowButtonStyle` row: its secondary text turns white too.
     @Entry var menuRowIsLit = false
-    /// The menu's highlight (`KeyHighlight`) or the keyboard's focus is on
-    /// this view, which shows it itself (`Highlightable.lightsItself`): a
-    /// menu item's row lights up, the menu's card takes the tint over its
-    /// glass.
-    @Entry var showsKeyHighlight = false
-    /// Inside a row that takes the highlight for its one button
-    /// (`Highlightable.ownsControls`): the button shows only its focus.
-    @Entry var isInHighlightedRow = false
 }
 
 /// Secondary text in a menu row, white while the row is lit.

@@ -178,6 +178,14 @@ extension EnvironmentValues {
     /// The card a highlightable control is in (`Card`), so the highlight can
     /// go to the card's first row (`KeyHighlight.highlightFirst(in:)`).
     @Entry var highlightGroup: UUID?
+    /// The menu's highlight (`KeyHighlight`) or the keyboard's focus is on
+    /// this view, which shows it itself (`Highlightable.lightsItself`): a
+    /// menu item's row lights up, the menu's card takes the tint over its
+    /// glass.
+    @Entry var showsKeyHighlight = false
+    /// Inside a row that takes the highlight for its one button
+    /// (`Highlightable.ownsControls`): the button shows only its focus.
+    @Entry var isInHighlightedRow = false
 }
 
 /// What Delete does on a highlighted control that can be removed (an added
@@ -190,21 +198,28 @@ struct HighlightRemoval {
 
 /// Scrolls the arrow keys' highlight into view as it moves
 /// (`KeyHighlight.revealed`): every Settings page, About's too (R7, the full
-/// check, 2026-10-27: written on each before).
+/// check, 2026-10-27: written on each before), and what scrolls in the menu
+/// and its side window (`MenuScrollArea`), which scroll without animating.
 struct RevealsKeyHighlight: ViewModifier {
     let scroller: ScrollViewProxy
+    var animated = true
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     func body(content: Content) -> some View {
         content.onChange(of: keyboard?.revealed) { _, revealed in
-            if let revealed { withAnimation(.easeOut(duration: 0.15)) { scroller.scrollTo(revealed) } }
+            guard let revealed else { return }
+            if animated {
+                withAnimation(.easeOut(duration: 0.15)) { scroller.scrollTo(revealed) }
+            } else {
+                scroller.scrollTo(revealed)
+            }
         }
     }
 }
 
 extension View {
     /// Scrolls the arrow keys' highlight into view with `scroller` (`RevealsKeyHighlight`).
-    func revealsKeyHighlight(with scroller: ScrollViewProxy) -> some View {
-        modifier(RevealsKeyHighlight(scroller: scroller))
+    func revealsKeyHighlight(with scroller: ScrollViewProxy, animated: Bool = true) -> some View {
+        modifier(RevealsKeyHighlight(scroller: scroller, animated: animated))
     }
 }

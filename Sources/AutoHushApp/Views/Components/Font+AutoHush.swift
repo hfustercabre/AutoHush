@@ -10,7 +10,7 @@ extension Font {
     static let appBody = Font.body
     /// A card's title, e.g. the media player's name; Settings' section titles.
     static let appHeadline = Font.headline
-    /// The menu's section headings ("Detection", "Turn off for"), as macOS's
+    /// The menu's section headings ("Turn off for", "Playing Now"), as macOS's
     /// own menus' section headers: a step under the rows, semibold (12 pt,
     /// measured against the Sound menu's "Output", 2026-10-18).
     static let appMenuHeading = Font.callout.weight(.semibold)

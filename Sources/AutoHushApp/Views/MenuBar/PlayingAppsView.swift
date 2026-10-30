@@ -5,20 +5,20 @@ import AutoHushKit
 /// pauses the music; or "Recently Played", the same for the apps that
 /// played in the last 30 minutes.
 struct PlayingAppsView: View {
-    enum List { case playingNow, recentlyPlayed }
+    enum Kind { case playingNow, recentlyPlayed }
 
     let model: StatusMenuModel
-    let list: List
+    let kind: Kind
 
     private var title: Text {
-        switch list {
+        switch kind {
         case .playingNow: Text("Playing Now", comment: "Menu: heading of the apps playing sound right now")
         case .recentlyPlayed: Text("Recently Played", comment: "Menu: heading of the apps that played sound in the last 30 minutes, under Playing Now")
         }
     }
 
     private var sources: [AudioSource] {
-        list == .playingNow ? model.listedSources : model.listedRecentSources
+        kind == .playingNow ? model.listedSources : model.listedRecentSources
     }
 
     var body: some View {

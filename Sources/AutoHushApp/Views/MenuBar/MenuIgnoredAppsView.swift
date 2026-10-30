@@ -1,10 +1,10 @@
 import SwiftUI
 import AutoHushKit
 
-/// "Ignored Apps": the apps switched off (V5, the user's pick, 2026-10-18),
-/// as the settings' parts: the title over a row with up to three of their
-/// icons, their names and what they are, and a chevron; a click opens them
-/// in a side window beside the menu, each with its switch (W2).
+/// "Ignored Apps": the apps switched off (V5, the user's pick, 2026-10-18):
+/// the part's title over a row with up to three of their icons, their names
+/// and what they are, and a chevron; a click opens them in a side window
+/// beside the menu, each with its switch (W2).
 struct MenuIgnoredAppsView: View {
     let model: StatusMenuModel
 

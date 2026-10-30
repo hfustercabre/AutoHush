@@ -86,13 +86,8 @@ struct GeneralSettingsView: View {
                         HStack(spacing: 8) {
                             PlayerFixButtons(player: model.chosenPlayerName ?? "",
                                              reopen: model.offersReopenPlayer ? { model.actions?.reopenPlayer() } : nil,
-                                             unmute: model.offersUnmute ? { model.actions?.unmutePlayer() } : nil)
-                            if model.showsResumeFailure {
-                                Button { model.actions?.retryResume() } label: {
-                                    Label { Text(verbatim: TryAgainText.title) } icon: { Image(systemName: "arrow.clockwise") }
-                                }
-                                .buttonStyle(.chip)
-                            }
+                                             unmute: model.offersUnmute ? { model.actions?.unmutePlayer() } : nil,
+                                             retryResume: model.showsResumeFailure ? { model.actions?.retryResume() } : nil)
                         }
                         .padding(.vertical, 4)
                     }

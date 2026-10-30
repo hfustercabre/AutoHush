@@ -31,7 +31,7 @@ enum MenuSpacing {
     /// starts): the same for every row, so their pictures and text line up
     /// down the menu (I2, the user's pick, 2026-10-18): Playing Now's and
     /// Recently Played's apps, the warnings and the update found, Media
-    /// Player's and Ignored Apps' rows, the settings' switches.
+    /// Player's and Ignored Apps' rows.
     struct RowLayout {
         let leading: CGFloat
         let picture: CGFloat

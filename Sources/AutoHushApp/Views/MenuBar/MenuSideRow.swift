@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A menu part's row that opens a side window beside the menu, as a
 /// submenu's item does (W2, the user's pick, 2026-10-18), laid out as the
-/// settings' switch rows: a picture 22 pt wide (wider for a stack of icons),
+/// menu's switch rows: a picture 22 pt wide (wider for a stack of icons),
 /// the title and a few words under it, and a chevron pointing to the side
 /// where a switch would be; lit while its side window is open. Resting the
 /// pointer on it opens it too (`onHover`, the user, 2026-10-18). It reports

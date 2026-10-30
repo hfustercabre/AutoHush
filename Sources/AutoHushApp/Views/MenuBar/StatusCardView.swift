@@ -42,7 +42,7 @@ struct StatusCardView: View {
                     }
                     if status.canRetry { retryButton }
                     if status.showsResumeFailure {
-                        CardChip(title: Text(TryAgainText.title), symbol: "arrow.clockwise") { model.perform(.retryResume) }
+                        PlayerFixButtons.tryAgain(inCard: true) { model.perform(.retryResume) }
                     }
                     if let missing = status.missingPermission { allowButton(missing) }
                     PlayerFixButtons(player: status.playerName,

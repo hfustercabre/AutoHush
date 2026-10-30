@@ -120,9 +120,9 @@ struct PlayerChooserView: View {
 
     /// The one player `search` narrows `options` down to, when it can be
     /// picked (installed, or a suggested web app); `nil` otherwise. Tiles
-    /// that share a name, as the Spotify app and the suggested Spotify web
-    /// app do, count as one: the app first, then an added web app, then a
-    /// suggested one.
+    /// that share a name, as an app and the suggested web app of the same
+    /// service do, count as one: the app first, then an added web app, then
+    /// a suggested one.
     static func onlyMatch(of options: [PlayerOption], search: String) -> PlayerOption? {
         guard !search.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
         let matches = options.matching(search)

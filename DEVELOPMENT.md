@@ -130,6 +130,7 @@ Sources/
                          show, with UpdateOffer), SettingsModel (what only the windows show, and their
                          actions), AppListModel (Sound Sources' list: its rows, order, search, selection
                          and removals; SettingsModel's), StatePresentation (the status's icons and text),
+                         MenuBarIcon (the icon of each state, drawn in code in +Drawing),
                          AppHealthState, StatusMenuModel (the menu's parts, MenuSection), MenuPlayerList (the menu's
                          players), KeyHighlight (the menu's and Settings' highlight, moved by the arrow
                          keys and the pointer), HighlightKey (the keys it takes, one mapping for both),
@@ -203,12 +204,12 @@ Sources/
                          those with a switch; MenuLine and MenuRowSymbol, its line between parts and a
                          row's symbol; SourceSwitchRow, an app's switch; SnoozeBarView, Turn
                          off for; PlayingAppsView, Playing Now and Recently Played; MenuToolbarView, the
-                         buttons; MenuSpacing, the space around its parts; MenuRowButtonStyle,
-                         MenuContentWidth, and MenuBarIcon, drawn in code),
+                         buttons; MenuSpacing, the space around its parts; MenuRowButtonStyle and
+                         MenuContentWidth),
                          Settings/ (one per page, SettingsPageView, SettingsSidebar, UpdatesCard,
                          About's, FineTuningRow, Behavior's rows to Fine-Tuning, SettingsSwitchRow,
                          TimingSliderRow, RestoreDefaultsButton), Welcome/, WebApps/
-                         (Add a Web App, the learning window and LearningSteps), Logs/ (LogsView),
+                         (Add a Web App, the learning window, LearningSteps and LearningText), Logs/ (LogsView),
                          AddApp/ (Add an App's window and its numbered steps, the app chooser, the warning
                          before a check, the check's panel, AddAppText: what only they say)
     Text/                the words several places say, one table per topic (Models and Services read words

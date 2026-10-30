@@ -5,12 +5,11 @@ import SwiftUI
 /// screen caps the window (`isCapped`), its last rows then fading out over
 /// a small chevron while more is below (C4, the user's pick, 2026-10-18;
 /// the chevron alone before macOS 26). The arrow keys' highlight
-/// (`revealed`) scrolls into view. Its scroll position is its own, so
-/// scrolling redraws it alone, not the whole menu (the full check,
+/// (`KeyHighlight.revealed`) scrolls into view. Its scroll position is its
+/// own, so scrolling redraws it alone, not the whole menu (the full check,
 /// 2026-10-18). It reports its content's height (`onHeight`).
 struct MenuScrollArea<Content: View>: View {
     let isCapped: Bool
-    let revealed: UUID?
     let onHeight: @MainActor (CGFloat) -> Void
     @ViewBuilder let content: Content
 
@@ -34,9 +33,7 @@ struct MenuScrollArea<Content: View>: View {
             .scrollIndicators(.automatic)
             .scrollBounceBehavior(.basedOnSize)
             .showsMoreBelow($reach, moreBelow: moreBelow)
-            .onChange(of: revealed) { _, revealed in
-                if let revealed { scroller.scrollTo(revealed) }
-            }
+            .revealsKeyHighlight(with: scroller, animated: false)
         }
     }
 
