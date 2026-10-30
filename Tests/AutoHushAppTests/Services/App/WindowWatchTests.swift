@@ -56,6 +56,32 @@ struct WindowWatchTests {
         #expect(bench.ticks == 2)
     }
 
+    /// What a watch of a test's own refreshed.
+    @MainActor
+    private final class Refreshes {
+        var done: [WindowWatch.Refresh] = []
+    }
+
+    @Test("a window opening during a round starts over: the round under way gives up its other refreshes, so two never interleave")
+    func wakeDuringRound() async {
+        let gate = Gate()
+        let refreshes = Refreshes()
+        let clock = ManualSleep()
+        let watch = WindowWatch(sleep: clock.sleep, refresh: { need in
+            refreshes.done.append(need)
+            if refreshes.done.count == 1 { await gate.wait() } // the first round holds at its first refresh
+        })
+        watch.register(isOpen: { true }) { [.players, .permissions] }
+        watch.wake()
+        await TestWait.until { await gate.waiting == 1 }
+        let first = watch.loopTask
+        watch.wake()
+        await TestWait.until { clock.sleeping == 1 } // the new round is done
+        await gate.open()
+        await first?.value
+        #expect(refreshes.done == [.players, .players, .permissions])
+    }
+
     @Test("the open windows' needs are merged, each refresh once a round; a closed window's don't count")
     func mergesOpenWindows() async {
         let bench = Bench()

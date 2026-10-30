@@ -50,6 +50,7 @@ extension AppDelegateTests {
     func choosePlayer() async {
         let scratch = Scratch()
         let (sut, monitorings) = makeSUT(scratch, chosenPlayer: nil)
+        sut.session.launch() // nothing to start yet
 
         sut.choosePlayer(Players.second)
         #expect(scratch.preferences.musicPlayer == Players.second)
@@ -276,6 +277,7 @@ extension AppDelegateTests {
     func onlyChosenPlayerIsAsked() async {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        sut.session.launch()
 
         // Nothing is asked before a player is chosen, not even when one opens.
         sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
@@ -297,8 +299,8 @@ extension AppDelegateTests {
         scratch.installed = []
         // The start stops at the install check, before scripting the player.
         let (sut, _) = makeSUT(scratch)
-        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
-        await TestWait.until { sut.status.health != .starting }
+        sut.session.launch()
+        await sut.session.waitUntilIdle()
         #expect(sut.status.health == .degraded("First isn’t installed"))
 
         // Installed again: it's controlled afresh as soon as AutoHush notices.
@@ -321,7 +323,7 @@ extension AppDelegateTests {
             alerts.calls.append(([alert.messageText, alert.informativeText] + alert.buttons.map(\.title)).joined(separator: " | "))
             return .alertSecondButtonReturn // OK: System Settings stays closed
         }
-        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first)
+        sut.session.launch()
         await TestWait.until { sut.status.health != .starting }
         return (scratch, sut, alerts)
     }

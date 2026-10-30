@@ -630,6 +630,26 @@ struct PlayerSessionTests {
     }
 
     @MainActor
+    @Test("a start asked for before launch (the player opened, Try Again, another chosen) waits for it: then it starts, taking the pause handed over")
+    func startWaitsForLaunch() async {
+        let bench = Bench()
+        let session = bench.makeSession(bench.second)
+        // While the copies opened before it quit, handing their pause over.
+        session.playerLaunched(Players.second)
+        session.retry()
+        session.choose(bench.first)
+        await session.waitUntilIdle()
+        #expect(bench.monitorings.made.isEmpty)
+        #expect(await bench.first.verifyCallCount == 0)
+
+        bench.preferences.pauseHandover = PauseHandover(at: Date(), player: Players.first)
+        session.launch()
+        await TestWait.until { session.state.health == .ready }
+        #expect(bench.monitorings.made.map(\.bundleID) == [Players.first])
+        #expect(bench.monitorings.made[0].starts.map(\.takingOverPause) == [true])
+    }
+
+    @MainActor
     @Test("a pause handed over for another player than the one chosen now isn't taken over")
     func pauseHandoverForAnotherPlayer() async {
         let other = Bench()

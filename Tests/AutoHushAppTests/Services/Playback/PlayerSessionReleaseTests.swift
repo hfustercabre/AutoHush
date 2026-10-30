@@ -65,4 +65,17 @@ struct PlayerSessionReleaseTests {
         monitorings.made[0].send(.playback(.musicPlaying))
         await TestWait.until { await added.releases == 1 }
     }
+
+    @Test("chosen again while its pause is held, it keeps what it turned on, and quitting turns it off once")
+    func chosenAgainWhilePauseHeld() async {
+        let session = await session()
+        monitorings.made[0].send(.playback(.pausedByMonitor))
+        session.choose(other)
+        await TestWait.until { session.isHoldingPause && session.state.health == .ready && monitorings.made.count == 2 }
+        session.choose(added) // its held pause taken back
+        await TestWait.until { session.state.health == .ready && monitorings.made.count == 3 }
+        #expect(await added.releases == 0)
+        await session.quit()?.value
+        #expect(await added.releases == 1)
+    }
 }

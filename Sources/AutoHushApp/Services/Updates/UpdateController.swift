@@ -39,8 +39,9 @@ final class UpdateController {
     /// The last check's, download's or install's outcome in one line, e.g.
     /// "Checking…"; `nil` before any.
     private(set) var status: String?
-    /// A newer release found by the last check.
-    @ObservationIgnored var availableUpdate: AppRelease? {
+    /// A newer release found by the last check. Observed: Settings → About
+    /// says when it's a release candidate.
+    var availableUpdate: AppRelease? {
         didSet { reportOffer() }
     }
     /// An update is being downloaded and installed.
@@ -164,8 +165,8 @@ final class UpdateController {
     /// last seen.
     var notificationsOff: Bool { lastPermission == .off }
 
-    /// Shows `status` in Settings.
-    func showStatus(_ status: String) {
+    /// Shows `status` in Settings; `nil`: none, as before any check this launch.
+    func showStatus(_ status: String?) {
         self.status = status
     }
 
