@@ -195,7 +195,7 @@ package final class Preferences {
             if let stored = (defaults.object(forKey: Key.antiDotMethod) as? String).flatMap(DetectionMethod.init), stored.isAntiDot {
                 return stored
             }
-            return detectionMethod.isAntiDot ? detectionMethod : .playbackSignals
+            return detectionMethod.isAntiDot ? detectionMethod : .defaultAntiDot
         }
         set {
             guard newValue.isAntiDot else { return }

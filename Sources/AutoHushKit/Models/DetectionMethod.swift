@@ -19,4 +19,8 @@ package enum DetectionMethod: String, Sendable {
     /// output, never by their sound (X13, the full check, 2026-10-19: decided
     /// here only).
     package var isAntiDot: Bool { self != .audioLevels }
+
+    /// AntiDot mode's way until the user picks one, and when its card's
+    /// defaults are restored: what apps tell macOS.
+    package static let defaultAntiDot = DetectionMethod.playbackSignals
 }

@@ -115,7 +115,7 @@ extension AddAppText {
 
     private static func wayInSentence(_ way: CheckResult.WayKind) -> String {
         switch way {
-        case .script: String(localized: "AppleScript", comment: "A way to pause and play an app added with Add an App: its AppleScript commands (the Add an App window, the check's panel, Settings → Diagnostics under “Controlled by”)")
+        case .script: WayText.title(.script)
         case .menu: String(localized: "its playback menu", comment: "The check's panel, in “By %@: pausing it”")
         case .page: String(localized: "its page’s button", comment: "The check's panel, in “By %@: pausing it”")
         case .panel: String(localized: "the Now Playing panel", comment: "The check's panel, in “By %@: pausing it”")

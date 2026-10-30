@@ -55,7 +55,7 @@ import PlayerCheckKit
         // as visible, that desktop was taken for home, and the first state
         // was never reached.
         if let home { Self.show(home, window: homeFront) }
-        guard let state = AppWindows.state(of: app), let (info, element) = AppWindows.main(of: pid) else { return nil }
+        guard let (state, main) = AppWindows.stateAndMain(of: app), let (info, element) = main else { return nil }
         original = state
         originalFrame = element?.frame ?? AppWindows.frame(of: info)
         ownDesktop = state == .fullScreen ? nil : Desktops.of(window: AppWindows.number(of: info))

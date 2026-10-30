@@ -72,7 +72,7 @@ extension SettingsModel {
         // of it, the silence threshold at −60 dB (each greyed out in the other).
         case .detection:
             if isAntiDotMode {
-                restored.detectionMethod = .playbackSignals
+                restored.detectionMethod = .defaultAntiDot
             } else {
                 restored.timings.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
             }

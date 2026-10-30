@@ -165,10 +165,17 @@ package enum AppWindows {
     /// desktop): Player Check's `WindowTest(app:)` rule. Without one, the
     /// check runs with its windows closed (each way tried once).
     package static func hasWindowWithinReach(_ app: NSRunningApplication) -> Bool {
-        // One look at its windows, for its state and its main window.
-        let found = main(of: app.processIdentifier)
-        guard let state = state(of: app, main: found) else { return false }
+        guard let (state, main) = stateAndMain(of: app) else { return false }
         // Hidden is the app's: it may have no main window then.
-        return state != .hidden || found != nil
+        return state != .hidden || main != nil
+    }
+
+    /// Its state and its main window, from one look at its windows (each
+    /// look on other desktops takes up to 1 s): what `hasWindowWithinReach`
+    /// and Player Check's `WindowTest(app:)` start from.
+    package static func stateAndMain(of app: NSRunningApplication)
+        -> (state: CheckResult.WindowState, main: (info: Info, element: AXUIElement?)?)? {
+        let found = main(of: app.processIdentifier)
+        return state(of: app, main: found).map { ($0, found) }
     }
 }

@@ -96,9 +96,7 @@ enum AddAppText {
         String(localized: "Other Apps That Can Play", comment: "Add an App window: over the other apps that can play, in the list of apps to choose")
     }
 
-    static var playingLabel: String {
-        String(localized: "Playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
-    }
+    static var playingLabel: String { PlaybackState.playingLine }
 
     static var lookingForApps: String {
         String(localized: "Looking for apps that can play…", comment: "Add an App window, while it reads which apps can play")

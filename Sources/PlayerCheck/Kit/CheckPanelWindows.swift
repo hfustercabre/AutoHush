@@ -1,3 +1,4 @@
+import AutoHushKit
 import CoreGraphics
 import Foundation
 
@@ -22,11 +23,8 @@ package enum CheckPanelWindows {
     /// The frames of the panel's windows in `windows` (as
     /// `CGWindowListCopyWindowInfo` lists them), `parent`'s, among `screens`.
     package static func frames(in windows: [[String: Any]], ownedBy parent: pid_t, screens: [CGRect]) -> [CGRect] {
-        windows.compactMap { info -> CGRect? in
-            guard (info[kCGWindowOwnerPID as String] as? Int).map({ pid_t($0) }) == parent,
-                  levels.contains(info[kCGWindowLayer as String] as? Int ?? 0),
-                  let bounds = info[kCGWindowBounds as String] as? NSDictionary,
-                  let frame = CGRect(dictionaryRepresentation: bounds as CFDictionary),
+        windows.map(ListedWindow.init).compactMap { window -> CGRect? in
+            guard window.owner == parent, levels.contains(window.layer), let frame = window.frame,
                   !screens.contains(where: { $0.size == frame.size }) else { return nil }
             return frame
         }
