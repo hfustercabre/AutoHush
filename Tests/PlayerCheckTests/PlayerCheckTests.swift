@@ -199,4 +199,24 @@ struct PlayerCheckTests {
         #expect(stateSummary(.panel)?.mark == CheckReportLine.WayMark.none)
         #expect(stateSummary(.menu) == nil) // not tried
     }
+
+    @Test("the verdict judges a way by every window state it was tried in, as its line does: it works when it worked in any, though not in the first; else it paused only when it paused in any; with no states, by its only run")
+    func overallResult() {
+        defer {
+            TestResults.first = [:]
+            TestResults.byState = [:]
+        }
+        // Not pressed in view (no button in sight), pressed in the other states (L2, 2026-10-30).
+        TestResults.first[.page] = .didNotPause
+        TestResults.byState[.page] = [(.visible, .didNotPause, "its page showed no Play/Pause to press"), (.covered, .worked, ""), (.hidden, .worked, "")]
+        #expect(TestResults.overall(.page) == .worked)
+        TestResults.byState[.page] = [(.visible, .didNotPause, ""), (.covered, .pausedOnly, "it paused, but didn't play again")]
+        #expect(TestResults.overall(.page) == .pausedOnly)
+        TestResults.byState[.page] = [(.visible, .didNotPause, ""), (.covered, .didNotPause, "")]
+        #expect(TestResults.overall(.page) == .didNotPause)
+        TestResults.byState = [:]
+        TestResults.first[.page] = .worked
+        #expect(TestResults.overall(.page) == .worked)
+        #expect(TestResults.overall(.menu) == nil) // not tried
+    }
 }

@@ -156,7 +156,8 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         say(hiddenInterface != nil ? "  No switch showed its \(pageWord): its buttons can't be read that way."
                                    : "  Its page showed no buttons: is the site loaded?")
     } else if let toggle = page.toggle {
-        switch TestResults.first[.page] {
+        // Judged by every window state, as its line in "Ways to Control It".
+        switch TestResults.overall(.page) {
         case .worked?:
             if isWebApp {
                 say("  Its page's Play/Pause works.")
