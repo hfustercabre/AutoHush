@@ -84,6 +84,8 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// While held, nothing paused by us is resumed (see `holdResumes`).
     var resumesHeld: Bool
     var playerState: PlayerState = .unknown
+    /// How many states the player's observer reported (`handlePlayerStateChange`).
+    var playerReports = 0
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
     var playsLocally = true
     /// It says it plays here, but wasn't heard when last asked
@@ -362,14 +364,15 @@ actor PlaybackArbiter: PlaybackArbiting {
         guard playsLocally else { return }
         let state = await livePlayerState()
         guard !isShutDown, autoPauseEnabled, state == .playing else { return }
-        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
-        levelLowered = nil
         do {
             try await fader.pauseNow()
         } catch {
             logger.error("[arbiter] pausing \(self.player.name, privacy: .public) as the output went away failed: \(error)")
             return
         }
+        // Paused: the Mac's volume lowered for the music is put back.
+        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
+        levelLowered = nil
         playerState = .paused
         latestStart = nil // no app's doing, to be taken over and resumed
         logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) paused at once, and stays paused")
@@ -526,6 +529,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// `.unknown` carries no information and is ignored.
     func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
+        playerReports += 1
         resumeFailure = nil // it answers: the user may have played or paused it
         if state != .playing { playsSilently = false }
         noteStoppedPlaying(state)
@@ -572,10 +576,17 @@ actor PlaybackArbiter: PlaybackArbiting {
     }
 
     /// Queries the player's live state, caches it and publishes the resulting
-    /// playback state. Used once as monitoring starts, to seed the cache.
+    /// playback state. Used once as monitoring starts, to seed the cache. A
+    /// report from its observer that came during the query is newer, and
+    /// stands (`playerReports`).
     @discardableResult
     func refreshPlaybackState() async -> PlayerState {
-        let state = await livePlayerState()
+        let reports = playerReports
+        let state = await player.playerState()
+        if playerReports == reports, state != .unknown {
+            noteStoppedPlaying(state)
+            playerState = state
+        }
         publishPlaybackState()
         return state
     }

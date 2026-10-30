@@ -167,6 +167,28 @@ extension PlaybackArbiterTests {
         #expect(await player.commandLog == ["mute", "forgetPause"])
     }
 
+    @Test("a mute that comes after the Mac went to sleep isn't held: no mute is lifted at shutdown, none stands")
+    func muteFinishingInSleepNotHeld() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setPlaysAnyway(true)
+        let gate = Gate()
+        let started = Gate()
+        let muting = await Self.slowMuting(player, started: started, gate: gate)
+        let arbiter = PlaybackArbiter(player: muting, configuration: .testing, debounceScheduler: ManualDebounceScheduler())
+
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await started.wait() // it's being listened to
+        await arbiter.setAsleep(true)
+        await gate.open()
+        await arbiter.waitForPause()
+        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await arbiter.setAsleep(false) // forgotten: paused for real, unmuted
+        await arbiter.waitUntilIdle()
+        #expect(await player.commandLog == ["mute", "forgetPause"])
+        await arbiter.shutdown()
+        #expect(await muting.releasedMutes == 0)
+    }
+
     @Test("a player muted just as the other app stopped, or Auto-Pause went off, while it was listened to is played again at once",
           arguments: [false, true])
     func everyAppStopsWhileMuting(autoPauseGoesOff: Bool) async {

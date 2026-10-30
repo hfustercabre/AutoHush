@@ -42,6 +42,20 @@ extension PlaybackArbiterTests {
         #expect(await nextState(from: stateStream.stream) == published)
     }
 
+    @Test("a report from the player's observer that comes while refreshPlaybackState asks the player stands: it's newer than the answer")
+    func reportDuringRefreshStands() async {
+        let player = MockMusicPlayer(state: .paused)
+        let answers = ManualSleep()
+        await player.setBeforeStateAnswer { await answers.sleep(.zero) }
+        let arbiter = makeArbiter(player: player)
+        let refreshing = Task { await arbiter.refreshPlaybackState() }
+        await TestWait.until { answers.sleeping == 1 } // its answer says paused
+        await arbiter.handlePlayerStateChange(.playing) // the user played it since
+        answers.step()
+        _ = await refreshing.value
+        #expect(await arbiter.playerState == .playing)
+    }
+
     // MARK: - Player state notifications / user-intent protection
 
     @Test("user resuming the player while a source plays clears pausedByUs and publishes musicPlaying")

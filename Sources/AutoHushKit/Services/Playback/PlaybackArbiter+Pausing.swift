@@ -103,8 +103,6 @@ extension PlaybackArbiter {
         guard !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return }
         isFadingOut = true
         noteCalls()
-        if let levelLowered { volumeLeveler?.restore(over: configuration.fadeOutDuration, lowered: levelLowered) } // as the music fades out
-        levelLowered = nil
         let paused: Bool
         do {
             paused = try await fader.fadeOutAndPause()
@@ -129,6 +127,10 @@ extension PlaybackArbiter {
             if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
             return
         }
+        // The Mac's volume lowered for the music is put back once it's
+        // paused: a pause called off or failed keeps it, the music playing.
+        if let levelLowered { volumeLeveler?.restore(over: configuration.fadeOutDuration, lowered: levelLowered) }
+        levelLowered = nil
         playerState = .paused
         pausedAt = clock()
         hearingDuringPause = nil
@@ -162,12 +164,14 @@ extension PlaybackArbiter {
             await muting.releaseMute()
             return true
         }
-        heldByMute = true
         pauseFailure = nil
         playerState = .paused
         logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted, because these apps play: \(self.playingApps, privacy: .public)")
+        // Held only when the pause is (not with the Mac asleep meanwhile).
+        guard holdPause() else { return true }
+        heldByMute = true
         // Things may have changed while it was measured.
-        if holdPause(), !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
+        if !isShutDown, !autoPauseEnabled || activeSources.isEmpty { scheduleResume(after: nil) }
         return true
     }
 

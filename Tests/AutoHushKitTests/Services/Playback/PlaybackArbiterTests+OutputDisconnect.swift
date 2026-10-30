@@ -99,6 +99,24 @@ extension PlaybackArbiterTests {
         #expect(leveler.log == ["lower -6.0", "restore now"])
     }
 
+    @Test("music playing with the Mac's volume lowered (Level the volume) keeps it lowered when its pause fails as the output goes away")
+    func failedDisconnectPauseKeepsLevel() async {
+        let player = MockMusicPlayer(state: .playing)
+        let leveler = RecordingVolumeLeveler()
+        var configuration = AppConfiguration.testing
+        configuration.levelsMusic = true
+        configuration.pausesOnOutputDisconnect = true
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { -6 })
+        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.videolan.vlc", playing: false) // resumed, lowered 6 dB
+        await TestWait.until { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        await player.setFailPause(StubError.failed)
+        await arbiter.handleOutputDisconnected()
+        #expect(leveler.log == ["lower -6.0"])
+    }
+
     @Test("with the switch off, or Auto-Pause off, the output going away changes nothing", arguments: [(false, true), (true, false)])
     func disconnectIgnored(on: Bool, autoPause: Bool) async {
         let player = MockMusicPlayer(state: .playing)

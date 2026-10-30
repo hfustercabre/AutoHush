@@ -187,7 +187,9 @@ extension AudioMonitor {
                 let heard = peaks[process.objectID].map { $0 >= configuration.audibleThreshold } ?? false
                 if announcing || heard {
                     woken.insert(process.objectID)
-                    if quietListen.until != nil { quietListen.heard = true }
+                    // An ignored app's can't pause the music, so it isn't
+                    // what the listen is for (`quietProcessesToListen`).
+                    if quietListen.until != nil, !ignoredSourceIDs.contains(source.id) { quietListen.heard = true }
                 }
                 guard heard else { continue }
             }

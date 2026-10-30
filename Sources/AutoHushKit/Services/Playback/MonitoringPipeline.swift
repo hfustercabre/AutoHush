@@ -30,13 +30,17 @@ package final class MonitoringPipeline {
     }
 
     private let arbiter: PlaybackArbiter
-    private let monitor: AudioMonitor
+    /// Internal for tests, which look at what it was told.
+    let monitor: AudioMonitor
     /// Told whether it may tap its sound, when it can (see `allowTaps`).
     private let mutingPlayer: any MutingMusicPlayer?
     /// Whether the player may be muted through a tap (`PlayerMuting`): not
     /// in AntiDot mode.
     private let tapsAllowed: OSAllocatedUnfairLock<Bool>
     private let playerObserver: any PlayerStateObserving
+    /// How many states the player's observer reported: one that came while
+    /// `start` read the player's state is newer than that read.
+    private let playerReports: OSAllocatedUnfairLock<Int>
     private let outputDisconnects: any OutputDisconnectWatching
     private let arbiterCommands: AsyncStream<ArbiterCommand>.Continuation
     private let statusUpdates: AsyncStream<MonitoringStatusUpdate>.Continuation
@@ -149,7 +153,10 @@ package final class MonitoringPipeline {
         monitorLink.monitor = monitor
         mutingPlayer = player as? any MutingMusicPlayer
         Self.allowTaps(for: mutingPlayer, in: detectionMethod)
+        let playerReports = OSAllocatedUnfairLock(initialState: 0)
+        self.playerReports = playerReports
         self.playerObserver = player.makeStateObserver { [weak monitor] state in
+            playerReports.withLock { $0 += 1 }
             arbiterCommands.yield(.playerState(state))
             monitor?.setPlayerPlaying(state == .playing)
         }
@@ -198,12 +205,14 @@ package final class MonitoringPipeline {
         }
         // Observe before seeding so no state change can slip in between.
         playerObserver.start()
+        let reports = playerReports.withLock { $0 }
         let initialState = await arbiter.refreshPlaybackState()
         guard !isStopped else { return false }
         // Before monitoring starts, so the apps it finds see the pause as ours.
         let tookOver = takingOverPause ? await arbiter.takeOverPause() : false
         guard !isStopped else { return tookOver }
-        monitor.setPlayerPlaying(initialState == .playing)
+        // A report meanwhile told the monitor already, and is newer.
+        if playerReports.withLock({ $0 }) == reports { monitor.setPlayerPlaying(initialState == .playing) }
         monitor.start()
         let commands = arbiterCommands
         outputDisconnects.start { commands.yield(.outputDisconnected) }
