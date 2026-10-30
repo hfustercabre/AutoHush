@@ -1,108 +1,6 @@
 import CryptoKit
 import Foundation
-import Security
 import AutoHushKit
-
-/// Why this copy of AutoHush can't install updates by itself.
-enum UpdateInstallUnavailability: Equatable, Sendable {
-    /// It isn't signed with a certificate (a development build), so there is
-    /// no way to tell that an update comes from the same developer.
-    case notSignedWithCertificate
-    /// It can't replace itself: the app or its folder is read-only for this
-    /// user (on the disk image, or in another user's folder).
-    case readOnlyLocation
-
-    /// Shown in Settings under the update choices, which it limits to "Notify me".
-    var explanation: String {
-        switch self {
-        case .notSignedWithCertificate:
-            return String(localized: "This copy of AutoHush can’t update itself, because it isn’t signed with AutoHush’s certificate.",
-                          comment: "Settings, under the update choices (development builds)")
-        case .readOnlyLocation:
-            return String(localized: "AutoHush can’t update itself, because it can’t write to the folder it’s in.",
-                          comment: "Settings, under the update choices")
-        }
-    }
-}
-
-/// Why an update could not be installed.
-enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
-    case unavailable(UpdateInstallUnavailability)
-    /// The release has no disk image to install from.
-    case noDiskImage
-    case badResponse(Int)
-    /// The download doesn't match GitHub's checksum, can't be opened, or
-    /// holds no AutoHush.app.
-    case damaged
-    /// The app in the download isn't signed by the running app's developer
-    /// (its bundle ID and team: a renewed certificate is fine).
-    case notGenuine
-    /// The app in the download isn't the version the release announced.
-    case wrongVersion
-    /// The app in the download needs a newer macOS than this Mac's (its
-    /// `LSMinimumSystemVersion`): installed, it wouldn't open.
-    case needsNewerMacOS(String)
-    /// Swapping in the new app failed, for the reason given: in the user's
-    /// language, and in English for the log.
-    case notReplaced(String, logReason: String)
-
-    var errorDescription: String? {
-        switch self {
-        case .unavailable(let reason):
-            return reason.explanation
-        case .noDiskImage:
-            return String(localized: "This release has no disk image to install from.", comment: "Update install error")
-        case .badResponse(let status):
-            return String(localized: "GitHub answered with HTTP status \(status).",
-                          comment: "Update check error; %lld is an HTTP status code")
-        case .damaged:
-            return String(localized: "The download is damaged.", comment: "Update install error")
-        case .notGenuine:
-            return String(localized: "The download isn’t signed by AutoHush’s developer, so it wasn’t installed.",
-                          comment: "Update install error")
-        case .wrongVersion:
-            return String(localized: "The download doesn’t contain the version GitHub announced.", comment: "Update install error")
-        case .needsNewerMacOS(let minimum):
-            return String(localized: "This version needs macOS \(minimum) or later, so it wasn’t installed.",
-                          comment: "Update install error; %@ is a macOS version, e.g. “15.0”")
-        case .notReplaced(let reason, _):
-            return String(localized: "AutoHush couldn’t replace itself: \(reason)",
-                          comment: "Update install error; %@ is the reason macOS gave")
-        }
-    }
-
-    var logDescription: String {
-        switch self {
-        case .unavailable(.notSignedWithCertificate): "This copy isn't signed with AutoHush's certificate, so it can't update itself."
-        case .unavailable(.readOnlyLocation): "AutoHush can't write to the folder it's in, so it can't update itself."
-        case .noDiskImage: "The release has no disk image to install from."
-        case .badResponse(let status): "GitHub answered with HTTP status \(status)."
-        case .damaged: "The download is damaged."
-        case .notGenuine: "The download isn't signed by AutoHush's developer."
-        case .wrongVersion: "The download doesn't contain the version GitHub announced."
-        case .needsNewerMacOS(let minimum): "The download needs macOS \(minimum) or later."
-        case .notReplaced(_, let reason): "AutoHush couldn't replace itself: \(reason)"
-        }
-    }
-}
-
-/// Installs updates. `UpdateInstaller` is the real one; tests stand in for it.
-protocol UpdateInstalling: Sendable {
-    /// Why this copy can't update itself, or nil when it can.
-    var unavailability: UpdateInstallUnavailability? { get }
-    /// Downloads `release`'s disk image to `file`, checked against the
-    /// SHA-256 GitHub lists for it, and returns the file's SHA-256. Without
-    /// `allowsConstrainedNetwork`, it doesn't download while Low Data Mode is on.
-    func download(_ release: AppRelease, to file: URL, allowsConstrainedNetwork: Bool) async throws -> String
-    /// Gets `release` ready to install and checks it: from `image`, an
-    /// earlier download, when given, otherwise downloaded now (see `download`
-    /// for `allowsConstrainedNetwork`).
-    func prepare(_ release: AppRelease, image: KeptImage?, allowsConstrainedNetwork: Bool) async throws -> PreparedUpdate
-    /// Puts `update` in the running app's place, to be opened once AutoHush quits.
-    func install(_ update: PreparedUpdate) throws
-    /// Deletes a prepared update that won't be installed.
-    func discard(_ update: PreparedUpdate)
-}
 
 /// Replaces AutoHush with a newer release:
 ///
@@ -121,6 +19,7 @@ protocol UpdateInstalling: Sendable {
 /// AutoHush isn't notarized, so Gatekeeper would refuse to open a copy marked
 /// as downloaded. The signature check takes Gatekeeper's place: once a copy
 /// passes it, its quarantine mark is removed, as the Homebrew cask does.
+/// The disk image is in `+DiskImage`, the checks in `+Signature`.
 struct UpdateInstaller: UpdateInstalling {
     typealias Download = @Sendable (URLRequest) async throws -> (URL, URLResponse)
     /// Opens the app at a URL once AutoHush has quit; returns a way to call that off.
@@ -137,9 +36,9 @@ struct UpdateInstaller: UpdateInstalling {
     private let relaunch: Relaunch
     /// The tools tried, in order, to open the disk image; when the one that
     /// opened it can't close it, the others are tried.
-    private let diskImageTools: [DiskImageTool]
+    let diskImageTools: [DiskImageTool]
     /// How long each of them may take (`diskImageToolTimeout`).
-    private let diskImageTimeout: TimeInterval
+    let diskImageTimeout: TimeInterval
     private let trash: Trash
 
     /// How long a disk image tool may take before it's stopped and the image
@@ -151,7 +50,7 @@ struct UpdateInstaller: UpdateInstalling {
         appURL: URL = Bundle.main.bundleURL,
         requirement: String? = UpdateInstaller.runningAppRequirement(),
         download: @escaping Download = { try await URLSession.updates.download(for: $0) },
-        relaunch: @escaping Relaunch = UpdateInstaller.openAfterExit,
+        relaunch: @escaping Relaunch = RelaunchWaiter.openAfterExit,
         diskImageTools: [DiskImageTool] = DiskImageTool.inOrderOfPreference,
         diskImageTimeout: TimeInterval = UpdateInstaller.diskImageToolTimeout,
         trash: @escaping Trash = { try? FileManager.default.trashItem(at: $0, resultingItemURL: nil) }
@@ -248,80 +147,6 @@ struct UpdateInstaller: UpdateInstalling {
         try? FileManager.default.removeItem(at: update.folder)
     }
 
-    // MARK: - Steps
-
-    /// Opens the disk image read-only and out of sight in Finder, and copies
-    /// AutoHush.app out of it.
-    private func copyApp(outOf imageFile: URL, into folder: URL) async throws -> URL {
-        let mountPoint = folder.appending(path: "Volume", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(at: mountPoint, withIntermediateDirectories: false)
-        let opener = try await attach(imageFile, at: mountPoint)
-
-        let copied = Result {
-            let source = mountPoint.appending(path: "AutoHush.app", directoryHint: .isDirectory)
-            let kind = try? source.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
-            guard kind?.isDirectory == true, kind?.isSymbolicLink == false else { throw UpdateInstallError.damaged }
-            let app = folder.appending(path: "AutoHush.app", directoryHint: .isDirectory)
-            try FileManager.default.copyItem(at: source, to: app)
-            return app
-        }
-        await detach(mountPoint, openedWith: opener)
-        return try copied.get()
-    }
-
-    /// Opens the disk image at `mountPoint` with the first tool that manages
-    /// to, and returns that tool's place in `diskImageTools`, to close it
-    /// again. A tool this macOS lacks fails, as does one that takes too
-    /// long, and the next one is tried.
-    private func attach(_ imageFile: URL, at mountPoint: URL) async throws -> Int {
-        for (index, tool) in diskImageTools.enumerated() {
-            if await run(tool.path, tool.attachArguments(imageFile.path, Self.resolvedPath(mountPoint))) { return index }
-            // One stopped at its timeout may have mounted it all the same:
-            // closed before the next tool tries the same place.
-            if Self.isMounted(at: Self.resolvedPath(mountPoint)) { await detach(mountPoint, openedWith: index) }
-        }
-        throw UpdateInstallError.damaged
-    }
-
-    /// Closes the disk image opened at `mountPoint` with the tool at
-    /// `opener`, then, while it's still mounted, with the others in turn, so
-    /// that no image stays attached (14.4's diskutil, for one, didn't know
-    /// `eject force`).
-    private func detach(_ mountPoint: URL, openedWith opener: Int) async {
-        let path = Self.resolvedPath(mountPoint)
-        let tool = diskImageTools[opener]
-        await run(tool.path, tool.detachArguments(path))
-        for other in diskImageTools[(opener + 1)...] + diskImageTools[..<opener] where Self.isMounted(at: path) {
-            await run(other.path, other.detachArguments(path))
-        }
-    }
-
-    /// Accepts `app` only when it's signed like the running app, intact (every
-    /// file, every architecture and any nested code), and is `version`. The
-    /// version is read after the signature check, which covers Info.plist.
-    private func check(_ app: URL, isVersion version: AppVersion) throws {
-        guard let requirement, Self.isSigned(app, satisfying: requirement) else { throw UpdateInstallError.notGenuine }
-        let info = NSDictionary(contentsOf: app.appending(path: "Contents/Info.plist"))
-        // A release candidate's number is its own key (`AppVersion(info:)`).
-        guard let found = (info as? [String: Any]).flatMap(AppVersion.init(info:)), found == version
-        else { throw UpdateInstallError.wrongVersion }
-        // Swapped in, an app that needs a newer macOS wouldn't open.
-        if let minimum = info?["LSMinimumSystemVersion"] as? String,
-           !Self.isAtLeast(minimum, ProcessInfo.processInfo.operatingSystemVersion) {
-            throw UpdateInstallError.needsNewerMacOS(minimum)
-        }
-    }
-
-    /// Whether `system` is `minimum` ("14.4", "15", "15.0.1") or later; an
-    /// unreadable minimum doesn't hold an update back.
-    static func isAtLeast(_ minimum: String, _ system: OperatingSystemVersion) -> Bool {
-        let parts = minimum.split(separator: ".").map { Int($0) }
-        guard !parts.isEmpty, parts.allSatisfy({ $0 != nil }) else { return true }
-        let needed = parts.compactMap { $0 } + [0, 0]
-        let have = [system.majorVersion, system.minorVersion, system.patchVersion]
-        return !have.lexicographicallyPrecedes(needed.prefix(3))
-    }
-
     // MARK: - System
 
     /// The hex SHA-256 of `file`, or nil when it can't be read.
@@ -329,132 +154,4 @@ struct UpdateInstaller: UpdateInstalling {
         guard let data = try? Data(contentsOf: file, options: .mappedIfSafe) else { return nil }
         return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
-
-    static func isSigned(_ app: URL, satisfying requirementText: String) -> Bool {
-        var code: SecStaticCode?
-        var requirement: SecRequirement?
-        guard SecStaticCodeCreateWithPath(app as CFURL, [], &code) == errSecSuccess, let code,
-              SecRequirementCreateWithString(requirementText as CFString, [], &requirement) == errSecSuccess
-        else { return false }
-        let flags = SecCSFlags(rawValue: kSecCSCheckAllArchitectures | kSecCSStrictValidate | kSecCSCheckNestedCode)
-        return SecStaticCodeCheckValidity(code, flags, requirement) == errSecSuccess
-    }
-
-    /// The running app's designated requirement, such as `identifier
-    /// "com.autohush.AutoHush" and anchor apple generic and certificate
-    /// leaf[subject.OU] = "BNT2VN4LH5"` (its developer team) and its
-    /// certificate issued by Apple's developer authority (`team_requirement`
-    /// in Scripts/lib/common.sh), or nil when it isn't signed with a
-    /// certificate (ad hoc or not at all).
-    static func runningAppRequirement() -> String? {
-        var running: SecCode?
-        var code: SecStaticCode?
-        var information: CFDictionary?
-        var requirement: SecRequirement?
-        var text: CFString?
-        guard SecCodeCopySelf([], &running) == errSecSuccess, let running,
-              SecCodeCopyStaticCode(running, [], &code) == errSecSuccess, let code,
-              SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &information) == errSecSuccess,
-              let certificates = (information as? [String: Any])?[kSecCodeInfoCertificates as String] as? [SecCertificate],
-              !certificates.isEmpty,
-              SecCodeCopyDesignatedRequirement(code, [], &requirement) == errSecSuccess, let requirement,
-              SecRequirementCopyString(requirement, [], &text) == errSecSuccess
-        else { return nil }
-        return text as String?
-    }
-
-    /// Removes the "downloaded from the internet" mark from `app` and
-    /// everything inside it.
-    static func removeQuarantine(from app: URL) {
-        let contents = FileManager.default.enumerator(at: app, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []
-        for url in [app] + contents {
-            url.withUnsafeFileSystemRepresentation { path in
-                guard let path else { return }
-                removexattr(path, "com.apple.quarantine", XATTR_NOFOLLOW)
-            }
-        }
-    }
-
-    /// Opens `app` from a small shell loop that waits for AutoHush to exit;
-    /// the loop outlives AutoHush. Calling the returned closure ends the loop
-    /// instead.
-    static func openAfterExit(_ app: URL) throws -> @Sendable () -> Void {
-        try openAfterExit(app, waitingFor: getpid(), opener: URL(filePath: "/usr/bin/open"))
-    }
-
-    /// The same loop waiting for `pid` to exit, looking every `interval`
-    /// seconds, then running `opener` with `app`: tests give a process, a
-    /// script of their own and a shorter look, so their waits for nothing
-    /// to happen are short too (B12, the full check, 2026-10-27).
-    static func openAfterExit(_ app: URL, waitingFor pid: pid_t, opener: URL,
-                              lookingEvery interval: Double = 0.2) throws -> @Sendable () -> Void {
-        let waiter = Process()
-        waiter.executableURL = URL(filePath: "/bin/sh")
-        waiter.arguments = [
-            "-c", #"while /bin/kill -0 "$1" 2>/dev/null; do /bin/sleep "$4"; done; exec "$3" "$2""#,
-            "autohush-relaunch", String(pid), app.path, opener.path, String(interval),
-        ]
-        try waiter.run()
-        let waiting = waiter.processIdentifier
-        return { kill(waiting, SIGTERM) }
-    }
-
-    /// `url`'s path with symbolic links resolved, the way macOS records where
-    /// a volume is mounted (/var/folders/… is /private/var/folders/…).
-    /// `diskutil eject` finds a volume only by that path.
-    private static func resolvedPath(_ url: URL) -> String {
-        url.withUnsafeFileSystemRepresentation { path in
-            guard let path, let resolved = realpath(path, nil) else { return url.path }
-            defer { free(resolved) }
-            return String(cString: resolved)
-        }
-    }
-
-    /// Whether a volume is mounted at `path` (resolved, as macOS records it).
-    private static func isMounted(at path: String) -> Bool {
-        var volume = statfs()
-        guard statfs(path, &volume) == 0 else { return false }
-        return withUnsafeBytes(of: volume.f_mntonname) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) } == path
-    }
-
-    /// Runs a disk image tool, for `diskImageTimeout` at most: whether it
-    /// did what it was asked (exited with 0).
-    @discardableResult
-    private func run(_ tool: String, _ arguments: [String]) async -> Bool {
-        await ToolRun(URL(filePath: tool), arguments, timeout: diskImageTimeout).run().succeeded
-    }
-}
-
-/// A command-line tool that opens a disk image read-only at a given folder,
-/// hidden from Finder, and closes it again.
-struct DiskImageTool: Sendable {
-    let path: String
-    /// The arguments that open the image (first) at the mount point (second).
-    let attachArguments: @Sendable (_ image: String, _ mountPoint: String) -> [String]
-    /// The arguments that close the image opened at the mount point.
-    let detachArguments: @Sendable (_ mountPoint: String) -> [String]
-
-    /// `diskutil image`, which macOS 27 recommends. macOS 15 doesn't have it;
-    /// 14.4's opened volumes the tests couldn't read, and its eject doesn't
-    /// know `force`.
-    static let diskutil = DiskImageTool(
-        path: "/usr/sbin/diskutil",
-        attachArguments: { ["image", "attach", "--readOnly", "--nobrowse", "--mountPoint", $1, $0] },
-        detachArguments: { ["eject", "force", $0] }
-    )
-
-    /// hdiutil, on every macOS AutoHush supports, but deprecated for attaching
-    /// and detaching since macOS 27. The image's own checksum isn't verified
-    /// (seconds of work): the SHA-256 and the signature check already cover
-    /// every byte that matters.
-    static let hdiutil = DiskImageTool(
-        path: "/usr/bin/hdiutil",
-        attachArguments: { ["attach", $0, "-readonly", "-nobrowse", "-noautoopen", "-noverify", "-mountpoint", $1] },
-        detachArguments: { ["detach", $0, "-force"] }
-    )
-
-    /// From macOS 27, which deprecates hdiutil's attach and detach, the newer
-    /// tool first, so updates keep working once macOS removes them (when it
-    /// fails, hdiutil takes over); before, hdiutil alone.
-    static let inOrderOfPreference: [DiskImageTool] = if #available(macOS 27, *) { [diskutil, hdiutil] } else { [hdiutil] }
 }

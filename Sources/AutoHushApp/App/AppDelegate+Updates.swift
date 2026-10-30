@@ -2,16 +2,12 @@ import AppKit
 
 // AppDelegate: the updates.
 extension AppDelegate {
-    /// Quits so that the installed update opens; a pause AutoHush is holding
-    /// is handed over (see `applicationShouldTerminate`).
-    func quitToFinishUpdate() {
-        quitFromRunLoop()
-    }
-
     /// Quits from the run loop, not from inside a main-actor job (the install's
     /// task, a signal handler): quitting waits for main-actor work (restoring
     /// the volume), which can't run while a main-actor job is still under way.
-    private func quitFromRunLoop() {
+    /// After an update, so that the installed one opens; a pause AutoHush is
+    /// holding is handed over (see `applicationShouldTerminate`).
+    func quitFromRunLoop() {
         RunLoop.main.perform { MainActor.assumeIsolated { NSApp.terminate(nil) } }
     }
 

@@ -165,9 +165,9 @@ struct StatusMenuControllerTests {
         #expect(sut.model.listedRecentSources == [vlc])
         #expect(!parts(sut).contains("playingNow"))
 
-        await sut.closeMenu()
+        sut.close()
         #expect(!sut.isMenuOpen)
-        await sut.closeMenu() // closed already: at once
+        sut.close() // closed already: nothing
         reopen(sut)
         #expect(parts(sut).contains("playingNow") && !parts(sut).contains("recentlyPlayed"))
     }

@@ -50,7 +50,7 @@ struct MainMenuTests {
 
     @Test("Find… goes to Sound Sources' search while it lists apps, the welcome window's over many players, the logs' or Add an App's list of apps; nowhere else")
     func findTargets() {
-        func target(_ window: FindTarget.Window, page: SettingsWindowController.Page? = nil, hasApps: Bool = true,
+        func target(_ window: FindTarget.Window, page: SettingsPage? = nil, hasApps: Bool = true,
                     showsPlayers: Bool = true, searchable: Bool = true) -> FindTarget? {
             FindTarget(window: window, settingsPage: page, hasApps: hasApps, welcomeShowsPlayers: showsPlayers,
                        playersSearchable: searchable)

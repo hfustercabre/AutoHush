@@ -68,7 +68,7 @@ struct AppReader: AppReading {
     /// unless AutoHush supports it already (`supported`) or it's AutoHush.
     static func checkableApp(at url: URL, supported: [PlayerOption]) -> Result<CheckableApp, OtherAppProblem> {
         guard let app = CheckableApp.at(url) else { return .failure(.notAnApp) }
-        if app.bundleID == Bundle.main.bundleIdentifier || app.bundleID.hasPrefix("com.autohush.") { return .failure(.autoHush) }
+        if CheckableApps.isAutoHush(app.bundleID) { return .failure(.autoHush) }
         if let player = supported.first(where: { $0.bundleID == app.bundleID }) { return .failure(.supported(player.name)) }
         return .success(app)
     }

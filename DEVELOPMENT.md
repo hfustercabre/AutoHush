@@ -136,7 +136,8 @@ Sources/
                          SettingsKeys (Settings' keys, its sidebar's and page's), AddWebAppModel,
                          PlayerOption (each player and whether it's installed), AppActions (what only
                          AppDelegate does), UpdateCommands (and what Settings reads of the updates),
-                         SettingsNavigation (Settings' page and its history), PermissionsState,
+                         SettingsNavigation (Settings' page and its history), SettingsPage (its pages),
+                         PermissionsState,
                          ChecklistStep (a step of the windows' checklists), DiagnosticsFacts,
                          DiagnosticsSnapshot, AppRelease, UpdateCheckResult, PreparedUpdate, KeptImage,
                          UpdatePrompt, UpdateNotice,
@@ -154,36 +155,41 @@ Sources/
     Services/            what does the work, by area: App/ (WindowWatch, what the open windows show,
                          followed once a second; OtherInstances, quits the copies opened before it;
                          DockPresence, in the Dock while a window is open; MenuBarIconPlace, the icon
-                         beside the system's; MenuBarIconVisibility, whether it's hidden), Playback/ (PlayerSession,
+                         beside the system's; MenuBarIconVisibility, whether it's hidden; FolderWatch;
+                         RelaunchWaiter, opens an app once AutoHush has quit), Playback/ (PlayerSession,
                          the chosen player from its start until AutoHush quits; HeldPauses), Settings/
                          (UserSettings, LaunchAtLoginController, ReopenChoices: the players reopened without
                          asking),
                          Permissions/ (PermissionCenter, for the chosen player and Add an App's app alike;
                          the chosen player's as last read, which the windows show),
                          Updates/ (UpdateController, observable for Settings; UpdateChecker,
-                         UpdateInstaller: download, signature check, swap; UpdateDownloads, UpdateNotifier,
-                         ReleaseNotes), WebApps/ (LearningSession, learning a web app's controls with the
-                         user; AddWebAppHost, what Add a Web App needs from the rest of AutoHush;
-                         FolderWatch), Diagnostics/ (DiagnosticsReport, Copy Report's text), Shortcuts/
+                         UpdateInstaller: download, signature check, swap, with +DiskImage and +Signature,
+                         through UpdateInstalling, failing with UpdateInstallError; DiskImageTool;
+                         UpdateDownloads, UpdateNotifier, ReleaseNotes), WebApps/ (LearningSession,
+                         learning a web app's controls with the user; AddWebAppHost, what Add a Web App
+                         needs from the rest of AutoHush), Diagnostics/ (DiagnosticsReport, Copy Report's
+                         text, with +Sections and +Words), Shortcuts/
                          (Shortcuts' actions and their choices, the two App Shortcuts, the Focus filter, and
                          FocusAutoPause, which notes Auto-Pause as a Focus starts and puts it back as it ends;
                          they reach Auto-Pause through AutoPauseControlling, registered at launch by
                          IntentDependencies), AddApp/ (PlayerCheckHelper and PlayerCheckRun: AutoHush's own
                          playercheck, and a check running in it, through CheckRunning; the ports of Add an
                          App's model: AppReading, the apps on the Mac (AppReader reads them live),
-                         CheckHelping, the check's helper (PlayerCheckHelper), AddAppHost, what it needs from
-                         the rest of AutoHush (AppDelegate), and AddAppPresenting, what it shows through
-                         AddAppFeature; CheckableApps: the apps Add an App offers;
+                         CheckHelping, the check's helper (PlayerCheckHelper), and AddAppHost, what it needs
+                         from the rest of AutoHush (AppDelegate); CheckableApps: the apps Add an App offers;
                          AppPlaying: whether the chosen app plays, by its level, or by its open output without
                          Audio Recording or in AntiDot mode)
-    Controllers/         AppKit's window and menu controllers: StatusMenuController (with +Keys, the
-                         keys as in macOS's menus, and +SideWindow, the side window), MenuPanel (the
+    Controllers/         AppKit's window and menu controllers: StatusMenuController (with +Opening, +Commands,
+                         +Keys, the keys as in macOS's menus, and +SideWindow, the side window), MenuPanel (the
                          menu's window, and its side window's), SettingsWindowController,
                          SettingsToolbarDelegate (its toolbar: Back and Forward, the page's name),
                          PlayerChooserWindowController (the welcome window), AddWebAppFeature (Add a Web
                          App: its model, its window and the add under way), AddWebAppWindowController,
                          LearningWindowController, HostedWindowController (their shared base),
-                         LogsWindowController, AddAppFeature (Add an App: its model, its windows, the check's
+                         LogsWindowController, PlacedWindowController (its and Settings' base),
+                         Presenting/ (what the windows show for those that open them, which tests stand in
+                         for: AddAppPresenting, Add an App's model's, AddWebAppPresenting,
+                         LearningWindowPresenting, PlayerChooserPresenting), AddAppFeature (Add an App: its model, its windows, the check's
                          panel and the Mac's output muted during a check), AddAppWindowController,
                          AppChooserWindowController (the apps to choose), CheckWarningWindowController (before
                          a check), CheckPanelController+AddApp (Add an App's view in the check's panel,

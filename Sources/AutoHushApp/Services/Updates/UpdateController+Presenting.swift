@@ -53,10 +53,11 @@ extension UpdateController {
     }
 
     /// Offers to install `release`, with its notes, or, when AutoHush can't,
-    /// says how to.
+    /// says how to. A kept download counts as downloaded, as in the menu,
+    /// unhashed: installing checks its contents (`UpdateDownloads.image`).
     private func presentAvailable(_ release: AppRelease, running: AppVersion) {
         let prompt = UpdatePrompt(
-            release: release, running: running, isDownloaded: downloads.image(for: release) != nil,
+            release: release, running: running, isDownloaded: downloads.isKept(release),
             canInstall: canInstall(release), isHomebrewInstall: UpdateChecker.isHomebrewInstall
         )
         let alert = NSAlert()

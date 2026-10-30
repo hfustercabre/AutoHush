@@ -36,6 +36,12 @@ enum CheckableApps {
         }
     }
 
+    /// AutoHush, this copy or another (its test copies' IDs start the same):
+    /// never offered, nor checked when picked on the disk.
+    static func isAutoHush(_ bundleID: String) -> Bool {
+        bundleID == ProjectInfo.bundleID || bundleID.hasPrefix("com.autohush.")
+    }
+
     /// Every app in `folders` (and their folders one level down), but those
     /// with a bundle ID in `excluding`, AutoHush and Safari web apps (added
     /// with Add a Web App…).
@@ -50,7 +56,7 @@ enum CheckableApps {
                 let item = listed.resolvingSymlinksInPath()
                 if item.pathExtension == "app" {
                     guard let app = CheckableApp.at(item), found[app.bundleID] == nil, !excluding.contains(app.bundleID),
-                          app.bundleID != Bundle.main.bundleIdentifier, !app.bundleID.hasPrefix("com.autohush."),
+                          !isAutoHush(app.bundleID),
                           !app.bundleID.hasPrefix(SupportedPlayers.safariWebAppPrefix) else { continue }
                     found[app.bundleID] = app
                 } else if depth > 0, (try? item.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true {

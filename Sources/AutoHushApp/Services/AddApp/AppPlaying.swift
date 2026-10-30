@@ -3,9 +3,10 @@ import AutoHushKit
 
 /// Whether the app Add an App checks plays now, as the check will judge it
 /// (its Play step waits for this): an output running isn't enough, since a
-/// paused app may keep it open, silent (Qobuz did, 2026-10-15: the step went
-/// on, then the check asked for it to play); its level decides whenever it
-/// can be measured (Audio Recording allowed), else the open output does.
+/// paused app may keep it open, silent (an app checked did, 2026-10-15: the
+/// step went on, then the check asked for it to play); its level decides
+/// whenever it can be measured (Audio Recording allowed), else the open
+/// output does.
 struct AppPlaying: Sendable {
     /// One for every poll of the step: it keeps the app's audio processes
     /// while the Mac's stay the same, as reading them all takes dozens of

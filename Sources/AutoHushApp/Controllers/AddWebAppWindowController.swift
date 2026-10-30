@@ -1,14 +1,9 @@
 import AppKit
 import SwiftUI
 
-/// What `AppDelegate` needs of the window; tests stand in for it.
-@MainActor
-protocol AddWebAppPresenting: AnyObject {
-    var isOpen: Bool { get }
-    func show()
-    func close()
-}
-
+/// The "Add a Web App" window: an address, then Safari's steps and the
+/// learning, floating in the corner while Safari and the web app come in
+/// front.
 @MainActor
 final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenting, NSWindowDelegate {
     private let model: AddWebAppModel
@@ -16,10 +11,11 @@ final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenti
     init(model: AddWebAppModel, settings: SettingsModel) {
         self.model = model
         let hosting = Self.sizedToFit(AddWebAppView(model: model, settings: settings, close: {}))
+        // Floating: Safari, then the web app, come in front meanwhile.
         super.init(content: hosting,
-                   title: String(localized: "Add a Web App", comment: "Title of the window that makes a website a Safari web app, in its title bar"))
+                   title: String(localized: "Add a Web App", comment: "Title of the window that makes a website a Safari web app, in its title bar"),
+                   floatsInCorner: true)
         window?.delegate = self
-        floatsInCorner = true // Safari, then the web app, come in front meanwhile
         hosting.rootView = AddWebAppView(model: model, settings: settings) { [weak self] in self?.close() }
     }
 

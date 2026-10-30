@@ -35,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var runAlert: @MainActor (NSAlert) -> NSApplication.ModalResponse = InfoAlert.runInFront
     /// How Reopen AutoHush opens it again once it has quit, then quits it
     /// (`reopenAutoHush`). Tests replace them.
-    var openAfterExit: @MainActor (URL) throws -> Void = { _ = try UpdateInstaller.openAfterExit($0) }
+    var openAfterExit: @MainActor (URL) throws -> Void = { _ = try RelaunchWaiter.openAfterExit($0) }
     var terminateToReopen: @MainActor () -> Void = { NSApp.terminate(nil) }
     /// The Settings window's content, which reads what it shows from its owners.
     private(set) var settingsModel: SettingsModel!
@@ -119,62 +119,69 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// from the app's windows, which every test shares: tests answer for it.
     let hasOpenWindow: @MainActor () -> Bool
 
-    init(
-        preferences: Preferences = Preferences(),
-        defaults: UserDefaults = .standard,
-        launchAtLoginController: any LaunchAtLoginControlling = LaunchAtLoginController(),
-        updateSystem: UpdateController.System = UpdateController.System(),
-        players: MusicPlayerCatalog = SupportedPlayers.catalog,
-        checkedPlayers: CheckedPlayers = SupportedPlayers.checkedPlayers,
-        addAppSystem: AddAppFeature.System = AddAppFeature.System(),
-        volumeLeveler: SystemVolumeLeveler = SystemVolumeLeveler(),
-        nowPlayingDefaults: UserDefaults = .standard,
-        nowPlayingSetting: NowPlayingSetting.Setting = .controlCenter,
-        // `nil`: `PlayerSession.pipelines`, with `volumeLeveler`.
-        makeMonitoring: PlayerSession.MakeMonitoring? = nil,
-        locateApp: @escaping PlayerOption.Locate = PlayerOption.locateInstalledApp,
-        makePlayerChooser: @escaping @MainActor (SettingsModel) -> any PlayerChooserPresenting = {
+    /// What AutoHush works through: its preferences and choices, the
+    /// players, the updates, Add an App's and Add a Web App's systems, the
+    /// windows it makes, macOS's notices, the clock and the waits. Tests
+    /// replace them.
+    @MainActor
+    struct System {
+        var preferences = Preferences()
+        var defaults: UserDefaults = .standard
+        var launchAtLoginController: any LaunchAtLoginControlling = LaunchAtLoginController()
+        var updateSystem = UpdateController.System()
+        var players: MusicPlayerCatalog = SupportedPlayers.catalog
+        var checkedPlayers: CheckedPlayers = SupportedPlayers.checkedPlayers
+        var addAppSystem = AddAppFeature.System()
+        var volumeLeveler = SystemVolumeLeveler()
+        var nowPlayingDefaults: UserDefaults = .standard
+        var nowPlayingSetting: NowPlayingSetting.Setting = .controlCenter
+        /// `nil`: `PlayerSession.pipelines`, with `volumeLeveler`.
+        var makeMonitoring: PlayerSession.MakeMonitoring?
+        var locateApp: PlayerOption.Locate = PlayerOption.locateInstalledApp
+        var makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting = {
             PlayerChooserWindowController(model: $0)
-        },
-        makeLearningWindow: @escaping @MainActor (SettingsModel) -> any LearningWindowPresenting = {
+        }
+        var makeLearningWindow: @MainActor (SettingsModel) -> any LearningWindowPresenting = {
             LearningWindowController(model: $0)
-        },
-        webAppMaker: any WebAppMaking = SupportedPlayers.webAppMaker,
-        makeAddWebAppWindow: @escaping @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting = {
+        }
+        var webAppMaker: any WebAppMaking = SupportedPlayers.webAppMaker
+        var makeAddWebAppWindow: @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting = {
             AddWebAppWindowController(model: $0, settings: $1)
-        },
-        openApp: @escaping @MainActor (URL) async -> Void = { url in
+        }
+        var openApp: @MainActor (URL) async -> Void = { url in
             do {
                 _ = try await NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
             } catch {
                 AutoHushLogger(category: "AppDelegate").error(
                     "Couldn't open \(url.lastPathComponent, privacy: .public): \(error)")
             }
-        },
-        learnedWindowDelay: Duration = .seconds(1.5),
-        madeWebAppWait: Duration = .milliseconds(500),
-        otherInstances: OtherInstances = .live(bundleIdentifier: Bundle.main.bundleIdentifier ?? "com.autohush.AutoHush"),
-        retries: PlayerSession.Retries = PlayerSession.Retries(),
-        watchFolder: @escaping FolderWatch.Start = FolderWatch.start,
-        installCheckDelay: Duration = .seconds(1),
-        permissionCenter: PermissionCenter = PermissionCenter(),
-        windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
-        workspaceCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
-        clock: @escaping @MainActor () -> Date = Date.init,
-        hasOpenWindow: @escaping @MainActor () -> Bool = { NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey } }
-    ) {
-        self.preferences = preferences
-        self.defaults = defaults
-        self.players = players
-        self.checkedPlayers = checkedPlayers
-        self.volumeLeveler = volumeLeveler
-        self.nowPlayingDefaults = nowPlayingDefaults
-        self.nowPlayingSetting = nowPlayingSetting
-        self.locateApp = locateApp
-        self.makePlayerChooser = makePlayerChooser
-        self.makeLearningWindow = makeLearningWindow
-        self.learnedWindowDelay = learnedWindowDelay
-        self.openApp = openApp
+        }
+        var learnedWindowDelay: Duration = .seconds(1.5)
+        var madeWebAppWait: Duration = .milliseconds(500)
+        var otherInstances: OtherInstances = .live(bundleIdentifier: ProjectInfo.bundleID)
+        var retries = PlayerSession.Retries()
+        var watchFolder: FolderWatch.Start = FolderWatch.start
+        var installCheckDelay: Duration = .seconds(1)
+        var permissionCenter = PermissionCenter()
+        var windowWatchSleep: @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+        var workspaceCenter: NotificationCenter = NSWorkspace.shared.notificationCenter
+        var clock: @MainActor () -> Date = Date.init
+        var hasOpenWindow: @MainActor () -> Bool = { NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey } }
+    }
+
+    init(system: System = System()) {
+        self.preferences = system.preferences
+        self.defaults = system.defaults
+        self.players = system.players
+        self.checkedPlayers = system.checkedPlayers
+        self.volumeLeveler = system.volumeLeveler
+        self.nowPlayingDefaults = system.nowPlayingDefaults
+        self.nowPlayingSetting = system.nowPlayingSetting
+        self.locateApp = system.locateApp
+        self.makePlayerChooser = system.makePlayerChooser
+        self.makeLearningWindow = system.makeLearningWindow
+        self.learnedWindowDelay = system.learnedWindowDelay
+        self.openApp = system.openApp
         // Before anything else is stored: people updating keep their player.
         preferences.keepFormerPlayer(players.formerDefault)
         userSettings = UserSettings(preferences: preferences)
@@ -186,33 +193,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             players: players,
             preferences: preferences,
             settings: userSettings.state.monitoring,
-            makeMonitoring: makeMonitoring
+            makeMonitoring: system.makeMonitoring
                 ?? PlayerSession.pipelines(hostedApp: SupportedPlayers.hostedApp(pid:), volumeLeveler: volumeLeveler),
             locateApp: locateApp,
-            retries: retries
+            retries: system.retries
         )
-        self.otherInstances = otherInstances
-        self.watchFolder = watchFolder
-        self.installCheckDelay = installCheckDelay
-        self.permissionCenter = permissionCenter
-        self.workspaceCenter = workspaceCenter
-        self.clock = clock
-        self.hasOpenWindow = hasOpenWindow
+        self.otherInstances = system.otherInstances
+        self.watchFolder = system.watchFolder
+        self.installCheckDelay = system.installCheckDelay
+        self.permissionCenter = system.permissionCenter
+        self.workspaceCenter = system.workspaceCenter
+        self.clock = system.clock
+        self.hasOpenWindow = system.hasOpenWindow
         super.init()
         session.didChange = { [weak self] _ in self?.showSession() }
         userSettings.didChange = { [weak self] in self?.showUserSettings($0) }
         learning.didChange = { [weak self] in self?.showLearning($0) }
         updates = UpdateController(
-            system: updateSystem,
+            system: system.updateSystem,
             preferences: preferences,
             isQuietMoment: { [weak self] in self?.isQuietMoment ?? false },
-            quit: { [weak self] in self?.quitToFinishUpdate() },
+            quit: { [weak self] in self?.quitFromRunLoop() },
             onOffer: { [weak self] in self?.status.updateOffer = $0 }
         )
-        updates.beforePresenting = { [weak self] in await self?.statusMenu?.closeMenu() }
-        addApp = AddAppFeature(host: self, system: addAppSystem, keptChecks: KeptCheckStore(defaults: defaults))
-        addWebApp = AddWebAppFeature(host: self, maker: webAppMaker, makeWindow: makeAddWebAppWindow, openApp: openApp,
-                                     learnedWindowDelay: learnedWindowDelay, madeWebAppWait: madeWebAppWait,
+        updates.beforePresenting = { [weak self] in self?.statusMenu?.close() }
+        addApp = AddAppFeature(host: self, system: system.addAppSystem, keptChecks: KeptCheckStore(defaults: defaults))
+        addWebApp = AddWebAppFeature(host: self, maker: system.webAppMaker, makeWindow: system.makeAddWebAppWindow, openApp: openApp,
+                                     learnedWindowDelay: learnedWindowDelay, madeWebAppWait: system.madeWebAppWait,
                                      exampleAddress: players.exampleWebAddress, countrySites: players.countrySites)
         settingsModel = SettingsModel(
             state: appState,
@@ -221,10 +228,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             permissionCenter: permissionCenter,
             learningSession: learning,
             actions: self,
-            launchAtLoginController: launchAtLoginController,
+            launchAtLoginController: system.launchAtLoginController,
             menuBarIcon: MenuBarIconPlace(defaults: defaults)
         )
-        windowWatch = WindowWatch(sleep: windowWatchSleep,
+        windowWatch = WindowWatch(sleep: system.windowWatchSleep,
                                   refresh: { [weak self] in await self?.refresh($0) },
                                   everyTick: { [weak self] in self?.followWelcomeClosed() })
         registerWatchedWindows()

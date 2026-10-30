@@ -1,16 +1,6 @@
 import AppKit
 import SwiftUI
 
-/// What `AppDelegate` needs of the welcome window; tests stand in for it, so
-/// they never put a window on screen.
-@MainActor
-protocol PlayerChooserPresenting: AnyObject {
-    var isOpen: Bool { get }
-    func show()
-    func bringForward()
-    func close()
-}
-
 /// The welcome window: asks which media player AutoHush controls, then for
 /// the permissions it needs. It opens at launch while none is chosen, and
 /// again when a supported player opens then. Closing it leaves AutoHush

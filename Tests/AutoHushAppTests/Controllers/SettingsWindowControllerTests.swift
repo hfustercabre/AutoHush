@@ -30,10 +30,10 @@ final class SettingsWindowControllerTests {
         let split = try #require(sut.window?.contentViewController as? NSSplitViewController)
         #expect(split.splitViewItems.count == 2)
         #expect(split.splitViewItems.first?.behavior == .sidebar)
-        #expect(SettingsWindowController.Page.groups.map { $0.pages.map(\.title) }
+        #expect(SettingsPage.groups.map { $0.pages.map(\.title) }
                 == [["General", "Media Player", "Sound Sources", "Behavior"], ["Fine-Tuning", "Diagnostics"], ["About"]])
-        #expect(SettingsWindowController.Page.groups.map(\.title) == ["Everyday", "Advanced", nil])
-        #expect(Set(SettingsWindowController.Page.groups.flatMap(\.pages)) == Set(SettingsWindowController.Page.allCases))
+        #expect(SettingsPage.groups.map(\.title) == ["Everyday", "Advanced", nil])
+        #expect(Set(SettingsPage.groups.flatMap(\.pages)) == Set(SettingsPage.allCases))
         #expect(sut.shownPage == nil) // not on screen
 
         sut.show(page: .diagnostics)

@@ -37,8 +37,8 @@ extension StatusMenuController {
         return handle(key)
     }
 
-    /// `key`, as `handleKey` takes it; `false` for Tab only, which goes on
-    /// to the keyboard's focus.
+    /// `key`, as `handleKey` takes it; `false` for Tab, which goes on to the
+    /// keyboard's focus, and Delete, which removes nothing in the menu.
     @discardableResult func handle(_ key: HighlightKey) -> Bool {
         let inSide = model.openSide != nil
         let keyboard = inSide ? model.sideKeyboard : model.keyboard
