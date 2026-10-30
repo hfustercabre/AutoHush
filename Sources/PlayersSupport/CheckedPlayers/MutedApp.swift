@@ -8,7 +8,7 @@ import AutoHushKit
 /// Audio Recording, so not in AntiDot mode. Whether it plays is its
 /// keep-awake assertion once it has shown one (Qobuz holds one only while
 /// it plays), else its sound output. A mute stands for a pause until the
-/// user plays it again or stops it (`MuteState`), and always takes.
+/// user plays it again or stops it (`MutedAppState`), and always takes.
 actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     nonisolated let setup: PlayerSetup
     nonisolated var controlPermission: Permission { .systemAudioRecording }
@@ -23,10 +23,10 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
     private let soundOn: @Sendable (pid_t) -> Bool
     private let muter: any AudioMuting
     /// The mute, and what it stands for.
-    private var hush = MuteState()
+    private var hush = MutedAppState()
     private var mutedPID: pid_t?
     private let assertions: PlaybackAssertions
-    /// What a stop is timed by (`MuteState.stopTime`).
+    /// What a stop is timed by (`MutedAppState.stopTime`).
     private let clock: @Sendable () -> Date
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     /// Whether Audio Recording lets a tap mute it (`AudioCapturePermission.allowsTaps`).
@@ -150,7 +150,7 @@ actor MutedApp: AddedAppPlayer, FadelessMusicPlayer, PolledMusicPlayer {
 
     /// The Mac slept: AutoHush no longer holds the pause the mute stands
     /// for. It's lifted once the app has been stopped for
-    /// `MuteState.stopTime`, never while it plays.
+    /// `MutedAppState.stopTime`, never while it plays.
     func forgetPause() async {
         guard hush.isMuted else { return }
         hush.forget()

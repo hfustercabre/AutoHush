@@ -10,7 +10,7 @@ import AutoHushKit
 /// player the user resumes, which AutoHush then leaves alone until the other
 /// apps stop. After a sleep (`forget`), the mute is lifted once it has
 /// stopped for `stopTime`.
-struct MuteState: Sendable, Equatable {
+struct MutedAppState: Sendable, Equatable {
     static let stopTime: TimeInterval = 3
 
     private(set) var isMuted = false
@@ -19,12 +19,12 @@ struct MuteState: Sendable, Equatable {
     private var forgotten = false
 
     mutating func mute() {
-        self = MuteState()
+        self = MutedAppState()
         isMuted = true
     }
 
     mutating func unmute() {
-        self = MuteState()
+        self = MutedAppState()
     }
 
     /// AutoHush no longer holds the pause the mute stands for (the Mac
