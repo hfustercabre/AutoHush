@@ -82,14 +82,42 @@ extension UpdateControllerTests {
         #expect(h.alerts.map(\.messageText).allSatisfy { !$0.contains("RC") })
     }
 
-    /// GitHub with a release candidate, its list held at `gate`, newer than
-    /// the `latest` release.
+    @Test("a check under way as release candidates are turned on asks again with them: the candidate is offered")
+    func releaseCandidatesOnDuringCheck() async {
+        let gate = Gate()
+        let h = Harness(checker: Self.heldCandidate(at: gate, latest: "v0.2.1"))
+        let checking = Task { await h.controller.check(userInitiated: true) }
+        await TestWait.until { await gate.waiting == 1 } // asked without release candidates
+        h.controller.setGetsReleaseCandidates(true) // its check joins the one under way
+        await gate.open()
+        await checking.value
+        #expect(h.controller.availableUpdate?.version == AppVersion("0.3.0-rc.1"))
+        #expect(h.offer?.release.version == AppVersion("0.3.0-rc.1"))
+    }
+
+    @Test("a release candidate withdrawn, then offered again, is announced again")
+    func releaseCandidateOfferedAgain() async {
+        let h = Harness(checker: .releases([("v0.3.0-rc.1", true), ("v0.2.0", false)]), mode: .notify)
+        h.preferences.getsReleaseCandidates = true
+        await h.controller.runAutomaticTasks()
+        h.controller.setGetsReleaseCandidates(false)
+        #expect(h.controller.availableUpdate == nil)
+
+        h.controller.setGetsReleaseCandidates(true)
+        await TestWait.until { h.controller.availableUpdate != nil && h.controller.checking == nil }
+        await h.controller.runAutomaticTasks() // as the switch's own run does after its check
+        let candidate = UpdateNotice.available(AppVersion("0.3.0-rc.1")!, running: AppVersion("0.2.0")!)
+        #expect(h.notifier.announced == [candidate, candidate])
+    }
+
+    /// GitHub with a release candidate newer than the `latest` release, each
+    /// answer held at `gate`.
     private static func heldCandidate(at gate: Gate, latest: String) -> UpdateChecker {
         UpdateChecker { request in
+            await gate.wait()
             let page = "https://github.com/\(ProjectInfo.repository)/releases/tag/"
             let body: String
             if request.url?.path().hasSuffix("/releases") == true {
-                await gate.wait()
                 body = #"[{"tag_name": "v0.3.0-rc.1", "prerelease": true, "html_url": "\#(page)v0.3.0-rc.1", "assets": []}]"#
             } else {
                 body = #"{"tag_name": "\#(latest)", "html_url": "\#(page)\#(latest)", "assets": []}"#
