@@ -14,7 +14,7 @@ extension BehaviorSettingsView {
             // that doesn't follow it): AntiDot mode hears none (the user, 2026-10-15/16);
             // the switch is off and dimmed (`SettingsSwitch.isUnavailable`).
             if !model.isAntiDotMode, let player = model.antiDotUnavailablePlayer {
-                Text(verbatim: DetectionText.unavailableNote(player.name, mutes: player.pausesByMuting)).captionStyle()
+                Text(verbatim: player.antiDotModeReason).captionStyle()
             }
             // Measuring needs Audio Recording: without it, the way to allow it, or AntiDot mode.
             if !model.isAntiDotMode, !model.permissions.audio.isSatisfied {

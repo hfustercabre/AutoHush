@@ -239,8 +239,7 @@ private struct SoundSourceRow: View {
                     .accessibilityHidden(true)
                 RowTitle(
                     Text(verbatim: row.source.name),
-                    subtitle: Text(verbatim: row.isIgnored ? IgnoredText.label
-                                   : PlayerOption.interruptsLabel(mutes: model.playerMutesNow))
+                    subtitle: Text(verbatim: SourceText.subtitle(isIgnored: row.isIgnored, mutes: model.playerMutesNow))
                 )
                 Spacer(minLength: 8)
             }

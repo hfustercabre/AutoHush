@@ -131,10 +131,6 @@ extension PlayerOption {
         pausesByMuting ? AntiDotText.onlyMuted(name) : AntiDotText.onlyHeard(name)
     }
 
-    /// `SourceText.interruptsLabel(mutes:)`, for the views that still ask
-    /// for it here.
-    static func interruptsLabel(mutes: Bool) -> String { SourceText.interruptsLabel(mutes: mutes) }
-
     /// Under a player that isn't installed, wherever players are offered.
     static var notInstalledLabel: String {
         String(localized: "Not installed", comment: "Under a media player that isn't on this Mac")

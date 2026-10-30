@@ -15,7 +15,7 @@ struct SourceSwitchRow: View {
     var body: some View {
         let pausesMusic = !model.status.isIgnored(source.id)
         let state = pausesMusic
-            ? Text(verbatim: PlayerOption.interruptsLabel(mutes: model.status.mutesNow))
+            ? Text(verbatim: SourceText.interruptsLabel(mutes: model.status.mutesNow))
             : saysIgnoredShortly
             ? Text("Ignored", comment: "The menu's Ignored Apps side window: under each app that is ignored (the side window's title already says what that means)")
             : Text(verbatim: IgnoredText.label)

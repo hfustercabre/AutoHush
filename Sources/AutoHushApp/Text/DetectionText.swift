@@ -21,12 +21,6 @@ enum DetectionText {
     static var detectByTitle: String {
         String(localized: "Detect playing apps by", comment: "Settings → Fine-Tuning, Detection: lead-in to AntiDot mode's ways of detecting playing apps")
     }
-
-    /// Under the AntiDot mode switch while it's off and dimmed: as the menu
-    /// says why the player couldn't be controlled in AntiDot mode.
-    static func unavailableNote(_ player: String, mutes: Bool) -> String {
-        mutes ? AntiDotText.onlyMuted(player) : AntiDotText.onlyHeard(player)
-    }
 }
 
 /// The detection choices as Settings and Diagnostics describe them.

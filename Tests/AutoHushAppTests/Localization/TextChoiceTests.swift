@@ -183,8 +183,8 @@ struct TextChoiceTests {
                 return Self.detectionMethods.map { Row("\($0)", $0.summary) }
             case .unavailableNote:
                 return [
-                    Row("muted only", DetectionText.unavailableNote(app, mutes: true), namesApp: true),
-                    Row("only its sound tells", DetectionText.unavailableNote(app, mutes: false), namesApp: true),
+                    Row("muted only", AntiDotText.onlyMuted(app), namesApp: true),
+                    Row("only its sound tells", AntiDotText.onlyHeard(app), namesApp: true),
                 ]
             case .updateTitle:
                 return AutomaticUpdates.allCases.map { Row("\($0)", $0.title) }
