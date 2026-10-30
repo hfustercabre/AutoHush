@@ -406,12 +406,11 @@ package struct SafariUI: SafariDriving {
             let closeTab = Self.menuItem("CloseTab", in: app)
             let isOnlyTab = closeTab?.value(kAXEnabledAttribute) as? Bool == false
             guard let item = isOnlyTab ? Self.menuItem("CloseWindow", in: app) : closeTab else { return false }
-            AXUIElementPerformAction(item, kAXPressAction as CFString)
-            return true
+            return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success
         }
         switch closed {
         case nil: logger.notice("The tab Add a Web App opened isn’t in front any more: left open")
-        case false?: logger.error("Safari’s Close Tab wasn’t found: the tab Add a Web App opened was left open")
+        case false?: logger.error("Safari’s Close Tab wasn’t found or didn’t take: the tab Add a Web App opened was left open")
         case true?: break
         }
     }

@@ -48,7 +48,7 @@ package struct ScriptingDictionary: Equatable, Sendable {
     /// A `current track` (pTrk) with a name: what it plays, by script.
     package var hasCurrentTrack: Bool { properties["pTrk"] != nil }
     /// Else a property of its own naming it (VLC's `name of current item`).
-    package var currentItemName: String? { properties.first { $0.value == "name of current item" }?.key }
+    package var currentItemName: String? { propertyCode(named: "name of current item") }
     /// Whether it says by script what it plays.
     package var namesItsSong: Bool { hasCurrentTrack || currentItemName != nil }
     /// What a `ScriptablePlayerProfile` needs: pause and play in its own
@@ -60,6 +60,12 @@ package struct ScriptingDictionary: Equatable, Sendable {
     func commandCode(_ name: String) -> String? {
         let codes = commands.filter { $0.value.lowercased() == name.lowercased() }.keys.sorted()
         return codes.first { $0.hasPrefix(suite ?? "????") } ?? codes.first
+    }
+
+    /// A property's code by its name: the first in order when two share it,
+    /// so it's the same each time (a dictionary's order isn't).
+    func propertyCode(named name: String) -> String? {
+        properties.filter { $0.value == name }.keys.min()
     }
 
     // MARK: - Reading it

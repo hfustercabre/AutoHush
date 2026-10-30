@@ -34,8 +34,8 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
         package init?(dictionary: ScriptingDictionary) {
             if dictionary.hasPlayerState, dictionary.hasStateValues {
                 self = .playerState
-            } else if let playing = dictionary.properties.first(where: { $0.value == "playing" })?.key {
-                self = .playingFlag(property: playing, currentTime: dictionary.properties.first { $0.value == "current time" }?.key)
+            } else if let playing = dictionary.propertyCode(named: "playing") {
+                self = .playingFlag(property: playing, currentTime: dictionary.propertyCode(named: "current time"))
             } else if dictionary.playsDocuments, let documentClass = dictionary.documentClass, let playing = dictionary.documentPlaying {
                 self = .documents(documentClass: documentClass, playing: playing)
             } else {
@@ -85,12 +85,11 @@ package struct ScriptSetup: Codable, Equatable, Sendable {
     /// commands named so, else one that toggles (playpause, else play); `nil`
     /// with none of them.
     package init?(dictionary: ScriptingDictionary) {
-        let names = Dictionary(dictionary.commands.map { ($0.value.lowercased(), $0.key) }, uniquingKeysWith: { first, _ in first })
         if let suite = dictionary.suite {
             commands = .pauseAndPlay(pause: suite + "Paus", play: suite + "Play")
         } else if let pause = dictionary.commandCode("pause"), let play = dictionary.commandCode("play") {
             commands = .pauseAndPlay(pause: pause, play: play)
-        } else if let toggle = dictionary.commandCode("playpause") ?? names["play"] {
+        } else if let toggle = dictionary.commandCode("playpause") ?? dictionary.commandCode("play") {
             commands = .toggle(toggle)
         } else {
             return nil

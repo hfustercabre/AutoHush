@@ -13,6 +13,8 @@ final class FakePanel: NowPlayingPanel, @unchecked Sendable {
     private var opened = 0
     var opens = true
     var inMenuBar = true
+    /// Its rows' Play/Pause can't be pressed (Accessibility refuses).
+    var pressFails = false
 
     init(_ rows: [PanelRow]) { shown = rows }
 
@@ -26,7 +28,7 @@ final class FakePanel: NowPlayingPanel, @unchecked Sendable {
             opened += 1
             return shown
         }
-        guard let row = pick(rows) else { return false }
+        guard let row = pick(rows), !pressFails else { return false }
         lock.withLock { pressedRows.append(row.text) }
         return true
     }
@@ -93,6 +95,16 @@ struct PanelWayTests {
         hidden.opens = false
         hidden.inMenuBar = false
         await #expect(throws: MusicPlayerError.playerCommandFailed(.nowPlayingHidden)) { try await way(hidden, store: store).pause() }
+    }
+
+    @Test("a press the panel refuses fails, and its row isn't kept")
+    func pressRefused() async {
+        let store = MemorySetupStore()
+        store.save(setup)
+        let panel = FakePanel(rows)
+        panel.pressFails = true
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressFailed)) { try await way(panel, store: store).pause() }
+        #expect(store.setups().first?.ways == setup.ways)
     }
 
     /// Its row always shows paused, as Qobuz's does.
