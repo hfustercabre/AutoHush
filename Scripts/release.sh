@@ -114,7 +114,7 @@ SHA256="$(shasum -a 256 "$DMG_PATH" | awk '{ print $1 }')"
 step "Writing the release notes"
 if (( RC )); then
     heading="## [Unreleased]"
-    printf '%s\n\n' "Release candidate $RC of AutoHush $VERSION, for testing before its release. Only copies with Get release candidates on (Settings → About) are offered it, and Homebrew doesn't install it." > "$NOTES_PATH"
+    printf '%s\n\n' "Release candidate $RC of AutoHush $VERSION, for testing before its release. Only copies with Get release candidates on (Settings → About) are offered it, and Homebrew doesn't install it. AutoHush 1.2.6 and older have no such switch: install it by hand from the disk image below, then turn the switch on, or AutoHush offers the latest release back." > "$NOTES_PATH"
 else
     heading="## [$VERSION]"
     : > "$NOTES_PATH"

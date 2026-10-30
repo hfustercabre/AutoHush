@@ -2,9 +2,10 @@
 // arrow from the app to the Applications folder, and a note about the first
 // launch, on the lavender of the light app icon.
 //
-// Built together with the app's MenuBarIcon.swift, so the mark is the real
-// menu bar icon (see Scripts/build-dmg.sh):
-//   swiftc -parse-as-library Sources/AutoHushApp/Views/MenuBar/MenuBarIcon.swift \
+// Built together with the app's MenuBarIcon.swift and MenuBarIcon+Drawing.swift,
+// so the mark is the real menu bar icon (see Scripts/build-dmg.sh):
+//   swiftc -parse-as-library Sources/AutoHushApp/Models/MenuBarIcon.swift \
+//       Sources/AutoHushApp/Models/MenuBarIcon+Drawing.swift \
 //       Scripts/lib/dmg-background.swift -o dmg-background
 //   dmg-background <output.png> <scale>
 //

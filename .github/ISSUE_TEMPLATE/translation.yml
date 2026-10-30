@@ -53,7 +53,7 @@ body:
     id: where
     attributes:
       label: Where does it show?
-      placeholder: "Settings → Fades, under the switch"
+      placeholder: "Settings → Behavior, the Fades card"
     validations:
       required: true
   - type: textarea

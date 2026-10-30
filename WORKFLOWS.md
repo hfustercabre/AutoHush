@@ -625,6 +625,7 @@ flowchart TD
   STALE{"Its row<br/>follows it?"}
   HEAR["Heard for half a second<br/>before a pause or a resume,<br/>the row pressed as a toggle<br/>(Audio Recording)"]
   TOOK{"Did the<br/>press take?"}
+  INSTEAD["Muted instead, as any<br/>player (Audio Recording,<br/>not in AntiDot mode)"]
   FAIL["Couldn’t pause,<br/>with ⓘ"]
   OKP(["Paused; played again<br/>when the other apps stop"])
   MUTE["Muted only (Mute It<br/>Instead): muted while other<br/>apps play, never paused"]
@@ -653,7 +654,8 @@ flowchart TD
   HID -->|"no"| STALE
   STALE -->|"no (Qobuz)"| HEAR --> TOOK
   STALE -->|"yes"| TOOK
-  TOOK -->|"no"| FAIL
+  TOOK -->|"no"| INSTEAD
+  INSTEAD -->|"can’t be muted"| FAIL
   TOOK -->|"yes"| OKP
   WAY --> MUTE --> MUTED --> UNM
   MUTE -.-> ANTI
@@ -668,7 +670,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-An app added with Add an App is paused and played only the one way chosen at Use, each press checked by the app’s own signs; when that way can’t (a page’s button with the window minimized, say), the pause fails and the menu says so. Only an AppleScript with a volume fades. An app that can only be muted, or whose Now Playing row needs its sound, isn’t available in AntiDot mode.
+An app added with Add an App is paused and played only the one way chosen at Use, each press checked by the app’s own signs; when that way can’t (a page’s button with the window minimized, say), it’s muted instead, as any player (with Audio Recording, outside AntiDot mode); otherwise the pause fails and the menu says so. Only an AppleScript with a volume fades. An app that can only be muted, or whose Now Playing row needs its sound, isn’t available in AntiDot mode.
 
 ## Updates
 

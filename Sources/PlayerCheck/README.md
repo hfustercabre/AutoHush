@@ -378,8 +378,9 @@ permission, 128 + the signal for a stop), and each one-line answer
 (`NowPlayingListLine`, `NowPlayingReasonsLine`, `LaunchOptionAnswer`,
 `WindowStateAnswer`), written and read by the same code. The report's lines
 they follow (the requests, the window states and trials, the input block,
-the permissions, the ways' checklist) are `CheckReportLine`s, and what a
-check found is `CheckResult` (`--result`), both in `CheckedPlayers`.
+the permissions, the ways' checklist) are `CheckReportLine`s, in
+`PlayerCheckKit`, and what a check found is `CheckResult` (`--result`), in
+`CheckedPlayers`.
 
 ## The apps in Now Playing (`--now-playing-list`)
 
