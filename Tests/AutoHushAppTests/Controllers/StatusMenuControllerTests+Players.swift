@@ -149,9 +149,9 @@ extension StatusMenuControllerTests {
     func browserAppRow() throws {
         let sut = menuWithCheckedApps()
         defer { sut.remove() }
-        let soundCloud = try row("Sounds", in: sut)
-        #expect(soundCloud.isEnabled)
-        #expect(soundCloud.accessibilityLabel == "Sounds, Google Chrome web app")
+        let sounds = try row("Sounds", in: sut)
+        #expect(sounds.isEnabled)
+        #expect(sounds.accessibilityLabel == "Sounds, Google Chrome web app")
     }
 
     @Test("an app that can only be muted says so; in AntiDot mode it's dimmed, saying why, and stays checked when chosen")
