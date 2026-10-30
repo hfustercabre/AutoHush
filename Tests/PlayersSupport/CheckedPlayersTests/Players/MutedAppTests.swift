@@ -4,9 +4,6 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-/// A keep-awake assertion as a player holds one while it plays.
-private let playing: Set<PowerAssertion> = [PowerAssertion(.system, "Playing")]
-
 @Suite("MutedApp", .waitsTimeLimit)
 struct MutedAppTests {
     private let muted = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox",
@@ -19,7 +16,7 @@ struct MutedAppTests {
         let held = Locked(false)
         let clock = ManualClock()
         let player = MutedApp(setup: muted, processIdentifier: { 4242 }, muter: muter,
-                              assertionsHeld: { _ in held.value ? playing : [] }, clock: { clock.now }, audioRecordingAllowed: { true })
+                              assertionsHeld: { _ in held.value ? MockPowerAssertions.playing : [] }, clock: { clock.now }, audioRecordingAllowed: { true })
         return (player, muter, held, clock)
     }
 
@@ -90,7 +87,7 @@ struct MutedAppTests {
     func mutedThenQuit() async throws {
         let muter = FakeMuter()
         let running = Locked<pid_t?>(4242)
-        let player = MutedApp(setup: muted, processIdentifier: { running.value }, muter: muter, assertionsHeld: { _ in playing }, audioRecordingAllowed: { true })
+        let player = MutedApp(setup: muted, processIdentifier: { running.value }, muter: muter, assertionsHeld: { _ in MockPowerAssertions.playing }, audioRecordingAllowed: { true })
         try await player.pause()
         #expect(muter.isMuted)
         running.value = nil
@@ -110,7 +107,7 @@ struct MutedAppTests {
     func releaseAndAccess() async throws {
         let muter = FakeMuter()
         let running = Locked<pid_t?>(4242)
-        let player = MutedApp(setup: muted, processIdentifier: { running.value }, muter: muter, assertionsHeld: { _ in playing }, audioRecordingAllowed: { true })
+        let player = MutedApp(setup: muted, processIdentifier: { running.value }, muter: muter, assertionsHeld: { _ in MockPowerAssertions.playing }, audioRecordingAllowed: { true })
         try await player.verifyControlAccess()
         try await player.pause()
         #expect(player.releasesOnQuit)

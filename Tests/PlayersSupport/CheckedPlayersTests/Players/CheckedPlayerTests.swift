@@ -7,9 +7,6 @@ import ScriptablePlayers
 import AutoHushTestSupport
 import PlayersTestSupport
 
-/// A keep-awake assertion as a player holds one while it plays.
-private let playing: Set<PowerAssertion> = [PowerAssertion(.system, "Playing")]
-
 @Suite("CheckedPlayer", .waitsTimeLimit)
 struct CheckedPlayerTests {
     private let app = URL(fileURLWithPath: "/Applications/Jukebox.app")
@@ -302,7 +299,7 @@ struct CheckedPlayerTests {
         let heard = FakeLevelProbe(audible: false)
         let held = Locked(false)
         let qobuz = CheckedPlayer(setup: stale, parts: CheckedPlayer.parts(for: stale, store: MemorySetupStore()), reports: nil,
-                                  processIdentifier: { 4242 }, levelProbe: heard, soundOn: { _ in true }, assertionsHeld: { _ in held.value ? playing : [] }, audioRecordingAllowed: { true })
+                                  processIdentifier: { 4242 }, levelProbe: heard, soundOn: { _ in true }, assertionsHeld: { _ in held.value ? MockPowerAssertions.playing : [] }, audioRecordingAllowed: { true })
         #expect(qobuz.needsAudioLevels && !qobuz.pausesByMuting) // heard, through Audio Recording, but pressed, not muted
         #expect(await qobuz.polledState() == .unknown) // its output open, and no assertion seen yet: nothing told
         held.value = true
