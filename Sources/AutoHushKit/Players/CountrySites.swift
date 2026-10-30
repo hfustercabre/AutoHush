@@ -7,7 +7,7 @@ import Foundation
 package struct CountrySites: Equatable, Sendable {
     /// The service's name, as the user knows it.
     package let name: String
-    /// Each country's site, by region code: "DE": "music.amazon.de".
+    /// Each country's site, by region code: "DE": "music.example.de".
     package let byRegion: [String: String]
     /// The site for every other country.
     let elsewhere: String
@@ -38,7 +38,7 @@ package struct CountrySites: Equatable, Sendable {
     /// The country `address` is the site of, as a region code; "" for every
     /// other country. The first of `preferred` (the one picked last, then the
     /// Mac's region) whose site it is; else the country its host ends with
-    /// (DE for music.amazon.de, though Austria uses it too); else the first
+    /// (DE for music.example.de, though Austria uses it too); else the first
     /// whose site it is, by code.
     package func country(of address: String, preferring preferred: [String]) -> String {
         guard let host = Self.host(of: address) else { return "" }

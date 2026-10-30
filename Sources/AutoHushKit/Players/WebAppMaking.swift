@@ -17,7 +17,7 @@ package protocol WebAppMaking: Sendable {
 /// offered with the players, to add, until a web app opens it.
 package struct WebAppSuggestion: Equatable, Sendable {
     package let name: String
-    /// What "Add a Web App" is filled in with, e.g. "music.youtube.com".
+    /// What "Add a Web App" is filled in with, e.g. "music.example.com".
     package let address: String
 
     package init(name: String, address: String) {

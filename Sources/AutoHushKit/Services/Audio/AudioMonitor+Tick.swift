@@ -29,12 +29,11 @@ extension AudioMonitor {
         candidates = processes.filter(\.isRunningOutput)
         playerProcesses = Set(candidates.filter { configuration.isMusicPlayer($0.bundleID) }.map(\.objectID))
         sourceOfProcess = [:]
-        // A process without a bundle ID (a command-line player such as afplay
-        // or mpv) counts as the app that owns it, e.g. Terminal; one no app
-        // owns (a system daemon) is left with an empty ID and doesn't count.
-        for process in candidates where process.bundleID.isEmpty || configuration.isMediaSource(process.bundleID) {
-            let source = sourceIdentifier?.source(for: process)
-                ?? AudioSource(id: process.bundleID, name: process.bundleID)
+        // A process without a bundle ID (a command-line player) counts as
+        // the app that owns it, e.g. Terminal; one no app owns (a system
+        // daemon) is left with an empty ID and doesn't count.
+        for process in candidates {
+            guard let source = owningSource(of: process) else { continue }
             if configuration.isMusicPlayer(source.id) { playerProcesses.insert(process.objectID) }
             // An excluded owner (e.g. the media player's helper) excludes its processes too.
             guard configuration.isMediaSource(source.id) else { continue }
@@ -55,18 +54,20 @@ extension AudioMonitor {
     private func updateMicrophoneSources(among processes: [AudioProcessInfo]) {
         microphoneSourceIDs = []
         for process in processes where process.isRunningInput {
-            let source: AudioSource
-            if let playing = sourceOfProcess[process.objectID] {
-                source = playing
-            } else {
-                // Only its microphone on: its owner, found as for a playing one.
-                guard process.bundleID.isEmpty || configuration.isMediaSource(process.bundleID) else { continue }
-                source = sourceIdentifier?.source(for: process) ?? AudioSource(id: process.bundleID, name: process.bundleID)
-            }
-            guard configuration.isMediaSource(source.id) else { continue }
+            // Only its microphone on: its owner, found as for a playing one.
+            guard let source = sourceOfProcess[process.objectID] ?? owningSource(of: process),
+                  configuration.isMediaSource(source.id) else { continue }
             microphoneSourceIDs.insert(source.id)
             knownSources[source.id] = source
         }
+    }
+
+    /// The app that owns `process` (`sourceIdentifier`), or its own bundle
+    /// ID; `nil` when that ID already rules it out (the media player's, an
+    /// app that never counts). The owner may be ruled out still.
+    private func owningSource(of process: AudioProcessInfo) -> AudioSource? {
+        guard process.bundleID.isEmpty || configuration.isMediaSource(process.bundleID) else { return nil }
+        return sourceIdentifier?.source(for: process) ?? AudioSource(id: process.bundleID, name: process.bundleID)
     }
 
     /// Tells the arbiter which apps have their microphone on (calls): only

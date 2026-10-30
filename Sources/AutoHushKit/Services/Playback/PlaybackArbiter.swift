@@ -207,7 +207,7 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// minute (2026-10-27: a player whose way kept failing was pressed every
     /// second, the menu bar's Now Playing opened each time).
     static func mutedPauseWait(afterFailures failures: Int) -> TimeInterval {
-        min(mutedPauseRetry * pow(2, Double(max(failures - 1, 0))), 60)
+        Backoff.doubling(afterFailures: failures, within: mutedPauseRetry...60)
     }
     /// The user's input counts as their play only when the player is heard
     /// again within this long of it (`userPlayedJustNow`).
