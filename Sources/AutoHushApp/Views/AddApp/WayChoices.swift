@@ -1,7 +1,5 @@
 import SwiftUI
-import AutoHushKit
 import CheckedPlayers
-import PlayerCheckKit
 
 /// The last step when ways worked (U2, the user's pick, 2026-10-15): each one
 /// AutoHush can use as a card to choose, the recommended first and chosen

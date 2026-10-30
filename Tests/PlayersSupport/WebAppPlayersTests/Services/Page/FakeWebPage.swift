@@ -1,7 +1,6 @@
 import Foundation
 import os
 @testable import WebAppPlayers
-import AutoHushTestSupport
 
 /// A web app's page in memory: buttons by number, each with its words and
 /// place; a press runs `onPress`.

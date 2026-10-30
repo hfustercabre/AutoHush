@@ -1,6 +1,4 @@
 import Foundation
-import AutoHushKit
-@testable import WebAppPlayers
 import AutoHushTestSupport
 
 /// The keyboard's Play/Pause key in tests: counts its presses, and does

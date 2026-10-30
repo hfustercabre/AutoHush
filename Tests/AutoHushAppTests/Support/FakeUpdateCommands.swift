@@ -1,7 +1,6 @@
 import Foundation
 import AutoHushKit
 @testable import AutoHushApp
-import AutoHushTestSupport
 
 /// Stands in for the updates: each command is logged; what Settings shows
 /// of them is as the test sets it.

@@ -1,7 +1,6 @@
 import AppKit
 import AutoHushKit
 import CheckPanel
-import CheckedPlayers
 import PlayerCheckKit
 import SwiftUI
 

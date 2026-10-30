@@ -1,8 +1,6 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
-import AutoHushTestSupport
-import CheckedPlayers
 
 /// A check that ends when the test says.
 @MainActor

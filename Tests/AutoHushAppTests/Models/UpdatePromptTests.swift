@@ -1,7 +1,6 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
 
 @Suite("UpdatePrompt")
 struct UpdatePromptTests {

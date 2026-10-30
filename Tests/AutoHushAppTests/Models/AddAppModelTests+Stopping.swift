@@ -4,7 +4,6 @@ import Testing
 import AutoHushTestSupport
 import CheckedPlayers
 import WebAppPlayers
-import PlayerCheckKit
 
 extension AddAppModelTests {
     @Test("closing the window stops the check")

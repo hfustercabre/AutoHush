@@ -1,6 +1,5 @@
 import Foundation
 import Security
-import AutoHushKit
 
 // UpdateInstaller: the checks of the app copied out (its signature, version
 // and macOS), and its quarantine mark.

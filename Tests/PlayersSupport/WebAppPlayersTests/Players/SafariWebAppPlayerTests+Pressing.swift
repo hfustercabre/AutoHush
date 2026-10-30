@@ -3,7 +3,6 @@ import Testing
 import AutoHushKit
 @testable import WebAppPlayers
 import AutoHushTestSupport
-import PlayersTestSupport
 
 extension SafariWebAppPlayerTests {
     @Test("it presses only from the opposite state, and waits for the page to follow")

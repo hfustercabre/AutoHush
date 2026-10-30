@@ -2,7 +2,6 @@ import CoreAudio
 import Foundation
 import Testing
 @testable import AutoHushKit
-import AutoHushTestSupport
 
 /// The Mac's own outputs, only read: never muted nor changed, the tests
 /// run on it.

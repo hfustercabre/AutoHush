@@ -1,6 +1,5 @@
 import AutoHushKit
 import CheckedPlayers
-import PlayerCheckKit
 import Foundation
 
 /// What the Add an App window (W2), the warning before its check (W6) and

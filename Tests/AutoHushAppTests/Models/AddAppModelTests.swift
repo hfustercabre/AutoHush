@@ -4,7 +4,6 @@ import Testing
 import AutoHushTestSupport
 import CheckedPlayers
 import WebAppPlayers
-import PlayerCheckKit
 
 @MainActor
 @Suite("AddAppModel", .waitsTimeLimit)

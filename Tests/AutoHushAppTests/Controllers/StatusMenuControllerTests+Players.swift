@@ -2,7 +2,6 @@ import AppKit
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
-import AutoHushTestSupport
 
 extension StatusMenuControllerTests {
     // MARK: - The music player

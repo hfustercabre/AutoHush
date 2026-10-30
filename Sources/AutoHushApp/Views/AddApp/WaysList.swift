@@ -1,7 +1,5 @@
 import SwiftUI
-import AutoHushKit
 import CheckedPlayers
-import PlayerCheckKit
 
 /// The ways the check tried, each with how it did (C5).
 struct WaysList: View {

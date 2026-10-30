@@ -1,7 +1,5 @@
 import Foundation
 import os
-import AutoHushKit
-import AutoHushTestSupport
 @testable import AutoHushApp
 
 /// Stands in for the learning window, so tests never put one on screen.

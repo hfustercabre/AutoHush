@@ -3,7 +3,6 @@ import CheckedPlayers
 import PlayerCheckKit
 import AutoHushKit
 import MenuPlayers
-import WebAppPlayers
 
 // MARK: - Playback menu (Accessibility, as AutoHush's AccessibilityPlaybackMenu)
 

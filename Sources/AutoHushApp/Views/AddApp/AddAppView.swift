@@ -1,8 +1,6 @@
 import AppKit
 import SwiftUI
-import AutoHushKit
 import CheckedPlayers
-import PlayerCheckKit
 
 // "Add an App…", under the menu's Other Apps and their tiles in Settings →
 // General and the welcome window (E3): the user chooses an app that can

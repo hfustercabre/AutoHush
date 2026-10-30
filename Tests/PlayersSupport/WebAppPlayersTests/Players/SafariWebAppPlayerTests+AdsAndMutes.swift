@@ -3,7 +3,6 @@ import Testing
 import AutoHushKit
 @testable import WebAppPlayers
 import AutoHushTestSupport
-import PlayersTestSupport
 
 extension SafariWebAppPlayerTests {
     @Test("a disabled Pause (an ad) is never pressed: muted instead, and only unmuted after")

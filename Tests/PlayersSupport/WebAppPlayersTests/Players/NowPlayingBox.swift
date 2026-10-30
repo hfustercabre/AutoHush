@@ -1,6 +1,5 @@
 import Foundation
 import AutoHushKit
-@testable import WebAppPlayers
 import AutoHushTestSupport
 
 /// The Now Playing app in tests: unknown (the key is pressed, as ever)

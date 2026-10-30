@@ -4,7 +4,6 @@ import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 import CheckedPlayers
-import PlayerCheckKit
 
 /// Add an App's window at its steps, drawn as the window draws it on
 /// `World`'s stand-ins: no other test draws its Allow, Reopen and Use steps

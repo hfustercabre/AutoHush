@@ -1,7 +1,4 @@
 import SwiftUI
-import AutoHushKit
-import CheckedPlayers
-import PlayerCheckKit
 
 /// Step 2's permissions: each one the chosen app's check needs, with what
 /// it's for and Allow… until it's allowed. In AntiDot mode, Audio Recording

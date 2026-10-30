@@ -1,7 +1,6 @@
 import Foundation
 import AutoHushKit
 @testable import AutoHushApp
-import AutoHushTestSupport
 
 /// Stands in for AppDelegate's part: each call is logged.
 @MainActor

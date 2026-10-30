@@ -2,7 +2,6 @@ import AppKit
 import Foundation
 import os
 import AutoHushKit
-import MenuPlayers
 import ScriptablePlayers
 import WebAppPlayers
 

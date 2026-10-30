@@ -4,7 +4,6 @@ import Testing
 import AutoHushTestSupport
 import CheckedPlayers
 import WebAppPlayers
-import PlayerCheckKit
 
 extension AddAppModelTests {
     @Test("a finished check is kept until it's used: the window opened again shows it")

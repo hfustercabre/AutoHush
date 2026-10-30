@@ -4,7 +4,6 @@ import Testing
 import AutoHushTestSupport
 import CheckedPlayers
 import WebAppPlayers
-import PlayerCheckKit
 
 extension AddAppModelTests {
     /// In AntiDot mode, Audio Recording turned down: the app playing, ready to check.
