@@ -27,14 +27,7 @@ enum PodcastsWords {
 
     /// The words in a translation table: `[language: [key: text]]`.
     static func find(in data: Data) -> PlayPauseWords? {
-        guard let languages = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any]
-        else { return nil }
-        let tables = languages.compactMapValues { ($0 as? [String: Any])?.compactMapValues { $0 as? String } }
-        guard let english = tables["en"] else { return nil }
-        func words(_ text: String) -> Set<String> {
-            let keys = english.filter { $0.value == text }.keys
-            return Set(tables.values.flatMap { table in keys.compactMap { table[$0] } })
-        }
-        return PlayPauseWords(play: words("Play"), pause: words("Pause"))
+        guard let tables = PlayPauseWords.loctable(data), let english = tables["en"] else { return nil }
+        return PlayPauseWords.tableWords(tables.values, english: english)
     }
 }

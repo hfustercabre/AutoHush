@@ -81,6 +81,26 @@ struct ScriptSetupTests {
         #expect(setup.state == .documents(documentClass: "docu", playing: "splg"))
     }
 
+    @Test("two commands or properties of the same name: the same one each time, by code, whatever a dictionary's order")
+    func sameNamesByCode() throws {
+        let twoSuites = """
+            <dictionary><suite name="One" code="aaaa"><command name="play" code="aaaaTogl"/>
+              <class-extension extends="application"><property name="playing" code="aPlg"/><property name="current time" code="aTim"/>
+              <property name="name of current item" code="aNam"/></class-extension></suite>
+            <suite name="Two" code="zzzz"><command name="play" code="zzzzTogl"/>
+              <class-extension extends="application"><property name="playing" code="zPlg"/><property name="current time" code="zTim"/>
+              <property name="name of current item" code="zNam"/></class-extension></suite></dictionary>
+            """
+        // Each read kept, so each dictionary keeps an order of its own (Swift's
+        // differs from one dictionary to the next).
+        let reads = try (0..<50).map { _ in try dictionary(twoSuites) }
+        let setups = reads.compactMap(ScriptSetup.init(dictionary:))
+        #expect(setups.count == reads.count)
+        #expect(setups.allSatisfy { $0.commands == .toggle("aaaaTogl") })
+        #expect(setups.allSatisfy { $0.state == .playingFlag(property: "aPlg", currentTime: "aTim") })
+        #expect(reads.allSatisfy { $0.currentItemName == "aNam" })
+    }
+
     /// An app in `folder` holding `files` (name: text) in its resources, its Info.plist naming `named`.
     private func app(_ name: String, in folder: URL, named: String? = nil, files: [String: String]) throws -> URL {
         let info = ["CFBundleIdentifier": "com.example.\(name.lowercased())", "OSAScriptingDefinition": named].compactMapValues { $0 }

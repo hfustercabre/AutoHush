@@ -103,12 +103,15 @@ struct MenuPlayerTests {
         #expect(player(FakeMenu()).stateReportDelay == PolledStateObserver.reportDelay) // a change is seen up to a read later
     }
 
-    @Test("without its own words, a menu player's state is unknown, and Diagnostics says so")
+    @Test("without its own words, a menu player's state is unknown, and Diagnostics says so, never reading them on its own thread")
     func withoutItsWords() async {
-        #expect(player(FakeMenu()).ownWordsRead == true)
+        let jukebox = player(FakeMenu())
+        #expect(await jukebox.playerState() == .playing)
+        #expect(jukebox.ownWordsRead == true) // as its state's read found them
         let wordless = MenuPlayer(profile: Self.profile, menu: FakeMenu(), processIdentifier: { 4242 }, words: { nil })
-        #expect(wordless.ownWordsRead == false) // Diagnostics says so
+        #expect(wordless.ownWordsRead == nil) // read on the player's queue, not here: nothing read yet
         #expect(await wordless.playerState() == .unknown)
+        #expect(wordless.ownWordsRead == false) // Diagnostics says so
     }
 
     @Test("its state comes from the menu: not running, no access, nothing to play, playing, paused")

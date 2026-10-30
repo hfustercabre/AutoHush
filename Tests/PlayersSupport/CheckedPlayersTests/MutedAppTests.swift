@@ -53,7 +53,7 @@ struct MutedAppTests {
         try await player.pause()
         held.value = false
         #expect(await player.playerState() == .paused)
-        clock.advance(by: MuteState.stopTime)
+        clock.advance(by: MutedAppState.stopTime)
         #expect(await player.playerState() == .paused)
         #expect(muter.isMuted)
         held.value = true
@@ -71,7 +71,7 @@ struct MutedAppTests {
         #expect(muter.isMuted) // it plays on
         held.value = false
         #expect(await player.playerState() == .paused)
-        clock.advance(by: MuteState.stopTime)
+        clock.advance(by: MutedAppState.stopTime)
         #expect(await player.playerState() == .paused)
         #expect(!muter.isMuted) // stopped for 3 s: lifted
     }

@@ -256,7 +256,7 @@ struct CheckedPlayerTests {
         #expect(await paused.playerState() == .paused) // its output open, silent: as it reports
     }
 
-    @Test("a report of a pause while it's heard is stale: its reports count no more; in AntiDot mode it isn't listened to")
+    @Test("a report of a pause while it's heard is stale: its reports count no more; in AntiDot mode, or without Audio Recording, it isn't listened to")
     func staleReport() async {
         var clients: [pid_t: NowPlayingReports.Client] = [:]
         NowPlayingReports.apply("[com.example.jukebox (\(getpid())) Jukebox ❯] PlaybackState changed from Playing to Paused", to: &clients)
@@ -286,6 +286,13 @@ struct CheckedPlayerTests {
         antiDot.allowTaps(false) // no taps: as it reports
         #expect(await antiDot.playerState() == .paused)
         #expect(unheard.listens == 0)
+
+        let unrecorded = FakeLevelProbe(audible: true)
+        let noRecording = CheckedPlayer(setup: setup([.menu(menuName: "Play")]), parts: .init(ways: [], signs: []),
+                                        reports: NowPlayingReports(clients: clients, processRuns: { _ in true }), processIdentifier: { 4242 },
+                                        levelProbe: unrecorded, soundOn: { _ in true }, audioRecordingAllowed: { false })
+        #expect(await noRecording.playerState() == .paused) // without Audio Recording, a tap hears nothing: as it reports
+        #expect(unrecorded.listens == 0)
     }
 
     @Test("one told by its level is listened to only when it's about to be paused or played; read once a second, its assertion tells")

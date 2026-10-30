@@ -31,20 +31,17 @@ extension PlayPauseWords {
         let files = FileManager.default
         var play: Set<String> = [], pause: Set<String> = [], sources: [String] = []
         func take(_ tables: [[String: String]], english: [String: String], from source: String) {
-            let playKeys = english.filter { $0.value == "Play" }.keys, pauseKeys = english.filter { $0.value == "Pause" }.keys
-            guard !playKeys.isEmpty || !pauseKeys.isEmpty else { return }
-            for table in tables {
-                play.formUnion(playKeys.compactMap { table[$0] })
-                pause.formUnion(pauseKeys.compactMap { table[$0] })
-            }
+            let words = tableWords(tables, english: english)
+            guard !words.play.isEmpty || !words.pause.isEmpty else { return }
+            play.formUnion(words.play)
+            pause.formUnion(words.pause)
             sources.append(source)
         }
         let names = (try? files.contentsOfDirectory(atPath: resources.path)) ?? []
         // Every language in one property list (Podcasts' Localizable.loctable).
         for name in names where name.hasSuffix(".loctable") {
             guard let data = try? Data(contentsOf: resources.appendingPathComponent(name), options: .alwaysMapped),
-                  let languages = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any] else { continue }
-            let tables = languages.compactMapValues { ($0 as? [String: Any])?.compactMapValues { $0 as? String } }
+                  let tables = loctable(data) else { continue }
             if let english = tables["en"] ?? tables["English"] ?? tables["Base"] { take(Array(tables.values), english: english, from: name) }
         }
         // One folder per language (Localizable.strings and the like).
@@ -62,16 +59,6 @@ extension PlayPauseWords {
         }
         // An Electron app's translations, inside app.asar as JSON.
         if let asar = try? Data(contentsOf: resources.appendingPathComponent("app.asar"), options: .alwaysMapped) {
-            /// JSON's white space, between a key, its colon and its text.
-            func isSpace(_ byte: UInt8) -> Bool { [0x20, 0x09, 0x0A, 0x0D].contains(byte) }
-            /// The JSON string starting at `index` (a quote), decoded, and the index after it.
-            func string(at index: Data.Index) -> (String, Data.Index)? {
-                guard index >= asar.startIndex, index < asar.endIndex, asar[index] == UInt8(ascii: "\"") else { return nil }
-                var end = index + 1
-                while end < asar.endIndex, asar[end] != UInt8(ascii: "\"") { end += asar[end] == UInt8(ascii: "\\") ? 2 : 1 }
-                guard end < asar.endIndex, end - index < 200, let text = try? JSONDecoder().decode(String.self, from: asar[index...end]) else { return nil }
-                return (text, end + 1)
-            }
             /// The keys whose text is `word`: `"<key>": "<word>"`.
             func keys(of word: String) -> Set<String> {
                 var found: Set<String> = [], start = asar.startIndex
@@ -80,35 +67,21 @@ extension PlayPauseWords {
                     start = range.upperBound
                     guard range.lowerBound > asar.startIndex else { continue }
                     var colon = range.lowerBound - 1
-                    while colon > asar.startIndex, isSpace(asar[colon]) { colon -= 1 }
+                    while colon > asar.startIndex, isJSONSpace(asar[colon]) { colon -= 1 }
                     guard asar[colon] == UInt8(ascii: ":") else { continue }
                     var close = colon - 1
-                    while close > asar.startIndex, isSpace(asar[close]) { close -= 1 }
+                    while close > asar.startIndex, isJSONSpace(asar[close]) { close -= 1 }
                     guard asar[close] == UInt8(ascii: "\"") else { continue }
                     var open = close - 1
                     while open > asar.startIndex, asar[open] != UInt8(ascii: "\""), close - open < 80 { open -= 1 }
-                    if let (key, _) = string(at: open), !key.isEmpty { found.insert(key) }
+                    if let (key, _) = jsonString(at: open, in: asar), !key.isEmpty { found.insert(key) }
                 }
                 return found
             }
-            /// Every text of `key`: `"<key>": "…"`, with or without spaces
-            /// around the colon, as `keys(of:)` reads them.
-            func texts(of key: String) -> Set<String> {
-                var found: Set<String> = [], start = asar.startIndex
-                let marker = Data("\"\(key)\"".utf8)
-                while let range = asar.range(of: marker, in: start..<asar.endIndex) {
-                    start = range.upperBound
-                    var index = range.upperBound
-                    while index < asar.endIndex, isSpace(asar[index]) { index += 1 }
-                    guard index < asar.endIndex, asar[index] == UInt8(ascii: ":") else { continue }
-                    index += 1
-                    while index < asar.endIndex, isSpace(asar[index]) { index += 1 }
-                    if let (text, _) = string(at: index), !text.isEmpty { found.insert(text) }
-                }
-                return found
-            }
-            let playTexts = keys(of: "Play").reduce(into: Set<String>()) { $0.formUnion(texts(of: $1)) }
-            let pauseTexts = keys(of: "Pause").reduce(into: Set<String>()) { $0.formUnion(texts(of: $1)) }
+            // Every text of those keys, with or without spaces around the
+            // colon, as `keys(of:)` reads them.
+            let playTexts = keys(of: "Play").reduce(into: Set<String>()) { $0.formUnion(asarTexts(ofKey: $1, in: asar)) }
+            let pauseTexts = keys(of: "Pause").reduce(into: Set<String>()) { $0.formUnion(asarTexts(ofKey: $1, in: asar)) }
             if !playTexts.isEmpty || !pauseTexts.isEmpty {
                 play.formUnion(playTexts)
                 pause.formUnion(pauseTexts)

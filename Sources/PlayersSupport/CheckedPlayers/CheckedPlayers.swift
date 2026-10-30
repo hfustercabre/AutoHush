@@ -1,6 +1,5 @@
 import AppKit
 import Foundation
-import os
 import AutoHushKit
 import WebAppPlayers
 
@@ -11,7 +10,7 @@ import WebAppPlayers
 /// supported app is; one moved since its check gets its new place.
 package final class CheckedPlayers: Sendable {
     let store: any PlayerSetupStore
-    private let players = OSAllocatedUnfairLock<[String: any AddedAppPlayer]>(initialState: [:])
+    private let players = KeptPlayers<PlayerSetup, any AddedAppPlayer>(key: { $0.bundleID }, source: { $0.setup })
     /// Where Launch Services finds an app now, by bundle ID; tests stand in for it.
     private let locate: @Sendable (String) -> URL?
 
@@ -22,24 +21,7 @@ package final class CheckedPlayers: Sendable {
     }
 
     package func current() -> [any AddedAppPlayer] {
-        let setups = store.setups().map(moved)
-        // New players are made outside the lock: each reads its page's
-        // learned button from the preferences as it's made.
-        let known = players.withLock { $0 }
-        let made = Dictionary(setups.filter { known[$0.bundleID]?.setup != $0 }.map { ($0.bundleID, Self.player(for: $0, store: store)) },
-                              uniquingKeysWith: { first, _ in first })
-        return players.withLock { players in
-            // A player another call kept meanwhile wins, so each app has one.
-            let latest = players
-            players = [:]
-            return setups.compactMap { setup in
-                guard let player = [latest[setup.bundleID], known[setup.bundleID], made[setup.bundleID]]
-                    .lazy.compactMap({ $0 }).first(where: { $0.setup == setup })
-                else { return nil } // never: a known player matches, or one was made
-                players[setup.bundleID] = player
-                return player
-            }
-        }
+        players.current(store.setups().map(moved)) { Self.player(for: $0, store: store) }
     }
 
     /// The player for `setup`: muted instead of paused when that's its way
@@ -69,7 +51,7 @@ package final class CheckedPlayers: Sendable {
         guard let setup = result.setup else { return }
         if let button = result.pageButton { recipes.save(button, for: setup.bundleID) }
         store.save(setup)
-        players.withLock { $0[setup.bundleID] = nil }
+        players.forget(setup.bundleID)
     }
 
     /// Removes the app added with `bundleID` (the user's Remove…): its setup
@@ -78,6 +60,6 @@ package final class CheckedPlayers: Sendable {
     package func forget(_ bundleID: String, recipes: any PlayPauseRecipeStore = DefaultsRecipeStore()) {
         store.forget(bundleID)
         recipes.forget(for: bundleID)
-        players.withLock { $0[bundleID] = nil }
+        players.forget(bundleID)
     }
 }

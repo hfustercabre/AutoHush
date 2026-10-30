@@ -163,7 +163,8 @@ actor PanelWay: MusicPlayer {
                 if declined || !now.bar.isEmpty { opened = panel.pressRow { pick($0, told: false) } }
             }
             // Not opened: hidden in the menu bar, which the user can change.
-            return (chosen, opened == nil && !panel.isInMenuBar())
+            // A row chosen counts only once its press took.
+            return (opened == true ? chosen : nil, opened == nil && !panel.isInMenuBar())
         }
         guard let pressed else { throw MusicPlayerError.playerCommandFailed(hidden ? .nowPlayingHidden : .pressFailed) }
         // Kept without its times, which change as it plays (`withoutTimes`).

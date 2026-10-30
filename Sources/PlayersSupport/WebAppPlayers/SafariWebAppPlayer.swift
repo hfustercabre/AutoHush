@@ -194,10 +194,9 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
     /// in place of a pause is lifted, so the web app is never left silent.
     @MainActor
     package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        WebAppStateObserver(
-            polled: PolledStateObserver(read: { [self] in await self.polledPlayerState() }, onChange: onChange),
-            onStop: { [self] in Task { await self.releaseMute() } }
-        )
+        StoppingObserver(PolledStateObserver(read: { [self] in await self.polledPlayerState() }, onChange: onChange)) { [self] in
+            Task { await self.releaseMute() }
+        }
     }
 
     /// Lifts a mute in place of a pause, without playing anything.
@@ -210,83 +209,5 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         let control = control
         try await queue.runThrowing { try control.press(from: state, pid: pid) }
-    }
-}
-
-/// A web app's state observer: the polled one, and lifting a mute when it stops.
-@MainActor
-final class WebAppStateObserver: PlayerStateObserving {
-    private let polled: PolledStateObserver
-    private let onStop: @MainActor () -> Void
-
-    init(polled: PolledStateObserver, onStop: @escaping @MainActor () -> Void) {
-        self.polled = polled
-        self.onStop = onStop
-    }
-
-    func start() { polled.start() }
-
-    func stop() {
-        polled.stop()
-        onStop()
-    }
-}
-
-/// The Safari web apps on this Mac as players, each kept as long as it's
-/// installed: a player remembers its button and how learning goes.
-package final class SafariWebAppPlayers: Sendable {
-    private let finder: SafariWebAppFinder
-    private let tested: [TestedWebApp]
-    private let makePlayer: @Sendable (SafariWebApp, _ isUntested: Bool) -> SafariWebAppPlayer
-    private let players = OSAllocatedUnfairLock<[String: SafariWebAppPlayer]>(initialState: [:])
-
-    /// `tested`: the sites AutoHush has been tested with; any other web app
-    /// is untested.
-    package init(
-        finder: SafariWebAppFinder = SafariWebAppFinder(),
-        tested: [TestedWebApp] = [],
-        makePlayer: @escaping @Sendable (SafariWebApp, _ isUntested: Bool) -> SafariWebAppPlayer = {
-            SafariWebAppPlayer(app: $0, isUntested: $1)
-        }
-    ) {
-        self.finder = finder
-        self.tested = tested
-        self.makePlayer = makePlayer
-    }
-
-    /// One player for each web app installed now, by name; a tested site's
-    /// is named as the site ("YouTube Music", whatever Safari called it). A
-    /// web app that was renamed or moved gets a new one.
-    package func current() -> [SafariWebAppPlayer] {
-        let apps = finder.webApps().map(named).sorted { $0.name.localizedLowercase < $1.name.localizedLowercase }
-        // New players are made outside the lock: each reads its learned
-        // button from the preferences as it's made.
-        let known = players.withLock { $0 }
-        let made = Dictionary(apps.filter { known[$0.bundleID]?.app != $0 }.map { app in
-            (app.bundleID, makePlayer(app, !tested.contains { $0.isAdded(as: app) }))
-        }, uniquingKeysWith: { first, _ in first })
-        return players.withLock { players in
-            // A player another call kept meanwhile wins, so each app has one.
-            let latest = players
-            players = [:]
-            return apps.compactMap { app in
-                guard let player = [latest[app.bundleID], known[app.bundleID], made[app.bundleID]]
-                    .lazy.compactMap({ $0 }).first(where: { $0.app == app })
-                else { return nil } // never: a known player matches, or one was made
-                players[app.bundleID] = player
-                return player
-            }
-        }
-    }
-
-    /// `app`, named as its tested site when it's one's.
-    private func named(_ app: SafariWebApp) -> SafariWebApp {
-        guard let site = tested.first(where: { $0.isAdded(as: app) }), site.name != app.name else { return app }
-        return SafariWebApp(bundleID: app.bundleID, name: site.name, url: app.url, startURL: app.startURL)
-    }
-
-    /// The tested sites that no web app installed now opens, to suggest.
-    package func suggestions() -> [WebAppSuggestion] {
-        TestedWebApp.notAdded(tested, among: finder.webApps())
     }
 }

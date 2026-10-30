@@ -24,32 +24,3 @@ extension AddedAppPlayer {
     /// again), and a mute always takes.
     package nonisolated var checksItsPresses: Bool { true }
 }
-
-/// What an added app's keep-awake assertions say, by AntiDot mode's rule
-/// (`AnnouncedAssertions.announcing`, its names learned while its sound is
-/// on; one keeping only the display awake doesn't tell, unless it's one of
-/// its video names): playing while it announces, paused once it has
-/// before; `.unknown` until it has.
-struct PlaybackAssertions: Sendable {
-    /// What the app's own processes hold now.
-    static let read: @Sendable (pid_t) -> Set<PowerAssertion> = { IOKitPowerAssertionReader().assertions(ownedBy: $0) }
-
-    private let read: @Sendable (pid_t) -> Set<PowerAssertion>
-    private var announced = AnnouncedAssertions()
-    private var seen = false
-
-    init(read: @escaping @Sendable (pid_t) -> Set<PowerAssertion>) {
-        self.read = read
-    }
-
-    /// `soundOn`: whether its sound output is on, asked only while it holds one.
-    mutating func state(of pid: pid_t, soundOn: () -> Bool) -> PlayerState {
-        let held = read(pid)
-        if !held.isEmpty, soundOn() { announced.learn(held) }
-        if announced.announcing(held) {
-            seen = true
-            return .playing
-        }
-        return seen ? .paused : .unknown
-    }
-}
