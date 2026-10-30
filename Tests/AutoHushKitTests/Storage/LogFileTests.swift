@@ -3,7 +3,9 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("LogFile", .waitsTimeLimit)
+/// Serialized: two of its tests start the app's log, which is one for the
+/// whole process.
+@Suite("LogFile", .waitsTimeLimit, .serialized)
 struct LogFileTests {
     /// A log in a folder of its own, at a clock the test moves.
     final class Scratch: Sendable {
@@ -115,6 +117,29 @@ struct LogFileTests {
         #expect(logged.map(\.message) == ["an info line", "a notice line", "an error line"])
         LogFile.stop()
         log.flush() // what other tests logged meanwhile written before the folder goes
+        withExtendedLifetime(scratch) {}
+    }
+
+    @Test("the leveler's loudness lines, though the audio monitor measures them, reach the log under the leveler's category, so the Logs window files them under Player with its other lines")
+    func levelLines() async {
+        let scratch = Scratch()
+        let log = LogFile.start(at: scratch.url)
+        var configuration = AudioMonitorTests.config()
+        configuration.levelsMusic = true
+        let h = AudioMonitorTests.Harness(configuration: configuration, meter: false)
+        h.monitor.queue.sync { h.monitor.resumeLevel.noteMusic(rms: 0.1, at: h.clock.now) }
+        h.monitor.setMusicPaused(true)
+        h.monitor.queue.sync { h.monitor.resumeLevel.noteApps(rms: 0.05) }
+        h.monitor.setMusicPaused(false)
+        h.monitor.queue.sync {}
+        log.flush()
+        // Other tests' monitors may log theirs meanwhile: every one counts.
+        let lines = await log.entries(since: .distantPast).filter { $0.message.hasPrefix("[level] the ") }
+        #expect(lines.contains { $0.message.hasPrefix("[level] the music’s loudness at the pause") })
+        #expect(lines.contains { $0.message.hasPrefix("[level] the apps’ loudness during the pause") })
+        #expect(lines.allSatisfy { $0.category == "VolumeLeveler" }, "\(lines.map(\.category))")
+        LogFile.stop()
+        log.flush()
         withExtendedLifetime(scratch) {}
     }
 
