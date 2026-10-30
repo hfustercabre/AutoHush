@@ -350,12 +350,12 @@ extension PlaybackArbiterTests {
         return (leveler.log, await player.playCallCount)
     }
 
-    /// Lowered before each resume, and put back as the music fades out for the next app.
+    /// Lowered before each resume, and put back once the music is paused for the next app.
     private static var levelingCycle: [String] {
         ["lower -6.0", "restore over \(AppConfiguration.testing.fadeOutDuration)", "lower -6.0"]
     }
 
-    @Test("with Level the volume on, the volume is lowered by the monitor's offset before each resume, put back as the music fades out and as monitoring stops")
+    @Test("with Level the volume on, the volume is lowered by the monitor's offset before each resume, put back once the music is paused and as monitoring stops")
     func levelsMusic() async {
         let run = await levelingLog(levels: true, offset: -6)
         #expect(run.log == Self.levelingCycle + ["restore now"] && run.plays == 2)
