@@ -249,6 +249,7 @@ final class SystemVolumeLevelerTests {
 /// Two outputs, each with its own volume, in memory: the speakers (42) and
 /// headphones (43); sound plays through `current`.
 private final class TwoOutputs: SystemVolumeControlling, @unchecked Sendable {
+    // Read and written only under `lock` (`uids` never changes).
     private let lock = NSLock()
     private var _current: AudioObjectID = 42
     private var _decibels: [AudioObjectID: [AudioObjectPropertyElement: Float]] = [42: [0: -10], 43: [0: -20]]

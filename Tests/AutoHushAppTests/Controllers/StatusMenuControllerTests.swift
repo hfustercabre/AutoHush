@@ -6,7 +6,7 @@ import AutoHushTestSupport
 
 /// Each test has its own menu bar item and notification centers (another
 /// desktop, another window becoming key): they run at once.
-@Suite("StatusMenuController", .waitsTimeLimit)
+@Suite("StatusMenuController", .waitsTimeLimit, .application)
 @MainActor
 struct StatusMenuControllerTests {
     let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
@@ -255,7 +255,7 @@ struct StatusMenuControllerTests {
         let sut = makeController()
         defer { sut.remove() }
         var status = readyStatus()
-        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+        let release = AppRelease.github("0.3.0", diskImage: false)
         status.updateOffer = UpdateOffer(release: release, state: .available)
         sut.status = status
         sut.perform(.updates)
@@ -270,7 +270,7 @@ struct StatusMenuControllerTests {
         var status = readyStatus()
         sut.status = status
         #expect(sut.statusItem.button?.image?.size == MenuBarIcon.size)
-        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+        let release = AppRelease.github("0.3.0", diskImage: false)
         status.updateOffer = UpdateOffer(release: release, state: .downloaded)
         sut.status = status
         #expect(sut.statusItem.button?.image?.size == MenuBarIcon.updateSize)

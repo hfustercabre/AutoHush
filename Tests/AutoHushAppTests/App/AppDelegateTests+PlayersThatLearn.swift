@@ -445,7 +445,8 @@ extension AppDelegateTests {
         await TestWait.until { sut.addWebApp.adding != nil }
         sut.choosePlayer(PlayerOption.suggestionID("deezer.com"))
         #expect(sut.addWebApp.adding != nil && sut.addWebApp.model.address == "https://www.deezer.com")
-        try? await Task.sleep(for: .milliseconds(50)) // an alert would have come by now
+        // An alert, on the main run loop's next turn, would have come before this.
+        await withCheckedContinuation { done in RunLoop.main.perform(inModes: [.default]) { done.resume() } }
         #expect(asked.calls.isEmpty)
         sut.addWebApp.close()
     }

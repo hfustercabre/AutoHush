@@ -37,17 +37,6 @@ package final class MockAudioProcessSnapshotProvider: AudioProcessSnapshotProvid
         lock.withLock { onChange = nil }
     }
 
-    package func waitUntilObserving(sourceLocation: SourceLocation = #_sourceLocation) {
-        let deadline = TestWait.deadline
-        while !isObserving {
-            guard Date() < deadline else {
-                TestWait.timedOut(at: sourceLocation)
-                return
-            }
-            usleep(1000)
-        }
-    }
-
     /// Simulates a HAL change callback and waits until the monitor handled it.
     package func triggerChange() {
         let (queue, onChange) = lock.withLock { (self.queue, self.onChange) }
@@ -178,4 +167,22 @@ package final class MockOutputDisconnects: OutputDisconnectWatching, @unchecked 
     package func start(onDisconnect: @escaping @Sendable () -> Void) { lock.withLock { handler = onDisconnect } }
     package func stop() { lock.withLock { handler = nil } }
     package func disconnect() { lock.withLock { handler }?() }
+}
+
+extension MonitoringPipeline.Readers {
+    /// Stand-ins for all the pipeline reads from macOS, Audio Recording
+    /// allowed and every start of the player the user's.
+    package static func standIns(
+        processes: MockAudioProcessSnapshotProvider = MockAudioProcessSnapshotProvider(),
+        levelMeter: MockLevelMeter = MockLevelMeter(),
+        powerAssertions: MockPowerAssertions = MockPowerAssertions(),
+        outputDisconnects: MockOutputDisconnects = MockOutputDisconnects(),
+        playerMute: @escaping @Sendable (String, @escaping @Sendable () -> Bool) -> (any PlayerMuting)? = {
+            ProcessPlayerMute(bundleID: $0, tapsAllowed: $1)
+        }
+    ) -> Self {
+        Self(processes: processes, levelMeter: levelMeter, audioCapturePermission: MockAudioCapturePermission(.granted),
+             powerAssertions: powerAssertions, outputDisconnects: outputDisconnects, playerMute: playerMute,
+             playerInput: { _ in { _ in true } })
+    }
 }

@@ -7,20 +7,24 @@ import AutoHushTestSupport
 
 /// Stands in for an app's playback menu: its Play/Pause item toggles when pressed.
 private final class FakeMenu: PlaybackMenu, @unchecked Sendable {
+    // Read and written only under `lock`.
     private let lock = NSLock()
     private var _title: String
     private var _enabled: Bool
     private var _trusted: Bool
     private var _found = true
     private var _pressFails = false
-    private(set) var presses = 0
-    private(set) var prompts: [Bool] = []
+    private var _presses = 0
+    private var _prompts: [Bool] = []
 
     init(title: String = "Pause", enabled: Bool = true, trusted: Bool = true) {
         _title = title
         _enabled = enabled
         _trusted = trusted
     }
+
+    var presses: Int { lock.withLock { _presses } }
+    var prompts: [Bool] { lock.withLock { _prompts } }
 
     var title: String {
         get { lock.withLock { _title } }
@@ -38,7 +42,7 @@ private final class FakeMenu: PlaybackMenu, @unchecked Sendable {
 
     func isTrusted(prompt: Bool) -> Bool {
         lock.withLock {
-            prompts.append(prompt)
+            _prompts.append(prompt)
             return _trusted
         }
     }
@@ -50,7 +54,7 @@ private final class FakeMenu: PlaybackMenu, @unchecked Sendable {
     func pressToggle(pid: pid_t) -> Bool {
         lock.withLock {
             guard !_pressFails else { return false }
-            presses += 1
+            _presses += 1
             _title = _title == "Pause" ? "Play" : "Pause"
             return true
         }

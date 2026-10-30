@@ -204,9 +204,11 @@ extension AudioMonitorTests {
         #expect(h.meter.lastMetered == [1])
 
         h.monitor.setAudioLevelsNeeded(false)
+        let release = h.monitor.queue.sync { h.monitor.audioLevelsRelease }
+        #expect(release != nil)
         h.monitor.setAudioLevelsNeeded(true)
-        try? await Task.sleep(for: .milliseconds(150))
-        h.provider.flush()
+        // The delay's end, without waiting for it: called off, it releases nothing.
+        h.monitor.queue.sync { release?.perform() }
         #expect(h.meter.lastMetered == [1])
     }
 }

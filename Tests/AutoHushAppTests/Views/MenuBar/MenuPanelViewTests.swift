@@ -62,7 +62,7 @@ struct MenuPanelViewTests {
             status.setActiveSources([vlc, chrome]) // Safari played before
             status.ignoredApps = [chrome]
             status.playback = .pausedByMonitor
-            let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+            let release = AppRelease.github("0.3.0", diskImage: false)
             status.updateOffer = UpdateOffer(release: release, state: .available)
         case .needsPermission:
             status.setHealth(.needsPermission(.systemAudioRecording))

@@ -273,7 +273,7 @@ struct AppStatusTests {
         var status = ready(.musicPlaying)
         let label = status.iconAccessibilityLabel
         #expect(!status.iconShowsUpdate)
-        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+        let release = AppRelease.github("0.3.0", diskImage: false)
         for state in [UpdateOffer.State.available, .downloaded, .installing] {
             status.updateOffer = UpdateOffer(release: release, state: state)
             #expect(status.iconShowsUpdate)

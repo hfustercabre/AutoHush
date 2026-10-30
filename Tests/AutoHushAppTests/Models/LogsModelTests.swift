@@ -8,6 +8,8 @@ import AutoHushTestSupport
 @MainActor
 struct LogsModelTests {
     /// A log in memory; its reads can be held, as a long log's take a while.
+    /// Used only on the main actor: by the tests, and by LogsModel, whose
+    /// read runs there too (an async function runs on its caller's actor).
     final class FakeLog: LogSource, @unchecked Sendable {
         var entries: [LogEntry] = []
         var handlers: [UUID: @Sendable (LogEntry) -> Void] = [:]

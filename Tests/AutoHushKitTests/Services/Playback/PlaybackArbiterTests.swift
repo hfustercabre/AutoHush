@@ -133,6 +133,7 @@ extension PlaybackArbiter {
 /// it lowers once until put back, and a put-back with another lowering's
 /// token does nothing (it isn't logged).
 final class RecordingVolumeLeveler: ResumeLeveling, @unchecked Sendable {
+    // Read and written only under `lock`.
     private let lock = NSLock()
     private var _log: [String] = []
     private var lowered: UUID?

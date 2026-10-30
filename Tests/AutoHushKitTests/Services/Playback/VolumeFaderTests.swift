@@ -252,14 +252,15 @@ struct VolumeFaderTests {
         await player.setVolumeLevel(70)
         let gate = StepGate()
         let fader = makeFader(player, gate: gate)
-        let paused = Locked(false)
+        let fadeOut = Locked<Task<Bool, any Error>?>(nil)
         await gate.at(step: 6) {
             // Another app starts playing while the music fades back in.
-            _ = Task { paused.value = try await fader.fadeOutAndPause() }
+            fadeOut.value = Task { try await fader.fadeOutAndPause() }
         }
 
         try await fader.playAndFadeIn()
-        await TestWait.until { paused.value }
+        await TestWait.until { fadeOut.value != nil }
+        #expect(try await fadeOut.value?.value == true) // paused, its error the test's
 
         #expect(await player.volumeLevel == 70)
     }

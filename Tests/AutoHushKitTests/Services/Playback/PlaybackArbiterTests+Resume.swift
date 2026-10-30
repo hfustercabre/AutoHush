@@ -77,12 +77,10 @@ extension PlaybackArbiterTests {
     }
 
     /// The playback state last published.
-    final class LastPublished: @unchecked Sendable {
-        // Read and written only under `lock`.
-        private let lock = NSLock()
-        private var last: PlaybackState?
-        var state: PlaybackState? { lock.withLock { last } }
-        func set(_ state: PlaybackState) { lock.withLock { last = state } }
+    final class LastPublished: Sendable {
+        private let last = Locked<PlaybackState?>(nil)
+        var state: PlaybackState? { last.value }
+        func set(_ state: PlaybackState) { last.value = state }
     }
 
     @Test("a player that announces its state isn't asked again after a resume")

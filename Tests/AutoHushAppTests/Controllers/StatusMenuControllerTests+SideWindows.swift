@@ -310,7 +310,7 @@ extension StatusMenuControllerTests {
     func updateRow(state: UpdateOffer.State) async {
         let sut = makeController()
         defer { sut.remove() }
-        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+        let release = AppRelease.github("0.3.0", diskImage: false)
         var status = readyStatus()
         status.updateOffer = UpdateOffer(release: release, state: state)
         sut.status = status

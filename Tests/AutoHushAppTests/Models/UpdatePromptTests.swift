@@ -5,10 +5,7 @@ import AutoHushKit
 
 @Suite("UpdatePrompt")
 struct UpdatePromptTests {
-    private let release = AppRelease(
-        version: AppVersion("0.3.8")!,
-        pageURL: URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v0.3.8")!
-    )
+    private let release = AppRelease.github("0.3.8", diskImage: false)
     private let running = AppVersion("0.3.7")!
 
     @Test("an update to download says both versions and offers to download and install it")

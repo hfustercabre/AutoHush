@@ -70,13 +70,12 @@ struct AudioMonitorTests {
 
         deinit { monitor.stop() }
 
-        /// Starts the monitor and waits until its start-up evaluation has run.
-        /// Observing begins before that evaluation, so without the flush a test
-        /// could set processes that the start-up evaluation already sees.
+        /// Starts the monitor and waits until its start-up evaluation has run
+        /// (on its queue, with its observing): without the wait, a test could
+        /// set processes that the start-up evaluation already sees.
         func start() {
             monitor.start()
-            provider.waitUntilObserving()
-            provider.flush()
+            monitor.queue.sync {}
         }
 
         /// Sets the processes, advances the clock and runs one evaluation.

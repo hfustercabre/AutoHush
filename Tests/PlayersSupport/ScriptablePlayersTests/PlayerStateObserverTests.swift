@@ -60,7 +60,8 @@ struct PlayerStateObserverTests {
         observer.stop()
 
         postTermination(of: Self.bundleID, on: workspaceCenter)
-        try? await Task.sleep(for: .milliseconds(50))
+        // A delivery, on the main queue, would have come before this.
+        await withCheckedContinuation { done in OperationQueue.main.addOperation { done.resume() } }
 
         #expect(received.isEmpty)
     }

@@ -429,7 +429,9 @@ struct SafariWebAppMakerTests {
     }
 }
 
-/// Safari, in memory.
+/// Safari, in memory. Its `var`s are set by the test before the maker
+/// runs (the task it starts sees them), and only read meanwhile; what both
+/// change is `Locked`.
 final class FakeSafari: SafariDriving, @unchecked Sendable {
     let log = Locked<[String]>([])
     var trusted = true

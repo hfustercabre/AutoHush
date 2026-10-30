@@ -113,14 +113,7 @@ struct UpdateInstallerTests {
     }
 
     func release(_ version: String = Fixture.version, sha256: String? = StandIn.sha256, diskImage: Bool = true) -> AppRelease {
-        AppRelease(
-            version: AppVersion(version)!,
-            pageURL: URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v\(version)")!,
-            diskImage: diskImage ? AppRelease.DiskImage(
-                url: URL(string: "https://github.com/hfustercabre/AutoHush/releases/download/v\(version)/AutoHush-\(version).dmg")!,
-                sha256: sha256
-            ) : nil
-        )
+        .github(version, diskImage: diskImage, sha256: sha256)
     }
 }
 

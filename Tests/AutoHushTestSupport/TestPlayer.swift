@@ -14,3 +14,20 @@ extension AppConfiguration {
         return configuration
     }
 }
+
+extension AppConfiguration {
+    /// The engine's configuration for tests that drive the monitor:
+    /// `TestPlayer` as the player, an app counting as playing at once, the
+    /// music paused and played without fading, and the monitor looking only
+    /// when the test changes the processes.
+    package static var testTicksOnly: AppConfiguration {
+        var timings = TimingSettings.defaults
+        timings.startConfirmation = 0
+        timings.fadesEnabled = false
+        var configuration = AppConfiguration(timings: timings)
+        configuration.musicPlayerBundleID = TestPlayer.bundleID
+        configuration.activeSampleInterval = 3600 // ticks only when the test changes the processes
+        configuration.idleSampleInterval = 3600
+        return configuration
+    }
+}

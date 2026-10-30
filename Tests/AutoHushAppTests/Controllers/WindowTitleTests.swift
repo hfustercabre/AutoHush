@@ -274,14 +274,8 @@ final class WindowTitleTests {
     /// (B2, the full check, 2026-10-27: a test took another's panel as its
     /// own).
     @MainActor
-    @Suite("The check's panel", .serialized)
+    @Suite("The check's panel", .serialized, .application)
     struct CheckPanelWindows {
-        /// `NSApp` is set up here when this suite runs alone (B3, the full
-        /// check, 2026-10-27: it crashed, nil, with no other suite before it).
-        init() {
-            _ = NSApplication.shared
-        }
-
         /// A check running on the stand-ins, its panel shown.
         private func panelShown() async throws -> (world: World, model: AddAppModel, sut: CheckPanelController, panel: NSPanel) {
             let world = World()

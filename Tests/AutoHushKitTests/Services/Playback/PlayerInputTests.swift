@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import Testing
 @testable import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("PlayerInput")
 struct PlayerInputTests {
@@ -63,21 +64,17 @@ struct PlayerInputTests {
     }
 
     @Test("the player coming forward counts from then, as macOS says so; another app coming forward ends it")
-    func comingForward() throws {
-        // A running app with a bundle ID stands for the player: macOS hands one over.
-        let app = try #require(NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier != nil })
-        let player = try #require(app.bundleIdentifier)
+    func comingForward() {
+        let player = "com.example.jukebox"
         let center = NotificationCenter()
         let input = PlayerInput(bundleID: player, secondsSince: { _ in 0 }, frontmost: { nil }, activations: center, clicks: noClicks)
         let before = Date().addingTimeInterval(-1)
         #expect(!input.since(before))
         center.post(name: NSWorkspace.didActivateApplicationNotification, object: nil,
-                    userInfo: [NSWorkspace.applicationUserInfoKey: app])
+                    userInfo: [NSWorkspace.applicationUserInfoKey: FakeRunningApplication(bundleID: player)])
         #expect(input.since(before))
 
-        let other = try #require(NSWorkspace.shared.runningApplications.first {
-            $0.bundleIdentifier != nil && $0.bundleIdentifier != player
-        })
+        let other = FakeRunningApplication(bundleID: "com.example.otherapp")
         center.post(name: NSWorkspace.didActivateApplicationNotification, object: nil,
                     userInfo: [NSWorkspace.applicationUserInfoKey: other])
         #expect(!input.since(before)) // input now is the other app's

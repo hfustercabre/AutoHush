@@ -8,15 +8,10 @@ import PlayerCheckKit
 
 /// Add an App's window at its steps, drawn as the window draws it on
 /// `World`'s stand-ins: no other test draws its Allow, Reopen and Use steps
-/// (B4, the full check, 2026-10-27).
-@Suite("Add an App's steps, drawn", .waitsTimeLimit)
+/// (B4, the full check, 2026-10-27). `NSApp` gives the window its icon.
+@Suite("Add an App's steps, drawn", .waitsTimeLimit, .application)
 @MainActor
 struct AddAppViewTests {
-    /// `NSApp` gives the window its icon: set up when this suite runs alone.
-    init() {
-        _ = NSApplication.shared
-    }
-
     /// The window's content drawn at the model's step.
     private func draws(_ model: AddAppModel) -> Bool {
         drawn(AddAppView(model: model, close: {}), width: AddAppView.width, height: 1000).height > 0
