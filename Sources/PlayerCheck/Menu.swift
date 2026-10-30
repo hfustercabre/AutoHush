@@ -48,8 +48,10 @@ func isOnScreen(_ window: AXUIElement, onThisDesktop: Bool, appHidden: Bool) -> 
 struct FoundMenu {
     let title: String
     let toggle: AXUIElement
-    /// Its Previous and Next shortcuts, e.g. "⌘← ⌘→" or "⇧← ⇧→".
+    /// Its Previous and Next shortcuts, e.g. `standardArrows` or "⇧← ⇧→".
     let arrows: String
+    /// The Previous and Next that AutoHush finds a playback menu by first (`playbackMenu`).
+    static let standardArrows = "⌘← ⌘→"
     var toggleTitle: String { toggle.title }
     var toggleEnabled: Bool { toggle.value(kAXEnabledAttribute) as? Bool ?? false }
 }
@@ -63,7 +65,7 @@ struct FoundMenu {
 /// their menus on every change.
 func playbackMenu(pid: pid_t) -> FoundMenu? {
     guard let menuBar = menuBar(of: pid), let (barItem, toggle) = AccessibilityPlaybackMenu.playbackMenu(in: menuBar) else { return nil }
-    return FoundMenu(title: barItem.title, toggle: toggle, arrows: arrows(in: barItem) ?? "⌘← ⌘→")
+    return FoundMenu(title: barItem.title, toggle: toggle, arrows: arrows(in: barItem) ?? FoundMenu.standardArrows)
 }
 
 /// The app's menu bar, read as AutoHush waits for a menu (`AccessibilityPlaybackMenu.menuBar`).
@@ -138,7 +140,9 @@ func modifierSymbols(_ modifiers: Int) -> String {
         menu = found
         say("  “\(found.title)”: first item \(shown(found.toggleTitle)), "
             + (found.toggleEnabled ? "enabled" : "disabled (nothing to play now, or nobody signed in)"))
-        if found.arrows != "⌘← ⌘→" { say("  its Previous and Next are \(found.arrows), not ⌘← ⌘→: AutoHush finds it by its first item, on Space") }
+        if found.arrows != FoundMenu.standardArrows {
+            say("  its Previous and Next are \(found.arrows), not \(FoundMenu.standardArrows): AutoHush finds it by its first item, on Space")
+        }
         say("  " + (ownAppWords.map { "its own words for Play and Pause, as AutoHush's menu players read them: \($0.words.play.count) and"
                                      + " \($0.words.pause.count), from \($0.source)" }
                     ?? "its own words for Play and Pause weren't found in its bundle: its item is read with this tool's list"))

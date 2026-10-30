@@ -23,7 +23,7 @@ import PlayerCheckKit
     let holder = NSRunningApplication(processIdentifier: responsible(getpid()))?.localizedName ?? "this tool"
     var missing: [CheckReportLine.Permission] = []
     if !AXIsProcessTrusted() {
-        _ = AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+        _ = AccessibilityPermission.isTrusted(prompt: true)
         say(CheckReportLine.waitingForAccessibility(holder, minutes: 2))
         Polling.wait(seconds: 120, every: 0.5, runLoop: true, until: AXIsProcessTrusted)
     }
@@ -87,7 +87,7 @@ import PlayerCheckKit
     guard levelsAllowed else { return } // nothing to mute it with
     // A browser's web app plays through its browser: the whole browser is
     // muted (its tabs and other web apps too): its own sound can't be told apart.
-    let mute = TestMute(pid: soundOwner(running.processIdentifier))
+    let mute = TestMute(pid: switchTarget(running.processIdentifier))
     testMute = mute
     let muted = webAppBrowser.map { "\($0) is muted until the check ends, its tabs and other web apps too: you won't hear \(appName)" }
         ?? "\(appName) is muted until the check ends: you won't hear it, while its sound still reaches what measures it"

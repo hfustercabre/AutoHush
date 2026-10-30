@@ -57,6 +57,17 @@ enum HiddenInterface {
         }
     }
     var switches: [String] { PageAccess.switches(for: interface) }
+    /// Its kind, for whoever reads `--now-playing-reasons`.
+    var kind: NowPlayingReasonsLine.InterfaceKind {
+        switch self {
+        case .electron: .electron
+        case .cef: .cef
+        case .flutter: .flutter
+        case .chromiumWebApp: .chromiumWebApp
+        }
+    }
+    /// A Chromium browser's web app's browser, by name; nil for any other.
+    var browser: String? { if case .chromiumWebApp(_, let browser) = self { browser } else { nil } }
     /// The app's, as AutoHush tells it.
     static func of(_ appURL: URL) -> HiddenInterface? {
         switch PageAccess.interface(ofAppAt: appURL) {
@@ -78,13 +89,14 @@ let hiddenInterface = HiddenInterface.of(appURL)
 var isFlutter: Bool { if case .flutter? = hiddenInterface { true } else { false } }
 var isElectron: Bool { if case .electron? = hiddenInterface { true } else { false } }
 /// A Chromium browser's web app: its browser's name; nil for any other app.
-var webAppBrowser: String? { if case .chromiumWebApp(_, let browser)? = hiddenInterface { browser } else { nil } }
+var webAppBrowser: String? { hiddenInterface?.browser }
 
 /// The process a switch is set on, as AutoHush sets it
 /// (`AccessibilityWebPage.switchTarget`): a Chromium browser's web app's
 /// browser (its own process serves the page; set on the web app, nothing
-/// shows), else the app itself. Its sound and keep-awake assertions are the
-/// browser's too (`soundOwner`).
+/// shows), else the app itself. Its sound and keep-awake assertions are that
+/// process's too: the browser's, one process for all its pages (tabs, calls,
+/// web apps).
 func switchTarget(_ pid: pid_t) -> pid_t { AccessibilityWebPage.switchTarget(pid, access: pageAccess) }
 
 /// Whether its page is Safari's WebKit: a Safari web app's, or the app's

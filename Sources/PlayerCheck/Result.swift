@@ -24,13 +24,7 @@ import WebAppPlayers
     // Not checked for Automation only when its dictionary has commands to try.
     let scriptable = scriptControls() != nil
     let noAutomation = automationAnswer == .denied || (partial && automationAnswer != .allowed)
-    // No page at all is no page button; not read for another reason is unchecked.
-    let pageUnread: CheckResult.Mark? = switch TestScope.pageNotChecked {
-    case nil, .noPage, .noSwitch: nil
-    case .noAccessibility: .noAccessibility
-    case .noWindowOpen: .noWindow
-    case .notRunning, .didntPlay, .notNeeded: .notChecked
-    }
+    let pageUnread = TestScope.pageNotChecked?.mark
     var findings = CheckFindings(bundleID: bundleID, appName: appName, appURL: appURL, ways: [
         .script: found(.script, scriptable, notChecked: scriptable && noAutomation ? .noAutomation : nil,
                        setup: scripting.flatMap(ScriptSetup.init(dictionary:)).map { setup in

@@ -31,7 +31,8 @@
 //                                                      then "#active\t<pid>"
 //   playercheck --now-playing-list --since <unix time> what changed since then, apps gone as "Removed"
 //   playercheck --now-playing-reasons <app path>…      why each app can be in Now Playing, as Player Check lists them:
-//                                                      "<path>\t<reason>\t<framework>\t<switches>" (each empty when none)
+//                                                      "<path>\t<reason>\t<framework>\t<switches>\t<kind>\t<browser>"
+//                                                      (each empty when none)
 //   playercheck --launch-option <app>                  the launch option it needs (Electron's apps), and whether it
 //                                                      runs with it: "<option or nothing>\t<yes|no|not running>"
 //   playercheck --relaunch <app>                       quits it, then opens it again with that option, in the background

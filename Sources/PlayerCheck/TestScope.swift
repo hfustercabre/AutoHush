@@ -44,4 +44,15 @@ enum PageNotChecked: Equatable {
         case .notNeeded(let via): "not needed for --via \(via.rawValue)"
         }
     }
+
+    /// Its mark in the result file; none for no page at all, which is no
+    /// page button rather than one unchecked.
+    var mark: CheckResult.Mark? {
+        switch self {
+        case .noPage, .noSwitch: nil
+        case .noAccessibility: .noAccessibility
+        case .noWindowOpen: .noWindow
+        case .notRunning, .didntPlay, .notNeeded: .notChecked
+        }
+    }
 }

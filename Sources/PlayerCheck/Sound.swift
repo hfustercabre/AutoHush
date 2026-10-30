@@ -78,11 +78,6 @@ func soundProcesses(of pid: pid_t) -> [String] {
     return levelsAllowed ? ProcessTapLevelProbe().isAudible(appPID: pid) : nil
 }
 
-/// The process that owns the app's sound and keep-awake assertions: a
-/// Chromium browser's web app's browser (one process for all its pages:
-/// tabs, calls, web apps), else the app.
-func soundOwner(_ pid: pid_t) -> pid_t { switchTarget(pid) }
-
 /// The pages a Chromium browser plays now, as AutoHush counts them for a
 /// Chromium web app (`PlayingPages`: one "Playing audio" assertion each).
 func playingPages(of browserPID: pid_t) -> Int { PlayingPages.count(ofBrowser: browserPID) }
@@ -96,7 +91,7 @@ func playingPages(of browserPID: pid_t) -> Int { PlayingPages.count(ofBrowser: b
 /// it's first found playing, and again after they changed.
 @MainActor func countOtherPages(_ pid: pid_t) {
     guard let browser = webAppBrowser, otherPlayingPages == nil else { return }
-    let total = playingPages(of: soundOwner(pid))
+    let total = playingPages(of: switchTarget(pid))
     // None held: nothing to count from (it's taken at the next look while it plays).
     guard total > 0 else { return }
     otherPlayingPages = total - 1
@@ -110,7 +105,7 @@ func playingPages(of browserPID: pid_t) -> Int { PlayingPages.count(ofBrowser: b
 /// go): one it played before the wait, and paused for it, lowers them.
 @MainActor func countPagesBeforePlaying(_ pid: pid_t, saying: Bool) {
     guard let browser = webAppBrowser, otherPlayingPages == nil else { return }
-    let total = playingPages(of: soundOwner(pid))
+    let total = playingPages(of: switchTarget(pid))
     otherPlayingPages = total
     if saying { say("  \(browser)'s playing pages now, without it: \(total); once it plays, there's one more") }
 }
@@ -121,7 +116,7 @@ func playingPages(of browserPID: pid_t) -> Int { PlayingPages.count(ofBrowser: b
 /// counted, and once another page started or stopped (said once).
 @MainActor func pagesSay(_ pid: pid_t) -> Bool? {
     guard let others = otherPlayingPages else { return nil }
-    let total = playingPages(of: soundOwner(pid))
+    let total = playingPages(of: switchTarget(pid))
     if let plays = PlayingPages.webAppPlays(total: total, others: others) { return plays }
     otherPlayingPages = nil
     say("    \(webAppBrowser ?? "its browser")'s playing pages went to \(total), from \(others) others: another page started or stopped,"
@@ -168,7 +163,7 @@ func assertions(of pid: pid_t) -> Set<PowerAssertion> {
     }
     if let browser = webAppBrowser {
         // A browser's web app: its sound and assertions are the browser's.
-        let owner = soundOwner(running.processIdentifier)
+        let owner = switchTarget(running.processIdentifier)
         let sound = soundProcesses(of: owner)
         say("  its sound is \(browser)'s, shared with its tabs and other web apps: "
             + (sound.isEmpty ? "none running now" : sound.joined(separator: "; ")))
@@ -189,7 +184,7 @@ func assertions(of pid: pid_t) -> Set<PowerAssertion> {
         _ = awake(running.processIdentifier, sounding: !sound.isEmpty)
     }
     let holder = nowPlayingPID()
-    let holds = holder > 0 && (holder == running.processIdentifier || responsible(holder) == running.processIdentifier)
+    let holds = isNowPlaying(running.processIdentifier, holder: holder)
     let other = holder == 0 ? "no app" : NSRunningApplication(processIdentifier: responsible(holder))?.localizedName ?? "pid \(holder)"
     say("  Now Playing: " + (holder < 0 ? "MediaRemote didn't answer"
         : holds ? "this app (until another app reports playing)"
@@ -210,6 +205,8 @@ func assertions(of pid: pid_t) -> Set<PowerAssertion> {
 /// again while it's muted); one that has none yet, or that can't be tapped
 /// yet, is tried again every half second until it's muted. A tap ends with
 /// this tool, so a stop or a crash lets it be heard again too.
+/// `@unchecked Sendable`: its mutable state and its muter are touched only
+/// on `queue` (`queue.sync`, and the timer that runs there).
 final class TestMute: @unchecked Sendable {
     private let pid: pid_t
     private let queue = DispatchQueue(label: "playercheck.mute")

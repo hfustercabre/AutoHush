@@ -33,7 +33,7 @@ jobs:
           fi
           segment='[a-z0-9]+(\.[a-z0-9]+)*'
           if [ "$AUTHOR" != "dependabot[bot]" ] && ! printf '%s\n' "$HEAD_BRANCH" | grep -Eqx "(feature|fix|chore)/$segment(-$segment)*"; then
-            echo "::error title=Branch name::Name the branch feature/…, fix/… or chore/…, in lowercase words joined by hyphens, e.g. fix/vlc-resume (see CONTRIBUTING.md)."
+            echo "::error title=Branch name::Name the branch feature/…, fix/… or chore/…, in lowercase words joined by hyphens, e.g. fix/resume-after-call (see CONTRIBUTING.md)."
             problems=1
           fi
           if [ "$problems" = 0 ]; then

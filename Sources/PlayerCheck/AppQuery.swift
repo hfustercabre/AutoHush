@@ -20,10 +20,6 @@ enum LaunchOption {
         PageAccess.interface(ofAppAt: url) == .electron ? occludedWindows : nil
     }
 
-    /// A process's launch arguments, its own path first (`ProcessArguments`).
-    static func arguments(of pid: pid_t) -> [String] { ProcessArguments.of(pid) }
-
-
     /// Quits the app as a person would (never by force: it's given 15 s), then
     /// opens it again with `option`, in the background: an app that comes
     /// forward by itself once its window shows (some do) goes behind the
@@ -82,7 +78,7 @@ enum LaunchOption {
 typealias AppQuery = CommandLineOptions.AppQuery
 
 @MainActor func answer(_ query: AppQuery) -> Never {
-    guard CommandLine.arguments.count > 2, let url = findApp(CommandLine.arguments[2]), let id = Bundle(url: url)?.bundleIdentifier else {
+    guard arguments.count > 1, let url = findApp(arguments[1]), let id = Bundle(url: url)?.bundleIdentifier else {
         print(AppQuery.noApp)
         exit(CheckExitStatus.failed)
     }
@@ -92,7 +88,7 @@ typealias AppQuery = CommandLineOptions.AppQuery
         let needed = LaunchOption.needed(by: url)
         let running: LaunchOptionAnswer.Running? = needed.map { needed in
             guard let app else { return .notRunning }
-            return LaunchOption.arguments(of: app.processIdentifier).contains(needed) ? .yes : .no
+            return ProcessArguments.of(app.processIdentifier).contains(needed) ? .yes : .no
         }
         print(LaunchOptionAnswer(option: needed, running: running).line)
         exit(CheckExitStatus.done)

@@ -20,6 +20,8 @@ import PlayerCheckKit
 /// The tap runs on a thread of its own: the main thread sleeps in waits,
 /// and a tap answered there would hold up their input until macOS turned it
 /// off.
+/// `@unchecked Sendable`: its mutable state is read and written only under
+/// `lock`, from the tap's thread, the main thread and a stop's.
 final class InputBlock: @unchecked Sendable {
     /// In `kCGEventSourceUserData` of every event this tool posts.
     static let marker: Int64 = 0x50434B

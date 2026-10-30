@@ -45,6 +45,18 @@ struct Way: Identifiable {
     func passes(_ state: CheckResult.WindowState) -> Bool {
         guard mark == .works || mark == .some else { return false }
         let wanted = (state == .otherDesktop ? [state, .otherDesktopCovered] : [state]).map(\.title)
-        return !states.contains { wanted.contains($0.state) || $0.state == "window states" }
+        return !states.contains { wanted.contains($0.state) || $0.state == CheckReportLine.allWindowStates }
+    }
+}
+
+extension CheckResult.WayKind {
+    /// The way as a sentence names it: "by \(inSentence)".
+    var inSentence: String {
+        switch self {
+        case .script: "AppleScript"
+        case .menu: "its playback menu"
+        case .page: "its page's button"
+        case .panel: "its row in the Now Playing panel"
+        }
     }
 }

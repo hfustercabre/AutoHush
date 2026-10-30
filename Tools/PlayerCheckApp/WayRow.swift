@@ -36,7 +36,7 @@ struct WayRow: View {
                                 + way.states.map { ". \($0.failed ? "Failed" : "Not tested") \($0.state): \($0.why)" }.joined())
             Spacer(minLength: 8)
             if let control, let via = way.via {
-                let name = AppDetail.wayName(via)
+                let name = via.inSentence
                 Button { control(.play) } label: { Image(systemName: "play.fill") }
                     .help("Play by \(name)").accessibilityLabel("Play by \(name)")
                 Button { control(.pause) } label: { Image(systemName: "pause.fill") }

@@ -36,7 +36,7 @@ privately, as [SECURITY.md](SECURITY.md) says.
 2. Create a branch from `dev` whose name says what it is:
    - **`feature/`** for something new, or a change to how something works
      (`feature/qobuz`, `feature/longer-fades`);
-   - **`fix/`** for a bug fix (`fix/vlc-resume`);
+   - **`fix/`** for a bug fix (`fix/resume-after-call`);
    - **`chore/`** for anything that doesn't change what AutoHush does:
      docs, translations, tests, tooling (`chore/update-readme`).
 3. Check that it builds and its tests pass (DEVELOPMENT.md →

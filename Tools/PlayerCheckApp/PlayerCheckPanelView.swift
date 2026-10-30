@@ -46,13 +46,8 @@ struct PlayerCheckPanelView: View {
             }
             if inputBlocked {
                 // As the window's warnings: the check drags windows with the pointer.
-                Label("Clicks, scrolling and keys are blocked until it ends. Stop or Escape ends the check.", systemImage: "hand.raised")
-                    .font(.callout.weight(.medium))
-                    .foregroundStyle(.orange)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                WarningNote(text: "Clicks, scrolling and keys are blocked until it ends. Stop or Escape ends the check.", systemImage: "hand.raised",
+                            font: .callout.weight(.medium), padding: 8)
             }
         }
         .padding(14)

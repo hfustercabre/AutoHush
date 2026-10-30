@@ -73,6 +73,9 @@ struct PlayerKindVerdictTests {
         ])
         #expect(PlayerKindVerdict.lines(facts, developer: true).contains(
             "  As a built-in player: a ScriptablePlayerProfile with suite fourCharCode(\"abcd\")."))
+        // measure-volume-curve measures built-in players only.
+        #expect(PlayerKindVerdict.lines(facts, developer: true).contains(
+            "  Once it's built in, measure its volume's curve: swift run measure-volume-curve com.example.player."))
         // Its state found wrong (Apple TV's): said, and no profile offered.
         facts.scriptStateWrong = true
         #expect(PlayerKindVerdict.lines(facts, developer: false).first?.contains("its state by script is wrong") == true)

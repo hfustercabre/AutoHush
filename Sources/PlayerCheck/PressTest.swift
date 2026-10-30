@@ -19,9 +19,9 @@ import ScriptablePlayers
     /// others says nothing about the app, so that state isn't counted
     /// against the panel.
     static var untested: [Way: [WindowState: String]] = [:]
+    /// Why a way wasn't tried, for "Ways to Control It".
+    static var notTried = readOnly ? "not tried: read only" : "not tried"
 }
-/// Why a way wasn't tried, for "Ways to Control It".
-@MainActor var notTried = readOnly ? "not tried: read only" : "not tried"
 
 /// Why a way's trial failed in a window state: what's known of the state
 /// (an Electron page out of view), else what its press said, else the trial's.
@@ -147,12 +147,12 @@ import ScriptablePlayers
         // Accessibility to reach it with): asking for it to play would only wait.
         say("  not run: nothing to press (no AppleScript play or pause, playback menu or page button), and "
             + (canBeNowPlaying ? "without the Accessibility permission the Now Playing panel can't be reached" : notNowPlaying))
-        notTried = "not tried: nothing to press"
+        TestResults.notTried = "not tried: nothing to press"
         return
     }
     if playedFirst == false {
         say("  not run: \(appName) didn't play")
-        notTried = "not tried: it didn't play"
+        TestResults.notTried = "not tried: it didn't play"
         return
     }
     // AppleScript that only toggles, with no state of its own: AutoHush sends

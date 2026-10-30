@@ -129,7 +129,9 @@ func waitForFullerMode(pid: pid_t) {
 /// For a check: brings the app forward a moment for its page to be built,
 /// runs `build` there, then brings back the app that was in front.
 @MainActor func inFront<T>(pid: pid_t, _ build: () -> T) -> T {
-    let front = NSWorkspace.shared.frontmostApplication
+    // SkyLight's front process: NSWorkspace's lags in the process that just
+    // brought another app forward (`WindowStates.frontPID`).
+    let front = WindowStates.frontPID().flatMap { NSRunningApplication(processIdentifier: $0) }
     if let front, front.processIdentifier != pid { changes.frontToRestore = front.bundleURL }
     bringForward(appURL)
     broughtForward = true

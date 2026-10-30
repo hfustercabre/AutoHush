@@ -58,13 +58,9 @@ struct AppDetail: View {
     /// states failing) and a button to relaunch it with it.
     @ViewBuilder private var launchOptionNote: some View {
         if let launch = checker.launchOptions[app.id], launch.running == .no || checker.relaunchingID == app.id {
-            VStack(alignment: .leading, spacing: 8) {
-                Label("\(app.name) is running without Chromium's \(launch.option): its page can't be pressed while its window is covered"
-                      + " or on another desktop, so a check now would show those states failing.",
-                      systemImage: "exclamationmark.triangle")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(.orange)
-                    .fixedSize(horizontal: false, vertical: true)
+            WarningNote(text: "\(app.name) is running without Chromium's \(launch.option): its page can't be pressed while its window is covered"
+                        + " or on another desktop, so a check now would show those states failing.",
+                        systemImage: "exclamationmark.triangle") {
                 HStack {
                     Button("Relaunch \(app.name) With It") { confirmingRelaunch = true }
                         .disabled(checker.isBusy || checker.tool == nil)
@@ -74,9 +70,6 @@ struct AppDetail: View {
                     }
                 }
             }
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
         }
         if let result = checker.relaunches[app.id], checker.relaunchingID != app.id {
             Label(result.text, systemImage: result.worked ? "checkmark.circle.fill" : "xmark.circle.fill")
@@ -107,10 +100,6 @@ struct AppDetail: View {
         }
     }
 
-    static func openAccessibilitySettings() {
-        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
-    }
-
     /// Privacy & Security at a permission's list (Audio Recording is under
     /// Screen & System Audio Recording).
     static func openPrivacySettings(for permission: CheckReportLine.Permission) {
@@ -127,7 +116,7 @@ struct AppDetail: View {
             HStack {
                 Label("Player Check needs the Accessibility permission to read menus and pages.", systemImage: "exclamationmark.triangle")
                 Spacer()
-                Button("Open Settings") { Self.openAccessibilitySettings() }
+                Button("Open Settings") { Self.openPrivacySettings(for: .accessibility) }
             }
             .padding(4)
         }
@@ -153,43 +142,23 @@ struct AppDetail: View {
             }
             if isChecking, report?.state == .allowing {
                 // Asked of macOS: the check starts by itself once it's allowed.
-                VStack(alignment: .leading, spacing: 8) {
-                    // Not named by its pane: macOS 27 calls it Device Control and Data Access.
-                    Label("Turn on Player Check in the list System Settings opens (macOS's request leads there, or the button below). The check starts as soon as it's allowed.",
-                          systemImage: "hand.raised")
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Button("Open System Settings") { Self.openAccessibilitySettings() }
+                // Not named by its pane: macOS 27 calls it Device Control and Data Access.
+                WarningNote(text: "Turn on Player Check in the list System Settings opens (macOS's request leads there, or the button below). The check starts as soon as it's allowed.",
+                            systemImage: "hand.raised") {
+                    Button("Open System Settings") { Self.openPrivacySettings(for: .accessibility) }
                 }
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
             }
             if isChecking, let request = report?.request {
                 // The test needs the app playing: the check asks, then goes on by itself.
-                Label(request, systemImage: "play.circle")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(.orange)
-                    .padding(10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
-                    .fixedSize(horizontal: false, vertical: true)
+                WarningNote(text: request, systemImage: "play.circle")
             }
             if !isChecking, let problem = checker.permissionProblems[app.id] {
                 // Cancelled before it did anything (no window moved, nothing pressed).
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("The check was cancelled before it did anything: \(problem.text)", systemImage: "exclamationmark.triangle")
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
+                WarningNote(text: "The check was cancelled before it did anything: \(problem.text)", systemImage: "exclamationmark.triangle") {
                     if let missing = problem.missing {
                         Button("Open System Settings") { Self.openPrivacySettings(for: missing) }
                     }
                 }
-                .padding(10)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
             }
             if checker.tool == nil {
                 Text("playercheck is missing from this app: build it with build.sh.").foregroundStyle(.red)
@@ -229,15 +198,6 @@ struct AppDetail: View {
                 .foregroundStyle(worked ? .green : .red)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    nonisolated static func wayName(_ way: CheckResult.WayKind) -> String {
-        switch way {
-        case .script: "AppleScript"
-        case .menu: "its playback menu"
-        case .page: "its page's button"
-        case .panel: "its row in the Now Playing panel"
         }
     }
 

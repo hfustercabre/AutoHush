@@ -26,7 +26,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     let passed = results.filter { $0.result == .worked }.count
     let mark: CheckReportLine.WayMark = passed == results.count ? .works : passed == 0 ? .none : .some
     guard let windowTest = TestScope.windowTest else {
-        let note = CheckReportLine.wayState(.notChecked, "window states", "not tested (\(TestScope.windowStatesNote ?? TestScope.noWindowOpen))")
+        let note = CheckReportLine.wayState(.notChecked, CheckReportLine.allWindowStates, "not tested (\(TestScope.windowStatesNote ?? TestScope.noWindowOpen))")
         return (mark, " (with its \(WindowState.windowsClosed.title))", [note])
     }
     let all = WindowState.trip.count
@@ -35,7 +35,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         : passed == 0 ? " (in every window state tested)" : ", in \(passed) of \(results.count) window states"
     var lines = mark == .some ? results.filter { $0.result != .worked }.map { CheckReportLine.wayState(.none, $0.state.title, $0.why) } : []
     for state in WindowState.trip where !results.contains(where: { $0.state == state }) {
-        let why = TestResults.untested[key]?[state] ?? windowTest.untested[state] ?? notTried.replacingOccurrences(of: "not tried: ", with: "")
+        let why = TestResults.untested[key]?[state] ?? windowTest.untested[state] ?? TestResults.notTried.replacingOccurrences(of: "not tried: ", with: "")
         lines.append(CheckReportLine.wayState(.notChecked, state.title, "not tested (\(why))"))
     }
     return (mark, suffix, lines)
@@ -49,7 +49,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         summary.lines.forEach { say($0) }
     } else {
         way(result == .worked ? .works : .none, "\(title): " + (result == .worked ? worked : failed))
-        if let windowStatesNote = TestScope.windowStatesNote { say(CheckReportLine.wayState(.notChecked, "window states", "not tested (\(windowStatesNote))")) }
+        if let windowStatesNote = TestScope.windowStatesNote { say(CheckReportLine.wayState(.notChecked, CheckReportLine.allWindowStates, "not tested (\(windowStatesNote))")) }
     }
 }
 
@@ -73,11 +73,11 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         } else if let scriptProblem {
             way(.none, "\(wayTitle(.script)): \(scriptProblem)")
         } else if fits {
-            way(.notTried, "\(wayTitle(.script)): pause, play and its state, as the supported scriptable players have them (\(notTried))")
+            way(.notTried, "\(wayTitle(.script)): pause, play and its state, as the supported scriptable players have them (\(TestResults.notTried))")
         } else {
             // The Player Check app offers no AppleScript Play or Pause for
             // this line until a check tried it: it looks for these words.
-            way(.notTried, "\(wayTitle(.script)): play or pause commands, but \(CheckReportLine.unlikeScriptablePlayers) have them (\(notTried))")
+            way(.notTried, "\(wayTitle(.script)): play or pause commands, but \(CheckReportLine.unlikeScriptablePlayers) have them (\(TestResults.notTried))")
         }
     } else {
         way(.none, "\(wayTitle(.script)): " + (scripting == nil ? "no scripting dictionary" : "a dictionary without play or pause"))
@@ -87,11 +87,11 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     } else if !AXIsProcessTrusted() {
         way(.notChecked, "\(wayTitle(.menu)): not checked (no Accessibility permission)")
     } else if let menu {
-        let found = "\(wayTitle(.menu)) “\(menu.title)”" + (menu.arrows == "⌘← ⌘→" ? "" : " (found by its first item on Space, its arrows \(menu.arrows))")
+        let found = "\(wayTitle(.menu)) “\(menu.title)”" + (menu.arrows == FoundMenu.standardArrows ? "" : " (found by its first item on Space, its arrows \(menu.arrows))")
         if let result = TestResults.first[.menu] {
             resultLine(.menu, found, result)
         } else {
-            way(.notTried, "\(found): first item \(shown(menu.toggleTitle)) (\(notTried))")
+            way(.notTried, "\(found): first item \(shown(menu.toggleTitle)) (\(TestResults.notTried))")
         }
     } else {
         way(.none, "\(wayTitle(.menu)): none with Play/Pause and Previous/Next")
@@ -106,13 +106,13 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
             if let result = TestResults.first[.page] {
                 resultLine(.page, found, result)
             } else {
-                way(.notTried, "\(found) (\(notTried))")
+                way(.notTried, "\(found) (\(TestResults.notTried))")
             }
         } else {
             way(.none, "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
         }
     }
-    if let result = TestResults.first[.panel], canBeNowPlaying {
+    if let result = TestResults.first[.panel] {
         triedWay(.panel, wayTitle(.panel), result, worked: "pressing its row (\(panelRowSaid ?? "the row")) paused and played it",
                  failed: panelProblem ?? (result == .pausedOnly ? "it paused, but didn't play again" : "pressing its row changed nothing"))
     } else if running == nil {
@@ -122,7 +122,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     } else if !AXIsProcessTrusted() {
         way(.notChecked, "\(wayTitle(.panel)): not checked (no Accessibility permission)")
     } else {
-        way(.notTried, "\(wayTitle(.panel)): its rows in the menu bar's panel play and pause the apps listed there (\(notTried))")
+        way(.notTried, "\(wayTitle(.panel)): its rows in the menu bar's panel play and pause the apps listed there (\(TestResults.notTried))")
     }
 }
 
@@ -205,7 +205,12 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     let stuck = switchesBackOff()
     say()
     for attribute in turnedOn {
-        say(stuck.contains(attribute) ? "(Couldn't set \(switchName(attribute)) back to off.)"
-                                      : "(\(switchName(attribute)) set back to off, as it was.)")
+        say(switchBackLine(attribute, foundOn: changes.wasFoundOn(attribute), stuck: stuck.contains(attribute)))
     }
+}
+
+/// How a switch was set back: off, or on for one found on (`switchesBackOff`).
+func switchBackLine(_ attribute: String, foundOn: Bool, stuck: Bool) -> String {
+    let was = foundOn ? "on" : "off"
+    return stuck ? "(Couldn't set \(switchName(attribute)) back to \(was).)" : "(\(switchName(attribute)) set back to \(was), as it was.)"
 }
