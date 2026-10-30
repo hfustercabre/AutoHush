@@ -6,6 +6,7 @@ import AutoHushTestSupport
 
 /// Stands in for the muter: whether a mute works, and how many were asked.
 private final class Muter: AudioMuting, @unchecked Sendable {
+    // Read and written only under `lock`.
     private let lock = NSLock()
     private var works: Bool
     private var asked = 0
@@ -23,7 +24,7 @@ private final class Muter: AudioMuting, @unchecked Sendable {
 
 /// The app muted for a test of its sound: it looks again every 0.1 s only
 /// until its first mute works.
-@Suite("playercheck: muting it for a test", .readOnlyRun)
+@Suite("playercheck: muting it for a test", .readOnlyRun, .waitsTimeLimit)
 struct TestMuteTests {
     @Test("muted at once: nothing is left to look for")
     func mutedAtOnce() {

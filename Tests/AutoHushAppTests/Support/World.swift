@@ -1,33 +1,8 @@
 import Foundation
+import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 import CheckedPlayers
-
-/// A check that ends when the test says.
-@MainActor
-final class FakeCheckRun: CheckRunning {
-    var stopped = false
-    /// Stopped, it ends at once; else it puts things back first, until `finish`.
-    var endsWhenStopped = true
-    private var end: PlayerCheckEnd?
-    private var waiting: [CheckedContinuation<PlayerCheckEnd, Never>] = []
-
-    func stop() {
-        stopped = true
-        if endsWhenStopped { finish(.stopped) }
-    }
-
-    func finish(_ end: PlayerCheckEnd) {
-        self.end = end
-        waiting.forEach { $0.resume(returning: end) }
-        waiting = []
-    }
-
-    func waitForEnd() async -> PlayerCheckEnd {
-        if let end { return end }
-        return await withCheckedContinuation { waiting.append($0) }
-    }
-}
 
 /// What Add an App's stand-ins saw and answer (the apps on the Mac, the
 /// check's helper, the rest of AutoHush and the feature's windows), for the
@@ -62,7 +37,6 @@ final class World {
     /// How many times the model asked whether the Mac can mute (Core Audio, live).
     var macCanMuteReads = 0
     var taps: [Bool] = []
-    var audioRequests = 0
     var menuBarSettingsOpened = 0
     var hasLog = false
     var logsShown = 0
@@ -90,6 +64,23 @@ extension AddAppModel {
                   sleep: { duration in
                       if let held = world.heldSleep { await held.sleep(duration) } else { try? await Task.sleep(for: .milliseconds(5)) }
                   })
+    }
+
+    /// A model at its first step, its window open, its apps read.
+    static func opened(on world: World) async -> AddAppModel {
+        let model = AddAppModel(world)
+        model.reset()
+        await model.loadApps()
+        return model
+    }
+
+    /// A model ready for its check: the app playing, past its first step.
+    static func ready(on world: World) async -> AddAppModel {
+        world.playing = true
+        let model = await opened(on: world)
+        model.continueWithApp()
+        await TestWait.until { model.stage == .ready }
+        return model
     }
 }
 
@@ -150,7 +141,6 @@ extension World: AddAppHost {
 
     func requestCheckPermission(_ permission: CheckPermission, app: CheckableApp, current: CheckPermissions) async {
         guard permission == .audioRecording else { return }
-        audioRequests += 1
         // Turned down: System Settings opens, and AutoHush waits to reopen.
         if permissions.audio == .denied { permissions.audio = .needsReopen }
     }

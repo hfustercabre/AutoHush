@@ -3,9 +3,10 @@ import SwiftUI
 import Testing
 @testable import AutoHushApp
 @testable import AutoHushKit
+import AutoHushTestSupport
 
 /// Settings' pages no other test shows, drawn as their window draws them.
-@Suite("Settings' pages, drawn")
+@Suite("Settings' pages, drawn", .waitsTimeLimit)
 @MainActor
 struct SettingsPageViewTests {
     private let actions = FakeAppActions()
@@ -38,7 +39,7 @@ struct SettingsPageViewTests {
     ])
     func generalWithControls(_ learning: LearningStatus) {
         let model = SettingsModel.forTests(actions: actions, updates: FakeUpdateCommands())
-        model.state.status.choosePlayer(named: "YT Music")
+        model.state.status.choosePlayer(named: "Yodel Music")
         model.state.status.learning = learning
         #expect(model.canLearnControlsAgain)
         #expect(draws(.general, model))
@@ -123,8 +124,8 @@ struct SettingsPageViewTests {
         return DiagnosticsSnapshot(
             overview: .init(kind: kind, title: "Working normally", detail: "Jukebox · Paused — Google Chrome is playing"),
             apps: apps ? [.init(id: "com.google.Chrome", name: "Google Chrome", bundlePath: nil, judgement: "Playing", evidence: "-20 dBFS"),
-                          .init(id: "org.videolan.vlc", name: "VLC", bundlePath: nil, judgement: "Silent, ignored", evidence: nil)] : [],
-            appsSummary: apps ? "Google Chrome, VLC" : "None",
+                          .init(id: "org.example.viewer", name: "Viewer", bundlePath: nil, judgement: "Silent, ignored", evidence: nil)] : [],
+            appsSummary: apps ? "Google Chrome, Viewer" : "None",
             sections: kinds.map { .init(kind: $0, title: "\($0)", summary: "Summary", rows: rows) },
             text: "The report"
         )

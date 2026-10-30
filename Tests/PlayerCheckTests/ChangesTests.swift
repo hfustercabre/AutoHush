@@ -1,9 +1,10 @@
 import Foundation
 import Testing
 @testable import PlayerCheck
+import AutoHushTestSupport
 
 /// What the check changed, which a stop on another thread puts back.
-@Suite("playercheck: what it changed", .readOnlyRun)
+@Suite("playercheck: what it changed", .readOnlyRun, .waitsTimeLimit)
 struct ChangesTests {
     @Test("a switch is noted once, and each change is made whole: a stop takes them all and leaves none")
     func switches() {

@@ -6,7 +6,7 @@ import AutoHushTestSupport
 
 /// The menu's highlight: reading order, the arrow keys wrapping, dimmed
 /// controls skipped, the pointer moving it, pressing and adjusting.
-@Suite("KeyHighlight")
+@Suite("KeyHighlight", .waitsTimeLimit)
 @MainActor
 struct KeyHighlightTests {
     /// A control at `x`, `y` (44 × 22), counting its presses and adjustments.

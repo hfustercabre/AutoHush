@@ -48,7 +48,7 @@ extension PlaybackArbiterTests {
         let hearing = Hearing(.silent) // a muted trailer
         let scheduler = ManualDebounceScheduler(), published = LastPublished()
         let arbiter = makeHearingArbiter(player, hearing: hearing, scheduler: scheduler, published: published)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { published.state == .playingSilently }
         #expect(await player.pauseCallCount == 0)
         #expect(scheduler.scheduledDelays.last == PlaybackArbiter.silentRecheckInterval)
@@ -70,7 +70,7 @@ extension PlaybackArbiterTests {
         let hearing = Hearing(.silent)
         let scheduler = ManualDebounceScheduler(), published = LastPublished()
         let arbiter = makeHearingArbiter(player, hearing: hearing, scheduler: scheduler, published: published)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { published.state == .playingSilently }
         hearing.now = .unknown
         await scheduler.completeNext()
@@ -85,7 +85,7 @@ extension PlaybackArbiterTests {
         let hearing = Hearing(.measuring(remaining: 0.4))
         let scheduler = ManualDebounceScheduler(), published = LastPublished()
         let arbiter = makeHearingArbiter(player, hearing: hearing, scheduler: scheduler, published: published)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { scheduler.scheduledDelays.last == 0.4 }
         #expect(await player.pauseCallCount == 0)
         #expect(published.state != .playingSilently)
@@ -100,7 +100,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler(), published = LastPublished()
         let arbiter = makeHearingArbiter(player, hearing: Hearing(.unknown), scheduler: scheduler, published: published)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { await player.pauseCallCount == 1 }
         #expect(published.state != .playingSilently)
     }
@@ -111,7 +111,7 @@ extension PlaybackArbiterTests {
             let player = MockMusicPlayer()
             let scheduler = ManualDebounceScheduler(), published = LastPublished()
             let arbiter = makeHearingArbiter(player, hearing: Hearing(.silent), scheduler: scheduler, published: published)
-            await arbiter.sourceChanged("org.videolan.vlc", playing: true) // measured alongside it: silent
+            await arbiter.sourceChanged("org.example.viewer", playing: true) // measured alongside it: silent
             await TestWait.until { published.state == .playingSilently }
             await arbiter.handlePlayerStateChange(.playing) // said again: still silent
             #expect(published.state == .playingSilently)
@@ -130,9 +130,9 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler(), published = LastPublished()
         let arbiter = makeHearingArbiter(player, hearing: Hearing(.silent), scheduler: scheduler, published: published)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { published.state == .playingSilently }
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(published.state == .musicPlaying)
         #expect(await player.pauseCallCount == 0)
@@ -145,7 +145,7 @@ extension PlaybackArbiterTests {
         let hearing = Hearing(.silent)
         let scheduler = ManualDebounceScheduler(), published = LastPublished()
         let arbiter = makeHearingArbiter(player, hearing: hearing, scheduler: scheduler, published: published)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { published.state == .playingSilently }
         hearing.now = .heard
         await arbiter.handlePlayerHeard()
@@ -163,7 +163,7 @@ extension PlaybackArbiterTests {
         await player.setStatesItself(false)
         let scheduler = ManualDebounceScheduler(), published = LastPublished()
         let arbiter = makeHearingArbiter(player, hearing: Hearing(.silent), scheduler: scheduler, published: published)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await TestWait.until { scheduler.scheduledDelays.last == PlaybackArbiter.silentRecheckInterval }
         await arbiter.waitForPause()
         #expect(published.state == .musicIdle)

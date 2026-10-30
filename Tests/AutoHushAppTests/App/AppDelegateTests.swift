@@ -101,7 +101,7 @@ struct AppDelegateTests {
 
         /// A web app AutoHush must learn, installed and offered beside First.
         func offerWebApp(_ status: LearningStatus) -> MockLearningPlayer {
-            let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "YT Music", status: status)
+            let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "Yodel Music", status: status)
             players = MusicPlayerCatalog(players: [first], found: { [webApp] })
             installed.insert(webApp.bundleID)
             return webApp

@@ -1,8 +1,9 @@
 import Foundation
 import Testing
 @testable import AutoHushKit
+import AutoHushTestSupport
 
-@Suite("TaskSleepDebounceScheduler")
+@Suite("TaskSleepDebounceScheduler", .waitsTimeLimit)
 struct PlaybackArbiterDebounceSchedulingTests {
     @Test("the real debounce ends once its delay is over, not at once")
     func waitsItsDelay() async {

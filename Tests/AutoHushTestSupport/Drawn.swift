@@ -7,7 +7,7 @@ import SwiftUI
 /// size, as it fits. `height`: tall enough for a form's rows, which are
 /// drawn only once in sight.
 @MainActor
-func drawn(_ view: some View, width: CGFloat, height: CGFloat = 600) -> NSSize {
+package func drawn(_ view: some View, width: CGFloat, height: CGFloat = 600) -> NSSize {
     let hosting = NSHostingView(rootView: view)
     hosting.frame = NSRect(x: 0, y: 0, width: width, height: height)
     hosting.layoutSubtreeIfNeeded()

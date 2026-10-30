@@ -12,13 +12,13 @@ struct HeldPausesTests {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
-        #expect(held.choose("com.spotify.client", leaving: "org.videolan.vlc", current: monitoring, token: token,
+        #expect(held.choose("com.example.streamer", leaving: "org.example.viewer", current: monitoring, token: token,
                             holdsPause: true)) // kept: left running
-        #expect(held.bundleIDs == ["org.videolan.vlc"])
+        #expect(held.bundleIDs == ["org.example.viewer"])
 
         #expect(held.takes(.playback(.pausedByMonitor), from: token)) // still holding it
         #expect(held.takes(.detection(.audioLevel), from: token))
-        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.videolan.vlc"]) // not ending: it would stop only later
+        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.example.viewer"]) // not ending: it would stop only later
 
         #expect(held.takes(.playback(.musicPlaying), from: token)) // the other apps stopped: it plays again
         await TestWait.until { monitoring.stops == 1 }
@@ -31,7 +31,7 @@ struct HeldPausesTests {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
-        held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
+        held.keep(monitoring, token: token, bundleID: "org.example.viewer")
         monitoring.beginResume() // the other apps stopped: it plays, fading in
         #expect(held.takes(.playback(.musicPlaying), from: token))
         await TestWait.until { monitoring.isWaitingForResume } // it stops only once that wait is over
@@ -49,7 +49,7 @@ struct HeldPausesTests {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
-        held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
+        held.keep(monitoring, token: token, bundleID: "org.example.viewer")
         held.setAutoPauseEnabled(true)
         #expect(monitoring.autoPause == true)
         monitoring.beginResume() // the other apps stopped: it plays, fading in
@@ -69,10 +69,10 @@ struct HeldPausesTests {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
-        held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
+        held.keep(monitoring, token: token, bundleID: "org.example.viewer")
         monitoring.beginResume()
         _ = held.takes(.playback(.musicPlaying), from: token)
-        #expect(held.takeBack("org.videolan.vlc"))
+        #expect(held.takeBack("org.example.viewer"))
         #expect(monitoring.stops == 1 && held.isEmpty)
 
         monitoring.endResume()
@@ -83,7 +83,7 @@ struct HeldPausesTests {
     @Test("not holding a pause, the monitoring left isn't kept")
     func notKeptWithoutPause() {
         let held = HeldPauses()
-        #expect(!held.choose("com.spotify.client", leaving: "org.videolan.vlc", current: FakeMonitoring(), token: UUID(),
+        #expect(!held.choose("com.example.streamer", leaving: "org.example.viewer", current: FakeMonitoring(), token: UUID(),
                              holdsPause: false))
         #expect(held.isEmpty)
     }
@@ -93,9 +93,9 @@ struct HeldPausesTests {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
-        held.keep(monitoring, token: token, bundleID: "org.videolan.vlc", awaitingTakeOver: true)
+        held.keep(monitoring, token: token, bundleID: "org.example.viewer", awaitingTakeOver: true)
         #expect(held.takes(.playback(.musicIdle), from: token)) // its first look: paused, not by it yet
-        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.videolan.vlc"])
+        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.example.viewer"])
         #expect(held.takes(.playback(.pausedByMonitor), from: token)) // taken over
         _ = held.takes(.playback(.musicPlaying), from: token) // then played again
         await TestWait.until { monitoring.stops == 1 }
@@ -104,7 +104,7 @@ struct HeldPausesTests {
         // Nothing to take over (played or quit meanwhile): dropped.
         let other = FakeMonitoring()
         let otherToken = UUID()
-        held.keep(other, token: otherToken, bundleID: "org.videolan.vlc", awaitingTakeOver: true)
+        held.keep(other, token: otherToken, bundleID: "org.example.viewer", awaitingTakeOver: true)
         held.drop(otherToken)
         #expect(other.stops == 1 && held.isEmpty)
     }
@@ -114,9 +114,9 @@ struct HeldPausesTests {
         let held = HeldPauses()
         let monitoring = FakeMonitoring()
         let token = UUID()
-        held.keep(monitoring, token: token, bundleID: "org.videolan.vlc")
+        held.keep(monitoring, token: token, bundleID: "org.example.viewer")
         _ = held.takes(.playback(.unknown), from: token)
-        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.videolan.vlc"])
+        #expect(monitoring.stops == 0 && held.bundleIDs == ["org.example.viewer"])
         _ = held.takes(.playback(.musicIdle), from: token) // the user stopped or quit it
         await TestWait.until { monitoring.stops == 1 }
     }
@@ -125,7 +125,7 @@ struct HeldPausesTests {
     func learnedAssertionsAndCurrent() {
         let held = HeldPauses()
         let token = UUID()
-        held.keep(FakeMonitoring(), token: token, bundleID: "org.videolan.vlc")
+        held.keep(FakeMonitoring(), token: token, bundleID: "org.example.viewer")
         #expect(!held.takes(.learnedAssertions("com.example.video", AnnouncedAssertions()), from: token))
         #expect(!held.takes(.playback(.musicPlaying), from: UUID()))
     }
@@ -133,26 +133,26 @@ struct HeldPausesTests {
     @Test("a player chosen again is taken back by its next monitoring only, once; another player's start ends the wait")
     func takeBack() {
         let held = HeldPauses()
-        let vlc = FakeMonitoring()
-        _ = held.choose("com.spotify.client", leaving: "org.videolan.vlc", current: vlc, token: UUID(), holdsPause: true)
-        #expect(!held.choose("org.videolan.vlc", leaving: "com.spotify.client", current: nil, token: UUID(), holdsPause: false))
-        #expect(vlc.stops == 1 && held.isEmpty)
-        #expect(held.takesBack("org.videolan.vlc"))
-        #expect(!held.takesBack("org.videolan.vlc")) // once
+        let viewer = FakeMonitoring()
+        _ = held.choose("com.example.streamer", leaving: "org.example.viewer", current: viewer, token: UUID(), holdsPause: true)
+        #expect(!held.choose("org.example.viewer", leaving: "com.example.streamer", current: nil, token: UUID(), holdsPause: false))
+        #expect(viewer.stops == 1 && held.isEmpty)
+        #expect(held.takesBack("org.example.viewer"))
+        #expect(!held.takesBack("org.example.viewer")) // once
 
         // Taken back, but another player starts first: not that one's pause.
         let again = FakeMonitoring()
-        _ = held.choose("com.spotify.client", leaving: "org.videolan.vlc", current: again, token: UUID(), holdsPause: true)
-        _ = held.choose("org.videolan.vlc", leaving: "com.spotify.client", current: nil, token: UUID(), holdsPause: false)
-        #expect(!held.takesBack("com.apple.Music"))
-        #expect(!held.takesBack("org.videolan.vlc"))
+        _ = held.choose("com.example.streamer", leaving: "org.example.viewer", current: again, token: UUID(), holdsPause: true)
+        _ = held.choose("org.example.viewer", leaving: "com.example.streamer", current: nil, token: UUID(), holdsPause: false)
+        #expect(!held.takesBack("com.example.library"))
+        #expect(!held.takesBack("org.example.viewer"))
     }
 
     @Test("Auto-Pause, the ignored apps and the detection method reach held monitoring; keeping a player again stops its earlier monitoring")
     func settingsAndReplacing() {
         let held = HeldPauses()
         let first = FakeMonitoring()
-        held.keep(first, token: UUID(), bundleID: "org.videolan.vlc")
+        held.keep(first, token: UUID(), bundleID: "org.example.viewer")
         held.setAutoPauseEnabled(false)
         held.setIgnoredSources(["com.example.video"])
         held.setDetectionMethod(.playbackSignals)
@@ -160,22 +160,22 @@ struct HeldPausesTests {
         #expect(first.detectionMethods == [.playbackSignals])
 
         let second = FakeMonitoring()
-        held.keep(second, token: UUID(), bundleID: "org.videolan.vlc")
-        #expect(first.stops == 1 && held.bundleIDs == ["org.videolan.vlc"])
+        held.keep(second, token: UUID(), bundleID: "org.example.viewer")
+        #expect(first.stops == 1 && held.bundleIDs == ["org.example.viewer"])
     }
 
     @Test("sleep forgets them all; quitting stops each with its volume back")
     func sleepAndQuit() async {
         let held = HeldPauses()
-        let vlc = FakeMonitoring()
-        let spotify = FakeMonitoring()
-        held.keep(vlc, token: UUID(), bundleID: "org.videolan.vlc")
-        held.keep(spotify, token: UUID(), bundleID: "com.spotify.client")
+        let viewer = FakeMonitoring()
+        let streamer = FakeMonitoring()
+        held.keep(viewer, token: UUID(), bundleID: "org.example.viewer")
+        held.keep(streamer, token: UUID(), bundleID: "com.example.streamer")
         held.stopAll()
-        #expect(vlc.stops == 1 && spotify.stops == 1 && held.isEmpty)
+        #expect(viewer.stops == 1 && streamer.stops == 1 && held.isEmpty)
 
         let fading = FakeMonitoring()
-        held.keep(fading, token: UUID(), bundleID: "org.videolan.vlc")
+        held.keep(fading, token: UUID(), bundleID: "org.example.viewer")
         await held.stopAndRestoreAll()
         #expect(fading.restoredStops == 1 && held.isEmpty)
     }

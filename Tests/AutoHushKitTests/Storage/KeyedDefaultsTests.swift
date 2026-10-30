@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("KeyedDefaults")
+@Suite("KeyedDefaults", .waitsTimeLimit)
 struct KeyedDefaultsTests {
     @Test("values are set and removed by ID; changes from many queues at once are all kept; a change that changes nothing writes nothing")
     func keeps() async {

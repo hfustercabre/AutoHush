@@ -204,34 +204,34 @@ struct PreferencesTests {
     func seenApps() {
         let store = InMemoryPreferenceStore()
         let preferences = Preferences(store: store)
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer", bundlePath: "/Applications/Viewer.app")
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
-        preferences.recordSeen([vlc])
+        preferences.recordSeen([viewer])
         preferences.recordSeen([chrome])
-        preferences.recordSeen([vlc])
-        #expect(Preferences(store: store).seenApps == [vlc, chrome])
+        preferences.recordSeen([viewer])
+        #expect(Preferences(store: store).seenApps == [viewer, chrome])
 
         preferences.recordSeen((0..<60).map { AudioSource(id: "app.\($0)", name: "App \($0)") })
         let kept = preferences.seenApps.map(\.id)
         #expect(kept.count == Preferences.seenAppsLimit)
         #expect(kept.first == "app.0")
-        #expect(!kept.contains(vlc.id) && !kept.contains(chrome.id)) // the oldest go
+        #expect(!kept.contains(viewer.id) && !kept.contains(chrome.id)) // the oldest go
     }
 
     @Test("keeping an app seen adds it at the front once, and leaves a known app where it is")
     func keepSeen() {
         let store = InMemoryPreferenceStore()
         let preferences = Preferences(store: store)
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer", bundlePath: "/Applications/Viewer.app")
         let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
-        preferences.recordSeen([vlc])
+        preferences.recordSeen([viewer])
         preferences.recordSeen([chrome])
 
-        preferences.keepSeen(vlc)
-        #expect(preferences.seenApps == [chrome, vlc])
+        preferences.keepSeen(viewer)
+        #expect(preferences.seenApps == [chrome, viewer])
         let zoom = AudioSource(id: "us.zoom.xos", name: "zoom.us", bundlePath: "/Applications/zoom.us.app")
         preferences.keepSeen(zoom)
-        #expect(preferences.seenApps == [zoom, chrome, vlc])
+        #expect(preferences.seenApps == [zoom, chrome, viewer])
     }
 
     @Test("the apps' order defaults to the most recent first, and persists")
@@ -272,10 +272,10 @@ struct PreferencesTests {
         #expect(Preferences(store: store).pauseHandover == nil)
 
         // Only players held paused when another was chosen.
-        let held = PauseHandover(at: date, player: nil, holdsChosen: false, held: ["org.videolan.vlc", "com.example.jukebox"])
+        let held = PauseHandover(at: date, player: nil, holdsChosen: false, held: ["org.example.viewer", "com.example.jukebox"])
         preferences.pauseHandover = held
         #expect(Preferences(store: store).pauseHandover == held)
-        let both = PauseHandover(at: date, player: "com.spotify.client", held: ["org.videolan.vlc"])
+        let both = PauseHandover(at: date, player: "com.example.streamer", held: ["org.example.viewer"])
         preferences.pauseHandover = both
         #expect(Preferences(store: store).pauseHandover == both)
     }

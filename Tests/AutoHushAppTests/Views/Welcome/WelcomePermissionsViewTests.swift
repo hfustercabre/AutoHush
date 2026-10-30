@@ -8,7 +8,7 @@ import AutoHushTestSupport
 /// The welcome window's second page, "Allow AutoHush to Work", drawn as its
 /// window draws it: no other test draws it (the full check, 2026-10-20: its
 /// coverage fell to 0 %).
-@Suite("The welcome window's permissions, drawn")
+@Suite("The welcome window's permissions, drawn", .waitsTimeLimit)
 @MainActor
 struct WelcomePermissionsViewTests {
     private let actions = FakeAppActions()

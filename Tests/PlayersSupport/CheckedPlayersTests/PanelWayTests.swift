@@ -7,16 +7,30 @@ import PlayersTestSupport
 
 /// The panel in memory: its rows, the one pressed.
 final class FakePanel: NowPlayingPanel, @unchecked Sendable {
+    // Read and written only under `lock`.
     private let lock = NSLock()
     private var shown: [PanelRow]
     private var pressedRows: [String] = []
     private var opened = 0
-    var opens = true
-    var inMenuBar = true
-    /// Its rows' Play/Pause can't be pressed (Accessibility refuses).
-    var pressFails = false
+    private var _opens = true
+    private var _inMenuBar = true
+    private var _pressFails = false
 
     init(_ rows: [PanelRow]) { shown = rows }
+
+    var opens: Bool {
+        get { lock.withLock { _opens } }
+        set { lock.withLock { _opens = newValue } }
+    }
+    var inMenuBar: Bool {
+        get { lock.withLock { _inMenuBar } }
+        set { lock.withLock { _inMenuBar = newValue } }
+    }
+    /// Its rows' Play/Pause can't be pressed (Accessibility refuses).
+    var pressFails: Bool {
+        get { lock.withLock { _pressFails } }
+        set { lock.withLock { _pressFails = newValue } }
+    }
 
     var pressed: [String] { lock.withLock { pressedRows } }
     /// How many times it was opened.
@@ -36,7 +50,7 @@ final class FakePanel: NowPlayingPanel, @unchecked Sendable {
     func isInMenuBar() -> Bool { inMenuBar }
 }
 
-@Suite("PanelWay")
+@Suite("PanelWay", .waitsTimeLimit)
 struct PanelWayTests {
     private let setup = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"),
                                     ways: [.menu(menuName: "Play"), .panel(rememberedRow: nil)])

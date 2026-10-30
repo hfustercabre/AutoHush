@@ -3,7 +3,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushTestSupport
 
-@Suite("FolderWatch")
+@Suite("FolderWatch", .waitsTimeLimit)
 @MainActor
 struct FolderWatchTests {
     /// Counts the changes reported for a temporary folder of its own.

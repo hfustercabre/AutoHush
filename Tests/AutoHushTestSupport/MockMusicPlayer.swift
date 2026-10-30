@@ -3,8 +3,6 @@ import Foundation
 import Testing
 import AutoHushKit
 
-// MARK: - MockMusicPlayer
-
 package actor MockMusicPlayer: MusicPlayer {
     package nonisolated let bundleID: String
     package nonisolated let name: String
@@ -47,7 +45,7 @@ package actor MockMusicPlayer: MusicPlayer {
     package var beforeVerify: (@Sendable () async -> Void)?
 
     package init(
-        bundleID: String = "com.example.jukebox",
+        bundleID: String = TestPlayer.bundleID,
         name: String = "Jukebox",
         state: PlayerState = .playing,
         volumeCurve: VolumeCurve = .linear,
@@ -244,167 +242,9 @@ package final class StateReports {
     nonisolated init() {}
 }
 
-// MARK: - MockMutingMusicPlayer
-
-/// A `MockMusicPlayer` that taps its own sound, as a web app does: it mutes
-/// itself through a tap, which `allowTaps` turns off.
-package actor MockMutingMusicPlayer: MutingMusicPlayer {
-    package let mock: MockMusicPlayer
-    private let tapsAllowed = Locked(true)
-
-    package init(_ mock: MockMusicPlayer) {
-        self.mock = mock
-    }
-
-    package nonisolated var bundleID: String { mock.bundleID }
-    package nonisolated var name: String { mock.name }
-    package nonisolated var stateReportDelay: TimeInterval { mock.stateReportDelay }
-    package nonisolated var tapsAreAllowed: Bool { tapsAllowed.value }
-
-    package nonisolated func allowTaps(_ allowed: Bool) { tapsAllowed.value = allowed }
-
-    /// Runs inside every check before muting, so a test can hold one there
-    /// while it changes something.
-    private var beforeMute: (@Sendable () async -> Void)?
-    package func setBeforeMute(_ hook: (@Sendable () async -> Void)?) { beforeMute = hook }
-
-    package func muteIfPlayingAnyway() async -> Bool {
-        if let beforeMute { await beforeMute() }
-        return await mock.muteIfPlayingAnyway()
-    }
-    package func forgetPause() async { await mock.forgetPause() }
-    /// Whether its pause is a mute of its own now (`isMutedForPause`).
-    package var mutedForPause = false
-    package func setMutedForPause(_ muted: Bool) { mutedForPause = muted }
-    package func isMutedForPause() async -> Bool { mutedForPause }
-    /// How many times a mute was lifted for good (`releaseMute`).
-    package private(set) var releasedMutes = 0
-    package func releaseMute() async { releasedMutes += 1 }
-    package func verifyControlAccess() async throws { try await mock.verifyControlAccess() }
-    package func playerState() async -> PlayerState { await mock.playerState() }
-    package func pause() async throws { try await mock.pause() }
-    package func play() async throws { try await mock.play() }
-    package func volume() async -> Int? { await mock.volume() }
-    package func setVolume(_ volume: Int) async throws { try await mock.setVolume(volume) }
-
-    /// Its inner mock's observer, so `userSets` on the mock reaches it too.
-    @MainActor
-    package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        mock.makeStateObserver(onChange: onChange)
-    }
-}
-
-// MARK: - ManualDebounceScheduler
-
-package final class ManualDebounceScheduler: PlaybackArbiterDebounceScheduling, @unchecked Sendable {
-    package init() {}
-    private var pendingTasks: [Task<Void, Never>] = []
-    private var recordedDelays: [TimeInterval] = []
-    private let lock = NSLock()
-    /// Never stepped: a debounce's task sleeps until it's cancelled.
-    private let held = ManualSleep()
-
-    /// A task that ends once it's cancelled (by the arbiter, or
-    /// `completeNext`). Until then it waits without running, so one the
-    /// arbiter drops uncancelled costs nothing for the rest of the run.
-    package func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never> {
-        lock.withLock {
-            recordedDelays.append(delay)
-            let task = Task<Void, Never> { [held] in await held.sleep(.seconds(delay)) }
-            pendingTasks.append(task)
-            return task
-        }
-    }
-
-    /// Cancels the oldest pending debounce task, letting the resume path proceed.
-    package func completeNext() async {
-        let task: Task<Void, Never>? = lock.withLock {
-            pendingTasks.isEmpty ? nil : pendingTasks.removeFirst()
-        }
-        guard let task else { return }
-        task.cancel()
-        _ = await task.value
-    }
-
-    package var scheduledDelays: [TimeInterval] {
-        lock.withLock { recordedDelays }
-    }
-}
-
-// MARK: - StubError
-
-package enum StubError: Error, LocalizedError {
-    case failed
-    package var errorDescription: String? { "stub failed" }
-}
-
-// MARK: - InMemoryPreferenceStore
-
-/// Keeps preferences in memory, so tests never write preference files. Each
-/// value is kept as UserDefaults keeps it, as a property list: one that
-/// isn't (a Set, a struct, which UserDefaults can't store) is an issue, and
-/// what's read back is the Foundation form UserDefaults hands back.
-package final class InMemoryPreferenceStore: PreferenceStore {
-    package init() {}
-    private var values: [String: Any] = [:]
-
-    package func object(forKey key: String) -> Any? { values[key] }
-
-    package func set(_ value: Any?, forKey key: String) {
-        guard let value else {
-            values[key] = nil
-            return
-        }
-        do {
-            let data = try PropertyListSerialization.data(fromPropertyList: value, format: .binary, options: 0)
-            values[key] = try PropertyListSerialization.propertyList(from: data, format: nil)
-        } catch {
-            Issue.record("\(key) isn't a property list, which UserDefaults can't store: \(value)")
-            values[key] = value
-        }
-    }
-}
-
-// MARK: - MockStateObserver
-
 @MainActor
 package final class MockStateObserver: PlayerStateObserving {
     package init() {}
-    private(set) var isObserving = false
-    package func start() { isObserving = true }
-    package func stop() { isObserving = false }
-}
-
-// MARK: - TestPlayer
-
-/// The music player in engine tests. The engine knows no player by name, so
-/// tests tell it which app's audio is the music, like the app does.
-package enum TestPlayer {
-    package static let bundleID = "com.example.jukebox"
-}
-
-extension AppConfiguration {
-    /// The default configuration, with `TestPlayer` as the chosen player.
-    package static var testing: AppConfiguration {
-        var configuration = AppConfiguration(timings: .defaults)
-        configuration.musicPlayerBundleID = TestPlayer.bundleID
-        return configuration
-    }
-}
-
-// MARK: - TestDates
-
-/// Dates in October 2026 on Madrid time, so tests don't depend on the Mac's
-/// time zone.
-package enum TestDates {
-    package static let calendar: Calendar = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "Europe/Madrid")!
-        return calendar
-    }()
-
-    /// The day of October 2026 at the time given, e.g. `date(2, 15, 30)`.
-    package static func date(_ day: Int, _ hour: Int, _ minute: Int = 0) -> Date {
-        calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute))!
-    }
+    package func start() {}
+    package func stop() {}
 }

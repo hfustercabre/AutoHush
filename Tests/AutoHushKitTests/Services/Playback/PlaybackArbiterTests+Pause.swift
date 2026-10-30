@@ -25,7 +25,7 @@ extension PlaybackArbiterTests {
 
     /// Any other app alike: which apps count is AppConfiguration's (`isMediaSource`).
     @Test("pauses the player when another app starts playing", arguments: [
-        "org.videolan.vlc",
+        "org.example.viewer",
         "com.example.somerandomplayer", // an app AutoHush knows nothing about
     ])
     func pausesForAnotherApp(sourceID: String) async {
@@ -43,7 +43,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .paused)
         let arbiter = makeArbiter(player: player)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
 
         #expect(await player.pauseCallCount == 0)
     }
@@ -55,11 +55,11 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
                                       debounceScheduler: ManualDebounceScheduler())
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.commandLog == ["mute"])
         #expect(await player.pauseCallCount == 0)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         #expect(await player.commandLog == ["mute", "play"])
@@ -71,9 +71,9 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
                                       debounceScheduler: ManualDebounceScheduler())
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.muteIfPlayingAnywayCount == 1)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.commandLog.isEmpty)
     }
@@ -83,14 +83,14 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .paused)
         await player.setPlaysAnyway(true)
         let plain = makeArbiter(player: player)
-        await plain.sourceChanged("org.videolan.vlc", playing: true)
+        await plain.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.muteIfPlayingAnywayCount == 0)
 
         let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
                                       debounceScheduler: ManualDebounceScheduler())
         await arbiter.handleLocalPlaybackChange(false)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.muteIfPlayingAnywayCount == 0)
         #expect(await player.commandLog.isEmpty)
     }
@@ -103,7 +103,7 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing,
                                       debounceScheduler: ManualDebounceScheduler())
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
 
         #expect(await player.muteIfPlayingAnywayCount == 0)
         #expect(await player.commandLog.isEmpty)
@@ -114,8 +114,8 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer()
         let arbiter = makeArbiter(player: player)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
 
         #expect(await player.pauseCallCount == 1)
     }
@@ -129,7 +129,7 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onStatusUpdate: statuses(playback: { states.append($0) }, pauseFailure: { failures.append($0) }))
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
 
         #expect(await player.pauseCallCount == 1)
         if stillLearning {
@@ -149,11 +149,11 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onStatusUpdate: statuses(playback: { states.append($0) }, pauseFailure: { failures.append($0) }))
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(states.value.last == .pauseFailed)
         #expect(failures.value == [.playerCommandFailed(.buttonDisabled)])
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { states.value.last == .musicPlaying }
         #expect(failures.value == [.playerCommandFailed(.buttonDisabled), nil])
     }
@@ -170,10 +170,10 @@ extension PlaybackArbiterTests {
         await player.setBeforeStateAnswer { [arbiter, player] in
             // The fade-out's check, after the arbiter's: the app stops just before the press.
             guard await player.stateQueryCount == 2 else { return }
-            await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+            await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
         }
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitUntilIdle()
 
         #expect(await player.pauseCallCount == 1)
@@ -194,7 +194,7 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onStatusUpdate: statuses(pauseFailure: { failures.append($0) }))
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         switch end {
         case .laterPauseWorks:
             await player.setFailPause(nil)

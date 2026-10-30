@@ -6,7 +6,7 @@ import AutoHushTestSupport
 
 /// When AutoHush's alerts run: after the work that asked for them, never
 /// over another alert or panel.
-@Suite("InfoAlert")
+@Suite("InfoAlert", .waitsTimeLimit)
 @MainActor
 struct InfoAlertTests {
     @Test("an alert asked for while another is open (its modal loop running) waits until it closes")

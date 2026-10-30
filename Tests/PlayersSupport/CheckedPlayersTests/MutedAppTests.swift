@@ -7,7 +7,7 @@ import AutoHushTestSupport
 /// A keep-awake assertion as a player holds one while it plays.
 private let playing: Set<PowerAssertion> = [PowerAssertion(.system, "Playing")]
 
-@Suite("MutedApp")
+@Suite("MutedApp", .waitsTimeLimit)
 struct MutedAppTests {
     private let muted = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox",
                                     appURL: URL(fileURLWithPath: "/Applications/Jukebox.app"), ways: [.mute])

@@ -6,7 +6,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("ScriptablePlayer", .appleEventCoercions)
+@Suite("ScriptablePlayer", .appleEventCoercions, .waitsTimeLimit)
 struct ScriptablePlayerTests {
 
     // Never sent: building descriptors does not contact the target process.

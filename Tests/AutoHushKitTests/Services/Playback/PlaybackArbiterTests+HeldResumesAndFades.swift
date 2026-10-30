@@ -14,15 +14,15 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
                                       onStatusUpdate: statuses(playback: { states.append($0) }))
 
-        if pausedBeforeHold { await arbiter.sourceChanged("org.videolan.vlc", playing: true) }
+        if pausedBeforeHold { await arbiter.sourceChanged("org.example.viewer", playing: true) }
         await arbiter.holdResumes(true)
-        if !pausedBeforeHold { await arbiter.sourceChanged("org.videolan.vlc", playing: true) }
+        if !pausedBeforeHold { await arbiter.sourceChanged("org.example.viewer", playing: true) }
         for _ in 1...2 { // the check's gaps
-            await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+            await arbiter.sourceChanged("org.example.viewer", playing: false)
             await arbiter.waitUntilIdle()
-            await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+            await arbiter.sourceChanged("org.example.viewer", playing: true)
         }
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.pauseCallCount == 1)
         #expect(await player.playCallCount == 0)
@@ -69,12 +69,12 @@ extension PlaybackArbiterTests {
         let arbiter = PlaybackArbiter(player: player, configuration: AppConfiguration(),
                                       debounceScheduler: ManualDebounceScheduler(), fadeSleep: { _ in })
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         #expect(await player.pauseCallCount == 1)
         #expect(await player.volumeHistory.contains(0))
         #expect(await player.volumeLevel == 60) // set back while paused
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitForResume() // faded back in
         let log = await player.commandLog
@@ -95,8 +95,8 @@ extension PlaybackArbiterTests {
                                       debounceScheduler: ManualDebounceScheduler(),
                                       fadeSleep: { _ in if Task.isCancelled { rushedSteps.increment() } })
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await TestWait.until { await player.playCallCount == 1 }
         await TestWait.until { await player.volumeLevel == 60 }
         #expect(rushedSteps.value == 0)
@@ -118,8 +118,8 @@ extension PlaybackArbiterTests {
                                       })
         await arbiter.waitForResume() // none under way
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await fadeInStarted.wait()
         #expect((await player.volumeLevel ?? 0) < 60) // fading in
 
@@ -134,9 +134,9 @@ extension PlaybackArbiterTests {
         let steps = FadeSteps(holdingAt: 2)
         let arbiter = await makeFadingArbiter(player, steps: steps)
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true) // the fade-out runs on its own
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true) // the fade-out runs on its own
         await TestWait.until { await steps.count == 2 } // the fade-out has begun, held
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
         await steps.letGo(2)
         await arbiter.waitForPause()
 
@@ -150,7 +150,7 @@ extension PlaybackArbiterTests {
         let steps = FadeSteps(holdingAt: 2)
         let arbiter = await makeFadingArbiter(player, steps: steps)
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await TestWait.until { await steps.count == 2 } // the fade-out has begun, held
         #expect((await player.volumeLevel ?? 0) < 60)
         await arbiter.shutdown()
@@ -168,7 +168,7 @@ extension PlaybackArbiterTests {
         let steps = FadeSteps(holdingAt: 2)
         let arbiter = await makeFadingArbiter(player, steps: steps)
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await TestWait.until { await steps.count == 2 } // the fade-out has begun, held
         await arbiter.setAutoPauseEnabled(false)
         await steps.letGo(2)
@@ -186,10 +186,10 @@ extension PlaybackArbiterTests {
         let steps = FadeSteps(holdingAt: 2, 4)
         let arbiter = await makeFadingArbiter(player, steps: steps)
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await TestWait.until { await steps.count == 2 }
         let calledOff = await player.volumeLevel ?? 0
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false) // music comes back up
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false) // music comes back up
         await steps.letGo(2)
         await TestWait.until { await steps.count == 4 }
         let partway = await player.volumeLevel ?? 0
@@ -216,13 +216,13 @@ extension PlaybackArbiterTests {
                                       fadeSleep: { if $0 == VolumeFader.restoreDelay { await restore.wait() } },
                                       onStatusUpdate: statuses(playback: { states.append($0) }))
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await TestWait.until { await player.pauseCallCount == 1 } // paused, volume not yet set back
         let published = states.value.count
         if autoPauseGoesOff {
             await arbiter.setAutoPauseEnabled(false) // too late to call the pause off: nothing of ours to resume yet
         } else {
-            await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+            await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
             // A resume now, before the pause has finished, finds nothing to do (and says so).
             await TestWait.until { states.value.count > published }
         }
@@ -241,7 +241,7 @@ extension PlaybackArbiterTests {
         let steps = FadeSteps(holdingAt: 2)
         let arbiter = await makeFadingArbiter(player, steps: steps)
 
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
         await TestWait.until { await steps.count == 2 } // the fade-out has begun, held
         await player.overrideState(.paused) // the user pauses the player mid-fade
         await steps.letGo(2)
@@ -249,7 +249,7 @@ extension PlaybackArbiterTests {
 
         #expect(await player.pauseCallCount == 0)
         #expect(await player.volumeLevel == 60)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
@@ -259,7 +259,7 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .paused)
         let arbiter = makeArbiter(player: player)
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
 
         #expect(await player.playCallCount == 0)
@@ -271,12 +271,12 @@ extension PlaybackArbiterTests {
         let arbiter = makeArbiter(player: player)
         let answer = Gate()
 
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         let pauseQueries = await player.stateQueryCount // its check, and its press's
         await player.setBeforeStateAnswer { await answer.wait() }
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: false)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
         await TestWait.until { await player.stateQueryCount > pauseQueries } // the resume is asking the player
-        await arbiter.handleSourceChange(sourceID: "com.colliderli.iina", isPlaying: true)
+        await arbiter.handleSourceChange(sourceID: "com.example.videoplayer", isPlaying: true)
         await answer.open()
         await arbiter.waitUntilIdle() // the pause, and the resume it called off
 

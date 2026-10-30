@@ -42,10 +42,10 @@ extension AppDelegateTests {
         #expect(!sut.userSettings.state.autoPauseActive)
         #expect(sut.status.autoPause == .off && menu.status.autoPause == .off)
 
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-        menu.perform(.setIgnored(vlc, true))
-        #expect(sut.session.settings.ignored == [vlc.id])
-        #expect(menu.status.ignoredApps == [vlc])
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
+        menu.perform(.setIgnored(viewer, true))
+        #expect(sut.session.settings.ignored == [viewer.id])
+        #expect(menu.status.ignoredApps == [viewer])
     }
 
     @MainActor
@@ -154,7 +154,7 @@ extension AppDelegateTests {
         let (sut, monitorings) = makeSUT(scratch)
         await start(sut)
         let monitoring = monitorings.made[0]
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer", bundlePath: "/Applications/Viewer.app")
 
         sut.userSettings.snooze(.oneHour)
         guard case .snoozed = sut.status.autoPause else {
@@ -168,11 +168,11 @@ extension AppDelegateTests {
         #expect(sut.settingsModel.isAutoPauseOn && sut.settingsModel.autoPauseNote == nil)
         #expect(monitoring.autoPause == true)
 
-        sut.userSettings.setIgnored(vlc, true)
-        #expect(sut.status.ignoredApps == [AudioSource(id: vlc.id, name: "VLC")])
-        #expect(sut.settingsModel.appList.apps.map(\.id) == [vlc.id])
+        sut.userSettings.setIgnored(viewer, true)
+        #expect(sut.status.ignoredApps == [AudioSource(id: viewer.id, name: "Viewer")])
+        #expect(sut.settingsModel.appList.apps.map(\.id) == [viewer.id])
         #expect(sut.settingsModel.appList.apps.first?.isIgnored == true)
-        #expect(monitoring.ignored == [vlc.id])
+        #expect(monitoring.ignored == [viewer.id])
 
         sut.userSettings.setTimings(TimingSettings(stopGrace: 4))
         #expect(sut.settingsModel.timings.stopGrace == 4)

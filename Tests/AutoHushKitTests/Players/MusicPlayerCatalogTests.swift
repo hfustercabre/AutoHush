@@ -39,9 +39,9 @@ struct MusicPlayerCatalogTests {
     func suggestions() {
         let added = Locked(false)
         let catalog = MusicPlayerCatalog(players: [], suggested: {
-            added.value ? [] : [WebAppSuggestion(name: "Deezer", address: "deezer.com")]
+            added.value ? [] : [WebAppSuggestion(name: "Discs", address: "discs.example")]
         })
-        #expect(catalog.webAppSuggestions == [WebAppSuggestion(name: "Deezer", address: "deezer.com")])
+        #expect(catalog.webAppSuggestions == [WebAppSuggestion(name: "Discs", address: "discs.example")])
         #expect(catalog.all.isEmpty)
         added.value = true
         #expect(catalog.webAppSuggestions.isEmpty)

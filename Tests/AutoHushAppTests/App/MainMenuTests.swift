@@ -1,8 +1,9 @@
 import AppKit
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
-@Suite("MainMenu")
+@Suite("MainMenu", .application)
 @MainActor
 struct MainMenuTests {
     /// "⇧⌘Z" for an item's keyboard shortcut.
@@ -14,7 +15,6 @@ struct MainMenuTests {
 
     @Test("the menu bar has the Mac's standard menus with Apple's shortcuts, and none of AutoHush's own")
     func standardShortcuts() throws {
-        _ = NSApplication.shared
         var opened: [String] = []
         let bar = MainMenu.make(about: { opened.append("about") }, settings: { opened.append("settings") },
                                 find: { opened.append("find") })
@@ -37,7 +37,6 @@ struct MainMenuTests {
 
     @Test("Find… is dimmed while the window in front has no search")
     func findDimmed() throws {
-        _ = NSApplication.shared
         final class Search { var shows = false }
         let search = Search()
         let bar = MainMenu.make(about: {}, settings: {}, canFind: { search.shows })

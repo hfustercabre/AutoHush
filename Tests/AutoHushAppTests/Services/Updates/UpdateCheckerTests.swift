@@ -1,8 +1,9 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
-@Suite("UpdateChecker")
+@Suite("UpdateChecker", .waitsTimeLimit)
 struct UpdateCheckerTests {
     private func checker(status: Int, body: String) -> UpdateChecker {
         UpdateChecker { request in

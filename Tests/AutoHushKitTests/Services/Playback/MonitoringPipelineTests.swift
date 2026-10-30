@@ -12,19 +12,7 @@ import AutoHushTestSupport
 struct MonitoringPipelineTests {
     /// Process IDs no process can have, so the real owner lookup finds none.
     private nonisolated static let playerProcess = AudioProcessInfo(objectID: 1, bundleID: TestPlayer.bundleID, pid: 999_998)
-    private nonisolated static let otherApp = AudioProcessInfo(objectID: 2, bundleID: "org.videolan.vlc", pid: 999_999)
-
-    /// The engine's configuration here: an app counts as playing at once, the
-    /// music pauses and plays without fading, and the monitor looks only when
-    /// the test changes the processes.
-    private nonisolated static func configuration(stopGrace: TimeInterval = TimingSettings.defaults.stopGrace) -> AppConfiguration {
-        var configuration = AppConfiguration(timings: TimingSettings(startConfirmation: 0, fadesEnabled: false))
-        configuration.musicPlayerBundleID = TestPlayer.bundleID
-        configuration.sourceStopGrace = stopGrace
-        configuration.activeSampleInterval = 3600 // ticks only when the test changes the processes
-        configuration.idleSampleInterval = 3600
-        return configuration
-    }
+    private nonisolated static let otherApp = AudioProcessInfo(objectID: 2, bundleID: "org.example.viewer", pid: 999_999)
 
     private struct Setup {
         let processes = MockAudioProcessSnapshotProvider()
@@ -43,7 +31,8 @@ struct MonitoringPipelineTests {
              playerMute: @escaping @Sendable (String, @escaping @Sendable () -> Bool) -> (any PlayerMuting)? = {
                  ProcessPlayerMute(bundleID: $0, tapsAllowed: $1)
              }) {
-            var configuration = MonitoringPipelineTests.configuration(stopGrace: stopGrace)
+            var configuration = AppConfiguration.testTicksOnly
+            configuration.sourceStopGrace = stopGrace
             configuration.pausesOnOutputDisconnect = pausesOnOutputDisconnect
             self.configuration = configuration
             processes.processes = [MonitoringPipelineTests.playerProcess, MonitoringPipelineTests.otherApp]
@@ -59,11 +48,7 @@ struct MonitoringPipelineTests {
                 ignoredSourceIDs: [],
                 detectionMethod: detectionMethod,
                 learnedAssertions: [:],
-                readers: .init(processes: processes, levelMeter: meter,
-                               audioCapturePermission: MockAudioCapturePermission(.granted),
-                               powerAssertions: MockPowerAssertions(), outputDisconnects: outputs,
-                               playerMute: playerMute,
-                               playerInput: { _ in { _ in true } }), // every start the user's
+                readers: .standIns(processes: processes, levelMeter: meter, outputDisconnects: outputs, playerMute: playerMute),
                 onStatusUpdate: { updates.all.append($0) }
             )
         }
@@ -96,10 +81,10 @@ struct MonitoringPipelineTests {
         await setup.pipeline.start()
         await setup.otherAppPlays()
         await TestWait.until { await player.pauseCallCount == 1 }
-        await TestWait.until { setup.updates.activeSources.last?.map(\.id) == ["org.videolan.vlc"] }
-        #expect(setup.pipeline.activeAudioReport() == [.init(id: "org.videolan.vlc", state: .playing, evidence: .level(0.5))])
+        await TestWait.until { setup.updates.activeSources.last?.map(\.id) == ["org.example.viewer"] }
+        #expect(setup.pipeline.activeAudioReport() == [.init(id: "org.example.viewer", state: .playing, evidence: .level(0.5))])
 
-        setup.pipeline.setIgnoredSources(["org.videolan.vlc"])
+        setup.pipeline.setIgnoredSources(["org.example.viewer"])
         await TestWait.until { await player.playCallCount == 1 }
         await setup.pipeline.waitForResume()
         #expect(await player.playCallCount == 1)

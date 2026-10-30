@@ -252,32 +252,16 @@ struct VolumeFaderTests {
         await player.setVolumeLevel(70)
         let gate = StepGate()
         let fader = makeFader(player, gate: gate)
-        let paused = Locked(false)
+        let fadeOut = Locked<Task<Bool, any Error>?>(nil)
         await gate.at(step: 6) {
             // Another app starts playing while the music fades back in.
-            _ = Task { paused.value = try await fader.fadeOutAndPause() }
+            fadeOut.value = Task { try await fader.fadeOutAndPause() }
         }
 
         try await fader.playAndFadeIn()
-        await TestWait.until { paused.value }
+        await TestWait.until { fadeOut.value != nil }
+        #expect(try await fadeOut.value?.value == true) // paused, its error the test's
 
         #expect(await player.volumeLevel == 70)
     }
 }
-
-@Suite("VolumeCurve")
-struct VolumeCurveTests {
-    @Test("a cube law puts half volume at about −18 dB, and converts back")
-    func cubic() {
-        #expect(abs(VolumeCurve.cubic.decibels(atVolume: 50) - -18.06) < 0.01)
-        #expect(abs(VolumeCurve.cubic.volume(atDecibels: -18.06) - 50) < 0.1)
-        #expect(VolumeCurve.cubic.decibels(atVolume: 100) == 0)
-        #expect(VolumeCurve.cubic.decibels(atVolume: 0) == -.infinity)
-    }
-
-    @Test("a linear curve puts half volume at about −6 dB")
-    func linear() {
-        #expect(abs(VolumeCurve.linear.decibels(atVolume: 50) - -6.02) < 0.01)
-    }
-}
-

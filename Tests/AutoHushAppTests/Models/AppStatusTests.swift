@@ -7,7 +7,7 @@ import AutoHushTestSupport
 @Suite("AppStatus")
 struct AppStatusTests {
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
-    private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+    private let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
     private let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
 
     /// Ready to control the Jukebox player.
@@ -172,11 +172,11 @@ struct AppStatusTests {
     @Test("a pause names the apps that caused it")
     func pauseNamesApps() {
         var status = ready(.pausedByMonitor)
-        status.setActiveSources([vlc])
-        #expect(status.statusLine == "Paused — VLC is playing")
-        status.setActiveSources([vlc, chrome])
-        #expect(status.statusLine == "Paused — Google Chrome and VLC are playing")
-        status.setActiveSources([vlc, chrome, safari])
+        status.setActiveSources([viewer])
+        #expect(status.statusLine == "Paused — Viewer is playing")
+        status.setActiveSources([viewer, chrome])
+        #expect(status.statusLine == "Paused — Google Chrome and Viewer are playing")
+        status.setActiveSources([viewer, chrome, safari])
         #expect(status.statusLine == "Paused — Google Chrome and 2 other apps are playing")
         status.setActiveSources([])
         #expect(status.statusLine == "Paused — another app is playing")
@@ -186,47 +186,47 @@ struct AppStatusTests {
     func recentlyPlayed() {
         var status = ready()
         let start = Date()
-        status.setActiveSources([vlc, chrome], now: start)
+        status.setActiveSources([viewer, chrome], now: start)
         #expect(status.recentSources(at: start).isEmpty)
         status.setActiveSources([chrome], now: start + 10)
         status.setActiveSources([], now: start + 20)
-        #expect(status.recentSources(at: start + 30) == [chrome, vlc])
+        #expect(status.recentSources(at: start + 30) == [chrome, viewer])
     }
 
-    /// VLC and Chrome played from `start`; VLC stopped 10 s later, Chrome
-    /// 20 s later, and VLC plays again at 40 s.
-    private func vlcPlaysAgain(from start: Date) -> AppStatus {
+    /// Viewer and Chrome played from `start`; Viewer stopped 10 s later, Chrome
+    /// 20 s later, and Viewer plays again at 40 s.
+    private func viewerPlaysAgain(from start: Date) -> AppStatus {
         var status = ready()
-        status.setActiveSources([vlc, chrome], now: start)
+        status.setActiveSources([viewer, chrome], now: start)
         status.setActiveSources([chrome], now: start + 10)
         status.setActiveSources([], now: start + 20)
-        status.setActiveSources([vlc], now: start + 40)
+        status.setActiveSources([viewer], now: start + 40)
         return status
     }
 
     @Test("an app recently played is no longer listed so once it plays again")
     func recentlyPlayedUntilPlayingAgain() {
         let start = Date()
-        let status = vlcPlaysAgain(from: start)
+        let status = viewerPlaysAgain(from: start)
         #expect(status.recentSources(at: start + 50) == [chrome]) // playing again: under Playing Now only
     }
 
     @Test("an app playing when monitoring stops is listed as recently played too")
     func recentlyPlayedAsMonitoringStops() {
         let start = Date()
-        var status = vlcPlaysAgain(from: start)
+        var status = viewerPlaysAgain(from: start)
         // Another player chosen: nothing is monitored until it starts.
         status.setHealth(.starting, now: start + 60)
         #expect(status.activeSources.isEmpty)
-        #expect(status.recentSources(at: start + 70) == [vlc, chrome])
+        #expect(status.recentSources(at: start + 70) == [viewer, chrome])
     }
 
     @Test("an app stays listed as recently played for 30 minutes")
     func recentlyPlayedFor30Minutes() {
         let start = Date()
-        var status = vlcPlaysAgain(from: start)
-        status.setHealth(.starting, now: start + 60) // VLC stops too
-        #expect(status.recentSources(at: start + 60 + 29 * 60) == [vlc, chrome])
+        var status = viewerPlaysAgain(from: start)
+        status.setHealth(.starting, now: start + 60) // Viewer stops too
+        #expect(status.recentSources(at: start + 60 + 29 * 60) == [viewer, chrome])
         #expect(status.recentSources(at: start + 60 + 30 * 60).isEmpty)
     }
 
@@ -247,11 +247,11 @@ struct AppStatusTests {
     @Test("ignored apps are listed but never named as the cause of a pause")
     func ignoredAppsAreNotCauses() {
         var status = ready(.pausedByMonitor)
-        status.ignoredApps = [vlc]
-        status.setActiveSources([vlc, chrome])
-        #expect(status.activeSources == [chrome, vlc])
+        status.ignoredApps = [viewer]
+        status.setActiveSources([viewer, chrome])
+        #expect(status.activeSources == [chrome, viewer])
         #expect(status.pausingSources == [chrome])
-        #expect(status.isIgnored(vlc.id))
+        #expect(status.isIgnored(viewer.id))
         #expect(status.statusLine == "Paused — Google Chrome is playing")
     }
 
@@ -273,7 +273,7 @@ struct AppStatusTests {
         var status = ready(.musicPlaying)
         let label = status.iconAccessibilityLabel
         #expect(!status.iconShowsUpdate)
-        let release = AppRelease(version: AppVersion("0.3.0")!, pageURL: URL(string: "https://example.com")!)
+        let release = AppRelease.github("0.3.0", diskImage: false)
         for state in [UpdateOffer.State.available, .downloaded, .installing] {
             status.updateOffer = UpdateOffer(release: release, state: state)
             #expect(status.iconShowsUpdate)

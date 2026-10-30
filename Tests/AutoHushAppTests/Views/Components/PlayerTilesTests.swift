@@ -3,8 +3,9 @@ import CoreGraphics
 import SwiftUI
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
-@Suite("PlayerTiles")
+@Suite("PlayerTiles", .waitsTimeLimit)
 @MainActor
 struct PlayerTilesTests {
     @Test("tiles go three a row; the add tile counts in the web apps' rows")

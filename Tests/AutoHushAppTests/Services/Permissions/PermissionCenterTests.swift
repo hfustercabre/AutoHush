@@ -5,7 +5,7 @@ import Testing
 import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("PermissionCenter")
+@Suite("PermissionCenter", .waitsTimeLimit)
 @MainActor
 struct PermissionCenterTests {
     /// A stand-in system: Accessibility, Automation and Audio Recording as set.
@@ -32,8 +32,8 @@ struct PermissionCenterTests {
 
     @Test("a scriptable player needs Automation, asked only while it runs; Audio Recording unless in AntiDot mode")
     func scriptablePlayer() async {
-        let spotify = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
-        let closed = await center(running: false).state(player: spotify, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
+        let streamer = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
+        let closed = await center(running: false).state(player: streamer, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
         #expect(closed.player == "com.example.jukebox")
         #expect(closed.control == .automation(player: "Jukebox"))
         #expect(closed.controlAccess == .playerNotRunning)
@@ -41,10 +41,10 @@ struct PermissionCenterTests {
         #expect(!closed.allSatisfied)
 
         let notAsked = await center(automation: OSStatus(errAEEventWouldRequireUserConsent), audio: .notDetermined)
-            .state(player: spotify, detectionMethod: .audioLevels, detection: .pending, awaitsReopen: false)
+            .state(player: streamer, detectionMethod: .audioLevels, detection: .pending, awaitsReopen: false)
         #expect(notAsked.controlAccess == .notAsked && notAsked.audio == .notAsked)
 
-        let antiDot = await center(audio: .denied).state(player: spotify, detectionMethod: .playbackSignals, detection: .playbackSignals, awaitsReopen: false)
+        let antiDot = await center(audio: .denied).state(player: streamer, detectionMethod: .playbackSignals, detection: .playbackSignals, awaitsReopen: false)
         #expect(antiDot.audio == .notNeeded)
         #expect(antiDot.allSatisfied)
     }
@@ -143,7 +143,7 @@ struct PermissionCenterTests {
         #expect(PermissionCenter.request(for: automation, access: .playerNotRunning) == .openPlayer)
         #expect(PermissionCenter.request(for: automation, access: .notAsked) == .askMacOS(automation))
         #expect(PermissionCenter.request(for: automation, access: .denied) == .openSettings(.automation))
-        let accessibility = Permission.accessibility(player: "TIDAL")
+        let accessibility = Permission.accessibility(player: "Tides")
         #expect(PermissionCenter.request(for: accessibility, access: .denied) == .askMacOS(accessibility))
         #expect(PermissionCenter.request(for: .systemAudioRecording, access: .notAsked) == .askMacOS(.systemAudioRecording))
         #expect(PermissionCenter.request(for: .systemAudioRecording, access: .denied) == .openSettings(.audioCapture))

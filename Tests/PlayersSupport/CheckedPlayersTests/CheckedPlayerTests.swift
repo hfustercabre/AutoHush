@@ -10,7 +10,7 @@ import PlayersTestSupport
 /// A keep-awake assertion as a player holds one while it plays.
 private let playing: Set<PowerAssertion> = [PowerAssertion(.system, "Playing")]
 
-@Suite("CheckedPlayer")
+@Suite("CheckedPlayer", .waitsTimeLimit)
 struct CheckedPlayerTests {
     private let app = URL(fileURLWithPath: "/Applications/Jukebox.app")
     private let script = ScriptSetup(commands: .pauseAndPlay(pause: "jukePaus", play: "jukePlay"), state: .playerState, hasVolume: true)

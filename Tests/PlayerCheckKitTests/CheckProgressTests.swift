@@ -15,7 +15,7 @@ struct CheckProgressTests {
 
     @Test("the report's headings say which part the check is in")
     func stages() {
-        #expect(progress(["Deezer 7.1 (com.deezer.deezer-desktop)", Line.Heading.scripting.rawValue]).stage == .reading)
+        #expect(progress(["Discs 7.1 (com.example.discs)", Line.Heading.scripting.rawValue]).stage == .reading)
         #expect(progress([Line.Heading.permissions.rawValue]).stage == .permissions)
         #expect(progress([Line.Heading.playing.rawValue]).stage == .playing)
         #expect(progress([Line.Heading.windowStates.rawValue]).stage == .movingWindow)
@@ -55,12 +55,12 @@ struct CheckProgressTests {
     @Test("a request lasts until it's answered or the report moves on, and lifts the block meanwhile")
     func requests() {
         let asked = progress([Line.Heading.playing.rawValue, Line.blocked + " until its window is put back",
-                              Line.waiting("start playing something in Deezer; the test goes on as soon as it plays", minutes: 2)])
+                              Line.waiting("start playing something in Discs; the test goes on as soon as it plays", minutes: 2)])
         #expect(asked.request == .play(minutes: 2) && asked.request?.minutes == 2) // the panel counts down from it
         #expect(asked.requestSince == Date(timeIntervalSince1970: 100))
         #expect(asked.inputBlocked && !asked.blocksInput)
-        #expect(progress([Line.waiting("pause Deezer yourself (its own Pause, anywhere): …", minutes: 2)]).request == .pause(minutes: 2))
-        #expect(progress([Line.waiting("start playing something in Deezer", minutes: 2), "  it plays: testing"]).request == nil)
+        #expect(progress([Line.waiting("pause Discs yourself (its own Pause, anywhere): …", minutes: 2)]).request == .pause(minutes: 2))
+        #expect(progress([Line.waiting("start playing something in Discs", minutes: 2), "  it plays: testing"]).request == nil)
         #expect(progress([Line.waiting("allow Accessibility for AutoHush", minutes: 3),
                           Line.Heading.windowStates.rawValue]).request == nil)
         #expect(progress([Line.waiting("allow Accessibility for AutoHush", minutes: 3)]).request

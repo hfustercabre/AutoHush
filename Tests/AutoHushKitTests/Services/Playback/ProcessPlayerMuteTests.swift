@@ -3,11 +3,11 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("ProcessPlayerMute")
+@Suite("ProcessPlayerMute", .waitsTimeLimit)
 struct ProcessPlayerMuteTests {
     private func playerMute(running pid: Locked<pid_t?>, muter: FakeMuter, taps: Bool = true,
                             recording: Bool = true) -> ProcessPlayerMute {
-        ProcessPlayerMute(bundleID: "org.videolan.vlc", muter: muter, tapsAllowed: { taps },
+        ProcessPlayerMute(bundleID: "org.example.viewer", muter: muter, tapsAllowed: { taps },
                           running: { _ in pid.value }, audioRecordingAllowed: { recording })
     }
 

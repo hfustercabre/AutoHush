@@ -5,22 +5,22 @@ import Testing
 @testable import AutoHushKit
 import AutoHushTestSupport
 
-@Suite("SettingsModel")
+@Suite("SettingsModel", .waitsTimeLimit)
 @MainActor
 struct SettingsModelTests {
     /// What Settings asked of AppDelegate and the updates; the user's
     /// settings show their own changes.
     private let log = CallLog()
-    private let actions: FakeAppActions
-    private let updates: FakeUpdateCommands
+    let actions: FakeAppActions
+    let updates: FakeUpdateCommands
 
     init() {
         actions = FakeAppActions(log: log)
         updates = FakeUpdateCommands(log: log)
     }
 
-    private func makeModel(_ controller: MockLaunchAtLoginController,
-                           settings: UserSettings = .inMemory()) -> SettingsModel {
+    func makeModel(_ controller: MockLaunchAtLoginController,
+                   settings: UserSettings = .inMemory()) -> SettingsModel {
         SettingsModel(settings: settings, updates: updates, actions: actions, launchAtLoginController: controller)
     }
 
@@ -52,7 +52,7 @@ struct SettingsModelTests {
 
     @Test("keeping the menu bar icon beside the system's icons moves it there at once; letting it go doesn't move it")
     func menuBarIconKept() {
-        let defaults = UserDefaults(suiteName: "SettingsModelTests-\(UUID().uuidString)")!
+        let defaults = MemoryDefaults()
         let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
                                   launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
                                   menuBarIcon: MenuBarIconPlace(defaults: defaults))
@@ -67,7 +67,7 @@ struct SettingsModelTests {
 
     @Test("General says the menu bar icon is hidden as it's read again (Settings opening), and no longer once it was moved beside the system's icons")
     func menuBarIconHidden() {
-        let defaults = UserDefaults(suiteName: "SettingsModelTests-\(UUID().uuidString)")!
+        let defaults = MemoryDefaults()
         let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
                                   launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
                                   menuBarIcon: MenuBarIconPlace(defaults: defaults))
@@ -259,15 +259,15 @@ struct SettingsModelTests {
     @Test("what the menu shows too comes from the app's state, and follows it")
     func readsTheAppState() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        let spotify = PlayerOption(bundleID: "com.spotify.client", name: "Spotify",
-                                   appURL: URL(fileURLWithPath: "/Applications/Spotify.app"), kind: .app)
-        model.state.status.playerOptions = [spotify]
-        model.state.status.chosenPlayerID = spotify.bundleID
-        #expect(model.playerOptions == [spotify])
-        #expect(model.chosenPlayerID == spotify.bundleID && model.chosenPlayerName == "Spotify")
+        let streamer = PlayerOption(bundleID: "com.example.streamer", name: "Streamer",
+                                    appURL: URL(fileURLWithPath: "/Applications/Streamer.app"), kind: .app)
+        model.state.status.playerOptions = [streamer]
+        model.state.status.chosenPlayerID = streamer.bundleID
+        #expect(model.playerOptions == [streamer])
+        #expect(model.chosenPlayerID == streamer.bundleID && model.chosenPlayerName == "Streamer")
         #expect(!model.canLearnControlsAgain)
 
-        model.state.status.setHealth(.needsPermission(.automation(player: "Spotify")))
+        model.state.status.setHealth(.needsPermission(.automation(player: "Streamer")))
         #expect(!model.statusLine.isEmpty && model.statusLine == model.state.status.statusLine)
         #expect(model.statusNeedsAttention)
 
@@ -286,15 +286,15 @@ struct SettingsModelTests {
                                  kind: .checkedApp)
         muted.pausesByMuting = true
         muted.needsAudioLevels = true
-        let spotify = PlayerOption(bundleID: "com.spotify.client", name: "Spotify",
-                                   appURL: URL(fileURLWithPath: "/Applications/Spotify.app"), kind: .app)
-        model.state.status.playerOptions = [muted, spotify]
-        #expect(model.offeredPlayers.map(\.name) == ["Spotify", "Muted"])
+        let streamer = PlayerOption(bundleID: "com.example.streamer", name: "Streamer",
+                                    appURL: URL(fileURLWithPath: "/Applications/Streamer.app"), kind: .app)
+        model.state.status.playerOptions = [muted, streamer]
+        #expect(model.offeredPlayers.map(\.name) == ["Streamer", "Muted"])
         #expect(model.offeredPlayers.map(\.isClickable) == [true, true])
 
         model.setAntiDotMode(true)
         #expect(model.offeredPlayers.map(\.isClickable) == [true, false])
-        #expect(model.playerOptions == [muted, spotify]) // as the app's state has them
+        #expect(model.playerOptions == [muted, streamer]) // as the app's state has them
     }
 
     @Test("the player card offers Reopen and Unmute as the menu's card does, following the status as it changes")
@@ -323,14 +323,14 @@ struct SettingsModelTests {
         #expect(!model.offersUnmute)
     }
 
-    private let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+    private let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
     private let chrome = AudioSource(id: "com.google.Chrome", name: "Google Chrome")
 
-    /// Settings' model with VLC among the apps, the player ready, and the
+    /// Settings' model with Viewer among the apps, the player ready, and the
     /// music paused for Chrome if `paused`.
-    private func showingVLC(paused: Bool) -> SettingsModel {
+    private func showingAnApp(paused: Bool) -> SettingsModel {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        show(model, seen: [vlc], ignored: [])
+        show(model, seen: [viewer], ignored: [])
         model.state.status.setHealth(.ready)
         if paused {
             model.state.status.playback = .pausedByMonitor
@@ -341,7 +341,7 @@ struct SettingsModelTests {
 
     @Test("a window showing the apps isn't told of the music's state")
     func followsPartByPart() {
-        let model = showingVLC(paused: false)
+        let model = showingAnApp(paused: false)
         let apps = Locked(0)
         withObservationTracking { _ = model.appList.apps } onChange: { apps.increment() }
         model.state.status.playback = .pausedByMonitor
@@ -351,10 +351,10 @@ struct SettingsModelTests {
 
     @Test("a window showing the status line isn't told of the apps, only of the music's state")
     func statusLineLeavesTheApps() {
-        let model = showingVLC(paused: true)
+        let model = showingAnApp(paused: true)
         let line = Locked(0)
         withObservationTracking { _ = model.statusLine } onChange: { line.increment() }
-        show(model, seen: [vlc, chrome], ignored: [vlc])
+        show(model, seen: [viewer, chrome], ignored: [viewer])
         #expect(line.value == 0)
         model.state.status.playback = .musicPlaying
         #expect(line.value == 1)
@@ -362,24 +362,24 @@ struct SettingsModelTests {
 
     @Test("a window showing the apps is told as they change")
     func appsFollowed() {
-        let model = showingVLC(paused: true)
+        let model = showingAnApp(paused: true)
         let apps = Locked(0)
         withObservationTracking { _ = model.appList.apps } onChange: { apps.increment() }
-        show(model, seen: [vlc, chrome], ignored: [vlc])
+        show(model, seen: [viewer, chrome], ignored: [viewer])
         #expect(apps.value == 1)
-        #expect(model.appList.apps.map(\.id) == [vlc.id, chrome.id])
+        #expect(model.appList.apps.map(\.id) == [viewer.id, chrome.id])
     }
 
     @Test("the apps are ordered again as their order changes")
     func appsOrderedAgain() {
-        let model = showingVLC(paused: true)
-        show(model, seen: [vlc, chrome], ignored: [vlc])
+        let model = showingAnApp(paused: true)
+        show(model, seen: [viewer, chrome], ignored: [viewer])
         model.state.status.playback = .musicPlaying
         let order = Locked(0)
         withObservationTracking { _ = model.appList.apps } onChange: { order.increment() }
         model.appList.setOrder(AppListOrder(criterion: .name))
         #expect(order.value == 1)
-        #expect(model.appList.apps.map(\.id) == [chrome.id, vlc.id])
+        #expect(model.appList.apps.map(\.id) == [chrome.id, viewer.id])
     }
 
     @Test("Settings' own setters store through the user's settings, the timings clamped first")
@@ -523,7 +523,7 @@ struct SettingsModelTests {
 
     @Test("Modes' Restore Defaults turns AntiDot mode off; Startup and Menu Bar's no longer keeps the icon beside the system's, leaving it where it is, and leaves launch at login alone, which doesn't count; Updates' checks daily and installs")
     func restoreDefaultsOfTheOtherCards() {
-        let icon = MenuBarIconPlace(defaults: UserDefaults(suiteName: "restore-\(UUID())")!)
+        let icon = MenuBarIconPlace(defaults: MemoryDefaults())
         let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
                                   launchAtLoginController: MockLaunchAtLoginController(isEnabled: false), menuBarIcon: icon)
         #expect(model.isDefault(.modes) && model.isDefault(.startup) && model.isDefault(.updates))
@@ -570,133 +570,5 @@ struct SettingsModelTests {
         #expect(!model.isDefault(.volume))
         model.setTimings(TimingSettings(fadesEnabled: false, resumesPlayback: false, levelsMusic: true))
         #expect(model.isDefault(.volume))
-    }
-
-    // MARK: - Updates
-
-    @Test("beside Check Now: the version until a check, then what it found; under it, when the last one was")
-    func updateRow() {
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        #expect(model.updateTitle == "AutoHush")
-        updates.currentVersion = AppVersion("0.3.11")
-        #expect(model.updateTitle == "AutoHush 0.3.11")
-        #expect(model.lastCheckedNote() == nil)
-
-        let now = Date()
-        updates.lastCheck = now.addingTimeInterval(-2 * 3600)
-        updates.status = "AutoHush 0.3.11 is up to date."
-        #expect(model.updateTitle == "AutoHush 0.3.11 is up to date.")
-        let formatter = RelativeDateTimeFormatter()
-        formatter.dateTimeStyle = .named
-        let when = formatter.localizedString(for: now.addingTimeInterval(-2 * 3600), relativeTo: now)
-        #expect(model.lastCheckedNote(now: now) == "Last checked \(when)")
-    }
-
-    @Test("the Updates row says only when the last check was until one runs in this launch, the version being About's; then what it found, with when; the version before any check")
-    func updateRowShowsTheVersionOnce() {
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        updates.currentVersion = AppVersion("0.3.11")
-        #expect(model.updateRow() == ("AutoHush 0.3.11", nil))
-
-        let now = Date()
-        updates.lastCheck = now.addingTimeInterval(-2 * 3600)
-        let checked = model.lastCheckedNote(now: now)
-        #expect(model.updateRow(now: now) == (checked ?? "", nil))
-        updates.status = "AutoHush 0.3.11 is up to date."
-        #expect(model.updateRow(now: now) == ("AutoHush 0.3.11 is up to date.", checked))
-    }
-
-    @Test("a release candidate running with Get release candidates off says the latest release is offered instead; found, a candidate says what it's a test of")
-    func releaseCandidateNotes() {
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        updates.currentVersion = AppVersion("1.2.6")
-        #expect(model.releaseCandidateNote == nil)
-        updates.currentVersion = AppVersion("1.2.7-rc.1")
-        #expect(model.releaseCandidateNote == "You’re on 1.2.7 RC 1, a release candidate: AutoHush offers the latest release instead.")
-        updates.getsReleaseCandidates = true
-        #expect(model.releaseCandidateNote == nil)
-
-        let now = Date()
-        updates.lastCheck = now.addingTimeInterval(-2 * 3600)
-        updates.status = "AutoHush 1.2.7 RC 2 is available."
-        updates.availableUpdate = AppRelease(version: AppVersion("1.2.7-rc.2")!, pageURL: URL(string: "https://github.com/hfustercabre/AutoHush/releases/tag/v1.2.7-rc.2")!)
-        let checked = model.lastCheckedNote(now: now) ?? ""
-        #expect(model.updateRow(now: now) == ("AutoHush 1.2.7 RC 2 is available.", "A test version of 1.2.7 · \(checked)"))
-    }
-
-    /// Settings' model on real updates, which find v0.3.0 and can't install
-    /// it (AutoHush's folder is read-only).
-    private func updateRows() -> (model: SettingsModel, updates: UpdateController, notifier: MockUpdateNotifier,
-                                  preferences: Preferences, folder: TemporaryFolder) {
-        let preferences = Preferences(store: InMemoryPreferenceStore())
-        let notifier = MockUpdateNotifier()
-        let folder = TemporaryFolder("SettingsModelTests", create: false)
-        let updates = UpdateController(
-            system: UpdateController.System(checker: .latestRelease("v0.3.0"), installer: MockUpdateInstaller(unavailability: .readOnlyLocation),
-                                            notifier: notifier, downloadsFolder: folder.url, currentVersion: AppVersion("0.2.0")),
-            preferences: preferences, isQuietMoment: { false }, quit: {}, onOffer: { _ in }
-        )
-        let model = SettingsModel(settings: .inMemory(), updates: updates, actions: actions,
-                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false))
-        return (model, updates, notifier, preferences, folder)
-    }
-
-    /// Whether what `read` reads is told of `change`, as a view drawn from it is.
-    private func follows(_ read: () -> Void, after change: () async -> Void) async -> Bool {
-        let changed = Locked(false)
-        withObservationTracking(read) { changed.value = true }
-        await change()
-        return changed.value
-    }
-
-    @Test("the update rows read the updates themselves, with no one passing them on: the version, and no check yet")
-    func updateRowsReadTheUpdates() {
-        let bench = updateRows()
-        #expect(bench.model.currentVersion == "0.2.0" && bench.model.updateStatus == nil && bench.model.lastUpdateCheck == nil)
-    }
-
-    @Test("the update rows' install note is as at launch")
-    func updateRowsInstallNote() {
-        let bench = updateRows()
-        #expect(bench.model.updateInstallNote == UpdateInstallUnavailability.readOnlyLocation.explanation)
-    }
-
-    @Test("a copy that can't install itself shows and explains Notify me, whatever was chosen before")
-    func updateRowsShowNotifyWhenInstallUnavailable() {
-        let bench = updateRows()
-        bench.updates.setMode(.install)
-        #expect(bench.model.automaticUpdates == .install && bench.model.shownAutomaticUpdates == .notify)
-    }
-
-    @Test("the update rows follow notifications turned off")
-    func updateRowsFollowNotifications() async {
-        let bench = updateRows()
-        bench.notifier.currentPermission = .off
-        #expect(await follows({ _ = bench.model.notificationsOff }, after: { await bench.updates.followNotificationPermission() }))
-        #expect(bench.model.notificationsOff)
-    }
-
-    @Test("the update rows follow a check's status and when it ran")
-    func updateRowsFollowTheCheck() async {
-        let bench = updateRows()
-        #expect(await follows({ _ = bench.model.updateStatus }, after: { await bench.updates.check(userInitiated: false) }))
-        #expect(bench.model.updateStatus == "Version 0.3.0 is available." && bench.model.lastUpdateCheck == bench.preferences.lastUpdateCheck)
-    }
-
-    @Test("the update rows follow the update settings")
-    func updateRowsFollowTheSettings() async {
-        let bench = updateRows()
-        #expect(await follows({ _ = bench.model.automaticUpdates }, after: { bench.updates.setMode(.notify) }))
-        #expect(bench.model.automaticUpdates == .notify)
-        #expect(await follows({ _ = bench.model.checksForUpdatesAutomatically }, after: { bench.updates.setChecksAutomatically(false) }))
-        #expect(!bench.model.checksForUpdatesAutomatically)
-    }
-
-    @Test("Volume's note says why leveling can't be changed as a fragment, without a period; nothing while it can")
-    func levelingUnavailableNote() {
-        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
-        #expect(model.levelingUnavailableNote == nil)
-        model.setAntiDotMode(true)
-        #expect(model.levelingUnavailableNote == "Off in AntiDot mode")
     }
 }

@@ -10,7 +10,7 @@ import PlayerCheckKit
 /// The logs window and Settings keep their place under a name of their
 /// own, which AppKit gives one window at a time: tests run at once, each
 /// with its own, removed after.
-@Suite("Windows")
+@Suite("Windows", .waitsTimeLimit)
 @MainActor
 final class WindowTitleTests {
     private let actions = FakeAppActions()
@@ -42,16 +42,16 @@ final class WindowTitleTests {
     func learningTitle() async {
         let model = makeModel()
         model.state.status.playerOptions = [
-            PlayerOption(bundleID: "com.apple.Safari.WebApp.A", name: "YT Music", appURL: URL(fileURLWithPath: "/Applications/A.app"),
+            PlayerOption(bundleID: "com.apple.Safari.WebApp.A", name: "Yodel Music", appURL: URL(fileURLWithPath: "/Applications/A.app"),
                          kind: .safariWebApp),
-            PlayerOption(bundleID: "com.apple.Safari.WebApp.B", name: "Deezer", appURL: URL(fileURLWithPath: "/Applications/B.app"),
+            PlayerOption(bundleID: "com.apple.Safari.WebApp.B", name: "Discs", appURL: URL(fileURLWithPath: "/Applications/B.app"),
                          kind: .safariWebApp),
         ]
         model.state.status.chosenPlayerID = "com.apple.Safari.WebApp.A"
         let sut = LearningWindowController(model: model)
-        #expect(sut.window?.title == "Learn YT Music’s Controls")
+        #expect(sut.window?.title == "Learn Yodel Music’s Controls")
         model.state.status.chosenPlayerID = "com.apple.Safari.WebApp.B"
-        await TestWait.until { sut.window?.title == "Learn Deezer’s Controls" }
+        await TestWait.until { sut.window?.title == "Learn Discs’s Controls" }
 
         let closes = CallLog()
         sut.onClose = { closes.calls.append("closed") } // AppDelegate keeps what was learned then
@@ -274,23 +274,12 @@ final class WindowTitleTests {
     /// (B2, the full check, 2026-10-27: a test took another's panel as its
     /// own).
     @MainActor
-    @Suite("The check's panel", .serialized)
+    @Suite("The check's panel", .serialized, .application)
     struct CheckPanelWindows {
-        /// `NSApp` is set up here when this suite runs alone (B3, the full
-        /// check, 2026-10-27: it crashed, nil, with no other suite before it).
-        init() {
-            _ = NSApplication.shared
-        }
-
         /// A check running on the stand-ins, its panel shown.
         private func panelShown() async throws -> (world: World, model: AddAppModel, sut: CheckPanelController, panel: NSPanel) {
             let world = World()
-            world.playing = true
-            let model = AddAppModel(world)
-            model.reset()
-            await model.loadApps()
-            model.continueWithApp()
-            await TestWait.until { model.stage == .ready }
+            let model = await AddAppModel.ready(on: world)
             model.startCheck()
             await TestWait.until { world.report != nil }
             let sut = CheckPanelController()
@@ -361,13 +350,13 @@ final class WindowTitleTests {
     func returnPicksOnlyMatch() {
         let url = URL(fileURLWithPath: "/Applications/Safari.app")
         let options = [
-            PlayerOption(bundleID: "com.example.spotify", name: "Spotify", appURL: url),
+            PlayerOption(bundleID: "com.example.streamer", name: "Streamer", appURL: url),
             PlayerOption(bundleID: "com.example.music", name: "Music", appURL: url),
-            PlayerOption(bundleID: "com.example.vlc", name: "VLC", appURL: nil), // not installed
+            PlayerOption(bundleID: "org.example.viewer", name: "Viewer", appURL: nil), // not installed
         ]
-        #expect(PlayerChooserView.onlyMatch(of: options, search: "spo")?.bundleID == "com.example.spotify")
-        #expect(PlayerChooserView.onlyMatch(of: options, search: "i") == nil) // Spotify and Music
-        #expect(PlayerChooserView.onlyMatch(of: options, search: "vlc") == nil) // can't be picked
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "str")?.bundleID == "com.example.streamer")
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "m") == nil) // Streamer and Music
+        #expect(PlayerChooserView.onlyMatch(of: options, search: "viewer") == nil) // can't be picked
         #expect(PlayerChooserView.onlyMatch(of: options, search: "xyz") == nil)
         #expect(PlayerChooserView.onlyMatch(of: options, search: "") == nil) // nothing typed: Return is Continue
         #expect(PlayerChooserView.onlyMatch(of: options, search: "  ") == nil)
@@ -376,26 +365,26 @@ final class WindowTitleTests {
     @Test("tiles that share a name count as one for Return: the app first, then an added web app, then a suggested one")
     func returnPicksAmongSameName() {
         let url = URL(fileURLWithPath: "/Applications/Safari.app")
-        let app = PlayerOption(bundleID: "com.example.spotify", name: "Spotify", appURL: url)
-        var suggested = PlayerOption(bundleID: "com.example.webapp.spotify", name: "Spotify", appURL: nil)
+        let app = PlayerOption(bundleID: "com.example.streamer", name: "Streamer", appURL: url)
+        var suggested = PlayerOption(bundleID: "com.example.webapp.streamer", name: "Streamer", appURL: nil)
         suggested.kind = .safariWebApp
-        suggested.webAddress = "open.spotify.com"
-        #expect(PlayerChooserView.onlyMatch(of: [app, suggested], search: "spo")?.bundleID == app.bundleID)
+        suggested.webAddress = "open.streamer.example"
+        #expect(PlayerChooserView.onlyMatch(of: [app, suggested], search: "str")?.bundleID == app.bundleID)
 
         // Without the app, the suggestion is the one that can be picked.
-        let missing = PlayerOption(bundleID: app.bundleID, name: "Spotify", appURL: nil)
-        #expect(PlayerChooserView.onlyMatch(of: [missing, suggested], search: "spotify")?.bundleID == suggested.bundleID)
+        let missing = PlayerOption(bundleID: app.bundleID, name: "Streamer", appURL: nil)
+        #expect(PlayerChooserView.onlyMatch(of: [missing, suggested], search: "streamer")?.bundleID == suggested.bundleID)
 
         // An app and an added web app of the same name: the app.
-        let music = PlayerOption(bundleID: "com.example.music", name: "Apple Music", appURL: url)
-        var added = PlayerOption(bundleID: "com.example.webapp.music", name: "Apple Music", appURL: url)
+        let music = PlayerOption(bundleID: "com.example.music", name: "Acme Music", appURL: url)
+        var added = PlayerOption(bundleID: "com.example.webapp.music", name: "Acme Music", appURL: url)
         added.kind = .safariWebApp
-        #expect(PlayerChooserView.onlyMatch(of: [added, music], search: "apple music")?.bundleID == music.bundleID)
+        #expect(PlayerChooserView.onlyMatch(of: [added, music], search: "acme music")?.bundleID == music.bundleID)
 
         // Different names still need a closer search.
-        var ytMusic = PlayerOption(bundleID: "com.example.webapp.yt", name: "YT Music", appURL: url)
-        ytMusic.kind = .safariWebApp
-        #expect(PlayerChooserView.onlyMatch(of: [music, ytMusic], search: "music") == nil)
+        var yodel = PlayerOption(bundleID: "com.example.webapp.yt", name: "Yodel Music", appURL: url)
+        yodel.kind = .safariWebApp
+        #expect(PlayerChooserView.onlyMatch(of: [music, yodel], search: "music") == nil)
     }
 
     @Test("a window shown stays open while macOS counts it as not visible (AutoHush hidden with ⌘H), until it closes")

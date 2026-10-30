@@ -3,6 +3,7 @@ import CoreGraphics
 import Foundation
 import Testing
 @testable import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("PlayerInput")
 struct PlayerInputTests {
@@ -44,40 +45,36 @@ struct PlayerInputTests {
 
     @Test("the player coming forward opens a span, another app closes it, and spans ended over 10 minutes ago are forgotten")
     func spansFollowActivations() {
-        var spans = PlayerInput.spans([], afterActivating: "org.videolan.vlc", player: "org.videolan.vlc", at: front)
-        spans = PlayerInput.spans(spans, afterActivating: "org.videolan.vlc", player: "org.videolan.vlc", at: front.addingTimeInterval(1))
+        var spans = PlayerInput.spans([], afterActivating: "org.example.viewer", player: "org.example.viewer", at: front)
+        spans = PlayerInput.spans(spans, afterActivating: "org.example.viewer", player: "org.example.viewer", at: front.addingTimeInterval(1))
         #expect(spans.count == 1) // still the open one
-        spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.videolan.vlc", at: front.addingTimeInterval(5))
+        spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.example.viewer", at: front.addingTimeInterval(5))
         #expect(spans.first?.to == front.addingTimeInterval(5))
-        spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.videolan.vlc",
+        spans = PlayerInput.spans(spans, afterActivating: "com.apple.Safari", player: "org.example.viewer",
                                   at: front.addingTimeInterval(5 + PlayerInput.spanMemory + 1))
         #expect(spans.isEmpty)
     }
 
     @Test("the player in front as it starts counts from then; another app in front doesn't", arguments: [true, false])
     func frontAtStart(_ playerInFront: Bool) {
-        let input = PlayerInput(bundleID: "org.videolan.vlc", secondsSince: { _ in 0 },
-                                frontmost: { playerInFront ? "org.videolan.vlc" : "com.apple.Safari" },
+        let input = PlayerInput(bundleID: "org.example.viewer", secondsSince: { _ in 0 },
+                                frontmost: { playerInFront ? "org.example.viewer" : "com.apple.Safari" },
                                 activations: NotificationCenter(), clicks: noClicks)
         #expect(input.since(Date().addingTimeInterval(-1)) == playerInFront)
     }
 
     @Test("the player coming forward counts from then, as macOS says so; another app coming forward ends it")
-    func comingForward() throws {
-        // A running app with a bundle ID stands for the player: macOS hands one over.
-        let app = try #require(NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier != nil })
-        let player = try #require(app.bundleIdentifier)
+    func comingForward() {
+        let player = "com.example.jukebox"
         let center = NotificationCenter()
         let input = PlayerInput(bundleID: player, secondsSince: { _ in 0 }, frontmost: { nil }, activations: center, clicks: noClicks)
         let before = Date().addingTimeInterval(-1)
         #expect(!input.since(before))
         center.post(name: NSWorkspace.didActivateApplicationNotification, object: nil,
-                    userInfo: [NSWorkspace.applicationUserInfoKey: app])
+                    userInfo: [NSWorkspace.applicationUserInfoKey: FakeRunningApplication(bundleID: player)])
         #expect(input.since(before))
 
-        let other = try #require(NSWorkspace.shared.runningApplications.first {
-            $0.bundleIdentifier != nil && $0.bundleIdentifier != player
-        })
+        let other = FakeRunningApplication(bundleID: "com.example.otherapp")
         center.post(name: NSWorkspace.didActivateApplicationNotification, object: nil,
                     userInfo: [NSWorkspace.applicationUserInfoKey: other])
         #expect(!input.since(before)) // input now is the other app's

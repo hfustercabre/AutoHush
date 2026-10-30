@@ -28,8 +28,8 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 1)
         #expect(await steps.count == 1) // only the wait before the volume is set back
         #expect(states.value.last == .musicIdle)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
@@ -39,13 +39,13 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .playing)
         let states = Locked<[PlaybackState]>([])
         let arbiter = await disconnectArbiter(player, states: states)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
         await arbiter.waitUntilIdle()
         #expect(await player.pauseCallCount == 1)
         #expect(states.value.last == .pausedByMonitor)
         await arbiter.handleOutputDisconnected()
-        #expect(states.value.last == .musicIdle) // VLC still plays: no longer our pause
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        #expect(states.value.last == .musicIdle) // Viewer still plays: no longer our pause
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
         #expect(await player.pauseCallCount == 1)
@@ -56,14 +56,14 @@ extension PlaybackArbiterTests {
         let player = MockMusicPlayer(state: .playing)
         let steps = FadeSteps(holdingAt: 2)
         let arbiter = await disconnectArbiter(player, steps: steps)
-        await arbiter.handleSourceChange(sourceID: "org.videolan.vlc", isPlaying: true) // its pause runs on its own
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true) // its pause runs on its own
         await TestWait.until { await steps.count == 2 } // fading out: 10 steps of 0.1 s in all
         await arbiter.handleOutputDisconnected()
         await steps.letGo(2)
         await arbiter.waitUntilIdle()
         #expect(await player.pauseCallCount == 1)
         #expect(await steps.count < 10) // the fade's other 8 steps never came
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
         await arbiter.waitUntilIdle()
         #expect(await player.playCallCount == 0)
     }
@@ -77,7 +77,7 @@ extension PlaybackArbiterTests {
         configuration.pausesOnOutputDisconnect = true
         let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: configuration,
                                       debounceScheduler: ManualDebounceScheduler())
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true) // muted for it
+        await arbiter.sourceChanged("org.example.viewer", playing: true) // muted for it
         await arbiter.handleOutputDisconnected()
         #expect(await player.commandLog.contains("forgetPause"))
     }
@@ -91,8 +91,8 @@ extension PlaybackArbiterTests {
         configuration.pausesOnOutputDisconnect = true
         let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
                                       fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { -6 })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false) // resumed, lowered 6 dB
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false) // resumed, lowered 6 dB
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         await arbiter.handleOutputDisconnected()
@@ -108,8 +108,8 @@ extension PlaybackArbiterTests {
         configuration.pausesOnOutputDisconnect = true
         let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
                                       fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { -6 })
-        await arbiter.sourceChanged("org.videolan.vlc", playing: true)
-        await arbiter.sourceChanged("org.videolan.vlc", playing: false) // resumed, lowered 6 dB
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false) // resumed, lowered 6 dB
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         await player.setFailPause(StubError.failed)

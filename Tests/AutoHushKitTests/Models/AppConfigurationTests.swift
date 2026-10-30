@@ -33,14 +33,14 @@ struct AppConfigurationTests {
     }
 
     @Test("accepts media apps, including ones it knows nothing about", arguments: [
-        "org.videolan.vlc",
-        "com.colliderli.iina",
+        "org.example.viewer",
+        "com.example.videoplayer",
         "com.google.Chrome",
         "com.google.Chrome.helper",
         "org.mozilla.firefox",
         "com.apple.Safari",
-        "com.apple.QuickTimePlayerX",
-        "com.apple.music",
+        "com.example.movies",
+        "com.example.library",
         "com.example.randomplayer",
         "io.some.mediaplayer",
     ])

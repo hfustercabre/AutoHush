@@ -10,10 +10,10 @@ struct AddWebAppModelTests {
     /// A model showing `site` ready to add, for the add numbered `attempt`.
     private func readyModel(attempt: Int) -> AddWebAppModel {
         let model = AddWebAppModel()
-        model.address = "play.qobuz.com"
+        model.address = "play.quartet.example"
         model.attempt = attempt
         model.continueTapped()
-        model.apply(.readyToAdd(site: "play.qobuz.com"))
+        model.apply(.readyToAdd(site: "play.quartet.example"))
         return model
     }
 
@@ -41,15 +41,15 @@ struct AddWebAppModelTests {
     @Test("a site that asks first has its step, which stays ticked; Safari's dialog closed without adding is said under Add to Dock until it's opened again")
     func closedWithoutAdding() {
         let model = AddWebAppModel()
-        model.address = "music.youtube.com"
+        model.address = "music.yodel.example"
         model.continueTapped()
-        model.apply(.siteAsks(shown: "consent.youtube.com", site: "music.youtube.com"))
-        #expect(model.siteAsked && model.phase == .siteAsks(shown: "consent.youtube.com", site: "music.youtube.com"))
-        model.apply(.readyToAdd(site: "music.youtube.com"))
-        #expect(model.siteAsked && model.phase == .readyToAdd(site: "music.youtube.com"))
+        model.apply(.siteAsks(shown: "consent.yodel.example", site: "music.yodel.example"))
+        #expect(model.siteAsked && model.phase == .siteAsks(shown: "consent.yodel.example", site: "music.yodel.example"))
+        model.apply(.readyToAdd(site: "music.yodel.example"))
+        #expect(model.siteAsked && model.phase == .readyToAdd(site: "music.yodel.example"))
         model.apply(.adding)
         model.apply(.notAdded)
-        model.apply(.readyToAdd(site: "music.youtube.com"))
+        model.apply(.readyToAdd(site: "music.yodel.example"))
         #expect(model.closedWithoutAdding)
         let ready = AddWebAppView.stepGroups(for: model.phase, closedWithoutAdding: model.closedWithoutAdding, learning: nil)
         #expect(ready.adding.last { $0.button == .addToDock }?.warning != nil)
@@ -72,7 +72,7 @@ struct AddWebAppModelTests {
         let second = Task { await model.waitForAdd(attempt: 2) }
         #expect(await first.value == false) // a newer wait ends the older one
         model.cancelWait(attempt: 1)        // the first add's cancel, late
-        model.apply(.readyToAdd(site: "play.qobuz.com"))
+        model.apply(.readyToAdd(site: "play.quartet.example"))
         model.addTapped()
         #expect(await second.value) // it was still waiting for Add to Dock: ended by the cancel, it would be false
     }
@@ -110,7 +110,7 @@ struct AddWebAppModelTests {
         model.chooseCountry("", in: sites)
         #expect(model.address == "music.some.com")
         #expect(model.country(in: sites) == "") // Other Countries, not the United States
-        model.address = "play.qobuz.com"
+        model.address = "play.quartet.example"
         #expect(model.addressSites == nil) // no countries for another site
         model.reset(address: "music.some.co.uk")
         #expect(model.country(in: sites) == "GB") // the pick is forgotten

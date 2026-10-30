@@ -181,16 +181,16 @@ extension AppDelegateTests {
     func chosenPlayerNotListedAsApp() {
         let scratch = Scratch()
         let first = AudioSource(id: Players.first, name: "First")
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-        scratch.preferences.recordSeen([first, vlc])
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
+        scratch.preferences.recordSeen([first, viewer])
         scratch.preferences.ignoredApps = [first]
         let (sut, _) = makeSUT(scratch)
-        #expect(sut.settingsModel.appList.apps.map(\.id) == ["org.videolan.vlc"])
+        #expect(sut.settingsModel.appList.apps.map(\.id) == ["org.example.viewer"])
         #expect(sut.status.ignoredApps.isEmpty)
 
         // Once another player is chosen, it's an app like any other.
         sut.choosePlayer(Players.second)
-        #expect(sut.settingsModel.appList.apps.map(\.id) == [Players.first, "org.videolan.vlc"])
+        #expect(sut.settingsModel.appList.apps.map(\.id) == [Players.first, "org.example.viewer"])
         #expect(sut.status.ignoredApps == [first])
     }
 
@@ -229,15 +229,15 @@ extension AppDelegateTests {
     @Test("Diagnostics in Settings lists the apps with sound, found where Settings → Sound Sources lists them")
     func diagnosticsAppsWithSound() async {
         let scratch = Scratch()
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC", bundlePath: "/Applications/VLC.app")
-        scratch.preferences.recordSeen([vlc])
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer", bundlePath: "/Applications/Viewer.app")
+        scratch.preferences.recordSeen([viewer])
         let (sut, monitorings) = makeSUT(scratch)
         await start(sut)
-        monitorings.made[0].audioReport = [ActiveAudioReport.Entry(id: vlc.id, name: "VLC", state: .playing)]
+        monitorings.made[0].audioReport = [ActiveAudioReport.Entry(id: viewer.id, name: "Viewer", state: .playing)]
         await sut.refresh(.diagnostics)
         let diagnostics = sut.settingsModel.diagnostics
-        #expect(diagnostics?.apps.map(\.bundlePath) == [vlc.bundlePath])
-        #expect(diagnostics?.text.contains("Apps with Sound\nVLC (org.videolan.vlc) — playing") == true)
+        #expect(diagnostics?.apps.map(\.bundlePath) == [viewer.bundlePath])
+        #expect(diagnostics?.text.contains("Apps with Sound\nViewer (org.example.viewer) — playing") == true)
     }
 
     @MainActor
@@ -401,12 +401,12 @@ extension AppDelegateTests {
     func musicAndAppsShown() async {
         let (sut, monitorings) = makeSUT()
         await start(sut)
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
         monitorings.made[0].send(.playback(.pausedByMonitor))
-        monitorings.made[0].send(.activeSources([vlc]))
+        monitorings.made[0].send(.activeSources([viewer]))
         #expect(sut.status.playback == .pausedByMonitor)
-        #expect(sut.status.activeSources == [vlc])
-        #expect(sut.settingsModel.appList.apps.map(\.id) == [vlc.id]) // listed in Settings → Sound Sources as it plays
+        #expect(sut.status.activeSources == [viewer])
+        #expect(sut.settingsModel.appList.apps.map(\.id) == [viewer.id]) // listed in Settings → Sound Sources as it plays
     }
 
     @MainActor
@@ -427,7 +427,7 @@ extension AppDelegateTests {
         let (sut, monitorings) = makeSUT()
         await start(sut)
         monitorings.made[0].send(.playback(.pausedByMonitor))
-        monitorings.made[0].send(.activeSources([AudioSource(id: "org.videolan.vlc", name: "VLC")]))
+        monitorings.made[0].send(.activeSources([AudioSource(id: "org.example.viewer", name: "Viewer")]))
         sut.holdsPlayerForCheck(true)
         sut.holdsPlayerForCheck(true) // again: nothing more
         #expect(sut.session.resumesHeld && monitorings.made[0].resumesHeld == [true])
@@ -442,17 +442,17 @@ extension AppDelegateTests {
     func recentlyPlayedShown() async {
         let (sut, monitorings) = makeSUT()
         await start(sut)
-        // VLC stops: Recently Played lists it. Safari plays as another
+        // Viewer stops: Recently Played lists it. Safari plays as another
         // player is chosen, which stops the monitoring: Safari too.
-        let vlc = AudioSource(id: "org.videolan.vlc", name: "VLC")
-        monitorings.made[0].send(.activeSources([vlc]))
+        let viewer = AudioSource(id: "org.example.viewer", name: "Viewer")
+        monitorings.made[0].send(.activeSources([viewer]))
         monitorings.made[0].send(.activeSources([]))
-        #expect(sut.status.recentSources() == [vlc])
+        #expect(sut.status.recentSources() == [viewer])
         let safari = AudioSource(id: "com.apple.Safari", name: "Safari")
         monitorings.made[0].send(.activeSources([safari]))
         sut.choosePlayer(Players.second)
         #expect(sut.status.activeSources.isEmpty)
-        #expect(sut.status.recentSources() == [safari, vlc])
+        #expect(sut.status.recentSources() == [safari, viewer])
     }
 
     @MainActor

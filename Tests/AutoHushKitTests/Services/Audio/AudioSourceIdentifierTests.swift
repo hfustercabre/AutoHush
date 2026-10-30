@@ -77,7 +77,7 @@ struct AudioSourceIdentifierTests {
 
     @Test("an app hosted by another program (a Safari web app) is named by what it runs as")
     func hostedApp() {
-        let webApp = AudioSource(id: "com.apple.Safari.WebApp.TEST", name: "YT Music", bundlePath: "/Users/test/Applications/YT Music.app")
+        let webApp = AudioSource(id: "com.apple.Safari.WebApp.TEST", name: "Yodel Music", bundlePath: "/Users/test/Applications/Yodel Music.app")
         let own = getpid()
         // Whichever process answers first (this one's responsible app, or this one).
         let identifier = ProcessAudioSourceIdentifier { _ in webApp }

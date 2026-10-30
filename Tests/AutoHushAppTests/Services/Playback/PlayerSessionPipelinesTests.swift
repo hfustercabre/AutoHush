@@ -12,31 +12,15 @@ struct PlayerSessionPipelinesTests {
     /// A process ID no process can have, so the real owner lookup finds none.
     private nonisolated static let playerProcess = AudioProcessInfo(objectID: 1, bundleID: TestPlayer.bundleID, pid: 999_998)
 
-    /// The engine's configuration here: an app counts as playing at once, the
-    /// music pauses and plays without fading, and the monitor looks only when
-    /// the test changes the processes.
-    private nonisolated static func configuration() -> AppConfiguration {
-        var configuration = AppConfiguration(timings: TimingSettings(startConfirmation: 0, fadesEnabled: false))
-        configuration.musicPlayerBundleID = TestPlayer.bundleID
-        configuration.activeSampleInterval = 3600 // ticks only when the test changes the processes
-        configuration.idleSampleInterval = 3600
-        return configuration
-    }
-
     private static func setup(_ settings: MonitoringSettings, learned: [String: AnnouncedAssertions] = [:],
                               resumesHeld: Bool = false) -> PlayerSession.MonitoringSetup {
-        PlayerSession.MonitoringSetup(configuration: configuration(), settings: settings,
+        PlayerSession.MonitoringSetup(configuration: .testTicksOnly, settings: settings,
                                       learnedAssertions: learned, resumesHeld: resumesHeld)
     }
 
     /// Pipelines sharing `leveler`, reading stand-ins for macOS, with Auto-Pause on.
     private static func pipelines(sharing leveler: CountingLeveler) -> (any SessionMonitoring, any SessionMonitoring) {
-        let make = PlayerSession.pipelines(hostedApp: { _ in nil }, volumeLeveler: leveler, readers: {
-            MonitoringPipeline.Readers(processes: MockAudioProcessSnapshotProvider(), levelMeter: MockLevelMeter(),
-                                       audioCapturePermission: MockAudioCapturePermission(.granted),
-                                       powerAssertions: MockPowerAssertions(), outputDisconnects: MockOutputDisconnects(),
-                                       playerInput: { _ in { _ in true } }) // every start the user's
-        })
+        let make = PlayerSession.pipelines(hostedApp: { _ in nil }, volumeLeveler: leveler, readers: { .standIns() })
         let settings = MonitoringSettings(autoPause: true, ignored: [], timings: .defaults, detection: .audioLevels)
         // A pause held for the player chosen before, and the new one's.
         return (make(MockMusicPlayer(), setup(settings), { _ in }), make(MockMusicPlayer(), setup(settings), { _ in }))
@@ -63,10 +47,7 @@ struct PlayerSessionPipelinesTests {
         meter.peaks = [page.objectID: 0.5, Self.playerProcess.objectID: 0.3] // the player heard too
         let assertions = MockPowerAssertions()
         assertions.held = [page.pid: MockPowerAssertions.playing]
-        let readers = MonitoringPipeline.Readers(processes: processes, levelMeter: meter,
-                                                 audioCapturePermission: MockAudioCapturePermission(.granted),
-                                                 powerAssertions: assertions, outputDisconnects: MockOutputDisconnects(),
-                                                 playerInput: { _ in { _ in true } }) // every start the user's
+        let readers = MonitoringPipeline.Readers.standIns(processes: processes, levelMeter: meter, powerAssertions: assertions)
         let player = MockMusicPlayer(state: .playing)
         let updates = PipelineUpdates()
         let levels = MonitoringSettings(autoPause: true, ignored: [ignored.bundleID], timings: .defaults, detection: .audioLevels)
@@ -96,7 +77,7 @@ struct PlayerSessionPipelinesTests {
     func levelingOffReachesSharedLeveler() async {
         let leveler = CountingLeveler()
         let (held, current) = Self.pipelines(sharing: leveler)
-        var off = Self.configuration()
+        var off = AppConfiguration.testTicksOnly
         off.levelsMusic = false
         held.setConfiguration(off)
         current.setConfiguration(off)
