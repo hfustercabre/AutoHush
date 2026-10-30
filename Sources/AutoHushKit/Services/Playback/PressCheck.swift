@@ -26,7 +26,7 @@ package struct PressCheck: Sendable {
     private let state: @Sendable () async -> PlayerState
     let sleep: VolumeFader.Sleep
     private let now: @Sendable () -> Date
-    private let logger = AutoHushLogger(category: "VolumeFader")
+    private let logger = AutoHushLogger(category: "PressCheck")
 
     package init(player: any MusicPlayer, sleep: @escaping VolumeFader.Sleep, now: @escaping @Sendable () -> Date = { Date() }) {
         self.init(name: player.name, checksItself: player.checksItsPresses,
