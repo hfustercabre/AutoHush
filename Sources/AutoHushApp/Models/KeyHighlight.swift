@@ -96,16 +96,19 @@ final class KeyHighlight {
         firstWhenReady()
     }
 
+    /// A highlighted control dimmed, or gone, gives the highlight to the
+    /// innermost other one still under the pointer (the card around the
+    /// card's Try Again), as leaving it does; none, without one.
     func update(_ id: UUID, isEnabled: Bool) {
         controls[id]?.isEnabled = isEnabled
-        if !isEnabled, highlighted == id { highlighted = nil }
+        if !isEnabled, highlighted == id { highlighted = innermostHovered(excluding: id) }
     }
 
     func remove(_ id: UUID) {
         controls[id] = nil
         earlyFrames[id] = nil
         hovered.removeAll { $0 == id }
-        if highlighted == id { highlighted = nil }
+        if highlighted == id { highlighted = innermostHovered() }
         lights[id] = nil
     }
 
@@ -114,17 +117,18 @@ final class KeyHighlight {
         hovered.removeAll { $0 == id }
         if inside {
             hovered.append(id)
-            highlighted = innermostHovered
+            highlighted = innermostHovered()
             onHighlight?()
         } else if highlighted == id {
-            highlighted = innermostHovered
+            highlighted = innermostHovered()
         }
     }
 
-    /// Of the controls under the pointer, the last it came onto, or one
-    /// inside it, whichever was told first (SwiftUI tells a control inside
-    /// another and the one around it in no set order).
-    private var innermostHovered: UUID? {
+    /// Of the controls under the pointer but `excluded`, the last it came
+    /// onto, or one inside it, whichever was told first (SwiftUI tells a
+    /// control inside another and the one around it in no set order).
+    private func innermostHovered(excluding excluded: UUID? = nil) -> UUID? {
+        let hovered = hovered.filter { $0 != excluded }
         guard var best = hovered.last else { return nil }
         for id in hovered.reversed() where id != best && isInside(id, best) { best = id }
         return best

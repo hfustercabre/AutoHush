@@ -6,25 +6,26 @@ import Foundation
 /// level the volume, and it doesn't need Audio Recording.
 enum AntiDotText {
     /// An app added with Add an App that can only be muted: why it couldn't
-    /// be controlled (the menu's card), and why AntiDot mode is off while
-    /// it's the player (Settings → Behavior).
+    /// be controlled (the menu's card), why AntiDot mode is off while it's
+    /// the player (Settings → Behavior), and why it can't be chosen in
+    /// AntiDot mode (its row's and tile's help and VoiceOver hint).
     static func onlyMuted(_ player: String) -> String {
         String(localized: "AutoHush can only mute \(player), and muting needs Audio Recording, which AntiDot mode doesn’t use.",
-               comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the menu; and Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; %@ is the player")
+               comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the menu; Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; and the help tag and VoiceOver hint of its row and tile where media players are offered, dimmed while AntiDot mode is on; %@ is the player")
     }
 
     /// An app added with Add an App whose Now Playing row doesn't show
-    /// whether it plays, so only its sound tells: the same two places.
+    /// whether it plays, so only its sound tells: the same three places.
     static func onlyHeard(_ player: String) -> String {
         String(localized: "AutoHush needs Audio Recording to hear whether \(player) is playing.",
-               comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the menu; and Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; %@ is the player")
+               comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the menu; Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; and the help tag and VoiceOver hint of its row and tile where media players are offered, dimmed while AntiDot mode is on; %@ is the player")
     }
 
     /// Under a switch that needs sound measured (Level the volume), dimmed:
-    /// the menu and Settings → Behavior.
+    /// Settings → Behavior and Fine-Tuning.
     static var featureOff: String {
         String(localized: "Off in AntiDot mode",
-               comment: "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): the menu and Settings → Behavior")
+               comment: "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): Settings → Behavior, and Fine-Tuning's volume limits")
     }
 
     /// Audio Recording, which it doesn't use: Diagnostics' row, the welcome

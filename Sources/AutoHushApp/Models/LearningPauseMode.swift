@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 /// How the pause goes once it plays: AutoHush tries it itself first.
 enum LearningPauseMode: Equatable, Sendable {

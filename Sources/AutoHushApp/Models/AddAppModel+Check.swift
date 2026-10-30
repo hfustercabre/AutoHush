@@ -71,9 +71,12 @@ extension AddAppModel {
         switch end {
         case .finished(let result?):
             if result.setup == nil, !reader.isRunning(app.bundleID) {
-                // It quit during the check: nothing could be tried.
-                failureReason = .appQuit
-                stage = .failed
+                // It quit during the check: nothing could be tried. A check
+                // again brings the kept result back, as below.
+                if !restoreKept(for: app) {
+                    failureReason = .appQuit
+                    stage = .failed
+                }
                 return
             }
             resultBeforeCheckAgain = nil
@@ -89,10 +92,8 @@ extension AddAppModel {
             // A check again of an app whose result is kept (Check Again
             // beside Use) that doesn't finish: that result comes back, Use
             // with it (the workflow audit, 2026-10-22).
-            // Not for an app gone from where it was: Use couldn't work.
-            if let kept = keptChecks.load(now: now()), kept.app.bundleID == app.bundleID, reader.appExists(at: kept.app.url) {
-                restore(kept)
-            } else if case .stopped = end {
+            guard !restoreKept(for: app) else { break }
+            if case .stopped = end {
                 stage = .stopped
             } else {
                 appNotFound = !reader.appExists(at: app.url)
@@ -107,6 +108,16 @@ extension AddAppModel {
             stage = .allowing
             watchPermissions()
         }
+    }
+
+    /// Brings back the result kept for `app` (Check Again beside Use), Use
+    /// with it; `false` with none. Not for an app gone from where it was:
+    /// Use couldn't work.
+    private func restoreKept(for app: CheckableApp) -> Bool {
+        guard let kept = keptChecks.load(now: now()), kept.app.bundleID == app.bundleID,
+              reader.appExists(at: kept.app.url) else { return false }
+        restore(kept)
+        return true
     }
 
     /// Stop (the window's, the panel's): the check puts everything back

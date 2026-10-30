@@ -3,7 +3,7 @@ import AutoHushKit
 
 /// The switches of Settings → Behavior, as Diagnostics names them too: the
 /// same words, and the rules for when one can't be changed.
-enum SettingsSwitch: CaseIterable {
+enum SettingsSwitch {
     case antiDot, pausesOnDisconnect, resumesPlayback, fades, levelsMusic, pausesForMicrophone, staysPausedAfterCalls
 
     /// Its name: the switch's and Diagnostics' row's.
@@ -118,19 +118,19 @@ enum SettingsSwitch: CaseIterable {
 
     static var fadesOffNote: String {
         String(localized: "Fade playback is off",
-               comment: "Settings → Behavior, under the fades' lengths, dimmed while the Fade playback switch is off")
+               comment: "Settings → Fine-Tuning, under the fades' lengths, dimmed while the Fade playback switch (Settings → Behavior) is off")
     }
 
     static var levelingOffNote: String {
         String(localized: "Level the volume is off",
-               comment: "Settings → Behavior, under Volume's limits, dimmed while the Level the volume switch is off")
+               comment: "Settings → Fine-Tuning, under the volume's limits, dimmed while the Level the volume switch (Settings → Behavior) is off")
     }
 
     /// Under the dimmed Fade playback, for a player AutoHush can't fade;
     /// Fine-Tuning's Fade Lengths too.
     static func cantFadeNote(_ player: String) -> String {
         String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
-               comment: "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player, e.g. TIDAL")
+               comment: "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player")
     }
 
     static var updateChecksOffNote: String {

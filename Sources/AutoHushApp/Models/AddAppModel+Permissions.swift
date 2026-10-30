@@ -65,8 +65,11 @@ extension AddAppModel {
     }
 
     /// Reads what the check of `app` needs, as it stands now, into
-    /// `permissions`.
+    /// `permissions`: only while it's still the app chosen once read, so an
+    /// app chosen meanwhile never shows the last one's.
     func refreshPermissions(for app: CheckableApp, scriptable: Bool) async {
-        permissions = await host?.checkPermissions(app, scriptable: scriptable) ?? CheckPermissions()
+        let read = await host?.checkPermissions(app, scriptable: scriptable) ?? CheckPermissions()
+        guard chosen == app else { return }
+        permissions = read
     }
 }

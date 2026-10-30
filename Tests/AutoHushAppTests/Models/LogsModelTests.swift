@@ -145,6 +145,10 @@ struct LogsModelTests {
         #expect(LogsModel.area(of: "Updates") == "Updates")
         #expect(LogsModel.area(of: "Settings") == "Settings")
         #expect(LogsModel.area(of: "LaunchAtLogin") == "Settings")
+        // The engine's loggers about the player whose names don't say so.
+        for category in ["PlayerMute", "OutputDisconnects", "VolumeLeveler", "PressCheck"] {
+            #expect(LogsModel.area(of: category) == "Player", "\(category)")
+        }
         // Every area is listed, for the column's width.
         for category in ["WebAppPlayer", "PlaybackArbiter", "AudioMonitor", "Updates", "Settings", "AppDelegate"] {
             #expect(LogsModel.areas.contains(LogsModel.area(of: category)))

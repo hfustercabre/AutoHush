@@ -120,7 +120,7 @@ struct SettingsModelTests {
         model.setAntiDotMode(true)
         model.useAntiDotMode()
         #expect(!model.isAntiDotMode)
-        #expect(DetectionText.unavailableNote("Muted") == "AutoHush can only mute Muted, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
+        #expect(DetectionText.unavailableNote("Muted", mutes: true) == "AutoHush can only mute Muted, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
     }
 
     @Test("the chosen player's traits come from its option")

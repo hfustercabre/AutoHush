@@ -78,12 +78,28 @@ struct AppStatusTests {
         status.setActiveSources([chrome])
         #expect(!status.mutesNow)
         status.playerMutedInstead = true
-        #expect(status.mutesNow && PlayerOption.interruptsLabel(mutes: status.mutesNow) == "Mutes your player")
+        #expect(status.mutesNow && SourceText.subtitle(isIgnored: false, mutes: status.mutesNow) == "Mutes your player")
         status.playback = .musicIdle // the mute's flag alone, once AutoHush no longer holds a pause
-        #expect(!status.mutesNow && PlayerOption.interruptsLabel(mutes: status.mutesNow) == "Pauses your player")
+        #expect(!status.mutesNow && SourceText.subtitle(isIgnored: false, mutes: status.mutesNow) == "Pauses your player")
         status.playerMutedInstead = false
         status.playerOptions[0].pausesByMuting = true // one that can only be muted, whatever it does
         #expect(status.mutesNow)
+        #expect(SourceText.subtitle(isIgnored: true, mutes: true) == IgnoredText.label) // ignored, it says only that
+    }
+
+    @Test("a given-up resume says so whatever Auto-Pause is, as a player that needs reopening does: its line with Try Again, never “Auto-Pause is off”")
+    func resumeGivenUpWithAutoPauseOff() {
+        for autoPause in [AppStatus.AutoPause.off, .snoozed("until 15:30")] {
+            var status = ready(.musicIdle)
+            status.resumeError = ControlError(MusicPlayerError.playerNotResponding, player: "Jukebox")
+            status.autoPause = autoPause
+            #expect(status.showsResumeFailure && status.needsAttention)
+            #expect(status.statusLine == "Couldn’t resume — Jukebox didn’t answer")
+            #expect(status.icon == .attention && status.dimsIcon)
+            #expect(status.iconAccessibilityLabel == "AutoHush: Couldn’t resume — Jukebox didn’t answer")
+            status.resumeError = nil
+            #expect(status.statusLine.hasPrefix("Auto-Pause is off"))
+        }
     }
 
     @Test("a player opened without what it needs says so, with the attention icon, whatever Auto-Pause is")
@@ -119,6 +135,13 @@ struct AppStatusTests {
         #expect(status.controlErrorAlert()?.title == "Couldn’t Pause Jukebox")
         #expect(status.controlErrorAlert(inEnglish: false)?.message == "\(error.text)\n\n\(error.detail)")
         #expect(status.controlErrorAlert(inEnglish: true)?.message == error.text) // once is enough
+        // An error AutoHush has no words of its own for says the same in both: once, in any language.
+        status.controlError = ControlError(StubError.failed, player: "Jukebox")
+        #expect(status.controlError?.ownDetail == nil)
+        #expect(status.controlErrorAlert(inEnglish: false)?.message == "stub failed")
+        status.controlError = ControlError(MusicPlayerError.stillLearning, player: "Jukebox")
+        #expect(status.controlErrorAlert(inEnglish: false)?.message == status.controlError?.text)
+        #expect(error.ownDetail == error.detail)
         status.setHealth(.retrying("Can’t control Jukebox right now"))
         #expect(status.controlErrorAlert()?.title == "Can’t Control Jukebox")
     }
