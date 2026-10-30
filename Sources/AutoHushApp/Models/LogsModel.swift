@@ -2,15 +2,6 @@ import AppKit
 import Observation
 import AutoHushKit
 
-/// Where the logs window reads AutoHush's log: `LogFile`; tests stand in.
-protocol LogSource: AnyObject, Sendable {
-    func entries(since date: Date) async -> [LogEntry]
-    func observe(_ handler: @escaping @Sendable (LogEntry) -> Void) -> UUID
-    func stopObserving(_ token: UUID)
-}
-
-extension LogFile: LogSource {}
-
 /// What the logs window shows: AutoHush's log since this launch, or over
 /// the last 24 hours (earlier launches too), never further back; all of it
 /// or only the problems, narrowed by a search, new lines added as they come.
@@ -167,19 +158,24 @@ final class LogsModel {
         return "UTC\(seconds < 0 ? "-" : "+")\(minutes / 60)\(rest)"
     }
 
-    /// The part of AutoHush a logger's category belongs to, as the window
-    /// shows it: in English, as the lines themselves are.
     /// Every area `area(of:)` names.
     static let areas = ["Web Apps", "Player", "Detection", "Updates", "Settings", "App"]
 
+    /// The part of AutoHush a logger's category belongs to, as the window
+    /// shows it: in English, as the lines themselves are.
     static func area(of category: String) -> String {
         if category.contains("WebApp") || category.contains("Learning") { return "Web Apps" }
-        if category.contains("Player") || category.contains("Playback") || category.contains("Fader") { return "Player" }
+        if category.contains("Player") || category.contains("Playback") || category.contains("Fader")
+            || playerCategories.contains(category) { return "Player" }
         if category.contains("Monitor") || category.contains("Meter") { return "Detection" }
         if category.contains("Update") { return "Updates" }
         if category == AutoHushLogger.settings.category || category.contains("LaunchAtLogin") { return "Settings" }
         return "App"
     }
+
+    /// The engine's loggers about the player whose names don't say so: its
+    /// mute, an output going away, the volume's leveling, a press checked.
+    private static let playerCategories: Set = ["PlayerMute", "OutputDisconnects", "VolumeLeveler", "PressCheck"]
 }
 
 private extension LogEntry {

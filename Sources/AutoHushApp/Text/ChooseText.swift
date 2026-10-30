@@ -4,9 +4,9 @@ import Foundation
 /// General and Diagnostics) and Add an App's app.
 enum ChooseText {
     /// Where no player is chosen yet: Diagnostics' button beside “Player”
-    /// and Settings → General's beside “No player chosen”.
+    /// and Settings → General's beside “None chosen”.
     static var choose: String {
-        String(localized: "Choose…", comment: "Settings → Diagnostics' button beside “Player” while none is chosen or it's not installed, and Settings → General's beside “No player chosen”, which open Settings' Media Player page")
+        String(localized: "Choose…", comment: "Settings → Diagnostics' button beside “Player” while none is chosen or it's not installed, and Settings → General's beside “None chosen”, which open Settings' Media Player page")
     }
 
     /// Add an App's app once chosen, or Settings → General's media player:

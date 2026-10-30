@@ -1,9 +1,10 @@
 import Foundation
 import AutoHushKit
 
-/// The players the menu offers, in the side window beside Media Player's row: the
-/// supported apps, the apps added with Add an App (then Add an App…), and
-/// the Safari web apps (then Add a Web App…), each with what its row says.
+/// The players the menu offers, in the side window beside the card's
+/// Change Player row: the supported apps, the apps added with Add an App
+/// (then Add an App…), and the Safari web apps (then Add a Web App…), each
+/// with what its row says.
 /// From `PlayerOption.searchThreshold` players on, a search comes first and
 /// narrows them down.
 struct MenuPlayerList: Equatable {

@@ -2,112 +2,6 @@ import Foundation
 import Observation
 import AutoHushKit
 
-/// What the menu's own controls do.
-enum StatusMenuCommand: Equatable, Sendable {
-    case toggleAutoPause
-    case snooze(AutoPauseSnooze)
-    /// Whether the app stops pausing the music (`true`) or pauses it again.
-    case setIgnored(AudioSource, Bool)
-    /// Shows only the players whose names match.
-    case searchPlayers(String)
-    /// The players' search takes the keyboard itself (a click in it).
-    case typeInSearch
-    /// Moves the side window's highlight through its rows (-1, 1).
-    case moveHighlight(Int)
-    /// Presses the highlighted row in the players' side window, or chooses
-    /// the first player the search left while something is typed (Return).
-    case chooseHighlighted
-    /// Chooses the player with this bundle ID (or a suggested web app's ID).
-    case choosePlayer(String)
-    /// Removes the app added with Add an App with this bundle ID, after asking.
-    case removeAddedApp(String)
-    case addApp
-    case addWebApp
-    /// Picks apps to ignore (the ignored apps' side window).
-    case ignoreAnotherApp
-    /// Opens a part's side window (its row clicked), closing the other.
-    case openSide(MenuSidePart)
-    /// The pointer came onto (`true`) or left a row that opens a side
-    /// window: resting on it a moment opens it, as a submenu.
-    case hoverSideRow(MenuSidePart, Bool)
-    /// The pointer came onto a part of the menu: another part than the open
-    /// side window's closes it, after a moment (the user, 2026-10-18).
-    case pointerEntered(MenuSection)
-    /// Tries starting again after a failed start.
-    case retry
-    /// Tries the resume that was given up again (`AppStatus.showsResumeFailure`).
-    case retryResume
-    /// Reopens the player as it needs to be opened (`AppStatus.playerNeedsReopen`).
-    case reopenPlayer
-    /// Lifts the mute of a player that's muted instead of paused, until the
-    /// other apps stop (`AppStatus.offersUnmute`).
-    case unmutePlayer
-    /// Learns the chosen web app's controls in a new learning window.
-    case learnControls
-    /// Asks for the permission the warning under the card is about.
-    case resolveWarning(Permission)
-    /// Reopens AutoHush, once the user went to allow Audio Recording.
-    case reopenAutoHush
-    case useAntiDotMode
-    /// Shows the update found (the row above the buttons).
-    case showUpdate
-    case openSettings
-    case showDiagnostics
-    /// Checks for updates, or shows the update found.
-    case updates
-    case showAbout
-    /// Shows why the media player couldn't be controlled (the info button
-    /// after the card's line).
-    case showControlError
-    case quit
-}
-
-extension StatusMenuCommand {
-    /// What opens a window or an alert closes the menu first, as a menu's
-    /// rows do, and acts once it has closed (`StatusMenuController.run`);
-    /// the rest act at once, the menu staying open. Updates keeps it open
-    /// while it checks (`StatusMenuController.perform`).
-    var closesMenuFirst: Bool {
-        switch self {
-        case .snooze, .removeAddedApp, .addApp, .addWebApp, .ignoreAnotherApp, .resolveWarning, .reopenAutoHush, .useAntiDotMode,
-             .showUpdate, .openSettings, .showDiagnostics, .updates, .showAbout, .showControlError, .learnControls,
-             .reopenPlayer, .unmutePlayer, .quit:
-            true
-        case .toggleAutoPause, .setIgnored, .choosePlayer, .searchPlayers, .typeInSearch, .moveHighlight, .chooseHighlighted,
-             .openSide, .hoverSideRow, .pointerEntered, .retry, .retryResume:
-            false
-        }
-    }
-}
-
-/// A part of the menu, in the order it shows (`StatusMenuModel.sections`).
-enum MenuSection: Equatable {
-    /// What tells it apart in the menu, as SwiftUI identifies it: a part
-    /// that comes while the menu is open leaves the others as they were
-    /// (the full check, 2026-10-18).
-    var id: String { String(describing: self) }
-
-    case card
-    /// What the chosen player lacks, with the way to fix it.
-    case warning(Permission)
-    /// Once the user went to allow Audio Recording: Reopen AutoHush.
-    case reopenAutoHush
-    /// Under Audio Recording's warning: AntiDot mode instead.
-    case useAntiDot
-    /// The card's Change Player row: not a part of its own, only where the
-    /// pointer is, so the players' side window closes once the pointer
-    /// rests on the rest of the card, as on any other part (the user,
-    /// 2026-10-25).
-    case playerRow
-    case snooze
-    case playingNow
-    case recentlyPlayed
-    case ignoredApps
-    /// The update found, or being installed.
-    case update
-    case toolbar
-}
-
 /// What the menu shows. Unlike the status, the apps listed are fixed while
 /// it's open, so no row moves under the pointer.
 @MainActor
@@ -118,7 +12,8 @@ final class StatusMenuModel {
     var listedSources: [AudioSource] = []
     /// The apps listed under "Recently Played", fixed the same way.
     var listedRecentSources: [AudioSource] = []
-    /// Whether the players' side window is open, beside Media Player's row.
+    /// Whether the players' side window is open, beside the card's Change
+    /// Player row.
     var isChoosingPlayer = false
     /// What was typed in the search over the players.
     var playerSearch = ""
@@ -134,8 +29,7 @@ final class StatusMenuModel {
     @ObservationIgnored weak var settings: SettingsModel?
     /// Whether AntiDot mode is on: an app that can only be muted can't be
     /// chosen then. Read live from the settings, so the players follow a
-    /// switch in the menu's own settings at once; without them, as the menu
-    /// opened.
+    /// switch in Settings at once; without them, as the menu opened.
     var isAntiDotMode: Bool {
         get { settings?.isAntiDotMode ?? antiDotModeAtOpening }
         set { antiDotModeAtOpening = newValue }
@@ -207,18 +101,5 @@ final class StatusMenuModel {
         if status.updateOffer != nil { sections.append(.update) }
         sections.append(.toolbar)
         return sections
-    }
-}
-
-/// The menu's parts that open a side window beside it.
-enum MenuSidePart: Hashable {
-    case players, ignoredApps
-
-    /// The menu's part its row is in.
-    var section: MenuSection {
-        switch self {
-        case .players: .playerRow
-        case .ignoredApps: .ignoredApps
-        }
     }
 }

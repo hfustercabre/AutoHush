@@ -741,6 +741,42 @@ struct AddAppModelTests {
         #expect(model.result == nil && model.failureReason == .appNotFound)
     }
 
+    @Test("Check Again beside Use that ends with the app quit (nothing could be tried) brings the kept result back, Use with it, as one that doesn't finish does")
+    func checkAgainAppQuit() async {
+        let world = World()
+        let model = await ready(world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: .works), CheckResult.WayResult(kind: .panel, mark: .menuBarHidden)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.menu(menuName: "Playback")]))))
+        await TestWait.until { model.result != nil }
+        let result = model.result
+        world.run = FakeCheckRun()
+        model.checkAgain()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck()
+        await TestWait.until { world.runs == 2 }
+        world.running = false
+        world.run.finish(.finished(CheckResult(ways: [], setup: nil)))
+        await TestWait.until { model.result != nil }
+        #expect(model.result == result && model.state(of: .use) == .current && model.failureReason == nil)
+    }
+
+    @Test("permissions read for an app no longer chosen once they come never show: the app chosen meanwhile has its own")
+    func permissionsOfAnotherApp() async throws {
+        let world = World()
+        let model = await ready(world)
+        let chosen = try #require(model.chosen)
+        let other = try #require(world.apps.first { $0 != chosen })
+        world.permissions.accessibility = false
+        await model.refreshPermissions(for: other, scriptable: false)
+        #expect(model.permissions.accessibility) // the chosen app's, as read before
+        await model.refreshPermissions(for: chosen, scriptable: false)
+        #expect(!model.permissions.accessibility)
+    }
+
     @Test("after Skip at the Reopen step, Use doesn't ask to reopen it, also once the kept check is restored")
     func skippedReopen() async {
         let world = World()

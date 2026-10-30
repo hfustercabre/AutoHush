@@ -1,6 +1,5 @@
 import AppKit
 import AutoHushPlayers
-import CheckedPlayers
 import SwiftUI
 import AutoHushKit
 import UniformTypeIdentifiers
@@ -87,8 +86,7 @@ enum AppIcon {
         if let cached = cache[key] { return cached }
         let icon = image(bundlePath: bundlePath, size: size)
         var shown = icon
-        if let path = bundlePath, let browser = CheckedAppTraits.browser(ofAppAt: URL(filePath: path)),
-           let browserURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browser) {
+        if let path = bundlePath, let browserURL = CheckableApp.browserURL(ofAppAt: URL(filePath: path)) {
             shown = badged(icon, with: NSWorkspace.shared.icon(forFile: browserURL.path), size: size)
         }
         cache[key] = shown

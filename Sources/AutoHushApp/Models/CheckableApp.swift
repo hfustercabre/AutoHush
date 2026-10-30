@@ -36,8 +36,12 @@ struct CheckableApp: Identifiable, Equatable, Codable, Sendable {
     /// The name of the browser that made the app at `url`, if it's a
     /// Chromium browser's web app.
     static func browserName(ofAppAt url: URL) -> String? {
-        guard let browser = CheckedAppTraits.browser(ofAppAt: url),
-              let browserURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: browser) else { return nil }
-        return AppName.of(appAt: browserURL)
+        browserURL(ofAppAt: url).map(AppName.of(appAt:))
+    }
+
+    /// Where the browser that made the app at `url` is, if it's a Chromium
+    /// browser's web app and that browser is installed.
+    static func browserURL(ofAppAt url: URL) -> URL? {
+        CheckedAppTraits.browser(ofAppAt: url).flatMap(NSWorkspace.shared.urlForApplication(withBundleIdentifier:))
     }
 }

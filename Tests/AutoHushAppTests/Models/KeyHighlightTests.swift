@@ -184,6 +184,26 @@ struct KeyHighlightTests {
         #expect(order(keyboard) == [above]) // makes up no control
     }
 
+    @Test("a highlighted control dimmed or gone under the pointer gives the highlight to the one around it (the card's Try Again in the card), so Return presses that and ↓ goes on from it")
+    func changesUnderPointer() {
+        let keyboard = KeyHighlight()
+        let card = UUID(), button = UUID()
+        keyboard.register(card, .init(frame: CGRect(x: 0, y: 0, width: 330, height: 140)))
+        keyboard.register(button, .init(frame: CGRect(x: 12, y: 104, width: 80, height: 22)))
+        keyboard.hover(card, true)
+        keyboard.hover(button, true)
+        #expect(keyboard.highlighted == button)
+        keyboard.update(button, isEnabled: false) // dimmed, the pointer still on it
+        #expect(keyboard.highlighted == card && keyboard.light(card).isOn)
+        keyboard.update(button, isEnabled: true)
+        keyboard.hover(button, true)
+        #expect(keyboard.highlighted == button)
+        keyboard.remove(button) // gone from under the pointer
+        #expect(keyboard.highlighted == card && keyboard.light(card).isOn)
+        keyboard.hover(card, false)
+        #expect(keyboard.highlighted == nil)
+    }
+
     @Test("each control's own light follows the highlight, so a move redraws the two it concerns")
     func lights() {
         let keyboard = KeyHighlight()

@@ -1,5 +1,5 @@
-import AppKit
-import SwiftUI
+import Foundation
+import Observation
 import AutoHushKit
 
 /// How adding a web app goes, for its window.

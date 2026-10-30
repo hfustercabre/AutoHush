@@ -1,4 +1,4 @@
-import SwiftUI
+import Foundation
 
 /// Why the user's last click didn't move the learning on, shown under its
 /// step until the next one.

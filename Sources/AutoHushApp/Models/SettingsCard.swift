@@ -4,7 +4,7 @@
 /// `SettingsModel` says whether each is at its defaults and sets it back
 /// (`isDefault(_:)`, `restoreDefaults(_:)`); Behavior's rows open
 /// Fine-Tuning at one of its own (`SettingsModel.fineTuningFocus`).
-enum SettingsCard: CaseIterable, Hashable {
+enum SettingsCard: Hashable {
     // Behavior's
     case pausing, resuming, fades, volume, modes
     // Fine-Tuning's

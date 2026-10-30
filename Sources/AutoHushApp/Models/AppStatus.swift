@@ -48,7 +48,7 @@ struct AppStatus: Equatable {
     var chosenPlayer: PlayerOption? {
         playerOptions.first { $0.bundleID == chosenPlayerID }
     }
-    /// The media player AutoHush controls, e.g. "Spotify"; empty while none
+    /// The media player AutoHush controls, e.g. "Jukebox"; empty while none
     /// is chosen.
     var playerName: String { chosenPlayer?.name ?? "" }
     /// How far AutoHush has come learning to control the chosen player;
@@ -100,7 +100,10 @@ struct AppStatus: Equatable {
     /// English, as the log has it, for a bug report (E1, the user's pick,
     /// 2026-10-26: in English it said the same twice).
     func controlErrorAlert(inEnglish: Bool = AppStatus.speaksEnglish) -> (title: String, message: String)? {
-        func message(_ error: ControlError) -> String { inEnglish ? error.text : "\(error.text)\n\n\(error.detail)" }
+        func message(_ error: ControlError) -> String {
+            guard !inEnglish, let detail = error.ownDetail else { return error.text }
+            return "\(error.text)\n\n\(detail)"
+        }
         if showsResumeFailure, let resumeError {
             return (String(localized: "Couldn’t Resume \(playerName)",
                            comment: "Title of the alert that says why AutoHush couldn't resume the media player (it didn't answer, or its play failed); %@ is the player"),
@@ -116,7 +119,7 @@ struct AppStatus: Equatable {
     }
 
     /// AutoHush runs in English, the language of its log.
-    nonisolated static var speaksEnglish: Bool {
+    static var speaksEnglish: Bool {
         (Bundle.main.preferredLocalizations.first ?? "en").hasPrefix("en")
     }
     /// What the info button's alert is about: the given-up resume while the
@@ -228,7 +231,7 @@ struct AppStatus: Equatable {
     /// General's player card: the line names the player, so it doesn't.
     static var reopenPlayerTitle: String {
         String(localized: "Reopen",
-               comment: "Button in the menu's card and on Settings → General's player card, under the status line that says the media player needs reopening (“Deezer needs reopening”): quits it (an app added with Add an App) and opens it again with the option it needs")
+               comment: "Button in the menu's card and on Settings → General's player card, under the status line that says the media player needs reopening (“Jukebox needs reopening”): quits it (an app added with Add an App) and opens it again with the option it needs")
     }
 
     /// The chip under the status line in the menu's card and on Settings →
@@ -270,15 +273,17 @@ struct AppStatus: Equatable {
     /// icon's and the menu's Updates button while an update waits.
     static func withUpdate(_ label: String) -> String {
         String(localized: "\(label), update available",
-               comment: "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Spotify isn’t running” or “Updates”")
+               comment: "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Jukebox isn’t running” or “Updates”")
     }
 
     /// The menu bar icon is dimmed while auto-pause is off.
     var dimsIcon: Bool { isReady && autoPause != .on }
 
-    /// The line under the card's title: what's happening.
+    /// The line under the card's title: what's happening. Needing reopening
+    /// and a given-up resume say so whatever Auto-Pause is: Reopen and Try
+    /// Again stay under the line.
     var statusLine: String {
-        guard isReady, !playerNeedsReopen else { return presentation.line }
+        guard isReady, !playerNeedsReopen, !showsResumeFailure else { return presentation.line }
         switch autoPause {
         case .off:
             return String(localized: "Auto-Pause is off", comment: "Status line at the top of the menu")

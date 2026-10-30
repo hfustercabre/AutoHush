@@ -45,7 +45,7 @@ final class SettingsModel {
     var chosenPlayerID: String? { state.chosenPlayerID }
     /// The chosen player as it's offered.
     var chosenPlayer: PlayerOption? { state.chosenPlayer }
-    /// The chosen player's name, e.g. "Spotify".
+    /// The chosen player's name, e.g. "Jukebox".
     var chosenPlayerName: String? { chosenPlayer?.name }
     /// How far AutoHush has come learning to control the chosen player;
     /// `nil` for a player it controls without learning.
@@ -68,7 +68,7 @@ final class SettingsModel {
     /// The chosen player needs reopening: the player card offers Reopen,
     /// as the menu's card does. The windows don't follow the whole status
     /// this is read from, so it's followed through the status line, which
-    /// says so whenever it is ("Deezer needs reopening").
+    /// says so whenever it is ("Jukebox needs reopening").
     var offersReopenPlayer: Bool {
         _ = state.statusLine
         return state.status.isReady && state.status.playerNeedsReopen
