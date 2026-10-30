@@ -12,6 +12,11 @@ struct CheckWarningView: View {
     /// Mac's output; an output with no mute control can't be, and the user
     /// hears the app.
     var muting = AddAppModel.CheckMuting.app
+    /// Mission Control's desktop shortcuts are off (`DesktopShortcuts`):
+    /// the check can't show another desktop, and says how to turn them on,
+    /// with a button to Keyboard settings (K2, the user's pick, 2026-10-30).
+    var desktopShortcutsOff = false
+    var openKeyboardSettings: () -> Void = {}
     let start: () -> Void
     let cancel: () -> Void
 
@@ -30,6 +35,13 @@ struct CheckWarningView: View {
                         ForEach(CheckResult.WindowState.trip, id: \.self, content: tile)
                     }
                     Text(verbatim: AddAppText.statesNote(app.name)).captionStyle()
+                    if desktopShortcutsOff {
+                        NoteLabel(AddAppText.desktopShortcutsOff(app.name), font: .appCaption)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Button(action: openKeyboardSettings) { Text(verbatim: AddAppText.openKeyboardSettings) }
+                            .buttonStyle(.chip)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
             }
             SectionHeading(Text(verbatim: AddAppText.movingHeading)).padding(.top, 8)

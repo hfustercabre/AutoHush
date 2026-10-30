@@ -541,7 +541,7 @@ Add an App checks an app AutoHush has no support of its own for. Its window numb
 
 ```mermaid
 flowchart TD
-  WARN(["The warning: what the<br/>check does, for about<br/>3 minutes"])
+  WARN(["The warning: what the<br/>check does, for about<br/>3 minutes; with the desktop<br/>shortcuts off, how to turn<br/>them on (Open Keyboard<br/>Settings…)"])
   GO{"Start?"}
   BACK["Cancel: back<br/>to step 5"]
   RUN["The check runs in AutoHush’s<br/>helper; AutoHush’s own player<br/>stays as it is (Paused while<br/>a check runs)"]

@@ -56,6 +56,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   main thread (a pause of the window with a large app).
 - **The Logs window:** the player's mute, Pause on disconnect and Level
   the volume's lines are filed under Player.
+- **Add an App, with Mission Control's desktop shortcuts off:** the
+  check can't show another desktop without **Move left a Space** and
+  **Move right a Space**, so the warning before it now says to turn them
+  on, with **Open Keyboard Settings…**.
 - **Add an App, after Check Again with the app's windows closed:** the
   wait for a window looks at the window list first, so it does much less
   work until a window opens.

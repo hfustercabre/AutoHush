@@ -103390,6 +103390,233 @@
         }
       }
     },
+    "Open Keyboard Settings…" : {
+      "comment" : "The window shown before a check starts: button under the note about the desktop shortcuts; opens System Settings → Keyboard",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فتح إعدادات لوحة المفاتيح…"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Obre la configuració de Teclat…"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otevřít nastavení klávesnice…"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åbn indstillinger for Tastatur…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tastatur-Einstellungen öffnen …"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Άνοιγμα ρυθμίσεων πληκτρολογίου…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir los ajustes de Teclado…"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir la configuración de Teclado…"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avaa Näppäimistö-asetukset…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages Clavier…"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ouvrir les réglages Clavier…"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "פתיחת הגדרות מקלדת…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कीबोर्ड सेटिंग खोलें…"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvori postavke tipkovnice…"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Billentyűzet-beállítások megnyitása…"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Pengaturan Papan Ketik…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apri le impostazioni di Tastiera…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーボードの設定を開く…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키보드 설정 열기…"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buka Seting Papan Kekunci…"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Åpne innstillinger for Tastatur…"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open instellingen voor Toetsenbord…"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otwórz ustawienia klawiatury…"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir Ajustes de Teclado…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir definições de Teclado…"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deschideți configurările pentru tastatură…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть настройки клавиатуры…"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otvoriť nastavenia klávesnice…"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Odpri nastavitve tipkovnice …"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öppna inställningar för Tangentbord…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดการตั้งค่าแป้นพิมพ์…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Klavye Ayarlarını Aç…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відкрити параметри клавіатури…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mở cài đặt Bàn phím…"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟鍵盤設定⋯"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开键盘设置…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打開鍵盤設定⋯"
+          }
+        }
+      }
+    },
     "Open Login Items Settings…" : {
       "comment" : "Settings → General: button that opens System Settings → Login Items",
       "localizations" : {
@@ -139725,6 +139952,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "待完成"
+          }
+        }
+      }
+    },
+    "To try %@ on another desktop, turn on “Move left a Space” and “Move right a Space” in Keyboard Shortcuts → Mission Control." : {
+      "comment" : "The window shown before a check starts, under the window states, when macOS's shortcuts to move between desktops are off (System Settings → Keyboard → Keyboard Shortcuts → Mission Control; use macOS's own names for them); %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لتجربة التطبيق %@ على سطح مكتب آخر، شغّل «نقل لليسار مسافة واحدة» و«نقل لليمين مسافة واحدة» في اختصارات لوحة المفاتيح ← إدارة المهام."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per provar %@ en un altre escriptori, activa «Ves un Space cap a l’esquerra» i «Ves un Space cap a la dreta» a Dreceres de teclat → Mission Control."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chcete-li aplikaci %@ vyzkoušet na jiné ploše, zapněte „Posunout o plochu doleva“ a „Posunout o plochu doprava“ v části Klávesové zkratky → Mission Control."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hvis du vil prøve %@ på et andet skrivebord, skal du slå ”Flyt et Space til venstre” og ”Flyt et Space til højre” til i Tastaturgenveje → Mission Control."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Um %@ auf einem anderen Schreibtisch auszuprobieren, aktiviere „Einen Space nach links bewegen“ und „Einen Space nach rechts bewegen“ unter Tastaturkurzbefehle → Mission Control."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Για να δοκιμάσετε την εφαρμογή %@ σε άλλο γραφείο εργασίας, ενεργοποιήστε τα «Μετακίνηση αριστερά κατά έναν χώρο» και «Μετακίνηση δεξιά κατά έναν χώρο» στις Συντομεύσεις πληκτρολογίου → Mission Control."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para probar %@ en otro escritorio, activa “Ir al Space de la izquierda” e “Ir al Space de la derecha” en Atajos de teclado → Mission Control."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para probar %@ en otro escritorio, activa “Ir al Space de la izquierda” e “Ir al Space de la derecha” en Atajos de teclado → Mission Control."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jotta appia %@ voidaan kokeilla toisella työpöydällä, laita ”Siirry edelliseen tilaan” ja ”Siirry seuraavaan tilaan” päälle kohdassa Näppäinoikotiet → Mission Control."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour essayer %@ sur un autre bureau, activez « Déplacer d’un Space vers la gauche » et « Déplacer d’un Space vers la droite » dans Raccourcis clavier → Mission Control."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pour essayer %@ sur un autre bureau, activez « Déplace un Space vers la gauche » et « Déplace un Space vers la droite » dans Raccourcis clavier → Mission Control."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "כדי לנסות את %@ בשולחן עבודה אחר, יש להפעיל את “מעבר ל-Space משמאל” ואת “מעבר ל-Space מימין” בקיצורי מקלדת ← Mission Control."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ को किसी दूसरे डेस्कटॉप पर आज़माने के लिए, कीबोर्ड शॉर्टकट → Mission Control में “एक स्पेस बाएँ मूव करें” और “एक स्पेस दाएँ मूव करें” चालू करें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Da biste aplikaciju %@ isprobali na drugoj radnoj površini, uključite „Idi na površinu ulijevo” i „Idi na površinu udesno” u odjeljku Prečaci tipkovnice → Mission Control."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ha a(z) %@ appot másik íróasztalon is ki szeretné próbálni, kapcsolja be a „Mozgás balra egy Spaces-íróasztallal” és a „Mozgás jobbra egy Spaces-íróasztallal” billentyűparancsot itt: Billentyűparancsok → Mission Control."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untuk mencoba %@ di desktop lain, nyalakan “Pindah Ruang ke kiri” dan “Pindah Ruang ke kanan” di Pintasan Papan Ketik → Mission Control."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per provare %@ su un’altra scrivania, attiva “Vai a sinistra di uno spazio” e “Vai a destra di uno spazio” in Scorciatoie da tastiera → Mission Control."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のデスクトップで%@を試すには、“キーボードショートカット”→“Mission Control”で“左の操作スペースに移動”と“右の操作スペースに移動”をオンにしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 데스크탑에서 %@을(를) 확인하려면 키보드 단축키 → Mission Control에서 ‘왼쪽으로 Space 이동’과 ‘오른쪽으로 Space 이동’을 켜십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untuk mencuba %@ pada desktop lain, aktifkan “Beralih ke kiri satu Space” dan “Beralih ke kanan satu Space” dalam Pintasan Papan Kekunci → Mission Control."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For å prøve %@ på et annet skrivebord, slå på «Flytt ett arbeidsområde til venstre» og «Flytt ett arbeidsområde til høyre» i Tastatursnarveier → Mission Control."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Om %@ op een ander bureaublad te proberen, schakel je ‘Ga een spatie naar links’ en ‘Ga een spatie naar rechts’ in bij Toetscombinaties → Mission Control."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aby wypróbować aplikację %@ na innym biurku, włącz „Przejdź w lewo o przestrzeń” i „Przejdź w prawo o przestrzeń” w sekcji Skróty klawiszowe → Mission Control."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para testar %@ em outra mesa, ative “Mover para a esquerda um Space” e “Mover para a direita um Space” em Atalhos de Teclado → Mission Control."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Para testar %@ noutra secretária, ative «Um espaço para a esquerda» e «Um espaço para a direita» em Atalhos de teclado → Mission Control."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pentru a încerca aplicația %@ pe alt desktop, activați „Treceți cu un spațiu spre stânga” și „Treceți cu un spațiu spre dreapta” în Scurtături din tastatură → Mission Control."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чтобы проверить %@ на другом рабочем столе, включите «На одну область влево» и «На одну область вправо» в разделе «Сочетания клавиш» → Mission Control."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ak chcete apku %@ vyskúšať na inej ploche, zapnite „Posunúť o plochu doľava“ a „Posunúť o plochu doprava“ v časti Klávesové skratky → Mission Control."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Če želite aplikacijo %@ preskusiti na drugem namizju, vklopite »Premakni se za eno namizje Spaces v levo« in »Premakni se za eno namizje Spaces v desno« v razdelku Bližnjice na tipkovnici → Mission Control."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Om du vill testa %@ på ett annat skrivbord slår du på ”Flytta ett Spaces-skrivbord åt vänster” och ”Flytta ett Spaces-skrivbord åt höger” i Kortkommandon → Mission Control."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หากต้องการลองใช้ %@ บนเดสก์ท็อปอื่น ให้เปิด “เลื่อน Space ไปทางซ้าย” และ “เลื่อน Space ไปทางขวา” ใน ปุ่มลัดแป้นพิมพ์ → Mission Control"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ uygulamasını başka bir masaüstünde denemek için Klavye Kestirmeleri → Mission Control’de “Bir boşluk sola git” ve “Bir boşluk sağa git” seçeneklerini açın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Щоб перевірити програму %@ на іншому робочому столі, увімкніть «Пересунути на простір ліворуч» і «Пересунути на простір праворуч» у розділі Клавіатурні скорочення → Mission Control."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Để thử %@ trên màn hình nền khác, hãy bật “Di chuyển sang trái một dấu cách” và “Di chuyển sang phải một dấu cách” trong Phím tắt → Mission Control."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如要在另一個桌面上嘗試 %@，請在「鍵盤快捷鍵」→「指揮中心」中開啟「向左移動一個空間」和「向右移動一個空間」。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "要在另一个桌面上尝试 %@，请在“键盘快捷键”→“调度中心”中打开“向左移动一个空间”和“向右移动一个空间”。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "若要在另一個桌面上嘗試 %@，請在「鍵盤快速鍵」→「指揮中心」中開啟「向左移動一個空間」和「向右移動一個空間」。"
           }
         }
       }

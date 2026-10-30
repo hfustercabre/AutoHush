@@ -34,6 +34,17 @@ extension AddAppText {
         String(localized: "\(app)’s Window Goes Through 7 States", comment: "The window shown before a check starts: heading over the window states; %@ is the app")
     }
 
+    /// Mission Control's desktop shortcuts are off (`DesktopShortcuts`):
+    /// the check can't show another desktop.
+    static func desktopShortcutsOff(_ app: String) -> String {
+        String(localized: "To try \(app) on another desktop, turn on “Move left a Space” and “Move right a Space” in Keyboard Shortcuts → Mission Control.",
+               comment: "The window shown before a check starts, under the window states, when macOS's shortcuts to move between desktops are off (System Settings → Keyboard → Keyboard Shortcuts → Mission Control; use macOS's own names for them); %@ is the app")
+    }
+
+    static var openKeyboardSettings: String {
+        String(localized: "Open Keyboard Settings…", comment: "The window shown before a check starts: button under the note about the desktop shortcuts; opens System Settings → Keyboard")
+    }
+
     static func statesNote(_ app: String) -> String {
         String(localized: "In each, AutoHush pauses and plays \(app) every way it can, the Now Playing panel too (it opens for a moment).",
                comment: "The window shown before a check starts, under the window states; %@ is the app")

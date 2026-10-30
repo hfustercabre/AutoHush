@@ -1,7 +1,8 @@
 import Foundation
 
 /// Panes of System Settings the app links to: three privacy panes,
-/// Notifications, and Menu Bar (where Now Playing is shown or hidden).
+/// Notifications, Menu Bar (where Now Playing is shown or hidden), and
+/// Keyboard (its Keyboard Shortcuts, the desktops' among them).
 package enum SystemSettingsPane: String {
     case automation = "Privacy_Automation"
     case accessibility = "Privacy_Accessibility"
@@ -10,6 +11,7 @@ package enum SystemSettingsPane: String {
     /// Menu Bar from macOS 26, Control Center before: the same pane
     /// (opened so on macOS 27, 2026-10-16).
     case menuBar = "MenuBar"
+    case keyboard = "Keyboard"
 
     package var url: URL {
         switch self {
@@ -19,6 +21,8 @@ package enum SystemSettingsPane: String {
             URL(string: "x-apple.systempreferences:com.apple.Notifications-Settings.extension")!
         case .menuBar:
             URL(string: "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")!
+        case .keyboard:
+            URL(string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension")!
         }
     }
 }
