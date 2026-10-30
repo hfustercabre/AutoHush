@@ -126,6 +126,9 @@ func waitForFullerMode(pid: pid_t) {
     return true
 }
 
+/// Set when the app had to be brought forward for its page to show.
+@MainActor var broughtForward = false
+
 /// For a check: brings the app forward a moment for its page to be built,
 /// runs `build` there, then brings back the app that was in front.
 @MainActor func inFront<T>(pid: pid_t, _ build: () -> T) -> T {

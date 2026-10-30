@@ -285,9 +285,12 @@ Sources/
                          ends or stops takes its block on the mouse and keyboard with it); --result writes what
                          it found (CheckResult), --partial goes on without Audio Recording or Automation,
                          --logs and --caches put its logs and caches in AutoHush's folders, --no-taps taps no
-                         sound (AntiDot mode); Kit/ is PlayerCheckKit, with the flags, exit statuses and
+                         sound (AntiDot mode). main.swift runs the steps; Models/ (what a check reads and
+                         keeps), Services/ (the steps by area: Run, Press, Scripting, Menu, Page, Panel, Sound,
+                         Windows), Utilities/. Kit/ is PlayerCheckKit, with the flags, exit statuses and
                          answers whoever runs it uses, and CheckReportLine (the report's lines AutoHush and
-                         Player Check follow) and CheckProgress (how far a check has got, read from them)
+                         Player Check follow) and CheckProgress (how far a check has got, read from them), in
+                         Models/, CommandLine/, Storage/ and Utilities/
 Tests/                   a test module per module, mirroring its folders, plus AutoHushTestSupport (shared
                          fakes, a value behind a lock, a gate, a sleep the test ends, a manual clock,
                          temporary folders, settings kept in memory: MemoryDefaults) and PlayersTestSupport

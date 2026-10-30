@@ -53,10 +53,16 @@ player (a test holds it to that): the report says what kind of player an
 app could be in the words of AutoHush's kinds (“as the supported scriptable
 players are”), and only the names of the app it checks, as read from it.
 
-The code is split by
-subject: `main.swift` runs the steps in the report's order, and each
-file holds one subject (`Scripting`, `Menu`, `Page`, `WindowStates`,
-`Signs`, `PressTest`, `Report`, …). AppleScript has four: `Scripting` (its
+The code is in folders by kind of code, then by area, as the app's is:
+`main.swift` runs the steps in the report's order; `Models/` holds the
+types a check reads and keeps (`FoundButton`, `PageCheck`, `PanelRead`,
+`TestResults`, …), each in its own file; `Services/` the steps, by area
+(`Run/`: the command line, permissions, report, result and stops;
+`Press/`: a press, the press test and its trials; `Scripting/`, `Menu/`,
+`Page/`, `Panel/` with Now Playing, `Sound/`, `Windows/`), each file one
+subject (`Scripting`, `Menu`, `Page`, `WindowStates`, `Signs`,
+`PressTest`, `Report`, …); `Utilities/` the small helpers of no area.
+AppleScript has four: `Scripting` (its
 dictionary, its commands and its volume), `AppleEvents` (sending them, as
 AutoHush sends them), `ScriptedState` (its state and its song) and
 `NotificationLog` (its state notifications). `WindowStates` moves the app's window;
@@ -65,7 +71,9 @@ App, which waits for a window the check can reach after Check Again.
 `Kit/` is PlayerCheckKit, the parts that need no app to check (its
 command line, an app's binaries, what the log leaves out, what's kept, how
 a press is judged, how a stop is handled, what the check found made into
-its result), so tests reach them.
+its result), so tests reach them: `Models/`, `CommandLine/` (the flags,
+exit statuses, answers and report lines), `Storage/` and `Utilities/`.
+The tests mirror these folders.
 `Tests/PlayerCheckTests` tests the tool itself, run as a read-only check
 of Calculator (`argumentsForTests`): its command line, its report's words,
 the apps' interfaces and its log. What reads, moves or presses another app

@@ -104,8 +104,9 @@ let package = Package(
         // own code for what they share (Apple events, menus, learned page
         // buttons, sound). AutoHush.app carries it as a helper, which Add an
         // App… runs (its own process: a check that ends, or stops, takes its
-        // block on the mouse and keyboard with it). Its files are split by
-        // subject, with main.swift's top-level code running the steps.
+        // block on the mouse and keyboard with it). Its steps are in
+        // Services/, by area, a file per subject, with main.swift's top-level
+        // code running them.
         .executableTarget(
             name: "PlayerCheck",
             dependencies: ["PlayerCheckKit", "AutoHushKit", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "CheckedPlayers"],

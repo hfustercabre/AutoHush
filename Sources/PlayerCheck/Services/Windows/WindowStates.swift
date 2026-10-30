@@ -12,13 +12,6 @@ import CheckedPlayers
 /// full screen on another desktop).
 typealias WindowState = CheckResult.WindowState
 
-extension CheckResult.WindowState {
-    /// Where Chromium treats an Electron app's page as hidden, unless the app
-    /// was opened with `LaunchOption.occludedWindows`: its window fully out
-    /// of view, but not minimized or hidden.
-    static let outOfView: Set<WindowState> = [.covered, .otherDesktop, .otherDesktopCovered, .fullScreen]
-}
-
 /// Changing an app's main window's state as a person would (reading it:
 /// `AppWindows`, shared with Add an App).
 @MainActor enum WindowStates {

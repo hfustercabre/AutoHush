@@ -62,15 +62,6 @@ typealias Scripting = ScriptingDictionary
 /// whichever way presses it. Nil when it can't be read by script.
 @MainActor let scriptState = scripting.flatMap(ScriptSetup.State.init(dictionary:))
 
-/// One of its AppleScript commands, as AutoHush sends it: by its code
-/// ("spfyPaus"), named in the report as its dictionary names it ("pause").
-/// `pauses`: sent to pause it (a toggle is sent both ways).
-struct ScriptCommand: Equatable {
-    let code: String
-    let name: String
-    let pauses: Bool
-}
-
 /// Its AppleScript commands to pause and play it, as AutoHush chooses them
 /// (`ScriptSetup(dictionary:)`): pause and play in its own suite (what
 /// ScriptablePlayers needs), else commands named so, else one that toggles
