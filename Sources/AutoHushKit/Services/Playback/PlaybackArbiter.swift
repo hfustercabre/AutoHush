@@ -80,12 +80,12 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// told once the Mac is awake.
     var forgotPauseInSleep = false
     /// The number of the latest sleep or wake applied (see `setAsleep`).
-    var sleepChange = 0
+    private var sleepChange = 0
     /// While held, nothing paused by us is resumed (see `holdResumes`).
     var resumesHeld: Bool
     var playerState: PlayerState = .unknown
     /// How many states the player's observer reported (`handlePlayerStateChange`).
-    var playerReports = 0
+    private(set) var playerReports = 0
     /// Assumed true until AudioMonitor reports, which it does on its first tick.
     var playsLocally = true
     /// It says it plays here, but wasn't heard when last asked
@@ -294,5 +294,18 @@ actor PlaybackArbiter: PlaybackArbiting {
         if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
         levelLowered = nil
         resumeLowered = false
+    }
+
+    /// Notes `change` as the latest sleep or wake applied (`setAsleep`);
+    /// false for one no newer than that, which comes late and is ignored.
+    func noteSleepChange(_ change: Int) -> Bool {
+        guard change > sleepChange else { return false }
+        sleepChange = change
+        return true
+    }
+
+    /// Counts a state the player's observer reported (`playerReports`).
+    func notePlayerReport() {
+        playerReports += 1
     }
 }

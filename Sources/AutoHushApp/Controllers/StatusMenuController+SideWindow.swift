@@ -15,7 +15,7 @@ extension StatusMenuController {
             return
         }
         let side = sidePanel ?? makeSidePanel()
-        sidePanel = side
+        setSidePanel(side)
         // VoiceOver names it by its part (the full check, 2026-10-18).
         side.title = part == .players ? PlayerOption.mediaPlayerHeading : MenuIgnoredAppsView.title
         side.contentView?.layoutSubtreeIfNeeded()
@@ -74,17 +74,17 @@ extension StatusMenuController {
     /// left it: resting on it a moment opens it, as a submenu.
     func hoverSideRow(_ part: MenuSidePart, _ inside: Bool) {
         if inside {
-            hoveredSideRow = part
+            setHoveredSideRow(part)
             sideOpenTask?.cancel()
             let pause = pause
-            sideOpenTask = Task { [weak self] in
+            setSideOpenTask(Task { [weak self] in
                 await pause(Self.sideOpenDelay)
                 guard !Task.isCancelled, let self, self.isMenuOpen, self.hoveredSideRow == part,
                       self.model.openSide != part else { return }
                 self.open(part)
-            }
+            })
         } else if hoveredSideRow == part {
-            hoveredSideRow = nil
+            setHoveredSideRow(nil)
             sideOpenTask?.cancel()
         }
     }
@@ -96,7 +96,7 @@ extension StatusMenuController {
         // On the card, but on its Change Player row: that row's, whichever
         // of the two told first.
         let section = section == .card && hoveredSideRow == .players ? .playerRow : section
-        pointerSection = section
+        setPointerSection(section)
         guard let open = model.openSide else { return }
         guard section != open.section else {
             sideCloseTask?.cancel() // back on its row
@@ -105,7 +105,7 @@ extension StatusMenuController {
         sideCloseTask?.cancel()
         let start = pointerLocation()
         let pause = pause
-        sideCloseTask = Task { [weak self] in
+        setSideCloseTask(Task { [weak self] in
             var from = start
             for _ in 0..<5 {
                 await pause(Self.sideCloseDelay)
@@ -117,7 +117,7 @@ extension StatusMenuController {
             }
             guard !Task.isCancelled, let self, self.stillLeaving(open) else { return }
             self.closeSide()
-        }
+        })
     }
 
     /// The side window `part` is open, and the pointer on another part of
@@ -190,7 +190,7 @@ extension StatusMenuController {
     /// follows at the end of this pass, as the menu does (resized during
     /// SwiftUI's layout, its content kept a stale frame, 2026-10-18).
     private func sideHeightChanged(_ height: CGFloat) {
-        sideHeight = height
+        noteSideHeight(height)
         RunLoop.main.perform { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.isMenuOpen, let panel = self.panel, let side = self.sidePanel, side.isVisible else { return }

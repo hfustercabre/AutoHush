@@ -16,7 +16,7 @@ extension PlaybackArbiter {
     /// `.unknown` carries no information and is ignored.
     func handlePlayerStateChange(_ state: PlayerState) async {
         guard !isShutDown, state != .unknown else { return }
-        playerReports += 1
+        notePlayerReport()
         resumeFailure = nil // it answers: the user may have played or paused it
         if state != .playing { playsSilently = false }
         noteStoppedPlaying(state)

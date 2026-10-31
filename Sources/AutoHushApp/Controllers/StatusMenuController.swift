@@ -29,30 +29,30 @@ final class StatusMenuController: NSObject {
     /// What the menu shows.
     let model: StatusMenuModel
     /// The menu's window, made the first time it opens.
-    var panel: MenuPanel?
+    private(set) var panel: MenuPanel?
     /// The side window beside it (the players, or the ignored apps), made
     /// the first time one opens.
-    var sidePanel: MenuPanel?
+    private(set) var sidePanel: MenuPanel?
     /// The side window's content height, as last measured.
-    var sideHeight: CGFloat = 0
+    private(set) var sideHeight: CGFloat = 0
     /// When a click elsewhere last closed the menu: a click on the menu bar
     /// item itself closes it that way first, as its mouse goes down.
-    var lastClosedByClick: Date?
+    private(set) var lastClosedByClick: Date?
     /// The row that opens a side window the pointer rests on, if any.
-    var hoveredSideRow: MenuSidePart?
+    private(set) var hoveredSideRow: MenuSidePart?
     /// The menu's part the pointer last came onto.
-    var pointerSection: MenuSection?
+    private(set) var pointerSection: MenuSection?
     /// How long the pointer rests on a row before its side window opens,
     /// and stays on another part before it closes (so the way to the side
     /// window may cross the menu), as macOS's submenus wait.
     static let sideOpenDelay: TimeInterval = 0.15
     static let sideCloseDelay: TimeInterval = 0.3
-    var isMenuOpen = false
+    private(set) var isMenuOpen = false
 
     /// The side window opening once the pointer rests on its row, and
     /// closing once it stays on another part: each new move replaces it.
-    var sideOpenTask: Task<Void, Never>?
-    var sideCloseTask: Task<Void, Never>?
+    private(set) var sideOpenTask: Task<Void, Never>?
+    private(set) var sideCloseTask: Task<Void, Never>?
 
     /// Where it hears that another window became key, and that the desktop
     /// changed (tests give it their own, so no other test's window counts).
@@ -85,16 +85,16 @@ final class StatusMenuController: NSObject {
     let settingsModel: SettingsModel?
     /// What closes the menu (clicks elsewhere, another desktop) and what it
     /// follows while open (Option, for an added app's Remove).
-    var monitors: [Any] = []
-    var spaceObserver: any NSObjectProtocol?
+    private var monitors: [Any] = []
+    private var spaceObserver: any NSObjectProtocol?
     /// Another window becoming key while the menu is open.
-    var keyWindowObserver: any NSObjectProtocol?
+    private var keyWindowObserver: any NSObjectProtocol?
     /// The menu bar item's window moving (`followItemMoves`).
     private var itemMoveObserver: any NSObjectProtocol?
     /// The content's height, as last measured.
-    var contentHeight: CGFloat = 0
+    private(set) var contentHeight: CGFloat = 0
     /// The panel follows the content's height at the end of this pass.
-    var followsContent = false
+    private(set) var followsContent = false
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
          updates: any UpdateCommands, actions: any AppActions?, settingsModel: SettingsModel? = nil) {
@@ -137,6 +137,97 @@ final class StatusMenuController: NSObject {
         itemMoveObserver = notificationCenter.addObserver(
             forName: NSWindow.didMoveNotification, object: window, queue: .main
         ) { [weak self] _ in MainActor.assumeIsolated { self?.settingsModel?.refreshMenuBarIcon() } }
+    }
+
+    // The writers of the state above, kept in this file so that state stays
+    // private(set) (K8, the full check of 2026-10-30): the other files call them.
+
+    /// The menu counts as open, or closed (`open`, `close`).
+    func setMenuOpen(_ isOpen: Bool) { isMenuOpen = isOpen }
+
+    /// Keeps the menu's window, once made (`open`).
+    func setPanel(_ panel: MenuPanel) { self.panel = panel }
+
+    /// Keeps the side window, once made (`showSide`).
+    func setSidePanel(_ side: MenuPanel) { sidePanel = side }
+
+    /// The menu's content height, as just measured.
+    func noteContentHeight(_ height: CGFloat) { contentHeight = height }
+
+    /// The side window's content height, as just measured.
+    func noteSideHeight(_ height: CGFloat) { sideHeight = height }
+
+    /// Whether the panel follows the content's height at the end of this pass.
+    func setFollowsContent(_ follows: Bool) { followsContent = follows }
+
+    /// When a click elsewhere closed the menu, or `nil` once that click came.
+    func setLastClosedByClick(_ date: Date?) { lastClosedByClick = date }
+
+    /// The row that opens a side window the pointer rests on, if any.
+    func setHoveredSideRow(_ part: MenuSidePart?) { hoveredSideRow = part }
+
+    /// The menu's part the pointer came onto.
+    func setPointerSection(_ section: MenuSection?) { pointerSection = section }
+
+    /// The side window opening, or closing, after its wait.
+    func setSideOpenTask(_ task: Task<Void, Never>) { sideOpenTask = task }
+    func setSideCloseTask(_ task: Task<Void, Never>) { sideCloseTask = task }
+
+    /// Closes the menu on a click outside it (in another app, or another of
+    /// AutoHush's windows); follows Option.
+    func watchWhileOpen() {
+        let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: clicks, handler: { [weak self] _ in
+            MainActor.assumeIsolated { self?.closeForClickElsewhere() }
+        }) { monitors.append(global) }
+        if let local = NSEvent.addLocalMonitorForEvents(matching: clicks.union(.flagsChanged), handler: { [weak self] event in
+            let isFlags = event.type == .flagsChanged
+            let optionHeld = event.modifierFlags.contains(.option)
+            let windowNumber = event.windowNumber
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if isFlags {
+                    self.model.isOptionHeld = optionHeld
+                } else if windowNumber != self.panel?.windowNumber, windowNumber != self.sidePanel?.windowNumber,
+                          windowNumber != self.statusItem.button?.window?.windowNumber {
+                    self.close()
+                }
+            }
+            return event
+        }) { monitors.append(local) }
+    }
+
+    /// Closes the menu as another window becomes key (one of AutoHush's, or
+    /// an alert, that a choice in the menu brought forward), or on another
+    /// desktop.
+    func watchOtherWindows() {
+        spaceObserver = workspaceCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in MainActor.assumeIsolated { self?.close() } }
+        keyWindowObserver = notificationCenter.addObserver(
+            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            // Its identity, which can cross into the main actor (the window can't).
+            let window = (note.object as? NSWindow).map(ObjectIdentifier.init)
+            MainActor.assumeIsolated {
+                guard let self, let window, window != self.panel.map(ObjectIdentifier.init),
+                      window != self.sidePanel.map(ObjectIdentifier.init),
+                      let key = NSApp.windows.first(where: { ObjectIdentifier($0) == window }),
+                      Self.closesMenu(becomingKey: key, statusItemWindow: self.statusItem.button?.window) else { return }
+                self.close()
+            }
+        }
+    }
+
+    /// Removes the event monitors and the observers the open menu had
+    /// (`close`).
+    func stopWatching() {
+        monitors.forEach(NSEvent.removeMonitor)
+        monitors = []
+        if let spaceObserver { workspaceCenter.removeObserver(spaceObserver) }
+        spaceObserver = nil
+        if let keyWindowObserver { notificationCenter.removeObserver(keyWindowObserver) }
+        keyWindowObserver = nil
     }
 
     // MARK: - Rendering

@@ -38,7 +38,7 @@ extension CheckedPlayer {
 
     /// Whether its sound output is on, read on the probe's queue, never on
     /// Swift's shared threads (DEVELOPMENT.md).
-    private func soundOnNow(_ pid: pid_t) async -> Bool {
+    func soundOnNow(_ pid: pid_t) async -> Bool {
         let soundOn = soundOn
         return await Self.probeQueue.run { soundOn(pid) }
     }
@@ -90,23 +90,5 @@ extension CheckedPlayer {
         // Audio Recording asked on the probe's queue too: TCC answers by IPC.
         let probe = levelProbe, allowed = audioRecordingAllowed
         return await Self.probeQueue.run { allowed() ? probe.isAudible(appPID: pid) : nil }
-    }
-
-    /// What it last reported to Now Playing, unless that's stale (see
-    /// `reportIsStale`): a report that it isn't playing while its output is
-    /// open is checked once against its level (half a second of listening,
-    /// with Audio Recording, not in AntiDot mode), at the first read that
-    /// isn't `polled`.
-    private func reported(pid: pid_t, polled: Bool) async -> PlayerState? {
-        guard !reportIsStale, let client = reports?.latest(of: bundleID), let state = client.state else { return nil }
-        guard !polled, state != .playing, client.changed != reportHeardAt, tapsAllowed.withLock({ $0 }) else { return state }
-        guard await soundOnNow(pid) else { return state }
-        reportHeardAt = client.changed
-        // Audio Recording asked on the probe's queue too, as `heardNow` asks it.
-        let probe = levelProbe, allowed = audioRecordingAllowed
-        guard await Self.probeQueue.run({ allowed() && probe.isAudible(appPID: pid) }) else { return state }
-        reportIsStale = true
-        logger.notice("\(self.name, privacy: .public)’s Now Playing report says \(client.reported ?? "", privacy: .public) while it’s heard: its reports count no more")
-        return nil
     }
 }

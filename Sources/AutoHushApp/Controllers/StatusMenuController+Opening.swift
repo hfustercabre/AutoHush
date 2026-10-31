@@ -12,7 +12,7 @@ extension StatusMenuController {
         if isMenuOpen {
             close()
         } else if let closed = lastClosedByClick, now().timeIntervalSince(closed) < 0.4 {
-            lastClosedByClick = nil
+            setLastClosedByClick(nil)
         } else {
             open()
         }
@@ -25,11 +25,11 @@ extension StatusMenuController {
         guard !isMenuOpen else { return }
         actions?.menuWillOpen()
         prepareContent()
-        isMenuOpen = true
+        setMenuOpen(true)
         watchOtherWindows()
         guard showsPanel else { return }
         let panel = self.panel ?? makePanel()
-        self.panel = panel
+        setPanel(panel)
         // Its content as it opens, measured before it's placed.
         panel.contentView?.layoutSubtreeIfNeeded()
         placePanel(panel)
@@ -46,18 +46,13 @@ extension StatusMenuController {
     /// check's result, which can't show over it.
     func close() {
         guard isMenuOpen else { return }
-        isMenuOpen = false
+        setMenuOpen(false)
         sideOpenTask?.cancel()
         sideCloseTask?.cancel()
         sidePanel?.orderOut(nil)
         panel?.orderOut(nil)
         statusItem.button?.highlight(false)
-        monitors.forEach(NSEvent.removeMonitor)
-        monitors = []
-        if let spaceObserver { workspaceCenter.removeObserver(spaceObserver) }
-        spaceObserver = nil
-        if let keyWindowObserver { notificationCenter.removeObserver(keyWindowObserver) }
-        keyWindowObserver = nil
+        stopWatching()
     }
 
     private func makePanel() -> MenuPanel {
@@ -76,7 +71,7 @@ extension StatusMenuController {
         }
         panel.onKey = { [weak self] in self?.handleKey($0) ?? false }
         hosting.layoutSubtreeIfNeeded()
-        contentHeight = max(contentHeight, hosting.fittingSize.height)
+        noteContentHeight(max(contentHeight, hosting.fittingSize.height))
         return panel
     }
 
@@ -118,44 +113,20 @@ extension StatusMenuController {
     /// line wrapped): the panel follows, animated while it shows, once its
     /// parts have all reported (a fold moves two of them in one pass).
     private func contentHeightChanged(_ height: CGFloat) {
-        contentHeight = height
+        noteContentHeight(height)
         guard isMenuOpen, panel?.isVisible == true, !followsContent else { return }
-        followsContent = true
+        setFollowsContent(true)
         RunLoop.main.perform { [weak self] in
             MainActor.assumeIsolated { self?.followContent() }
         }
     }
 
     private func followContent() {
-        followsContent = false
+        setFollowsContent(false)
         guard isMenuOpen, let panel, panel.isVisible, let screen = panel.screen else { return }
         let height = Self.fittingHeight(contentHeight, top: panel.frame.maxY, in: screen.visibleFrame)
         model.isCappedByScreen = Self.isCapped(height: height, content: contentHeight)
         panel.setContentHeight(height, animated: !reducesMotion())
-    }
-
-    /// Closes the menu on a click outside it (in another app, or another of
-    /// AutoHush's windows); follows Option.
-    private func watchWhileOpen() {
-        let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
-        if let global = NSEvent.addGlobalMonitorForEvents(matching: clicks, handler: { [weak self] _ in
-            MainActor.assumeIsolated { self?.closeForClickElsewhere() }
-        }) { monitors.append(global) }
-        if let local = NSEvent.addLocalMonitorForEvents(matching: clicks.union(.flagsChanged), handler: { [weak self] event in
-            let isFlags = event.type == .flagsChanged
-            let optionHeld = event.modifierFlags.contains(.option)
-            let windowNumber = event.windowNumber
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                if isFlags {
-                    self.model.isOptionHeld = optionHeld
-                } else if windowNumber != self.panel?.windowNumber, windowNumber != self.sidePanel?.windowNumber,
-                          windowNumber != self.statusItem.button?.window?.windowNumber {
-                    self.close()
-                }
-            }
-            return event
-        }) { monitors.append(local) }
     }
 
     /// A click outside the menu closes it. One on the menu bar item itself
@@ -165,29 +136,7 @@ extension StatusMenuController {
     func closeForClickElsewhere() {
         close()
         if let item = itemFrame?() ?? statusItem.button?.window?.frame, item.contains(pointerLocation()) {
-            lastClosedByClick = now()
-        }
-    }
-
-    /// Closes the menu as another window becomes key (one of AutoHush's, or
-    /// an alert, that a choice in the menu brought forward), or on another
-    /// desktop.
-    private func watchOtherWindows() {
-        spaceObserver = workspaceCenter.addObserver(
-            forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main
-        ) { [weak self] _ in MainActor.assumeIsolated { self?.close() } }
-        keyWindowObserver = notificationCenter.addObserver(
-            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
-        ) { [weak self] note in
-            // Its identity, which can cross into the main actor (the window can't).
-            let window = (note.object as? NSWindow).map(ObjectIdentifier.init)
-            MainActor.assumeIsolated {
-                guard let self, let window, window != self.panel.map(ObjectIdentifier.init),
-                      window != self.sidePanel.map(ObjectIdentifier.init),
-                      let key = NSApp.windows.first(where: { ObjectIdentifier($0) == window }),
-                      Self.closesMenu(becomingKey: key, statusItemWindow: self.statusItem.button?.window) else { return }
-                self.close()
-            }
+            setLastClosedByClick(now())
         }
     }
 

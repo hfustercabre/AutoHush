@@ -54,8 +54,7 @@ extension PlaybackArbiter {
     /// and is ignored.
     func setAsleep(_ asleep: Bool, change: Int? = nil) async {
         if let change {
-            guard change > sleepChange else { return }
-            sleepChange = change
+            guard noteSleepChange(change) else { return }
         }
         guard !isShutDown, asleep != isAsleep else { return }
         isAsleep = asleep

@@ -61,9 +61,9 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// app may report only while it's the Now Playing app (Qobuz's said
     /// "Paused" for half an hour while it played, Player Check, 2026-10-15),
     /// so its reports count no more.
-    var reportIsStale = false
+    private var reportIsStale = false
     /// The report last checked against its level, by when it came.
-    var reportHeardAt: Date?
+    private var reportHeardAt: Date?
     static let probeQueue = DispatchQueue(label: "AutoHush.CheckedPlayer.level", qos: .userInitiated)
 
     package init(setup: PlayerSetup, reports: NowPlayingReports? = CheckedPlayer.sharedReports, store: any PlayerSetupStore = DefaultsPlayerSetupStore()) {
@@ -202,4 +202,22 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// Controlled through a Now Playing row that doesn't follow it: only its
     /// sound tells how it is.
     package nonisolated var needsAudioLevels: Bool { parts.hearing != nil }
+
+    /// What it last reported to Now Playing, unless that's stale (see
+    /// `reportIsStale`): a report that it isn't playing while its output is
+    /// open is checked once against its level (half a second of listening,
+    /// with Audio Recording, not in AntiDot mode), at the first read that
+    /// isn't `polled`.
+    func reported(pid: pid_t, polled: Bool) async -> PlayerState? {
+        guard !reportIsStale, let client = reports?.latest(of: bundleID), let state = client.state else { return nil }
+        guard !polled, state != .playing, client.changed != reportHeardAt, tapsAllowed.withLock({ $0 }) else { return state }
+        guard await soundOnNow(pid) else { return state }
+        reportHeardAt = client.changed
+        // Audio Recording asked on the probe's queue too, as `heardNow` asks it.
+        let probe = levelProbe, allowed = audioRecordingAllowed
+        guard await Self.probeQueue.run({ allowed() && probe.isAudible(appPID: pid) }) else { return state }
+        reportIsStale = true
+        logger.notice("\(self.name, privacy: .public)’s Now Playing report says \(client.reported ?? "", privacy: .public) while it’s heard: its reports count no more")
+        return nil
+    }
 }
