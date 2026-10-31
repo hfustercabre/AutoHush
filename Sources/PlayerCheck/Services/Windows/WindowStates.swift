@@ -1,6 +1,7 @@
 import AppKit
 import AutoHushKit
 import CheckedPlayers
+import PlayerCheckKit
 
 // MARK: - Window states
 

@@ -1,6 +1,6 @@
 import CoreGraphics
 import Testing
-@testable import AutoHushKit
+@testable import PlayerCheckKit
 
 @Suite("DesktopShortcuts")
 struct DesktopShortcutsTests {
