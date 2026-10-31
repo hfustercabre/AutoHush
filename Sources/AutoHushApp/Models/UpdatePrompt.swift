@@ -37,19 +37,33 @@ struct UpdatePrompt: Equatable {
             buttons = [openPage, later]
             return
         }
+        // A release candidate says so, and the latest release offered back
+        // from one (Get release candidates turned off) says why (WA6, R1, the
+        // user's pick, 2026-10-31).
+        let backFromCandidate = release.version < running
+        let back = String(localized: "You’re running version \(current), a release candidate. Get release candidates is off, so the latest release is offered. Installing it restarts AutoHush.",
+                          comment: "Update popup, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version")
         if isDownloaded {
             title = String(localized: "AutoHush \(new) Is Ready to Install",
                            comment: "Update popup title; %@ is the new version, already downloaded")
-            message = String(localized: "You’re running version \(current), and version \(new) is downloaded. Installing it restarts AutoHush.",
-                             comment: "Update popup; the first %@ is the installed version, the second the downloaded one")
+            message = backFromCandidate ? back
+                : release.version.isReleaseCandidate
+                ? String(localized: "You’re running version \(current), and version \(new) is downloaded. It’s a release candidate, a test version of the next release. Installing it restarts AutoHush.",
+                         comment: "Update popup for a release candidate, a test version of the next release; the first %@ is the installed version, the second the downloaded one")
+                : String(localized: "You’re running version \(current), and version \(new) is downloaded. Installing it restarts AutoHush.",
+                         comment: "Update popup; the first %@ is the installed version, the second the downloaded one")
             buttons = [
                 Button(title: String(localized: "Install and Relaunch", comment: "Update alert button"), choice: .install),
                 later, openPage,
             ]
         } else {
             title = String(localized: "AutoHush \(new) Is Available", comment: "Alert title; %@ is the new version number")
-            message = String(localized: "You’re running version \(current), and version \(new) is available. Installing it restarts AutoHush.",
-                             comment: "Update popup; the first %@ is the installed version, the second the new one")
+            message = backFromCandidate ? back
+                : release.version.isReleaseCandidate
+                ? String(localized: "You’re running version \(current), and version \(new) is available. It’s a release candidate, a test version of the next release. Installing it restarts AutoHush.",
+                         comment: "Update popup for a release candidate, a test version of the next release; the first %@ is the installed version, the second the new one")
+                : String(localized: "You’re running version \(current), and version \(new) is available. Installing it restarts AutoHush.",
+                         comment: "Update popup; the first %@ is the installed version, the second the new one")
             buttons = [
                 Button(title: String(localized: "Download and Install",
                                      comment: "Update popup button: downloads the update, installs it and restarts"),

@@ -10,16 +10,21 @@ This project follows [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Add an App:** an app that quits after it started playing, before the
-  check starts, is told at once (its Open Again step, or after Check Again
-  the result before), instead of only when you start the check; the
-  warning before the check closes with it.
+  check starts, is told at once, with Open and, after Check Again, Back
+  to Result, instead of only when you start the check; the warning before
+  the check closes with it. After Check Again with its windows closed, a
+  window closed again before the check goes back to waiting for one.
 - **Add an App, with Mission Control's desktop shortcuts off:** the
   warning dims the two desktop states the check can't reach.
 - **Add an App, after Check Again with the app's windows closed:** once a
-  window is open, the wait for it to play no longer looks at every
-  desktop's windows twice a second.
+  window is open on screen, the wait for it to play no longer looks at
+  every desktop's windows twice a second.
 - **Add an App's check, stopped:** its log says its window was put back
   and the app unmuted, as a finished check's does.
+- **Release candidates:** the update window says when what it offers is a
+  release candidate, a test version of the next release, and, while
+  you're on one with Get release candidates off, why it offers the latest
+  release.
 
 ---
 

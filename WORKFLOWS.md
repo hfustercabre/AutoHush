@@ -528,8 +528,7 @@ flowchart TD
   PLAY --> PL
   PL -->|"yes"| CHK
   PL -->|"no"| NOPL --> PLAY
-  CHK -->|"it quits before<br/>the check starts"| NOPL
-  CHK -->|"it quits, after<br/>Check Again"| RES
+  CHK -->|"it quits, or its window<br/>closes again (after Check<br/>Again with its windows<br/>closed), before the check"| NOPL
 
   class CHK,RES ref
   class NO,NOPL warn
@@ -689,7 +688,7 @@ flowchart TD
   NOT["A notification; the icon’s<br/>arrow, Updates in the accent<br/>color, Install AutoHush in<br/>the menu"]
   DL["Downloaded (not in<br/>Low Data Mode), kept<br/>up to 7 days"]
   AI["Waits for a quiet moment:<br/>no pause held, no window<br/>or menu open"]
-  OFFER["The offer, with what’s new:<br/>Download and Install (or Install<br/>and Relaunch), Open Release<br/>Page, Later"]
+  OFFER["The offer, with what’s new<br/>(a release candidate, or the<br/>latest release back from one,<br/>says so): Download and Install<br/>(or Install and Relaunch),<br/>Open Release Page, Later"]
   LATER["Later: still offered<br/>in the menu"]
   PREP["Downloaded, or the kept<br/>download, then checked:<br/>GitHub’s checksum, the version,<br/>the same developer team, and<br/>the macOS it needs"]
   OK{"Checked, and<br/>still quiet?"}
