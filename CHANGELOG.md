@@ -10,7 +10,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - **Settings → About** describes AutoHush as the README does: “Whatever’s
-  playing steps aside when something else needs your ears.”
+  playing steps aside when something else needs your ears.” Its icon, name,
+  version and description are centered, each on a line of its own, the
+  icon and the name sized to the window, and the page stays centered.
 
 ### Fixed
 
