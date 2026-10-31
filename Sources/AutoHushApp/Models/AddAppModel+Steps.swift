@@ -181,6 +181,7 @@ extension AddAppModel {
                 self.checkAgainState?.windowMissing = !windowOpen
                 if windowOpen, await self.reader.isPlaying(app, traits: traits), self.stage == .waitingToPlay(since: since) {
                     self.stage = .ready
+                    await self.watchUntilStart(app)
                     return
                 }
                 if self.now().timeIntervalSince(since) >= Self.playWait {
@@ -211,6 +212,21 @@ extension AddAppModel {
 
     /// The app quit while it was waited for (or didn't open again): the
     /// play step says so, and whether it's still where it was chosen.
+    /// Ready: the app is watched until the check starts, so one that quits
+    /// meanwhile is told at once (its quit step, or Check Again's kept
+    /// result), not by Start the Check (L7, 2026-10-31).
+    private func watchUntilStart(_ app: CheckableApp) async {
+        while !Task.isCancelled, stage == .ready {
+            await sleep(.milliseconds(500))
+            guard !Task.isCancelled, stage == .ready else { return }
+            if !reader.isRunning(app.bundleID) {
+                presenter?.closeWarning()
+                if !restoreKept(for: app) { quit(app) }
+                return
+            }
+        }
+    }
+
     private func quit(_ app: CheckableApp) {
         appQuit = true
         appNotFound = !reader.appExists(at: app.url)

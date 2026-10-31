@@ -1,4 +1,5 @@
 import AppKit
+import os
 import AutoHushKit
 import AutoHushPlayers
 import CheckedPlayers
@@ -12,6 +13,9 @@ struct AppReader: AppReading {
     let helper: PlayerCheckHelper?
     /// The players AutoHush supports, and whether AntiDot mode is on.
     weak var host: any AddAppHost?
+    /// The main window the last look found, per app, so the next look can
+    /// be a cheap one (`AppWindows.windowWithinReach`).
+    private let knownWindows = OSAllocatedUnfairLock<[pid_t: Int]>(initialState: [:])
 
     func listApps() async -> [CheckableApp] {
         // The supported players aren't offered (their support is AutoHush's
@@ -54,14 +58,17 @@ struct AppReader: AppReading {
 
     func hasWindowWithinReach(_ app: CheckableApp) async -> Bool {
         guard let pid = NSRunningApplication.running(app.bundleID)?.processIdentifier else { return false }
-        return await Self.windowWithinReach(pid)
+        return await Self.windowWithinReach(pid, known: knownWindows)
     }
 
     /// Off the main actor: a look at the windows on other desktops takes
     /// about 70 ms, up to 1 s.
     @concurrent
-    private nonisolated static func windowWithinReach(_ pid: pid_t) async -> Bool {
-        NSRunningApplication(processIdentifier: pid).map(AppWindows.hasWindowWithinReach) ?? false
+    private nonisolated static func windowWithinReach(_ pid: pid_t, known: OSAllocatedUnfairLock<[pid_t: Int]>) async -> Bool {
+        guard let app = NSRunningApplication(processIdentifier: pid) else { return false }
+        let found = AppWindows.windowWithinReach(app, known: known.withLock { $0[pid] })
+        known.withLock { $0[pid] = found.window }
+        return found.reachable
     }
 
     /// An app picked on the disk (Other App…), named as the list names it,

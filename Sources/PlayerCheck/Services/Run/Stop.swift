@@ -56,12 +56,18 @@ func stopNow(_ code: Int32) -> Never {
 
 /// After a trial, or another step a stop waited for: the stop it held back,
 /// said by `line` (by default, after a trial: it played the app again); the
-/// app's window put back first, when it's away.
+/// app's window put back first, when it's away, and its mute ended, each
+/// said as a finished check says it, so its log confirms what the panel
+/// says (L6, 2026-10-31).
 @MainActor func stopIfRequested(_ line: String? = nil) {
     guard stopState.isRequested else { return }
     say("  " + (line ?? "stopped: \(appName) was played again first"))
-    if stopState.isWindowAway { TestScope.windowTest?.restore() }
+    if stopState.isWindowAway, let windowTest = TestScope.windowTest {
+        let problem = windowTest.restore()
+        say("  its window put back as it was (\(windowTest.original.title))" + (problem.map { ", but \($0)" } ?? ""))
+    }
     if inputBlock.end() { say(CheckReportLine.free) }
+    unmuteAfterTest("the check stopped")
     stopNow(CheckExitStatus.stop)
 }
 

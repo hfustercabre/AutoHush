@@ -109,6 +109,18 @@ extension AddAppModelTests {
         #expect(!model.appQuit && world.opened.count == 2)
     }
 
+    @Test("the app quitting once it plays, before the check starts, says so at once, the warning before the check closed")
+    func appQuitsWhenReady() async {
+        let world = World()
+        let model = await AddAppModel.ready(on: world)
+        model.continueToCheck()
+        let closed = world.warningsClosed
+        world.running = false
+        await TestWait.until { model.stage == .playTimedOut }
+        #expect(model.appQuit && model.state(of: .play) == .failed)
+        #expect(world.warningsClosed == closed + 1)
+    }
+
     @Test("the app quitting and no longer found (moved or deleted) while it's waited for, or in the check, offers another app instead of Open or Check Again")
     func appGone() async {
         let world = World()

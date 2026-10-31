@@ -112,7 +112,7 @@ extension AddAppModel {
     /// Brings back the result kept for `app` (Check Again beside Use), Use
     /// with it; `false` with none. Not for an app gone from where it was:
     /// Use couldn't work.
-    private func restoreKept(for app: CheckableApp) -> Bool {
+    func restoreKept(for app: CheckableApp) -> Bool {
         guard let kept = keptChecks.load(now: now()), kept.app.bundleID == app.bundleID,
               reader.appExists(at: kept.app.url) else { return false }
         restore(kept)

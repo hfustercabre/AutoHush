@@ -88,6 +88,15 @@ struct CheckWarningView: View {
         }
         .frame(maxWidth: .infinity, alignment: .top)
         .accessibilityElement(children: .combine)
+        // Out of the check's reach while the desktop shortcuts are off: dimmed
+        // as unavailable things are, the note below saying why (I1, 2026-10-31).
+        .unavailable(desktopShortcutsOff && Self.needsDesktopShortcuts(state))
+    }
+
+    /// The states shown on another desktop, which the check reaches with
+    /// Mission Control's desktop shortcuts.
+    static func needsDesktopShortcuts(_ state: CheckResult.WindowState) -> Bool {
+        state == .otherDesktop || state == .otherDesktopCovered
     }
 
     static func symbol(_ state: CheckResult.WindowState) -> String {

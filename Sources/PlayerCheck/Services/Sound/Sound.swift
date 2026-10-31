@@ -198,10 +198,11 @@ func assertions(of pid: pid_t) -> Set<PowerAssertion> {
 /// The test's mute (`TestMute`), while it lasts.
 @MainActor var testMute: TestMute?
 
-/// Heard again once the test is done with it (playing again if it was).
-@MainActor func unmuteAfterTest() {
+/// Heard again once the test is done with it (playing again if it was),
+/// or the check stopped (`stopIfRequested`).
+@MainActor func unmuteAfterTest(_ why: String = "the test is over") {
     guard let mute = testMute else { return }
     testMute = nil
-    say("  \(webAppBrowser ?? appName) unmuted: the test is over"
+    say("  \(webAppBrowser ?? appName) unmuted: \(why)"
         + (mute.stop() ? " (its sound couldn't be muted for a while: it may have been heard)" : ""))
 }

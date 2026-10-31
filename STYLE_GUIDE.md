@@ -166,6 +166,9 @@ mode; only Settings' sidebar keeps one of its own.
 - **Problems** are orange with a warning triangle (`NoteLabel`), never red.
 - **Disabled** controls show at 45% opacity, over macOS's own disabled
   look. A control that's dimmed twice, inside a dimmed group, stays at 45%.
+  What a step can't reach shows the same way (`.unavailable(_:)`): the
+  warning before a check dims its two desktop tiles while Mission
+  Control's desktop shortcuts are off, the note under them saying why.
 - **Settings that only matter while a switch is on (or off)** always show,
   under it in the same card, greyed out and unclickable while they don't
   apply (`.unavailable(_:)`: disabled, at 45%): the fades' lengths under

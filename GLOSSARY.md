@@ -189,3 +189,10 @@ is (an Electron app's launch option); `reopen()` quits it and opens it
 again as it needs. The menu and Settings → General say so, with a Reopen
 button; a player the user chose to reopen always (`ReopenChoices`) is
 reopened without asking.
+
+**Release candidate** (`AppVersion.releaseCandidate`, `isReleaseCandidate`):
+a version published to test the next release before it's out, tagged
+`v<version>-rc.<n>` (a GitHub pre-release, never in the Homebrew tap) and
+shown as “1.2.7 RC 1”. Only copies with Get release candidates on
+(`getsReleaseCandidates`) are offered one, and one is only offered, never
+installed by itself. _Avoid_: beta.

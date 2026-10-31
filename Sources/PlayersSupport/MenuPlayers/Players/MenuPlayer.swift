@@ -23,10 +23,12 @@ package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
     /// once per copy and version), as last read; `nil` before the first read.
     /// Diagnostics asks on the main thread, so they're read again on its
     /// queue, never there: the first read of a copy can take a while (an
-    /// app.asar of tens of MB).
+    /// app.asar of tens of MB). Only the first ask queues a read: each
+    /// reading of its state reads them again (K7, 2026-10-31), so the queue
+    /// its presses wait on gets no job per Diagnostics refresh.
     package nonisolated var ownWordsRead: Bool? {
         let last = wordsRead.withLock { $0 }
-        queue.async { _ = self.readWords() }
+        if last == nil { queue.async { _ = self.readWords() } }
         return last
     }
 

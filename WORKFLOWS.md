@@ -149,7 +149,7 @@ flowchart TD
   TONE["Too short: a notification<br/>or chat tone, ignored"]
   AP{"Auto-Pause on,<br/>the player playing<br/>on this Mac?"}
   LEFT["Left alone"]
-  HEARD{"Heard? Its sound, measured<br/>with the other app's (AntiDot<br/>mode: not asked)"}
+  HEARD{"Heard? Its sound, measured<br/>with the other app’s (AntiDot<br/>mode: not asked)"}
   SILENT["Playing silently (a muted<br/>trailer): not paused; shown as<br/>not playing when only its open<br/>output said it plays"]
   START(["It starts, or is heard,<br/>while an app plays"])
   MUTED["Muted instead until the<br/>apps stop (the menu: Muted,<br/>the app: Mutes your player;<br/>Audio Recording, not in<br/>AntiDot mode)"]
@@ -171,7 +171,7 @@ flowchart TD
   RETRY["No answer: tried twice<br/>more, a second apart"]
   CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
   STAY["Stays paused: you<br/>play it when ready"]
-  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most, 2 dB at least, by<br/>default), back up once it's<br/>paused again, unless you changed it<br/>(no resume after all: at once;<br/>after a crash: at the next<br/>launch, within the hour)"]
+  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most, 2 dB at least, by<br/>default), back up once your<br/>player is paused or muted<br/>again, unless you changed it<br/>(no resume after all: at once;<br/>after a crash: at the next<br/>launch, within the hour)"]
   FI(["Played and faded in<br/>over 2 s, to your volume"])
 
   S --> F
@@ -528,6 +528,8 @@ flowchart TD
   PLAY --> PL
   PL -->|"yes"| CHK
   PL -->|"no"| NOPL --> PLAY
+  CHK -->|"it quits before<br/>the check starts"| NOPL
+  CHK -->|"it quits, after<br/>Check Again"| RES
 
   class CHK,RES ref
   class NO,NOPL warn

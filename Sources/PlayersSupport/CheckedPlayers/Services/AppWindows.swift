@@ -104,7 +104,11 @@ package enum AppWindows {
 
     /// The windows on screen above `info` that overlap it, front first, with their apps.
     package static func windowsAbove(_ info: Info) -> [(pid: pid_t, window: Int, frame: CGRect)] {
-        let list = infos(.optionOnScreenOnly)
+        windowsAbove(info, in: infos(.optionOnScreenOnly))
+    }
+
+    /// `windowsAbove`, in a list of the windows on screen already read.
+    private static func windowsAbove(_ info: Info, in list: [Info]) -> [(pid: pid_t, window: Int, frame: CGRect)] {
         guard let index = list.firstIndex(where: { number(of: $0) == number(of: info) }) else { return [] }
         let box = frame(of: info)
         return list[..<index].filter { other in
@@ -116,8 +120,10 @@ package enum AppWindows {
 
     /// Whether the windows on screen above it cover every point of a grid over it.
     package static func isCovered(_ info: Info) -> Bool {
-        guard infos(.optionOnScreenOnly).contains(where: { number(of: $0) == number(of: info) }) else { return false }
-        return isCovered(box: frame(of: info), above: windowsAbove(info).map(\.frame))
+        // One read of the list for both (R8, 2026-10-31).
+        let list = infos(.optionOnScreenOnly)
+        guard list.contains(where: { number(of: $0) == number(of: info) }) else { return false }
+        return isCovered(box: frame(of: info), above: windowsAbove(info, in: list).map(\.frame))
     }
 
     /// `isCovered`'s rule: whether `above` holds every point of a 9×9 grid
@@ -165,15 +171,28 @@ package enum AppWindows {
     /// desktop): Player Check's `WindowTest(app:)` rule. Without one, the
     /// check runs with its windows closed (each way tried once).
     package static func hasWindowWithinReach(_ app: NSRunningApplication) -> Bool {
+        windowWithinReach(app, known: nil).reachable
+    }
+
+    /// `hasWindowWithinReach`, from `known`, the main window an earlier ask
+    /// found, and with the main window found, for the next ask (Add an App's
+    /// wait asks every 0.5 s until the app plays).
+    package static func windowWithinReach(_ app: NSRunningApplication, known: Int?) -> (reachable: Bool, window: Int?) {
         // The window list alone first (a few ms): with no document window of
         // the app's in it, `main(of:)` finds none either, so the look at
         // every desktop's windows (up to 1 s) is spared while the user opens
-        // one (Add an App's wait asks every 0.5 s).
+        // one.
         let pid = app.processIdentifier
-        guard infos(.optionAll).contains(where: { owner(of: $0) == pid && ListedWindow($0).layer == 0 }) else { return false }
-        guard let (state, main) = stateAndMain(of: app) else { return false }
+        let listed = infos(.optionAll).filter { owner(of: $0) == pid && ListedWindow($0).layer == 0 }
+        guard !listed.isEmpty else { return (false, nil) }
+        // The window found before, still on screen: still within reach (one
+        // on screen isn't closed), so that look is spared too while the user
+        // starts it playing (R8, 2026-10-31). Off screen, it's looked at again.
+        if let known, listed.contains(where: { number(of: $0) == known && ListedWindow($0).isOnScreen }) { return (true, known) }
+        guard let (state, main) = stateAndMain(of: app) else { return (false, nil) }
         // Hidden is the app's: it may have no main window then.
-        return state != .hidden || main != nil
+        let reachable = state != .hidden || main != nil
+        return (reachable, reachable ? main.map { number(of: $0.info) } : nil)
     }
 
     /// Its state and its main window, from one look at its windows (each
