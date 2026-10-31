@@ -112,7 +112,7 @@ extension AddAppModel {
     /// Brings back the result kept for `app` (Check Again beside Use), Use
     /// with it; `false` with none. Not for an app gone from where it was:
     /// Use couldn't work.
-    func restoreKept(for app: CheckableApp) -> Bool {
+    private func restoreKept(for app: CheckableApp) -> Bool {
         guard let kept = keptChecks.load(now: now()), kept.app.bundleID == app.bundleID,
               reader.appExists(at: kept.app.url) else { return false }
         restore(kept)
@@ -124,7 +124,10 @@ extension AddAppModel {
     /// to its step (the workflow audit, 2026-10-22).
     func stopCheck() {
         guard let run else {
-            if stage == .checking { stage = .ready }
+            if stage == .checking {
+                stage = .ready
+                watchAgainUntilStart()
+            }
             return
         }
         isStopping = true

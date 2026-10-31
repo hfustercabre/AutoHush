@@ -23,12 +23,15 @@ package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
     /// once per copy and version), as last read; `nil` before the first read.
     /// Diagnostics asks on the main thread, so they're read again on its
     /// queue, never there: the first read of a copy can take a while (an
-    /// app.asar of tens of MB). Only the first ask queues a read: each
-    /// reading of its state reads them again (K7, 2026-10-31), so the queue
-    /// its presses wait on gets no job per Diagnostics refresh.
+    /// app.asar of tens of MB). Only the first ask queues a read, also while
+    /// that read still runs (P4, the review of 2026-10-31): each reading of
+    /// its state reads them again (K7), so the queue its presses wait on
+    /// gets no job per Diagnostics refresh.
     package nonisolated var ownWordsRead: Bool? {
         let last = wordsRead.withLock { $0 }
-        if last == nil { queue.async { _ = self.readWords() } }
+        if last == nil, firstReadQueued.withLock({ queued in defer { queued = true }; return !queued }) {
+            queue.async { _ = self.readWords() }
+        }
         return last
     }
 
@@ -37,6 +40,8 @@ package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
     private nonisolated let words: @Sendable () -> PlayPauseWords?
     /// Whether the last read of its words found them (`ownWordsRead`).
     private nonisolated let wordsRead = OSAllocatedUnfairLock<Bool?>(initialState: nil)
+    /// Whether `ownWordsRead` queued its one read.
+    private nonisolated let firstReadQueued = OSAllocatedUnfairLock(initialState: false)
     /// macOS's request for Accessibility is shown once per launch, not at
     /// every check.
     private var hasAskedForAccess = false

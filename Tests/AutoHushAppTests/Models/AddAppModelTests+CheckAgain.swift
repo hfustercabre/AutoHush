@@ -111,7 +111,28 @@ extension AddAppModelTests {
         #expect(model.stage == .playTimedOut && model.canGoBackToResult)
     }
 
-    @Test("after Check Again following a check with its windows closed, the play step waits for a window too; Back to Result forgets the wait")
+    @Test("after Check Again beside Use, the app quitting once it plays shows its quit step, as while it's waited for, Back to Result with it")
+    func checkAgainQuitWhenReady() async {
+        let world = World()
+        let model = await AddAppModel.ready(on: world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .menu, mark: .none), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.panel(rememberedRow: nil)]),
+            windowsClosed: true)))
+        await TestWait.until { model.result != nil }
+
+        world.playing = true
+        model.checkAgain()
+        await TestWait.until { model.stage == .ready }
+        world.running = false
+        await TestWait.until { model.appQuit }
+        #expect(model.stage == .playTimedOut && model.result == nil && model.canGoBackToResult)
+    }
+
+    @Test("after Check Again following a check with its windows closed, the play step waits for a window too, also when it closes again before the check; Back to Result forgets the wait")
     func checkAgainWaitsForWindow() async {
         let world = World()
         let model = await AddAppModel.ready(on: world)
@@ -132,6 +153,14 @@ extension AddAppModelTests {
         world.windowOpen = true
         await TestWait.until { model.stage == .ready }
         #expect(!model.windowMissing)
+        // Its window closed again before the check: the wait for one (WA7), the warning closed.
+        model.continueToCheck()
+        let closed = world.warningsClosed
+        world.windowOpen = false
+        await TestWait.until { model.windowMissing }
+        #expect(model.stage != .ready && world.warningsClosed == closed + 1)
+        world.windowOpen = true
+        await TestWait.until { model.stage == .ready }
 
         model.backToResult()
         #expect(!model.waitsForWindow)

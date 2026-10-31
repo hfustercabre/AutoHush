@@ -210,23 +210,39 @@ extension AddAppModel {
         }
     }
 
-    /// The app quit while it was waited for (or didn't open again): the
-    /// play step says so, and whether it's still where it was chosen.
-    /// Ready: the app is watched until the check starts, so one that quits
-    /// meanwhile is told at once (its quit step, or Check Again's kept
-    /// result), not by Start the Check (L7, 2026-10-31).
+    /// Back at the check step with no wait running (Stop while the last
+    /// check still put things back): watched until the check starts, as
+    /// after the wait (WA2, the review of 2026-10-31).
+    func watchAgainUntilStart() {
+        guard let app = chosen, stage == .ready else { return }
+        work = Task { [weak self] in await self?.watchUntilStart(app) }
+    }
+
+    /// Ready: the app is watched until the check starts, so a change that
+    /// undoes the play step is told at once, not by Start the Check (L7,
+    /// 2026-10-31), the warning closed: it quit, its quit step as while it
+    /// was waited for, also after Check Again (WA1, the user, 2026-10-31);
+    /// after Check Again with its windows closed, its window closed again,
+    /// the wait for one (WA7, the user, 2026-10-31).
     private func watchUntilStart(_ app: CheckableApp) async {
         while !Task.isCancelled, stage == .ready {
             await sleep(.milliseconds(500))
             guard !Task.isCancelled, stage == .ready else { return }
             if !reader.isRunning(app.bundleID) {
                 presenter?.closeWarning()
-                if !restoreKept(for: app) { quit(app) }
+                quit(app)
+                return
+            }
+            if waitsForWindow, !(await reader.hasWindowWithinReach(app)), !Task.isCancelled, stage == .ready {
+                presenter?.closeWarning()
+                waitForPlaying()
                 return
             }
         }
     }
 
+    /// The app quit while it was waited for (or didn't open again): the
+    /// play step says so, and whether it's still where it was chosen.
     private func quit(_ app: CheckableApp) {
         appQuit = true
         appNotFound = !reader.appExists(at: app.url)

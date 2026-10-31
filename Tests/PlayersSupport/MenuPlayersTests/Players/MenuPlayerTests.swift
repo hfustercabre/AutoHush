@@ -62,15 +62,19 @@ struct MenuPlayerTests {
         #expect(wordless.ownWordsRead == false) // Diagnostics says so
     }
 
-    @Test("once its words were read, asking whether they were queues no other read")
+    @Test("asking whether its words were read queues one read, also while it still runs, and none once they were")
     func wordsAskedOnce() async {
         let reads = Locked(0)
+        let gate = DispatchSemaphore(value: 0)
         let jukebox = MenuPlayer(profile: Self.profile, menu: FakeMenu(), processIdentifier: { 4242 },
-                                 words: { reads.increment(); return nil })
-        _ = jukebox.ownWordsRead // nothing read yet: one read queued
+                                 words: { reads.increment(); gate.wait(); return nil })
+        for _ in 0..<5 { _ = jukebox.ownWordsRead } // nothing read yet, the first read held: one queued
         await TestWait.until { reads.value == 1 }
+        gate.signal()
+        await TestWait.until { jukebox.ownWordsRead == false }
         for _ in 0..<5 { _ = jukebox.ownWordsRead }
-        #expect(await jukebox.playerState() == .unknown) // after anything queued: its own read
+        gate.signal() // its state's own read
+        #expect(await jukebox.playerState() == .unknown)
         #expect(reads.value == 2)
     }
 

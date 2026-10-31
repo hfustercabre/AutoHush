@@ -294,11 +294,7 @@ import WebAppPlayers
             stopState.setInTrial(false)
             WindowTest.currentState = nil
             if inputBlock.end() { say(CheckReportLine.free) }
-            // Read again: another app's windows that covered it may be behind it now.
-            let now = AppWindows.state(of: running)
-            say(now == windowTest.original || problem != nil
-                ? "  its window put back as it was (\(windowTest.original.title))" + (problem.map { ", but \($0)" } ?? "")
-                : "  its window put back where it was, but it was \(windowTest.original.title) and it's \(now?.title ?? "gone") now")
+            say(windowTest.putBackLine(problem: problem))
             stopIfRequested()
         }
         if pressSwitchLeftOn, let pressSwitch, setSwitch(pressSwitch, true, pid: pid) {

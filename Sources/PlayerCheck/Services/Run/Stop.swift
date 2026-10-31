@@ -63,8 +63,7 @@ func stopNow(_ code: Int32) -> Never {
     guard stopState.isRequested else { return }
     say("  " + (line ?? "stopped: \(appName) was played again first"))
     if stopState.isWindowAway, let windowTest = TestScope.windowTest {
-        let problem = windowTest.restore()
-        say("  its window put back as it was (\(windowTest.original.title))" + (problem.map { ", but \($0)" } ?? ""))
+        say(windowTest.putBackLine(problem: windowTest.restore()))
     }
     if inputBlock.end() { say(CheckReportLine.free) }
     unmuteAfterTest("the check stopped")

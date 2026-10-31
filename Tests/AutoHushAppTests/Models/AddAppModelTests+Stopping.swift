@@ -54,7 +54,7 @@ extension AddAppModelTests {
         world.run.finish(.stopped) // else its task waits for good, keeping the model and the world
     }
 
-    @Test("Stop while the last check still puts things back: the new one never starts, back to its step")
+    @Test("Stop while the last check still puts things back: the new one never starts, back to its step, the app watched until Start again")
     func stopWhileLastCheckEnds() async {
         let world = World()
         let model = await AddAppModel.ready(on: world)
@@ -76,6 +76,9 @@ extension AddAppModelTests {
         first.finish(.stopped)
         await TestWait.until { !model.isEndingLastCheck }
         #expect(world.runs == 1 && model.stage == .ready)
+        world.running = false // still watched until Start (WA2)
+        await TestWait.until { model.stage == .playTimedOut }
+        #expect(model.appQuit)
     }
 
     @Test("Change… closes the warning before a check: its Start was for the app before")

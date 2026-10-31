@@ -315,6 +315,17 @@ import PlayerCheckKit
         }
     }
 
+    /// The log's line once `restore` ended with `problem`, its state read
+    /// again: another app's windows that covered it may be behind it now. A
+    /// finished check and a stopped one say it the same way (P1, the review
+    /// of 2026-10-31).
+    func putBackLine(problem: String?) -> String {
+        let now = AppWindows.state(of: app)
+        return now == original || problem != nil
+            ? "  its window put back as it was (\(original.title))" + (problem.map { ", but \($0)" } ?? "")
+            : "  its window put back where it was, but it was \(original.title) and it's \(now?.title ?? "gone") now"
+    }
+
     /// Back as it was at the start: its state, place and desktop, the other
     /// apps' windows over it again, the home app's window and the home app in
     /// front. What it couldn't put back, or nil.
