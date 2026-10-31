@@ -4,8 +4,9 @@ import ScriptablePlayers
 
 // MARK: - Its state and its song, by script
 
-/// macOS refused the app's state (-1743): it's no longer asked. Each kind of
-/// error, and each unknown state value, is said once.
+/// macOS refused the app's state (-1743), or --partial went on without
+/// Automation: it's no longer asked. Each kind of error, and each unknown
+/// state value, is said once.
 @MainActor var scriptRefused = false
 /// Its state by script said it didn't play while it was heard (an app whose
 /// `player state` reads stopped while it plays a stream, 2026-10-22): wrong

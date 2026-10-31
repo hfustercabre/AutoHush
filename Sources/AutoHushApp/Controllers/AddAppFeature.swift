@@ -19,7 +19,8 @@ final class AddAppFeature {
         /// is first made.
         var standIns: (reader: any AppReading, helper: any CheckHelping)?
         /// Whether Mission Control's desktop shortcuts are on, read as the
-        /// warning before a check opens (`DesktopShortcuts`); tests say.
+        /// warning before a check opens and each time it comes back in front
+        /// (`DesktopShortcuts`); tests say.
         var desktopShortcutsOn: () -> Bool = { DesktopShortcuts.areOn }
     }
 
@@ -90,8 +91,9 @@ extension AddAppFeature: AddAppPresenting {
     func showWarning() {
         guard let model, let app = model.chosen else { return }
         warningWindow?.close()
+        let shortcutsOn = system.desktopShortcutsOn
         let window = CheckWarningWindowController(app: app, muting: model.checkMuting,
-                                                  desktopShortcutsOff: !system.desktopShortcutsOn()) { [weak model] in model?.startCheck() }
+                                                  desktopShortcutsOff: { !shortcutsOn() }) { [weak model] in model?.startCheck() }
         warningWindow = window
         window.show()
     }

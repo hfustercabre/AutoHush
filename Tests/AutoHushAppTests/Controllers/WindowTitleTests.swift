@@ -72,7 +72,7 @@ final class WindowTitleTests {
             PlayerChooserWindowController(model: model, tallestPage: 600).window,
             AddAppWindowController(model: addApp).window,
             AppChooserWindowController(model: addApp).window,
-            CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: false) {}.window,
+            CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: { false }) {}.window,
             AddWebAppWindowController(model: AddWebAppModel(), settings: model).window,
             LearningWindowController(model: model).window,
         ]
@@ -93,7 +93,7 @@ final class WindowTitleTests {
         return (world, [
             AddAppWindowController(model: addApp),
             AppChooserWindowController(model: addApp),
-            CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: false) {},
+            CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: { false }) {},
         ])
     }
 
@@ -167,7 +167,7 @@ final class WindowTitleTests {
         let world = World()
         let started = CallLog()
         var warningWindow: NSWindow?
-        let warning = CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: false) {
+        let warning = CheckWarningWindowController(app: world.apps[0], muting: .none, desktopShortcutsOff: { false }) {
             started.calls.append(warningWindow?.isVisible == false ? "started, closed" : "started, open")
         }
         warningWindow = warning.window
@@ -180,6 +180,21 @@ final class WindowTitleTests {
         warningView.rootView.cancel()
         await TestWait.until { !warning.isOpen }
         #expect(!warning.isOpen && started.calls.count == 1)
+    }
+
+    @Test("the check's warning reads the desktop shortcuts again as it or AutoHush comes back in front: their note goes once they're on")
+    func warningReadsShortcutsAgain() async {
+        let off = Locked(true)
+        let warning = CheckWarningWindowController(app: World().apps[0], muting: .none, desktopShortcutsOff: { off.value }) {}
+        #expect(warning.showsDesktopShortcutsNote)
+        off.value = false
+        NotificationCenter.default.post(name: NSWindow.didBecomeKeyNotification, object: warning.window)
+        await TestWait.until { !warning.showsDesktopShortcutsNote }
+        #expect(!warning.showsDesktopShortcutsNote)
+        off.value = true
+        NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApp)
+        await TestWait.until { warning.showsDesktopShortcutsNote }
+        #expect(warning.showsDesktopShortcutsNote)
     }
 
     @Test("Add a Web App's window floats in the top-right corner, its top edge kept as it grows")

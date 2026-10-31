@@ -375,6 +375,42 @@ extension PlaybackArbiterTests {
         #expect(leveler.log == ["lower -6.0"])
     }
 
+    /// How the music is muted in place of a pause, for `mutedPauseRestoresLevel`.
+    enum MuteInPlaceOfPause: CaseIterable {
+        case pauseFailed, playsWhileSaidPaused
+    }
+
+    @Test("with Level the volume on, a pause muted instead puts the Mac's volume back at once, as a pause does",
+          arguments: MuteInPlaceOfPause.allCases)
+    func mutedPauseRestoresLevel(way: MuteInPlaceOfPause) async {
+        let player = MockMusicPlayer()
+        let leveler = RecordingVolumeLeveler()
+        var configuration = AppConfiguration.testing
+        configuration.levelsMusic = true
+        let mute = FakeMute()
+        let arbiter = PlaybackArbiter(player: way == .pauseFailed ? player : MockMutingMusicPlayer(player),
+                                      configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in }, volumeLeveler: leveler, resumeOffset: { -6 },
+                                      playerMute: way == .pauseFailed ? mute : nil)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false) // resumed, lowered 6 dB
+        await TestWait.until { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        switch way {
+        case .pauseFailed: await player.setFailPause(StubError.failed)
+        case .playsWhileSaidPaused:
+            await player.setState(.paused)
+            await player.setPlaysAnyway(true)
+        }
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.waitUntilIdle()
+        switch way {
+        case .pauseFailed: #expect(mute.muteCount == 1)
+        case .playsWhileSaidPaused: #expect(await player.commandLog.last == "mute")
+        }
+        #expect(leveler.log == ["lower -6.0", "restore now"])
+    }
+
     @Test("turning Level the volume off puts back whatever is lowered, leaving monitoring's stop nothing of its own to put back")
     func levelingTurnedOff() async {
         let run = await levelingLog(levels: true, offset: -6, turnsOff: true)

@@ -676,7 +676,7 @@ An app added with Add an App is paused and played only the one way chosen at Use
 
 ```mermaid
 flowchart TD
-  AUTO(["An automatic check:<br/>GitHub, once a day"])
+  AUTO(["An automatic check: GitHub,<br/>once a day; at once as Get<br/>release candidates turns on,<br/>or off while one runs"])
   ASK(["Updates in the menu,<br/>or Check Now in Settings"])
   NEW{"A newer version? (Get<br/>release candidates on: the<br/>newest release or release<br/>candidate; off while one<br/>runs: the latest release)"}
   UTD["Up to date, or it<br/>couldn’t check: said<br/>only when you asked"]
@@ -724,7 +724,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-Updates, in Settings → About, sets what happens when an update is found, and can turn the automatic checks off. With **Get release candidates** on, checks find release candidates too (versions to test before a release); one is only ever offered, never downloaded or installed by itself. Turned off while one runs, the latest release is offered instead, even an older one; turned off while one is offered, the offer goes at once, and the next check finds the latest release. Notifications are optional: without them every choice still works and the menu bar icon shows the update. Settings, permissions and any pause AutoHush held carry over to the new version.
+Updates, in Settings → About, sets what happens when an update is found, and can turn the automatic checks off. With **Get release candidates** on, checks find release candidates too (versions to test before a release); one is only ever offered, never downloaded or installed by itself. Turned off while one runs, it checks at once and the latest release is offered instead, even an older one; turned off while one is offered, the offer goes at once, and the next check finds the latest release. Notifications are optional: without them every choice still works and the menu bar icon shows the update. Settings, permissions and any pause AutoHush held carry over to the new version.
 
 ## Problems: when the player can’t start
 

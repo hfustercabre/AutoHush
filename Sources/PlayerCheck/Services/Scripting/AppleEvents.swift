@@ -37,15 +37,16 @@ func propertySpecifier(_ code: String) -> NSAppleEventDescriptor {
 /// (`AutomationPermission`): a send waits only 5 s, too short for someone
 /// reading macOS's prompt. Allowed or denied, it's said once and kept
 /// (`automationAnswer`; a test's Permissions ask it first); any other answer
-/// (-600: the app quit) is asked again before the next event. Nil when
-/// allowed; else the error the event gets instead.
+/// (-600: the app quit) is asked again before the next event. Never shown
+/// with --partial, as in its Permissions (L5). Nil when allowed; else the
+/// error the event gets instead.
 @MainActor func automationRefusal(pid: pid_t) -> NSError? {
     switch automationAnswer {
     case .allowed?: return nil
     case .denied?: return NSError(domain: NSOSStatusErrorDomain, code: Int(errAEEventNotPermitted))
     default: break
     }
-    let status = AutomationPermission.check(pid: pid, ask: true)
+    let status = AutomationPermission.check(pid: pid, ask: !partial)
     let answer = AutomationPermission(status: status)
     // A press's output is its one line of result: there it's only logged.
     let note: (String) -> Void = action == nil ? { say($0) } : { log($0) }

@@ -15,15 +15,16 @@ extension UpdateController {
 
     /// Looks for release candidates too, or not. On, it checks again at once
     /// while checks are automatic: a candidate may be offered. Off, a
-    /// candidate offered is withdrawn at once, with no check: the next one
-    /// finds the latest release (B1, the user, 2026-10-30). Either way, a
+    /// candidate offered is withdrawn at once (B1, the user, 2026-10-30);
+    /// with no check, but while one runs: then the latest release is offered
+    /// at once, as Settings says (D2, the user, 2026-10-30). Either way, a
     /// check under way asks again as the switch is now (`runCheck`).
     func setGetsReleaseCandidates(_ enabled: Bool) {
         guard enabled != getsReleaseCandidates else { return }
         AutoHushLogger.settings.info("Get release candidates: \(enabled ? "on" : "off", privacy: .public)")
         getsReleaseCandidates = enabled
-        guard enabled else { return withdrawReleaseCandidate() }
-        guard checksAutomatically else { return }
+        if !enabled { withdrawReleaseCandidate() }
+        guard checksAutomatically, enabled || currentVersion?.isReleaseCandidate == true else { return }
         Task {
             await check(userInitiated: false)
             await runAutomaticTasks()

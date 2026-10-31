@@ -100,7 +100,8 @@ window moved and nothing pressed. With `--partial`, which AutoHush passes
 needed: without Audio Recording the app isn't muted by this tool (run by Add
 an App, AutoHush mutes the Mac's output meanwhile instead) and whether it
 plays is told by other signs, and without Automation its AppleScript isn't
-tried.
+tried. Neither is asked for then: the window asked already, or the user
+went on without it.
 With `--no-taps`, which AutoHush passes in AntiDot mode, no sound is tapped
 at all, as without Audio Recording. An app that doesn't answer whether it
 may be controlled (it quit meanwhile) stops the check the same way, saying
@@ -262,7 +263,7 @@ Each way is tried with the app's main window in each of these states:
 |---|---|
 | visible | shown, on this desktop; if the window it was run from covers it, that one moves aside |
 | covered | a window of the tool's own over it |
-| on another desktop | dragged there, as a person drags a window, with Control-→ |
+| on another desktop | dragged there, as a person drags a window, with Mission Control's "Move right a Space" (Control-→, or the keys the user set) |
 | covered on another desktop | the tool's window over it there |
 | full screen | `AXFullScreen`; not tested when its window's green button only zooms (no `AXFullScreenButton` among its buttons): it can't go full screen |
 | minimized | `AXMinimized` |

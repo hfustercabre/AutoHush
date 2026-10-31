@@ -33,6 +33,8 @@ extension UpdateChecker {
 
     /// Answers GitHub's list of releases with `tags`, newest first, those
     /// marked pre-releases, each with its disk image; `onRequest` sees each request.
+    /// Only checks with release candidates read the list: one without them
+    /// asks for the latest release (`latestRelease`).
     static func releases(_ tags: [(tag: String, prerelease: Bool)],
                          onRequest: @escaping @Sendable (URLRequest) -> Void = { _ in }) -> UpdateChecker {
         UpdateChecker { request in

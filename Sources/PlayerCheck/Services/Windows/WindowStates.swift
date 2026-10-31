@@ -116,36 +116,47 @@ typealias WindowState = CheckResult.WindowState
         post(event)
     }
 
-    /// Control-→ (or ←) as a keyboard sends it: Control pressed, the arrow
-    /// with the Fn and number-pad flags arrows carry (macOS's desktop
-    /// shortcuts are registered with them: without, it does nothing), then
-    /// Control released with no flags. The flags of posted events stay in the
-    /// system's keyboard state: without the release, every later click is a
-    /// Control-click, which can't drag a window.
-    private static func controlArrow(right: Bool) {
+    /// The modifier keys a shortcut can hold, with their key codes.
+    private static let modifierKeys: [(flag: CGEventFlags, key: CGKeyCode)] = [
+        (.maskControl, 59), (.maskAlternate, 58), (.maskShift, 56), (.maskCommand, 55),
+    ]
+
+    /// "Move right a Space" (or left) as a keyboard sends it, with the keys
+    /// it's set to (Control-→ unless the user changed it): its modifiers
+    /// pressed, the key with the flags it's registered with (an arrow's
+    /// carry Fn and number pad: without, it does nothing), then the
+    /// modifiers released, the last with no flags. The flags of posted
+    /// events stay in the system's keyboard state: without the release,
+    /// every later click is a Control-click, which can't drag a window.
+    private static func moveSpace(right: Bool) {
+        let keys = DesktopShortcuts.keys(right: right)
         let source = CGEventSource(stateID: .hidSystemState)
-        func control(down: Bool) {
-            let event = CGEvent(keyboardEventSource: source, virtualKey: 59, keyDown: down)
+        let modifiers = modifierKeys.filter { keys.flags.contains($0.flag) }
+        func modifier(_ index: Int, down: Bool) {
+            let event = CGEvent(keyboardEventSource: source, virtualKey: modifiers[index].key, keyDown: down)
             event?.type = .flagsChanged
-            event?.flags = down ? .maskControl : []
+            // Down: it and those before; up: those before only.
+            event?.flags = CGEventFlags(modifiers.prefix(down ? index + 1 : index).map(\.flag))
             post(event)
         }
-        control(down: true)
+        for index in modifiers.indices { modifier(index, down: true) }
+        var flags = keys.flags
+        if (123...126).contains(keys.keyCode) { flags.formUnion([.maskSecondaryFn, .maskNumericPad]) }
         for down in [true, false] {
-            let event = CGEvent(keyboardEventSource: source, virtualKey: right ? 124 : 123, keyDown: down)
-            event?.flags = [.maskControl, .maskSecondaryFn, .maskNumericPad]
+            let event = CGEvent(keyboardEventSource: source, virtualKey: keys.keyCode, keyDown: down)
+            event?.flags = flags
             post(event)
         }
-        control(down: false)
+        for index in modifiers.indices.reversed() { modifier(index, down: false) }
     }
 
-    /// Shows the main display's desktop `id` as a person would, one Control-→
-    /// or ← at a time; whether it's the current one after.
+    /// Shows the main display's desktop `id` as a person would, one "Move
+    /// right a Space" (or left) at a time; whether it's the current one after.
     static func showDesktop(_ id: Int) -> Bool {
         guard let all = Desktops.all(), let to = all.spaces.firstIndex(where: { $0.id == id }),
               let from = all.spaces.firstIndex(where: { $0.id == all.current }) else { return false }
         for _ in 0..<abs(to - from) {
-            controlArrow(right: to > from)
+            moveSpace(right: to > from)
             Thread.sleep(forTimeInterval: 0.9)
         }
         return Polling.wait(seconds: 2, every: 0.1, until: { Desktops.all()?.current == id })
@@ -185,7 +196,7 @@ typealias WindowState = CheckResult.WindowState
     /// Drags the app's main window `steps` desktops right (left when
     /// negative), as a person would: it's brought forward, held at a spot of
     /// its top bar (a small drag towards the screen's middle shows the spot
-    /// holds it), Control-→ or ← pressed, let go; the pointer goes back where
+    /// holds it), "Move right a Space" (or left) pressed, let go; the pointer goes back where
     /// it was. Once held, the window is dragged back to where it started before
     /// the desktop changes, so it lands in its place.
     /// `reveal` shows its page to Accessibility while it's in view (true), so
@@ -242,7 +253,7 @@ typealias WindowState = CheckResult.WindowState
                 }
                 log(String(format: "  drag: held in place at %.0f,%.0f", element.frame?.minX ?? -1, element.frame?.minY ?? -1))
                 for _ in 0..<abs(steps) {
-                    controlArrow(right: steps > 0)
+                    moveSpace(right: steps > 0)
                     Thread.sleep(forTimeInterval: 0.9)
                 }
                 mouse(.leftMouseUp, at: at)

@@ -50,7 +50,9 @@ func soundProcesses(of pid: pid_t) -> [String] {
     }
     let permission = TCCAudioCapturePermission()
     var status = permission.status()
-    if status == .notDetermined, asking {
+    // Not with --partial: Add an App's window asked already, or the user
+    // went on without it (the user, 2026-10-30: "Yes, same rule" as L5's).
+    if status == .notDetermined, asking, !partial {
         say("  Audio Recording: asked (to measure its sound as AutoHush does, and to keep it silent meanwhile)")
         let answer = OSAllocatedUnfairLock<Bool?>(initialState: nil)
         permission.request { @Sendable granted in answer.withLock { $0 = granted } } // answered on another thread

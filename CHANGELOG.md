@@ -22,7 +22,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Level the volume:** the Mac's volume now goes back up once your
   player is paused, not as it starts fading out, so a pause called off
   (the other apps stopped during the fade-out) or one that fails keeps
-  the music at the volume it was playing at.
+  the music at the volume it was playing at. A player muted in place of
+  a pause puts it back at once too.
 - **Resuming:** an app that's ignored no longer delays the resume when it
   says it plays during the quiet listen; a player whose state is read
   once a second is asked again after its resume even if another app
@@ -59,7 +60,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Add an App, with Mission Control's desktop shortcuts off:** the
   check can't show another desktop without **Move left a Space** and
   **Move right a Space**, so the warning before it now says to turn them
-  on, with **Open Keyboard Settings…**.
+  on, with **Open Keyboard Settings…**; the note goes once they're on.
+  The check presses the keys they're set to, so it works with other keys
+  than Control-← and Control-→ too.
 - **Add an App, after Check Again with the app's windows closed:** the
   wait for a window looks at the window list first, so it does much less
   work until a window opens.
@@ -72,6 +75,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   again after the switch went off and on is announced again.
 - **The Logs window:** Level the volume's loudness measurements are filed
   under Player too.
+- **Add an App's check:** it no longer asks for Audio Recording or
+  Automation when you went on without them in the second step.
 - **Player Check:** the switches it turned back on are reported so, and it
   brings the right app back to the front after a page check.
 

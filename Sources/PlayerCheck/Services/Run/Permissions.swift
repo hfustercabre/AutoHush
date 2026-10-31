@@ -14,7 +14,8 @@ import PlayerCheckKit
 /// the app when it has AppleScript play or pause. Without all of them
 /// nothing more is done: no window moved, nothing pressed. Its exit status
 /// says so to whoever runs it (`CheckExitStatus.permissionMissing`). With --partial (AutoHush's), only
-/// Accessibility is needed; with --no-taps, Audio Recording isn't used.
+/// Accessibility is needed, and Audio Recording and Automation aren't asked for; with --no-taps, Audio
+/// Recording isn't used.
 /// Then the app is muted until the test ends.
 @MainActor func checkPermissions() {
     guard let running else { return }
@@ -43,8 +44,10 @@ import PlayerCheckKit
         // Asked once: macOS waits for an app still starting before it answers
         // (measured on macOS 14.4, 15 and 27, 2026-10-20), so `.notRunning`
         // means it quit meanwhile, or answered something else. Its prompt
-        // shows when it hasn't asked yet.
-        let answer = AutomationPermission(status: AutomationPermission.check(pid: running.processIdentifier, ask: true))
+        // shows when it hasn't asked yet, but not with --partial: Add an
+        // App's window asked already, or the user went on without it (L5,
+        // the user, 2026-10-30).
+        let answer = AutomationPermission(status: AutomationPermission.check(pid: running.processIdentifier, ask: !partial))
         if answer == .allowed || answer == .denied { automationAnswer = answer }
         let automation = CheckReportLine.Permission.automation(app: appName)
         switch answer {
@@ -63,6 +66,7 @@ import PlayerCheckKit
         if !levelsAllowed { say("  without Audio Recording: \(appName) isn't muted, and whether it plays is told by other signs") }
         if unanswered || missing.contains(where: { if case .automation = $0 { true } else { false } }) {
             scriptProblem = "Automation for \(appName) isn't allowed, so its AppleScript isn't tried"
+            scriptRefused = true // nor its state or song read by it
             say("  without Automation: \(appName)'s AppleScript isn't tried")
         }
         missing = []
