@@ -5,6 +5,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Settings → About** fits its icon and name to the window as soon as it
+  opens, not only once the window is resized, and no longer flickers
+  between two sizes. In a short window the icon sits beside the name and
+  the version. Settings is at least 650 points tall again, so the page
+  fits without scrolling.
+
 ## [1.2.8] — 2026-10-31
 
 ### Changed

@@ -15,9 +15,10 @@ final class SettingsWindowController: PlacedWindowController {
     /// in the app's language (the user, 2026-10-17: "make the minimum width
     /// respect the content"); tall enough for the whole sidebar, foot
     /// included.
-    /// At least 600 pt tall, so the sidebar shows About above its foot (S1, the user, 2026-10-18;
-    /// 650 while Calls was a page, 2026-10-21, back to 600 with Behavior; it opens 620 tall).
-    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 600) }
+    /// At least 650 pt tall, so the sidebar shows About above its foot (S1, the user, 2026-10-18;
+    /// 650 while Calls was a page, 2026-10-21, back to 600 with Behavior) and About's page fits
+    /// in its usual states (the user, 2026-10-31: "Raise the min height to 650").
+    static var minimumSize: NSSize { NSSize(width: sidebarWidth + leastPageWidth, height: 650) }
     static var maximumSize: NSSize { NSSize(width: sidebarWidth + max(640, leastPageWidth), height: 900) }
 
     /// The page's least width: 480, or Fine-Tuning's AntiDot mode's ways
@@ -26,7 +27,7 @@ final class SettingsWindowController: PlacedWindowController {
     private static let leastPageWidth: CGFloat = {
         max(480, ChoiceChips<Never>.fittingWidth(DetectionMethod.antiDotWays.map(\.title)) + 2 * (20 + 10))
     }()
-    static let initialSize = NSSize(width: 760, height: 620)
+    static let initialSize = NSSize(width: 760, height: 650)
     /// Where macOS keeps the window's place and size between launches.
     static let frameName = "Settings"
 

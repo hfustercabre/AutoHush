@@ -53,9 +53,9 @@ final class SettingsWindowControllerTests {
         let sut = makeController()
         let window = try #require(sut.window)
         #expect(window.styleMask.contains(.resizable))
-        // At least 715 × 560, wider when a choice needs it in the app's language.
+        // At least 715 × 650, wider when a choice needs it in the app's language.
         #expect(window.contentMinSize == SettingsWindowController.minimumSize)
-        #expect(window.contentMinSize.width >= 715 && window.contentMinSize.height == 600)
+        #expect(window.contentMinSize.width >= 715 && window.contentMinSize.height == 650)
         #expect(window.contentMaxSize == SettingsWindowController.maximumSize)
         #expect(window.contentMaxSize.width >= 875 && window.contentMaxSize.height == 900)
         let sidebar = try #require((window.contentViewController as? NSSplitViewController)?.splitViewItems.first)
