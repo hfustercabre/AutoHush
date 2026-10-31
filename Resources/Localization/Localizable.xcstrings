@@ -110433,233 +110433,6 @@
         }
       }
     },
-    "Pauses what’s playing while other apps play audio, and resumes it afterwards." : {
-      "comment" : "Settings → About, beside the app's icon and name: what AutoHush does",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يوقف ما يُشغَّل مؤقتًا بينما تُشغّل التطبيقات الأخرى الصوت، ثم يستأنفه بعد ذلك."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Posa en pausa el que sona mentre altres apps reprodueixen àudio, i ho reprèn després."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pozastavuje to, co hraje, když jiné aplikace přehrávají zvuk, a potom to obnoví."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sætter det, der afspilles, på pause, mens andre apps afspiller lyd, og genoptager det bagefter."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausiert, was gerade läuft, während andere Apps Audio abspielen, und setzt es danach fort."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Θέτει σε παύση ό,τι παίζει όσο άλλες εφαρμογές αναπαράγουν ήχο και το συνεχίζει μετά."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa lo que suena mientras otras apps reproducen audio, y lo reanuda después."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa lo que suena mientras otras apps reproducen audio, y lo reanuda después."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Keskeyttää sen, mikä soi, kun muut apit toistavat ääntä, ja jatkaa toistoa sen jälkeen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Met en pause ce qui est en lecture pendant que d’autres apps lisent du son, puis le reprend."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Met en pause ce qui est en lecture pendant que d’autres apps lisent du son, puis le reprend."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "משהה את מה שמתנגן בזמן שאפליקציות אחרות מנגנות, ומחדש אותו אחר כך."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "दूसरे ऐप्स के ऑडियो चलाने पर जो चल रहा है उसे पॉज़ करता है, और बाद में फिर से शुरू करता है।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pauzira ono što svira dok druge aplikacije reproduciraju zvuk, a zatim to nastavlja."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Szünetelteti, ami szól, amíg más appok hangot játszanak le, majd utána folytatja."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menjeda yang sedang diputar saat app lain memutar audio, lalu melanjutkannya setelahnya."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mette in pausa ciò che è in riproduzione mentre altre app riproducono audio e poi lo riprende."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ほかのAppがオーディオを再生している間は再生中のものを一時停止し、終わると再開します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "다른 앱이 오디오를 재생하는 동안 재생 중인 항목을 일시 정지하고, 끝나면 다시 재생합니다."
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Menjeda apa yang sedang dimainkan semasa app lain memainkan audio, dan menyambungnya semula selepas itu."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Setter det som spilles av, på pause mens andre apper spiller av lyd, og gjenopptar det etterpå."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pauzeert wat er speelt terwijl andere apps audio afspelen, en hervat het daarna."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wstrzymuje to, co gra, gdy inne aplikacje odtwarzają dźwięk, a potem to wznawia."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa o que está tocando enquanto outros apps reproduzem áudio e o retoma depois."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausa o que está a tocar enquanto outras apps reproduzem áudio, e retoma-o depois."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pune pe pauză ce se redă cât timp alte aplicații redau sunet și reia redarea după aceea."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ставит на паузу то, что играет, пока другие приложения воспроизводят звук, и затем возобновляет."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pozastavuje to, čo hrá, keď iné apky prehrávajú zvuk, a potom to obnoví."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zaustavi, kar se predvaja, medtem ko druge aplikacije predvajajo zvok, in nato nadaljuje."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pausar det som spelas medan andra appar spelar upp ljud och återupptar det efteråt."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "หยุดพักสิ่งที่กำลังเล่นขณะที่แอปอื่นเล่นเสียง แล้วเล่นต่อภายหลัง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diğer uygulamalar ses çalarken çalanı duraklatır ve ardından sürdürür."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Призупиняє те, що грає, поки інші програми відтворюють звук, а потім відновлює."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tạm dừng nội dung đang phát khi các ứng dụng khác phát âm thanh và tiếp tục phát sau đó."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在其他 App 播放音訊時暫停正在播放的內容，並在之後繼續播放。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在其他 App 播放音频时暂停正在播放的内容，并在之后继续播放。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在其他 App 播放音訊時暫停正在播放的內容，並在之後繼續播放。"
-          }
-        }
-      }
-    },
     "Pauses your player" : {
       "comment" : "The menu's Playing Now and Settings → Sound Sources: under an app that pauses your player while it plays",
       "localizations" : {
@@ -149259,6 +149032,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "檢查為 %@ 找到的結果會被捨棄。"
+          }
+        }
+      }
+    },
+    "Whatever’s playing steps aside when something else needs your ears." : {
+      "comment" : "Settings → About, beside the app's icon and name: what AutoHush does, as the README's tagline says it: the media player's playback (music, podcasts, videos) pauses while another app plays sound",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أيًّا كان ما يُشغَّل، يتنحّى جانبًا حين يحتاج شيءٌ آخر إلى إصغائك."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El que sona s’aparta quan una altra cosa et fa parar l’orella."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To, co hraje, ustoupí stranou, když vaše uši potřebuje něco jiného."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det, der afspilles, træder til side, når noget andet har brug for dine ører."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Was gerade läuft, macht Platz, wenn etwas anderes deine Ohren braucht."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ό,τι παίζει κάνει στην άκρη όταν κάτι άλλο χρειάζεται τα αυτιά σας."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que suena se aparta cuando otra cosa reclama tus oídos."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lo que suena se hace a un lado cuando otra cosa reclama tus oídos."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se, mikä soi, väistyy, kun jokin muu tarvitsee korviasi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui est en lecture s’efface quand autre chose réclame votre écoute."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce qui est en lecture s’efface quand autre chose réclame votre écoute."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "כל מה שמתנגן זז הצידה כשמשהו אחר צריך את האוזניים שלך."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जब कोई और आवाज़ आपका ध्यान माँगे, तो जो भी चल रहा हो, वह रास्ता दे देता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ono što svira povlači se u stranu kad nešto drugo treba vaše uši."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ami szól, félreáll, amikor valami másnak szüksége van a fülére."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apa pun yang sedang diputar menepi sejenak saat ada hal lain yang perlu Anda dengar."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quello che stai ascoltando si fa da parte quando qualcos’altro ha bisogno delle tue orecchie."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ほかの音に耳を傾けたいときは、再生中のものがそっと道を譲ります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 소리에 귀 기울여야 할 때면, 재생 중인 것은 잠시 자리를 비켜 줍니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apa sahaja yang sedang dimainkan memberi laluan apabila ada perkara lain yang perlu anda dengar."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det som spilles av, trer til side når noe annet trenger ørene dine."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wat er speelt, maakt plaats wanneer iets anders je oren nodig heeft."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To, co gra, ustępuje miejsca, gdy Twoje uszy są potrzebne gdzie indziej."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que está tocando dá passagem quando outra coisa precisa dos seus ouvidos."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O que está a tocar dá passagem quando outra coisa precisa dos seus ouvidos."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ce se redă face loc când altceva vă cere atenția."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "То, что играет, уступает место, когда ваш слух нужен чему-то другому."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To, čo hrá, ustúpi nabok, keď vaše uši potrebuje niečo iné."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kar se predvaja, se umakne, ko vaša ušesa potrebuje nekaj drugega."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Det som spelas kliver åt sidan när något annat behöver dina öron."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สิ่งที่กำลังเล่นอยู่จะหลีกทางให้ เมื่อมีเสียงอื่นที่คุณต้องฟัง"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başka bir şeye kulak vermeniz gerektiğinde, çalan her neyse kenara çekilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Те, що грає, поступається місцем, коли ваші вуха потрібні деінде."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bất cứ thứ gì đang phát cũng sẽ nhường chỗ khi có điều khác cần bạn lắng nghe."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當其他聲音需要你留心聆聽時，正在播放的內容會適時讓路。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当别的声音需要你倾听时，正在播放的内容会适时让路。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當別的聲音需要你傾聽時，正在播放的內容會適時讓路。"
           }
         }
       }

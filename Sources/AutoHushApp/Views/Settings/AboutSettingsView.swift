@@ -62,8 +62,9 @@ struct AboutSettingsView: View {
                             .textSelection(.enabled)
                     }
                 }
-                Text("Pauses what’s playing while other apps play audio, and resumes it afterwards.",
-                     comment: "Settings → About, beside the app's icon and name: what AutoHush does")
+                // The README's tagline (the user, 2026-10-31).
+                Text("Whatever’s playing steps aside when something else needs your ears.",
+                     comment: "Settings → About, beside the app's icon and name: what AutoHush does, as the README's tagline says it: the media player's playback (music, podcasts, videos) pauses while another app plays sound")
                     .foregroundStyle(.appSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

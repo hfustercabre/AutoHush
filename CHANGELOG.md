@@ -7,6 +7,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Settings → About** describes AutoHush as the README does: “Whatever’s
+  playing steps aside when something else needs your ears.”
+
 ### Fixed
 
 - **Add an App:** an app that quits after it started playing, before the
