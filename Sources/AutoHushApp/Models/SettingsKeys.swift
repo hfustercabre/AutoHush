@@ -5,7 +5,8 @@ import Foundation
 /// sides: the sidebar's pages and the page's controls, one highlighted at a
 /// time (`KeyHighlight` each). ↑ and ↓ move within the sidebar while it
 /// holds the highlight, each page showing at once as in System Settings,
-/// else through the page, row by row. → or Return goes from the sidebar
+/// else through the page, row by row; Page Up and Page Down, Home and End
+/// jump through the same side (`KeyHighlight.jump`, 2026-11-01). → or Return goes from the sidebar
 /// into the page; ← goes back, unless the highlight is on a slider or a
 /// choice, which ← and → change, or in a row of several (tiles), which they
 /// move along first. Return or Space presses the page's control. The
@@ -61,6 +62,16 @@ final class SettingsKeys {
                 // The sidebar let go of it (the pointer left, Tab): the page's.
                 side = .page
                 page.move(step)
+            }
+            return true
+        case .pageUp, .pageDown, .home, .end:
+            guard let jump = key.jump else { return false }
+            if side == .sidebar, sidebar.highlighted != nil {
+                sidebar.jump(jump)
+                sidebar.press()
+            } else {
+                side = .page
+                page.jump(jump)
             }
             return true
         case .returnKey, .space:

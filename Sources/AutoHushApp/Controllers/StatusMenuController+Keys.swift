@@ -8,7 +8,8 @@ extension StatusMenuController {
     /// Settings (`HighlightKey`): ↑ ↓ move the highlight through the menu's
     /// controls (`KeyHighlight`), or the side window's rows while it's open
     /// (the players' too: "Implement the same in the Media Player
-    /// submenu"), row by row; Return or Space presses the one it's on; →
+    /// submenu"), row by row, Page Up and Page Down about a page, Home and
+    /// End to the first and last (2026-11-01); Return or Space presses the one it's on; →
     /// opens a side window from its row, its first row lit, or lights it in
     /// one the pointer opened; ← closes it; on a slider or a choice, ← and →
     /// change it, and in a row of several (the durations, the buttons) they
@@ -51,6 +52,9 @@ extension StatusMenuController {
             // One highlight at a time: the keyboard's focus, if Tab gave it, goes.
             panel?.makeFirstResponder(nil)
             keyboard.move(key == .down ? 1 : -1)
+        case .pageUp, .pageDown, .home, .end:
+            panel?.makeFirstResponder(nil)
+            if let jump = key.jump { keyboard.jump(jump) }
         case .returnKey where model.isChoosingPlayer:
             perform(.chooseHighlighted)
         case .returnKey, .space:

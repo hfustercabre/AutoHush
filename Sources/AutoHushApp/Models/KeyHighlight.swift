@@ -9,8 +9,10 @@ import Observation
 /// in reading order, wrapping at the ends, and ← and → along a row of
 /// several (the durations, the buttons, tiles); Return or Space presses the
 /// one it's on; ← and → change a slider or a choice, and → opens a side
-/// window. The pointer moves it too, as in a menu: the control under it is
-/// the highlighted one. Each control registers itself (`Highlightable`)
+/// window. Page Up and Page Down move it about a page, Home and End to the
+/// first and last row (`jump`). The pointer moves it too, as in a menu: the
+/// control under it is the highlighted one. Moved by a key, VoiceOver's
+/// cursor and Zoom go with it (`Light.arrivals`, `screenFrame`). Each control registers itself (`Highlightable`)
 /// with where it is and what pressing it does. The menu, its side window,
 /// Settings' sidebar and Settings' page have one each.
 @MainActor
@@ -70,7 +72,25 @@ final class KeyHighlight {
     /// Whether one control is highlighted, observed by that control alone.
     @MainActor @Observable final class Light {
         fileprivate(set) var isOn = false
+        /// How many times a key moved the highlight onto it: each time,
+        /// VoiceOver's cursor goes to it (A3, 2026-11-01), not when the
+        /// pointer does, as VoiceOver's own cursor doesn't follow the mouse.
+        fileprivate(set) var arrivals = 0
     }
+
+    /// Page Up or Page Down, Home or End (`HighlightKey.jump`).
+    enum Jump { case pageUp, pageDown, first, last }
+
+    /// How tall the part that scrolls shows (the menu's list, a Settings
+    /// page), as its view reports it (`RevealsKeyHighlight`): Page Up and
+    /// Page Down go about that far. `nil`: all of it shows (the sidebar).
+    @ObservationIgnored var pageHeight: CGFloat?
+    /// Where a frame in the controls' window is on the screen, in Zoom's
+    /// coordinates (`ZoomFocus.screenRect`); set by the window's owner, so
+    /// Zoom follows the keys (A3, 2026-11-01). `nil`: Zoom isn't told.
+    @ObservationIgnored var screenFrame: (@MainActor (CGRect) -> CGRect?)?
+    /// Tells Zoom where the highlight is now, if Zoom is on (tests replace it).
+    @ObservationIgnored var zoom: @MainActor (CGRect) -> Void = ZoomFocus.follow
 
     /// The control's own `Light`.
     func light(_ id: UUID) -> Light {
@@ -178,16 +198,56 @@ final class KeyHighlight {
         guard !rows.isEmpty else { return }
         let next: UUID
         if let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) {
-            let target = rows[((row + step) % rows.count + rows.count) % rows.count]
-            if rows[row].count > 1, let from = controls[highlighted]?.frame.midX {
-                next = target.min { abs((controls[$0]?.frame.midX ?? 0) - from) < abs((controls[$1]?.frame.midX ?? 0) - from) } ?? target[0]
-            } else {
-                next = target[0]
-            }
+            next = entry(to: rows[((row + step) % rows.count + rows.count) % rows.count], from: rows[row], highlighted)
         } else {
             next = (step > 0 ? rows[0] : rows[rows.count - 1])[0]
         }
         highlight(next)
+    }
+
+    /// Where the highlight lands in `target` from `highlighted` in `row`:
+    /// from a row of several, the nearest above or under; else the first.
+    private func entry(to target: [UUID], from row: [UUID], _ highlighted: UUID) -> UUID {
+        guard row.count > 1, let from = controls[highlighted]?.frame.midX else { return target[0] }
+        return target.min { abs((controls[$0]?.frame.midX ?? 0) - from) < abs((controls[$1]?.frame.midX ?? 0) - from) } ?? target[0]
+    }
+
+    /// Page Down (Up): the highlight about a page on (back) in its part
+    /// (`Control.band`), to the last row that ends within `pageHeight` of
+    /// where its own starts, at least one row; from its part's last row (first), into
+    /// the next part (previous); at the end, it stays: no wrapping, as in
+    /// macOS's lists. Home and End: the first row and the last. From
+    /// nothing, Page Down and Home light the first row, Page Up and End the
+    /// last (A12, 2026-11-01: Apple's standard keys, fn with the arrows on a laptop).
+    func jump(_ jump: Jump) {
+        let rows = rows
+        guard !rows.isEmpty else { return }
+        let step = jump == .pageDown || jump == .first ? 1 : -1
+        guard jump == .pageUp || jump == .pageDown,
+              let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) else {
+            return highlight((step > 0 ? rows[0] : rows[rows.count - 1])[0])
+        }
+        let target = pageTarget(from: row, step: step, in: rows)
+        guard target != row else { return }
+        highlight(entry(to: rows[target], from: rows[row], highlighted))
+    }
+
+    /// The row a page on from `row` (`jump`).
+    private func pageTarget(from row: Int, step: Int, in rows: [[UUID]]) -> Int {
+        guard let start = controls[rows[row][0]] else { return row }
+        let page = pageHeight ?? .infinity
+        var target = row
+        var next = row + step
+        while rows.indices.contains(next), let control = controls[rows[next][0]], control.band == start.band {
+            let distance = step > 0 ? control.frame.maxY - start.frame.minY : start.frame.maxY - control.frame.minY
+            if distance > page, target != row { break }
+            target = next
+            if distance > page { break }
+            next += step
+        }
+        // Its part's end: the next part's first row (or the previous one's last).
+        if target == row, rows.indices.contains(row + step) { target = row + step }
+        return target
     }
 
     /// The highlight `step` controls along its row (← -1, → 1); `false` at
@@ -209,7 +269,22 @@ final class KeyHighlight {
     private func highlight(_ id: UUID) {
         highlighted = id
         revealed = id
+        light(id).arrivals += 1
         onHighlight?()
+        followWithZoom(id)
+    }
+
+    /// Zoom shows the control the keys moved to, once it's scrolled into
+    /// view (the reveal takes 0.15 s), if the highlight is still there.
+    private func followWithZoom(_ id: UUID) {
+        guard screenFrame != nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.revealed == id, let frame = self.controls[id]?.frame,
+                      let rect = self.screenFrame?(frame) else { return }
+                self.zoom(rect)
+            }
+        }
     }
 
     /// Once the controls that came in the same update have registered (the

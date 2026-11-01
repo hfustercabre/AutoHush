@@ -603,6 +603,18 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   moves from step to step; its mark is hidden, and its lines and buttons
   are read on their own. The window announces the step to do now, and a
   step's warning or failure, as they come.
+- **VoiceOver and Zoom follow the keys' highlight** (`KeyHighlight`): a
+  key that moves it (the arrows, Page Up…End, ← into the sidebar, → into a
+  side window) moves VoiceOver's cursor to the lit control
+  (`@AccessibilityFocusState` in `Highlightable`), which VoiceOver then
+  reads, and nothing is announced besides, so it's said once; Zoom is told
+  where it is (`ZoomFocus`, once it's scrolled into view). The pointer's
+  highlight moves neither, as VoiceOver's cursor doesn't follow the mouse
+  (A3, 2026-11-01).
+- **Reduce Motion:** nothing slides or scrolls with an animation: the
+  menu's panel grows at once, the highlight's reveal (`RevealsKeyHighlight`)
+  and `ScrollDriver` jump, and Sound Sources' rows don't slide as the list
+  changes (A11, 2026-11-01).
 - **Contrast:** text keeps at least 4.5:1, except in macOS's own colors,
   kept as macOS draws them (Principles).
 
@@ -646,7 +658,12 @@ standard ones**:
   along a row of tiles; Return or Space presses the one it's on, ← and →
   change a slider or a choice; on any other control, ← goes to the
   sidebar, on the page shown, where ↑ and ↓ show each page at once, and →
-  or Return goes back into the page (`SettingsKeys`, `HighlightKey`). The
+  or Return goes back into the page (`SettingsKeys`, `HighlightKey`).
+  **Page Up and Page Down** move the highlight about a page (as tall as
+  what shows of the page or list), in its part (a list that scrolls, the
+  buttons under it) and then into the next, and **Home and End** to the
+  first and last control, on either side, without wrapping (A12,
+  2026-11-01: fn with the arrows on a laptop; Apple's standard keys). The
   pointer moves the same highlight, one at a time on either side; it never
   jumps to the sidebar's first page by itself. A key with nothing to act
   on doesn't beep. A field being typed in keeps its keys.
@@ -674,7 +691,9 @@ and the buttons under them, and Return or Space presses the one it's on;
 ← and → move along a row of several (the durations, the buttons); →
 opens a side window from its row, its first row lit (or lights that row
 when the pointer opened it already), and ← closes it; on a slider or a
-choice, ← and → change it; Escape closes the side window, then the menu
+choice, ← and → change it; Page Up and Page Down move about a page of
+what scrolls, Home and End to the first and last row, as in Settings;
+Escape closes the side window, then the menu
 (`StatusMenuController.handleKey`, `KeyHighlight`, `HighlightKey`: one
 mapping of the keys for the menu and Settings). A key with nothing to act
 on doesn't beep. The pointer moves the same highlight, as in a menu. In

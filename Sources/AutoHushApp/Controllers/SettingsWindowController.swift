@@ -74,6 +74,9 @@ final class SettingsWindowController: PlacedWindowController {
                                          height: max(content.height, Self.minimumSize.height)))
         }
         window?.title = navigation.page.title
+        // Zoom follows the keys' highlight on each side (A3).
+        keys.sidebar.screenFrame = { [weak view = sidebar.view] rect in view.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
+        keys.page.screenFrame = { [weak view = page.view] rect in view.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
         navigation.onChange = { [weak window = self.window, weak model, toolbarDelegate, keys] page in
             window?.title = page.title
             // A Behavior row's card in Fine-Tuning: only for that visit.
@@ -104,8 +107,8 @@ final class SettingsWindowController: PlacedWindowController {
               let key = HighlightKey(keyCode: keyCode, modifiers: flags) else { return false }
         // With keyboard navigation on, Tab may have given a control the focus.
         let controlHasFocus = NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow)
-        // One highlight at a time: the arrows take it from the focus.
-        if key == .up || key == .down { window.makeFirstResponder(nil) }
+        // One highlight at a time: the arrows (and Page Up…End) take it from the focus.
+        if key == .up || key == .down || key.jump != nil { window.makeFirstResponder(nil) }
         if keys.handle(key, controlHasFocus: controlHasFocus) { return true }
         // Delete removes the apps selected in Sound Sources, as their Remove
         // does (macOS's lists' key; the workflow audit, 2026-10-22).

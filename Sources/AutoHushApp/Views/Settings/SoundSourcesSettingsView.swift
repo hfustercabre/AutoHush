@@ -18,6 +18,7 @@ struct SoundSourcesSettingsView: View {
     private var list: AppListModel { model.appList }
     /// Opens Sort by's pop-up from the keys.
     @State private var sortPopUp = PopUpOpener()
+    @Environment(\.accessibilityReduceMotion) private var reducesMotion
 
     var body: some View {
         page
@@ -48,9 +49,11 @@ struct SoundSourcesSettingsView: View {
                          comment: "Settings → Sound Sources, under the list; “Select” as in clicking apps in the list (⌘-click or ⇧-click selects several)")
                         .captionStyle()
                 }
-                .animation(.default, value: list.apps)
+                // Rows slide as the list changes, but with Reduce Motion on (A11, 2026-11-01).
+                .animation(reducesMotion ? nil : .default, value: list.apps)
             }
             .formStyle(.grouped)
+            .measuresHighlightPage() // Page Up and Page Down go about its height
             .environment(\.cardsAreFormSections, true)
             // Each button on one line, in every language: three of them leave
             // little room.

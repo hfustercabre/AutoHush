@@ -67,6 +67,23 @@ extension StatusMenuControllerTests {
         #expect(!sut.handleKey(MenuPanelTests.key(0))) // A: not the list's
     }
 
+    @Test("among the players, End and Home go to the last and first row, Page Down and Up a page on and back; the menu's highlight stays put")
+    func jumpsThroughPlayers() {
+        let sut = menuWithTwoPlayers()
+        defer { sut.remove() }
+        let (first, second) = twoPlayerRows(sut)
+        #expect(sut.handleKey(MenuPanelTests.key(119))) // End
+        #expect(sut.model.sideKeyboard.highlighted == second)
+        #expect(sut.handleKey(MenuPanelTests.key(115))) // Home
+        #expect(sut.model.sideKeyboard.highlighted == first)
+        #expect(sut.handleKey(MenuPanelTests.key(121))) // Page Down: both show, the last
+        #expect(sut.model.sideKeyboard.highlighted == second)
+        #expect(sut.handleKey(MenuPanelTests.key(116))) // Page Up
+        #expect(sut.model.sideKeyboard.highlighted == first)
+        #expect(sut.model.keyboard.highlighted == nil)
+        #expect(sut.model.isChoosingPlayer) // nothing chosen by them
+    }
+
     @Test("among the players, the search field's ↓ and ↑ move the side window's highlight too")
     func searchFieldMovesThroughPlayers() {
         let sut = menuWithTwoPlayers()
@@ -206,9 +223,17 @@ extension StatusMenuControllerTests {
         #expect(!StatusMenuController.composes(try Self.keyDown("\u{F701}", code: 125), inputMethod: true))
     }
 
-    @Test("one key mapping for the menu and Settings: plain arrows, Return or Enter, Space, Tab with or without Shift; others, or with ⌘ ⌥ ⌃ ⇧, are the window's")
+    @Test("one key mapping for the menu and Settings: plain arrows, Page Up and Down, Home and End, Return or Enter, Space, Tab with or without Shift; others, or with ⌘ ⌥ ⌃ ⇧, are the window's")
     func highlightKeys() {
         #expect(HighlightKey(keyCode: 125, modifiers: []) == .down)
+        // fn with the arrows on a laptop: the same key codes, with fn.
+        #expect(HighlightKey(keyCode: 116, modifiers: .function) == .pageUp)
+        #expect(HighlightKey(keyCode: 121, modifiers: .function) == .pageDown)
+        #expect(HighlightKey(keyCode: 115, modifiers: .function) == .home)
+        #expect(HighlightKey(keyCode: 119, modifiers: []) == .end)
+        #expect(HighlightKey(keyCode: 119, modifiers: .shift) == nil)
+        #expect(HighlightKey.pageUp.jump == .pageUp && HighlightKey.pageDown.jump == .pageDown)
+        #expect(HighlightKey.home.jump == .first && HighlightKey.end.jump == .last && HighlightKey.down.jump == nil)
         #expect(HighlightKey(keyCode: 126, modifiers: [.numericPad, .function]) == .up) // arrows carry these
         #expect(HighlightKey(keyCode: 76, modifiers: []) == .returnKey)
         #expect(HighlightKey(keyCode: 49, modifiers: []) == .space)

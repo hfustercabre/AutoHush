@@ -87,6 +87,117 @@ struct KeyHighlightTests {
         #expect(!keyboard.k.moveInRow(1)) // a row of one
     }
 
+    @Test("Home and End go to the first and last row, without wrapping further; from nothing, Page Down is the first row and Page Up the last")
+    func homeAndEnd() {
+        let keyboard = KeyHighlight()
+        let first = control(keyboard, 0, 0)
+        _ = control(keyboard, 0, 30)
+        let last = control(keyboard, 0, 60)
+        _ = control(keyboard, 0, 90, enabled: false) // dimmed: skipped
+        keyboard.jump(.last)
+        #expect(keyboard.highlighted == last && keyboard.revealed == last)
+        keyboard.jump(.last)
+        #expect(keyboard.highlighted == last)
+        keyboard.jump(.first)
+        #expect(keyboard.highlighted == first)
+        keyboard.clear()
+        keyboard.jump(.pageDown)
+        #expect(keyboard.highlighted == first)
+        keyboard.clear()
+        keyboard.jump(.pageUp)
+        #expect(keyboard.highlighted == last)
+    }
+
+    @Test("Page Down and Up go about a page (the rows that fit in `pageHeight` from where the highlight's row starts), at least a row, stopping at the ends; a row of several keeps the nearest")
+    func pages() {
+        let keyboard = KeyHighlight()
+        keyboard.pageHeight = 100
+        // Rows 22 pt tall every 30 pt: 0, 30, 60, 90, 120, 150, 180.
+        let ids = (0..<7).map { control(keyboard, 0, CGFloat($0) * 30) }
+        let right = control(keyboard, 200, 60) // beside the third
+        keyboard.jump(.first)
+        keyboard.jump(.pageDown) // 60 + 22 fits in 100 from 0, 90 + 22 doesn't
+        #expect(keyboard.highlighted == ids[2])
+        keyboard.jump(.pageDown) // 120 + 22 - 60 = 82 fits, 150's 112 doesn't
+        #expect(keyboard.highlighted == ids[4])
+        keyboard.jump(.pageDown)
+        #expect(keyboard.highlighted == ids[6]) // the last: no wrapping
+        keyboard.jump(.pageDown)
+        #expect(keyboard.highlighted == ids[6])
+        keyboard.jump(.pageUp) // 180 + 22 - 120 = 82 fits, 90 doesn't
+        #expect(keyboard.highlighted == ids[4])
+        keyboard.pageHeight = 10 // a page smaller than a row: still a row on
+        keyboard.jump(.pageUp)
+        #expect(keyboard.highlighted == ids[3])
+        keyboard.jump(.pageUp)
+        #expect(keyboard.highlighted == ids[2]) // a row of two, from one: its first
+        _ = keyboard.moveInRow(1)
+        #expect(keyboard.highlighted == right)
+        keyboard.jump(.pageDown) // from a row of several: the nearest
+        #expect(keyboard.highlighted == ids[3])
+        keyboard.pageHeight = nil // all shows: a page is the whole part
+        keyboard.jump(.pageUp)
+        #expect(keyboard.highlighted == ids[0])
+    }
+
+    @Test("Page Down and Up stay in their part (the menu's list) until its end, then step into the next part (its buttons) or the previous one (its card)")
+    func pagesByPart() {
+        let keyboard = KeyHighlight()
+        keyboard.pageHeight = 1000
+        let card = UUID(), button = UUID()
+        keyboard.register(card, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 80), band: .top))
+        let rows = (0..<3).map { index in
+            let id = UUID()
+            keyboard.register(id, .init(frame: CGRect(x: 0, y: 100 + CGFloat(index) * 30, width: 300, height: 22)))
+            return id
+        }
+        keyboard.register(button, .init(frame: CGRect(x: 0, y: 200, width: 80, height: 22), band: .bottom))
+        keyboard.jump(.first)
+        #expect(keyboard.highlighted == card)
+        keyboard.jump(.pageDown) // the card's part ends: into the list
+        #expect(keyboard.highlighted == rows[0])
+        keyboard.jump(.pageDown) // the list's end, not the buttons
+        #expect(keyboard.highlighted == rows[2])
+        keyboard.jump(.pageDown)
+        #expect(keyboard.highlighted == button)
+        keyboard.jump(.pageUp)
+        #expect(keyboard.highlighted == rows[2])
+        keyboard.jump(.pageUp)
+        #expect(keyboard.highlighted == rows[0])
+        keyboard.jump(.pageUp)
+        #expect(keyboard.highlighted == card)
+    }
+
+    @Test("a key moving the highlight onto a control counts as its arrival (VoiceOver's cursor goes there); the pointer's doesn't")
+    func arrivals() {
+        let keyboard = KeyHighlight()
+        let first = control(keyboard, 0, 0), second = control(keyboard, 0, 50)
+        keyboard.move(1)
+        keyboard.jump(.last)
+        keyboard.jump(.first)
+        #expect(keyboard.light(first).arrivals == 2 && keyboard.light(second).arrivals == 1)
+        keyboard.hover(second, true)
+        #expect(keyboard.highlighted == second && keyboard.light(second).arrivals == 1)
+    }
+
+    @Test("Zoom is told where the control a key moved to is on the screen, once it's scrolled into view; the pointer's moves aren't")
+    func zoomFollows() async {
+        let keyboard = KeyHighlight()
+        let first = control(keyboard, 0, 0)
+        let told = Locked<[CGRect]>([])
+        keyboard.screenFrame = { $0.offsetBy(dx: 1000, dy: 500) }
+        keyboard.zoom = { rect in told.withLock { $0.append(rect) } }
+        keyboard.move(1)
+        #expect(told.value.isEmpty) // not before the reveal's scroll
+        keyboard.update(first, frame: CGRect(x: 0, y: 10, width: 44, height: 22)) // scrolled
+        await TestWait.until { !told.value.isEmpty }
+        #expect(told.value == [CGRect(x: 1000, y: 510, width: 44, height: 22)])
+        keyboard.clear()
+        keyboard.hover(first, true)
+        try? await Task.sleep(for: .milliseconds(400))
+        #expect(told.value.count == 1)
+    }
+
     @Test("a side window opened by → lights its first row once its rows have come and been placed, waiting for frames that come after them")
     func firstWhenReady() async {
         let keyboard = KeyHighlight()

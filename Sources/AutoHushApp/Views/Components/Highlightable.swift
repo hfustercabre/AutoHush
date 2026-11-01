@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// In the menu and Settings (wherever a `KeyHighlight` is given), a control
@@ -51,6 +52,9 @@ struct HighlightableControl: ViewModifier {
 /// pressing it (or ← and →) does, the pointer moves the highlight onto it,
 /// and the tint shows behind it while it's highlighted, has the keyboard's
 /// focus (`isFocused`, its control's) or `isLit`; a dimmed one is skipped.
+/// A key moving the highlight onto it moves VoiceOver's cursor there too
+/// (`KeyHighlight.Light.arrivals`), so VoiceOver says what's lit, once:
+/// nothing is announced besides (A3, 2026-11-01).
 /// `lightsItself`: no tint, the view shows it itself (`showsKeyHighlight`:
 /// a menu item's row, the card). `ownsControls`: a row whose one button
 /// takes no highlight of its own (Settings' rows, the user's pick: the
@@ -71,6 +75,7 @@ struct Highlightable: ViewModifier {
     var isCurrent: (() -> Bool)?
     @State private var id = UUID()
     @State private var actions = Actions()
+    @AccessibilityFocusState private var hasVoiceOverCursor: Bool
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.highlightBand) private var band
     @Environment(\.highlightRemoval) private var removal
@@ -107,6 +112,11 @@ struct Highlightable: ViewModifier {
                         .padding(-outset)
                 }
                 .id(id)
+                .accessibilityFocused($hasVoiceOverCursor)
+                .onChange(of: keyboard.light(id).arrivals) {
+                    // Only for VoiceOver: without it, nothing to move.
+                    if NSWorkspace.shared.isVoiceOverEnabled { hasVoiceOverCursor = true }
+                }
                 .onHover { keyboard.hover(id, $0) }
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { keyboard.update(id, frame: $0) }
                 .onAppear {
@@ -199,16 +209,20 @@ struct HighlightRemoval {
 /// Scrolls the arrow keys' highlight into view as it moves
 /// (`KeyHighlight.revealed`): every Settings page, About's too (R7, the full
 /// check, 2026-10-27: written on each before), and what scrolls in the menu
-/// and its side window (`MenuScrollArea`), which scroll without animating.
+/// and its side window (`MenuScrollArea`), which scroll without animating;
+/// none does with Reduce Motion on (A11, 2026-11-01), as the menu's panel
+/// and `ScrollDriver` don't. Its height is the highlight's page
+/// (`MeasuresHighlightPage`).
 struct RevealsKeyHighlight: ViewModifier {
     let scroller: ScrollViewProxy
     var animated = true
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+    @Environment(\.accessibilityReduceMotion) private var reducesMotion
 
     func body(content: Content) -> some View {
-        content.onChange(of: keyboard?.revealed) { _, revealed in
+        content.measuresHighlightPage().onChange(of: keyboard?.revealed) { _, revealed in
             guard let revealed else { return }
-            if animated {
+            if animated, !reducesMotion {
                 withAnimation(.easeOut(duration: 0.15)) { scroller.scrollTo(revealed) }
             } else {
                 scroller.scrollTo(revealed)
@@ -217,7 +231,23 @@ struct RevealsKeyHighlight: ViewModifier {
     }
 }
 
+/// What scrolls in a window with a highlight (`KeyHighlight`), its height
+/// told as the highlight's page, for Page Up and Page Down
+/// (`KeyHighlight.pageHeight`, 2026-11-01).
+struct MeasuresHighlightPage: ViewModifier {
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+
+    func body(content: Content) -> some View {
+        content.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { keyboard?.pageHeight = $0 }
+    }
+}
+
 extension View {
+    /// Tells the highlight how tall a page is (`MeasuresHighlightPage`).
+    func measuresHighlightPage() -> some View {
+        modifier(MeasuresHighlightPage())
+    }
+
     /// Scrolls the arrow keys' highlight into view with `scroller` (`RevealsKeyHighlight`).
     func revealsKeyHighlight(with scroller: ScrollViewProxy, animated: Bool = true) -> some View {
         modifier(RevealsKeyHighlight(scroller: scroller, animated: animated))

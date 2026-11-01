@@ -94,6 +94,23 @@ struct SettingsKeysTests {
         #expect(keys.page.highlighted == controls[0])
     }
 
+    @Test("End and Home jump through the page; in the sidebar, they show the last and first page at once, as ↑ and ↓ do")
+    func jumps() {
+        let log = CallLog()
+        let (keys, rows, controls) = makeKeys(log: log, pages: ["General", "Detection", "About"])
+        #expect(keys.handle(.end))
+        #expect(keys.side == .page && keys.page.highlighted == controls[1])
+        #expect(keys.handle(.home, controlHasFocus: true)) // a focused control doesn't keep them
+        #expect(keys.page.highlighted == controls[0])
+        keys.handle(.left)
+        #expect(keys.handle(.end))
+        #expect(keys.sidebar.highlighted == rows[2])
+        #expect(keys.handle(.pageUp)) // the sidebar all shows: a page is all of it
+        #expect(keys.sidebar.highlighted == rows[0])
+        #expect(log.calls == ["show About", "show General"])
+        #expect(keys.page.highlighted == nil)
+    }
+
     @Test("the pointer takes the highlight to its side, one at a time")
     func pointer() {
         let log = CallLog()
