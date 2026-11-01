@@ -683,7 +683,7 @@ flowchart TD
   NEW{"A newer version? (Get<br/>release candidates on: the<br/>newest release or release<br/>candidate; off while one<br/>runs: the latest release)"}
   UTD["Up to date, or it<br/>couldn’t check: said<br/>only when you asked"]
   CAN{"Can this copy<br/>install it?"}
-  HAND["By hand: Homebrew, or Open<br/>Release Page (a folder it can’t<br/>write to, or a copy signed<br/>with another certificate); the<br/>menu says AutoHush X Is Available…"]
+  HAND["By hand: Homebrew, or Open<br/>Release Page (a folder it can’t<br/>write to, or a copy signed<br/>with another certificate; a<br/>release candidate from GitHub,<br/>back from one: brew reinstall);<br/>the menu says AutoHush X Is<br/>Available…"]
   RC{"A release candidate,<br/>or back to the latest<br/>release from one?"}
   MODE{"Settings → About,<br/>Updates: when an<br/>update is found"}
   NOT["A notification; the icon’s<br/>arrow, Updates in the accent<br/>color, Install AutoHush in<br/>the menu"]

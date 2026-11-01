@@ -5,6 +5,19 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Release candidates, where AutoHush can't update itself** (outside
+  Applications, or installed with Homebrew): the update window says when
+  it offers a release candidate, and why it offers the latest release on
+  one. With Homebrew, which has no release candidates, it says to
+  download one from GitHub, and to go back with `brew reinstall`. The
+  way back that installs itself says why in fewer words.
+
+---
+
 ## [1.2.9] — 2026-11-01
 
 ### Changed
