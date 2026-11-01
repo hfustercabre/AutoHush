@@ -7,7 +7,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Page Up, Page Down, Home and End** move the keyboard's highlight in
+  the menu and Settings, a page at a time or to the first and last row.
+- **VoiceOver** follows the arrow keys' highlight, and Zoom shows where
+  it is. VoiceOver says which permission each Allow… button in the
+  welcome window asks for, when one is allowed, when Add an App's check
+  blocks the keyboard (and that Escape stops it), and how many results a
+  search found.
+
 ### Fixed
+
+- **Settings → Diagnostics** scrolls to the arrow keys' highlight; it
+  went below the window's edge.
+- **Reduce Motion:** the highlight scrolls into view without an
+  animation, and Sound Sources' rows don't slide.
 
 - **Release candidates, where AutoHush can't update itself** (outside
   Applications, or installed with Homebrew): the update window says when

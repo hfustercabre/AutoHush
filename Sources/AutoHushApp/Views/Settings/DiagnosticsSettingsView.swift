@@ -12,7 +12,10 @@ struct DiagnosticsSettingsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Form {
+            // The pages' own form, so the arrow keys' highlight scrolls into
+            // view (A5, 2026-11-01: it went below the window's edge here),
+            // with Diagnostics' foot under it.
+            SettingsPageScroll {
                 if let diagnostics = model.diagnostics {
                     overview(diagnostics.overview)
                     part(.apps, title: DiagnosticsReport.appsTitle, symbol: "speaker.wave.2", summary: diagnostics.appsSummary) {
@@ -26,8 +29,6 @@ struct DiagnosticsSettingsView: View {
                     }
                 }
             }
-            .formStyle(.grouped)
-            .environment(\.cardsAreFormSections, true)
             footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
