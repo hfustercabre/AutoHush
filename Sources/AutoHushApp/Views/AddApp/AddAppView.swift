@@ -52,17 +52,25 @@ struct AddAppView: View {
         .announcesCurrentStep(announcement)
         .onChange(of: isWaitingToPlay) { _, waiting in floats(waiting) }
         .defaultFocus($focused, model.currentStep)
-        .onChange(of: model.stage, initial: true) { focusCurrentStep() }
-        .onChange(of: model.permissions.neededAllowed) { focusCurrentStep() }
+        .task(id: FocusMove(stage: model.stage, neededAllowed: model.permissions.neededAllowed)) { await focusCurrentStep() }
+    }
+
+    /// What moves the focus to the current step: the stage, or the
+    /// permissions needed allowed.
+    private struct FocusMove: Equatable {
+        let stage: AddAppModel.Stage
+        let neededAllowed: Bool
     }
 
     /// The focus leaves the control it's on, then goes to the current step's
     /// main control once it's in place (none while it waits for the app to
-    /// play).
-    private func focusCurrentStep() {
+    /// play). In the view's own task, which ends with the view: a focus set
+    /// once the view was gone crashed macOS's focus system (CI, 2026-11-01).
+    private func focusCurrentStep() async {
         focused = nil
-        let step = model.currentStep
-        Task { @MainActor in focused = step }
+        await Task.yield()
+        guard !Task.isCancelled else { return }
+        focused = model.currentStep
     }
 
     var appName: String? { model.chosen?.name }

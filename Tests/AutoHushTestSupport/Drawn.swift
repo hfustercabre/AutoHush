@@ -14,5 +14,9 @@ package func drawn(_ view: some View, width: CGFloat, height: CGFloat = 600) -> 
     if let bitmap = hosting.bitmapImageRepForCachingDisplay(in: hosting.bounds) {
         hosting.cacheDisplay(in: hosting.bounds, to: bitmap)
     }
+    // Kept until the main actor's next turn, so what drawing it queued there
+    // (a focus update) runs while it's still there: one that ran after it
+    // was gone crashed macOS's focus system (CI, 2026-11-01).
+    Task { @MainActor in withExtendedLifetime(hosting) {} }
     return hosting.fittingSize
 }
