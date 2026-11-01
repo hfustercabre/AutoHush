@@ -36,8 +36,7 @@ struct SoundSourcesSettingsView: View {
                         Text("Apps appear here once they have played audio.", comment: "Settings → Sound Sources, while the list is empty")
                             .foregroundStyle(.appSecondary)
                     } else if list.shownApps.isEmpty, let search = list.search {
-                        Text(verbatim: String(localized: "No apps match “\(search)”.",
-                                              comment: "Settings → Sound Sources, when the search finds nothing; %@ is what was typed"))
+                        Text(verbatim: Self.noMatch(search))
                             .foregroundStyle(.appSecondary)
                     }
                     ForEach(Array(list.shownApps.enumerated()), id: \.element.id) { index, row in
@@ -124,6 +123,12 @@ struct SoundSourcesSettingsView: View {
                      comment: "Settings → Sound Sources: title of the confirmation for removing several selected apps, one of them at least turned off; %lld is how many (2 or more)")
     }
 
+    /// Instead of the apps when the search finds none.
+    private static func noMatch(_ search: String) -> String {
+        String(localized: "No apps match “\(search)”.",
+               comment: "Settings → Sound Sources, when the search finds nothing; %@ is what was typed")
+    }
+
     /// The heading, or the search while it's open, then "Sort by" with the
     /// order's pop-up, an arrow that reverses it, and the magnifier.
     private var header: some View {
@@ -135,7 +140,7 @@ struct SoundSourcesSettingsView: View {
                 SearchField(text: Binding(
                     get: { list.search ?? "" },
                     set: { text in if list.search != nil { list.search = text } }
-                ), focusesOnAppear: true) {
+                ), focusesOnAppear: true, results: SearchResults(count: list.shownApps.count, noMatch: Self.noMatch(list.search ?? ""))) {
                     list.search = nil
                 }
                 .padding(.trailing, 10)

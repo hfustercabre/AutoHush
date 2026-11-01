@@ -70,6 +70,12 @@ struct MenuPlayerList: Equatable {
         webApps = shown.filter { $0.kind == .safariWebApp }.map(row)
     }
 
+    /// What `search` found, for VoiceOver: the players shown, or the note
+    /// for none.
+    func searchResults(_ search: String) -> SearchResults {
+        SearchResults(count: supportedApps.count + otherApps.count + webApps.count, noMatch: noMatchNote ?? PlayerOption.noMatchNote(search))
+    }
+
     /// The players that can be chosen, top to bottom: Return with nothing
     /// highlighted chooses the first.
     var choosable: [Row] {

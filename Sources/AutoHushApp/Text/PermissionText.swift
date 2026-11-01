@@ -58,6 +58,12 @@ enum PermissionText {
         String(localized: "Allowed", comment: "Diagnostics, the welcome window and the Add an App window: a permission that is granted")
     }
 
+    /// `permissions` (a list of their names) are allowed: Add an App's
+    /// summary, and VoiceOver on the welcome window ("Audio Recording allowed").
+    static func allowed(_ permissions: String) -> String {
+        String(localized: "\(permissions) allowed", comment: "Add an App window, under the step “Allow what the check needs” once done; %@ lists the permissions, e.g. “Accessibility and Audio Recording”")
+    }
+
     static var reopen: String {
         String(localized: "Reopen AutoHush",
                comment: "Menu item and button, after the user went to allow audio recording in System Settings: macOS applies it only once AutoHush is quit and opened again. Also Add an App’s step “Allow what the check needs” when Accessibility changed while AutoHush was open")

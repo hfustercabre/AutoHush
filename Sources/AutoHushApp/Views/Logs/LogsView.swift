@@ -14,7 +14,7 @@ struct LogsView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
-                SearchField(text: $model.search)
+                SearchField(text: $model.search, results: SearchResults(count: model.shown.count, noMatch: emptyNote))
                 Picker(selection: $model.range) {
                     ForEach(LogsModel.Range.allCases, id: \.self) { Text($0.title).tag($0) }
                 } label: {

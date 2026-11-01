@@ -60,10 +60,12 @@ struct PlayerChooserView: View {
 
     /// The search and the tiles.
     @ViewBuilder private var players: some View {
+        let shown = model.offeredPlayers.matching(search)
         if model.playerOptions.isSearchable {
-            SearchField(text: $search, onSubmit: returnInSearch)
+            SearchField(text: $search, results: SearchResults(count: shown.count, noMatch: PlayerOption.noMatchNote(search)),
+                        onSubmit: returnInSearch)
         }
-        PlayerTiles(options: model.offeredPlayers.matching(search), selection: picked,
+        PlayerTiles(options: shown, selection: picked,
                     onSelect: select,
                     onAddWebApp: { model.actions?.openAddWebApp() },
                     onAddApp: { model.actions?.openAddApp() },

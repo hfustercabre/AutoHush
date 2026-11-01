@@ -204,7 +204,7 @@ enum AddAppText {
         }
         let allowedList = allowed.formatted(.list(type: .and))
         guard !without.isEmpty else {
-            return String(localized: "\(allowedList) allowed", comment: "Add an App window, under the step “Allow what the check needs” once done; %@ lists the permissions, e.g. “Accessibility and Audio Recording”")
+            return PermissionText.allowed(allowedList)
         }
         return String(localized: "\(allowedList) allowed; the check goes on without \(without.formatted(.list(type: .and)))",
                       comment: "Add an App window, under the step “Allow what the check needs” once done without some; the first %@ lists the permissions allowed, the second those it goes without, e.g. “Automation”")

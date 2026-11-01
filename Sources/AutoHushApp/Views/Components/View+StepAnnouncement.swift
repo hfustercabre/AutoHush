@@ -23,11 +23,24 @@ extension View {
 /// inside its text, not in the notification's priority, which VoiceOver reads.
 @MainActor
 func postStepAnnouncement(_ text: String) {
+    postAnnouncement(text, priority: .high)
+}
+
+/// Posts an announcement at `priority`, through AppKit for the reason
+/// above: a search's results go out at low priority, after what VoiceOver
+/// is saying (2026-11-01).
+@MainActor
+func postAnnouncement(_ text: String, priority: NSAccessibilityPriorityLevel) {
     let element: NSObject = NSApp.keyWindow ?? NSApp
-    NSAccessibility.post(element: element, notification: .announcementRequested, userInfo: stepAnnouncementInfo(text))
+    NSAccessibility.post(element: element, notification: .announcementRequested, userInfo: announcementInfo(text, priority: priority))
 }
 
 /// The announcement's text and its high priority, as `NSAccessibility` takes them.
 func stepAnnouncementInfo(_ text: String) -> [NSAccessibility.NotificationUserInfoKey: Any] {
-    [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue]
+    announcementInfo(text, priority: .high)
+}
+
+/// The announcement's text and its priority, as `NSAccessibility` takes them.
+func announcementInfo(_ text: String, priority: NSAccessibilityPriorityLevel) -> [NSAccessibility.NotificationUserInfoKey: Any] {
+    [.announcement: text, .priority: priority.rawValue]
 }

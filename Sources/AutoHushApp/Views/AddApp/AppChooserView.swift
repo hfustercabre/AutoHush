@@ -18,7 +18,7 @@ struct AppChooserView: View {
 
     var body: some View {
         WindowPage(icon: NSApp.applicationIconImage, description: Text(verbatim: AddAppText.chooserDescription), width: Self.width) {
-            SearchField(text: $model.search, focusesOnAppear: true, onSubmit: chooseSelected, onMove: moveSelection)
+            SearchField(text: $model.search, focusesOnAppear: true, results: searchResults, onSubmit: chooseSelected, onMove: moveSelection)
                 .padding(.top, 8)
             Card { list }
             if let problem = model.otherAppProblem { NoteLabel(AddAppText.otherAppProblem(problem)) }
@@ -36,6 +36,11 @@ struct AppChooserView: View {
         .onChange(of: model.otherAppProblem) { _, problem in
             if let problem { AccessibilityNotification.Announcement(AddAppText.otherAppProblem(problem)).post() }
         }
+    }
+
+    /// What the search found, for VoiceOver; nothing while the apps load.
+    private var searchResults: SearchResults? {
+        model.apps.isEmpty ? nil : SearchResults(count: model.shownAppsInOrder.count, noMatch: PlayerOption.noMatchNote(model.search))
     }
 
     /// The app selected among those shown, else the only one shown.

@@ -9,7 +9,9 @@ import AutoHushKit
 /// The button that allows a missing permission: "Open <player>" while
 /// Automation waits for the player to run, "Reopen AutoHush" once Audio
 /// Recording only needs a relaunch, else "Allow…" (or the permission's own
-/// "Allow … Access…" with `long`). Nothing once it's allowed.
+/// "Allow … Access…" with `long`). Nothing once it's allowed. VoiceOver
+/// always hears the long words: the welcome window's two "Allow…" say
+/// which permission each allows (A6, 2026-11-01).
 struct PermissionButton: View {
     let model: SettingsModel
     let permission: Permission
@@ -20,6 +22,7 @@ struct PermissionButton: View {
     var body: some View {
         if let title {
             let button = Button { model.actions?.requestPermission(permission) } label: { Text(verbatim: title) }
+                .accessibilityLabel(Text(verbatim: spokenTitle ?? title))
             if prominent {
                 button.buttonStyle(ChipButtonStyle(filled: true, isSelected: true))
             } else {
@@ -30,6 +33,11 @@ struct PermissionButton: View {
 
     private var title: String? {
         Self.title(for: access, permission: permission, long: long, player: model.chosenPlayerName ?? "")
+    }
+
+    /// What VoiceOver hears: the long words, which name the permission.
+    private var spokenTitle: String? {
+        Self.title(for: access, permission: permission, long: true, player: model.chosenPlayerName ?? "")
     }
 
     /// Its words while `permission` stands at `access`, for `player`; `nil`

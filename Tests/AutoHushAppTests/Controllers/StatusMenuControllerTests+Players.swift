@@ -296,8 +296,11 @@ extension StatusMenuControllerTests {
         sut.perform(.searchPlayers("MUSI"))
         #expect(sut.model.playerSearch == "MUSI")
         #expect(playerRows(sut) == ["search", "[Supported]", "Acme Music", "Música"])
+        // VoiceOver hears how many it shows, or the note (A14, 2026-11-01).
+        #expect(sut.model.players.searchResults("MUSI").announcement == "2 results")
         sut.perform(.searchPlayers("zz"))
         #expect(playerRows(sut) == ["search", "No players match “zz”."])
+        #expect(sut.model.players.searchResults("zz").announcement == "No players match “zz”.")
     }
 
     @Test("Return with nothing highlighted chooses the first player the search left, only while something is typed")

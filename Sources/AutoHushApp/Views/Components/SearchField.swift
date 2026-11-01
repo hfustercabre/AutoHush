@@ -3,6 +3,7 @@ import SwiftUI
 /// A search field in the style of the chips: a magnifier, the text, and a ✕
 /// that closes the search (`onClose`) or, without one, clears what was typed.
 /// Settings → Sound Sources and the places that offer the media players use it.
+/// With `results`, VoiceOver hears them once typing pauses.
 struct SearchField: View {
     @Binding var text: String
     /// Takes the keyboard focus as it appears, in a window (not in a menu:
@@ -11,6 +12,10 @@ struct SearchField: View {
     /// Takes the focus each time this changes (the menu's side window, once
     /// it's key).
     var focusRequest = 0
+    /// What the search found, for VoiceOver; `nil` while there's nothing
+    /// to tell (the list still loading). Before the closures, so Sound
+    /// Sources' trailing closure binds as it did.
+    var results: SearchResults?
     /// A click in it, before it takes the focus (the menu's side window
     /// becomes key then).
     var onClick: (() -> Void)?
@@ -20,6 +25,10 @@ struct SearchField: View {
     /// ↑ and ↓ in it, for a list under it whose selection they move (-1, 1).
     var onMove: ((Int) -> Void)?
     @FocusState private var isFocused: Bool
+
+    /// How long typing pauses before VoiceOver hears the results: not over
+    /// each key's echo.
+    static let resultsDelay = Duration.milliseconds(500)
 
     var body: some View {
         HStack(spacing: 5) {
@@ -50,6 +59,13 @@ struct SearchField: View {
             if focusesOnAppear { DispatchQueue.main.async { isFocused = true } }
         }
         .onChange(of: focusRequest) { isFocused = true }
+        // Each key starts the wait again; low priority, after what VoiceOver
+        // is saying (A14, 2026-11-01).
+        .task(id: text) {
+            guard let results, !text.isEmpty else { return }
+            guard (try? await Task.sleep(for: Self.resultsDelay)) != nil else { return }
+            postAnnouncement(results.announcement, priority: .low)
+        }
     }
 
     private func move(_ step: Int) -> KeyPress.Result {

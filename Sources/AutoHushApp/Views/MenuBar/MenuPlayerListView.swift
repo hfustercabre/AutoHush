@@ -22,6 +22,7 @@ struct MenuPlayerListView: View {
                 // it the keyboard (`StatusMenuController.searchTakesKeyboard`).
                 SearchField(text: Binding(get: { model.playerSearch }, set: { model.perform(.searchPlayers($0)) }),
                             focusRequest: model.searchFocus,
+                            results: list.searchResults(model.playerSearch),
                             onClick: { model.perform(.typeInSearch) },
                             onSubmit: { model.perform(.chooseHighlighted) },
                             onMove: { model.perform(.moveHighlight($0)) })

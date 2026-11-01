@@ -50,4 +50,29 @@ struct WelcomePermissionsViewTests {
         let size = drawn(PlayerChooserView(model: model), width: PlayerChooserView.width)
         #expect(size.height > 0)
     }
+
+    @Test("VoiceOver hears each permission that turns allowed, then that Done can be clicked (A6)")
+    func announcements() {
+        let missing = PermissionsState(player: "com.example.jukebox", control: .automation(player: "Jukebox"),
+                                       controlAccess: .denied, audio: .notAsked)
+        var automation = missing
+        automation.controlAccess = .allowed
+        #expect(WelcomePermissionsView.announcement(from: missing, to: automation) == "Automation allowed")
+        var both = automation
+        both.audio = .allowed
+        #expect(WelcomePermissionsView.announcement(from: automation, to: both) == "Audio Recording allowed. Done is available")
+        // AntiDot mode: nothing turned allowed, but Done can be clicked.
+        var antiDot = automation
+        antiDot.audio = .notNeeded
+        #expect(WelcomePermissionsView.announcement(from: automation, to: antiDot) == "Done is available")
+        // Nothing new, or a read for another player: nothing said.
+        #expect(WelcomePermissionsView.announcement(from: both, to: both) == nil)
+        var otherPlayer = both
+        otherPlayer.player = "com.example.other"
+        #expect(WelcomePermissionsView.announcement(from: missing, to: otherPlayer) == nil)
+        // Audio Recording allowed only from the next launch isn't allowed yet.
+        var reopen = missing
+        reopen.audio = .needsReopen
+        #expect(WelcomePermissionsView.announcement(from: missing, to: reopen) == nil)
+    }
 }

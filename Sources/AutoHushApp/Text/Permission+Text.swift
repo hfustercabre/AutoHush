@@ -18,6 +18,20 @@ extension Permission {
         }
     }
 
+    /// Once it's allowed: the check under the player's name (Settings →
+    /// General, the menu's card), and what VoiceOver hears as the welcome
+    /// window's row turns allowed (A6, 2026-11-01).
+    var allowedTitle: String {
+        switch self {
+        case .automation:
+            String(localized: "Automation allowed", comment: "Settings → General and the foot of the menu's card, under the media player, with a check: AutoHush may control it through Automation")
+        case .accessibility:
+            String(localized: "Accessibility allowed", comment: "Settings → General and the foot of the menu's card, under the media player, with a check: AutoHush may control it through Accessibility")
+        case .systemAudioRecording:
+            PermissionText.allowed(PermissionText.audioTitle)
+        }
+    }
+
     /// The status line while the player needs it, said once: the menu's
     /// card has Allow… under it, instead of a row asking again (I2, P3, the
     /// user's pick, 2026-10-19).

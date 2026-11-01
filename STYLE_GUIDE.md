@@ -555,6 +555,9 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
     the menu's status line ("AutoHush: Spotify isn’t running", "AutoHush:
     Auto-Pause is off until 15:30"), never a word of AutoHush's own like
     "degraded". While an update waits, it adds ", update available".
+  - A short "Allow…" (`PermissionButton`, the welcome window) says its
+    long words to VoiceOver, which name the permission ("Allow Audio
+    Recording Access…"), as Add an App's and the menu card's do.
   - A slider says what it sets (Fine-Tuning's: the row's
     title) and its value as the row shows it ("0.5 s"); the row's own text
     is hidden from VoiceOver, so it's read once.
@@ -584,7 +587,15 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   after Copy Report and Copy Logs, why Add a Web App couldn't take the
   address, a step's warning when it shows or changes, the card's line after
   Try Again, why a window waits for a permission, when it opens and when it
-  locks, and what a check's panel asks of the user, and that it stops.
+  locks, what a check's panel asks of the user, and that it stops, and,
+  at high priority, that the check blocks the mouse and keys (its note,
+  which says Escape ends it). On the welcome window's permissions, each
+  one that turns allowed ("Automation allowed"), then "Done is available"
+  once nothing's missing.
+- **Searches say what they found:** once typing pauses half a second,
+  VoiceOver hears how many items the list shows ("3 results", a plural
+  string) or its own words for none ("No apps match “…”."), at low
+  priority, after what it's saying (`SearchField`'s `results`).
 - **Switches** read as switches, with their row's title (`PillToggleStyle`
   does this).
 - **Chosen items** carry the "selected" trait.

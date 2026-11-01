@@ -14620,6 +14620,29 @@
         }
       }
     },
+    "%lld results" : {
+      "comment" : "VoiceOver, once typing in a search pauses: how many items the search shows (1 or more)",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld result"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld results"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "1 Hour" : {
       "comment" : "In the menu: turn auto-pause off for 1 hour",
       "localizations" : {
@@ -62529,6 +62552,9 @@
           }
         }
       }
+    },
+    "Done is available" : {
+      "comment" : "Welcome window, said by VoiceOver once every permission is allowed (or not needed): the Done button can be clicked now"
     },
     "Download and Install" : {
       "comment" : "Update popup button: downloads the update, installs it and restarts",

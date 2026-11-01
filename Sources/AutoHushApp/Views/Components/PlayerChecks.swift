@@ -11,7 +11,7 @@ struct PlayerChecks: View {
         if model.chosenPlayer != nil {
             HStack(spacing: 12) {
                 if let control = model.permissions.control, model.permissions.controlAccess.isSatisfied {
-                    check(Self.allowedTitle(control), done: true)
+                    check(control.allowedTitle, done: true)
                 }
                 if !model.playerCanFade {
                     check(String(localized: "No fades", comment: "Settings → General and the foot of the menu's card, under the media player: AutoHush can't fade this player (some apps, web apps)"), done: false)
@@ -33,14 +33,5 @@ struct PlayerChecks: View {
         }
         .font(.appCaption)
         .foregroundStyle(.appSecondary)
-    }
-
-    private static func allowedTitle(_ permission: Permission) -> String {
-        switch permission {
-        case .automation:
-            String(localized: "Automation allowed", comment: "Settings → General and the foot of the menu's card, under the media player, with a check: AutoHush may control it through Automation")
-        default:
-            String(localized: "Accessibility allowed", comment: "Settings → General and the foot of the menu's card, under the media player, with a check: AutoHush may control it through Accessibility")
-        }
     }
 }

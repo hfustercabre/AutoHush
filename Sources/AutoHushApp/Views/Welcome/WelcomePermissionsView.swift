@@ -49,10 +49,35 @@ struct WelcomePermissionsView: View {
             MainButton(Self.doneTitle) { model.actions?.finishWelcome() }
                 .disabled(!state.allSatisfied)
         }
+        // Allowed in System Settings, a row's button goes away: VoiceOver
+        // hears what was allowed, and when Done can be clicked (A6, 2026-11-01).
+        .onChange(of: model.permissions) { old, new in
+            if let announcement = Self.announcement(from: old, to: new) { postStepAnnouncement(announcement) }
+        }
     }
 
     private static var doneTitle: String {
         String(localized: "Done", comment: "Welcome window: button that closes it once the permissions are allowed")
+    }
+
+    /// What VoiceOver hears as the permissions go from `old` to `new`: each
+    /// one that turned allowed, then, once nothing's missing, that Done can
+    /// be clicked; `nil` when neither happened. A read for another player
+    /// (the one chosen as the page opens) says nothing about this one.
+    static func announcement(from old: PermissionsState, to new: PermissionsState) -> String? {
+        guard old.player == new.player else { return nil }
+        var parts: [String] = []
+        if let control = new.control, new.controlAccess == .allowed, old.controlAccess != .allowed {
+            parts.append(control.allowedTitle)
+        }
+        if new.audio == .allowed, old.audio != .allowed {
+            parts.append(Permission.systemAudioRecording.allowedTitle)
+        }
+        if new.allSatisfied, !old.allSatisfied {
+            parts.append(String(localized: "Done is available",
+                                comment: "Welcome window, said by VoiceOver once every permission is allowed (or not needed): the Done button can be clicked now"))
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: ". ")
     }
 
     private func row<Trailing: View>(symbol: String, title: String, note: String, access: PermissionAccess,

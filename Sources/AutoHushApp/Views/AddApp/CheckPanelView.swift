@@ -63,7 +63,13 @@ struct CheckPanelView: View {
         .fixedSize(horizontal: false, vertical: true)
         .font(.appBody)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { resized($0) }
-        .onChange(of: progress.blocksInput, initial: true) { _, blocked in dimmed(blocked) }
+        .onChange(of: progress.blocksInput, initial: true) { _, blocked in
+            dimmed(blocked)
+            // VoiceOver hears that the keys stop working, and that Escape
+            // ends the check, at high priority as a window's step: what
+            // the check does to the app next mustn't cut it off (A7, 2026-11-01).
+            if blocked { postStepAnnouncement(AddAppText.blockedNote) }
+        }
         // VoiceOver hears what the check asks (it waits for the user, against
         // a time limit), and that it stops.
         .onChange(of: progress.request) { _, request in
