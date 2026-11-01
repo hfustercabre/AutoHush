@@ -109,16 +109,19 @@ struct AppChooserView: View {
                         let lines = [app.browserName.map(AddAppText.browserWebApp), app.nowPlaying == true ? AddAppText.playingLabel : nil]
                             .compactMap { $0 }
                         if !lines.isEmpty {
-                            Text(verbatim: lines.joined(separator: " · ")).font(.appCaption).foregroundStyle(.appSecondary)
+                            Text(verbatim: lines.joined(separator: " · ")).font(.appCaption)
+                                .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.appSecondary))
                         }
                     }
+                    // Selected, white on the accent color, as macOS's lists (A1a).
+                    .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.foreground))
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 6)
                 .padding(.vertical, 4)
                 .id(app.id)
                 .background {
-                    if isSelected { RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.selectedTileFill) }
+                    if isSelected { RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.listSelectionFill) }
                 }
                 .contentShape(Rectangle())
                 // Selected at the first click, not after the double click's wait.

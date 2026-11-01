@@ -225,7 +225,9 @@ extension AppListOrder {
 }
 
 /// An app in Settings → Sound Sources: its icon and name, whether it pauses
-/// the music, and its switch. A click selects the row anywhere but on the
+/// the music, and its switch; selected, on the accent color with its text
+/// white, as macOS's lists (A1a, the user's pick, 2026-11-01: the faint
+/// selection looked like the pointer's highlight). A click selects the row anywhere but on the
 /// switch, which keeps its own clicks, ⌘ and ⇧ as in macOS's lists; from
 /// the keyboard, Space adds the row in focus to the selection or takes it
 /// out (Tab reaches it with keyboard navigation on), so several can be
@@ -247,7 +249,8 @@ private struct SoundSourceRow: View {
                     .accessibilityHidden(true)
                 RowTitle(
                     Text(verbatim: row.source.name),
-                    subtitle: Text(verbatim: SourceText.subtitle(isIgnored: row.isIgnored, mutes: model.playerMutesNow))
+                    subtitle: Text(verbatim: SourceText.subtitle(isIgnored: row.isIgnored, mutes: model.playerMutesNow)),
+                    isOnSelection: isSelected
                 )
                 Spacer(minLength: 8)
             }
@@ -265,11 +268,11 @@ private struct SoundSourceRow: View {
             .toggleStyle(PillToggleStyle())
             .focused($switchFocused)
             .focusEffectDisabled(keyboard != nil)
+            // A white ground, so the switch (the accent color while on) shows on the selection.
+            .background { if isSelected { Capsule().fill(.white).padding(-2) } }
         }
         .background {
-            if isSelected {
-                RoundedRectangle(cornerRadius: 6).fill(.selectedRowFill).padding(.horizontal, -6).padding(.vertical, -4)
-            }
+            if isSelected { SelectionFill().padding(.horizontal, -6).padding(.vertical, -4) }
         }
         .contentShape(Rectangle())
         .focusable(interactions: .activate) // as a button: Tab, not a click, gives it focus
@@ -297,5 +300,19 @@ private struct SoundSourceRow: View {
 
     private static var removeFromListTitle: Text {
         Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")
+    }
+}
+
+/// A selected Sound Sources row's ground: macOS's selection color; where
+/// the keys' highlight is, outlined inside in white, as the highlight's
+/// accent outline, behind it, doesn't show (A1a, A2a).
+private struct SelectionFill: View {
+    @Environment(\.keyHighlightByKeys) private var byKeys
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
+        shape
+            .fill(.listSelectionFill)
+            .overlay { if byKeys { shape.strokeBorder(.white, lineWidth: 2) } }
     }
 }

@@ -242,7 +242,8 @@ final class StatusMenuController: NSObject {
 
     private func renderIcon() {
         guard let button = statusItem.button else { return }
-        button.image = status.icon.image(accessibilityDescription: status.iconAccessibilityLabel, showsUpdate: status.iconShowsUpdate)
+        button.image = status.icon.image(accessibilityDescription: status.iconAccessibilityLabel, showsUpdate: status.iconShowsUpdate,
+                                         isOff: status.dimsIcon)
         // The badged image is as tall as the item: drawn as it is, not scaled to fit.
         button.imageScaling = .scaleNone
         button.title = ""

@@ -31,6 +31,7 @@ struct Card<Content: View, Footer: View>: View {
     @Environment(\.cardsAreFormSections) private var isFormSection
     /// The menu's card is highlighted: the tint over its glass, under its content.
     @Environment(\.showsKeyHighlight) private var isHighlighted
+    @Environment(\.keyHighlightByKeys) private var isHighlightedByKeys
     /// Its rows and footer, as one group for the arrow keys' highlight.
     @State private var highlightGroup = UUID()
 
@@ -118,7 +119,8 @@ extension Card {
     /// The menu's tint over the card's glass while it's highlighted.
     @ViewBuilder fileprivate var highlight: some View {
         if isHighlighted {
-            HighlightTint(isFocused: true, cornerRadius: ClearGlassCard.cornerRadius, fill: .cardFocusTint)
+            HighlightTint(isFocused: true, byKeys: isHighlightedByKeys, cornerRadius: ClearGlassCard.cornerRadius,
+                          fill: .cardFocusTint)
         }
     }
 }

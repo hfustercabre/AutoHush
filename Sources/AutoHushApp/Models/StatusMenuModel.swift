@@ -69,6 +69,9 @@ final class StatusMenuModel {
     @ObservationIgnored var perform: @MainActor (StatusMenuCommand) -> Void = { _ in }
 
     init(status: AppStatus) {
+        // Either highlight lit hides the keyboard's focus in both (K9).
+        keyboard.partner = sideKeyboard
+        sideKeyboard.partner = keyboard
         self.status = status
     }
 

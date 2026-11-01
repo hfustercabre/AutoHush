@@ -49,13 +49,18 @@ struct CheckPanelView: View {
                 windowStep(step)
             }
             if progress.blocksInput {
-                Label(AddAppText.blockedNote, systemImage: "hand.raised")
+                // The text in the primary color, so it reads on the tint; the hand orange (A8a).
+                Label {
+                    Text(verbatim: AddAppText.blockedNote)
+                } icon: {
+                    Image(systemName: "hand.raised").foregroundStyle(.appWarning)
+                }
                     .font(.appCallout.weight(.medium))
-                    .foregroundStyle(.appWarning)
+                    .foregroundStyle(.primary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(.warningBadgeFill))
+                    .background(RoundedRectangle(cornerRadius: 8).tinted(.warningBadgeFill, outline: .appWarning))
             }
         }
         .padding(14)

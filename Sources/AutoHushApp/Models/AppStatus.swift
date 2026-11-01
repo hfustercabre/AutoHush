@@ -276,7 +276,7 @@ struct AppStatus: Equatable {
                comment: "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Jukebox isn’t running” or “Updates”")
     }
 
-    /// The menu bar icon is dimmed while auto-pause is off.
+    /// The menu bar icon is dimmed, and slashed, while auto-pause is off.
     var dimsIcon: Bool { isReady && autoPause != .on }
 
     /// The line under the card's title: what's happening. Needing reopening

@@ -7,6 +7,7 @@ package struct CheckRequestNote: View {
     let detail: String
     let symbol: String
     let look: CheckPanelLook
+    @Environment(\.colorSchemeContrast) private var contrast
 
     package init(_ text: String, detail: String, symbol: String, look: CheckPanelLook) {
         self.text = text
@@ -25,7 +26,12 @@ package struct CheckRequestNote: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(look.requestFill))
+        .background {
+            // Outlined in its tint with Increase Contrast: the faint fill alone barely shows then.
+            let shape = RoundedRectangle(cornerRadius: 8)
+            shape.fill(look.requestFill)
+                .overlay { if contrast == .increased { shape.strokeBorder(look.requestTint, lineWidth: 1) } }
+        }
         .accessibilityElement(children: .combine)
     }
 }

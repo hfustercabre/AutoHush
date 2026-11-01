@@ -25,6 +25,9 @@ final class SettingsKeys {
     private(set) var side: Side = .page
 
     init() {
+        // Either side lit hides the keyboard's focus on both (K9).
+        sidebar.partner = page
+        page.partner = sidebar
         sidebar.onHighlight = { [weak self] in
             self?.side = .sidebar
             self?.page.clear()

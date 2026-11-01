@@ -9,14 +9,14 @@ struct CountdownBanner: View {
         Label {
             Text(verbatim: text).fixedSize(horizontal: false, vertical: true)
         } icon: {
-            Image(systemName: "timer")
+            Image(systemName: "timer").foregroundStyle(.appWarning)
         }
         .font(.appCallout.weight(.semibold))
-        .foregroundStyle(.appWarning)
+        .foregroundStyle(.primary)
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.warningBadgeFill))
+        .background(RoundedRectangle(cornerRadius: 8).tinted(.warningBadgeFill, outline: .appWarning))
         .padding(.vertical, 2)
     }
 }

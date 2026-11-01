@@ -50,7 +50,11 @@ extension ShapeStyle where Self == Color {
     /// Behind what the user must do now: what the check's panel asks
     /// (`appAccent` on it), the accent color, faint.
     static var nextStepFill: Color { .accentColor.opacity(0.15) }
-    /// Behind a list row the user selected (Settings → Sound Sources).
+    /// Behind a list row the user selected, its text white, as macOS's lists
+    /// select (Settings → Sound Sources, Add an App's apps; A1a, the user's
+    /// pick, 2026-11-01): `selectedContentBackgroundColor`.
+    static var listSelectionFill: Color { Color(nsColor: .selectedContentBackgroundColor) }
+    /// Behind the accent `HeadingBadge` ("Recommended").
     static var selectedRowFill: Color { .accentColor.opacity(0.16) }
     /// Behind the chosen player's tile (`PlayerTiles`).
     static var selectedTileFill: Color { .accentColor.opacity(0.2) }

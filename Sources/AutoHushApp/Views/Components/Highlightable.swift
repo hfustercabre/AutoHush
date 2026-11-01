@@ -6,7 +6,8 @@ import SwiftUI
 /// reaches, all three shown by a faint tint of the system's accent color
 /// behind it (F5, the user's pick, 2026-10-18; under the pointer too, the
 /// user: "the accent color should show not only on keyboard navigation, but
-/// also when the mouse is over the item"), instead of macOS's focus ring.
+/// also when the mouse is over the item"), instead of macOS's focus ring;
+/// outlined where the keys put it (`HighlightTint`).
 /// For a control that is itself focusable (a button, a switch); a row that
 /// holds one uses `Highlightable` with its control's focus. In a row that
 /// takes the highlight for its control (`Highlightable.ownsControls`), only
@@ -30,13 +31,16 @@ struct HighlightableControl: ViewModifier {
     @Environment(\.isInHighlightedRow) private var isInHighlightedRow
 
     @ViewBuilder func body(content: Content) -> some View {
-        if keyboard == nil {
-            content
-        } else if isInHighlightedRow {
+        if let keyboard, isInHighlightedRow {
             content
                 .focused($isFocused)
                 .focusEffectDisabled()
-                .background { HighlightTint(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset).padding(-outset) }
+                .background {
+                    HighlightTint(isFocused: isFocused && !keyboard.hidesFocus, byKeys: true, cornerRadius: cornerRadius, inset: inset)
+                        .padding(-outset)
+                }
+        } else if keyboard == nil {
+            content
         } else {
             content
                 .focused($isFocused)
@@ -51,7 +55,9 @@ struct HighlightableControl: ViewModifier {
 /// a control the highlight goes to: it registers where it is and what
 /// pressing it (or ← and →) does, the pointer moves the highlight onto it,
 /// and the tint shows behind it while it's highlighted, has the keyboard's
-/// focus (`isFocused`, its control's) or `isLit`; a dimmed one is skipped.
+/// focus (`isFocused`, its control's; unless something was highlighted
+/// since, K9) or `isLit`; a dimmed one is skipped, unless it has a reason
+/// to show (`HighlightReason`, A13a).
 /// A key moving the highlight onto it moves VoiceOver's cursor there too
 /// (`KeyHighlight.Light.arrivals`), so VoiceOver says what's lit, once:
 /// nothing is announced besides (A3, 2026-11-01).
@@ -80,6 +86,7 @@ struct Highlightable: ViewModifier {
     @Environment(\.highlightBand) private var band
     @Environment(\.highlightRemoval) private var removal
     @Environment(\.highlightGroup) private var group
+    @Environment(\.highlightReason) private var reason
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     /// What pressing it does as it was drawn last: registered once, its
@@ -103,14 +110,22 @@ struct Highlightable: ViewModifier {
         if let keyboard {
             let enabled = isEnabled && isAvailable
             // Its own light: a move redraws the controls it concerns only.
-            let lit = isFocused || isLit || (enabled && keyboard.light(id).isOn)
+            let light = keyboard.light(id)
+            let isOn = keyboard.shows(id, isEnabled: enabled)
+            let focusShows = isFocused && !keyboard.hidesFocus
+            let lit = focusShows || isLit || isOn
+            // Tab's focus is the keys' too.
+            let byKeys = focusShows || (isOn && light.byKeys)
             content
                 .environment(\.showsKeyHighlight, lightsItself && lit)
+                .environment(\.keyHighlightByKeys, byKeys)
                 .environment(\.isInHighlightedRow, ownsControls)
+                .environment(\.highlightReason, nil)
                 .background {
-                    HighlightTint(isFocused: !lightsItself && lit, cornerRadius: cornerRadius, inset: inset)
+                    HighlightTint(isFocused: !lightsItself && lit, byKeys: byKeys, cornerRadius: cornerRadius, inset: inset)
                         .padding(-outset)
                 }
+                .preference(key: ShownHighlightReason.self, value: byKeys ? reason : nil)
                 .id(id)
                 .accessibilityFocused($hasVoiceOverCursor)
                 .onChange(of: keyboard.light(id).arrivals) {
@@ -121,7 +136,7 @@ struct Highlightable: ViewModifier {
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { keyboard.update(id, frame: $0) }
                 .onAppear {
                     let actions = actions
-                    keyboard.register(id, .init(band: band, group: group, isEnabled: enabled,
+                    keyboard.register(id, .init(band: band, group: group, isEnabled: enabled, explains: reason != nil,
                                                 press: press == nil ? nil : { actions.press?() },
                                                 adjust: adjust == nil ? nil : { actions.adjust?($0) },
                                                 delete: removal == nil ? nil : { actions.delete?() },
@@ -161,17 +176,25 @@ extension View {
 }
 
 /// The tint itself (`focusTint`), behind a control or a row that is
-/// highlighted or has the keyboard's focus.
+/// highlighted or has the keyboard's focus; outlined in the accent color
+/// (2 pt) where the keys put it, so it shows at 3:1, and always with
+/// Increase Contrast (A2a, 2026-11-01). Under the pointer, the tint alone.
 struct HighlightTint: View {
     let isFocused: Bool
+    var byKeys = false
     var cornerRadius: CGFloat = 8
     var inset: CGFloat = 0
     var fill: Color = .focusTint
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         if isFocused {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            shape
                 .fill(fill)
+                .overlay {
+                    if byKeys || contrast == .increased { shape.strokeBorder(Color.accentColor, lineWidth: 2) }
+                }
                 .padding(.horizontal, inset)
                 .allowsHitTesting(false)
         }
@@ -196,6 +219,61 @@ extension EnvironmentValues {
     /// Inside a row that takes the highlight for its one button
     /// (`Highlightable.ownsControls`): the button shows only its focus.
     @Entry var isInHighlightedRow = false
+    /// The keys (or Tab) put the highlight on this view, not the pointer:
+    /// the menu's card outlines its tint, a menu row shows its reason.
+    @Entry var keyHighlightByKeys = false
+    /// Set around a control (`highlightReason(_:)`): why it's dimmed, or
+    /// what it does, shown while the keys' highlight is on it.
+    @Entry var highlightReason: String?
+}
+
+extension View {
+    /// `reason` shows while the keys' highlight is on this control (A13a,
+    /// the user's pick, 2026-11-01: what only a help tag said, for the
+    /// keyboard); dimmed, the keys still stop on it for that. `nil`: none.
+    /// Shown by a `HighlightReasonCaption` around it, or read inside it
+    /// (`keyHighlightByKeys`, a menu row).
+    func highlightReason(_ reason: String?) -> some View {
+        environment(\.highlightReason, reason)
+    }
+}
+
+/// The reason of the control the keys' highlight is on, from inside a view
+/// (`highlightReason(_:)`).
+struct ShownHighlightReason: PreferenceKey {
+    static let defaultValue: String? = nil
+
+    static func reduce(value: inout String?, nextValue: () -> String?) {
+        value = value ?? nextValue()
+    }
+}
+
+/// `text` as a caption while the keys' highlight is on the row it's in
+/// (A13a): what a row's control does, which its help tag says to the pointer.
+struct KeyHighlightCaption: View {
+    let text: String
+    @Environment(\.keyHighlightByKeys) private var byKeys
+
+    var body: some View {
+        if byKeys { Text(verbatim: text).captionStyle() }
+    }
+}
+
+/// `content`, then the reason of the control in it the keys' highlight is
+/// on, if any, as a caption under it (A13a).
+struct HighlightReasonCaption<Content: View>: View {
+    @ViewBuilder let content: Content
+    @State private var reason: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            content
+            if let reason { Text(verbatim: reason).captionStyle() }
+        }
+        .onPreferenceChange(ShownHighlightReason.self) { shown in
+            MainActor.assumeIsolated { reason = shown }
+        }
+    }
 }
 
 /// What Delete does on a highlighted control that can be removed (an added

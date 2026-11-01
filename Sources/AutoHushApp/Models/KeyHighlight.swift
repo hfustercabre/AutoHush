@@ -28,8 +28,11 @@ final class KeyHighlight {
         var band = HighlightBand.middle
         /// The card it's in (`Card`), if any.
         var group: UUID?
-        /// A dimmed one is skipped.
+        /// A dimmed one is skipped, unless it `explains` itself.
         var isEnabled = true
+        /// Dimmed, it still takes the keys' highlight, to show why it's
+        /// dimmed (`HighlightReason`, A13a, 2026-11-01); pressing it does nothing.
+        var explains = false
         var press: (() -> Void)?
         /// ← (-1) or → (1): a slider's step, a choice's next option.
         var adjust: ((Int) -> Void)?
@@ -47,8 +50,18 @@ final class KeyHighlight {
             guard highlighted != oldValue else { return }
             if let oldValue { lights[oldValue]?.isOn = false }
             if let highlighted { light(highlighted).isOn = true }
+            hidesFocusIfLit()
+            partner?.hidesFocusIfLit()
         }
     }
+    /// Whether the keyboard's focus (Tab's) hides its tint: something is
+    /// highlighted here or in `partner`, moved there after the focus, as
+    /// Tab clears the highlight (K9, 2026-11-01: one tint at a time,
+    /// whichever moved last). Observed only by the control with the focus.
+    private(set) var hidesFocus = false
+    /// The other highlight of the same keys (Settings' sidebar and page, the
+    /// menu and its side window): either one lit hides the focus.
+    @ObservationIgnored weak var partner: KeyHighlight?
     /// The control the arrow keys moved to last, to scroll into view; the
     /// pointer's never needs it.
     private(set) var revealed: UUID?
@@ -72,6 +85,9 @@ final class KeyHighlight {
     /// Whether one control is highlighted, observed by that control alone.
     @MainActor @Observable final class Light {
         fileprivate(set) var isOn = false
+        /// The keys moved it there, not the pointer: its tint is outlined
+        /// (A2a, 2026-11-01), and a reason it has shows (`HighlightReason`).
+        fileprivate(set) var byKeys = false
         /// How many times a key moved the highlight onto it: each time,
         /// VoiceOver's cursor goes to it (A3, 2026-11-01), not when the
         /// pointer does, as VoiceOver's own cursor doesn't follow the mouse.
@@ -118,17 +134,28 @@ final class KeyHighlight {
 
     /// A highlighted control dimmed, or gone, gives the highlight to the
     /// innermost other one still under the pointer (the card around the
-    /// card's Try Again), as leaving it does; none, without one.
+    /// card's Try Again), as leaving it does; none, without one. One that
+    /// `explains` itself keeps the keys' highlight.
     func update(_ id: UUID, isEnabled: Bool) {
         controls[id]?.isEnabled = isEnabled
-        if !isEnabled, highlighted == id { highlighted = innermostHovered(excluding: id) }
+        guard !isEnabled, highlighted == id else { return }
+        if controls[id]?.explains == true, lights[id]?.byKeys == true { return }
+        point(at: innermostHovered(excluding: id))
+    }
+
+    /// Whether `id` shows the highlight now: enabled, or dimmed but
+    /// explaining itself to the keys.
+    func shows(_ id: UUID, isEnabled: Bool) -> Bool {
+        let light = light(id)
+        guard light.isOn else { return false }
+        return isEnabled || (controls[id]?.explains == true && light.byKeys)
     }
 
     func remove(_ id: UUID) {
         controls[id] = nil
         earlyFrames[id] = nil
         hovered.removeAll { $0 == id }
-        if highlighted == id { highlighted = innermostHovered() }
+        if highlighted == id { point(at: innermostHovered()) }
         lights[id] = nil
     }
 
@@ -137,11 +164,22 @@ final class KeyHighlight {
         hovered.removeAll { $0 == id }
         if inside {
             hovered.append(id)
-            highlighted = innermostHovered()
+            point(at: innermostHovered())
             onHighlight?()
         } else if highlighted == id {
-            highlighted = innermostHovered()
+            point(at: innermostHovered())
         }
+    }
+
+    /// The highlight where the pointer put it (`nil`: none).
+    private func point(at id: UUID?) {
+        highlighted = id
+        if let id { light(id).byKeys = false }
+    }
+
+    private func hidesFocusIfLit() {
+        let hides = highlighted != nil || partner?.highlighted != nil
+        if hides != hidesFocus { hidesFocus = hides }
     }
 
     /// Of the controls under the pointer but `excluded`, the last it came
@@ -169,11 +207,12 @@ final class KeyHighlight {
         earlyFrames = [:]
     }
 
-    /// The enabled controls in reading order, by row: part by part
+    /// The enabled controls (and the dimmed ones that explain themselves)
+    /// in reading order, by row: part by part
     /// (`Control.band`), in each row by row from the top (a control within
     /// 6 pt of a row's top is on it), each row left to right.
     var rows: [[UUID]] {
-        let enabled = controls.filter(\.value.isEnabled).sorted { a, b in
+        let enabled = controls.filter { $0.value.isEnabled || $0.value.explains }.sorted { a, b in
             let (a, b) = (a.value, b.value)
             if a.band != b.band { return a.band < b.band }
             return a.frame.minY != b.frame.minY ? a.frame.minY < b.frame.minY : a.frame.minX < b.frame.minX
@@ -268,6 +307,7 @@ final class KeyHighlight {
 
     private func highlight(_ id: UUID) {
         highlighted = id
+        light(id).byKeys = true
         revealed = id
         light(id).arrivals += 1
         onHighlight?()

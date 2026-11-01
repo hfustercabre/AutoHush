@@ -14,7 +14,8 @@ struct HeadingBadge: View {
             .foregroundStyle(accent ? AnyShapeStyle(.appAccent) : AnyShapeStyle(.appWarning))
             .padding(.horizontal, 6)
             .padding(.vertical, 1)
-            .background(Capsule().fill(accent ? AnyShapeStyle(.selectedRowFill) : AnyShapeStyle(.warningBadgeFill)))
+            .background(Capsule().tinted(accent ? AnyShapeStyle(.selectedRowFill) : AnyShapeStyle(.warningBadgeFill),
+                                         outline: accent ? AnyShapeStyle(.appAccent) : AnyShapeStyle(.appWarning)))
             .fixedSize()
     }
 }

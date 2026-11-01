@@ -2,7 +2,8 @@ import SwiftUI
 
 /// What fixes the chosen player, under its status line in the menu's card
 /// and in Settings → General: Reopen while it must be reopened to be
-/// controlled (its tooltip and VoiceOver hint say why), Unmute while it's
+/// controlled (its tooltip and VoiceOver hint say why, and a caption under
+/// it while the keys are on it, A13a), Unmute while it's
 /// muted for another app (it's heard until the other apps stop), then Try
 /// Again after a given-up resume. `nil`: not offered now. In the card
 /// they're its chips (`CardChip`), in Settings push buttons; side by side or
@@ -18,9 +19,12 @@ struct PlayerFixButtons: View {
     var body: some View {
         if let reopen {
             let reason = ReopenText.reason(player)
-            Self.button(AppStatus.reopenPlayerTitle, symbol: "arrow.clockwise", inCard: inCard, action: reopen)
-                .help(reason)
-                .accessibilityHint(Text(verbatim: reason))
+            HighlightReasonCaption {
+                Self.button(AppStatus.reopenPlayerTitle, symbol: "arrow.clockwise", inCard: inCard, action: reopen)
+                    .help(reason)
+                    .accessibilityHint(Text(verbatim: reason))
+                    .highlightReason(reason)
+            }
         }
         if let unmute {
             Self.button(AppStatus.unmuteTitle, symbol: "speaker.wave.2", inCard: inCard, action: unmute)

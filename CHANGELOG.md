@@ -16,6 +16,24 @@ This project follows [Semantic Versioning](https://semver.org/).
   welcome window asks for, when one is allowed, when Add an App's check
   blocks the keyboard (and that Escape stops it), and how many results a
   search found.
+- **Reasons for the keyboard:** while the arrow keys are on a control
+  whose reason was only in its tooltip, it shows under it: why a player
+  is dimmed in AntiDot mode (the keys now stop on it), why to reopen
+  the player, what the update choice does.
+
+### Changed
+
+- **The keyboard's highlight is easier to see:** outlined where the
+  arrow keys put it, and only one control lit at a time (the pointer's or
+  Tab's, whichever moved last).
+- **Selected apps** in Settings → Sound Sources and in Add an App's list
+  show in the accent color, as in macOS's lists, so they no longer look
+  like the pointer's highlight.
+- **Increase Contrast** outlines AutoHush's own faint tints too.
+- **Countdowns and Add an App's "keys are blocked" line** are in the
+  normal text color, easier to read; their icon stays orange.
+- **The menu bar icon** is slashed while Auto-Pause is off, not only
+  dimmed.
 
 ### Fixed
 

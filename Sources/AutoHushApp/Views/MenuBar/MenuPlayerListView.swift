@@ -75,7 +75,8 @@ struct MenuPlayerListView: View {
                                 .truncationMode(.tail)
                             if row.option.isUntested, !removes { HeadingBadge(text: PlayerOption.untestedBadge) }
                         }
-                        if let subtitle = row.subtitle, !removes { MenuRowSubtitle(text: subtitle) }
+                        // Why it's dimmed, in its subtitle's place while the keys are on it.
+                        if !removes { MenuRowSubtitle(text: row.subtitle, reason: row.help) }
                     }
                     Spacer(minLength: 4)
                     if row.isChosen, !removes {
@@ -85,6 +86,7 @@ struct MenuPlayerListView: View {
                     }
                 }
                 .disabled(!row.isEnabled && !removes)
+                .highlightReason(removes ? nil : row.help)
                 .help(row.help.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
                 .accessibilityLabel(Text(verbatim: removes ? PlayerOption.removeTitle(row.option.name) : row.accessibilityLabel))
                 .accessibilityHint(row.help.map { Text(verbatim: $0) } ?? Text(verbatim: ""))

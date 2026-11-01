@@ -21,7 +21,7 @@ struct UpdatesCard: View {
             // A pop-up menu, as System Settings has them (A4, the user's pick,
             // 2026-10-26: chips were too much), borderless as every pop-up
             // (U3, the user, 2026-10-27); what the choice does is its help
-            // tag and VoiceOver hint.
+            // tag and VoiceOver hint, and a caption while the keys are on it.
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     let title = String(localized: "When an update is found", comment: "Settings → About: lead-in to what happens when an update is found")
@@ -47,7 +47,12 @@ struct UpdatesCard: View {
                     .help(shown.explanation)
                     .accessibilityHint(Text(verbatim: shown.explanation))
                 }
-                if let note = model.updateInstallNote { Text(note).captionStyle() }
+                if let note = model.updateInstallNote {
+                    Text(note).captionStyle()
+                } else {
+                    // What the choice does, while the keys are on it (A13a).
+                    KeyHighlightCaption(text: model.shownAutomaticUpdates.explanation)
+                }
             }
             // ← and → choose, while the arrow keys' highlight is on it;
             // Return or Space shows the choices (`PopUpOpener`).

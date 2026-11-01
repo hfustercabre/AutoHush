@@ -57,7 +57,7 @@ struct SettingsSidebar: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background {
-                if isShown { RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.sidebarSelectionFill) }
+                if isShown { RoundedRectangle(cornerRadius: 10, style: .continuous).tinted(.sidebarSelectionFill, outline: .secondary) }
             }
             .contentShape(Rectangle())
         }

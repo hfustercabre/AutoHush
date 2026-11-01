@@ -130,10 +130,14 @@ struct PlayerTiles: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// A group's tiles, then why the dimmed one the keys are on is dimmed
+    /// (A13a): under the group, as one under a tile would break its row.
     private func grid(_ options: [PlayerOption], adds: Adds?) -> some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: Self.columns), spacing: Self.rowSpacing) {
-            ForEach(options) { tile($0) }
-            if let adds { addTile(adds) }
+        HighlightReasonCaption {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: Self.columns), spacing: Self.rowSpacing) {
+                ForEach(options) { tile($0) }
+                if let adds { addTile(adds) }
+            }
         }
     }
 
@@ -173,7 +177,7 @@ struct PlayerTiles: View {
     /// (Click to add, Untested, Not installed, Muted only); tinted and
     /// outlined once chosen. Dimmed while it can't be chosen; in AntiDot
     /// mode, an app only its sound tells about says why in its help tag and
-    /// VoiceOver hint. An app added with Add an App shows a × under the
+    /// VoiceOver hint, and under its group while the keys are on it. An app added with Add an App shows a × under the
     /// pointer or the keyboard, and can be removed from its right-click menu.
     @ViewBuilder private func tile(_ option: PlayerOption) -> some View {
         let button = tileButton(option)
@@ -183,6 +187,7 @@ struct PlayerTiles: View {
                 button
                     .help(option.antiDotModeReason)
                     .accessibilityHint(Text(verbatim: option.antiDotModeReason))
+                    .highlightReason(option.antiDotModeReason)
             } else {
                 button
             }

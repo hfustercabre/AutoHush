@@ -9,20 +9,23 @@ extension MenuBarIcon {
     /// takes the room around it.
     static let updateSize = NSSize(width: 22, height: 22)
 
-    /// The icon; with `showsUpdate`, the update badge in its corner.
-    func image(accessibilityDescription: String? = nil, showsUpdate: Bool = false) -> NSImage {
+    /// The icon; with `showsUpdate`, the update badge in its corner; with
+    /// `isOff` (Auto-Pause off), a slash across it, as `speaker.slash`, so
+    /// it shows by its shape, not by its dimming alone (A10a, the user's
+    /// pick, 2026-11-01).
+    func image(accessibilityDescription: String? = nil, showsUpdate: Bool = false, isOff: Bool = false) -> NSImage {
         let size = showsUpdate ? Self.updateSize : Self.size
         let image = NSImage(size: size, flipped: true) { _ in
             guard let context = NSGraphicsContext.current?.cgContext else { return false }
             guard showsUpdate else {
-                draw(in: context)
+                draw(in: context, isOff: isOff)
                 return true
             }
             // One layer, so the badge's gap cuts the tile and nothing under it.
             context.beginTransparencyLayer(auxiliaryInfo: nil)
             context.saveGState()
             context.translateBy(x: (size.width - Self.size.width) / 2, y: (size.height - Self.size.height) / 2)
-            draw(in: context)
+            draw(in: context, isOff: isOff)
             context.restoreGState()
             Self.drawUpdateBadge(in: context)
             context.endTransparencyLayer()
@@ -42,7 +45,7 @@ extension MenuBarIcon {
     /// inside the tile with room around them.
     private static let glyphScale: CGFloat = 0.82
 
-    private func draw(in context: CGContext) {
+    private func draw(in context: CGContext, isOff: Bool) {
         // The design grid, scaled so the tile fills the image.
         let scale = Self.size.width / Self.tile.width
         context.scaleBy(x: scale, y: scale)
@@ -62,11 +65,37 @@ extension MenuBarIcon {
         context.setLineCap(.round)
         context.setLineJoin(.round)
         let center = Self.tile.midX
+        context.saveGState()
         context.translateBy(x: center, y: center)
         context.scaleBy(x: Self.glyphScale, y: Self.glyphScale)
         context.translateBy(x: -center, y: -center)
         for cutout in cutouts { cutout.draw(in: context) }
+        context.restoreGState()
+        if isOff { Self.drawSlash(in: context) }
         context.endTransparencyLayer()
+    }
+
+    /// Auto-Pause off's slash, on the tile's grid: a solid line from top
+    /// left to bottom right with a gap cut out on each side, so it reads
+    /// across the bars' holes and the solid tile alike. Leaves the blend
+    /// mode at `destinationOut`, as the cut-outs expect.
+    private static func drawSlash(in context: CGContext) {
+        let from = CGPoint(x: 2.8, y: 2.8), to = CGPoint(x: 15.2, y: 15.2)
+        let width: CGFloat = 1.5, gap: CGFloat = 0.9
+        context.setLineCap(.round)
+        context.setStrokeColor(.black)
+        // The gap, cut out.
+        context.setLineWidth(width + 2 * gap)
+        context.move(to: from)
+        context.addLine(to: to)
+        context.strokePath()
+        // The line, drawn in it.
+        context.setBlendMode(.normal)
+        context.setLineWidth(width)
+        context.move(to: from)
+        context.addLine(to: to)
+        context.strokePath()
+        context.setBlendMode(.destinationOut)
     }
 
     /// An update waits: a disc with a down arrow cut out of it, in the
