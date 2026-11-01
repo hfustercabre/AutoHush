@@ -16,9 +16,10 @@ struct AboutSettingsView: View {
     @State private var iconSize: CGFloat = 96
     /// The page's size, its content's height (padding included) and the
     /// name's size as last measured, and the icon's side each of the last two
-    /// was measured beside: a fit waits until both are of the icon shown, as
-    /// the name is measured after the content (it stayed 96 pt until the
-    /// window was resized, 2026-10-31).
+    /// was measured beside: a fit waits until the content is of the icon
+    /// shown and the name was measured once, as the name is measured after
+    /// the content (it stayed 96 pt until the window was resized,
+    /// 2026-10-31); the name's size is then scaled to the icon (`nameSize`).
     @State private var pageSize: CGSize = .zero
     @State private var contentHeight: CGFloat = 0
     @State private var nameSize: CGSize = .zero
@@ -80,7 +81,7 @@ struct AboutSettingsView: View {
     }
 
     /// Fits the icon, and the name with it, to the page's room, once the
-    /// content and the name are both measured beside the icon shown; puts
+    /// content is measured beside the icon shown and the name once; puts
     /// the icon beside the name when even `leastIconSize` doesn't fit, and
     /// back on its own line once it does.
     private func fit() {
@@ -91,8 +92,9 @@ struct AboutSettingsView: View {
             }
             return
         }
-        guard measuredBeside.content == iconSize, measuredBeside.name == iconSize else { return }
-        let atLeast = Self.contentHeight(atIcon: Self.leastIconSize, current: iconSize, content: contentHeight, name: nameSize)
+        guard measuredBeside.content == iconSize, measuredBeside.name > 0 else { return }
+        let name = Self.nameSize(nameSize, measuredBeside: measuredBeside.name, at: iconSize)
+        let atLeast = Self.contentHeight(atIcon: Self.leastIconSize, current: iconSize, content: contentHeight, name: name)
         if pageSize.height > 0, atLeast > pageSize.height + 0.5 {
             stackedAtLeast = atLeast
             stackedExtra = 0
@@ -100,8 +102,18 @@ struct AboutSettingsView: View {
             isCompact = true
             return
         }
-        let fitted = Self.fittedIconSize(current: iconSize, page: pageSize, content: contentHeight, name: nameSize)
+        let fitted = Self.fittedIconSize(current: iconSize, page: pageSize, content: contentHeight, name: name)
         if abs(fitted - iconSize) >= 1 { iconSize = fitted }
+    }
+
+    /// The name's size beside an icon of `side`, from one measured beside
+    /// `measured`: its font follows the icon, and its size with it. A 1 pt
+    /// step may leave the name's rounded size as it was, so it isn't
+    /// measured again: the fit would have waited for good (on a 1x screen,
+    /// the 1.2.9 review).
+    nonisolated static func nameSize(_ size: CGSize, measuredBeside measured: CGFloat, at side: CGFloat) -> CGSize {
+        guard measured > 0 else { return size }
+        return CGSize(width: size.width * side / measured, height: size.height * side / measured)
     }
 
     /// The content's height with the icon at `side`, from one measured
@@ -219,7 +231,7 @@ struct AboutSettingsView: View {
     /// The README's tagline (the user, 2026-10-31).
     private var tagline: some View {
         Text("Whatever’s playing steps aside when something else needs your ears.",
-             comment: "Settings → About, beside the app's icon and name: what AutoHush does, as the README's tagline says it: the media player's playback (music, podcasts, videos) pauses while another app plays sound")
+             comment: "Settings → About, centered under the app's icon, name and version: what AutoHush does, as the README's tagline says it: the media player's playback (music, podcasts, videos) pauses while another app plays sound")
             .foregroundStyle(.appSecondary)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)

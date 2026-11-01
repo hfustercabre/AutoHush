@@ -62,10 +62,12 @@ func stopNow(_ code: Int32) -> Never {
 @MainActor func stopIfRequested(_ line: String? = nil) {
     guard stopState.isRequested else { return }
     say("  " + (line ?? "stopped: \(appName) was played again first"))
-    if stopState.isWindowAway, let windowTest = TestScope.windowTest {
-        say(windowTest.putBackLine(problem: windowTest.restore()))
-    }
+    // Input free before the window's state is read again for its line, as
+    // when a check finishes (the 1.2.9 review: Stop held it a second more).
+    let windowTest = stopState.isWindowAway ? TestScope.windowTest : nil
+    let problem = windowTest?.restore() ?? nil
     if inputBlock.end() { say(CheckReportLine.free) }
+    if let windowTest { say(windowTest.putBackLine(problem: problem)) }
     unmuteAfterTest("the check stopped")
     stopNow(CheckExitStatus.stop)
 }

@@ -67,7 +67,7 @@ final class SettingsWindowController: PlacedWindowController {
         super.init(content: split, frameName: frameName, minimumSize: Self.minimumSize, maximumSize: Self.maximumSize,
                    initialSize: Self.initialSize, toolbar: toolbar, transparentTitleBar: seeThrough)
         // A size kept from before a choice needed more room, another language,
-        // or the sidebar more height (600 from 2026-10-18).
+        // or more height (600 from 2026-10-18, 650 from 2026-10-31: 1.2.7 opened at 620).
         if let window, let content = window.contentView?.frame.size,
            content.width < Self.minimumSize.width || content.height < Self.minimumSize.height {
             window.setContentSize(NSSize(width: max(content.width, Self.minimumSize.width),

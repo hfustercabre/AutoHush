@@ -36,6 +36,7 @@ extension AddAppModel {
     /// one has put things back; once it ends, what it found (or why it didn't).
     func startCheck() {
         guard stage == .ready, windowIsOpen, let app = chosen else { return }
+        stopWork() // the watch until Start ends here, not at its next look
         progress = CheckProgress()
         failureReason = nil
         pickedWay = nil

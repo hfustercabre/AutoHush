@@ -14,8 +14,9 @@ extension UpdateController {
     }
 
     /// Looks for release candidates too, or not. On, it checks again at once
-    /// while checks are automatic: a candidate may be offered. Off, a
-    /// candidate offered is withdrawn at once (B1, the user, 2026-10-30);
+    /// while checks are automatic: a candidate may be offered; the latest
+    /// release offered back from one is withdrawn at once (the 1.2.9 review).
+    /// Off, a candidate offered is withdrawn at once (B1, the user, 2026-10-30);
     /// with no check, but while one runs: then the latest release is offered
     /// at once, as Settings says (D2, the user, 2026-10-30). Either way, a
     /// check under way asks again as the switch is now (`runCheck`).
@@ -23,7 +24,7 @@ extension UpdateController {
         guard enabled != getsReleaseCandidates else { return }
         AutoHushLogger.settings.info("Get release candidates: \(enabled ? "on" : "off", privacy: .public)")
         getsReleaseCandidates = enabled
-        if !enabled { withdrawReleaseCandidate() }
+        withdrawUnwantedOffer()
         guard checksAutomatically, enabled || currentVersion?.isReleaseCandidate == true else { return }
         Task {
             await check(userInitiated: false)
@@ -31,13 +32,19 @@ extension UpdateController {
         }
     }
 
-    /// The release candidate offered, if any, is no longer: the menu,
-    /// Settings and its notification stop offering it, and Settings says
-    /// when the last check was. Its notice is forgotten too, so offered
-    /// again it's announced again. One being installed goes on.
-    private func withdrawReleaseCandidate() {
-        guard let offered = availableUpdate, offered.version.isReleaseCandidate, !isInstalling else { return }
-        logger.info("Release candidates off: \(offered.version.description, privacy: .public) is no longer offered")
+    /// The offer the switch no longer wants, if any, is no longer: off, a
+    /// release candidate; on, a release older than the one running (offered
+    /// back from a candidate while it was off). The menu, Settings and its
+    /// notification stop offering it, and Settings says when the last check
+    /// was. Its notice is forgotten too, so offered again it's announced
+    /// again. One being installed goes on.
+    private func withdrawUnwantedOffer() {
+        guard let offered = availableUpdate, !isInstalling else { return }
+        let unwanted = getsReleaseCandidates
+            ? currentVersion.map { offered.version < $0 } ?? false
+            : offered.version.isReleaseCandidate
+        guard unwanted else { return }
+        logger.info("Release candidates \(self.getsReleaseCandidates ? "on" : "off", privacy: .public): \(offered.version.description, privacy: .public) is no longer offered")
         availableUpdate = nil
         withdrawOffer()
         if preferences.lastUpdateNotice?.hasSuffix(" \(offered.version)") == true { preferences.lastUpdateNotice = nil }

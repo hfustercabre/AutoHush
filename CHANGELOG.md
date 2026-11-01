@@ -14,7 +14,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   version and description are centered, each on a line of its own, the
   icon and the name sized to the window (the icon beside the name in a
   short window), and the page stays centered. Settings is at least 650
-  points tall again, so the page fits without scrolling.
+  points tall again, so About fits in nearly every case.
 
 ### Fixed
 

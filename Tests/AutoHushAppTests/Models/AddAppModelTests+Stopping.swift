@@ -81,6 +81,32 @@ extension AddAppModelTests {
         #expect(model.appQuit)
     }
 
+    @Test("Start and Stop again while the last check still puts things back leave one watch, which closing the window ends")
+    func stopTwiceWhileLastCheckEnds() async {
+        let world = World()
+        let model = await AddAppModel.ready(on: world)
+        let first = world.run
+        first.endsWhenStopped = false
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        model.windowClosed()
+        world.run = FakeCheckRun()
+        model.reset()
+        await model.loadApps()
+        model.continueWithApp()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck()
+        model.stopCheck()
+        model.startCheck() // before the watch looks again
+        model.stopCheck()
+        #expect(model.stage == .ready)
+        model.windowClosed()
+        world.running = false
+        try? await Task.sleep(for: .milliseconds(200)) // a watch left over would see it quit by now
+        #expect(model.stage == .ready && !model.appQuit)
+        first.finish(.stopped)
+    }
+
     @Test("Change… closes the warning before a check: its Start was for the app before")
     func changeClosesWarning() async {
         let world = World()

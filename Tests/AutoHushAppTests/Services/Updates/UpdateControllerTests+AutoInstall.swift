@@ -77,6 +77,19 @@ extension UpdateControllerTests {
         #expect(h.installer.calls.isEmpty)
     }
 
+    @Test("turning release candidates on withdraws the latest release offered back from one at once, with no check")
+    func releaseCandidatesOnWithdrawsTheWayBack() async {
+        let h = Harness(checker: .latestRelease("v0.2.0"), currentVersion: AppVersion("0.3.0-rc.1"))
+        h.preferences.getsReleaseCandidates = true
+        h.controller.setGetsReleaseCandidates(false)
+        await TestWait.until { h.controller.availableUpdate != nil && h.controller.checking == nil }
+        #expect(h.controller.availableUpdate?.version == AppVersion("0.2.0"))
+        h.controller.setChecksAutomatically(false)
+        h.controller.setGetsReleaseCandidates(true)
+        #expect(h.controller.availableUpdate == nil && h.offer == nil)
+        #expect(h.controller.status == nil)
+    }
+
     @Test("a check under way as release candidates are turned off asks again without them: none is offered")
     func releaseCandidatesOffDuringCheck() async {
         let gate = Gate()

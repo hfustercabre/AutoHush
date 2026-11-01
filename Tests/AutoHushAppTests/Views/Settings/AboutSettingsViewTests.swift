@@ -40,6 +40,13 @@ struct AboutSettingsViewTests {
         #expect(abs(atLeast - (520 - 32 - 20.0 / 3)) < 0.001)
     }
 
+    @Test("the name's size beside another icon follows it, so a fit needn't wait for the name measured again")
+    func nameAtAnotherSize() {
+        let name = AboutSettingsView.nameSize(CGSize(width: 80, height: 20), measuredBeside: 96, at: 72)
+        #expect(name == CGSize(width: 60, height: 15))
+        #expect(AboutSettingsView.nameSize(CGSize(width: 80, height: 20), measuredBeside: 0, at: 72) == CGSize(width: 80, height: 20))
+    }
+
     @Test("the icon goes back above the name only with 2 pt to spare, so the two headers never take turns")
     func stackedFitsAgain() {
         // The compact page 470 tall, the stacked one 50 taller.

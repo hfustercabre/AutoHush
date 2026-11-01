@@ -528,7 +528,8 @@ flowchart TD
   PLAY --> PL
   PL -->|"yes"| CHK
   PL -->|"no"| NOPL --> PLAY
-  CHK -->|"it quits, or its window<br/>closes again (after Check<br/>Again with its windows<br/>closed), before the check"| NOPL
+  CHK -->|"it quits before<br/>the check"| NOPL
+  CHK -->|"its window closes again<br/>(after Check Again with its<br/>windows closed), before the check"| PLAY
 
   class CHK,RES ref
   class NO,NOPL warn

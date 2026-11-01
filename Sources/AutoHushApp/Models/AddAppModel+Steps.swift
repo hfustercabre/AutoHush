@@ -215,6 +215,7 @@ extension AddAppModel {
     /// after the wait (WA2, the review of 2026-10-31).
     func watchAgainUntilStart() {
         guard let app = chosen, stage == .ready else { return }
+        stopWork() // a watch still asleep would go on beside this one (the 1.2.9 review)
         work = Task { [weak self] in await self?.watchUntilStart(app) }
     }
 
