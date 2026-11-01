@@ -146312,6 +146312,687 @@
         }
       }
     },
+    "Version %@ is a release candidate, and Get release candidates is off. Download the latest release from GitHub and replace AutoHush in your Applications folder." : {
+      "comment" : "Update alert where AutoHush can't update itself, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإصدار %@ إصدار مرشّح، و«الحصول على الإصدارات المرشّحة» متوقف. نزّل أحدث إصدار من GitHub واستبدل AutoHush في مجلد «التطبيقات»."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versió %@ és una versió candidata i «Obtén versions candidates» està desactivat. Baixa la darrera versió publicada de GitHub i substitueix l’AutoHush a la carpeta Aplicacions."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verze %@ je kandidátská verze a volba „Získávat kandidátské verze“ je vypnutá. Stáhněte si nejnovější vydání z GitHubu a nahraďte AutoHush ve složce Aplikace."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ er en udgivelseskandidat, og ”Hent udgivelseskandidater” er slået fra. Hent den seneste udgivelse fra GitHub, og erstat AutoHush i din Apps-mappe."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ ist ein Release Candidate, und „Release Candidates erhalten“ ist aus. Lade die neueste Version von GitHub und ersetze AutoHush in deinem Ordner „Programme“."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η έκδοση %@ είναι υποψήφια έκδοση και η επιλογή «Λήψη υποψήφιων εκδόσεων» είναι απενεργοποιημένη. Λάβετε την πιο πρόσφατη έκδοση από το GitHub και αντικαταστήστε το AutoHush στον φάκελο «Εφαρμογές»."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ es una versión candidata y «Obtener versiones candidatas» está desactivado. Descarga la última versión publicada de GitHub y sustituye AutoHush en tu carpeta Aplicaciones."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ es una versión candidata y «Obtener versiones candidatas» está desactivado. Descarga la última versión publicada de GitHub y reemplaza AutoHush en tu carpeta Aplicaciones."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versio %@ on julkaisuehdokas, ja ”Hae julkaisuehdokkaat” on pois päältä. Lataa uusin julkaisu GitHubista ja korvaa AutoHush Apit-kansiossa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ est une version candidate et « Recevoir les versions candidates » est désactivé. Téléchargez la dernière version publiée sur GitHub et remplacez AutoHush dans votre dossier Applications."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ est une version candidate et « Recevoir les versions candidates » est désactivé. Téléchargez la dernière version publiée sur GitHub et remplacez AutoHush dans votre dossier Applications."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "גרסה %@ היא גרסה מועמדת, והאפשרות “קבלת גרסאות מועמדות” כבויה. יש להוריד את הגרסה העדכנית ביותר מ-GitHub ולהחליף את AutoHush בתיקיית היישומים."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "संस्करण %@ एक रिलीज़ कैंडिडेट है, और “रिलीज़ कैंडिडेट पाएँ” बंद है। GitHub से नवीनतम रिलीज़ डाउनलोड करें और अपने ऐप्लिकेशन फ़ोल्डर में AutoHush को बदलें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzija %@ je kandidat za izdanje, a opcija „Primaj kandidate za izdanje” je isključena. Preuzmite najnovije izdanje s GitHuba i zamijenite AutoHush u mapi Aplikacije."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ verzió kiadásra jelölt verzió, és a „Kiadásra jelölt verziók letöltése” beállítás ki van kapcsolva. Töltse le a legújabb kiadást a GitHubról, és cserélje le az AutoHusht az Alkalmazások mappában."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi %@ adalah kandidat rilis, dan “Dapatkan kandidat rilis” mati. Unduh rilis terbaru dari GitHub dan ganti AutoHush di folder Aplikasi Anda."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versione %@ è una release candidate e «Ricevi le release candidate» è disattivato. Scarica l’ultima versione rilasciata da GitHub e sostituisci AutoHush nella cartella Applicazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョン%@はリリース候補で、「リリース候補を入手」がオフです。GitHubから最新のリリースをダウンロードし、「アプリケーション」フォルダのAutoHushを置き換えてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 %@은(는) 릴리즈 후보이며 ‘릴리즈 후보 받기’가 꺼져 있습니다. GitHub에서 최신 릴리즈를 다운로드하여 응용 프로그램 폴더의 AutoHush를 교체하십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi %@ ialah calon keluaran, dan “Dapatkan calon keluaran” tidak aktif. Muat turun keluaran terkini daripada GitHub dan gantikan AutoHush dalam folder Aplikasi anda."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versjon %@ er en utgivelseskandidat, og «Hent utgivelseskandidater» er av. Last ned den nyeste utgivelsen fra GitHub og erstatt AutoHush i Apper-mappen."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versie %@ is een release candidate en ‘Ontvang release candidates’ staat uit. Download de nieuwste release van GitHub en vervang AutoHush in je map Apps."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wersja %@ jest wersją kandydującą, a opcja „Pobieraj wersje kandydujące” jest wyłączona. Pobierz najnowsze wydanie z GitHuba i zastąp AutoHush w folderze Aplikacje."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %@ é uma versão candidata e “Obter versões candidatas” está desativado. Baixe a versão mais recente lançada no GitHub e substitua o AutoHush na sua pasta Aplicativos."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %@ é uma versão candidata e “Obter versões candidatas” está desativado. Descarregue a versão mais recente publicada no GitHub e substitua o AutoHush na pasta Aplicações."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versiunea %@ este o versiune candidată, iar „Primiți versiuni candidate” este dezactivat. Descărcați cea mai recentă versiune lansată de pe GitHub și înlocuiți AutoHush din dosarul Aplicații."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версия %@ — релиз-кандидат, а параметр «Получать релиз-кандидаты» выключен. Загрузите последний выпуск с GitHub и замените AutoHush в папке «Программы»."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzia %@ je kandidátska verzia a voľba „Získavať kandidátske verzie“ je vypnutá. Stiahnite si najnovšie vydanie z GitHubu a nahraďte AutoHush v priečinku Aplikácie."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Različica %@ je kandidat za izdajo, možnost »Prejemaj kandidate za izdajo« pa je izklopljena. Prenesite najnovejšo izdajo z GitHuba in zamenjajte AutoHush v mapi Aplikacije."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ är en releasekandidat och ”Hämta releasekandidater” är av. Hämta den senaste versionen från GitHub och ersätt AutoHush i mappen Appar."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เวอร์ชั่น %@ เป็น Release Candidate และ “รับเวอร์ชัน Release Candidate” ปิดอยู่ ดาวน์โหลดรุ่นล่าสุดที่เผยแพร่จาก GitHub แล้วแทนที่ AutoHush ในโฟลเดอร์แอปพลิเคชันของคุณ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sürümü bir sürüm adayı ve “Sürüm adaylarını al” kapalı. En son sürümü GitHub’dan indirip Uygulamalar klasöründeki AutoHush ile değiştirin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версія %@ — кандидат на випуск, а параметр «Отримувати кандидати на випуск» вимкнено. Завантажте останній випуск з GitHub і замініть AutoHush у папці «Програми»."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên bản %@ là một bản phát hành ứng viên và “Nhận bản phát hành ứng viên” đang tắt. Hãy tải bản phát hành mới nhất từ GitHub và thay thế AutoHush trong thư mục Ứng dụng."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候選版本，且「取得候選版本」已關閉。請從 GitHub 下載最新的正式版本，並替換「應用程式」檔案夾中的 AutoHush。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候选版本，且“获取候选版本”已关闭。请从 GitHub 下载最新的正式版本，并替换“应用程序”文件夹中的 AutoHush。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候選版本，且「取得候選版本」已關閉。請從 GitHub 下載最新的正式版本，並替換「應用程式」檔案夾中的 AutoHush。"
+          }
+        }
+      }
+    },
+    "Version %@ is a release candidate, and Get release candidates is off. Go back to the latest release with Homebrew:" : {
+      "comment" : "Update alert for a copy installed with Homebrew, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. The Homebrew command follows.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإصدار %@ إصدار مرشّح، و«الحصول على الإصدارات المرشّحة» متوقف. عُد إلى أحدث إصدار باستخدام Homebrew:"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versió %@ és una versió candidata i «Obtén versions candidates» està desactivat. Torna a la darrera versió publicada amb Homebrew:"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verze %@ je kandidátská verze a volba „Získávat kandidátské verze“ je vypnutá. Vraťte se k nejnovějšímu vydání pomocí Homebrew:"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ er en udgivelseskandidat, og ”Hent udgivelseskandidater” er slået fra. Gå tilbage til den seneste udgivelse med Homebrew:"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ ist ein Release Candidate, und „Release Candidates erhalten“ ist aus. Wechsle mit Homebrew zurück zur neuesten Version:"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η έκδοση %@ είναι υποψήφια έκδοση και η επιλογή «Λήψη υποψήφιων εκδόσεων» είναι απενεργοποιημένη. Επιστρέψτε στην πιο πρόσφατη έκδοση με το Homebrew:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ es una versión candidata y «Obtener versiones candidatas» está desactivado. Vuelve a la última versión publicada con Homebrew:"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ es una versión candidata y «Obtener versiones candidatas» está desactivado. Vuelve a la última versión publicada con Homebrew:"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versio %@ on julkaisuehdokas, ja ”Hae julkaisuehdokkaat” on pois päältä. Palaa uusimpaan julkaisuun Homebrew’lla:"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ est une version candidate et « Recevoir les versions candidates » est désactivé. Revenez à la dernière version publiée avec Homebrew :"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ est une version candidate et « Recevoir les versions candidates » est désactivé. Revenez à la dernière version publiée avec Homebrew :"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "גרסה %@ היא גרסה מועמדת, והאפשרות “קבלת גרסאות מועמדות” כבויה. לחזרה לגרסה העדכנית ביותר באמצעות Homebrew:"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "संस्करण %@ एक रिलीज़ कैंडिडेट है, और “रिलीज़ कैंडिडेट पाएँ” बंद है। Homebrew से नवीनतम रिलीज़ पर वापस जाएँ:"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzija %@ je kandidat za izdanje, a opcija „Primaj kandidate za izdanje” je isključena. Vratite se na najnovije izdanje pomoću Homebrewa:"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ verzió kiadásra jelölt verzió, és a „Kiadásra jelölt verziók letöltése” beállítás ki van kapcsolva. Térjen vissza a legújabb kiadásra a Homebrew segítségével:"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi %@ adalah kandidat rilis, dan “Dapatkan kandidat rilis” mati. Kembali ke rilis terbaru dengan Homebrew:"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versione %@ è una release candidate e «Ricevi le release candidate» è disattivato. Torna all’ultima versione rilasciata con Homebrew:"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョン%@はリリース候補で、「リリース候補を入手」がオフです。Homebrewで最新のリリースに戻してください："
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 %@은(는) 릴리즈 후보이며 ‘릴리즈 후보 받기’가 꺼져 있습니다. Homebrew를 사용하여 최신 릴리즈로 되돌리십시오:"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi %@ ialah calon keluaran, dan “Dapatkan calon keluaran” tidak aktif. Kembali ke keluaran terkini dengan Homebrew:"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versjon %@ er en utgivelseskandidat, og «Hent utgivelseskandidater» er av. Gå tilbake til den nyeste utgivelsen med Homebrew:"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versie %@ is een release candidate en ‘Ontvang release candidates’ staat uit. Ga met Homebrew terug naar de nieuwste release:"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wersja %@ jest wersją kandydującą, a opcja „Pobieraj wersje kandydujące” jest wyłączona. Wróć do najnowszego wydania za pomocą Homebrew:"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %@ é uma versão candidata e “Obter versões candidatas” está desativado. Volte para a versão mais recente lançada com o Homebrew:"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %@ é uma versão candidata e “Obter versões candidatas” está desativado. Volte à versão mais recente publicada com o Homebrew:"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versiunea %@ este o versiune candidată, iar „Primiți versiuni candidate” este dezactivat. Reveniți la cea mai recentă versiune lansată cu Homebrew:"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версия %@ — релиз-кандидат, а параметр «Получать релиз-кандидаты» выключен. Вернитесь к последнему выпуску с помощью Homebrew:"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzia %@ je kandidátska verzia a voľba „Získavať kandidátske verzie“ je vypnutá. Vráťte sa k najnovšiemu vydaniu pomocou Homebrew:"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Različica %@ je kandidat za izdajo, možnost »Prejemaj kandidate za izdajo« pa je izklopljena. Vrnite se na najnovejšo izdajo z orodjem Homebrew:"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ är en releasekandidat och ”Hämta releasekandidater” är av. Gå tillbaka till den senaste versionen med Homebrew:"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เวอร์ชั่น %@ เป็น Release Candidate และ “รับเวอร์ชัน Release Candidate” ปิดอยู่ กลับไปใช้รุ่นล่าสุดที่เผยแพร่ด้วย Homebrew:"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sürümü bir sürüm adayı ve “Sürüm adaylarını al” kapalı. Homebrew ile en son sürüme geri dönün:"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версія %@ — кандидат на випуск, а параметр «Отримувати кандидати на випуск» вимкнено. Поверніться до останнього випуску за допомогою Homebrew:"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên bản %@ là một bản phát hành ứng viên và “Nhận bản phát hành ứng viên” đang tắt. Quay lại bản phát hành mới nhất bằng Homebrew:"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候選版本，且「取得候選版本」已關閉。請使用 Homebrew 回到最新的正式版本："
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候选版本，且“获取候选版本”已关闭。请使用 Homebrew 回到最新的正式版本："
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候選版本，且「取得候選版本」已關閉。請使用 Homebrew 回到最新的正式版本："
+          }
+        }
+      }
+    },
+    "Version %@ is a release candidate, and Get release candidates is off. Installing the latest release restarts AutoHush." : {
+      "comment" : "Update popup, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإصدار %@ إصدار مرشّح، و«الحصول على الإصدارات المرشّحة» متوقف. يؤدي تثبيت أحدث إصدار إلى إعادة تشغيل AutoHush."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versió %@ és una versió candidata i «Obtén versions candidates» està desactivat. L’AutoHush es reiniciarà per instal·lar la darrera versió publicada."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verze %@ je kandidátská verze a volba „Získávat kandidátské verze“ je vypnutá. Instalace nejnovějšího vydání AutoHush restartuje."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ er en udgivelseskandidat, og ”Hent udgivelseskandidater” er slået fra. AutoHush genstartes, når den seneste udgivelse installeres."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ ist ein Release Candidate, und „Release Candidates erhalten“ ist aus. Zum Installieren der neuesten Version wird AutoHush neu gestartet."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Η έκδοση %@ είναι υποψήφια έκδοση και η επιλογή «Λήψη υποψήφιων εκδόσεων» είναι απενεργοποιημένη. Η εγκατάσταση της πιο πρόσφατης έκδοσης επανεκκινεί το AutoHush."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ es una versión candidata y «Obtener versiones candidatas» está desactivado. AutoHush se reiniciará para instalar la última versión publicada."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versión %@ es una versión candidata y «Obtener versiones candidatas» está desactivado. AutoHush se reiniciará para instalar la última versión publicada."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versio %@ on julkaisuehdokas, ja ”Hae julkaisuehdokkaat” on pois päältä. Uusimman julkaisun asentaminen käynnistää AutoHushin uudelleen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ est une version candidate et « Recevoir les versions candidates » est désactivé. AutoHush redémarrera pour installer la dernière version publiée."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La version %@ est une version candidate et « Recevoir les versions candidates » est désactivé. AutoHush redémarrera pour installer la dernière version publiée."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "גרסה %@ היא גרסה מועמדת, והאפשרות “קבלת גרסאות מועמדות” כבויה. התקנת הגרסה העדכנית ביותר מפעילה מחדש את AutoHush."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "संस्करण %@ एक रिलीज़ कैंडिडेट है, और “रिलीज़ कैंडिडेट पाएँ” बंद है। नवीनतम रिलीज़ इंस्टॉल करने पर AutoHush फिर से शुरू होता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzija %@ je kandidat za izdanje, a opcija „Primaj kandidate za izdanje” je isključena. Instalacija najnovijeg izdanja ponovno pokreće AutoHush."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ verzió kiadásra jelölt verzió, és a „Kiadásra jelölt verziók letöltése” beállítás ki van kapcsolva. A legújabb kiadás telepítése újraindítja az AutoHusht."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi %@ adalah kandidat rilis, dan “Dapatkan kandidat rilis” mati. Menginstal rilis terbaru akan memulai ulang AutoHush."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La versione %@ è una release candidate e «Ricevi le release candidate» è disattivato. Per installare l’ultima versione rilasciata, AutoHush verrà riavviato."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "バージョン%@はリリース候補で、「リリース候補を入手」がオフです。最新のリリースをインストールするとAutoHushが再起動します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "버전 %@은(는) 릴리즈 후보이며 ‘릴리즈 후보 받기’가 꺼져 있습니다. 최신 릴리즈를 설치하면 AutoHush가 다시 시작됩니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versi %@ ialah calon keluaran, dan “Dapatkan calon keluaran” tidak aktif. Memasang keluaran terkini akan memulakan semula AutoHush."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versjon %@ er en utgivelseskandidat, og «Hent utgivelseskandidater» er av. AutoHush starter på nytt når den nyeste utgivelsen installeres."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versie %@ is een release candidate en ‘Ontvang release candidates’ staat uit. Bij het installeren van de nieuwste release wordt AutoHush opnieuw gestart."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wersja %@ jest wersją kandydującą, a opcja „Pobieraj wersje kandydujące” jest wyłączona. Instalacja najnowszego wydania uruchomi AutoHush ponownie."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %@ é uma versão candidata e “Obter versões candidatas” está desativado. Para instalar a versão mais recente lançada, o AutoHush será reiniciado."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A versão %@ é uma versão candidata e “Obter versões candidatas” está desativado. Para instalar a versão mais recente publicada, o AutoHush será reiniciado."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versiunea %@ este o versiune candidată, iar „Primiți versiuni candidate” este dezactivat. Instalarea celei mai recente versiuni lansate repornește AutoHush."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версия %@ — релиз-кандидат, а параметр «Получать релиз-кандидаты» выключен. При установке последнего выпуска AutoHush перезапустится."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verzia %@ je kandidátska verzia a voľba „Získavať kandidátske verzie“ je vypnutá. Inštalácia najnovšieho vydania AutoHush reštartuje."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Različica %@ je kandidat za izdajo, možnost »Prejemaj kandidate za izdajo« pa je izklopljena. Namestitev najnovejše izdaje znova zažene AutoHush."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@ är en releasekandidat och ”Hämta releasekandidater” är av. När den senaste versionen installeras startas AutoHush om."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เวอร์ชั่น %@ เป็น Release Candidate และ “รับเวอร์ชัน Release Candidate” ปิดอยู่ การติดตั้งรุ่นล่าสุดที่เผยแพร่จะเปิด AutoHush ใหม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sürümü bir sürüm adayı ve “Sürüm adaylarını al” kapalı. En son sürümü yüklemek, AutoHush’ı yeniden başlatır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Версія %@ — кандидат на випуск, а параметр «Отримувати кандидати на випуск» вимкнено. Під час встановлення останнього випуску AutoHush перезапуститься."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Phiên bản %@ là một bản phát hành ứng viên và “Nhận bản phát hành ứng viên” đang tắt. Việc cài đặt bản phát hành mới nhất sẽ khởi động lại AutoHush."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候選版本，且「取得候選版本」已關閉。安裝最新的正式版本時 AutoHush 會重新開啟。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候选版本，且“获取候选版本”已关闭。安装最新的正式版本时 AutoHush 将重新启动。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "版本 %@ 是候選版本，且「取得候選版本」已關閉。安裝最新的正式版本時 AutoHush 會重新開啟。"
+          }
+        }
+      }
+    },
     "Version %@ is available." : {
       "comment" : "Update status in Settings; %@ is a version number",
       "localizations" : {
@@ -156073,6 +156754,472 @@
         }
       }
     },
+    "You have version %@. Version %@ is a release candidate, a test version of the next release: download it from GitHub and replace AutoHush in your Applications folder." : {
+      "comment" : "Update alert where AutoHush can't update itself, offering a release candidate, a test version of the next release; the first %@ is the installed version, the second the new one",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لديك الإصدار %@. الإصدار %@ إصدار مرشّح، أي نسخة تجريبية من الإصدار التالي: نزّله من GitHub واستبدل AutoHush في مجلد «التطبيقات»."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tens la versió %@. La versió %@ és una versió candidata, una versió de prova de la propera publicació: baixa-la de GitHub i substitueix l’AutoHush a la carpeta Aplicacions."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máte verzi %@. Verze %@ je kandidátská verze, testovací verze příštího vydání: stáhněte si ji z GitHubu a nahraďte AutoHush ve složce Aplikace."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du har version %@. Version %@ er en udgivelseskandidat, en testversion af næste udgivelse: Hent den fra GitHub, og erstat AutoHush i din Apps-mappe."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast Version %@. Version %@ ist ein Release Candidate, eine Testversion der nächsten Version: Lade sie von GitHub und ersetze AutoHush in deinem Ordner „Programme“."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έχετε την έκδοση %@. Η έκδοση %@ είναι υποψήφια έκδοση, μια δοκιμαστική έκδοση της επόμενης κυκλοφορίας: λάβετέ την από το GitHub και αντικαταστήστε το AutoHush στον φάκελο «Εφαρμογές»."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You have version %1$@. Version %2$@ is a release candidate, a test version of the next release: download it from GitHub and replace AutoHush in your Applications folder."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión %@. La versión %@ es una versión candidata, una versión de prueba de la próxima publicación: descárgala de GitHub y sustituye AutoHush en tu carpeta Aplicaciones."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión %@. La versión %@ es una versión candidata, una versión de prueba de la próxima publicación: descárgala de GitHub y reemplaza AutoHush en tu carpeta Aplicaciones."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sinulla on versio %@. Versio %@ on julkaisuehdokas, seuraavan julkaisun testiversio: lataa se GitHubista ja korvaa AutoHush Apit-kansiossa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez la version %@. La version %@ est une version candidate, une version de test de la prochaine publication : téléchargez-la sur GitHub et remplacez AutoHush dans votre dossier Applications."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez la version %@. La version %@ est une version candidate, une version de test de la prochaine publication : téléchargez-la sur GitHub et remplacez AutoHush dans votre dossier Applications."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "מותקנת גרסה %@. גרסה %@ היא גרסה מועמדת, גרסת ניסיון של הגרסה הבאה: יש להוריד אותה מ-GitHub ולהחליף את AutoHush בתיקיית היישומים."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपके पास संस्करण %@ है। संस्करण %@ एक रिलीज़ कैंडिडेट है, यानी अगली रिलीज़ का टेस्ट संस्करण: इसे GitHub से डाउनलोड करें और अपने ऐप्लिकेशन फ़ोल्डर में AutoHush को बदलें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imate verziju %@. Verzija %@ je kandidat za izdanje, testna verzija sljedećeg izdanja: preuzmite je s GitHuba i zamijenite AutoHush u mapi Aplikacije."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ön a(z) %@ verziót használja. A(z) %@ verzió kiadásra jelölt verzió, a következő kiadás tesztverziója: töltse le a GitHubról, és cserélje le az AutoHusht az Alkalmazások mappában."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anda memiliki versi %@. Versi %@ adalah kandidat rilis, versi uji dari rilis berikutnya: unduh dari GitHub dan ganti AutoHush di folder Aplikasi Anda."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai la versione %@. La versione %@ è una release candidate, una versione di prova della prossima release: scaricala da GitHub e sostituisci AutoHush nella cartella Applicazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のバージョンは%@です。バージョン%@は次のリリースのテスト版であるリリース候補です。GitHubからダウンロードし、「アプリケーション」フォルダのAutoHushを置き換えてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 버전은 %@입니다. 버전 %@은(는) 다음 릴리즈의 테스트 버전인 릴리즈 후보입니다. GitHub에서 다운로드하여 응용 프로그램 폴더의 AutoHush를 교체하십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anda mempunyai versi %@. Versi %@ ialah calon keluaran, versi ujian bagi keluaran seterusnya: muat turunnya daripada GitHub dan gantikan AutoHush dalam folder Aplikasi anda."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du har versjon %@. Versjon %@ er en utgivelseskandidat, en testversjon av neste utgivelse: Last den ned fra GitHub og erstatt AutoHush i Apper-mappen."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je hebt versie %@. Versie %@ is een release candidate, een testversie van de volgende release: download deze van GitHub en vervang AutoHush in je map Apps."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masz wersję %@. Wersja %@ to wersja kandydująca, testowa wersja następnego wydania: pobierz ją z GitHuba i zastąp AutoHush w folderze Aplikacje."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você tem a versão %@. A versão %@ é uma versão candidata, uma versão de teste do próximo lançamento: baixe-a no GitHub e substitua o AutoHush na sua pasta Aplicativos."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tem a versão %@. A versão %@ é uma versão candidata, uma versão de teste da próxima publicação: descarregue-a no GitHub e substitua o AutoHush na pasta Aplicações."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aveți versiunea %@. Versiunea %@ este o versiune candidată, o versiune de test a următoarei lansări: descărcați-o de pe GitHub și înlocuiți AutoHush din dosarul Aplicații."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У вас версия %@. Версия %@ — релиз-кандидат, тестовая версия следующего выпуска: загрузите её с GitHub и замените AutoHush в папке «Программы»."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máte verziu %@. Verzia %@ je kandidátska verzia, testovacia verzia ďalšieho vydania: stiahnite si ju z GitHubu a nahraďte AutoHush v priečinku Aplikácie."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imate različico %@. Različica %@ je kandidat za izdajo, preskusna različica naslednje izdaje: prenesite jo z GitHuba in zamenjajte AutoHush v mapi Aplikacije."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du har version %@. Version %@ är en releasekandidat, en testversion av nästa version: hämta den från GitHub och ersätt AutoHush i mappen Appar."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คุณมีเวอร์ชั่น %@ เวอร์ชั่น %@ เป็น Release Candidate ซึ่งเป็นเวอร์ชั่นทดสอบของรุ่นถัดไปที่จะเผยแพร่ ดาวน์โหลดได้จาก GitHub แล้วแทนที่ AutoHush ในโฟลเดอร์แอปพลิเคชันของคุณ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sürümüne sahipsiniz. %@ sürümü, bir sonraki sürümün test sürümü olan bir sürüm adayıdır: GitHub’dan indirip Uygulamalar klasöründeki AutoHush ile değiştirin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У вас версія %@. Версія %@ — кандидат на випуск, тестова версія наступного випуску: завантажте її з GitHub і замініть AutoHush у папці «Програми»."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bạn đang dùng phiên bản %@. Phiên bản %@ là một bản phát hành ứng viên, phiên bản thử nghiệm của bản phát hành tiếp theo: hãy tải về từ GitHub và thay thế AutoHush trong thư mục Ứng dụng."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你目前使用的是版本 %@。版本 %@ 是候選版本，即下一個正式版本的測試版：請從 GitHub 下載，並替換「應用程式」檔案夾中的 AutoHush。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你当前使用的是版本 %@。版本 %@ 是候选版本，即下一个正式版本的测试版：请从 GitHub 下载，并替换“应用程序”文件夹中的 AutoHush。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你目前使用的是版本 %@。版本 %@ 是候選版本，即下一個正式版本的測試版：請從 GitHub 下載，並替換「應用程式」檔案夾中的 AutoHush。"
+          }
+        }
+      }
+    },
+    "You have version %@. Version %@ is a release candidate, which Homebrew doesn’t offer: download it from GitHub and replace AutoHush in your Applications folder." : {
+      "comment" : "Update alert for a copy installed with Homebrew, offering a release candidate, a test version of the next release, which Homebrew doesn't have; the first %@ is the installed version, the second the new one",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لديك الإصدار %@. الإصدار %@ إصدار مرشّح لا يوفّره Homebrew: نزّله من GitHub واستبدل AutoHush في مجلد «التطبيقات»."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tens la versió %@. La versió %@ és una versió candidata, que Homebrew no ofereix: baixa-la de GitHub i substitueix l’AutoHush a la carpeta Aplicacions."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máte verzi %@. Verze %@ je kandidátská verze, kterou Homebrew nenabízí: stáhněte si ji z GitHubu a nahraďte AutoHush ve složce Aplikace."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du har version %@. Version %@ er en udgivelseskandidat, som Homebrew ikke tilbyder: Hent den fra GitHub, og erstat AutoHush i din Apps-mappe."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du hast Version %@. Version %@ ist ein Release Candidate, den Homebrew nicht anbietet: Lade sie von GitHub und ersetze AutoHush in deinem Ordner „Programme“."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Έχετε την έκδοση %@. Η έκδοση %@ είναι υποψήφια έκδοση, την οποία το Homebrew δεν προσφέρει: λάβετέ την από το GitHub και αντικαταστήστε το AutoHush στον φάκελο «Εφαρμογές»."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "You have version %1$@. Version %2$@ is a release candidate, which Homebrew doesn’t offer: download it from GitHub and replace AutoHush in your Applications folder."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión %@. La versión %@ es una versión candidata, que Homebrew no ofrece: descárgala de GitHub y sustituye AutoHush en tu carpeta Aplicaciones."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tienes la versión %@. La versión %@ es una versión candidata, que Homebrew no ofrece: descárgala de GitHub y reemplaza AutoHush en tu carpeta Aplicaciones."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sinulla on versio %@. Versio %@ on julkaisuehdokas, jota Homebrew ei tarjoa: lataa se GitHubista ja korvaa AutoHush Apit-kansiossa."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez la version %@. La version %@ est une version candidate, que Homebrew ne propose pas : téléchargez-la sur GitHub et remplacez AutoHush dans votre dossier Applications."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez la version %@. La version %@ est une version candidate, que Homebrew ne propose pas : téléchargez-la sur GitHub et remplacez AutoHush dans votre dossier Applications."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "מותקנת גרסה %@. גרסה %@ היא גרסה מועמדת ש-Homebrew אינו מציע: יש להוריד אותה מ-GitHub ולהחליף את AutoHush בתיקיית היישומים."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आपके पास संस्करण %@ है। संस्करण %@ एक रिलीज़ कैंडिडेट है, जो Homebrew पर उपलब्ध नहीं है: इसे GitHub से डाउनलोड करें और अपने ऐप्लिकेशन फ़ोल्डर में AutoHush को बदलें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imate verziju %@. Verzija %@ je kandidat za izdanje, koji Homebrew ne nudi: preuzmite je s GitHuba i zamijenite AutoHush u mapi Aplikacije."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ön a(z) %@ verziót használja. A(z) %@ verzió kiadásra jelölt verzió, amelyet a Homebrew nem kínál: töltse le a GitHubról, és cserélje le az AutoHusht az Alkalmazások mappában."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anda memiliki versi %@. Versi %@ adalah kandidat rilis, yang tidak ditawarkan Homebrew: unduh dari GitHub dan ganti AutoHush di folder Aplikasi Anda."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai la versione %@. La versione %@ è una release candidate, che Homebrew non offre: scaricala da GitHub e sostituisci AutoHush nella cartella Applicazioni."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "現在のバージョンは%@です。バージョン%@はリリース候補のため、Homebrewでは提供されていません。GitHubからダウンロードし、「アプリケーション」フォルダのAutoHushを置き換えてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "현재 버전은 %@입니다. 버전 %@은(는) Homebrew에서 제공하지 않는 릴리즈 후보입니다. GitHub에서 다운로드하여 응용 프로그램 폴더의 AutoHush를 교체하십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anda mempunyai versi %@. Versi %@ ialah calon keluaran, yang tidak ditawarkan oleh Homebrew: muat turunnya daripada GitHub dan gantikan AutoHush dalam folder Aplikasi anda."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du har versjon %@. Versjon %@ er en utgivelseskandidat, som Homebrew ikke tilbyr: Last den ned fra GitHub og erstatt AutoHush i Apper-mappen."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Je hebt versie %@. Versie %@ is een release candidate, die Homebrew niet aanbiedt: download deze van GitHub en vervang AutoHush in je map Apps."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Masz wersję %@. Wersja %@ to wersja kandydująca, której Homebrew nie oferuje: pobierz ją z GitHuba i zastąp AutoHush w folderze Aplikacje."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você tem a versão %@. A versão %@ é uma versão candidata, que o Homebrew não oferece: baixe-a no GitHub e substitua o AutoHush na sua pasta Aplicativos."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tem a versão %@. A versão %@ é uma versão candidata, que o Homebrew não oferece: descarregue-a no GitHub e substitua o AutoHush na pasta Aplicações."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aveți versiunea %@. Versiunea %@ este o versiune candidată, pe care Homebrew nu o oferă: descărcați-o de pe GitHub și înlocuiți AutoHush din dosarul Aplicații."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У вас версия %@. Версия %@ — релиз-кандидат, который Homebrew не предлагает: загрузите её с GitHub и замените AutoHush в папке «Программы»."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máte verziu %@. Verzia %@ je kandidátska verzia, ktorú Homebrew neponúka: stiahnite si ju z GitHubu a nahraďte AutoHush v priečinku Aplikácie."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Imate različico %@. Različica %@ je kandidat za izdajo, ki ga Homebrew ne ponuja: prenesite jo z GitHuba in zamenjajte AutoHush v mapi Aplikacije."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Du har version %@. Version %@ är en releasekandidat, som Homebrew inte erbjuder: hämta den från GitHub och ersätt AutoHush i mappen Appar."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คุณมีเวอร์ชั่น %@ เวอร์ชั่น %@ เป็น Release Candidate ซึ่ง Homebrew ไม่มีให้ ดาวน์โหลดได้จาก GitHub แล้วแทนที่ AutoHush ในโฟลเดอร์แอปพลิเคชันของคุณ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ sürümüne sahipsiniz. %@ sürümü, Homebrew’un sunmadığı bir sürüm adayıdır: GitHub’dan indirip Uygulamalar klasöründeki AutoHush ile değiştirin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У вас версія %@. Версія %@ — кандидат на випуск, якого Homebrew не пропонує: завантажте її з GitHub і замініть AutoHush у папці «Програми»."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bạn đang dùng phiên bản %@. Phiên bản %@ là một bản phát hành ứng viên mà Homebrew không cung cấp: hãy tải về từ GitHub và thay thế AutoHush trong thư mục Ứng dụng."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你目前使用的是版本 %@。版本 %@ 是候選版本，Homebrew 不提供：請從 GitHub 下載，並替換「應用程式」檔案夾中的 AutoHush。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你当前使用的是版本 %@。版本 %@ 是候选版本，Homebrew 不提供：请从 GitHub 下载，并替换“应用程序”文件夹中的 AutoHush。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "你目前使用的是版本 %@。版本 %@ 是候選版本，Homebrew 不提供：請從 GitHub 下載，並替換「應用程式」檔案夾中的 AutoHush。"
+          }
+        }
+      }
+    },
     "Your Mac muted meanwhile" : {
       "comment" : "The window shown before a check starts: the whole Mac's sound is muted during the check (the app itself can't be: no Audio Recording, or AntiDot mode)",
       "localizations" : {
@@ -157431,233 +158578,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "你目前使用的是版本 %@。按一下以查看新功能並安裝。"
-          }
-        }
-      }
-    },
-    "You’re running version %@, a release candidate. Get release candidates is off, so the latest release is offered. Installing it restarts AutoHush." : {
-      "comment" : "Update popup, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أنت تستخدم الإصدار %@، وهو إصدار مرشّح. «الحصول على الإصدارات المرشّحة» متوقف، لذا يُعرض أحدث إصدار. يؤدي التثبيت إلى إعادة تشغيل AutoHush."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tens la versió %@, una versió candidata. «Obtén versions candidates» està desactivat, així que s’ofereix la darrera versió publicada. L’AutoHush es reiniciarà per instal·lar-la."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Používáte verzi %@, což je kandidátská verze. Volba „Získávat kandidátské verze“ je vypnutá, takže se nabízí nejnovější vydání. Instalace AutoHush restartuje."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Du bruger version %@, en udgivelseskandidat. ”Hent udgivelseskandidater” er slået fra, så den seneste udgivelse tilbydes. AutoHush genstartes, når den installeres."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Du hast Version %@, einen Release Candidate. „Release Candidates erhalten“ ist aus, daher wird die neueste Version angeboten. Zum Installieren wird AutoHush neu gestartet."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Χρησιμοποιείτε την έκδοση %@, μια υποψήφια έκδοση. Η επιλογή «Λήψη υποψήφιων εκδόσεων» είναι απενεργοποιημένη, οπότε προσφέρεται η πιο πρόσφατη έκδοση. Η εγκατάσταση επανεκκινεί το AutoHush."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tienes la versión %@, una versión candidata. «Obtener versiones candidatas» está desactivado, así que se ofrece la última versión publicada. AutoHush se reiniciará para instalarla."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tienes la versión %@, una versión candidata. «Obtener versiones candidatas» está desactivado, así que se ofrece la última versión publicada. AutoHush se reiniciará para instalarla."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Käytät versiota %@, joka on julkaisuehdokas. ”Hae julkaisuehdokkaat” on pois päältä, joten tarjolla on uusin julkaisu. Asentaminen käynnistää AutoHushin uudelleen."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous avez la version %@, une version candidate. « Recevoir les versions candidates » est désactivé, donc la dernière version publiée est proposée. AutoHush redémarrera pour l’installer."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vous avez la version %@, une version candidate. « Recevoir les versions candidates » est désactivé, donc la dernière version publiée est proposée. AutoHush redémarrera pour l’installer."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "מותקנת גרסה %@, גרסה מועמדת. “קבלת גרסאות מועמדות” כבויה, ולכן מוצעת הגרסה העדכנית ביותר. ההתקנה מפעילה מחדש את AutoHush."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आप संस्करण %@ चला रहे हैं, जो एक रिलीज़ कैंडिडेट है। “रिलीज़ कैंडिडेट पाएँ” बंद है, इसलिए नवीनतम रिलीज़ ऑफ़र की जा रही है। इसे इंस्टॉल करने पर AutoHush फिर से शुरू होता है।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Koristite verziju %@, koja je kandidat za izdanje. Opcija „Primaj kandidate za izdanje” je isključena, pa se nudi najnovije izdanje. Instalacija ponovno pokreće AutoHush."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ön a(z) %@ verziót használja, amely egy kiadásra jelölt verzió. A „Kiadásra jelölt verziók letöltése” beállítás ki van kapcsolva, ezért az AutoHush a legújabb kiadást ajánlja fel. A telepítés újraindítja az AutoHusht."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anda menjalankan versi %@, kandidat rilis. “Dapatkan kandidat rilis” mati, sehingga rilis terbaru ditawarkan. Menginstalnya akan memulai ulang AutoHush."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hai la versione %@, una release candidate. «Ricevi le release candidate» è disattivato, quindi viene proposta l’ultima versione rilasciata. Per installarla, AutoHush verrà riavviato."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "現在のバージョンはリリース候補の%@です。「リリース候補を入手」がオフのため、最新のリリースを提示しています。インストールするとAutoHushが再起動します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "현재 버전은 릴리즈 후보인 %@입니다. ‘릴리즈 후보 받기’가 꺼져 있어 최신 릴리즈를 제공합니다. 설치하면 AutoHush가 다시 시작됩니다."
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anda menjalankan versi %@, satu calon keluaran. “Dapatkan calon keluaran” tidak aktif, jadi keluaran terkini ditawarkan. Memasangnya akan memulakan semula AutoHush."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Du bruker versjon %@, en utgivelseskandidat. «Hent utgivelseskandidater» er av, så den nyeste utgivelsen tilbys. AutoHush starter på nytt når den installeres."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Je gebruikt versie %@, een release candidate. ‘Ontvang release candidates’ staat uit, dus wordt de nieuwste release aangeboden. Bij het installeren wordt AutoHush opnieuw gestart."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Używasz wersji %@, wersji kandydującej. Opcja „Pobieraj wersje kandydujące” jest wyłączona, więc proponowane jest najnowsze wydanie. Instalacja uruchomi AutoHush ponownie."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Você tem a versão %@, uma versão candidata. “Obter versões candidatas” está desativado, então a versão mais recente lançada é oferecida. Para instalá-la, o AutoHush será reiniciado."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tem a versão %@, uma versão candidata. “Obter versões candidatas” está desativado, por isso é oferecida a versão mais recente publicada. Para a instalar, o AutoHush será reiniciado."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Folosiți versiunea %@, o versiune candidată. „Primiți versiuni candidate” este dezactivat, așa că se oferă cea mai recentă versiune lansată. Instalarea repornește AutoHush."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "У вас версия %@, релиз-кандидат. Параметр «Получать релиз-кандидаты» выключен, поэтому предлагается последний выпуск. При установке AutoHush перезапустится."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Používate verziu %@, čo je kandidátska verzia. Voľba „Získavať kandidátske verzie“ je vypnutá, takže sa ponúka najnovšie vydanie. Inštalácia AutoHush reštartuje."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uporabljate različico %@, ki je kandidat za izdajo. Možnost »Prejemaj kandidate za izdajo« je izklopljena, zato je ponujena najnovejša izdaja. Namestitev znova zažene AutoHush."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Du kör version %@, en releasekandidat. ”Hämta releasekandidater” är av, så den senaste versionen erbjuds. När den installeras startas AutoHush om."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "คุณกำลังใช้เวอร์ชั่น %@ ซึ่งเป็น Release Candidate “รับเวอร์ชัน Release Candidate” ปิดอยู่ จึงเสนอรุ่นล่าสุดที่เผยแพร่ การติดตั้งจะเปิด AutoHush ใหม่"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ sürüm adayını kullanıyorsunuz. “Sürüm adaylarını al” kapalı olduğundan en son sürüm sunuluyor. Yüklemek, AutoHush’ı yeniden başlatır."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "У вас версія %@, кандидат на випуск. Параметр «Отримувати кандидати на випуск» вимкнено, тому пропонується останній випуск. Під час встановлення AutoHush перезапуститься."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bạn đang dùng phiên bản %@, một bản phát hành ứng viên. “Nhận bản phát hành ứng viên” đang tắt nên bản phát hành mới nhất được đề xuất. Việc cài đặt sẽ khởi động lại AutoHush."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你目前使用的是候選版本 %@。「取得候選版本」已關閉，因此會提供最新的正式版本。安裝時 AutoHush 會重新開啟。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你当前使用的是候选版本 %@。“获取候选版本”已关闭，因此会提供最新的正式版本。安装时 AutoHush 将重新启动。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "你目前使用的是候選版本 %@。「取得候選版本」已關閉，因此會提供最新的正式版本。安裝時 AutoHush 會重新開啟。"
           }
         }
       }
