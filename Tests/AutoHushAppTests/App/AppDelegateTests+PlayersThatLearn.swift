@@ -329,7 +329,8 @@ extension AppDelegateTests {
         listNow()
         await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID }
         #expect(sut.addWebApp.model.problem == nil)
-        #expect(sut.addWebApp.model.phase == .learning(name: "Quartet", alreadyThere: true))
+        #expect(sut.addWebApp.model.phase == .learning(name: "Quartet", alreadyThere: true),
+                "learning: \(String(describing: sut.status.learning)), window open: \(sut.addWebApp.isOpen)")
     }
 
     @MainActor
