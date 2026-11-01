@@ -7,22 +7,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-
-- **Settings → About** fits its icon and name to the window as soon as it
-  opens, not only once the window is resized, and no longer flickers
-  between two sizes. In a short window the icon sits beside the name and
-  the version. Settings is at least 650 points tall again, so the page
-  fits without scrolling.
-
-## [1.2.8] — 2026-10-31
-
 ### Changed
 
 - **Settings → About** describes AutoHush as the README does: “Whatever’s
   playing steps aside when something else needs your ears.” Its icon, name,
   version and description are centered, each on a line of its own, the
-  icon and the name sized to the window, and the page stays centered.
+  icon and the name sized to the window (the icon beside the name in a
+  short window), and the page stays centered. Settings is at least 650
+  points tall again, so the page fits without scrolling.
 
 ### Fixed
 
