@@ -296,9 +296,10 @@ actor PlaybackArbiter: PlaybackArbiting {
         resumeLowered = false
     }
 
-    /// Notes `change` as the latest sleep or wake applied (`setAsleep`);
-    /// false for one no newer than that, which comes late and is ignored.
-    func noteSleepChange(_ change: Int) -> Bool {
+    /// Whether `change` is newer than the latest sleep or wake applied
+    /// (`setAsleep`), noted as the latest when it is; one no newer comes
+    /// late and is ignored.
+    func acceptsSleepChange(_ change: Int) -> Bool {
         guard change > sleepChange else { return false }
         sleepChange = change
         return true

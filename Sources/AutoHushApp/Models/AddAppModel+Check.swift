@@ -127,7 +127,7 @@ extension AddAppModel {
         guard let run else {
             if stage == .checking {
                 stage = .ready
-                watchAgainUntilStart()
+                watchAfterStopUntilStart()
             }
             return
         }

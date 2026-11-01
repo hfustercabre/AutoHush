@@ -377,7 +377,8 @@ flags (`CommandLineOptions`, with the arguments of a check, a press and each
 question), the exit statuses (`CheckExitStatus`: 0, 1, 3 for a missing
 permission, 128 + the signal for a stop), and each one-line answer
 (`NowPlayingListLine`, `NowPlayingReasonsLine`, `LaunchOptionAnswer`,
-`WindowStateAnswer`), written and read by the same code. The report's lines
+`WindowStateAnswer`, each a `OneLineAnswer`), written and read by the same
+code. The report's lines
 they follow (the requests, the window states and trials, the input block,
 the permissions, the ways' checklist) are `CheckReportLine`s, in
 `PlayerCheckKit`, and what a check found is `CheckResult` (`--result`), in

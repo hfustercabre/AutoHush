@@ -1,13 +1,9 @@
 import Foundation
 
-// One of playercheck's one-line answers, a tab between fields: the helper
-// writes it with its `line`, and AutoHush and the Player Check app read it
-// with its `init?(line:)`, so neither side can drift.
-
 /// Why an app can be in Now Playing, a line of --now-playing-reasons:
 /// "<path>\t<reason>\t<interface>\t<switches>\t<kind>\t<browser>", each
 /// empty when none.
-package struct NowPlayingReasonsLine: Equatable, Sendable {
+package struct NowPlayingReasonsLine: OneLineAnswer {
     /// The kind of interface `interface` names, for whoever reads the line
     /// (its name is for people).
     package enum InterfaceKind: String, Sendable {
@@ -44,7 +40,7 @@ package struct NowPlayingReasonsLine: Equatable, Sendable {
     }
 
     package init?(line: some StringProtocol) {
-        let fields = String(line).split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+        let fields = Self.fields(of: line)
         guard fields.count >= 2, !fields[0].isEmpty else { return nil }
         let field = { (index: Int) in index < fields.count && !fields[index].isEmpty ? fields[index] : nil }
         self.init(path: fields[0], reason: field(1), interface: field(2), switches: field(3), kind: field(4).flatMap(InterfaceKind.init),

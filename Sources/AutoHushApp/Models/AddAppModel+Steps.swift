@@ -213,7 +213,7 @@ extension AddAppModel {
     /// Back at the check step with no wait running (Stop while the last
     /// check still put things back): watched until the check starts, as
     /// after the wait (WA2, the review of 2026-10-31).
-    func watchAgainUntilStart() {
+    func watchAfterStopUntilStart() {
         guard let app = chosen, stage == .ready else { return }
         stopWork() // a watch still asleep would go on beside this one (the 1.2.9 review)
         work = Task { [weak self] in await self?.watchUntilStart(app) }

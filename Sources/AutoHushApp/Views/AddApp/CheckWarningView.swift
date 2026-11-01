@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import CheckedPlayers
+import PlayerCheckKit
 
 /// The window the check step's Continue… opens before the check starts
 /// (W6, the user, 2026-10-15): the 7 states the app's window goes
@@ -90,13 +91,7 @@ struct CheckWarningView: View {
         .accessibilityElement(children: .combine)
         // Out of the check's reach while the desktop shortcuts are off: dimmed
         // as unavailable things are, the note below saying why (I1, 2026-10-31).
-        .unavailable(desktopShortcutsOff && Self.needsDesktopShortcuts(state))
-    }
-
-    /// The states shown on another desktop, which the check reaches with
-    /// Mission Control's desktop shortcuts.
-    static func needsDesktopShortcuts(_ state: CheckResult.WindowState) -> Bool {
-        state == .otherDesktop || state == .otherDesktopCovered
+        .unavailable(desktopShortcutsOff && state.needsDesktopShortcuts)
     }
 
     static func symbol(_ state: CheckResult.WindowState) -> String {

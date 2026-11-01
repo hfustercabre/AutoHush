@@ -1,12 +1,8 @@
 import Foundation
 import CheckedPlayers
 
-// One of playercheck's one-line answers, a tab between fields: the helper
-// writes it with its `line`, and AutoHush and the Player Check app read it
-// with its `init?(line:)`, so neither side can drift.
-
 /// --window-state <app>: the state its main window is in now.
-package enum WindowStateAnswer: Equatable, Sendable {
+package enum WindowStateAnswer: OneLineAnswer {
     case state(CheckResult.WindowState)
     case noWindow
     case notRunning

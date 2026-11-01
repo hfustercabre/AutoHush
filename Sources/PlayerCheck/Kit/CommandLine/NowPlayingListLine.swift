@@ -1,13 +1,9 @@
 import Foundation
 
-// One of playercheck's one-line answers, a tab between fields: the helper
-// writes it with its `line`, and AutoHush and the Player Check app read it
-// with its `init?(line:)`, so neither side can drift.
-
 /// An app macOS keeps in Now Playing, a line of --now-playing-list:
 /// "<bundle ID>\t<pid>\t<state>\t<1 if active>\t<name>". The list ends with
 /// the active one's process (`activeLine`).
-package struct NowPlayingListLine: Equatable, Sendable {
+package struct NowPlayingListLine: OneLineAnswer {
     /// Ready for Now Playing, never said it plays.
     package static let registered = "Registered"
     /// Gone since the time --since gave.
@@ -36,7 +32,7 @@ package struct NowPlayingListLine: Equatable, Sendable {
 
     /// `nil` for the active line, or one that isn't an app's.
     package init?(line: some StringProtocol) {
-        let fields = String(line).split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+        let fields = Self.fields(of: line)
         guard fields.count >= 4, !fields[0].hasPrefix("#"), let pid = pid_t(fields[1]) else { return nil }
         self.init(bundleID: fields[0], pid: pid, state: fields[2], isActive: fields[3] == "1", name: fields.count > 4 ? fields[4] : "")
     }
