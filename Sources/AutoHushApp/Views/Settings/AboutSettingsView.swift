@@ -11,59 +11,28 @@ import SwiftUI
 /// About button opens it.
 struct AboutSettingsView: View {
     let model: SettingsModel
-    /// The icon's side, fitted to the page (`fittedIconSize`); the name
-    /// grows and shrinks with it.
-    @State private var iconSize: CGFloat = 96
-    /// The page's size, its content's height (padding included) and the
-    /// name's size as last measured, and the icon's side each of the last two
-    /// was measured beside: a fit waits until the content is of the icon
-    /// shown and the name was measured once, as the name is measured after
-    /// the content (it stayed 96 pt until the window was resized,
-    /// 2026-10-31); the name's size is then scaled to the icon (`nameSize`).
-    @State private var pageSize: CGSize = .zero
-    @State private var contentHeight: CGFloat = 0
-    @State private var nameSize: CGSize = .zero
-    @State private var measuredBeside = (content: CGFloat(0), name: CGFloat(0))
-    /// The icon beside the name and the version (`compactHeader`): the page
-    /// is too short for them on lines of their own even at `leastIconSize`
-    /// (M5, the user's pick, 2026-10-31). Then the content's height as last
-    /// measured, and how much taller the stacked header at `leastIconSize`
-    /// made it, measured as it changed over.
-    @State private var isCompact = false
-    @State private var compactHeight: CGFloat = 0
-    @State private var stackedAtLeast: CGFloat = 0
-    @State private var stackedExtra: CGFloat = 0
+    /// The icon fitted to the page, the name with it (`AboutFit`), from
+    /// where the last opening left it.
+    @State private var fit = AboutFit(resuming: Self.lastFit)
+    /// Where About's fit was last, in this run only (not kept on disk): the
+    /// next opening starts there, not at 96 pt, so the icon doesn't jump as
+    /// the page opens (I1, the user, 2026-11-01).
+    private static var lastFit: AboutFit?
 
-    /// The icon's least and largest sides, and the name's text size to it
-    /// (17 pt beside 96, 23 beside 128): it resizes a little, at most to
-    /// F2's 128 pt and 23 pt (the user, 2026-10-31: "making it resize but
-    /// only a little? At most as the F2"), and shrinks so the copyright
-    /// line fits the window's minimum size in the page's tallest case (no
-    /// automatic checks, a release candidate offered, Restore Defaults).
-    nonisolated static let leastIconSize: CGFloat = 64
-    nonisolated static let largestIconSize: CGFloat = 128
-    nonisolated static let nameRatio: CGFloat = 23 / 128
-    /// The least a fit grows the icon by (`fittedIconSize`).
-    nonisolated static let leastGrowth: CGFloat = 3
     /// The icon's side beside the name.
     nonisolated static let compactIconSize: CGFloat = 56
+    /// The name's size beside `compactIconSize`: 17 pt, as under a 96 pt icon.
+    private static let compactNameFont = Font.appAboutTitle(iconSize: 96)
 
     var body: some View {
         GeometryReader { page in
             ScrollViewReader { scroller in
                 ScrollView {
                     content
-                        .padding(20)
+                        .padding(AboutFit.pageMargin)
                         .frame(maxWidth: .infinity)
                         .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { height in
-                            if isCompact {
-                                compactHeight = height
-                                if stackedExtra == 0 { stackedExtra = stackedAtLeast - height }
-                            } else {
-                                contentHeight = height
-                                measuredBeside.content = iconSize
-                            }
-                            fit()
+                            update { $0.contentMeasured(height: height) }
                         }
                         // Centered in the page however tall the window is (the
                         // user, 2026-10-31: "make it so it always stay
@@ -74,86 +43,20 @@ struct AboutSettingsView: View {
                 .revealsKeyHighlight(with: scroller)
             }
             .onChange(of: page.size, initial: true) {
-                pageSize = page.size
-                fit()
+                update { $0.pageChanged(to: page.size) }
             }
         }
     }
 
-    /// Fits the icon, and the name with it, to the page's room, once the
-    /// content is measured beside the icon shown and the name once; puts
-    /// the icon beside the name when even `leastIconSize` doesn't fit, and
-    /// back on its own line once it does.
-    private func fit() {
-        if isCompact {
-            guard compactHeight > 0, stackedExtra > 0 else { return }
-            if Self.stackedFits(page: pageSize, compactContent: compactHeight, stackedExtra: stackedExtra) {
-                isCompact = false
-            }
-            return
-        }
-        guard measuredBeside.content == iconSize, measuredBeside.name > 0 else { return }
-        let name = Self.nameSize(nameSize, measuredBeside: measuredBeside.name, at: iconSize)
-        let atLeast = Self.contentHeight(atIcon: Self.leastIconSize, current: iconSize, content: contentHeight, name: name)
-        if pageSize.height > 0, atLeast > pageSize.height + 0.5 {
-            stackedAtLeast = atLeast
-            stackedExtra = 0
-            iconSize = Self.leastIconSize
-            isCompact = true
-            return
-        }
-        let fitted = Self.fittedIconSize(current: iconSize, page: pageSize, content: contentHeight, name: name)
-        if abs(fitted - iconSize) >= 1 { iconSize = fitted }
-    }
-
-    /// The name's size beside an icon of `side`, from one measured beside
-    /// `measured`: its font follows the icon, and its size with it. A 1 pt
-    /// step may leave the name's rounded size as it was, so it isn't
-    /// measured again: the fit would have waited for good (on a 1x screen,
-    /// the 1.2.9 review).
-    nonisolated static func nameSize(_ size: CGSize, measuredBeside measured: CGFloat, at side: CGFloat) -> CGSize {
-        guard measured > 0 else { return size }
-        return CGSize(width: size.width * side / measured, height: size.height * side / measured)
-    }
-
-    /// The content's height with the icon at `side`, from one measured
-    /// beside `current`: the icon's and the name's heights follow it.
-    nonisolated static func contentHeight(atIcon side: CGFloat, current: CGFloat, content: CGFloat, name: CGSize) -> CGFloat {
-        guard current > 0 else { return content }
-        return content - (current - side) - name.height * (1 - side / current)
-    }
-
-    /// The stacked header fits again at `leastIconSize`, with 2 pt to spare
-    /// so the two headers never take turns (the compact one went in at 0.5
-    /// over).
-    nonisolated static func stackedFits(page: CGSize, compactContent: CGFloat, stackedExtra: CGFloat) -> Bool {
-        page.height > 0 && compactContent + stackedExtra <= page.height - 2
-    }
-
-    /// The icon's side that makes the page as tall as `page` (its room
-    /// shared by the icon and the name, whose height follows it), within
-    /// `leastIconSize`…`largestIconSize`, the name kept on one line, grown
-    /// only by `leastGrowth` or more while the room is tight.
-    /// Nothing measured yet, the page's size included: `current`.
-    nonisolated static func fittedIconSize(current: CGFloat, page: CGSize, content: CGFloat, name: CGSize) -> CGFloat {
-        guard current > 0, page.width > 0, page.height > 0, content > 0, name.width > 0, name.height > 0 else { return current }
-        let fixed = content - current - name.height
-        let byHeight = (page.height - fixed) / (1 + name.height / current)
-        let byName = (page.width - 2 * 20) * current / name.width
-        let room = min(byHeight, byName)
-        let fitted = max(leastIconSize, min(room, largestIconSize)).rounded(.down)
-        // It shrinks at once but grows only by `leastGrowth` or more, unless
-        // the room is that much larger: the name's line height steps with
-        // its font, so 1 pt more can overflow again, and the two sizes took
-        // turns for good (79 and 80 pt at the window's minimum size,
-        // 2026-10-31).
-        let tight = room < fitted + leastGrowth
-        return tight && fitted > current && fitted < current + leastGrowth ? current : fitted
+    /// Changes the fit, and remembers it for the next opening.
+    private func update(_ change: (inout AboutFit) -> Void) {
+        change(&fit)
+        Self.lastFit = fit
     }
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 22) {
-            if isCompact { compactHeader } else { header }
+            if fit.isCompact { compactHeader } else { header }
             UpdatesCard(model: model)
             HStack(spacing: 8) {
                 Spacer(minLength: 0)
@@ -175,20 +78,13 @@ struct AboutSettingsView: View {
 
     /// The icon, the name, the version and what AutoHush does, each on a
     /// line of its own, centered, as macOS's About windows (H1, the user's
-    /// pick, 2026-10-31), the icon and the name sized by `iconSize`.
+    /// pick, 2026-10-31), the icon and the name sized by the fit.
     private var header: some View {
         VStack(spacing: 6) {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
-                .frame(width: iconSize, height: iconSize)
-                .accessibilityHidden(true)
-            Text(verbatim: "AutoHush")
-                .font(.appAboutTitle(iconSize: iconSize))
-                .fixedSize()
+            icon(side: fit.iconSize)
+            name(.appAboutTitle(iconSize: fit.iconSize))
                 .onGeometryChange(for: CGSize.self, of: { $0.size }) { size in
-                    nameSize = size
-                    measuredBeside.name = iconSize
-                    fit()
+                    update { $0.nameMeasured(size) }
                 }
             version
             tagline
@@ -203,14 +99,9 @@ struct AboutSettingsView: View {
     private var compactHeader: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                Image(nsImage: NSApp.applicationIconImage)
-                    .resizable()
-                    .frame(width: Self.compactIconSize, height: Self.compactIconSize)
-                    .accessibilityHidden(true)
+                icon(side: Self.compactIconSize)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: "AutoHush")
-                        .font(.appAboutTitle(iconSize: 96))
-                        .fixedSize()
+                    name(Self.compactNameFont)
                     version
                 }
             }
@@ -218,6 +109,22 @@ struct AboutSettingsView: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
+    }
+
+    /// AutoHush's icon, `side` points square; the name beside it says it to
+    /// VoiceOver.
+    private func icon(side: CGFloat) -> some View {
+        Image(nsImage: NSApp.applicationIconImage)
+            .resizable()
+            .frame(width: side, height: side)
+            .accessibilityHidden(true)
+    }
+
+    /// AutoHush's name, on one line.
+    private func name(_ font: Font) -> some View {
+        Text(verbatim: "AutoHush")
+            .font(font)
+            .fixedSize()
     }
 
     @ViewBuilder private var version: some View {

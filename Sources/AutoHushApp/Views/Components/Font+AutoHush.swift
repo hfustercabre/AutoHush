@@ -5,10 +5,13 @@ import SwiftUI
 /// for what they're used for. Settings' sidebar keeps its larger names.
 extension Font {
     /// The app's name in Settings → About, under its icon (H1, 2026-10-31):
-    /// semibold, in proportion to the icon: 23 pt under 128, 17 under 96.
+    /// semibold, in proportion to the icon (`appAboutTitleRatio`).
     static func appAboutTitle(iconSize: CGFloat) -> Font {
-        .system(size: iconSize * AboutSettingsView.nameRatio, weight: .semibold)
+        .system(size: iconSize * appAboutTitleRatio, weight: .semibold)
     }
+    /// `appAboutTitle`'s size to the icon's side: 23 pt under 128 (F2's
+    /// size, the user, 2026-10-31), 17 under 96.
+    static let appAboutTitleRatio: CGFloat = 23 / 128
     /// Plain text and rows' titles.
     static let appBody = Font.body
     /// A card's title, e.g. the media player's name; Settings' section titles.
