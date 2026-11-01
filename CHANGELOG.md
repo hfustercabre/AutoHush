@@ -5,7 +5,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [1.2.9] — 2026-11-01
 
 ### Changed
 
@@ -33,7 +33,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Release candidates:** the update window says when what it offers is a
   release candidate, a test version of the next release, and, while
   you're on one with Get release candidates off, why it offers the latest
-  release.
+  release; turned back on, it stops offering that release.
 
 ---
 
