@@ -33,4 +33,19 @@ struct AppWindowsTests {
         #expect(!AppWindows.isClosed(onScreen: false, desktops: nil))
         #expect(!AppWindows.isClosed(onScreen: true, desktops: []))
     }
+
+    @Test("the window found before spares the full look only while it's still listed as the app's and on screen")
+    func reachableShortcut() {
+        func window(_ number: Int, owner: pid_t = 42, onScreen: Bool) -> AppWindows.Info {
+            [kCGWindowNumber as String: number, kCGWindowOwnerPID as String: Int(owner),
+             kCGWindowLayer as String: 0, kCGWindowIsOnscreen as String: onScreen]
+        }
+        let other = window(8, onScreen: true)
+        #expect(AppWindows.isReachableShortcut(listed: [other, window(7, onScreen: true)], known: 7, pid: 42))
+        #expect(!AppWindows.isReachableShortcut(listed: [other, window(7, onScreen: false)], known: 7, pid: 42)) // off screen: the full look runs
+        #expect(!AppWindows.isReachableShortcut(listed: [other], known: 7, pid: 42)) // closed, gone from the list
+        #expect(!AppWindows.isReachableShortcut(listed: [window(7, owner: 99, onScreen: true)], known: 7, pid: 42)) // another app's
+        #expect(!AppWindows.isReachableShortcut(listed: [other], known: nil, pid: 42)) // none known yet
+        #expect(!AppWindows.isReachableShortcut(listed: [], known: 7, pid: 42))
+    }
 }

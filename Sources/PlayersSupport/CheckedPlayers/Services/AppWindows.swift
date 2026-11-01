@@ -185,14 +185,23 @@ package enum AppWindows {
         let pid = app.processIdentifier
         let listed = infos(.optionAll).filter { owner(of: $0) == pid && ListedWindow($0).layer == 0 }
         guard !listed.isEmpty else { return (false, nil) }
-        // The window found before, still on screen: still within reach (one
-        // on screen isn't closed), so that look is spared too while the user
-        // starts it playing (R8, 2026-10-31). Off screen, it's looked at again.
-        if let known, listed.contains(where: { number(of: $0) == known && ListedWindow($0).isOnScreen }) { return (true, known) }
+        // The window found before, still on screen: that look is spared too
+        // while the user starts it playing (R8, 2026-10-31).
+        if isReachableShortcut(listed: listed, known: known, pid: pid) { return (true, known) }
         guard let (state, main) = stateAndMain(of: app) else { return (false, nil) }
         // Hidden is the app's: it may have no main window then.
         let reachable = state != .hidden || main != nil
         return (reachable, reachable ? main.map { number(of: $0.info) } : nil)
+    }
+
+    /// `windowWithinReach`'s shortcut: the main window an earlier ask found
+    /// (`known`), still listed as the app's (`pid`) and on screen, is still
+    /// within reach (one on screen isn't closed). Off screen, closed, or
+    /// gone, it isn't: the full look runs. A number now another app's, or
+    /// no window known, isn't either.
+    package static func isReachableShortcut(listed: [Info], known: Int?, pid: pid_t) -> Bool {
+        guard let known else { return false }
+        return listed.contains { owner(of: $0) == pid && number(of: $0) == known && ListedWindow($0).isOnScreen }
     }
 
     /// Its state and its main window, from one look at its windows (each
