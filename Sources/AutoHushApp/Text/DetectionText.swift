@@ -35,22 +35,24 @@ extension DetectionMethod {
         case .playbackSignals:
             return String(localized: "What apps tell macOS", comment: "Settings, AntiDot mode: a way to detect playing apps")
         case .openStreams:
-            return String(localized: "Open audio streams only",
-                          comment: "Settings, AntiDot mode: a way to detect playing apps")
+            return String(localized: "Any app with sound on",
+                          comment: "Settings, AntiDot mode, and Diagnostics' “Detecting by”: a way to detect playing apps, where any app whose sound output is on counts as playing, even when paused")
         }
     }
 
+    /// One sentence under the ways in Settings → Fine-Tuning (T10b, the
+    /// user's pick, 2026-11-02).
     var summary: String {
         switch self {
         case .audioLevels:
-            return String(localized: "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple dot while AutoHush measures.",
-                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: what measuring audio levels does; the purple dot is macOS's recording indicator")
+            return String(localized: "Most accurate; macOS shows its purple dot.",
+                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: what measuring audio levels does (AntiDot mode off); the purple dot is macOS's recording indicator")
         case .playbackSignals:
-            return String(localized: "Apps count as playing while they tell macOS so; apps that never do, while their audio is open. Sounds without video under 3 seconds don’t pause your player.",
+            return String(localized: "Apps count while they tell macOS they play.",
                           comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: how “What apps tell macOS” works")
         case .openStreams:
-            return String(localized: "Any app with its audio open counts as playing, even when paused. It must stay open 2 seconds before your player pauses, so notification sounds don’t interrupt it.",
-                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: how “Open audio streams only” works")
+            return String(localized: "Paused apps count too; short sounds don’t.",
+                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: how “Any app with sound on” works (an app with its sound on counts even when paused; a sound shorter than 2 seconds doesn't pause the player)")
         }
     }
 }

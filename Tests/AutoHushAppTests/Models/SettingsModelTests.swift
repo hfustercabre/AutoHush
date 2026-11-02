@@ -394,7 +394,7 @@ struct SettingsModelTests {
         #expect(log.calls.isEmpty)
     }
 
-    @Test("AntiDot mode switches between audio levels and playback signals; each way's summary says the engine's least start")
+    @Test("AntiDot mode switches between audio levels and playback signals, and keeps the way chosen")
     func antiDotMode() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         #expect(!model.isAntiDotMode)
@@ -407,10 +407,6 @@ struct SettingsModelTests {
         model.setAntiDotMode(false)
         #expect(!model.isAntiDotMode && model.detectionMethod == .audioLevels)
         #expect(model.settings.state.detection == .audioLevels)
-        // How long an app must play before your player pauses, at the least.
-        let configuration = AppConfiguration()
-        #expect(DetectionMethod.playbackSignals.summary.contains("under \(Int(configuration.minimumStartWithoutVideo)) seconds"))
-        #expect(DetectionMethod.openStreams.summary.contains("stay open \(Int(configuration.minimumStartWithOpenStreams)) seconds"))
     }
 
     @Test("each card's Restore Defaults restores the settings it shows only: Behavior's its switches, Fine-Tuning's its sliders and ways")

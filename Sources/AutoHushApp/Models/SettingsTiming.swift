@@ -39,7 +39,7 @@ enum SettingsTiming {
             Text("How long another app must be silent. Bridges gaps between tracks and videos.",
                  comment: "Settings → Fine-Tuning, under “Resume playback after”")
         case .silenceThreshold:
-            Text("Quieter output counts as silence. Only used while measuring audio levels (AntiDot mode off).",
+            Text("Quieter output counts as silence.",
                  comment: "Settings → Fine-Tuning, under “Silence threshold”")
         case .fadeOut:
             Text("How long playback fades out before it pauses. 0 pauses it at once.",

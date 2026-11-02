@@ -270,9 +270,11 @@ struct DiagnosticsReportTests {
             "Pause playback after: \(half) s\nPause playback after, without video: 3 s\nPause for the microphone: Off"))
     }
 
-    @Test("with open audio streams only, says every app's start: at least 2 s")
+    @Test("with any app with sound on, says every app's start: at least 2 s, and detecting by that way's name")
     func saysOpenStreamsStarts() {
-        #expect(quietReport(.disabled, .openStreams).text.contains("Behavior\nPause playback after: 2 s\nPause for the microphone: Off"))
+        let report = quietReport(.disabled, .openStreams).text
+        #expect(report.contains("Behavior\nPause playback after: 2 s\nPause for the microphone: Off"))
+        #expect(report.contains("Detecting by: Any app with sound on\nAntiDot mode: On"))
     }
 
     @Test("measuring levels without Audio Recording access, says AntiDot mode's starts with it off; measured, the usual ones")
@@ -280,7 +282,7 @@ struct DiagnosticsReportTests {
         let half = 0.5.formatted(.number.precision(.fractionLength(0...2))) // as the Mac's region writes it
         let unmeasured = quietReport(.unavailable, .audioLevels).text
         #expect(unmeasured.contains("Behavior\nPause playback after: 2 s\nPause playback after, without video: 3 s\n"))
-        #expect(unmeasured.contains("Detecting by: Open audio streams (no Audio Recording access)\nAntiDot mode: Off\n"))
+        #expect(unmeasured.contains("Detecting by: Any app with sound on (no Audio Recording access)\nAntiDot mode: Off\n"))
         #expect(quietReport(.audioLevel, .audioLevels).text.contains("Behavior\nPause playback after: \(half) s\nPause for the microphone: Off"))
     }
 

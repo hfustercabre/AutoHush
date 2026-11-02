@@ -14,7 +14,7 @@ import AutoHushKit
 @Suite("Choices fit in every language")
 @MainActor
 struct ChoiceFitTests {
-    static let detection = ["What apps tell macOS", "Open audio streams only"]
+    static let detection = ["What apps tell macOS", "Any app with sound on"]
 
     private func titles(_ keys: [String], in language: String) -> [String] {
         keys.map { language == "en" ? $0 : BottomBarFitTests.catalog[$0]?[language] ?? $0 }

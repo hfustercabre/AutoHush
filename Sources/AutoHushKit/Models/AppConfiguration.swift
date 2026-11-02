@@ -33,7 +33,7 @@ package struct AppConfiguration: Sendable {
         max(sourceStartConfirmation, minimumStartWithoutVideo)
     }
 
-    /// "Open audio streams only": the least any app must keep its audio open
+    /// "Any app with sound on": the least any app must keep its audio open
     /// before it counts as playing. That method can't tell video, and an
     /// app's chat tone keeps its stream open about a second (measured on
     /// macOS 14.4).

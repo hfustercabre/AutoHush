@@ -41,11 +41,12 @@ enum AntiDotText {
                comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the alert after the menu's card, while AntiDot mode is on; %@ is the player")
     }
 
-    /// Under a switch that needs sound measured (Level the volume), dimmed:
-    /// Settings → Behavior and Fine-Tuning.
+    /// Under a setting that needs sound measured, dimmed: Level the volume
+    /// (Settings → Behavior and Fine-Tuning) and the silence threshold
+    /// (Fine-Tuning's Detection).
     static var featureOff: String {
         String(localized: "Off in AntiDot mode",
-               comment: "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): Settings → Behavior, and Fine-Tuning's volume limits")
+               comment: "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): Settings → Behavior, and Fine-Tuning's volume limits; and under Fine-Tuning's dimmed silence threshold")
     }
 
     /// Audio Recording, which it doesn't use: Diagnostics' row, the welcome

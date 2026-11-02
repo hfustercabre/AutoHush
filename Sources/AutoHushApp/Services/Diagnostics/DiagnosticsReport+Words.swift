@@ -52,8 +52,8 @@ extension DiagnosticsReport {
         case .pending:
             return String(localized: "Audio levels (starting)", comment: "Diagnostics: audio levels, before the first is measured")
         case .unavailable:
-            return String(localized: "Open audio streams (no Audio Recording access)",
-                          comment: "Diagnostics: the detection used while the audio recording permission is missing")
+            return String(localized: "Any app with sound on (no Audio Recording access)",
+                          comment: "Diagnostics: the detection used while the audio recording permission is missing, which is AntiDot mode's “Any app with sound on” (any app whose sound output is on counts as playing)")
         case .playbackSignals: return DetectionMethod.playbackSignals.title
         case .disabled:        return DetectionMethod.openStreams.title
         }

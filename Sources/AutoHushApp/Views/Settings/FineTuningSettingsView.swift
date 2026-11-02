@@ -103,6 +103,10 @@ struct FineTuningSettingsView: View {
                 // Only measuring audio levels has a threshold: greyed out in AntiDot mode.
                 TimingSliderRow(model: model, timing: .silenceThreshold, isCurrent: isFocus(.detection))
                     .unavailable(model.isAntiDotMode)
+                // Why it's dimmed, as Volume Limits says it (T10b, 2026-11-02).
+                if model.isAntiDotMode {
+                    NoteLabel(AntiDotText.featureOff, kind: .info)
+                }
             } footer: {
                 RestoreDefaultsButton(model: model, card: .detection)
             }

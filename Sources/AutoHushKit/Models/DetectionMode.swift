@@ -15,7 +15,7 @@ package enum DetectionMode: Equatable, Sendable {
     /// power assertions, or by their open output when they never hold one.
     /// No capture.
     case playbackSignals
-    /// AntiDot mode with "Open audio streams only": open output streams count
+    /// AntiDot mode with "Any app with sound on": open output streams count
     /// as playing. No capture.
     case disabled
 }
