@@ -130,6 +130,16 @@ extension PlaybackArbiter {
             return
         }
         isFadingOut = false
+        // Its monitoring stopped as its pause was pressed (another player
+        // chosen, AutoHush quitting): nobody would resume it, so it plays
+        // again, as before AutoHush touched it (the user, 2026-11-02).
+        if paused, isShutDown {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) paused as its monitoring stopped — played again")
+            do { try await fader.playAndFadeIn() } catch {
+                logger.error("[arbiter] playing \(self.player.name, privacy: .public) again failed: \(error)")
+            }
+            return
+        }
         if paused { pauseFailure = nil }
         guard paused else {
             logger.info("[arbiter] pause called off during the fade-out (playing now: \(self.playingApps, privacy: .public))")

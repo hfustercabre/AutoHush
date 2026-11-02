@@ -215,6 +215,43 @@ extension PlaybackArbiterTests {
 
     // MARK: - Shutdown
 
+    @Test("shut down as the player's pause is pressed (another player chosen, AutoHush quitting), the pause under way plays it again: nobody would resume it")
+    func shutdownDuringPressPlaysAgain() async {
+        let player = MockMusicPlayer(state: .playing), stopped = Locked(false)
+        let arbiter = makeArbiter(player: player)
+        await player.setBeforeStateAnswer { // the press is checked
+            guard await player.pauseCallCount == 1, !stopped.value else { return }
+            stopped.value = true
+            await arbiter.shutdown()
+        }
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.waitForPause()
+        #expect(stopped.value)
+        #expect(await player.pauseCallCount == 1)
+        #expect(await player.playCallCount == 1)
+        #expect(await player.state == .playing)
+        #expect(await arbiter.pausedByUs == false)
+    }
+
+    @Test("shut down before the player's pause is pressed (its volume read, with no fade to make), no pause is made")
+    func shutdownBeforePressNoPause() async {
+        let player = MockMusicPlayer(state: .playing), stopped = Locked(false) // its volume unknown: no fade
+        var configuration = AppConfiguration.testing
+        configuration.fadeOutDuration = 1
+        let arbiter = makeArbiter(player: player, configuration: configuration)
+        await player.setBeforeVolumeAnswer { // no volume to fade: pressed next
+            guard !stopped.value else { return }
+            stopped.value = true
+            await arbiter.shutdown()
+        }
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.waitForPause()
+        #expect(stopped.value)
+        #expect(await player.pauseCallCount == 0)
+        #expect(await player.playCallCount == 0)
+        #expect(await player.state == .playing)
+    }
+
     @Test("shutdown calls off a resume under way")
     func shutdownCancelsPendingResume() async {
         let player = MockMusicPlayer(state: .playing)

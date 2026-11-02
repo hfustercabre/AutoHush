@@ -30,7 +30,8 @@ package final class MonitoringPipeline {
         case delivered(CheckedContinuation<Void, Never>)
     }
 
-    private let arbiter: PlaybackArbiter
+    /// Internal for tests, which look at where it stands.
+    let arbiter: PlaybackArbiter
     /// Internal for tests, which look at what it was told.
     let monitor: AudioMonitor
     /// Told whether it may tap its sound, when it can (see `allowTaps`).
@@ -236,10 +237,13 @@ package final class MonitoringPipeline {
         shutdown = Task { await arbiter.shutdown() }
     }
 
-    /// Stops, and waits until a faded-down player has its volume back.
+    /// Stops, and waits until a faded-down player has its volume back, and
+    /// until the pause under way ends: one pressed as it stopped plays the
+    /// player again (`PlaybackArbiter.pauseMusicIfNeeded`), before AutoHush quits.
     package func stopAndRestoreVolume() async {
         stop()
         await shutdown?.value
+        await arbiter.waitForPause()
     }
 
     /// Returns once no resume is under way, the music fading back in

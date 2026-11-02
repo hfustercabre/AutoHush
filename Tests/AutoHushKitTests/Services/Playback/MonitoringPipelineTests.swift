@@ -219,6 +219,24 @@ struct MonitoringPipelineTests {
         setup.pipeline.stop()
     }
 
+    @Test("stopped as the player's pause is pressed, it's done stopping only once that pause played the player again (before AutoHush quits)")
+    func stopDuringPauseWaitsForIt() async {
+        let player = MockMusicPlayer(state: .playing), pressed = ManualSleep()
+        await player.setBeforeStateAnswer { // its pause pressed: shown once the test says
+            if await player.pauseCallCount == 1 { await pressed.sleep(.zero) }
+        }
+        let setup = Setup(player: player)
+        await setup.pipeline.start()
+        await setup.otherAppPlays()
+        await TestWait.until { pressed.sleeping == 1 }
+        let stopping = Task { await setup.pipeline.stopAndRestoreVolume() }
+        await TestWait.until { await setup.pipeline.arbiter.isShutDown }
+        pressed.timeIsUp()
+        await stopping.value
+        #expect(await player.playCallCount == 1)
+        #expect(await player.state == .playing)
+    }
+
     @Test("a play its observer reports while the pipeline asks the player's state, as it starts, stands: the monitor knows it plays")
     func reportWhileStartingStands() async {
         let player = MockMusicPlayer(state: .paused)

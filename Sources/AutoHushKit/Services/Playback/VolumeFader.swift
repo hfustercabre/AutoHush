@@ -74,10 +74,12 @@ package actor VolumeFader {
     }
 
     /// Fades the music out, then pauses it. Returns `false` when `cancel()`
-    /// stopped the fade first: the music then fades back up and keeps playing.
+    /// stopped the fade first: the music then fades back up and keeps playing;
+    /// or when `abandon()` came before its pause was pressed: it plays on.
     func fadeOutAndPause() async throws -> Bool {
         let fade = startFade()
         guard case let (current, target)? = await fadeVolumes(lasting: fadeOut) else {
+            guard !isAbandoned else { return false }
             try await presses.press(to: .paused)
             await restoreUserVolume() // e.g. paused at once in the middle of a fade-in
             return true
@@ -116,6 +118,7 @@ package actor VolumeFader {
         case .playing, .unknown:
             break
         }
+        guard !isAbandoned else { return false } // its volume set back already
 
         do {
             try await presses.press(to: .paused)
