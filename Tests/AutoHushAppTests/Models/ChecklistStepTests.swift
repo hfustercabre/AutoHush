@@ -205,7 +205,7 @@ struct ChecklistStepTests {
 
     @Test("a step's announcement goes out at high priority, so the focus change that comes with the step doesn't cut it off")
     func announcementPriority() {
-        let info = stepAnnouncementInfo("Play something in Yodel Music")
+        let info = announcementInfo("Play something in Yodel Music", priority: .high) // postStepAnnouncement's
         #expect(info[.announcement] as? String == "Play something in Yodel Music")
         #expect(info[.priority] as? Int == NSAccessibilityPriorityLevel.high.rawValue)
     }

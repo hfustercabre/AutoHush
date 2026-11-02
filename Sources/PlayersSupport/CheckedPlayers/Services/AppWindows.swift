@@ -5,7 +5,7 @@ import AutoHushKit
 /// it's closed (a menu bar player keeps its own, playing on), and the state
 /// it's in (`CheckResult.WindowState`). Player Check moves the window
 /// through those states (`WindowStates`); Add an App waits, after Check
-/// Again, for a window the check can reach (`hasWindowWithinReach`), so both
+/// Again, for a window the check can reach (`windowWithinReach`), so both
 /// tell them by the same rule. Each look at the windows on other desktops
 /// takes about 70 ms, up to 1 s: off the main actor in an app.
 package enum AppWindows {
@@ -169,14 +169,10 @@ package enum AppWindows {
     /// Whether the app has a window the check can reach and move (on
     /// screen, covered, minimized, hidden, full screen, on another
     /// desktop): Player Check's `WindowTest(app:)` rule. Without one, the
-    /// check runs with its windows closed (each way tried once).
-    package static func hasWindowWithinReach(_ app: NSRunningApplication) -> Bool {
-        windowWithinReach(app, known: nil).reachable
-    }
-
-    /// `hasWindowWithinReach`, from `known`, the main window an earlier ask
-    /// found, and with the main window found, for the next ask (Add an App's
-    /// wait asks every 0.5 s until the app plays).
+    /// check runs with its windows closed (each way tried once). From
+    /// `known`, the main window an earlier ask found, and with the main
+    /// window found, for the next ask (Add an App's wait asks every 0.5 s
+    /// until the app plays).
     package static func windowWithinReach(_ app: NSRunningApplication, known: Int?) -> (reachable: Bool, window: Int?) {
         // The window list alone first (a few ms): with no document window of
         // the app's in it, `main(of:)` finds none either, so the look at
@@ -205,7 +201,7 @@ package enum AppWindows {
     }
 
     /// Its state and its main window, from one look at its windows (each
-    /// look on other desktops takes up to 1 s): what `hasWindowWithinReach`
+    /// look on other desktops takes up to 1 s): what `windowWithinReach`
     /// and Player Check's `WindowTest(app:)` start from.
     package static func stateAndMain(of app: NSRunningApplication)
         -> (state: CheckResult.WindowState, main: (info: Info, element: AXUIElement?)?)? {

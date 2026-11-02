@@ -32,7 +32,7 @@ struct AppStatusTests {
         // Its alert's button follows its own error, not a pause's (the apps
         // stopping cleared that): Now Playing hidden offers the pane.
         status.resumeError = ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Jukebox")
-        #expect(status.controlError == nil && status.alertError?.opensMenuBarSettings == true)
+        #expect(status.controlError == nil && status.controlErrorFix(antiDot: false, audio: .allowed) == .openMenuBarSettings)
         status.playback = .pausedByMonitor // paused again for another app
         status.setActiveSources([safari])
         #expect(!status.showsResumeFailure && !status.needsAttention)

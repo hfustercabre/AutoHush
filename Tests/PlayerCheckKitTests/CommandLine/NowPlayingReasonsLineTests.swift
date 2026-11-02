@@ -1,7 +1,6 @@
 import Foundation
 import Testing
 @testable import PlayerCheckKit
-import CheckedPlayers
 
 /// Why an app can be in Now Playing, as the helper writes it, is read back the same.
 @Suite("NowPlayingReasonsLine")

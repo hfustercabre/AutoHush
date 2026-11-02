@@ -47,9 +47,10 @@ struct AppHealthStateTests {
         for failure: ControlFailure in [.stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed, .pressIgnored] {
             #expect(failure.text(player: "Yodel Music", antiDot: false).contains("Yodel Music"))
         }
-        // Only Now Playing hidden in the menu bar opens the pane where it's shown.
-        #expect(ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Quartet").opensMenuBarSettings)
-        #expect(!menu.opensMenuBarSettings)
+        // What failed is kept for the alert's button (ControlErrorFixTests):
+        // Now Playing hidden in the menu bar opens the pane where it's shown.
+        #expect(ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Quartet").failure == .nowPlayingHidden)
+        #expect(menu.failure == .menuItemNotFound)
         #expect(SystemSettingsPane.menuBar.url.absoluteString == "x-apple.systempreferences:com.apple.ControlCenter-Settings.extension")
 
         // Its alert: the button first (Return), OK after it (Escape), the pane opened by the first.

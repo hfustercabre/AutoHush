@@ -35,11 +35,6 @@ func postAnnouncement(_ text: String, priority: NSAccessibilityPriorityLevel) {
     NSAccessibility.post(element: element, notification: .announcementRequested, userInfo: announcementInfo(text, priority: priority))
 }
 
-/// The announcement's text and its high priority, as `NSAccessibility` takes them.
-func stepAnnouncementInfo(_ text: String) -> [NSAccessibility.NotificationUserInfoKey: Any] {
-    announcementInfo(text, priority: .high)
-}
-
 /// The announcement's text and its priority, as `NSAccessibility` takes them.
 func announcementInfo(_ text: String, priority: NSAccessibilityPriorityLevel) -> [NSAccessibility.NotificationUserInfoKey: Any] {
     [.announcement: text, .priority: priority.rawValue]

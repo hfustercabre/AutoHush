@@ -12,8 +12,6 @@ struct ControlError: Equatable {
     /// What failed, when the player said (`MusicPlayerError.playerCommandFailed`):
     /// it picks the alert's button (`ControlErrorFix`).
     private(set) var failure: ControlFailure?
-    /// Now Playing is hidden in the menu bar: its alert opens the pane to show it.
-    var opensMenuBarSettings: Bool { failure == .nowPlayingHidden }
 
     /// `detail`, unless it says what `text` does (an error AutoHush has no
     /// words of its own for): then it's said once.
