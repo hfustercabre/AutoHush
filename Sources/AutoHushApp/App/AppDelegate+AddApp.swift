@@ -91,7 +91,8 @@ extension AppDelegate: AddAppHost {
         checkedPlayers.keep(result)
         logger.notice("Add an App: \(setup.name, privacy: .public) added, by \(setup.ways.map(\.logName).joined(separator: ", "), privacy: .public)")
         refreshPlayerOptions()
-        switchPlayer(to: setup.bundleID, replacing: setup.bundleID == player?.bundleID, asksToReopen: asksToReopen)
+        switchPlayer(to: setup.bundleID, replacing: setup.bundleID == player?.bundleID, asksToReopen: asksToReopen,
+                     fromAddWindow: true)
     }
 }
 

@@ -13,9 +13,10 @@ extension AppDelegate {
     /// filled in with its address.
     /// `replacing`: chosen again all the same, as an app checked again
     /// (its new setup); `asksToReopen`: false right after the user skipped
-    /// reopening it in Add an App.
+    /// reopening it in Add an App; `fromAddWindow`: chosen by Add a Web App
+    /// or Add an App as it closes (`welcomeGoesOn`).
     func switchPlayer(to bundleID: String, showsLearningWindow: Bool = true, replacing: Bool = false,
-                      asksToReopen: Bool = true) {
+                      asksToReopen: Bool = true, fromAddWindow: Bool = false) {
         refreshPlayerOptions()
         let option = status.playerOptions.first { $0.bundleID == bundleID }
         if let address = option?.webAddress {
@@ -25,8 +26,7 @@ extension AppDelegate {
         // Picked again in the welcome window after its Back: on to what it
         // needs, as the first time (the workflow audit, 2026-10-22).
         if bundleID == player?.bundleID, !replacing, isShowingPlayerChooser {
-            settingsModel.welcomeAsksPermissions = true
-            windowWatch.wake()
+            welcomeGoesOn(fromAddWindow: fromAddWindow)
             return
         }
         guard bundleID != player?.bundleID || replacing,
@@ -45,19 +45,51 @@ extension AppDelegate {
         // From the welcome window: it goes on to what the player needs, and
         // closes once that's allowed; the learning window waits for it.
         let fromWelcome = isShowingPlayerChooser
-        if fromWelcome { settingsModel.welcomeAsksPermissions = true }
         learningAfterWelcome = false
         if showsLearningWindow, case .learning = (chosen as? any LearningMusicPlayer)?.learningStatus {
             if fromWelcome { learningAfterWelcome = true } else { showLearningWindow() }
         }
-        if fromWelcome { windowWatch.wake() }
+        if fromWelcome { welcomeGoesOn(fromAddWindow: fromAddWindow) }
         followPlayerReopen(asking: asksToReopen)
+    }
+
+    /// The welcome window goes on to what the chosen player needs: its
+    /// permissions page. Chosen by Add a Web App or Add an App as it closes
+    /// (`fromAddWindow`), which ask for what they need themselves, it waits
+    /// for the player's permissions to be read: with nothing missing, the
+    /// welcome window is done, as with its Done; otherwise it comes forward
+    /// on its permissions page, above the app just opened, which hid its
+    /// Done (the user's pick, 2026-11-02).
+    private func welcomeGoesOn(fromAddWindow: Bool) {
+        welcomeAfterAdd?.cancel()
+        guard fromAddWindow else {
+            settingsModel.welcomeAsksPermissions = true
+            windowWatch.wake()
+            return
+        }
+        let chosen = player?.bundleID
+        welcomeAfterAdd = Task { [weak self] in
+            await self?.refreshPermissions()
+            // Closed, or another player chosen, meanwhile: nothing to go on with.
+            guard let self, !Task.isCancelled, self.isShowingPlayerChooser, self.player?.bundleID == chosen else { return }
+            self.welcomeAfterAdd = nil
+            let state = self.permissionCenter.chosen
+            if state.player == chosen, state.allSatisfied {
+                self.finishWelcome()
+                return
+            }
+            self.settingsModel.welcomeAsksPermissions = true
+            self.playerChooser?.show()
+            self.windowWatch.wake()
+        }
     }
 
     /// The welcome window is done: the player is chosen and what it needs
     /// allowed (or the window was closed). A player to learn opens the
     /// learning window then.
     func finishWelcome() {
+        welcomeAfterAdd?.cancel()
+        welcomeAfterAdd = nil
         settingsModel.welcomeAsksPermissions = false
         if isShowingPlayerChooser { playerChooser?.close() }
         guard learningAfterWelcome else { return }

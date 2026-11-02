@@ -97,6 +97,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The player chosen in the welcome window is to be learned: the learning
     /// window opens once the welcome window is done.
     var learningAfterWelcome = false
+    /// A player chosen by an add window from the welcome window: its
+    /// permissions read, before the welcome window goes on (`welcomeGoesOn`).
+    var welcomeAfterAdd: Task<Void, Never>?
     /// Watches the Applications folders, and the one holding the chosen
     /// player's app, so AutoHush notices at once when it's uninstalled or
     /// installed again.

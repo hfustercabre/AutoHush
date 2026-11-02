@@ -97,9 +97,10 @@ final class AddWebAppFeature {
                 // Opened first, so it's running by the time it's chosen.
                 await self.openApp(made.url)
                 // Added while the welcome window shows (from it, or from the
-                // menu meanwhile): that one asks for what the web app needs,
-                // and the learning window follows its Done, as for a web app
-                // picked there; this window's work is done.
+                // menu meanwhile): that one is done once what the web app
+                // needs is allowed, or comes forward to ask for it, and the
+                // learning window follows, as for a web app picked there;
+                // this window's work is done.
                 let fromWelcome = host.isShowingPlayerChooser
                 // Another player chosen meanwhile (the user's) stays: the web
                 // app is added, and this window has nothing left to show (the

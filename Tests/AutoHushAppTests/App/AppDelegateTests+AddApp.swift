@@ -48,6 +48,44 @@ extension AppDelegateTests {
         await TestWait.until { sut.status.playerNeedsReopen }
     }
 
+    /// Added, checked by Add an App opened from the welcome window, before
+    /// any player is chosen, and used, Added running or not (`running`) and
+    /// Audio Recording as `audio`.
+    @MainActor
+    private func addedFromWelcome(running: Bool, audio: AudioCapturePermission? = .granted) -> (scratch: Scratch, sut: AppDelegate) {
+        let scratch = Scratch()
+        let added = AddedApps(scratch.addedSetups)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { added.players() })
+        scratch.installed.insert("com.example.added")
+        if running { scratch.running.insert("com.example.added") } // its Automation is read then
+        scratch.audio = audio
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        sut.handleApplicationDidLaunch(bundleIdentifier: Players.first) // brings the welcome window
+        #expect(sut.isShowingPlayerChooser)
+        sut.useCheckedApp(Self.checked("com.example.added", "Added", menu: "Controls"), asksToReopen: false)
+        #expect(sut.player?.bundleID == "com.example.added")
+        return (scratch, sut)
+    }
+
+    @MainActor
+    @Test("Add an App's Use from the welcome window with nothing missing: the welcome window is done and closes")
+    func addedAppFromWelcomeAllowed() async {
+        let (scratch, sut) = addedFromWelcome(running: true)
+        await TestWait.until { !sut.isShowingPlayerChooser }
+        #expect(!sut.settingsModel.welcomeAsksPermissions)
+        #expect(scratch.chooser.shown == 1) // never brought back
+    }
+
+    @MainActor
+    @Test("Add an App's Use from the welcome window with something missing: the welcome window comes forward on its permissions",
+          arguments: [(running: false, audio: AudioCapturePermission.granted), (running: true, audio: .denied)])
+    func addedAppFromWelcomeMissing(running: Bool, audio: AudioCapturePermission) async {
+        let (scratch, sut) = addedFromWelcome(running: running, audio: audio)
+        await TestWait.until { sut.settingsModel.welcomeAsksPermissions }
+        #expect(sut.isShowingPlayerChooser)
+        #expect(scratch.chooser.shown == 2) // in front, above the app
+    }
+
     @MainActor
     @Test("Add an App's Use keeps what the check found and chooses the app, not asking to reopen it when told not to")
     func addedAppUsed() async throws {

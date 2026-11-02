@@ -370,10 +370,10 @@ extension AppDelegateTests {
         #expect(!scratch.addWindow.isOpen) // its learning step would never move
     }
 
+    /// Quartet added with Add a Web App opened from the welcome window, the
+    /// permissions as `scratch` reports them: chosen, and the add window closed.
     @MainActor
-    @Test("added from the welcome window, the add window closes: the welcome window asks for what it needs, and learning follows its Done")
-    func addWebAppFromWelcome() async {
-        let scratch = Scratch()
+    private func addWebAppFromWelcome(_ scratch: Scratch) async -> AppDelegate {
         let (webApp, _) = scratch.makesWebApp(named: "Quartet")
         scratch.installed.remove(Players.second)
         let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
@@ -386,9 +386,31 @@ extension AppDelegateTests {
         await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.quartet.example") }
         sut.addWebApp.model.addTapped()
         await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID && !scratch.addWindow.isOpen }
+        return sut
+    }
+
+    @MainActor
+    @Test("added from the welcome window with nothing missing: the add window and the welcome window close, and learning follows")
+    func addWebAppFromWelcomeAllowed() async {
+        let scratch = Scratch()
+        let sut = await addWebAppFromWelcome(scratch)
+        await TestWait.until { !sut.isShowingPlayerChooser }
+        #expect(!scratch.addWindow.isOpen)
+        #expect(!sut.settingsModel.welcomeAsksPermissions)
+        #expect(scratch.learningWindow.isOpen)
+        #expect(scratch.chooser.shown == 1) // never brought back
+    }
+
+    @MainActor
+    @Test("added from the welcome window with Audio Recording missing: the welcome window comes forward to ask, and learning follows its Done")
+    func addWebAppFromWelcomeMissing() async {
+        let scratch = Scratch()
+        scratch.audio = .denied
+        let sut = await addWebAppFromWelcome(scratch)
+        await TestWait.until { sut.settingsModel.welcomeAsksPermissions }
         #expect(!scratch.addWindow.isOpen) // one window asks: the welcome window
         #expect(sut.isShowingPlayerChooser)
-        #expect(sut.settingsModel.welcomeAsksPermissions)
+        #expect(scratch.chooser.shown == 2) // in front, above the web app just opened
         #expect(!scratch.learningWindow.isOpen)
 
         sut.finishWelcome()
