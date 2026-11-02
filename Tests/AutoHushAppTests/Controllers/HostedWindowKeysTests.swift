@@ -8,7 +8,7 @@ import AutoHushTestSupport
 /// it's dimmed, Space for the lit control, and in the welcome window a
 /// letter typed into the search (T1). (SwiftUI presses a default button
 /// only in a key window, which a test's never is.)
-@Suite("Guiding windows' keys", .waitsTimeLimit)
+@Suite("Guiding windows' keys", .application, .waitsTimeLimit)
 @MainActor
 struct HostedWindowKeysTests {
     private func key(_ sut: HostedWindowController, _ keyCode: UInt16, _ characters: String? = nil) throws -> Bool {

@@ -8,7 +8,7 @@ import AutoHushTestSupport
 
 /// The menu and its side windows drawn as their windows draw them, in the
 /// states the menu shows most: no test opens them on screen.
-@Suite("The menu, drawn", .waitsTimeLimit)
+@Suite("The menu, drawn", .application, .waitsTimeLimit)
 @MainActor
 struct MenuPanelViewTests {
     private let actions = FakeAppActions()
