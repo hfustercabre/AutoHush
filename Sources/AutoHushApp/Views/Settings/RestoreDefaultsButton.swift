@@ -6,7 +6,8 @@ import SwiftUI
 /// Gone once pressed, so VoiceOver says the card was restored, and a press
 /// from the arrow keys' highlight leaves it on the card's first row (U2,
 /// the user, 2026-10-27). VoiceOver reads it with the card's title, since a
-/// page can show five (I3, the user, 2026-10-27).
+/// page can show five (I3, the user, 2026-10-27). Each press is a step for
+/// the Edit menu's Undo (U10a, 2026-11-02: `SettingsModel.restoreDefaults`).
 struct RestoreDefaultsButton: View {
     let model: SettingsModel
     let card: SettingsCard
@@ -36,7 +37,7 @@ struct RestoreDefaultsButton: View {
     }
 
     private static var title: Text {
-        Text("Restore Defaults", comment: "Settings: the button under each card with settings (Behavior's, Fine-Tuning's, General's Startup and Menu Bar, About's Updates) that sets that card's settings back to their defaults")
+        Text(verbatim: ButtonText.restoreDefaults)
     }
 
     /// The button's name for VoiceOver: with the card's title.

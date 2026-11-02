@@ -218,4 +218,29 @@ final class SettingsWindowControllerTests {
         #expect(model.appList.selectedApps.isEmpty && preferences.seenApps.isEmpty)
         #expect(!sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // none selected
     }
+
+    @Test("the window's Undo is Restore Defaults' and Sound Sources' removals' too, and forgets every step as the window closes")
+    func undoClearedOnClose() throws {
+        let model = makeModel()
+        let sut = makeController(model)
+        let window = try #require(sut.window)
+        let undo = try #require(window.undoManager)
+        #expect(model.undoManager === undo && model.appList.undoManager === undo)
+        sut.show(page: .fineTuning)
+        #expect(window.undoManager === undo)
+
+        undo.groupsByEvent = false
+        undo.beginUndoGrouping()
+        var timings = model.timings
+        timings.startConfirmation = 2
+        model.setTimings(timings)
+        model.restoreDefaults(.timing)
+        undo.endUndoGrouping()
+        #expect(undo.canUndo)
+        sut.close()
+        #expect(!undo.canUndo && !undo.canRedo)
+        sut.show() // opened again: the same, empty
+        defer { sut.close() }
+        #expect(window.undoManager === undo && !undo.canUndo)
+    }
 }

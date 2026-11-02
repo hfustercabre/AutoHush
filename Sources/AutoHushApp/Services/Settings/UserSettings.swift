@@ -163,11 +163,42 @@ final class UserSettings: AutoPauseControlling {
         setIgnored(source, true)
     }
 
-    /// Removes an app from Settings → Sound Sources; a forgotten app is no longer ignored.
-    func forget(_ source: AudioSource) {
-        logger.info("Apps: removed \(source.name, privacy: .public) (\(source.id, privacy: .public)) from the list")
-        preferences.seenApps.removeAll { $0.id == source.id }
-        storeIgnoredApps(preferences.ignoredApps.filter { $0.id != source.id })
+    /// Removes apps from Settings → Sound Sources; a forgotten app is no
+    /// longer ignored. What was forgotten is handed back, for Undo
+    /// (`remember`).
+    @discardableResult
+    func forget(_ sources: [AudioSource]) -> ForgottenApps {
+        let ids = Set(sources.map(\.id))
+        let seen = preferences.seenApps, ignored = preferences.ignoredApps
+        let forgotten = ForgottenApps(
+            apps: sources,
+            seen: seen.enumerated().filter { ids.contains($0.element.id) }.map { ForgottenApps.Seen(place: $0.offset, app: $0.element) },
+            ignored: ignored.filter { ids.contains($0.id) })
+        for source in sources {
+            logger.info("Apps: removed \(source.name, privacy: .public) (\(source.id, privacy: .public)) from the list")
+        }
+        preferences.seenApps = seen.filter { !ids.contains($0.id) }
+        storeIgnoredApps(ignored.filter { !ids.contains($0.id) })
+        return forgotten
+    }
+
+    /// Undoes `forget` (U10a, the user's pick, 2026-11-02): each app back in
+    /// the list where it was (when it last played), ignored again if it
+    /// was. One that played since keeps the place that gave it.
+    func remember(_ forgotten: ForgottenApps) {
+        var seen = preferences.seenApps
+        for entry in forgotten.seen where !seen.contains(where: { $0.id == entry.app.id }) {
+            seen.insert(entry.app, at: min(entry.place, seen.count))
+        }
+        var ignored = preferences.ignoredApps
+        for app in forgotten.ignored where !ignored.contains(where: { $0.id == app.id }) {
+            ignored.append(app)
+        }
+        for source in forgotten.apps {
+            logger.info("Apps: put \(source.name, privacy: .public) (\(source.id, privacy: .public)) back in the list")
+        }
+        preferences.seenApps = seen
+        storeIgnoredApps(ignored)
     }
 
     /// Empties Settings → Sound Sources: every app is forgotten and none is ignored

@@ -5,9 +5,9 @@ import AutoHushKit
 /// Settings → Sound Sources' list: a row for each app that played sound and
 /// each ignored one, in the order the user chose, the search by name, the
 /// selection (a click, ⌘ and ⇧, as in macOS's lists) and Remove, asked first
-/// when an app is turned off. It reads the apps from `AppState` and the order
-/// from `UserSettings`, and changes them there; `SettingsModel` owns it
-/// (X20, the full check, 2026-10-19).
+/// when an app is turned off, and undone with the Edit menu's Undo. It reads
+/// the apps from `AppState` and the order from `UserSettings`, and changes
+/// them there; `SettingsModel` owns it (X20, the full check, 2026-10-19).
 @MainActor
 @Observable
 final class AppListModel {
@@ -65,6 +65,11 @@ final class AppListModel {
     /// Their names, kept while the confirmation closes (its title shows the
     /// name, or how many they are).
     private(set) var removalNames: [String] = []
+
+    /// The Settings window's: each removal is a step for its Undo and Redo,
+    /// which put the apps back as they were (U10a, the user's pick,
+    /// 2026-11-02). None until the window is made.
+    @ObservationIgnored weak var undoManager: UndoManager?
 
     /// The apps that played sound and the ignored ones.
     @ObservationIgnored private let state: AppState
@@ -144,7 +149,7 @@ final class AppListModel {
         if rows.contains(where: \.isIgnored) {
             askToRemove(rows)
         } else {
-            rows.forEach(takeOff)
+            takeOff(rows.map(\.source))
         }
     }
 
@@ -154,7 +159,7 @@ final class AppListModel {
         if row.isIgnored {
             askToRemove([row])
         } else {
-            takeOff(row)
+            takeOff([row.source])
         }
     }
 
@@ -178,17 +183,35 @@ final class AppListModel {
     func confirmRemoval() {
         let rows = appsAwaitingRemoval
         appsAwaitingRemoval = []
-        rows.forEach(takeOff)
+        takeOff(rows.map(\.source))
     }
 
     /// The confirmation closed without removing them.
     func cancelRemoval() { appsAwaitingRemoval = [] }
 
-    private func takeOff(_ row: Row) {
-        settings.forget(row.source)
-        selectedAppIDs.remove(row.id)
-        selectionBesidesRange.remove(row.id)
-        if selectionAnchor == row.id { selectionAnchor = nil }
+    /// Forgets the apps, and unselects them: one step for Undo.
+    private func takeOff(_ sources: [AudioSource]) {
+        guard !sources.isEmpty else { return }
+        let forgotten = settings.forget(sources)
+        for id in sources.map(\.id) {
+            selectedAppIDs.remove(id)
+            selectionBesidesRange.remove(id)
+            if selectionAnchor == id { selectionAnchor = nil }
+        }
+        registerUndo(of: forgotten)
+    }
+
+    /// Undo ("Undo Remove", the button's word) puts the apps back as they
+    /// were, and Redo takes them off again, the same way.
+    private func registerUndo(of forgotten: ForgottenApps) {
+        guard let undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { list in
+            list.settings.remember(forgotten)
+            guard let undoManager = list.undoManager else { return }
+            undoManager.registerUndo(withTarget: list) { list in list.takeOff(forgotten.apps) }
+            undoManager.setActionName(PlayerAlerts.removeTitle)
+        }
+        undoManager.setActionName(PlayerAlerts.removeTitle)
     }
 
     // MARK: - The rows

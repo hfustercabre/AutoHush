@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import AutoHushApp
 @testable import AutoHushKit
@@ -358,5 +359,72 @@ struct AppListModelTests {
         #expect(model.selectedApps.isEmpty)
         model.search = nil
         #expect(selected(model) == [ids[1]])
+    }
+
+    // MARK: - Undo
+
+    /// The Settings window's undo manager, a step only where a test closes
+    /// one, as each removal is an event of its own in the app.
+    private func undoManager(for model: AppListModel) -> UndoManager {
+        let undo = UndoManager()
+        undo.groupsByEvent = false
+        model.undoManager = undo
+        return undo
+    }
+
+    private func step(_ undo: UndoManager, _ action: () -> Void) {
+        undo.beginUndoGrouping()
+        action()
+        undo.endUndoGrouping()
+    }
+
+    @Test("Undo puts removed apps back in their places, ignored again if they were, after the confirmation; Redo takes them off again")
+    func undoRemoval() {
+        let (model, settings) = listing(ignored: [Self.listed[2]])
+        let undo = undoManager(for: model), ids = Self.ids
+        let before = settings.state
+        model.click(on: ids[1])
+        model.click(on: ids[3], shift: true)
+        step(undo) {
+            model.removeSelected() // the confirmation first
+            model.confirmRemoval()
+        }
+        #expect(settings.state.seenApps.map(\.id) == [ids[0], ids[4]] && settings.state.ignoredApps.isEmpty)
+        #expect(undo.undoActionName == "Remove")
+
+        undo.undo()
+        #expect(settings.state == before) // the order apps played in, and Chess turned off
+        #expect(undo.redoActionName == "Remove")
+        undo.redo()
+        #expect(settings.state.seenApps.map(\.id) == [ids[0], ids[4]] && settings.state.ignoredApps.isEmpty)
+        undo.undo()
+        #expect(settings.state == before)
+    }
+
+    @Test("each removal is a step of its own; a cancelled one isn't one")
+    func removalSteps() {
+        let (model, settings) = listing(ignored: [Self.listed[2]])
+        let undo = undoManager(for: model), ids = Self.ids, rows = model.apps
+        let before = settings.state
+        model.click(on: ids[0])
+        step(undo) { model.removeSelected() }
+        let afterFirst = settings.state
+        step(undo) { model.removeFromList(rows[1]) } // Books
+        model.remove(rows[2]) // Chess, turned off: asked first
+        model.cancelRemoval() // nothing registered (it would raise outside a group)
+        #expect(settings.state.seenApps.map(\.id) == [ids[2], ids[3], ids[4]])
+
+        undo.undo()
+        #expect(settings.state == afterFirst)
+        undo.undo()
+        #expect(settings.state == before && !undo.canUndo)
+    }
+
+    @Test("without the Settings window's undo manager, Remove only removes")
+    func removalWithoutUndo() {
+        let (model, settings) = listing()
+        model.click(on: Self.ids[0])
+        model.removeSelected()
+        #expect(settings.state.seenApps.count == 4 && model.undoManager == nil)
     }
 }

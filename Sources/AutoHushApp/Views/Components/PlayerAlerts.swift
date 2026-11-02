@@ -37,7 +37,7 @@ enum PlayerAlerts {
     /// Its default button, and Settings → Sound Sources' that removes the
     /// apps selected (and its confirmation's).
     static var removeTitle: String {
-        String(localized: "Remove", comment: "A button that removes: under Settings → Sound Sources' list (the selected apps), in its confirmation for removing apps turned off, and in the alert before an app added with Add an App is removed")
+        String(localized: "Remove", comment: "A button that removes: under Settings → Sound Sources' list (the selected apps), in its confirmation for removing apps turned off, and in the alert before an app added with Add an App is removed. Also what the Edit menu's Undo and Redo name after apps were removed from Sound Sources (macOS adds “Undo” or “Redo” before it)")
     }
 
     /// Before Learn Again stops a web app being added (Add a Web App

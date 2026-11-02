@@ -244,6 +244,9 @@ final class SettingsModel {
     /// What only AppDelegate does: choosing a player, its windows, the
     /// permissions.
     @ObservationIgnored weak var actions: any AppActions?
+    /// The Settings window's: Restore Defaults is a step for its Undo and
+    /// Redo (U10a, the user's pick, 2026-11-02). None until the window is made.
+    @ObservationIgnored weak var undoManager: UndoManager?
     @ObservationIgnored private let launchAtLoginController: any LaunchAtLoginControlling
     @ObservationIgnored private let menuBarIcon: MenuBarIconPlace
 

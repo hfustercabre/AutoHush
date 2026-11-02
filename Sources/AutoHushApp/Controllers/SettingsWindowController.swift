@@ -74,6 +74,13 @@ final class SettingsWindowController: PlacedWindowController {
                                          height: max(content.height, Self.minimumSize.height)))
         }
         window?.title = navigation.page.title
+        // The window's Undo and Redo (the Edit menu, ⌘Z and ⇧⌘Z): Restore
+        // Defaults, Sound Sources' removals and what's typed in the search
+        // (U10a, the user's pick, 2026-11-02), on the window's own undo
+        // manager, which it keeps: emptied as it closes.
+        window?.delegate = self
+        model.undoManager = window?.undoManager
+        model.appList.undoManager = window?.undoManager
         // Zoom follows the keys' highlight on each side (A3).
         keys.sidebar.screenFrame = { [weak view = sidebar.view] rect in view.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
         keys.page.screenFrame = { [weak view = page.view] rect in view.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
@@ -181,6 +188,12 @@ extension SettingsWindowController: NSMenuItemValidation {
         default: true
         }
     }
+}
+
+extension SettingsWindowController: NSWindowDelegate {
+    /// The window is kept when closed: an Undo days later would undo a step
+    /// long forgotten.
+    func windowWillClose(_ notification: Notification) { window?.undoManager?.removeAllActions() }
 }
 
 /// The split view without a line between the sidebar and the page: the

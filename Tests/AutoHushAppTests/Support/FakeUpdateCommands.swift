@@ -25,9 +25,24 @@ final class FakeUpdateCommands: UpdateCommands {
         heldCheck = nil
     }
     func presentAvailableUpdate() { log.calls.append("update") }
-    func setChecksAutomatically(_ enabled: Bool) { log.calls.append("autoUpdate \(enabled)") }
-    func setMode(_ mode: AutomaticUpdates) { log.calls.append("updates \(mode.rawValue)") }
-    func setGetsReleaseCandidates(_ enabled: Bool) { log.calls.append("releaseCandidates \(enabled)") }
+    /// The choices' commands change what Settings shows of them too, as
+    /// the real updates' do; off, only the test changes it.
+    var followsCommands = false
+
+    func setChecksAutomatically(_ enabled: Bool) {
+        log.calls.append("autoUpdate \(enabled)")
+        if followsCommands { checksAutomatically = enabled }
+    }
+
+    func setMode(_ mode: AutomaticUpdates) {
+        log.calls.append("updates \(mode.rawValue)")
+        if followsCommands { self.mode = mode }
+    }
+
+    func setGetsReleaseCandidates(_ enabled: Bool) {
+        log.calls.append("releaseCandidates \(enabled)")
+        if followsCommands { getsReleaseCandidates = enabled }
+    }
 
     // What Settings shows of the updates, as the test sets it.
     var currentVersion: AppVersion?

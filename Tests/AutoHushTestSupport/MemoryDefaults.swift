@@ -13,6 +13,8 @@ import Foundation
 package final class MemoryDefaults: UserDefaults, @unchecked Sendable {
     private let lock = NSLock()
     private var values: [String: Any] = [:]
+    /// Every value kept, by key: a test compares all of them.
+    package var contents: [String: Any] { lock.withLock { values } }
 
     package init() {
         super.init(suiteName: FileManager.default.temporaryDirectory.appending(path: "MemoryDefaults-\(UUID().uuidString)/none").path)!

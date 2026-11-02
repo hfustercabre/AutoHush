@@ -1,3 +1,4 @@
+import Foundation
 import AutoHushKit
 
 /// Each card's Restore Defaults (the user, 2026-10-25: one for every card
@@ -12,21 +13,43 @@ extension SettingsModel {
     }
 
     /// Sets the card's settings back to their defaults, leaving what's
-    /// greyed out as it is.
+    /// greyed out as it is: one step for Settings' Undo, which puts back
+    /// every setting it changed (U10a, the user's pick, 2026-11-02).
     func restoreDefaults(_ card: SettingsCard) {
-        let restored = restoredSettings(card), current = currentSettings
-        if restored.timings != current.timings { setTimings(restored.timings) }
-        if restored.detectionMethod != current.detectionMethod { setDetectionMethod(restored.detectionMethod) }
-        if restored.keepsMenuBarIconNearSystemIcons != current.keepsMenuBarIconNearSystemIcons {
-            setKeepsMenuBarIconNearSystemIcons(restored.keepsMenuBarIconNearSystemIcons)
+        let before = currentSettings
+        apply(restoredSettings(card))
+        registerUndo(putting: before, backOn: card)
+    }
+
+    /// Sets the settings a card's Restore Defaults can change to `settings`,
+    /// each only where it differs.
+    private func apply(_ settings: CardSettings) {
+        let current = currentSettings
+        if settings.timings != current.timings { setTimings(settings.timings) }
+        if settings.detectionMethod != current.detectionMethod { setDetectionMethod(settings.detectionMethod) }
+        if settings.keepsMenuBarIconNearSystemIcons != current.keepsMenuBarIconNearSystemIcons {
+            setKeepsMenuBarIconNearSystemIcons(settings.keepsMenuBarIconNearSystemIcons)
         }
-        if restored.checksForUpdatesAutomatically != current.checksForUpdatesAutomatically {
-            updates.setChecksAutomatically(restored.checksForUpdatesAutomatically)
+        if settings.checksForUpdatesAutomatically != current.checksForUpdatesAutomatically {
+            updates.setChecksAutomatically(settings.checksForUpdatesAutomatically)
         }
-        if restored.automaticUpdates != current.automaticUpdates { updates.setMode(restored.automaticUpdates) }
-        if restored.getsReleaseCandidates != current.getsReleaseCandidates {
-            updates.setGetsReleaseCandidates(restored.getsReleaseCandidates)
+        if settings.automaticUpdates != current.automaticUpdates { updates.setMode(settings.automaticUpdates) }
+        if settings.getsReleaseCandidates != current.getsReleaseCandidates {
+            updates.setGetsReleaseCandidates(settings.getsReleaseCandidates)
         }
+    }
+
+    /// Undo ("Undo Restore Defaults") puts `settings` back, on the card's
+    /// page if another shows, and Redo restores them again, the same way.
+    private func registerUndo(putting settings: CardSettings, backOn card: SettingsCard) {
+        guard let undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { model in
+            let current = model.currentSettings
+            model.apply(settings)
+            model.actions?.openSettings(page: card.page)
+            model.registerUndo(putting: current, backOn: card)
+        }
+        undoManager.setActionName(ButtonText.restoreDefaults)
     }
 
     /// The settings a card's Restore Defaults can change, as they are now.
@@ -95,7 +118,8 @@ extension SettingsModel {
 }
 
 /// The settings a card's Restore Defaults can change: the timings, the
-/// detection, the menu bar icon's place and the updates' choices.
+/// detection, the menu bar icon's place and the updates' choices. It sets
+/// them through these alone, so they're also all its Undo needs to keep.
 private struct CardSettings: Equatable {
     var timings: TimingSettings
     var detectionMethod: DetectionMethod

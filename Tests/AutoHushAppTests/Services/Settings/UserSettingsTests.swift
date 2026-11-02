@@ -146,10 +146,35 @@ struct UserSettingsTests {
         let settings = UserSettings(preferences: preferences)
         settings.setIgnored(viewer, true)
 
-        settings.forget(viewer)
+        settings.forget([viewer])
         #expect(settings.state.ignoredApps.isEmpty)
         #expect(settings.state.seenApps.isEmpty)
         #expect(preferences.seenApps.isEmpty)
+    }
+
+    @Test("forgotten apps are remembered where they were in the order apps played, ignored again if they were; one that played since keeps its new place")
+    func rememberForgottenApps() {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let books = AudioSource(id: "com.example.books", name: "Books", bundlePath: "/Applications/Books.app")
+        let chess = AudioSource(id: "com.example.chess", name: "Chess", bundlePath: "/Applications/Chess.app")
+        preferences.recordSeen([viewer, books, chess, chrome]) // most recent first
+        let settings = UserSettings(preferences: preferences)
+        settings.setIgnored(chess, true)
+        let before = settings.state
+
+        let forgotten = settings.forget([books, chess, chrome])
+        #expect(settings.state.seenApps == [viewer] && settings.state.ignoredApps.isEmpty)
+        settings.remember(forgotten)
+        #expect(settings.state == before)
+        #expect(preferences.seenApps.map(\.bundlePath) == before.seenApps.map(\.bundlePath)) // their icons too
+
+        // Chrome played meanwhile: it stays the most recent; Books goes back
+        // to its place, second.
+        let again = settings.forget([books, chrome])
+        preferences.recordSeen([chrome])
+        settings.appsSeenChanged()
+        settings.remember(again)
+        #expect(settings.state.seenApps == [chrome, books, viewer, chess])
     }
 
     @Test("an app that plays only the volume sound is ignored once; stopped ignoring, it stays so until the list is reset")

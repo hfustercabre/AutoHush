@@ -11,4 +11,14 @@ enum SettingsCard: Hashable, CaseIterable {
     case timing, fadeLengths, volumeLimits, detection
     // General's and About's
     case startup, updates
+
+    /// The page that shows it: where its Restore Defaults is undone.
+    var page: SettingsPage {
+        switch self {
+        case .pausing, .resuming, .fades, .volume, .modes: .behavior
+        case .timing, .fadeLengths, .volumeLimits, .detection: .fineTuning
+        case .startup: .general
+        case .updates: .about
+        }
+    }
 }

@@ -2,8 +2,9 @@ import Foundation
 
 /// The buttons several windows say the same way: Cancel and Continue (the
 /// welcome, Add a Web App and Add an App windows, the alerts), Allow… beside
-/// a permission not allowed, Open <app>, and Help (the menu bar's menu and
-/// Settings → About's link).
+/// a permission not allowed, Open <app>, Help (the menu bar's menu and
+/// Settings → About's link), and Restore Defaults (under Settings' cards,
+/// and the Edit menu's Undo and Redo of it).
 enum ButtonText {
     static var cancel: String {
         String(localized: "Cancel", comment: "Button that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player or to remove an app added with Add an App")
@@ -33,5 +34,11 @@ enum ButtonText {
     /// menu bar's Help menu and Settings → About's link (T7b, 2026-11-02).
     static var help: String {
         String(localized: "Help", comment: "The menu bar's Help menu, and the link in Settings → About that opens AutoHush's help (the README's Tips and troubleshooting) on GitHub; macOS's own word")
+    }
+
+    /// Under each Settings card with settings, and its step in the Edit
+    /// menu: "Undo Restore Defaults", "Redo Restore Defaults" (U10a).
+    static var restoreDefaults: String {
+        String(localized: "Restore Defaults", comment: "Settings: the button under each card with settings (Behavior's, Fine-Tuning's, General's Startup and Menu Bar, About's Updates) that sets that card's settings back to their defaults. Also what the Edit menu's Undo and Redo name after it (macOS adds “Undo” or “Redo” before it)")
     }
 }

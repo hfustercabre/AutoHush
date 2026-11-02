@@ -8,6 +8,8 @@ import AutoHushKit
 package final class InMemoryPreferenceStore: PreferenceStore {
     package init() {}
     private var values: [String: Any] = [:]
+    /// Every value kept, by key: a test compares all of them.
+    package var contents: [String: Any] { values }
 
     package func object(forKey key: String) -> Any? { values[key] }
 
