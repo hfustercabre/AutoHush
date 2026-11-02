@@ -17,10 +17,19 @@ struct ProjectInfoTests {
         #expect(ProjectInfo.newIssuePage.absoluteString == "https://github.com/hfustercabre/AutoHush/issues/new?template=bug.yml")
     }
 
-    @Test("Help opens the README's Tips and troubleshooting on GitHub, a heading the README has")
-    func help() throws {
+    @Test("Help opens the README's Tips and troubleshooting on GitHub")
+    func help() {
         #expect(ProjectInfo.helpPage.absoluteString == "https://github.com/hfustercabre/AutoHush#tips-and-troubleshooting")
-        let readme = try String(contentsOf: PackagePaths.root.appending(path: "README.md"), encoding: .utf8)
+    }
+
+    /// The README beside the sources, which a test kit run elsewhere (the
+    /// old macOS VMs') may not have: skipped there, not failed.
+    private static let readme = PackagePaths.root.appending(path: "README.md")
+
+    @Test("Help's anchor is a heading the README has",
+          .enabled(if: FileManager.default.fileExists(atPath: readme.path), "no README.md beside the sources"))
+    func helpHeading() throws {
+        let readme = try String(contentsOf: Self.readme, encoding: .utf8)
         let anchors = readme.split(separator: "\n").filter { $0.hasPrefix("#") }.map { Self.anchor(ofHeading: String($0)) }
         #expect(anchors.contains(ProjectInfo.helpAnchor))
     }

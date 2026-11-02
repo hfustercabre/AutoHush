@@ -112,7 +112,12 @@ extension AppDelegateTests {
         try await pauseFailed(sut, monitorings, .buttonDisabled)
         let alerts = answering(sut)
         sut.showControlError()
-        #expect(alerts.calls.last?.hasSuffix("as during an ad. | OK") == true) // AppKit's own OK only
+        // The alert says why, then (unless AutoHush speaks English, which
+        // the test runner's bundle decides) the log's English, then AppKit's
+        // own OK only.
+        let alert = try #require(sut.status.controlErrorAlert())
+        #expect(sut.status.controlError?.text.hasSuffix("as during an ad.") == true)
+        #expect(alerts.calls.last == "\(alert.title) | \(alert.message) | OK")
         try await pauseFailed(sut, monitorings, .pressFailed)
         sut.showControlError()
         #expect(alerts.calls.last?.hasSuffix(" | Learn Again… | OK") == true)
