@@ -204,6 +204,27 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 3)
     }
 
+    @Test("a failed pause that couldn't be muted is over once a later one is muted in its place (Try Again with AntiDot off): nothing failed is said any more")
+    func failedPauseOverOnceMuted() async {
+        let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressFailed))
+        let failures = Locked<[MusicPlayerError?]>([]), states = Locked<[PlaybackState]>([])
+        let antiDot = Locked(true)
+        let mute = FakeMute(allowed: { !antiDot.value })
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      onStatusUpdate: statuses(playback: { states.append($0) }, pauseFailure: { failures.append($0) }),
+                                      playerMute: mute)
+
+        await arbiter.sourceChanged("org.example.viewer", playing: true) // refused, and no mute in AntiDot mode
+        await arbiter.waitUntilIdle()
+        #expect(failures.value == [.playerCommandFailed(.pressFailed)])
+        antiDot.value = false
+        await arbiter.retryPause() // refused again, muted in its place
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 2)
+        #expect(states.value.last == .pausedByMonitor)
+        #expect(failures.value == [.playerCommandFailed(.pressFailed), nil])
+    }
+
     @Test("Try Again calls off a look still pending (a silent player's next one): its pause is the one tried, not one more after it")
     func retryPauseCallsOffPendingLook() async {
         let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressFailed))
