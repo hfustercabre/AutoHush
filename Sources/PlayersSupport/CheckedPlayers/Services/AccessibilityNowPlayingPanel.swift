@@ -20,12 +20,12 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
 
     package init() {}
 
-    func isInMenuBar() -> Bool { Self.menuItem() != nil }
+    func isInMenuBar() -> Bool { Self.item(hidden: NowPlayingSetting.isHidden) != nil }
 
     package func pressRow(_ pick: ([PanelRow]) -> PanelRow?) -> Bool? {
         // Hidden by the user: shown for this press only (the user, 2026-10-16),
         // looked for meanwhile only in the menu bar's own windows.
-        if Self.menuItem() == nil, NowPlayingSetting.isHidden {
+        if NowPlayingSetting.isHidden, Self.item(hidden: true) == nil {
             return NowPlayingSetting.whileShown(until: { Self.listedItem() != nil }) { Self.press(pick) } ?? nil
         }
         return Self.press(pick)
@@ -43,6 +43,20 @@ package struct AccessibilityNowPlayingPanel: NowPlayingPanel {
     /// Settings, it's in neither: macOS removes it.
     package static func menuItem() -> AXUIElement? {
         listedItem() ?? hitTestedItem()
+    }
+
+    /// The menu bar's item, as `menuItem()` finds it; with Now Playing
+    /// hidden in the menu bar (`NowPlayingSetting.isHidden`, a defaults
+    /// read), only in the menu bar's own windows: macOS removes a hidden
+    /// item, so the hit-test sweep (about 200 points in two apps, each up
+    /// to `timeout`) would find nothing, and every press would wait for it.
+    private static func item(hidden: Bool) -> AXUIElement? {
+        item(hidden: hidden, listed: listedItem, hitTested: hitTestedItem)
+    }
+
+    /// `item(hidden:)`'s rule, with the ways to find it given.
+    static func item<Item>(hidden: Bool, listed: () -> Item?, hitTested: () -> Item?) -> Item? {
+        hidden ? listed() : listed() ?? hitTested()
     }
 
     static let identifier = "com.apple.menuextra.now-playing"
