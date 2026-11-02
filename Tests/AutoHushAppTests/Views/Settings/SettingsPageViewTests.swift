@@ -22,6 +22,25 @@ struct SettingsPageViewTests {
         #expect(draws(page, model))
     }
 
+    @Test("About draws its compact header, the icon beside the name and the version, in a window too short for the stacked one, and keeps it there")
+    func aboutCompactHeader() throws {
+        // A fit put compact by a page too short at 64 pt, its way back measured (AboutFitTests' numbers).
+        var compact = AboutFit()
+        compact.pageChanged(to: CGSize(width: 640, height: 480))
+        compact.contentMeasured(height: 520)
+        compact.nameMeasured(CGSize(width: 80, height: 20))
+        compact.contentMeasured(height: 440)
+        try #require(compact.isCompact && compact.stackedExtra > 0)
+        let last = AboutSettingsView.lastFit
+        defer { AboutSettingsView.lastFit = last }
+        AboutSettingsView.lastFit = compact // the opening resumes it
+        let updates = FakeUpdateCommands()
+        updates.currentVersion = AppVersion("0.2.0")
+        let model = SettingsModel.forTests(actions: actions, updates: updates)
+        #expect(draws(.about, model, height: 300))
+        #expect(AboutSettingsView.lastFit?.isCompact == true)
+    }
+
     @Test("General draws the player's Reopen and Unmute, while it must be reopened and is muted for another app")
     func generalWithFixes() {
         let model = SettingsModel.forTests(actions: actions, updates: FakeUpdateCommands())

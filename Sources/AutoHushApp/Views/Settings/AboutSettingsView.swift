@@ -16,8 +16,9 @@ struct AboutSettingsView: View {
     @State private var fit = AboutFit(resuming: Self.lastFit)
     /// Where About's fit was last, in this run only (not kept on disk): the
     /// next opening starts there, not at 96 pt, so the icon doesn't jump as
-    /// the page opens (I1, the user, 2026-11-01).
-    private static var lastFit: AboutFit?
+    /// the page opens (I1, the user, 2026-11-01). Tests set it, to draw
+    /// the compact header.
+    static var lastFit: AboutFit?
 
     /// The icon's side beside the name.
     nonisolated static let compactIconSize: CGFloat = 56
