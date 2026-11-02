@@ -4,16 +4,19 @@ import SwiftUI
 /// and in Settings → General: Reopen while it must be reopened to be
 /// controlled (its tooltip and VoiceOver hint say why, and a caption under
 /// it while the keys are on it, A13a), Unmute while it's
-/// muted for another app (it's heard until the other apps stop), then Try
-/// Again after a given-up resume. `nil`: not offered now. In the card
-/// they're its chips (`CardChip`), in Settings push buttons; side by side or
-/// stacked, as the caller lays them out. The card has its Try Again above
+/// muted for another app (it's heard until the other apps stop), Try Again
+/// after a given-up resume, then Learn Controls… while a web app's controls
+/// aren't learned (`AppStatus.controlsNotLearned`; it opens the learning
+/// window, as the Controls row's button does). `nil`: not offered now. In
+/// the card they're its chips (`CardChip`), in Settings push buttons; side
+/// by side or stacked, as the caller lays them out. The card has its Try Again above
 /// the permission it lacks (`tryAgain(inCard:action:)`), not here.
 struct PlayerFixButtons: View {
     let player: String
     var reopen: (() -> Void)?
     var unmute: (() -> Void)?
     var retryResume: (() -> Void)?
+    var learnControls: (() -> Void)?
     var inCard = false
 
     var body: some View {
@@ -31,6 +34,9 @@ struct PlayerFixButtons: View {
         }
         if let retryResume {
             Self.tryAgain(inCard: inCard, action: retryResume)
+        }
+        if let learnControls {
+            Self.button(LearnText.learnButton, symbol: "hand.tap", inCard: inCard, action: learnControls)
         }
     }
 

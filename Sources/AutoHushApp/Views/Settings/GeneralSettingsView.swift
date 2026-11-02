@@ -65,10 +65,11 @@ struct GeneralSettingsView: View {
         }
     }
 
-    /// The chosen player with what it's doing (with Reopen or Unmute, as
-    /// the menu's card has them) and what works, and Change… (Choose… while
-    /// none is chosen), which shows the Media Player page; what it lacks and
-    /// the way to allow it; a web app's controls; then the Auto-Pause switch.
+    /// The chosen player with what it's doing (with Reopen, Unmute or Learn
+    /// Controls…, as the menu's card has them) and what works, and Change…
+    /// (Choose… while none is chosen), which shows the Media Player page;
+    /// what it lacks and the way to allow it; a web app's controls; then the
+    /// Auto-Pause switch.
     private var playerCard: some View {
         Card(Text(verbatim: PlayerOption.mediaPlayerHeading)) {
             HStack(alignment: .center, spacing: 12) {
@@ -81,13 +82,14 @@ struct GeneralSettingsView: View {
                         .font(.appSubheadline)
                         .foregroundStyle(model.statusNeedsAttention ? AnyShapeStyle(.appWarning) : AnyShapeStyle(.appSecondary))
                         .fixedSize(horizontal: false, vertical: true)
-                    if model.offersReopenPlayer || model.offersUnmute || model.showsResumeFailure {
+                    if model.offersReopenPlayer || model.offersUnmute || model.showsResumeFailure || model.offersLearnControls {
                         // As the menu's card has them.
                         HStack(spacing: 8) {
                             PlayerFixButtons(player: model.chosenPlayerName ?? "",
                                              reopen: model.offersReopenPlayer ? { model.actions?.reopenPlayer() } : nil,
                                              unmute: model.offersUnmute ? { model.actions?.unmutePlayer() } : nil,
-                                             retryResume: model.showsResumeFailure ? { model.actions?.retryResume() } : nil)
+                                             retryResume: model.showsResumeFailure ? { model.actions?.retryResume() } : nil,
+                                             learnControls: model.offersLearnControls ? { model.actions?.learnControlsAgain() } : nil)
                         }
                         .padding(.vertical, 4)
                     }
@@ -107,8 +109,9 @@ struct GeneralSettingsView: View {
                 PermissionButton(model: model, permission: control, access: model.permissions.controlAccess, long: true)
             }
             // A web app's controls: learned or not, and the way to learn them
-            // afresh in the learning window (the steps show only there).
-            if let name = model.chosenPlayerName, model.canLearnControlsAgain {
+            // afresh in the learning window (the steps show only there). Not
+            // while Learn Controls… is under the line.
+            if let name = model.chosenPlayerName, model.showsControlsRow {
                 CardDivider()
                 ControlsRow(name: name, isLearned: model.learning?.isLearned == true) { model.actions?.learnControlsAgain() }
             }

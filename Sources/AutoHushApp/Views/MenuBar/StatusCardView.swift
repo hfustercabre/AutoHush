@@ -48,6 +48,7 @@ struct StatusCardView: View {
                     PlayerFixButtons(player: status.playerName,
                                      reopen: status.playerNeedsReopen && status.isReady ? { model.perform(.reopenPlayer) } : nil,
                                      unmute: status.offersUnmute ? { model.perform(.unmutePlayer) } : nil,
+                                     learnControls: status.controlsNotLearned ? { model.perform(.learnControls) } : nil,
                                      inCard: true)
                 }
                 Spacer(minLength: 8)
@@ -72,8 +73,9 @@ struct StatusCardView: View {
                 PlayerChecks(model: settings)
             }
             // A web app's controls: learned or not, and the way to learn
-            // them in the learning window (the steps show only there).
-            if status.canLearnControlsAgain {
+            // them in the learning window (the steps show only there). Not
+            // while Learn Controls… is under the line.
+            if status.showsControlsRow {
                 CardDivider()
                 ControlsRow(name: status.playerName, isLearned: status.learning?.isLearned == true, buttonFont: .appCallout) {
                     model.perform(.learnControls)

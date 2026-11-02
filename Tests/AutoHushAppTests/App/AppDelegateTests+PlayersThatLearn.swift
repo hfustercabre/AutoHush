@@ -258,6 +258,29 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("a web app's controls not learned: calm while the learning window shows the steps, orange with Learn Controls… once it's closed")
+    func controlsNotLearned() async {
+        let scratch = Scratch()
+        let webApp = scratch.offerWebApp(.learning(hasPlayed: false))
+        webApp.setFailVerify(nil) // it can be controlled
+        let (sut, _) = makeSUT(scratch)
+        sut.session.launch()
+        sut.choosePlayer(webApp.bundleID)
+        await TestWait.until { sut.status.isReady }
+        #expect(scratch.learningWindow.isOpen && sut.status.learningStepsShown)
+        #expect(!sut.status.controlsNotLearned && !sut.settingsModel.offersLearnControls && sut.settingsModel.showsControlsRow)
+
+        scratch.learningWindow.close() // Later: the window watch's next round sees it closed
+        await TestWait.until { !sut.status.learningStepsShown }
+        #expect(sut.status.controlsNotLearned && sut.status.statusLine == "Controls not learned")
+        #expect(sut.settingsModel.offersLearnControls && !sut.settingsModel.showsControlsRow)
+
+        sut.learnControlsAgain() // the chip: a new learning window
+        await TestWait.until { scratch.learningWindow.isOpen }
+        #expect(sut.status.learningStepsShown && !sut.status.controlsNotLearned)
+    }
+
+    @MainActor
     @Test("a web app added from its address is chosen and opened, its steps shown in the add window, which closes once learned")
     func addWebApp() async {
         let scratch = Scratch()
@@ -276,6 +299,7 @@ extension AppDelegateTests {
         #expect(sut.addWebApp.model.phase == .learning(name: "Quartet", alreadyThere: false))
         #expect(scratch.opened == [appURL])
         #expect(!scratch.learningWindow.isOpen) // the add window shows the steps
+        #expect(sut.status.learningStepsShown && !sut.status.controlsNotLearned)
 
         webApp.set(.learned)
         await TestWait.until { !scratch.addWindow.isOpen }

@@ -46,6 +46,11 @@ final class AddWebAppFeature {
     }
 
     var isOpen: Bool { window?.isOpen == true }
+    /// The window shows the learning steps of the web app it added.
+    var showsLearning: Bool {
+        guard isOpen, case .learning = model.phase else { return false }
+        return true
+    }
 
     /// The "Add a Web App" window, ready for an address, filled in with
     /// `address` if there's one (or showing the one being added).

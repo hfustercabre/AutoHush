@@ -63,10 +63,27 @@ extension AppDelegate {
         if learningWindow == nil { learningWindow = makeLearningWindow(settingsModel) }
         learningWindow?.onClose = { [weak self] in self?.learning.windowClosed() }
         learningWindow?.show()
+        followLearningSteps()
         windowWatch.wake() // follows the permission it may wait for
         if opening, let player, let url = status.chosenPlayer?.appURL, !permissionCenter.isRunning(player.bundleID) {
             Task { await openApp(url) }
         }
+    }
+
+    /// A window shows the learning steps: the learning window, or Add a Web
+    /// App learning the web app it added. The card stays calm meanwhile, and
+    /// says the controls aren't learned once none does
+    /// (`AppStatus.controlsNotLearned`).
+    var showsLearningSteps: Bool { learningWindow?.isOpen == true || addWebApp.showsLearning }
+
+    /// Tells the status whether a window shows the learning steps: as one
+    /// opens, and as learning goes (`showLearning`). A window closing still
+    /// counts as open, so the window watch's round (`everyTick`) follows it
+    /// once it's closed.
+    func followLearningSteps() {
+        let shown = showsLearningSteps
+        guard shown != status.learningStepsShown else { return }
+        status.learningStepsShown = shown
     }
 }
 

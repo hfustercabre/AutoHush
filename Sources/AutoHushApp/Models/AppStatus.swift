@@ -62,6 +62,21 @@ struct AppStatus: Equatable {
     /// afresh, once learned (they may have been learned wrong) or before
     /// (the learning window was closed halfway).
     var canLearnControlsAgain: Bool { chosenPlayer != nil && learning != nil }
+    /// A window shows the learning steps: the learning window, or Add a Web
+    /// App learning the web app it added. The card stays calm meanwhile.
+    var learningStepsShown = false
+    /// The chosen player's controls aren't learned, so AutoHush can't pause
+    /// it, while Auto-Pause is on and no window shows the steps: the line
+    /// says so in orange, with Learn Controls… under it (U1a, the user's
+    /// pick, 2026-11-02). Reopening or a given-up resume says its own.
+    var controlsNotLearned: Bool {
+        guard isReady, autoPause == .on, !learningStepsShown, !playerNeedsReopen, !showsResumeFailure,
+              chosenPlayer != nil, learning?.isLearned == false else { return false }
+        return true
+    }
+    /// The card's Controls row: not while Learn Controls… is under the line,
+    /// which would show the button twice.
+    var showsControlsRow: Bool { canLearnControlsAgain && !controlsNotLearned }
     private(set) var health: AppHealthState = .starting
     var playback: PlaybackState = .unknown
     var detection: DetectionMode = .pending
@@ -200,6 +215,7 @@ struct AppStatus: Equatable {
     private var presentation: StatePresentation {
         health.presentation ?? (playerNeedsReopen ? .needingAttention(Self.needsReopenLine(playerName))
             : showsResumeFailure ? .needingAttention(Self.resumeFailedLine(playerName))
+            : controlsNotLearned ? .needingAttention(Self.controlsNotLearnedLine)
             : mutesNow && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name), microphone: onlyMicrophone)
             : playerHeldForCheck && playback == .pausedByMonitor ? .heldForCheck
             : playback.presentation(playing: pausingSources.map(\.name), microphone: onlyMicrophone))
@@ -219,6 +235,13 @@ struct AppStatus: Equatable {
     static func resumeFailedLine(_ player: String) -> String {
         String(localized: "Couldn’t resume — \(player) didn’t answer",
                comment: "Status line at the top of the menu (orange, with an info button and Try Again under it) and on Settings → General's player card: AutoHush tried to resume the media player once the other apps stopped, and it didn't answer (or its play failed); %@ is the player")
+    }
+
+    /// The status line while the chosen player's controls aren't learned
+    /// (`controlsNotLearned`).
+    static var controlsNotLearnedLine: String {
+        String(localized: "Controls not learned",
+               comment: "Status line at the top of the menu (orange, with “Learn Controls…” under it) and on Settings → General's player card: AutoHush hasn't learned the chosen web app's controls (its Play/Pause button), so it can't pause it; the line goes under the web app's name")
     }
 
     /// The status line while the player needs reopening.
@@ -251,7 +274,7 @@ struct AppStatus: Equatable {
         switch health {
         case .starting, .playerClosed:                           return false
         case .ready:                                             return playerNeedsReopen || (playback == .pauseFailed && autoPause == .on)
-                                                                    || showsResumeFailure
+                                                                    || showsResumeFailure || controlsNotLearned
         case .needsPlayer, .degraded, .retrying, .needsPermission, .failed: return true
         }
     }

@@ -106,6 +106,8 @@ extension AppDelegate {
         var shown = status
         shown.learning = learningStatus
         shown.learningPause = state.pause
+        // A web app chosen by Add a Web App: its window shows the steps.
+        shown.learningStepsShown = showsLearningSteps
         status = shown
         guard changed, learningStatus == nil || learningStatus == .learned else { return }
         // Learned (both steps ticked), or nothing to learn: the windows go.

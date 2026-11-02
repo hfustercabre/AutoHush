@@ -371,6 +371,51 @@ struct AppStatusTests {
         #expect(!status.canLearnControlsAgain)
     }
 
+    @Test("a web app whose controls aren't learned says so in orange, with Learn Controls… in place of the Controls row, while Auto-Pause is on")
+    func controlsNotLearned() {
+        var status = ready(.musicPlaying)
+        status.learning = .learning(hasPlayed: false)
+        #expect(status.controlsNotLearned && status.needsAttention)
+        #expect(status.statusLine == "Controls not learned")
+        #expect(status.icon == .attention)
+        #expect(status.iconAccessibilityLabel == "AutoHush: Controls not learned")
+        #expect(status.canLearnControlsAgain && !status.showsControlsRow) // the chip, not the row too
+        status.learning = .learning(hasPlayed: true) // closed halfway
+        #expect(status.controlsNotLearned && status.statusLine == "Controls not learned")
+
+        // Auto-Pause off or snoozed says so instead, as today, with the Controls row.
+        for autoPause in [AppStatus.AutoPause.off, .snoozed("until 15:30")] {
+            status.autoPause = autoPause
+            #expect(!status.controlsNotLearned && !status.needsAttention && status.showsControlsRow)
+            #expect(status.statusLine.hasPrefix("Auto-Pause is off"))
+        }
+        status.autoPause = .on
+
+        // While a window shows the steps: as today, nothing orange.
+        status.learningStepsShown = true
+        #expect(!status.controlsNotLearned && !status.needsAttention && status.showsControlsRow)
+        #expect(status.statusLine == "Playing" && status.icon == .playing)
+        #expect(status.iconAccessibilityLabel == "AutoHush: your player is playing")
+        status.learningStepsShown = false
+
+        // Learned, or learned again (what it learned still works): as today.
+        for learning in [LearningStatus.learned, .relearning] {
+            status.learning = learning
+            #expect(!status.controlsNotLearned && !status.needsAttention && status.showsControlsRow)
+            #expect(status.statusLine == "Playing" && status.icon == .playing)
+        }
+
+        // Not running: calm, as today.
+        status.learning = .learning(hasPlayed: false)
+        status.setHealth(.playerClosed("Jukebox isn’t running"))
+        #expect(!status.controlsNotLearned && !status.needsAttention && status.showsControlsRow)
+
+        // A player that learns nothing never says so.
+        var plain = ready(.musicPlaying)
+        plain.learning = nil
+        #expect(!plain.controlsNotLearned && !plain.showsControlsRow && plain.statusLine == "Playing")
+    }
+
     @Test("missing audio access warns only when ready")
     func audioAccessWarning() {
         var status = ready()

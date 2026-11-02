@@ -242,7 +242,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         windowWatch = WindowWatch(sleep: system.windowWatchSleep,
                                   refresh: { [weak self] in await self?.refresh($0) },
-                                  everyTick: { [weak self] in self?.followWelcomeClosed() })
+                                  everyTick: { [weak self] in
+                                      self?.followWelcomeClosed()
+                                      self?.followLearningSteps() // a window that shows the steps closed
+                                  })
         registerWatchedWindows()
         showChosenPlayer()
         refreshPlayerOptions()

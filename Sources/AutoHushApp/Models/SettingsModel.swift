@@ -90,6 +90,17 @@ final class SettingsModel {
         _ = state.statusLine
         return state.status.showsResumeFailure
     }
+    /// The chosen web app's controls aren't learned: the player card offers
+    /// Learn Controls… under the line, as the menu's card does, in place of
+    /// its Controls row (`AppStatus.controlsNotLearned`). Followed as
+    /// `offersUnmute` is, through the status line ("Controls not learned").
+    var offersLearnControls: Bool {
+        _ = state.statusLine
+        return state.status.controlsNotLearned
+    }
+    /// The player card's Controls row: not while it offers Learn Controls…
+    /// (`AppStatus.showsControlsRow`).
+    var showsControlsRow: Bool { canLearnControlsAgain && !offersLearnControls }
     /// The chosen player is muted now rather than paused (`AppStatus.mutesNow`):
     /// Sound Sources' apps say "Mutes your player". Followed through the
     /// chosen player (one that can only be muted) and, as `offersReopenPlayer`
