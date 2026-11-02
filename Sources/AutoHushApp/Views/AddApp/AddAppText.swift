@@ -182,8 +182,8 @@ enum AddAppText {
     }
 
     static func audioUse(_ app: String) -> String {
-        String(localized: "Hears whether \(app) plays, and mutes it.",
-               comment: "Add an App window, under “Audio Recording”: what the check uses it for; %@ is the app")
+        String(localized: "Hears whether \(app) plays, and mutes it. Never recorded.",
+               comment: "Add an App window, under “Audio Recording”: what the check uses it for (it only measures how loud the app plays, and never records its audio); %@ is the app")
     }
 
     static var automationUse: String {

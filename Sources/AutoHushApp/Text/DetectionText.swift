@@ -43,8 +43,8 @@ extension DetectionMethod {
     var summary: String {
         switch self {
         case .audioLevels:
-            return String(localized: "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple recording indicator while AutoHush measures.",
-                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: what measuring audio levels does")
+            return String(localized: "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple dot while AutoHush measures.",
+                          comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: what measuring audio levels does; the purple dot is macOS's recording indicator")
         case .playbackSignals:
             return String(localized: "Apps count as playing while they tell macOS so; apps that never do, while their audio is open. Sounds without video under 3 seconds don’t pause your player.",
                           comment: "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: how “What apps tell macOS” works")

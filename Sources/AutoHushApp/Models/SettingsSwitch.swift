@@ -33,8 +33,8 @@ enum SettingsSwitch {
     var subtitle: Text {
         switch self {
         case .antiDot:
-            Text("Hides the purple recording indicator. Detection is less precise.",
-                 comment: "Settings, under AntiDot mode")
+            Text("Hides the purple dot. Detection is a little less precise.",
+                 comment: "Settings, under AntiDot mode; the purple dot is macOS's recording indicator, shown while AutoHush measures audio")
         case .pausesOnDisconnect:
             Text("Headphones and other outputs: your player stays paused instead of moving to the speakers. Some players already do this themselves.",
                  comment: "Settings → Behavior, under “Pause on disconnect”: when headphones or another output (Bluetooth or USB speakers) are unplugged or go out of range; AutoHush doesn’t resume it. Some media players already pause on their own when that happens")

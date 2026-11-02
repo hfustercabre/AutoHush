@@ -303,6 +303,15 @@ struct TextChoiceTests {
             == "Accessibility and Audio Recording allowed; the check goes on without Automation")
     }
 
+    @Test("Audio Recording's notes say nothing is recorded, and Use AntiDot Mode Instead what it trades (T2a, F2a)")
+    func audioRecordingNotes() {
+        for access: PermissionAccess in [.allowed, .notAsked, .playerNotRunning] {
+            #expect(PermissionText.audioNote(access) == "Tells playing apps from silent ones. Never recorded.")
+        }
+        #expect(AddAppText.audioUse(Self.app) == "Hears whether Jukebox plays, and mutes it. Never recorded.")
+        #expect(PermissionText.antiDotTradeOff == "No purple dot; a little less precise.")
+    }
+
     @Test("Add an App's countdown rounds up, and never goes below zero")
     func countdown() {
         #expect(AddAppText.timeLeft(104.2, for: .play(minutes: 2)) == "You have 1:45 to start it playing.")

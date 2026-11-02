@@ -37578,6 +37578,233 @@
         }
       }
     },
+    "AutoHush is now in the menu bar." : {
+      "comment" : "Welcome window, beside Done on its permissions page, after AutoHush's menu bar icon: AutoHush keeps running there once the window closes",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أصبح AutoHush الآن في شريط القوائم."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’AutoHush ara és a la barra de menús."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush je teď na řádku nabídek."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush er nu på menulinjen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ist jetzt in der Menüleiste."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush βρίσκεται τώρα στη γραμμή μενού."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ya está en la barra de menús."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ya está en la barra de menús."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush on nyt valikkorivillä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush est désormais dans la barre des menus."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush est désormais dans la barre des menus."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush נמצא עכשיו בשורת התפריטים."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush अब मेनू बार में है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush je sada na traci izbornika."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush mostantól a menüsoron van."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kini ada di bar menu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ora è nella barra dei menu."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushはメニューバーにあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 이제 메뉴 막대에 있습니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kini berada dalam bar menu."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush er nå i menylinjen."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush staat nu in de menubalk."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush jest teraz na pasku menu."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush agora está na barra de menus."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush está agora na barra de menus."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush este acum în bara de meniu."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush теперь в строке меню."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush je teraz na lište menu."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush je zdaj v menijski vrstici."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush finns nu i menyraden."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตอนนี้ AutoHush อยู่ในแถบเมนูแล้ว"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush artık menü çubuğunda."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush тепер на смузі меню."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush hiện ở trên thanh menu."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 現在位於選單列中。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 现在位于菜单栏中。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 現在位於選單列中。"
+          }
+        }
+      }
+    },
     "AutoHush lets you know. Install the update from its menu whenever you like." : {
       "comment" : "Settings → About: help tag and VoiceOver hint of the update pop-up while Notify me is chosen",
       "localizations" : {
@@ -39394,229 +39621,229 @@
         }
       }
     },
-    "AutoHush pauses it while other apps play audio, then resumes it. You can change it anytime in the menu or Settings." : {
-      "comment" : "Welcome window, at its top beside AutoHush's icon, under the title “Choose Your Media Player”",
+    "AutoHush pauses it while other apps play audio, then resumes it. Change it anytime from AutoHush’s menu bar icon." : {
+      "comment" : "Welcome window, at its top beside AutoHush's icon, under the title “Choose Your Media Player”: “it” is the media player chosen below; AutoHush's icon in the menu bar opens its menu, where the player can be changed",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يوقفه AutoHush مؤقتًا بينما تُشغّل التطبيقات الأخرى الصوت، ثم يستأنفه. يمكنك تغييره في أي وقت من القائمة أو الإعدادات."
+            "value" : "يوقفه AutoHush مؤقتًا بينما تُشغّل التطبيقات الأخرى الصوت، ثم يستأنفه. يمكنك تغييره في أي وقت من أيقونة AutoHush في شريط القوائم."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L’AutoHush el posa en pausa mentre altres apps reprodueixen àudio, i després el reprèn. El pots canviar quan vulguis des del menú o a la configuració."
+            "value" : "L’AutoHush el posa en pausa mentre altres apps reprodueixen àudio, i després el reprèn. El pots canviar quan vulguis des de la icona de l’AutoHush a la barra de menús."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush ho pozastaví, když jiné aplikace přehrávají zvuk, a potom ho obnoví. Kdykoli ho můžete změnit v nabídce nebo v nastavení."
+            "value" : "AutoHush ho pozastaví, když jiné aplikace přehrávají zvuk, a potom ho obnoví. Kdykoli ho můžete změnit z ikony AutoHush na řádku nabídek."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush sætter den på pause, mens andre apps afspiller lyd, og genoptager den bagefter. Du kan altid ændre den i menuen eller i Indstillinger."
+            "value" : "AutoHush sætter den på pause, mens andre apps afspiller lyd, og genoptager den bagefter. Du kan altid ændre den fra AutoHushs symbol på menulinjen."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pausiert ihn, während andere Apps Audio abspielen, und setzt ihn danach fort. Du kannst ihn jederzeit im Menü oder in den Einstellungen ändern."
+            "value" : "AutoHush pausiert ihn, während andere Apps Audio abspielen, und setzt ihn danach fort. Du kannst ihn jederzeit über das Symbol von AutoHush in der Menüleiste ändern."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Το AutoHush τη θέτει σε παύση όσο άλλες εφαρμογές αναπαράγουν ήχο και μετά τη συνεχίζει. Μπορείτε να την αλλάξετε οποιαδήποτε στιγμή από το μενού ή τις Ρυθμίσεις."
+            "value" : "Το AutoHush τη θέτει σε παύση όσο άλλες εφαρμογές αναπαράγουν ήχο και μετά τη συνεχίζει. Μπορείτε να την αλλάξετε οποιαδήποτε στιγμή από το εικονίδιο του AutoHush στη γραμμή μενού."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush lo pausa mientras otras apps reproducen audio, y después lo reanuda. Puedes cambiarlo cuando quieras desde el menú o en Ajustes."
+            "value" : "AutoHush lo pausa mientras otras apps reproducen audio, y después lo reanuda. Puedes cambiarlo cuando quieras desde el icono de AutoHush en la barra de menús."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush lo pausa mientras otras apps reproducen audio, y después lo reanuda. Puedes cambiarlo cuando quieras desde el menú o en Configuración."
+            "value" : "AutoHush lo pausa mientras otras apps reproducen audio, y después lo reanuda. Puedes cambiarlo cuando quieras desde el ícono de AutoHush en la barra de menús."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush keskeyttää sen, kun muut apit toistavat ääntä, ja jatkaa sitten. Voit vaihtaa sen milloin tahansa valikosta tai asetuksista."
+            "value" : "AutoHush keskeyttää sen, kun muut apit toistavat ääntä, ja jatkaa sitten. Voit vaihtaa sen milloin tahansa AutoHushin symbolista valikkorivillä."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush le met en pause pendant que d’autres apps lisent du son, puis le relance. Vous pouvez le changer à tout moment dans le menu ou les Réglages."
+            "value" : "AutoHush le met en pause pendant que d’autres apps lisent du son, puis le relance. Vous pouvez le changer à tout moment depuis l’icône d’AutoHush dans la barre des menus."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush le met en pause pendant que d’autres apps lisent du son, puis le relance. Vous pouvez le changer à tout moment dans le menu ou les Réglages."
+            "value" : "AutoHush le met en pause pendant que d’autres apps lisent du son, puis le relance. Vous pouvez le changer à tout moment depuis l’icône d’AutoHush dans la barre des menus."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush משהה אותו בזמן שאפליקציות אחרות מנגנות, ואז מחדש את הניגון. אפשר להחליף אותו בכל עת בתפריט או בהגדרות."
+            "value" : "AutoHush משהה אותו בזמן שאפליקציות אחרות מנגנות, ואז מחדש את הניגון. אפשר להחליף אותו בכל עת דרך הצלמית של AutoHush בשורת התפריטים."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "जब दूसरे ऐप्स ऑडियो चलाते हैं, तो AutoHush इसे पॉज़ करता है और फिर से शुरू करता है। आप इसे कभी भी मेनू या सेटिंग में बदल सकते हैं।"
+            "value" : "जब दूसरे ऐप्स ऑडियो चलाते हैं, तो AutoHush इसे पॉज़ करता है और फिर से शुरू करता है। आप इसे कभी भी मेनू बार में AutoHush के आइकन से बदल सकते हैं।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush ga pauzira dok druge aplikacije reproduciraju zvuk, a zatim ga nastavlja. Možete ga promijeniti bilo kada u izborniku ili u postavkama."
+            "value" : "AutoHush ga pauzira dok druge aplikacije reproduciraju zvuk, a zatim ga nastavlja. Možete ga promijeniti bilo kada putem ikone aplikacije AutoHush na traci izbornika."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Az AutoHush szünetelteti, amíg más appok hangot játszanak le, majd folytatja. Bármikor módosíthatja a menüben vagy a beállításokban."
+            "value" : "Az AutoHush szünetelteti, amíg más appok hangot játszanak le, majd folytatja. Bármikor módosíthatja az AutoHush menüsoron lévő ikonjával."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush menjedanya saat app lain memutar audio, lalu melanjutkannya. Anda dapat mengubahnya kapan saja di menu atau di Pengaturan."
+            "value" : "AutoHush menjedanya saat app lain memutar audio, lalu melanjutkannya. Anda dapat mengubahnya kapan saja dari ikon AutoHush di bar menu."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush lo mette in pausa mentre altre app riproducono audio, poi lo riprende. Puoi cambiarlo in qualsiasi momento dal menu o nelle Impostazioni."
+            "value" : "AutoHush lo mette in pausa mentre altre app riproducono audio, poi lo riprende. Puoi cambiarlo in qualsiasi momento dall’icona di AutoHush nella barra dei menu."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ほかのAppがオーディオを再生している間はプレーヤーを一時停止し、その後再開します。メニューまたは設定でいつでも変更できます。"
+            "value" : "ほかのAppがオーディオを再生している間はプレーヤーを一時停止し、その後再開します。メニューバーのAutoHushのアイコンからいつでも変更できます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "다른 앱이 오디오를 재생하는 동안 플레이어를 일시 정지하고, 이후 다시 재생합니다. 메뉴나 설정에서 언제든지 변경할 수 있습니다."
+            "value" : "다른 앱이 오디오를 재생하는 동안 플레이어를 일시 정지하고, 이후 다시 재생합니다. 메뉴 막대의 AutoHush 아이콘에서 언제든지 변경할 수 있습니다."
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush menjedanya semasa app lain memainkan audio, kemudian menyambungnya semula. Anda boleh menukarnya pada bila-bila masa dalam menu atau Seting."
+            "value" : "AutoHush menjedanya semasa app lain memainkan audio, kemudian menyambungnya semula. Anda boleh menukarnya pada bila-bila masa daripada ikon AutoHush dalam bar menu."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush setter den på pause mens andre apper spiller av lyd, og gjenopptar den etterpå. Du kan når som helst endre den i menyen eller i Innstillinger."
+            "value" : "AutoHush setter den på pause mens andre apper spiller av lyd, og gjenopptar den etterpå. Du kan når som helst endre den fra AutoHush-symbolet i menylinjen."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pauzeert hem terwijl andere apps audio afspelen, en hervat hem daarna. Je kunt dit altijd wijzigen in het menu of in Instellingen."
+            "value" : "AutoHush pauzeert hem terwijl andere apps audio afspelen, en hervat hem daarna. Je kunt dit altijd wijzigen via het symbool van AutoHush in de menubalk."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush wstrzymuje go, gdy inne aplikacje odtwarzają dźwięk, a potem go wznawia. Możesz go zmienić w każdej chwili w menu lub w ustawieniach."
+            "value" : "AutoHush wstrzymuje go, gdy inne aplikacje odtwarzają dźwięk, a potem go wznawia. Możesz go zmienić w każdej chwili za pomocą ikony AutoHush na pasku menu."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O AutoHush o pausa enquanto outros apps reproduzem áudio e depois o retoma. Você pode alterá-lo a qualquer momento no menu ou nos Ajustes."
+            "value" : "O AutoHush o pausa enquanto outros apps reproduzem áudio e depois o retoma. Você pode alterá-lo a qualquer momento pelo ícone do AutoHush na barra de menus."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O AutoHush coloca-o em pausa enquanto outras apps reproduzem áudio, e depois retoma-o. Pode alterá-lo a qualquer momento no menu ou nas Definições."
+            "value" : "O AutoHush coloca-o em pausa enquanto outras apps reproduzem áudio, e depois retoma-o. Pode alterá-lo a qualquer momento através do ícone do AutoHush na barra de menus."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush îl pune pe pauză cât timp alte aplicații redau sunet, apoi îl reia. Îl puteți schimba oricând din meniu sau din Configurări."
+            "value" : "AutoHush îl pune pe pauză cât timp alte aplicații redau sunet, apoi îl reia. Îl puteți schimba oricând din pictograma AutoHush din bara de meniu."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush ставит его на паузу, пока другие приложения воспроизводят звук, и затем возобновляет. Его можно сменить в любое время в меню или в настройках."
+            "value" : "AutoHush ставит его на паузу, пока другие приложения воспроизводят звук, и затем возобновляет. Его можно сменить в любое время через значок AutoHush в строке меню."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush ho pozastaví, keď iné apky prehrávajú zvuk, a potom ho obnoví. Kedykoľvek ho môžete zmeniť v menu alebo v nastaveniach."
+            "value" : "AutoHush ho pozastaví, keď iné apky prehrávajú zvuk, a potom ho obnoví. Kedykoľvek ho môžete zmeniť cez ikonu AutoHush na lište menu."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush ga zaustavi, medtem ko druge aplikacije predvajajo zvok, in ga nato nadaljuje. Kadar koli ga lahko spremenite v meniju ali v nastavitvah."
+            "value" : "AutoHush ga zaustavi, medtem ko druge aplikacije predvajajo zvok, in ga nato nadaljuje. Kadar koli ga lahko spremenite z ikono AutoHush v menijski vrstici."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush pausar den medan andra appar spelar upp ljud och återupptar den sedan. Du kan ändra den när som helst i menyn eller i Inställningar."
+            "value" : "AutoHush pausar den medan andra appar spelar upp ljud och återupptar den sedan. Du kan ändra den när som helst från AutoHush-symbolen i menyraden."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush จะหยุดพักตัวเล่นขณะที่แอปอื่นเล่นเสียง แล้วเล่นต่อ คุณเปลี่ยนตัวเล่นได้ทุกเมื่อในเมนูหรือการตั้งค่า"
+            "value" : "AutoHush จะหยุดพักตัวเล่นขณะที่แอปอื่นเล่นเสียง แล้วเล่นต่อ คุณเปลี่ยนตัวเล่นได้ทุกเมื่อจากไอคอน AutoHush ในแถบเมนู"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Diğer uygulamalar ses çalarken AutoHush onu duraklatır, ardından sürdürür. Bunu istediğiniz zaman menüden veya Ayarlar’dan değiştirebilirsiniz."
+            "value" : "Diğer uygulamalar ses çalarken AutoHush onu duraklatır, ardından sürdürür. Bunu istediğiniz zaman menü çubuğundaki AutoHush simgesinden değiştirebilirsiniz."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush призупиняє його, поки інші програми відтворюють звук, а потім відновлює. Його можна змінити будь-коли в меню або в параметрах."
+            "value" : "AutoHush призупиняє його, поки інші програми відтворюють звук, а потім відновлює. Його можна змінити будь-коли через значок AutoHush на смузі меню."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "AutoHush tạm dừng nó khi các ứng dụng khác phát âm thanh, rồi tiếp tục phát. Bạn có thể thay đổi bất cứ lúc nào trong menu hoặc trong Cài đặt."
+            "value" : "AutoHush tạm dừng nó khi các ứng dụng khác phát âm thanh, rồi tiếp tục phát. Bạn có thể thay đổi bất cứ lúc nào từ biểu tượng AutoHush trên thanh menu."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在其他 App 播放音訊時，AutoHush 會暫停它，之後繼續播放。你可以隨時在選單或設定中更改。"
+            "value" : "在其他 App 播放音訊時，AutoHush 會暫停它，之後繼續播放。你可以隨時透過選單列中的 AutoHush 圖像更改。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在其他 App 播放音频时，AutoHush 会暂停它，之后继续播放。你可以随时在菜单或设置中更改。"
+            "value" : "在其他 App 播放音频时，AutoHush 会暂停它，之后继续播放。你可以随时通过菜单栏中的 AutoHush 图标更改。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在其他 App 播放音訊時，AutoHush 會暫停它，之後繼續播放。你可以隨時在選單或設定中更改。"
+            "value" : "在其他 App 播放音訊時，AutoHush 會暫停它，之後繼續播放。你可以隨時透過選單列中的 AutoHush 圖像更改。"
           }
         }
       }
@@ -70500,229 +70727,229 @@
         }
       }
     },
-    "Hears whether %@ plays, and mutes it." : {
-      "comment" : "Add an App window, under “Audio Recording”: what the check uses it for; %@ is the app",
+    "Hears whether %@ plays, and mutes it. Never recorded." : {
+      "comment" : "Add an App window, under “Audio Recording”: what the check uses it for (it only measures how loud the app plays, and never records its audio); %@ is the app",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يسمع ما إذا كان %@ يُشغّل الصوت، ويكتمه."
+            "value" : "يسمع ما إذا كان %@ يُشغّل الصوت، ويكتمه. لا يسجّل شيئًا."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sent si %@ sona, i en silencia el so."
+            "value" : "Sent si %@ sona, i en silencia el so. No grava res."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Slyší, jestli aplikace %@ hraje, a ztlumí ji."
+            "value" : "Slyší, jestli aplikace %@ hraje, a ztlumí ji. Nic nenahrává."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hører, om %@ afspiller, og slår lyden fra."
+            "value" : "Hører, om %@ afspiller, og slår lyden fra. Optager aldrig noget."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hört, ob %@ abspielt, und schaltet die App stumm."
+            "value" : "Hört, ob %@ abspielt, und schaltet die App stumm. Nimmt nichts auf."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ακούει αν παίζει η εφαρμογή %@ και τη θέτει σε σίγαση."
+            "value" : "Ακούει αν παίζει η εφαρμογή %@ και τη θέτει σε σίγαση. Δεν ηχογραφεί τίποτα."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oye si %@ suena y silencia su sonido."
+            "value" : "Oye si %@ suena y silencia su sonido. No graba nada."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escucha si %@ suena y silencia su sonido."
+            "value" : "Escucha si %@ suena y silencia su sonido. No graba nada."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kuulee, toistaako appi %@, ja mykistää sen."
+            "value" : "Kuulee, toistaako appi %@, ja mykistää sen. Ei tallenna mitään."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Détecte si %@ lit du son, et le coupe."
+            "value" : "Détecte si %@ lit du son, et le coupe. N’enregistre rien."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Détecte si %@ lit du son, et le coupe."
+            "value" : "Détecte si %@ lit du son, et le coupe. N’enregistre rien."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "שומע אם %@ מנגן, ומשתיק אותו."
+            "value" : "שומע אם %@ מנגן, ומשתיק אותו. לא מקליט דבר."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "सुनता है कि %@ चल रहा है या नहीं, और उसे म्यूट करता है।"
+            "value" : "सुनता है कि %@ चल रहा है या नहीं, और उसे म्यूट करता है। कभी रिकॉर्ड नहीं करता।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Čuje svira li aplikacija %@ i utišava je."
+            "value" : "Čuje svira li aplikacija %@ i utišava je. Ništa ne snima."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hallja, hogy szól-e a(z) %@, és lenémítja."
+            "value" : "Hallja, hogy szól-e a(z) %@, és lenémítja. Semmit sem rögzít."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mendengar apakah %@ memutar, dan membisukannya."
+            "value" : "Mendengar apakah %@ memutar, dan membisukannya. Tidak pernah merekam."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sente se %@ è in riproduzione e ne disattiva l’audio."
+            "value" : "Sente se %@ è in riproduzione e ne disattiva l’audio. Non registra nulla."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@が再生しているかを聞き取り、消音します。"
+            "value" : "%@が再生しているかを聞き取り、消音します。録音はしません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@이(가) 재생되는지 듣고, 음소거합니다."
+            "value" : "%@이(가) 재생되는지 듣고, 음소거합니다. 녹음하지 않습니다."
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mendengar sama ada %@ bermain, dan menyenyapkannya."
+            "value" : "Mendengar sama ada %@ bermain, dan menyenyapkannya. Tidak pernah merakam."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hører om %@ spiller av, og demper den."
+            "value" : "Hører om %@ spiller av, og demper den. Tar aldri opp noe."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hoort of %@ afspeelt en dempt de app."
+            "value" : "Hoort of %@ afspeelt en dempt de app. Neemt nooit iets op."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Słyszy, czy aplikacja %@ odtwarza, i wycisza ją."
+            "value" : "Słyszy, czy aplikacja %@ odtwarza, i wycisza ją. Niczego nie nagrywa."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ouve se %@ está tocando e silencia o som."
+            "value" : "Ouve se %@ está tocando e silencia o som. Não grava nada."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ouve se %@ está a tocar e silencia o som."
+            "value" : "Ouve se %@ está a tocar e silencia o som. Não grava nada."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aude dacă aplicația %@ redă și îi oprește sunetul."
+            "value" : "Aude dacă aplicația %@ redă și îi oprește sunetul. Nu înregistrează nimic."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Слышит, играет ли %@, и выключает его звук."
+            "value" : "Слышит, играет ли %@, и выключает его звук. Ничего не записывает."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Počuje, či apka %@ hrá, a stlmí ju."
+            "value" : "Počuje, či apka %@ hrá, a stlmí ju. Nič nenahráva."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sliši, ali aplikacija %@ predvaja, in jo utiša."
+            "value" : "Sliši, ali aplikacija %@ predvaja, in jo utiša. Nikoli ne snema."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hör om %@ spelar upp och gör den ljudlös."
+            "value" : "Hör om %@ spelar upp och gör den ljudlös. Spelar aldrig in något."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ฟังว่า %@ เล่นอยู่หรือไม่ และปิดเสียงแอป"
+            "value" : "ฟังว่า %@ เล่นอยู่หรือไม่ และปิดเสียงแอป ไม่มีการบันทึกเสียง"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ uygulamasının çalıp çalmadığını duyar ve sesini kapatır."
+            "value" : "%@ uygulamasının çalıp çalmadığını duyar ve sesini kapatır. Asla kayıt yapmaz."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Чує, чи грає програма %@, і вимикає її звук."
+            "value" : "Чує, чи грає програма %@, і вимикає її звук. Нічого не записує."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nghe xem %@ có phát không, và tắt tiếng ứng dụng."
+            "value" : "Nghe xem %@ có phát không, và tắt tiếng ứng dụng. Không bao giờ ghi âm."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "偵測 %@ 是否在播放，並將其靜音。"
+            "value" : "偵測 %@ 是否在播放，並將其靜音。從不錄音。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "检测 %@ 是否在播放，并将其静音。"
+            "value" : "检测 %@ 是否在播放，并将其静音。从不录音。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "偵測 %@ 是否在播放，並將其靜音。"
+            "value" : "偵測 %@ 是否在播放，並將其靜音。從不錄音。"
           }
         }
       }
@@ -71408,229 +71635,229 @@
         }
       }
     },
-    "Hides the purple recording indicator. Detection is less precise." : {
-      "comment" : "Settings, under AntiDot mode",
+    "Hides the purple dot. Detection is a little less precise." : {
+      "comment" : "Settings, under AntiDot mode; the purple dot is macOS's recording indicator, shown while AutoHush measures audio",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يُخفي مؤشر التسجيل الأرجواني. الاكتشاف أقل دقة."
+            "value" : "يُخفي النقطة البنفسجية. الاكتشاف أقل دقة قليلًا."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Amaga l’indicador lila de gravació. La detecció és menys precisa."
+            "value" : "Amaga el punt lila. La detecció és una mica menys precisa."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skryje fialový indikátor nahrávání. Rozpoznávání je méně přesné."
+            "value" : "Skryje fialovou tečku. Rozpoznávání je o něco méně přesné."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skjuler den lilla optageindikator. Registreringen er mindre præcis."
+            "value" : "Skjuler den lilla prik. Registreringen er lidt mindre præcis."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Blendet die violette Aufnahmeanzeige aus. Die Erkennung ist ungenauer."
+            "value" : "Blendet den violetten Punkt aus. Die Erkennung ist etwas ungenauer."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Αποκρύπτει τη μοβ ένδειξη εγγραφής. Ο εντοπισμός είναι λιγότερο ακριβής."
+            "value" : "Αποκρύπτει τη μοβ κουκκίδα. Ο εντοπισμός είναι λίγο λιγότερο ακριβής."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oculta el indicador morado de grabación. La detección es menos precisa."
+            "value" : "Oculta el punto morado. La detección es un poco menos precisa."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oculta el indicador morado de grabación. La detección es menos precisa."
+            "value" : "Oculta el punto morado. La detección es un poco menos precisa."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Piilottaa violetin tallennusilmaisimen. Tunnistus on epätarkempi."
+            "value" : "Piilottaa violetin pisteen. Tunnistus on hieman epätarkempi."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Masque l’indicateur d’enregistrement violet. La détection est moins précise."
+            "value" : "Masque le point violet. La détection est un peu moins précise."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Masque l’indicateur d’enregistrement violet. La détection est moins précise."
+            "value" : "Masque le point violet. La détection est un peu moins précise."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "מסתיר את מחוון ההקלטה הסגול. הזיהוי פחות מדויק."
+            "value" : "מסתיר את הנקודה הסגולה. הזיהוי מעט פחות מדויק."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "बैंगनी रिकॉर्डिंग संकेतक छिपाता है। पहचान कम सटीक होती है।"
+            "value" : "बैंगनी बिंदु छिपाता है। पहचान थोड़ी कम सटीक होती है।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skriva ljubičasti indikator snimanja. Prepoznavanje je manje precizno."
+            "value" : "Skriva ljubičastu točku. Prepoznavanje je nešto manje precizno."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elrejti a lila felvételjelzőt. A felismerés kevésbé pontos."
+            "value" : "Elrejti a lila pontot. A felismerés kicsit kevésbé pontos."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Menyembunyikan indikator rekaman ungu. Deteksi kurang presisi."
+            "value" : "Menyembunyikan titik ungu. Deteksi sedikit kurang presisi."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nasconde l’indicatore viola di registrazione. Il rilevamento è meno preciso."
+            "value" : "Nasconde il punto viola. Il rilevamento è un po’ meno preciso."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "紫色の録音インジケータを表示しません。検出の精度は下がります。"
+            "value" : "紫色のドットを表示しません。検出の精度は少し下がります。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "보라색 녹음 표시기를 숨깁니다. 감지 정확도가 낮아집니다."
+            "value" : "보라색 점을 숨깁니다. 감지 정확도가 약간 낮아집니다."
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Menyembunyikan penunjuk rakaman ungu. Pengesanan kurang tepat."
+            "value" : "Menyembunyikan titik ungu. Pengesanan kurang tepat sedikit."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skjuler den lilla opptaksindikatoren. Oppdagingen blir mindre presis."
+            "value" : "Skjuler den lilla prikken. Oppdagingen blir litt mindre presis."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verbergt de paarse opname-indicator. De herkenning is minder nauwkeurig."
+            "value" : "Verbergt de paarse stip. De herkenning is iets minder nauwkeurig."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ukrywa fioletowy wskaźnik nagrywania. Wykrywanie jest mniej dokładne."
+            "value" : "Ukrywa fioletową kropkę. Wykrywanie jest nieco mniej dokładne."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oculta o indicador roxo de gravação. A detecção é menos precisa."
+            "value" : "Oculta o ponto roxo. A detecção é um pouco menos precisa."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oculta o indicador de gravação roxo. A deteção é menos precisa."
+            "value" : "Oculta o ponto roxo. A deteção é um pouco menos precisa."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ascunde indicatorul violet de înregistrare. Detectarea este mai puțin precisă."
+            "value" : "Ascunde punctul violet. Detectarea este puțin mai puțin precisă."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Скрывает фиолетовый индикатор записи. Определение менее точное."
+            "value" : "Скрывает фиолетовую точку. Определение чуть менее точное."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skryje fialový indikátor nahrávania. Rozpoznávanie je menej presné."
+            "value" : "Skryje fialovú bodku. Rozpoznávanie je o niečo menej presné."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skrije vijoličasti indikator snemanja. Zaznavanje je manj natančno."
+            "value" : "Skrije vijolično piko. Zaznavanje je nekoliko manj natančno."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Döljer den lila inspelningsindikatorn. Upptäckten blir mindre exakt."
+            "value" : "Döljer den lila pricken. Upptäckten blir något mindre exakt."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ซ่อนตัวบ่งชี้การบันทึกสีม่วง การตรวจจับจะแม่นยำน้อยลง"
+            "value" : "ซ่อนจุดสีม่วง การตรวจจับจะแม่นยำน้อยลงเล็กน้อย"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mor kayıt göstergesini gizler. Algılama daha az kesindir."
+            "value" : "Mor noktayı gizler. Algılama biraz daha az kesindir."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Приховує фіолетовий індикатор записування. Визначення менш точне."
+            "value" : "Приховує фіолетову крапку. Визначення трохи менш точне."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ẩn chỉ báo ghi màu tím. Phát hiện kém chính xác hơn."
+            "value" : "Ẩn chấm tím. Phát hiện kém chính xác hơn một chút."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隱藏紫色錄音指示器。偵測較不精確。"
+            "value" : "隱藏紫色圓點。偵測精確度略低。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隐藏紫色录音指示器。检测不太精确。"
+            "value" : "隐藏紫色圆点。检测精度略低。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隱藏紫色錄音指示器。偵測較不精確。"
+            "value" : "隱藏紫色圓點。偵測精確度略低。"
           }
         }
       }
@@ -86844,229 +87071,229 @@
         }
       }
     },
-    "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple recording indicator while AutoHush measures." : {
-      "comment" : "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: what measuring audio levels does",
+    "Most accurate: a paused video stops counting once it’s silent. macOS shows its purple dot while AutoHush measures." : {
+      "comment" : "Settings → Fine-Tuning, Detection, under the ways of detecting playing apps: what measuring audio levels does; the purple dot is macOS's recording indicator",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "الأكثر دقة: يتوقف احتساب الفيديو المتوقف مؤقتًا بمجرد أن يصمت. يعرض macOS مؤشر التسجيل الأرجواني أثناء قياس AutoHush."
+            "value" : "الأكثر دقة: يتوقف احتساب الفيديو المتوقف مؤقتًا بمجرد أن يصمت. يعرض macOS النقطة البنفسجية أثناء قياس AutoHush."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La més precisa: un vídeo en pausa deixa de comptar tan bon punt queda en silenci. macOS mostra l’indicador lila de gravació mentre l’AutoHush mesura."
+            "value" : "La més precisa: un vídeo en pausa deixa de comptar tan bon punt queda en silenci. macOS mostra el punt lila mentre l’AutoHush mesura."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nejpřesnější: pozastavené video se přestane počítat, jakmile ztichne. macOS zobrazuje fialový indikátor nahrávání, zatímco AutoHush měří."
+            "value" : "Nejpřesnější: pozastavené video se přestane počítat, jakmile ztichne. macOS zobrazuje fialovou tečku, zatímco AutoHush měří."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mest præcis: en video, der er sat på pause, holder op med at tælle, så snart den bliver stille. macOS viser den lilla optageindikator, mens AutoHush måler."
+            "value" : "Mest præcis: en video, der er sat på pause, holder op med at tælle, så snart den bliver stille. macOS viser den lilla prik, mens AutoHush måler."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Am genauesten: Ein pausiertes Video zählt nicht mehr, sobald es still ist. macOS zeigt die violette Aufnahmeanzeige, während AutoHush misst."
+            "value" : "Am genauesten: Ein pausiertes Video zählt nicht mehr, sobald es still ist. macOS zeigt den violetten Punkt, während AutoHush misst."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Το πιο ακριβές: ένα βίντεο σε παύση παύει να μετρά μόλις σωπάσει. Το macOS εμφανίζει τη μοβ ένδειξη εγγραφής όσο μετρά το AutoHush."
+            "value" : "Το πιο ακριβές: ένα βίντεο σε παύση παύει να μετρά μόλις σωπάσει. Το macOS εμφανίζει τη μοβ κουκκίδα όσο μετρά το AutoHush."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La más precisa: un vídeo en pausa deja de contar en cuanto se queda en silencio. macOS muestra su indicador morado de grabación mientras AutoHush mide."
+            "value" : "La más precisa: un vídeo en pausa deja de contar en cuanto se queda en silencio. macOS muestra su punto morado mientras AutoHush mide."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La más precisa: un video en pausa deja de contar en cuanto se queda en silencio. macOS muestra su indicador morado de grabación mientras AutoHush mide."
+            "value" : "La más precisa: un video en pausa deja de contar en cuanto se queda en silencio. macOS muestra su punto morado mientras AutoHush mide."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tarkin: keskeytetty video lakkaa laskemasta heti, kun se hiljenee. macOS näyttää violetin tallennusilmaisimen, kun AutoHush mittaa."
+            "value" : "Tarkin: keskeytetty video lakkaa laskemasta heti, kun se hiljenee. macOS näyttää violetin pisteen, kun AutoHush mittaa."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La plus précise : une vidéo en pause cesse de compter dès qu’elle devient silencieuse. macOS affiche son indicateur d’enregistrement violet pendant qu’AutoHush mesure."
+            "value" : "La plus précise : une vidéo en pause cesse de compter dès qu’elle devient silencieuse. macOS affiche son point violet pendant qu’AutoHush mesure."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La plus précise : une vidéo en pause cesse de compter dès qu’elle devient silencieuse. macOS affiche son indicateur d’enregistrement violet pendant qu’AutoHush mesure."
+            "value" : "La plus précise : une vidéo en pause cesse de compter dès qu’elle devient silencieuse. macOS affiche son point violet pendant qu’AutoHush mesure."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "המדויקת ביותר: סרטון מושהה מפסיק להיחשב ברגע שהוא שותק. macOS מציג את מחוון ההקלטה הסגול בזמן ש-AutoHush מודד."
+            "value" : "המדויקת ביותר: סרטון מושהה מפסיק להיחשב ברגע שהוא שותק. macOS מציג את הנקודה הסגולה בזמן ש-AutoHush מודד."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "सबसे सटीक: पॉज़ किया गया वीडियो शांत होते ही गिना जाना बंद हो जाता है। AutoHush के मापते समय macOS बैंगनी रिकॉर्डिंग संकेतक दिखाता है।"
+            "value" : "सबसे सटीक: पॉज़ किया गया वीडियो शांत होते ही गिना जाना बंद हो जाता है। AutoHush के मापते समय macOS बैंगनी बिंदु दिखाता है।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Najpreciznije: pauzirani videozapis prestaje se brojati čim utihne. macOS prikazuje ljubičasti indikator snimanja dok AutoHush mjeri."
+            "value" : "Najpreciznije: pauzirani videozapis prestaje se brojati čim utihne. macOS prikazuje ljubičastu točku dok AutoHush mjeri."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A legpontosabb: a szüneteltetett videó azonnal kiesik, amint elhallgat. Amíg az AutoHush mér, a macOS a lila felvételjelzőt mutatja."
+            "value" : "A legpontosabb: a szüneteltetett videó azonnal kiesik, amint elhallgat. Amíg az AutoHush mér, a macOS a lila pontot mutatja."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Paling akurat: video yang dijeda berhenti dihitung begitu senyap. macOS menampilkan indikator rekaman ungu saat AutoHush mengukur."
+            "value" : "Paling akurat: video yang dijeda berhenti dihitung begitu senyap. macOS menampilkan titik ungu saat AutoHush mengukur."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La più precisa: un video in pausa smette di contare non appena diventa silenzioso. macOS mostra l’indicatore viola di registrazione mentre AutoHush misura."
+            "value" : "La più precisa: un video in pausa smette di contare non appena diventa silenzioso. macOS mostra il punto viola mentre AutoHush misura."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最も正確です。一時停止したビデオは、無音になるとすぐに対象外になります。AutoHushが測定している間、macOSは紫色の録音インジケータを表示します。"
+            "value" : "最も正確です。一時停止したビデオは、無音になるとすぐに対象外になります。AutoHushが測定している間、macOSは紫色のドットを表示します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "가장 정확합니다. 일시 정지된 비디오는 소리가 멈추는 즉시 제외됩니다. AutoHush가 측정하는 동안 macOS에 보라색 녹음 표시기가 나타납니다."
+            "value" : "가장 정확합니다. 일시 정지된 비디오는 소리가 멈추는 즉시 제외됩니다. AutoHush가 측정하는 동안 macOS에 보라색 점가 나타납니다."
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Paling tepat: video yang dijeda tidak lagi dikira setelah ia senyap. macOS menunjukkan penunjuk rakaman ungunya semasa AutoHush mengukur."
+            "value" : "Paling tepat: video yang dijeda tidak lagi dikira setelah ia senyap. macOS menunjukkan titik ungunya semasa AutoHush mengukur."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mest presis: en video som er satt på pause, slutter å telle så snart den blir stille. macOS viser den lilla opptaksindikatoren mens AutoHush måler."
+            "value" : "Mest presis: en video som er satt på pause, slutter å telle så snart den blir stille. macOS viser den lilla prikken mens AutoHush måler."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Het nauwkeurigst: een gepauzeerde video telt niet meer zodra hij stil is. macOS toont de paarse opname-indicator terwijl AutoHush meet."
+            "value" : "Het nauwkeurigst: een gepauzeerde video telt niet meer zodra hij stil is. macOS toont de paarse stip terwijl AutoHush meet."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Najdokładniejsze: wstrzymane wideo przestaje się liczyć, gdy tylko ucichnie. macOS pokazuje fioletowy wskaźnik nagrywania, gdy AutoHush mierzy."
+            "value" : "Najdokładniejsze: wstrzymane wideo przestaje się liczyć, gdy tylko ucichnie. macOS pokazuje fioletową kropkę, gdy AutoHush mierzy."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mais preciso: um vídeo pausado deixa de contar assim que fica em silêncio. O macOS mostra o indicador roxo de gravação enquanto o AutoHush mede."
+            "value" : "Mais preciso: um vídeo pausado deixa de contar assim que fica em silêncio. O macOS mostra o ponto roxo enquanto o AutoHush mede."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A mais precisa: um vídeo em pausa deixa de contar assim que fica em silêncio. O macOS mostra o indicador de gravação roxo enquanto o AutoHush mede."
+            "value" : "A mais precisa: um vídeo em pausa deixa de contar assim que fica em silêncio. O macOS mostra o ponto roxo enquanto o AutoHush mede."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cel mai precis: un videoclip pus pe pauză nu mai contează imediat ce tace. macOS afișează indicatorul violet de înregistrare cât timp AutoHush măsoară."
+            "value" : "Cel mai precis: un videoclip pus pe pauză nu mai contează imediat ce tace. macOS afișează punctul violet cât timp AutoHush măsoară."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Самый точный: видео на паузе перестаёт учитываться, как только замолкает. Пока AutoHush измеряет, macOS показывает фиолетовый индикатор записи."
+            "value" : "Самый точный: видео на паузе перестаёт учитываться, как только замолкает. Пока AutoHush измеряет, macOS показывает фиолетовую точку."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Najpresnejšie: pozastavené video sa prestane počítať, len čo stíchne. macOS zobrazuje fialový indikátor nahrávania, kým AutoHush meria."
+            "value" : "Najpresnejšie: pozastavené video sa prestane počítať, len čo stíchne. macOS zobrazuje fialovú bodku, kým AutoHush meria."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Najnatančnejše: zaustavljen video se preneha šteti, takoj ko utihne. macOS prikazuje vijoličasti indikator snemanja, medtem ko AutoHush meri."
+            "value" : "Najnatančnejše: zaustavljen video se preneha šteti, takoj ko utihne. macOS prikazuje vijolično piko, medtem ko AutoHush meri."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mest exakt: en pausad video slutar räknas så fort den tystnar. macOS visar den lila inspelningsindikatorn medan AutoHush mäter."
+            "value" : "Mest exakt: en pausad video slutar räknas så fort den tystnar. macOS visar den lila pricken medan AutoHush mäter."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "แม่นยำที่สุด: วิดีโอที่หยุดพักจะไม่นับเมื่อเงียบแล้ว macOS จะแสดงตัวบ่งชี้การบันทึกสีม่วงขณะที่ AutoHush วัด"
+            "value" : "แม่นยำที่สุด: วิดีโอที่หยุดพักจะไม่นับเมื่อเงียบแล้ว macOS จะแสดงจุดสีม่วงขณะที่ AutoHush วัด"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En kesin yöntem: duraklatılan bir video sessizleştiği anda sayılmaz. AutoHush ölçüm yaparken macOS mor kayıt göstergesini gösterir."
+            "value" : "En kesin yöntem: duraklatılan bir video sessizleştiği anda sayılmaz. AutoHush ölçüm yaparken macOS mor noktayı gösterir."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Найточніший: призупинене відео перестає враховуватися, щойно замовкає. Поки AutoHush вимірює, macOS показує фіолетовий індикатор записування."
+            "value" : "Найточніший: призупинене відео перестає враховуватися, щойно замовкає. Поки AutoHush вимірює, macOS показує фіолетову крапку."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chính xác nhất: video bị tạm dừng sẽ không còn được tính ngay khi im lặng. macOS hiển thị chỉ báo ghi màu tím khi AutoHush đo."
+            "value" : "Chính xác nhất: video bị tạm dừng sẽ không còn được tính ngay khi im lặng. macOS hiển thị chấm tím khi AutoHush đo."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最精確：已暫停的影片一旦無聲便不再計入。AutoHush 測量時，macOS 會顯示紫色錄音指示器。"
+            "value" : "最精確：已暫停的影片一旦無聲便不再計入。AutoHush 測量時，macOS 會顯示紫色圓點。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最精确：已暂停的视频一旦无声便不再计入。AutoHush 测量时，macOS 会显示紫色录音指示器。"
+            "value" : "最精确：已暂停的视频一旦无声便不再计入。AutoHush 测量时，macOS 会显示紫色圆点。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "最精確：已暫停的影片一旦無聲便不再計入。AutoHush 測量時，macOS 會顯示紫色錄音指示器。"
+            "value" : "最精確：已暫停的影片一旦無聲便不再計入。AutoHush 測量時，macOS 會顯示紫色圓點。"
           }
         }
       }
@@ -93650,6 +93877,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "未記錄任何問題。"
+          }
+        }
+      }
+    },
+    "No purple dot; a little less precise." : {
+      "comment" : "Welcome window, the menu and Settings, beside or under “Use AntiDot Mode Instead”, and its help tag: AntiDot mode hides macOS's purple dot (the recording indicator shown while AutoHush measures audio), but tells playing apps a little less precisely",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بلا نقطة بنفسجية؛ دقة أقل قليلًا."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense punt lila; una mica menys precís."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez fialové tečky; o něco méně přesný."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen lilla prik; lidt mindre præcis."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein violetter Punkt; etwas ungenauer."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χωρίς μοβ κουκκίδα· λίγο λιγότερο ακριβής."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin punto morado; un poco menos preciso."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin punto morado; un poco menos preciso."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ei violettia pistettä; hieman epätarkempi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de point violet ; un peu moins précis."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pas de point violet; un peu moins précis."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "בלי נקודה סגולה; מעט פחות מדויק."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कोई बैंगनी बिंदु नहीं; थोड़ा कम सटीक।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez ljubičaste točke; nešto manje precizan."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nincs lila pont; kicsit kevésbé pontos."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanpa titik ungu; sedikit kurang presisi."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessun punto viola; un po’ meno preciso."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "紫色のドットなし。精度は少し下がります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보라색 점 없음, 정확도는 약간 낮음."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiada titik ungu; kurang tepat sedikit."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen lilla prikk; litt mindre presis."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geen paarse stip; iets minder nauwkeurig."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez fioletowej kropki; nieco mniej dokładny."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem ponto roxo; um pouco menos preciso."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem ponto roxo; um pouco menos preciso."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fără punctul violet; puțin mai puțin precis."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без фиолетовой точки; чуть менее точный."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez fialovej bodky; o niečo menej presný."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brez vijolične pike; nekoliko manj natančen."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingen lila prick; något mindre exakt."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่มีจุดสีม่วง แต่แม่นยำน้อยลงเล็กน้อย"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mor nokta yok; biraz daha az kesin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без фіолетової крапки; трохи менш точний."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không có chấm tím; kém chính xác hơn một chút."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不顯示紫色圓點；精確度略低。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不显示紫色圆点；精度略低。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不顯示紫色圓點；精確度略低。"
           }
         }
       }
@@ -132717,229 +133171,229 @@
         }
       }
     },
-    "Tells playing apps from silent ones." : {
-      "comment" : "Welcome window, under “Audio Recording”: what AutoHush uses it for",
+    "Tells playing apps from silent ones. Never recorded." : {
+      "comment" : "Welcome window, under “Audio Recording”: what AutoHush uses it for; it only measures how loud apps play, and never records their audio",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يميز التطبيقات التي تعمل من الصامتة."
+            "value" : "يميز التطبيقات التي تعمل من الصامتة. لا يسجّل شيئًا."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Distingeix les apps que sonen de les silencioses."
+            "value" : "Distingeix les apps que sonen de les silencioses. No grava res."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rozlišuje aplikace, které hrají, od tichých."
+            "value" : "Rozlišuje aplikace, které hrají, od tichých. Nic nenahrává."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skelner apps, der spiller, fra tavse apps."
+            "value" : "Skelner apps, der spiller, fra tavse apps. Optager aldrig noget."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Unterscheidet spielende von stummen Apps."
+            "value" : "Unterscheidet spielende von stummen Apps. Nimmt nichts auf."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ξεχωρίζει τις εφαρμογές που παίζουν από τις αθόρυβες."
+            "value" : "Ξεχωρίζει τις εφαρμογές που παίζουν από τις αθόρυβες. Δεν ηχογραφεί τίποτα."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Distingue las apps que suenan de las silenciosas."
+            "value" : "Distingue las apps que suenan de las silenciosas. No graba nada."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Distingue las apps que suenan de las silenciosas."
+            "value" : "Distingue las apps que suenan de las silenciosas. No graba nada."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erottaa soivat apit hiljaisista."
+            "value" : "Erottaa soivat apit hiljaisista. Ei tallenna mitään."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Distingue les apps qui jouent de celles qui sont silencieuses."
+            "value" : "Distingue les apps qui jouent de celles qui sont silencieuses. N’enregistre rien."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Distingue les apps qui jouent de celles qui sont silencieuses."
+            "value" : "Distingue les apps qui jouent de celles qui sont silencieuses. N’enregistre rien."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "מבחין בין אפליקציות מנגנות לשקטות."
+            "value" : "מבחין בין אפליקציות מנגנות לשקטות. לא מקליט דבר."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "बज रहे ऐप्स को चुप ऐप्स से अलग करता है।"
+            "value" : "बज रहे ऐप्स को चुप ऐप्स से अलग करता है। कभी रिकॉर्ड नहीं करता।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Razlikuje aplikacije koje sviraju od tihih."
+            "value" : "Razlikuje aplikacije koje sviraju od tihih. Ništa ne snima."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Megkülönbözteti a lejátszó appokat a csendesektől."
+            "value" : "Megkülönbözteti a lejátszó appokat a csendesektől. Semmit sem rögzít."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Membedakan app yang memutar dari yang diam."
+            "value" : "Membedakan app yang memutar dari yang diam. Tidak pernah merekam."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Distingue le app che suonano da quelle silenziose."
+            "value" : "Distingue le app che suonano da quelle silenziose. Non registra nulla."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "再生中のアプリと無音のアプリを区別します。"
+            "value" : "再生中のアプリと無音のアプリを区別します。録音はしません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "재생 중인 앱과 무음 앱을 구분합니다."
+            "value" : "재생 중인 앱과 무음 앱을 구분합니다. 녹음하지 않습니다."
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Membezakan app yang bermain daripada yang senyap."
+            "value" : "Membezakan app yang bermain daripada yang senyap. Tidak pernah merakam."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skiller apper som spiller, fra stille apper."
+            "value" : "Skiller apper som spiller, fra stille apper. Tar aldri opp noe."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Onderscheidt spelende apps van stille."
+            "value" : "Onderscheidt spelende apps van stille. Neemt nooit iets op."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Odróżnia aplikacje, które grają, od cichych."
+            "value" : "Odróżnia aplikacje, które grają, od cichych. Niczego nie nagrywa."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Distingue os apps que tocam dos silenciosos."
+            "value" : "Distingue os apps que tocam dos silenciosos. Não grava nada."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Distingue as apps que tocam das silenciosas."
+            "value" : "Distingue as apps que tocam das silenciosas. Não grava nada."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deosebește aplicațiile care redau de cele silențioase."
+            "value" : "Deosebește aplicațiile care redau de cele silențioase. Nu înregistrează nimic."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отличает играющие приложения от тихих."
+            "value" : "Отличает играющие приложения от тихих. Ничего не записывает."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rozlišuje apky, ktoré hrajú, od tichých."
+            "value" : "Rozlišuje apky, ktoré hrajú, od tichých. Nič nenahráva."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loči aplikacije, ki predvajajo, od tihih."
+            "value" : "Loči aplikacije, ki predvajajo, od tihih. Nikoli ne snema."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Skiljer spelande appar från tysta."
+            "value" : "Skiljer spelande appar från tysta. Spelar aldrig in något."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "แยกแอปที่กำลังเล่นออกจากแอปที่เงียบ"
+            "value" : "แยกแอปที่กำลังเล่นออกจากแอปที่เงียบ ไม่มีการบันทึกเสียง"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Çalan uygulamaları sessiz olanlardan ayırır."
+            "value" : "Çalan uygulamaları sessiz olanlardan ayırır. Asla kayıt yapmaz."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Відрізняє програми, що грають, від тихих."
+            "value" : "Відрізняє програми, що грають, від тихих. Нічого не записує."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Phân biệt ứng dụng đang phát với ứng dụng im lặng."
+            "value" : "Phân biệt ứng dụng đang phát với ứng dụng im lặng. Không bao giờ ghi âm."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "區分正在播放的 App 和無聲的 App。"
+            "value" : "區分正在播放的 App 和無聲的 App。從不錄音。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "区分正在播放的 App 和无声的 App。"
+            "value" : "区分正在播放的 App 和无声的 App。从不录音。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "區分正在播放的 App 和無聲的 App。"
+            "value" : "區分正在播放的 App 和無聲的 App。從不錄音。"
           }
         }
       }
@@ -152920,229 +153374,229 @@
         }
       }
     },
-    "Without Audio Recording access, a silent app with its sound open keeps your player paused." : {
-      "comment" : "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed",
+    "Without Audio Recording, a silent app with its sound open keeps your player paused. Audio is never recorded." : {
+      "comment" : "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed; AutoHush only measures how loud apps play, and never records their audio",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "بدون الوصول إلى تسجيل الصوت، يُبقي تطبيق صامت بصوت مفتوح مشغّلك متوقفًا مؤقتًا."
+            "value" : "بدون تسجيل الصوت، يُبقي تطبيق صامت بصوت مفتوح مشغّلك متوقفًا مؤقتًا. لا يُسجَّل الصوت أبدًا."
           }
         },
         "ca" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sense accés a la gravació d’àudio, una app silenciosa amb el so obert manté el reproductor en pausa."
+            "value" : "Sense la gravació d’àudio, una app silenciosa amb el so obert manté el reproductor en pausa. L’àudio no es grava mai."
           }
         },
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez přístupu k nahrávání zvuku nechá tichá aplikace s otevřeným zvukem váš přehrávač pozastavený."
+            "value" : "Bez nahrávání zvuku nechá tichá aplikace s otevřeným zvukem váš přehrávač pozastavený. Zvuk se nikdy nenahrává."
           }
         },
         "da" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uden adgang til lydoptagelse holder en tavs app med åben lyd din afspiller på pause."
+            "value" : "Uden lydoptagelse holder en tavs app med åben lyd din afspiller på pause. Lyd optages aldrig."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ohne Zugriff auf Audioaufnahme hält eine stumme App mit offenem Ton deinen Player pausiert."
+            "value" : "Ohne Audioaufnahme hält eine stumme App mit offenem Ton deinen Player pausiert. Audio wird nie aufgenommen."
           }
         },
         "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Χωρίς πρόσβαση στην εγγραφή ήχου, μια αθόρυβη εφαρμογή με ανοιχτό ήχο κρατά την εφαρμογή αναπαραγωγής σας σε παύση."
+            "value" : "Χωρίς εγγραφή ήχου, μια αθόρυβη εφαρμογή με ανοιχτό ήχο κρατά την εφαρμογή αναπαραγωγής σας σε παύση. Ο ήχος δεν ηχογραφείται ποτέ."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin acceso a la grabación de audio, una app silenciosa con el sonido abierto mantiene tu reproductor en pausa."
+            "value" : "Sin la grabación de audio, una app silenciosa con el sonido abierto mantiene tu reproductor en pausa. El audio nunca se graba."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sin acceso a la grabación de audio, una app silenciosa con el sonido abierto mantiene tu reproductor en pausa."
+            "value" : "Sin la grabación de audio, una app silenciosa con el sonido abierto mantiene tu reproductor en pausa. El audio nunca se graba."
           }
         },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ilman äänen tallennuksen käyttöä hiljainen appi, jonka ääni on auki, pitää soittimesi keskeytettynä."
+            "value" : "Ilman äänen tallennusta hiljainen appi, jonka ääni on auki, pitää soittimesi keskeytettynä. Ääntä ei koskaan tallenneta."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sans accès à l’enregistrement audio, une app silencieuse au son ouvert garde votre lecteur en pause."
+            "value" : "Sans l’enregistrement audio, une app silencieuse au son ouvert garde votre lecteur en pause. L’audio n’est jamais enregistré."
           }
         },
         "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sans accès à l’enregistrement audio, une app silencieuse au son ouvert garde votre lecteur en pause."
+            "value" : "Sans l’enregistrement audio, une app silencieuse au son ouvert garde votre lecteur en pause. L’audio n’est jamais enregistré."
           }
         },
         "he" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ללא הרשאת הקלטת שמע, אפליקציה שקטה שהשמע שלה פתוח משאירה את הנגן שלך מושהה."
+            "value" : "ללא הקלטת שמע, אפליקציה שקטה שהשמע שלה פתוח משאירה את הנגן שלך מושהה. השמע אף פעם לא מוקלט."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ऑडियो रिकॉर्डिंग ऐक्सेस के बिना, खुली आवाज़ वाला कोई चुप ऐप आपका प्लेयर पॉज़ रखता है।"
+            "value" : "ऑडियो रिकॉर्डिंग के बिना, खुली आवाज़ वाला कोई चुप ऐप आपका प्लेयर पॉज़ रखता है। ऑडियो कभी रिकॉर्ड नहीं होता।"
           }
         },
         "hr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez pristupa snimanju zvuka tiha aplikacija s otvorenim zvukom drži vaš reproduktor pauziranim."
+            "value" : "Bez snimanja zvuka tiha aplikacija s otvorenim zvukom drži vaš reproduktor pauziranim. Zvuk se nikad ne snima."
           }
         },
         "hu" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hangfelvételi hozzáférés nélkül egy csendes app nyitott hanggal szüneteltetve tartja a lejátszóját."
+            "value" : "Hangfelvétel nélkül egy csendes app nyitott hanggal szüneteltetve tartja a lejátszóját. A hang sosem kerül rögzítésre."
           }
         },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tanpa akses rekaman audio, app diam dengan suara terbuka membuat pemutar Anda tetap dijeda."
+            "value" : "Tanpa rekaman audio, app diam dengan suara terbuka membuat pemutar Anda tetap dijeda. Audio tidak pernah direkam."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Senza accesso alla registrazione audio, un’app silenziosa con l’audio aperto tiene il lettore in pausa."
+            "value" : "Senza la registrazione audio, un’app silenziosa con l’audio aperto tiene il lettore in pausa. L’audio non viene mai registrato."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "オーディオ録音へのアクセスがないと、サウンドを開いたままの無音のアプリがプレーヤーを一時停止したままにします。"
+            "value" : "オーディオ録音がないと、サウンドを開いたままの無音のアプリがプレーヤーを一時停止したままにします。オーディオは録音されません。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "오디오 녹음 접근이 없으면 사운드가 열린 무음 앱이 플레이어를 일시 정지된 상태로 유지합니다."
+            "value" : "오디오 녹음이 없으면 사운드가 열린 무음 앱이 플레이어를 일시 정지된 상태로 유지합니다. 오디오는 녹음되지 않습니다."
           }
         },
         "ms" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tanpa akses Rakaman Audio, app senyap dengan bunyinya terbuka mengekalkan pemain anda dijeda."
+            "value" : "Tanpa Rakaman Audio, app senyap dengan bunyinya terbuka mengekalkan pemain anda dijeda. Audio tidak pernah dirakam."
           }
         },
         "nb" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Uten tilgang til lydopptak holder en stille app med åpen lyd spilleren din på pause."
+            "value" : "Uten lydopptak holder en stille app med åpen lyd spilleren din på pause. Lyd tas aldri opp."
           }
         },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zonder toegang tot audio-opname houdt een stille app met open geluid je speler gepauzeerd."
+            "value" : "Zonder audio-opname houdt een stille app met open geluid je speler gepauzeerd. Audio wordt nooit opgenomen."
           }
         },
         "pl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez dostępu do nagrywania dźwięku cicha aplikacja z otwartym dźwiękiem utrzymuje wstrzymanie Twojego odtwarzacza."
+            "value" : "Bez nagrywania dźwięku cicha aplikacja z otwartym dźwiękiem utrzymuje wstrzymanie Twojego odtwarzacza. Dźwięk nigdy nie jest nagrywany."
           }
         },
         "pt" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sem acesso à gravação de áudio, um app silencioso com o som aberto mantém seu player pausado."
+            "value" : "Sem a gravação de áudio, um app silencioso com o som aberto mantém seu player pausado. O áudio nunca é gravado."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sem acesso à gravação de áudio, uma app silenciosa com o som aberto mantém o seu leitor em pausa."
+            "value" : "Sem a gravação de áudio, uma app silenciosa com o som aberto mantém o seu leitor em pausa. O áudio nunca é gravado."
           }
         },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fără acces la înregistrarea audio, o aplicație silențioasă cu sunetul deschis vă ține playerul pe pauză."
+            "value" : "Fără înregistrarea audio, o aplicație silențioasă cu sunetul deschis vă ține playerul pe pauză. Sunetul nu este înregistrat niciodată."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Без доступа к записи звука тихое приложение с открытым звуком держит ваш плеер на паузе."
+            "value" : "Без записи звука тихое приложение с открытым звуком держит ваш плеер на паузе. Звук никогда не записывается."
           }
         },
         "sk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bez prístupu k nahrávaniu zvuku nechá tichá apka s otvoreným zvukom váš prehrávač pozastavený."
+            "value" : "Bez nahrávania zvuku nechá tichá apka s otvoreným zvukom váš prehrávač pozastavený. Zvuk sa nikdy nenahráva."
           }
         },
         "sl" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Brez dostopa do snemanja zvoka tiha aplikacija z odprtim zvokom ohranja vaš predvajalnik zaustavljen."
+            "value" : "Brez snemanja zvoka tiha aplikacija z odprtim zvokom ohranja vaš predvajalnik zaustavljen. Zvok se nikoli ne snema."
           }
         },
         "sv" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Utan åtkomst till ljudinspelning håller en tyst app med öppet ljud din spelare pausad."
+            "value" : "Utan ljudinspelning håller en tyst app med öppet ljud din spelare pausad. Ljud spelas aldrig in."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "หากไม่มีสิทธิ์การบันทึกเสียง แอปที่เงียบแต่เปิดสตรีมเสียงไว้จะทำให้ตัวเล่นของคุณหยุดพักต่อไป"
+            "value" : "หากไม่มีสิทธิ์การบันทึกเสียง แอปที่เงียบแต่เปิดสตรีมเสียงไว้จะทำให้ตัวเล่นของคุณหยุดพักต่อไป เสียงจะไม่ถูกบันทึกเลย"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ses kaydı erişimi olmadan, sesi açık sessiz bir uygulama oynatıcınızı duraklatılmış tutar."
+            "value" : "Ses kaydı olmadan, sesi açık sessiz bir uygulama oynatıcınızı duraklatılmış tutar. Ses asla kaydedilmez."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Без доступу до записування звуку тиха програма з відкритим звуком тримає ваш програвач на паузі."
+            "value" : "Без записування звуку тиха програма з відкритим звуком тримає ваш програвач на паузі. Звук ніколи не записується."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Khi không có quyền ghi âm thanh, một ứng dụng im lặng đang mở âm thanh sẽ giữ trình phát của bạn ở trạng thái tạm dừng."
+            "value" : "Khi không có quyền ghi âm thanh, một ứng dụng im lặng đang mở âm thanh sẽ giữ trình phát của bạn ở trạng thái tạm dừng. Âm thanh không bao giờ được ghi lại."
           }
         },
         "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "沒有錄音權限時，開著聲音但無聲的 App 會讓你的播放器保持暫停。"
+            "value" : "沒有錄音權限時，開著聲音但無聲的 App 會讓你的播放器保持暫停。音訊絕不會被錄製。"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "没有录音权限时，打开了声音但无声的 App 会让你的播放器保持暂停。"
+            "value" : "没有录音权限时，打开了声音但无声的 App 会让你的播放器保持暂停。音频绝不会被录制。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "沒有錄音權限時，開著聲音但無聲的 App 會讓你的播放器保持暫停。"
+            "value" : "沒有錄音權限時，開著聲音但無聲的 App 會讓你的播放器保持暫停。音訊絕不會被錄製。"
           }
         }
       }

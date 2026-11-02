@@ -40,8 +40,8 @@ enum PermissionText {
     static func audioNote(_ access: PermissionAccess) -> String {
         switch access {
         case .allowed, .notAsked, .playerNotRunning:
-            String(localized: "Tells playing apps from silent ones.",
-                   comment: "Welcome window, under “Audio Recording”: what AutoHush uses it for")
+            String(localized: "Tells playing apps from silent ones. Never recorded.",
+                   comment: "Welcome window, under “Audio Recording”: what AutoHush uses it for; it only measures how loud apps play, and never records their audio")
         case .denied:
             String(localized: "Turn it on for AutoHush in System Settings, then reopen AutoHush.",
                    comment: "Welcome window and Settings, while Audio Recording isn't allowed")
@@ -72,5 +72,12 @@ enum PermissionText {
     static var useAntiDot: String {
         String(localized: "Use AntiDot Mode Instead",
                comment: "Button and menu item, while Audio Recording isn't allowed: switches to AntiDot mode, which doesn't need it")
+    }
+
+    /// What AntiDot mode trades, beside or under each Use AntiDot Mode
+    /// Instead, and as its help tag and VoiceOver hint (F2a, 2026-11-02).
+    static var antiDotTradeOff: String {
+        String(localized: "No purple dot; a little less precise.",
+               comment: "Welcome window, the menu and Settings, beside or under “Use AntiDot Mode Instead”, and its help tag: AntiDot mode hides macOS's purple dot (the recording indicator shown while AutoHush measures audio), but tells playing apps a little less precisely")
     }
 }

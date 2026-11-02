@@ -106,8 +106,7 @@ struct MenuPanelView: View {
             actionRow(permission.grantTitle, symbol: "exclamationmark.triangle.fill", .resolveWarning(permission))
         case .reopenAutoHush:
             actionRow(PermissionText.reopen, symbol: "exclamationmark.triangle.fill", .reopenAutoHush)
-        case .useAntiDot:
-            actionRow(PermissionText.useAntiDot, symbol: nil, .useAntiDotMode)
+        case .useAntiDot: useAntiDotRow
         case .snooze: SnoozeBarView(model: model)
         case .playingNow: PlayingAppsView(model: model, kind: .playingNow)
         case .recentlyPlayed: PlayingAppsView(model: model, kind: .recentlyPlayed)
@@ -132,6 +131,26 @@ struct MenuPanelView: View {
         } content: {
             Text(verbatim: title)
         }
+    }
+
+    /// Use AntiDot Mode Instead, with what it trades under it (F2a,
+    /// 2026-11-02); VoiceOver hears that once, as its hint.
+    private var useAntiDotRow: some View {
+        MenuActionRow(action: { model.perform(.useAntiDotMode) }) {
+            Color.clear
+        } content: {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: PermissionText.useAntiDot)
+                // Grey, white with the row's text while it's lit.
+                Text(verbatim: PermissionText.antiDotTradeOff)
+                    .font(.appCaption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityHidden(true)
+            }
+        }
+        .help(PermissionText.antiDotTradeOff)
+        .accessibilityHint(Text(verbatim: PermissionText.antiDotTradeOff))
     }
 
     /// "Install AutoHush 0.3.8…", which shows the update found; while it

@@ -43,13 +43,15 @@ extension BehaviorSettingsView {
             Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }
                 .buttonStyle(.chip)
                 .fixedSize()
+                .help(PermissionText.antiDotTradeOff)
+                .accessibilityHint(Text(verbatim: PermissionText.antiDotTradeOff))
         }
     }
 
     private var audioNote: String {
         model.permissions.audio == .needsReopen
             ? PermissionText.audioNote(.needsReopen)
-            : String(localized: "Without Audio Recording access, a silent app with its sound open keeps your player paused.",
-                     comment: "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed")
+            : String(localized: "Without Audio Recording, a silent app with its sound open keeps your player paused. Audio is never recorded.",
+                     comment: "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed; AutoHush only measures how loud apps play, and never records their audio")
     }
 }

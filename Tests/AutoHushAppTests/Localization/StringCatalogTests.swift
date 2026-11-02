@@ -40,6 +40,14 @@ struct StringCatalogTests {
         }
     }
 
+    @Test("macOS's recording indicator is the purple dot in every English text (F2a, 2026-11-02)")
+    func purpleDot() throws {
+        let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "Localizable.xcstrings"))
+        for key in catalog.strings.keys {
+            #expect(!key.localizedCaseInsensitiveContains("recording indicator"), "“\(key)”")
+        }
+    }
+
     @Test("Info.plist's texts are in the InfoPlist catalog, word for word")
     func infoPlistTexts() throws {
         let data = try Data(contentsOf: Self.resources.appending(path: "Info.plist"))

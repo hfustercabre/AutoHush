@@ -51,6 +51,15 @@ struct WelcomePermissionsViewTests {
         #expect(size.height > 0)
     }
 
+    @Test("beside Done, the menu bar's icon as macOS tints it, then where AutoHush stays, on one line (F1a)")
+    func menuBarNote() {
+        #expect(WelcomeMenuBarNote.text == "AutoHush is now in the menu bar.")
+        #expect(MenuBarIcon.noMusic.image().isTemplate)
+        let size = drawn(WelcomeMenuBarNote(), width: PlayerChooserView.width)
+        #expect(size.width > 0 && size.width < PlayerChooserView.width / 2)
+        #expect(size.height < 24)
+    }
+
     @Test("VoiceOver hears each permission that turns allowed, then that Done can be clicked (A6)")
     func announcements() {
         let missing = PermissionsState(player: "com.example.jukebox", control: .automation(player: "Jukebox"),

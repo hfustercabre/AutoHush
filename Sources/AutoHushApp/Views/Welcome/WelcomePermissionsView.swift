@@ -32,10 +32,17 @@ struct WelcomePermissionsView: View {
                     }
                     // Not for a player that can only be muted: AntiDot mode can't mute it.
                     if !state.audio.isSatisfied, model.antiDotUnavailableFor == nil {
+                        // What it trades, beside it (F2a, 2026-11-02); VoiceOver
+                        // hears it once, as the chip's hint.
                         HStack {
+                            Text(verbatim: PermissionText.antiDotTradeOff)
+                                .captionStyle()
+                                .accessibilityHidden(true)
                             Spacer()
                             Button { model.useAntiDotMode() } label: { Text(verbatim: PermissionText.useAntiDot) }
                                 .buttonStyle(.chip)
+                                .help(PermissionText.antiDotTradeOff)
+                                .accessibilityHint(Text(verbatim: PermissionText.antiDotTradeOff))
                         }
                     }
                 }
@@ -46,6 +53,7 @@ struct WelcomePermissionsView: View {
             }
             .buttonStyle(.chip)
             Spacer()
+            WelcomeMenuBarNote()
             MainButton(Self.doneTitle) { model.actions?.finishWelcome() }
                 .disabled(!state.allSatisfied)
         }
