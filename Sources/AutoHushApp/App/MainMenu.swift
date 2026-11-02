@@ -3,8 +3,9 @@ import AppKit
 /// The menu bar AutoHush shows while one of its windows is open (it's in the
 /// Dock then, `DockPresence`): a Mac app's standard menus, with Apple's
 /// keyboard shortcuts and none of AutoHush's own. The Edit menu is what makes
-/// ⌘X, ⌘C, ⌘V, ⌘A and ⌘Z work in text fields; the View menu's Back (⌘[) and
-/// Forward (⌘]) walk Settings' pages, as System Settings' do.
+/// ⌘X, ⌘C, ⌘V, ⌘A and ⌘Z work in text fields (and Settings' own Undo); the
+/// View menu's Back (⌘[) and Forward (⌘]) walk Settings' pages, as System
+/// Settings' do; the Help menu opens AutoHush's help.
 @MainActor
 enum MainMenu {
     /// `about` and `settings` open those pages of Settings; `find` opens or
@@ -20,6 +21,9 @@ enum MainMenu {
         let window = windowMenu()
         bar.addItem(submenu(window, title: windowTitle))
         NSApplication.shared.windowsMenu = window
+        let help = helpMenu()
+        bar.addItem(submenu(help, title: ButtonText.help))
+        NSApplication.shared.helpMenu = help
         return bar
     }
 
@@ -96,6 +100,16 @@ enum MainMenu {
         menu.addItem(.separator())
         menu.addItem(item(String(localized: "Bring All to Front", comment: "The menu bar's Window menu; macOS's own words"),
                           #selector(NSApplication.arrangeInFront(_:))))
+        return menu
+    }
+
+    /// macOS's Help menu, which it gives its menu search (T7b, the user's
+    /// pick, 2026-11-02): AutoHush Help (⌘?, Apple's own key) opens the
+    /// README's Tips and troubleshooting on GitHub.
+    private static func helpMenu() -> NSMenu {
+        let menu = NSMenu(title: ButtonText.help)
+        menu.addItem(item(String(localized: "AutoHush Help", comment: "The menu bar's Help menu (⌘?): opens AutoHush's help (the README's Tips and troubleshooting) on GitHub; macOS's own pattern, “<App> Help”"),
+                          key: "?", perform: { NSWorkspace.shared.open(ProjectInfo.helpPage) }))
         return menu
     }
 

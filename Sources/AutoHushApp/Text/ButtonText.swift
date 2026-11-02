@@ -2,7 +2,8 @@ import Foundation
 
 /// The buttons several windows say the same way: Cancel and Continue (the
 /// welcome, Add a Web App and Add an App windows, the alerts), Allow… beside
-/// a permission not allowed, and Open <app>.
+/// a permission not allowed, Open <app>, and Help (the menu bar's menu and
+/// Settings → About's link).
 enum ButtonText {
     static var cancel: String {
         String(localized: "Cancel", comment: "Button that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player or to remove an app added with Add an App")
@@ -26,5 +27,11 @@ enum ButtonText {
     /// the app being checked once it quit.
     static func open(_ app: String) -> String {
         String(localized: "Open \(app)", comment: "Button that opens an app: the media player, so macOS can ask for Automation (Settings, the welcome window), or, in the Add an App window, the app being checked after it quit; %@ is the app")
+    }
+
+    /// AutoHush's help, the README's Tips and troubleshooting on GitHub: the
+    /// menu bar's Help menu and Settings → About's link (T7b, 2026-11-02).
+    static var help: String {
+        String(localized: "Help", comment: "The menu bar's Help menu, and the link in Settings → About that opens AutoHush's help (the README's Tips and troubleshooting) on GitHub; macOS's own word")
     }
 }

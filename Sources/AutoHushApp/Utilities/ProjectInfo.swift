@@ -1,7 +1,7 @@
 import Foundation
 
-/// Where AutoHush lives on GitHub (update checks, Settings → About), and
-/// where people can support it (Settings → About, and the foot of Settings'
+/// Where AutoHush lives on GitHub (update checks, Settings → About, the Help
+/// menu), and where people can support it (Settings → About, and the foot of Settings'
 /// sidebar).
 enum ProjectInfo {
     static let repository = "hfustercabre/AutoHush"
@@ -18,6 +18,12 @@ enum ProjectInfo {
     static func whatsNewPage(for version: AppVersion?) -> URL {
         version.map(releasePage(for:)) ?? homepage.appending(path: "releases")
     }
+
+    /// AutoHush Help (the Help menu, ⌘?) and Help in Settings → About: the
+    /// README's Tips and troubleshooting on GitHub (T7b, the user's pick,
+    /// 2026-11-02). The README's heading makes the anchor, which a test checks.
+    static let helpAnchor = "tips-and-troubleshooting"
+    static let helpPage = URL(string: "\(homepage.absoluteString)#\(helpAnchor)")!
 
     /// Report an Issue in Settings → About: the bug report form, which asks
     /// for the version, macOS, the player and Diagnostics' report.

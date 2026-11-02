@@ -60,7 +60,10 @@ struct AboutSettingsView: View {
             UpdatesCard(model: model)
             HStack(spacing: 8) {
                 Spacer(minLength: 0)
-                link(Text(verbatim: "GitHub"), symbol: "chevron.left.forwardslash.chevron.right", to: ProjectInfo.homepage)
+                // Help in GitHub's place (T7b-swap, the user's pick, 2026-11-02):
+                // it opens the README on GitHub, and a fourth chip doesn't fit
+                // the narrowest window.
+                link(Text(verbatim: ButtonText.help), symbol: "questionmark.circle", to: ProjectInfo.helpPage)
                 link(Text("What’s New", comment: "Settings → About: opens the release notes on GitHub"),
                      symbol: "sparkles", to: ProjectInfo.whatsNewPage(for: model.currentVersion.flatMap(AppVersion.init)))
                 link(Text("Report an Issue", comment: "Settings → About: opens a new issue on GitHub"),
