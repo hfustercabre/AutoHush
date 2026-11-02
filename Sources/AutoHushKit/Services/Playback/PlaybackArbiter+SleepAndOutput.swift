@@ -18,10 +18,12 @@ extension PlaybackArbiter {
         }
         // A fade-out under way pauses where it got to, rather than fading
         // on through the next output (the user, 2026-10-21), and isn't held.
+        // Called off, the music coming back up, it's paused at once below,
+        // as when it plays.
         if isFadingOut {
             outputGoneDuringPause = true
-            await fader.cutFadeOutShort()
-            return
+            if await fader.cutFadeOutShort() { return }
+            outputGoneDuringPause = false
         }
         guard playsLocally else { return }
         let state = await livePlayerState()

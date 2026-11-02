@@ -142,11 +142,16 @@ package actor VolumeFader {
 
     /// Ends the fade-out ramping down now at once: it pauses where it got
     /// to, without fading further (the output went away, and the rest would
-    /// play on the next one). Nothing while none is.
-    func cutFadeOutShort() {
-        guard let fadingOut, fadingOut == generation else { return }
+    /// play on the next one). Nothing while none is. `false` when the
+    /// fade-out was called off and the music is coming back up instead: no
+    /// pause comes of it, so it's the caller's to pause.
+    @discardableResult
+    func cutFadeOutShort() -> Bool {
+        guard comingBack == nil else { return false }
+        guard let fadingOut, fadingOut == generation else { return true }
         cutShort = fadingOut
         generation += 1
+        return true
     }
 
     /// Plays from near silence, then fades the music in to the user's volume.

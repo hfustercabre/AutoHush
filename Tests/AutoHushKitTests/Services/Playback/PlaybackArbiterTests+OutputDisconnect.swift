@@ -68,6 +68,25 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
     }
 
+    @Test("music coming back up after a fade-out called off (the app stopped within it) is paused at once as the output goes away, not faded in on the next one")
+    func disconnectDuringComeback() async {
+        let player = MockMusicPlayer(state: .playing)
+        // Called off at its second step, the fade-out comes back up in two: steps 3 and 4.
+        let steps = FadeSteps(holdingAt: 2, 4)
+        let arbiter = await disconnectArbiter(player, steps: steps)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true) // its pause runs on its own
+        await TestWait.until { await steps.count == 2 }
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false) // the music comes back up
+        await steps.letGo(2)
+        await TestWait.until { await steps.count == 4 }
+        await arbiter.handleOutputDisconnected()
+        await steps.letGo(4)
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 1)
+        #expect(await player.state == .paused)
+        #expect(await player.playCallCount == 0)
+    }
+
     @Test("a mute standing in for the pause (a web app's ad) is turned into a real pause once the output goes away")
     func disconnectEndsMute() async {
         let player = MockMusicPlayer()
