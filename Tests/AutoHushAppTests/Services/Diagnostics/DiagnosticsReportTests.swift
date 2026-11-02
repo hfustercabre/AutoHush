@@ -109,7 +109,7 @@ struct DiagnosticsReportTests {
         ])
     }
 
-    @Test("the card on top: working, needs attention, auto-pause off, starting (until the player's state is known too)")
+    @Test("the card on top: working, needs attention, auto-pause off, starting (until the player's state is known too); starting's line only when it says more")
     func overview() {
         var attention = workingStatus()
         attention.setHealth(.needsPermission(.automation(player: "Jukebox")))
@@ -123,6 +123,11 @@ struct DiagnosticsReportTests {
         #expect(kinds.map(\.kind) == [.working, .attention, .off, .starting, .starting])
         #expect(kinds[1].detail == "Needs Automation access")
         #expect(kinds[2].title == "Auto-Pause is off until 15:30")
+        #expect(kinds[3].detail == nil)
+        #expect(kinds[4].detail == nil)
+        unknownState.autoPause = .off
+        #expect(DiagnosticsReport.snapshot(activeAudio: [], status: unknownState, facts: facts()).overview.detail
+                    == "Auto-Pause is off")
     }
 
     @Test("the music player's part says whether its words were read, and its last error in words and in English")

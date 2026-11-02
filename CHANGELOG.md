@@ -81,7 +81,7 @@ This project follows [Semantic Versioning](https://semver.org/).
   says **Ignore an App…** adds one now.
 - **Diagnostics** says "other desktops", and what to do when a web
   app's window there can't be reached; the menu says "Starting…" while
-  AutoHush starts.
+  AutoHush starts, and Diagnostics says it once.
 - **The chosen player's tile** is solid blue with white text, and a
   highlighted blue button shows a ring around it, so neither looks like
   the keyboard's highlight. Settings says "purple dot" for macOS's

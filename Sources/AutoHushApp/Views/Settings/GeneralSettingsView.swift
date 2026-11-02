@@ -118,8 +118,8 @@ struct GeneralSettingsView: View {
             .buttonStyle(.plain)
             .highlightableRow(press: { model.showSoundSources() })
             .accessibilityLabel(Text(verbatim: SettingsPage.soundSources.title))
-            .accessibilityHint(Text("Shows them in Sound Sources",
-                                    comment: "VoiceOver hint of the Sound Sources row under the Auto-Pause switch in Settings → General, which opens the Sound Sources page listing the apps that pause the player"))
+            .accessibilityHint(Text("Opens the apps that pause your player",
+                                    comment: "VoiceOver hint of the Sound Sources row under the Auto-Pause switch in Settings → General: it opens the Sound Sources page, which lists the apps that pause the player"))
         }
     }
 }

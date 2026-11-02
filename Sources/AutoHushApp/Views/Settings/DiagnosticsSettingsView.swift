@@ -55,9 +55,11 @@ struct DiagnosticsSettingsView: View {
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: overview.title).font(.appHeadline)
-                    Text(verbatim: overview.detail)
-                        .foregroundStyle(.appSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if let detail = overview.detail {
+                        Text(verbatim: detail)
+                            .foregroundStyle(.appSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 Spacer(minLength: 0)
             }

@@ -54,9 +54,9 @@ enum DiagnosticsReport {
     private static func overview(status: AppStatus) -> DiagnosticsSnapshot.Overview {
         // Ready, but the player's state not known yet: still starting.
         if status.health == .starting || status.isReady && status.playback == .unknown {
-            return .init(kind: .starting,
-                         title: String(localized: "Starting…", comment: "Diagnostics: AutoHush is starting; also the status line at the top of the menu while it starts"),
-                         detail: status.statusLine)
+            let title = String(localized: "Starting…", comment: "Diagnostics: AutoHush is starting; also the status line at the top of the menu while it starts")
+            return .init(kind: .starting, title: title,
+                         detail: status.statusLine == title ? nil : status.statusLine)
         }
         if status.needsAttention {
             return .init(kind: .attention,
@@ -78,7 +78,7 @@ enum DiagnosticsReport {
     private static func text(overview: DiagnosticsSnapshot.Overview, activeAudio: [ActiveAudioReport.Entry],
                              sections: [DiagnosticsSnapshot.Section]) -> String {
         let apps = activeAudio.isEmpty ? noAudio : activeAudio.map(line(for:)).joined(separator: "\n")
-        let blocks = ["\(overview.title) — \(overview.detail)", "\(appsTitle)\n\(apps)"]
+        let blocks = [overview.detail.map { "\(overview.title) — \($0)" } ?? overview.title, "\(appsTitle)\n\(apps)"]
             + sections.map { section in
                 ([section.title] + section.rows.map { "\($0.label): \($0.value)" }).joined(separator: "\n")
             }

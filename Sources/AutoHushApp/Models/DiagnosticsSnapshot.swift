@@ -8,7 +8,8 @@ struct DiagnosticsSnapshot: Equatable {
         enum Kind: Equatable { case working, attention, off, starting }
         let kind: Kind
         let title: String
-        let detail: String
+        /// Nil when it would only repeat the title ("Starting…" twice).
+        let detail: String?
     }
 
     /// An app with its sound on.
