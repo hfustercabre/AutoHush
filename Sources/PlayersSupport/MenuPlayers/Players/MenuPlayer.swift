@@ -109,7 +109,13 @@ package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
     /// What the Play/Pause item says: "Pause" while the app plays, "Play"
     /// while it's paused. A title in both lists, or neither, says nothing.
     package static func state(of toggle: MenuToggle, words: PlayPauseWords) -> PlayerState {
-        switch (words.pause.contains(toggle.title), words.play.contains(toggle.title)) {
+        state(ofTitle: toggle.title, words: words)
+    }
+
+    /// What an item titled `title` says (`state(of:words:)`), exactly, case
+    /// and all: Player Check judges a menu by this too.
+    package static func state(ofTitle title: String, words: PlayPauseWords) -> PlayerState {
+        switch (words.pause.contains(title), words.play.contains(title)) {
         case (true, false): .playing
         case (false, true): .paused
         default: .unknown

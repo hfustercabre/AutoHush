@@ -14,7 +14,8 @@ package enum PlayerKindVerdict {
         package var webAppBrowser: String?
         package var scripting: ScriptingDictionary?
         package var stateNotification: StateNotification = .notFollowed
-        /// The first trial of each way, when the test tried it.
+        /// Each way's result over every window state it was tried in
+        /// (`TestResults.overall`), when the test tried it.
         package var scriptResult: TrialResult?
         /// Its state by script said it didn't play while it was heard.
         package var scriptStateWrong = false
@@ -23,7 +24,7 @@ package enum PlayerKindVerdict {
         package var menuTitle: String?
         package var isRunning = true
         package var pageHasPlayPause = false
-        /// The first trial of its row in the Now Playing panel, when tried.
+        /// Its row in the Now Playing panel's result, as the other ways', when tried.
         package var panelResult: TrialResult?
 
         package init(bundleID: String) { self.bundleID = bundleID }

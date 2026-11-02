@@ -63,18 +63,20 @@ func modifierSymbols(_ modifiers: Int) -> String {
 /// Presses its Play/Pause item, as AutoHush presses it (`AccessibilityPlaybackMenu.pressToggle`).
 @MainActor func pressMenuToggle(pid: pid_t) -> Bool { AccessibilityPlaybackMenu().pressToggle(pid: pid) }
 
-/// What its menu's Play/Pause item says of the state, as AutoHush's
-/// MenuPlayer reads it: disabled, it's stopped (nothing to play); else by
-/// the app's own words (`MenuPlayer.state(of:words:)`), else by this tool's
-/// list ("Pause" while it plays). Nil when the item says neither.
+/// What its menu's Play/Pause item says of the state, as an added app's
+/// MenuPlayer reads it (`MenuPlayerProfile.found`): disabled, it's stopped
+/// (nothing to play); else by the common words and the app's own together,
+/// exactly, case and all (`MenuPlayer.state(ofTitle:words:)`). Nil when the
+/// item says neither, as AutoHush can't tell then either.
 @MainActor func menuState(_ toggle: MenuToggle) -> PlayerState? {
-    guard toggle.isEnabled else { return .stopped }
-    if let ownWords {
-        let state = MenuPlayer.state(of: toggle, words: ownWords)
-        if state != .unknown { return state }
-    }
-    let title = toggle.title.lowercased()
-    return pauseWords.contains(title) ? .playing : playWords.contains(title) ? .paused : nil
+    menuState(title: toggle.title, isEnabled: toggle.isEnabled, ownWords: ownWords)
+}
+
+/// `menuState`'s rule, for an item titled `title` and the app's own words.
+func menuState(title: String, isEnabled: Bool, ownWords: PlayPauseWords?) -> PlayerState? {
+    guard isEnabled else { return .stopped }
+    let state = MenuPlayer.state(ofTitle: title, words: PlayPauseWords.common.merged(with: ownWords))
+    return state == .unknown ? nil : state
 }
 
 @MainActor func reportMenu() {

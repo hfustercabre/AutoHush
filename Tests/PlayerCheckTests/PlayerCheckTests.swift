@@ -219,4 +219,30 @@ struct PlayerCheckTests {
         #expect(TestResults.overall(.page) == .worked)
         #expect(TestResults.overall(.menu) == nil) // not tried
     }
+
+    @Test("its menu's item is read as an added app's MenuPlayer reads it: by the common words and the app's own, exactly, so a title AutoHush can't tell says nothing here either; disabled, it's stopped")
+    func menuStateAsAutoHush() {
+        #expect(menuState(title: "Pause", isEnabled: true, ownWords: nil) == .playing)
+        #expect(menuState(title: "reproducir", isEnabled: true, ownWords: nil) == .paused)
+        #expect(menuState(title: "PAUSE", isEnabled: true, ownWords: nil) == nil)
+        #expect(menuState(title: "PLAY", isEnabled: true, ownWords: nil) == nil)
+        #expect(menuState(title: "Shuffle", isEnabled: true, ownWords: nil) == nil)
+        #expect(menuState(title: "Pause", isEnabled: false, ownWords: nil) == .stopped)
+    }
+
+    @Test("the verdict judges its script, its menu and the panel by every window state, as the page: one that failed in view but worked in another state works")
+    func verdictByEveryState() {
+        defer {
+            TestResults.first = [:]
+            TestResults.byState = [:]
+        }
+        for way in [Way.script, .menu, .panel] {
+            TestResults.first[way] = .didNotPause
+            TestResults.byState[way] = [(.visible, .didNotPause, ""), (.covered, .worked, ""), (.hidden, .worked, "")]
+        }
+        let facts = verdictFacts()
+        #expect(facts.scriptResult == .worked && facts.menuResult == .worked && facts.panelResult == .worked)
+        TestResults.byState = [:] // with no window states, by its only run
+        #expect(verdictFacts().menuResult == .didNotPause)
+    }
 }

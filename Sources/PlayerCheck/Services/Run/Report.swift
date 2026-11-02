@@ -128,9 +128,8 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
 
 // MARK: - Verdict
 
-@MainActor func reportVerdict() {
-    say()
-    say(CheckReportLine.Heading.verdict.rawValue)
+/// What the verdict judges by.
+@MainActor func verdictFacts() -> PlayerKindVerdict.Facts {
     var facts = PlayerKindVerdict.Facts(bundleID: bundleID)
     facts.isSafariWebApp = isWebApp
     facts.webAppBrowser = webAppBrowser
@@ -138,14 +137,22 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
     let stateNotes = notifications?.seen.filter { $0.value.contains("Player State") }.keys.sorted() ?? []
     facts.stateNotification = announcingNotification.map { .announced($0) }
         ?? (!stateNotes.isEmpty ? .seen(stateNotes) : notifications == nil ? .notFollowed : .noneSeen)
-    facts.scriptResult = TestResults.first[.script]
+    // Each way judged by every window state it was tried in, as its line in
+    // "Ways to Control It" and the result file judge it (2026-11-02).
+    facts.scriptResult = TestResults.overall(.script)
     facts.scriptStateWrong = scriptStateWrong
-    facts.menuResult = TestResults.first[.menu]
+    facts.menuResult = TestResults.overall(.menu)
     facts.menuTitle = menu?.title
     facts.isRunning = running != nil
     facts.pageHasPlayPause = page?.toggle != nil
-    facts.panelResult = TestResults.first[.panel]
-    PlayerKindVerdict.lines(facts, developer: developer).forEach { say($0) }
+    facts.panelResult = TestResults.overall(.panel)
+    return facts
+}
+
+@MainActor func reportVerdict() {
+    say()
+    say(CheckReportLine.Heading.verdict.rawValue)
+    PlayerKindVerdict.lines(verdictFacts(), developer: developer).forEach { say($0) }
 
     // What the page showed: Add an App adds an app whose page's Play/Pause
     // works, pressed there (`PlayerSetup.Way.page`) as a Safari web app's is.
