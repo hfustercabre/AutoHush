@@ -51,7 +51,8 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
         case .noDiskImage:
             return String(localized: "This release has no disk image to install from.", comment: "Update install error")
         case .badResponse(let status):
-            return UpdateCheckError.badResponse(status).errorDescription
+            return String(localized: "GitHub answered with HTTP status \(status).",
+                          comment: "Update install error, as the download failed; %lld is an HTTP status code")
         case .damaged:
             return String(localized: "The download is damaged.", comment: "Update install error")
         case .notGenuine:

@@ -168,6 +168,15 @@ struct UpdateCheckerTests {
             try await checker(status: 200, body: #"{"tag_name": "latest"}"#).check(currentVersion: AppVersion("0.2.0")!)
         }
     }
+
+    @Test("both errors say the same plain words to the user; what GitHub answered goes to the log only (T11a)")
+    func errorTexts() {
+        for error: UpdateCheckError in [.badResponse(403), .unreadableRelease] {
+            #expect(error.errorDescription == "GitHub didn’t answer. Try again later.")
+        }
+        #expect(UpdateCheckError.badResponse(403).logDescription == "GitHub answered with HTTP status 403.")
+        #expect(UpdateCheckError.unreadableRelease.logDescription == "GitHub's release information couldn't be read.")
+    }
 }
 
 private extension UpdateCheckResult {

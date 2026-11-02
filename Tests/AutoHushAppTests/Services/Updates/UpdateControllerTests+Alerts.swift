@@ -123,9 +123,10 @@ extension UpdateControllerTests {
             (.latestRelease("v0.2.0"), AppVersion("0.2.0"), "AutoHush Is Up to Date", "You have the latest version, 0.2.0."),
             (answering(404, ""), AppVersion("0.2.0"), "No Releases Yet", "No AutoHush release has been published on GitHub yet."),
             (.offline, AppVersion("0.2.0"), "Couldn’t Check for Updates", URLError(.notConnectedToInternet).localizedDescription),
-            (answering(500, ""), AppVersion("0.2.0"), "Couldn’t Check for Updates", "GitHub answered with HTTP status 500."),
+            // GitHub's refusal or an answer AutoHush can't read: one plain text, the status in the log only (T11a).
+            (answering(500, ""), AppVersion("0.2.0"), "Couldn’t Check for Updates", "GitHub didn’t answer. Try again later."),
             (answering(200, #"{"tag_name": "latest"}"#), AppVersion("0.2.0"), "Couldn’t Check for Updates",
-             "GitHub’s release information couldn’t be read."),
+             "GitHub didn’t answer. Try again later."),
             (.offline, nil, "Couldn’t Check for Updates", "AutoHush’s version is unknown."),
         ]
         // Notifications about an update available, downloaded or that failed to install, in turn.

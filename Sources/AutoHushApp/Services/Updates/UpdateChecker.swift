@@ -6,14 +6,13 @@ enum UpdateCheckError: LocalizedError, LoggableError, Equatable {
     case badResponse(Int)
     case unreadableRelease
 
+    /// One plain text for both (T11a, the user's pick, 2026-11-02): an
+    /// answer GitHub refused (often its rate limit, for up to an hour) or
+    /// one AutoHush can't read; what it was stays in the log
+    /// (`logDescription`).
     var errorDescription: String? {
-        switch self {
-        case .badResponse(let status):
-            return String(localized: "GitHub answered with HTTP status \(status).",
-                          comment: "Update check error; %lld is an HTTP status code")
-        case .unreadableRelease:
-            return String(localized: "GitHub’s release information couldn’t be read.", comment: "Update check error")
-        }
+        String(localized: "GitHub didn’t answer. Try again later.",
+               comment: "Message of the alert “Couldn’t Check for Updates”, after a check asked for from the menu or Settings: GitHub refused the request or its answer couldn't be read")
     }
 
     var logDescription: String {
