@@ -38,7 +38,7 @@ flowchart TD
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
   AGAIN(["AutoHush opened again<br/>while it runs (Finder,<br/>Spotlight, Launchpad)"])
-  SET["Settings, Everyday:<br/>Media Player, Sound Sources<br/>(ignore, remove, reset),<br/>Behavior (the switches);<br/>Advanced: Fine-Tuning<br/>(timings, lengths, limits,<br/>detection), Diagnostics"]
+  SET["Settings, Everyday:<br/>Media Player, Sound Sources<br/>(ignore, remove, reset;<br/>⌘Z undoes a removal or<br/>a Restore Defaults),<br/>Behavior (the switches);<br/>Advanced: Fine-Tuning<br/>(timings, lengths, limits,<br/>detection), Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])
@@ -148,7 +148,7 @@ flowchart TD
   IGN["An ignored app (display<br/>apps’ volume sound: ignored<br/>from their first run, and<br/>after Reset List…): listed<br/>under Playing Now, never pauses"]
   DM{"Detection"}
   NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays (one that<br/>keeps saying so stays measured;<br/>listened to 0.5 s every 30 s<br/>while your player plays, and<br/>once before it resumes; never<br/>an app you ignore)"]
-  ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Open audio<br/>streams only); sound without<br/>video must play 3 s (any<br/>sound 2 s, with open streams)"]
+  ANTI["AntiDot mode: what it tells<br/>macOS (I’m playing), or any<br/>open sound (Any app with<br/>sound on); sound without<br/>video must play 3 s (any<br/>sound 2 s, with sound on)"]
   MIC["Pause for the microphone<br/>on: its microphone on<br/>for 1 s counts, sound or<br/>not (the card: “is using<br/>the microphone”)"]
   T{"Playing<br/>for 0.5 s?"}
   TONE["Too short: a notification<br/>or chat tone, ignored"]
@@ -252,7 +252,7 @@ flowchart LR
   subgraph AUTO["Auto-Pause"]
     direction TB
     E4["Auto-Pause off: the card<br/>(its switch, or a click on it),<br/>Set Auto-Pause in Shortcuts"]
-    E5["Turn off for 5 minutes<br/>to 24 hours: the menu,<br/>Shortcuts"]
+    E5["Turn off for 5 minutes<br/>to 24 hours: the menu<br/>(time left shown),<br/>Shortcuts"]
     E6["A Focus with AutoHush’s<br/>filter starts or ends"]
   end
   subgraph MAC["The Mac and AutoHush"]

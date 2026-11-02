@@ -31,6 +31,14 @@ This project follows [Semantic Versioning](https://semver.org/).
   Use AntiDot Mode Instead trades ("No purple dot; a little less
   precise."), there, in the menu and in Settings. Audio Recording's
   notes say audio is never recorded.
+- **A Help menu** while a window is open, with macOS's search, and
+  **AutoHush Help** (⌘?), which opens the README's tips and
+  troubleshooting; Settings → About's **Help** link (in place of GitHub)
+  opens it too.
+- **Undo in Settings:** Edit → Undo (⌘Z) and Redo bring back what a
+  card's **Restore Defaults** changed, on that card's page, and apps
+  removed from Sound Sources, each in its place and still ignored if it
+  was. What can be undone is forgotten when Settings closes.
 
 ### Changed
 
@@ -58,6 +66,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Adding a player from the welcome window** no longer leaves the
   welcome waiting behind the new app for Done: it closes by itself when
   nothing is missing, or comes forward to ask for what is.
+- **Settings explain themselves:** General's Auto-Pause says what it
+  does ("Pauses your player while other apps play."), with a **Sound
+  Sources** row under it; Media Player says when the chosen player still
+  needs a permission, with the button that allows it, as General does.
+- **Detection's ways** say what counts in a sentence each, and **Open
+  audio streams only** is now **Any app with sound on**; the silence
+  threshold says "Off in AntiDot mode" while it's greyed out.
+- **Turn off for** hides while Auto-Pause is off; while AutoHush is
+  turned off for a while, it reads "Turned off for", with the chosen
+  time selected and the time left.
+- **Settings → Sound Sources** says "ignored", as the menu does, and
+  Sort by's **On/Off** is now **Status**; while the list is empty, it
+  says **Ignore an App…** adds one now.
+- **Diagnostics** says "other desktops", and what to do when a web
+  app's window there can't be reached; the menu says "Starting…" while
+  AutoHush starts.
 - **The chosen player's tile** is solid blue with white text, and a
   highlighted blue button shows a ring around it, so neither looks like
   the keyboard's highlight. Settings says "purple dot" for macOS's
