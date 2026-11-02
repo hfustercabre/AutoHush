@@ -39,6 +39,16 @@ struct AppDelegateTests {
         lazy var players = MusicPlayerCatalog(players: [first, second], formerDefault: Players.first)
         var installed: Set<String> = [Players.first, Players.second]
         let chooser = FakePlayerChooser()
+        /// The supported apps open as the welcome window opens, and those of
+        /// them playing (`PlayerSignalsReader`): none unless a test says.
+        let signals = Locked(PlayerSignals())
+        var signalsReader: PlayerSignalsReader {
+            let signals = signals
+            return PlayerSignalsReader(
+                open: { ids in Dictionary(uniqueKeysWithValues: ids.filter(signals.value.open.contains).map { ($0, pid_t(4242)) }) },
+                playing: { open in signals.value.playing.intersection(open.keys) }
+            )
+        }
         let learningWindow = FakeLearningWindow()
         /// How many learning windows AutoHush made (each Learn Again makes a new one).
         var learningWindowsMade = 0
@@ -156,6 +166,7 @@ struct AppDelegateTests {
             makeMonitoring: scratch.monitorings.make,
             locateApp: { scratch.locate($0) },
             makePlayerChooser: { _ in scratch.chooser },
+            playerSignalsReader: scratch.signalsReader,
             makeLearningWindow: { _ in
                 scratch.learningWindowsMade += 1
                 return scratch.learningWindow

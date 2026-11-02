@@ -147,6 +147,26 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("the welcome window opens knowing which supported apps are open, and which of them play a moment later, read afresh each time it opens")
+    func welcomeReadsPlayerSignals() async {
+        let scratch = Scratch()
+        scratch.signals.value = PlayerSignals(playing: [Players.second, "com.example.unknown"], open: [Players.first, Players.second])
+        let (sut, _) = makeSUT(scratch, chosenPlayer: nil)
+        #expect(sut.settingsModel.playerSignals == PlayerSignals()) // not read before it opens
+
+        sut.showPlayerChooser()
+        #expect(sut.settingsModel.playerSignals.open == [Players.first, Players.second]) // at once
+        await TestWait.until { sut.settingsModel.playerSignals.playing == [Players.second] } // only the open ones
+
+        scratch.chooser.close()
+        scratch.signals.value = PlayerSignals(open: [Players.first])
+        sut.showPlayerChooser()
+        #expect(sut.settingsModel.playerSignals.open == [Players.first])
+        await TestWait.until { sut.settingsModel.playerSignals.playing.isEmpty }
+        #expect(sut.settingsModel.playerSignals == PlayerSignals(open: [Players.first]))
+    }
+
+    @MainActor
     @Test("opening the menu brings the welcome window forward while it's open, in case other windows covered it")
     func menuBringsWelcomeForward() {
         let scratch = Scratch()

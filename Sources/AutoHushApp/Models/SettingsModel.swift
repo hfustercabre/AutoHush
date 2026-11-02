@@ -34,6 +34,9 @@ final class SettingsModel {
     var permissions: PermissionsState { permissionCenter.chosen }
     /// The welcome window shows what the chosen player needs, after its list.
     var welcomeAsksPermissions = false
+    /// Which supported apps are open and playing, as the welcome window last
+    /// opened: its tiles start with the likely player picked.
+    var playerSignals = PlayerSignals()
 
     // From the app's state.
     /// The media players to choose from (also in the welcome window).

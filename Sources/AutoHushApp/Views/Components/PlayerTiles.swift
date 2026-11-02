@@ -26,6 +26,9 @@ struct PlayerTiles: View {
     /// A click on an installed player, or on a suggested web app (which then
     /// opens "Add a Web App" filled in).
     let onSelect: (PlayerOption) -> Void
+    /// A double-click on a tile (the welcome window: it picks the player and
+    /// continues); `nil`: a double-click is two clicks.
+    var onChoose: ((PlayerOption) -> Void)?
     let onAddWebApp: () -> Void
     /// "Add an App…": checks an app and adds it.
     var onAddApp: () -> Void = {}
@@ -221,6 +224,8 @@ struct PlayerTiles: View {
             .chosenOutline(isSelected)
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 10)) // lights up under the pointer; dims while disabled
+        // Beside the click, which picks it first (U4b, the user, 2026-11-02).
+        .simultaneousGesture(TapGesture(count: 2).onEnded { onChoose?(option) }, including: onChoose == nil ? .subviews : .all)
         .disabled(!option.isClickable)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }

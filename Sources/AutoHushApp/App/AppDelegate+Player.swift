@@ -225,8 +225,24 @@ extension AppDelegate {
         }
         settingsModel.welcomeAsksPermissions = false
         refreshPlayerOptions()
+        readPlayerSignals()
         playerChooser?.show()
         windowWatch.wake()
+    }
+
+    /// Which supported apps are open, at once, so the welcome window opens
+    /// with the one open picked; then which of them play, a moment later
+    /// (`PlayerSignals`).
+    private func readPlayerSignals() {
+        let ids = status.playerOptions.filter { $0.kind == .app && $0.isInstalled }.map(\.bundleID)
+        let open = playerSignalsReader.open(ids)
+        settingsModel.playerSignals = PlayerSignals(open: Set(open.keys))
+        playerSignalsRead?.cancel()
+        playerSignalsRead = Task { [weak self, reader = playerSignalsReader] in
+            let playing = await reader.playing(open)
+            guard !Task.isCancelled, let self else { return }
+            self.settingsModel.playerSignals.playing = playing
+        }
     }
 
     /// The menu opens: what it lists is brought up to date. The welcome

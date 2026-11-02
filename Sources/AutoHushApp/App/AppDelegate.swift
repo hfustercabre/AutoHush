@@ -55,6 +55,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Asks for the media player while none is chosen; made when first needed.
     var playerChooser: any PlayerChooserPresenting?
     let makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting
+    /// Reads which supported apps are open and playing, as the welcome window
+    /// opens, and that read while it's under way.
+    let playerSignalsReader: PlayerSignalsReader
+    var playerSignalsRead: Task<Void, Never>?
     /// Learning the chosen player's controls with the user, when it's one
     /// AutoHush must learn (a Safari web app).
     let learning = LearningSession()
@@ -144,6 +148,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var makePlayerChooser: @MainActor (SettingsModel) -> any PlayerChooserPresenting = {
             PlayerChooserWindowController(model: $0)
         }
+        var playerSignalsReader: PlayerSignalsReader = .live
         var makeLearningWindow: @MainActor (SettingsModel) -> any LearningWindowPresenting = {
             LearningWindowController(model: $0)
         }
@@ -182,6 +187,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.nowPlayingSetting = system.nowPlayingSetting
         self.locateApp = system.locateApp
         self.makePlayerChooser = system.makePlayerChooser
+        self.playerSignalsReader = system.playerSignalsReader
         self.makeLearningWindow = system.makeLearningWindow
         self.learnedWindowDelay = system.learnedWindowDelay
         self.openApp = system.openApp

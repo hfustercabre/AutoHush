@@ -4,7 +4,8 @@ import SwiftUI
 
 /// The media players as tiles, as in Settings → Media Player (`PlayerTiles`): the
 /// apps, then the Safari web apps and the tile that adds one; the user picks
-/// one and continues.
+/// one and continues, or double-clicks it. The likely player starts picked
+/// (`PlayerSignals`).
 /// Players that aren't installed come after the installed apps, dimmed, and
 /// can't be picked. Past `visibleTileRows` rows of tiles, they scroll. From
 /// `PlayerOption.searchThreshold` players on, a search narrows them down.
@@ -13,7 +14,7 @@ struct PlayerChooserView: View {
     /// The tallest the first page may be: past it, its list scrolls. `nil`:
     /// as tall as the players make it.
     var tallestPage: CGFloat?
-    /// The player the user picked.
+    /// The player the user picked (clicked, or continued with).
     @State private var picked: String?
     @State private var search = ""
 
@@ -65,8 +66,9 @@ struct PlayerChooserView: View {
             SearchField(text: $search, results: SearchResults(count: shown.count, noMatch: PlayerOption.noMatchNote(search)),
                         onSubmit: returnInSearch)
         }
-        PlayerTiles(options: shown, selection: picked,
+        PlayerTiles(options: shown, selection: selection,
                     onSelect: select,
+                    onChoose: choose,
                     onAddWebApp: { model.actions?.openAddWebApp() },
                     onAddApp: { model.actions?.openAddApp() },
                     onRemove: { model.actions?.removeAddedApp($0.bundleID) },
@@ -104,8 +106,37 @@ struct PlayerChooserView: View {
         if option.webAddress != nil { model.actions?.choosePlayer(option.bundleID) } else { picked = option.bundleID }
     }
 
+    /// A double-click on a tile: a player is picked and chosen, as its
+    /// click then Continue would. A suggested web app's clicks have opened
+    /// "Add a Web App" already.
+    private func choose(_ option: PlayerOption) {
+        guard let id = Self.doubleClickChoice(option) else { return }
+        picked = id
+        continueTapped()
+    }
+
+    /// The player a double-click on `option`'s tile chooses: `nil` for a
+    /// suggested web app, and one that can't be chosen.
+    static func doubleClickChoice(_ option: PlayerOption) -> String? {
+        option.webAddress == nil && option.isInstalled && option.isClickable ? option.bundleID : nil
+    }
+
     private func continueTapped() {
-        if let picked { model.actions?.choosePlayer(picked) }
+        guard let selection else { return }
+        picked = selection // Back shows it picked, whatever the signals say then
+        model.actions?.choosePlayer(selection)
+    }
+
+    /// The tile picked: the user's, while it's still offered and can be
+    /// chosen; else the likely player (`PlayerSignals`), which follows the
+    /// list and the signals until the user picks one.
+    private var selection: String? {
+        Self.selection(picked: picked, among: model.offeredPlayers, signals: model.playerSignals)
+    }
+
+    static func selection(picked: String?, among options: [PlayerOption], signals: PlayerSignals) -> String? {
+        if let picked, options.contains(where: { $0.bundleID == picked && $0.isInstalled && $0.isClickable }) { return picked }
+        return signals.likelyPlayer(among: options)
     }
 
     /// Return in the search, which has the keyboard from the start and keeps
@@ -139,6 +170,6 @@ struct PlayerChooserView: View {
 
     /// A player is picked, and is still installed and can be chosen.
     private var canContinue: Bool {
-        model.offeredPlayers.contains { $0.bundleID == picked && $0.isInstalled && $0.isClickable }
+        model.offeredPlayers.contains { $0.bundleID == selection && $0.isInstalled && $0.isClickable }
     }
 }
