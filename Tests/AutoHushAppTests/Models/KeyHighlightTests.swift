@@ -193,9 +193,13 @@ struct KeyHighlightTests {
         await TestWait.until { !told.value.isEmpty }
         #expect(told.value == [CGRect(x: 1000, y: 510, width: 44, height: 22)])
         keyboard.clear()
+        let second = control(keyboard, 0, 40)
         keyboard.hover(first, true)
-        try? await Task.sleep(for: .milliseconds(400))
-        #expect(told.value.count == 1)
+        keyboard.move(1) // a key's move after the pointer's: told once it's scrolled into view
+        await TestWait.until { told.value.count > 1 }
+        // The pointer's move, though it came first, never was.
+        #expect(told.value == [CGRect(x: 1000, y: 510, width: 44, height: 22), CGRect(x: 1000, y: 540, width: 44, height: 22)])
+        #expect(keyboard.highlighted == second)
     }
 
     @Test("a side window opened by → lights its first row once its rows have come and been placed, waiting for frames that come after them")

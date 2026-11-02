@@ -103,14 +103,16 @@ extension AppDelegateTests {
         let scratch = Scratch()
         let (webApp, _) = scratch.makesWebApp(named: "Quartet", status: .learned)
         scratch.maker.onMake = {} // macOS doesn't list it yet
-        let (sut, _) = makeSUT(scratch, madeWebAppWait: .seconds(30))
+        let sleep = ManualSleep()
+        let (sut, _) = makeSUT(scratch, madeWebAppWait: .seconds(30), madeWebAppSleep: sleep.sleep)
         sut.addWebApp.show()
         sut.addWebApp.model.address = "play.quartet.example"
         sut.addWebApp.model.continueTapped()
         await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.quartet.example") }
         sut.addWebApp.model.addTapped()
         await TestWait.until { !scratch.opened.isEmpty } // made and opened: chosen once, then looked for again
-        try? await Task.sleep(for: .milliseconds(50)) // its next look, half a minute away
+        await TestWait.until { sleep.sleeping == 1 } // its next look, half a minute away
+        #expect(sleep.durations == [.seconds(30)])
         let adding = sut.addWebApp.adding
 
         scratch.webAppsFound.value = [webApp] // listed now

@@ -166,6 +166,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         var learnedWindowDelay: Duration = .seconds(1.5)
         var madeWebAppWait: Duration = .milliseconds(500)
+        var madeWebAppSleep: @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
         var otherInstances: OtherInstances = .live(bundleIdentifier: ProjectInfo.bundleID)
         var retries = PlayerSession.Retries()
         var watchFolder: FolderWatch.Start = FolderWatch.start
@@ -229,6 +230,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         addApp = AddAppFeature(host: self, system: system.addAppSystem, keptChecks: KeptCheckStore(defaults: defaults))
         addWebApp = AddWebAppFeature(host: self, maker: system.webAppMaker, makeWindow: system.makeAddWebAppWindow, openApp: openApp,
                                      learnedWindowDelay: learnedWindowDelay, madeWebAppWait: system.madeWebAppWait,
+                                     madeWebAppSleep: system.madeWebAppSleep,
                                      exampleAddress: players.exampleWebAddress, countrySites: players.countrySites)
         settingsModel = SettingsModel(
             state: appState,

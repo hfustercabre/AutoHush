@@ -24,13 +24,16 @@ final class AddWebAppFeature {
     private let openApp: @MainActor (URL) async -> Void
     /// The learning shows both steps ticked this long before the window closes.
     private let learnedWindowDelay: Duration
-    /// Between two looks for a web app just made that isn't listed yet.
+    /// Between two looks for a web app just made that isn't listed yet,
+    /// waited by `madeWebAppSleep` (a test holds it there).
     private let madeWebAppWait: Duration
+    private let madeWebAppSleep: @Sendable (Duration) async -> Void
     private let logger = AutoHushLogger(category: "AddWebApp")
 
     init(host: any AddWebAppHost, maker: any WebAppMaking,
          makeWindow: @escaping @MainActor (AddWebAppModel, SettingsModel) -> any AddWebAppPresenting,
          openApp: @escaping @MainActor (URL) async -> Void, learnedWindowDelay: Duration, madeWebAppWait: Duration,
+         madeWebAppSleep: @escaping @Sendable (Duration) async -> Void,
          exampleAddress: String?, countrySites: [CountrySites]) {
         self.host = host
         self.maker = maker
@@ -38,6 +41,7 @@ final class AddWebAppFeature {
         self.openApp = openApp
         self.learnedWindowDelay = learnedWindowDelay
         self.madeWebAppWait = madeWebAppWait
+        self.madeWebAppSleep = madeWebAppSleep
         model.exampleAddress = exampleAddress
         model.countrySites = countrySites
         model.start = { [weak self] in self?.add(from: $0) }
@@ -121,7 +125,7 @@ final class AddWebAppFeature {
                 while host.chosenPlayerID == before, before != made.bundleID, lookups < Self.madeWebAppLookups,
                       model.attempt == attempt, !Task.isCancelled {
                     lookups += 1
-                    try? await Task.sleep(for: self.madeWebAppWait)
+                    await self.madeWebAppSleep(self.madeWebAppWait)
                     // Cancelled meanwhile (the sleep ends at once then), or another chosen.
                     guard model.attempt == attempt, !Task.isCancelled, host.chosenPlayerID == before else { break }
                     host.chooseWebApp(made.bundleID, showsLearningWindow: fromWelcome)

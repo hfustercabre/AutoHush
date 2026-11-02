@@ -95,14 +95,19 @@ extension AddAppModelTests {
         await model.loadApps()
         model.continueWithApp()
         await TestWait.until { model.stage == .ready }
+        let sleep = ManualSleep()
+        world.heldSleep = sleep // the watches' looks held until the test ends them
+        await TestWait.until { sleep.sleeping == 1 }
         model.startCheck()
         model.stopCheck()
         model.startCheck() // before the watch looks again
         model.stopCheck()
         #expect(model.stage == .ready)
+        await TestWait.until { sleep.sleeping == 1 } // one watch
         model.windowClosed()
+        #expect(sleep.sleeping == 0) // ended, none left over to look again
         world.running = false
-        try? await Task.sleep(for: .milliseconds(200)) // a watch left over would see it quit by now
+        sleep.timeIsUp()
         #expect(model.stage == .ready && !model.appQuit)
         first.finish(.stopped)
     }
