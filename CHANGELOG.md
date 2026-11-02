@@ -102,6 +102,22 @@ This project follows [Semantic Versioning](https://semver.org/).
   one. With Homebrew, which has no release candidates, it says to
   download one from GitHub, and to go back with `brew reinstall`. The
   way back that installs itself says why in fewer words.
+- **Unplugging headphones while the player fades back up** (an app
+  stopped just as AutoHush paused it) pauses it, as Pause on disconnect
+  says.
+- **A player muted because it wouldn't pause** no longer keeps the
+  earlier "Couldn't pause" behind the card's info button.
+- **A player removed or deleted while chosen** shows again in Settings →
+  Sound Sources and the menu's Ignored Apps.
+- **Add an App's check** plays the app again after its last test, so it
+  never ends with the app paused; it judges each way by every window
+  state it tried, and reads an app's menus as AutoHush does.
+- **Add a Web App** takes only a web app of the site being added, not
+  another one made meanwhile.
+- **Players controlled through Now Playing** pause and resume faster while
+  Now Playing is hidden in the menu bar.
+- **The arrow keys** reach an added app whose reason for being dimmed
+  goes away while the list is open.
 
 ---
 

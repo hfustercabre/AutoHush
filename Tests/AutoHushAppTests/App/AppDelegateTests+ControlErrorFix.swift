@@ -114,10 +114,11 @@ extension AppDelegateTests {
         sut.showControlError()
         // The alert says why, then (unless AutoHush speaks English, which
         // the test runner's bundle decides) the log's English, then AppKit's
-        // own OK only.
+        // own OK only, which macOS 14 and 15 list only once the alert shows.
         let alert = try #require(sut.status.controlErrorAlert())
         #expect(sut.status.controlError?.text.hasSuffix("as during an ad.") == true)
-        #expect(alerts.calls.last == "\(alert.title) | \(alert.message) | OK")
+        #expect(["\(alert.title) | \(alert.message) | OK", "\(alert.title) | \(alert.message)"]
+            .contains(alerts.calls.last))
         try await pauseFailed(sut, monitorings, .pressFailed)
         sut.showControlError()
         #expect(alerts.calls.last?.hasSuffix(" | Learn Again… | OK") == true)
