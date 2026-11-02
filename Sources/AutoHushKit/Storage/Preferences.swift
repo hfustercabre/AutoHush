@@ -14,8 +14,11 @@ package final class Preferences {
     enum Key {
         static let autoPauseEnabled = "autoPauseEnabled"
         static let autoPauseSnoozedUntil = "autoPauseSnoozedUntil"
+        /// The snooze's duration in seconds, from 1.3.0.
+        static let autoPauseSnoozeDuration = "autoPauseSnoozeDuration"
         static let focusNotedAutoPauseEnabled = "focusNotedAutoPauseEnabled"
         static let focusNotedAutoPauseSnoozedUntil = "focusNotedAutoPauseSnoozedUntil"
+        static let focusNotedAutoPauseSnoozeDuration = "focusNotedAutoPauseSnoozeDuration"
         static let focusAppliedAutoPause = "focusAppliedAutoPause"
         static let ignoredApps = "ignoredApps"
         static let appsIgnoredByDefault = "appsIgnoredByDefault"
@@ -72,12 +75,14 @@ package final class Preferences {
         get {
             AutoPauseSetting(
                 isEnabled: defaults.object(forKey: Key.autoPauseEnabled) as? Bool ?? true,
-                snoozedUntil: defaults.object(forKey: Key.autoPauseSnoozedUntil) as? Date
+                snoozedUntil: defaults.object(forKey: Key.autoPauseSnoozedUntil) as? Date,
+                snooze: snooze(forKey: Key.autoPauseSnoozeDuration)
             )
         }
         set {
             defaults.set(newValue.isEnabled, forKey: Key.autoPauseEnabled)
             defaults.set(newValue.snoozedUntil, forKey: Key.autoPauseSnoozedUntil)
+            defaults.set(newValue.snooze?.duration, forKey: Key.autoPauseSnoozeDuration)
         }
     }
 
@@ -90,7 +95,8 @@ package final class Preferences {
             return FocusAutoPauseNote(
                 noted: AutoPauseSetting(
                     isEnabled: defaults.object(forKey: Key.focusNotedAutoPauseEnabled) as? Bool ?? true,
-                    snoozedUntil: defaults.object(forKey: Key.focusNotedAutoPauseSnoozedUntil) as? Date
+                    snoozedUntil: defaults.object(forKey: Key.focusNotedAutoPauseSnoozedUntil) as? Date,
+                    snooze: snooze(forKey: Key.focusNotedAutoPauseSnoozeDuration)
                 ),
                 applied: applied
             )
@@ -98,8 +104,15 @@ package final class Preferences {
         set {
             defaults.set(newValue?.noted.isEnabled, forKey: Key.focusNotedAutoPauseEnabled)
             defaults.set(newValue?.noted.snoozedUntil, forKey: Key.focusNotedAutoPauseSnoozedUntil)
+            defaults.set(newValue?.noted.snooze?.duration, forKey: Key.focusNotedAutoPauseSnoozeDuration)
             defaults.set(newValue?.applied, forKey: Key.focusAppliedAutoPause)
         }
+    }
+
+    /// A snooze's duration kept in seconds under `key`; `nil` when none is
+    /// (an AutoHush before 1.3.0 kept only the end) or it's no choice's.
+    private func snooze(forKey key: String) -> AutoPauseSnooze? {
+        (defaults.object(forKey: key) as? Double).flatMap(AutoPauseSnooze.init(duration:))
     }
 
     /// Each timing's key in the stored dictionary. A missing key keeps its default.

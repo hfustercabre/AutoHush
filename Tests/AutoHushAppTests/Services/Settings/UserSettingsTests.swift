@@ -43,6 +43,47 @@ struct UserSettingsTests {
         #expect(preferences.autoPause.snoozedUntil == nil)
     }
 
+    @Test("a snooze keeps its duration for the menu; another replaces it; turning Auto-Pause on or off by hand, or the snooze running out, clears it")
+    func snoozeDuration() {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let settings = UserSettings(preferences: preferences)
+        let now = Date()
+
+        settings.snooze(.fifteenMinutes, now: now)
+        #expect(preferences.autoPause.snooze == .fifteenMinutes)
+        #expect(settings.state.snooze == RunningSnooze(end: AutoPauseSnooze.fifteenMinutes.endDate(from: now), duration: .fifteenMinutes))
+        settings.snooze(.oneHour, now: now)
+        #expect(settings.state.snooze == RunningSnooze(end: AutoPauseSnooze.oneHour.endDate(from: now), duration: .oneHour))
+
+        settings.toggleAutoPause(now: now)
+        #expect(settings.state.snooze == nil && preferences.autoPause.snooze == nil)
+        settings.snooze(.fiveMinutes, now: now)
+        settings.setAutoPause(false)
+        #expect(settings.state.snooze == nil && preferences.autoPause.snooze == nil)
+        settings.snooze(.fiveMinutes, now: now)
+        settings.setAutoPause(true)
+        #expect(settings.state.snooze == nil && preferences.autoPause.snooze == nil)
+
+        // Run out as the settings are read.
+        preferences.autoPause = .snoozed(.fiveMinutes, from: now.addingTimeInterval(-600))
+        let later = UserSettings(preferences: preferences, now: now)
+        #expect(later.state.snooze == nil && preferences.autoPause == AutoPauseSetting())
+    }
+
+    @Test("a snooze an older AutoHush started, kept without its duration, still runs, with no duration")
+    func snoozeWithoutDuration() {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let now = Date()
+        let end = now.addingTimeInterval(600)
+        preferences.autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: end)
+        let settings = UserSettings(preferences: preferences, now: now)
+        #expect(settings.state.snooze == RunningSnooze(end: end, duration: nil))
+        guard case .snoozed = settings.state.autoPause else {
+            Issue.record("expected snoozed, got \(settings.state.autoPause)")
+            return
+        }
+    }
+
     @Test("an expired snooze is cleared as the settings are read, and one running out meanwhile once its time is up")
     func expiredSnoozeCleared() async {
         let preferences = Preferences(store: InMemoryPreferenceStore())

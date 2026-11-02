@@ -67,6 +67,10 @@ final class StatusMenuModel {
     /// line shown while it tries.
     @ObservationIgnored var announcesResumeOutcome = false
     @ObservationIgnored var perform: @MainActor (StatusMenuCommand) -> Void = { _ in }
+    /// The clock the snooze bar's time left is read by: set as the menu
+    /// opens and each time the minutes left change
+    /// (`StatusMenuController.followSnoozeClock`).
+    var now = Date()
 
     init(status: AppStatus) {
         // Either highlight lit hides the keyboard's focus in both (K9).
@@ -84,7 +88,7 @@ final class StatusMenuModel {
     /// The menu's parts, in order: the card (with the media player's row,
     /// H4, the user's pick, 2026-10-25), a warning and its fix (not the
     /// player's own missing permission, which the card asks for), Turn off
-    /// for, the apps playing and played, Ignored Apps, the update found, and
+    /// for (unless Auto-Pause is off), the apps playing and played, Ignored Apps, the update found, and
     /// the buttons. The settings are Settings' only (A1, the user's pick,
     /// 2026-10-25).
     var sections: [MenuSection] {
@@ -96,7 +100,9 @@ final class StatusMenuModel {
             // Not for a player that can only be muted: AntiDot mode can't mute it.
             if warning == .systemAudioRecording, !status.playerNeedsLevels { sections.append(.useAntiDot) }
         }
-        sections.append(.snooze)
+        // Not while Auto-Pause is off: a duration would turn it on, not off
+        // (U9c, the user's pick, 2026-11-02).
+        if status.autoPause != .off { sections.append(.snooze) }
         if !listedSources.isEmpty { sections.append(.playingNow) }
         if !listedRecentSources.isEmpty { sections.append(.recentlyPlayed) }
         // Always, so the first app to ignore can be added from the menu (the user, 2026-10-18).
@@ -105,4 +111,18 @@ final class StatusMenuModel {
         sections.append(.toolbar)
         return sections
     }
+
+    // MARK: - Turn off for
+
+    /// The bar's heading: "Turned off for" while a snooze runs.
+    var snoozeHeading: String {
+        status.snooze == nil ? AutoPauseSnooze.heading : AutoPauseSnooze.runningHeading
+    }
+
+    /// The duration running, selected in the bar; none for a snooze an
+    /// AutoHush before 1.3.0 started.
+    var runningSnoozeDuration: AutoPauseSnooze? { status.snooze?.duration }
+
+    /// The time left, beside the heading while a snooze runs.
+    var snoozeTimeLeft: String? { status.snooze?.timeLeft(at: now) }
 }

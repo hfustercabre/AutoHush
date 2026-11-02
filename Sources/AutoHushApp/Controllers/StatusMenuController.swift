@@ -16,7 +16,7 @@ import AutoHushKit
 /// before anything opens a window. It has no keyboard shortcuts: AutoHush
 /// has none of its own. Opening and closing it are in `+Opening`, what its
 /// controls do in `+Commands`, the side windows in `+SideWindow`, the keys
-/// in `+Keys`.
+/// in `+Keys`, the snooze bar's clock in `+SnoozeClock`.
 @MainActor
 final class StatusMenuController: NSObject {
     /// The engine reports its state often (on every track change, for one),
@@ -65,7 +65,8 @@ final class StatusMenuController: NSObject {
     var pause: @Sendable (TimeInterval) async -> Void = { try? await Task.sleep(for: .seconds($0)) }
     /// Where the pointer is, in the screen's coordinates (tests move it).
     var pointerLocation: @MainActor () -> CGPoint = { NSEvent.mouseLocation }
-    /// The clock a click on the menu bar item is timed by (tests move it).
+    /// The clock a click on the menu bar item is timed by, and the snooze
+    /// bar's time left read (tests move it).
     var now: @MainActor () -> Date = Date.init
     /// The menu bar item's frame, from its window unless set (tests, whose
     /// item the menu bar may not have placed).
@@ -95,6 +96,9 @@ final class StatusMenuController: NSObject {
     private(set) var contentHeight: CGFloat = 0
     /// The panel follows the content's height at the end of this pass.
     private(set) var followsContent = false
+    /// Reads the clock again as the snooze's minutes left change, while the
+    /// menu is open (`followSnoozeClock`).
+    private(set) var snoozeClock: Timer?
 
     init(status: AppStatus = AppStatus(), settings: UserSettings, session: PlayerSession,
          updates: any UpdateCommands, actions: any AppActions?, settingsModel: SettingsModel? = nil) {
@@ -169,6 +173,9 @@ final class StatusMenuController: NSObject {
     /// The menu's part the pointer came onto.
     func setPointerSection(_ section: MenuSection?) { pointerSection = section }
 
+    /// The timer that reads the clock again for the snooze bar, or `nil`.
+    func setSnoozeClock(_ timer: Timer?) { snoozeClock = timer }
+
     /// The side window opening, or closing, after its wait.
     func setSideOpenTask(_ task: Task<Void, Never>) { sideOpenTask = task }
     func setSideCloseTask(_ task: Task<Void, Never>) { sideCloseTask = task }
@@ -237,7 +244,9 @@ final class StatusMenuController: NSObject {
     private func render() {
         renderIcon()
         guard isMenuOpen else { return }
+        let snoozeChanged = model.status.snooze != status.snooze
         model.status = status
+        if snoozeChanged { followSnoozeClock() }
     }
 
     private func renderIcon() {

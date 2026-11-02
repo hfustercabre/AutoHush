@@ -45,7 +45,7 @@ struct FocusAutoPauseTests {
         #expect(setup.preferences.focusAutoPause == nil)
     }
 
-    @Test("a timed turn off is noted and comes back to the same end")
+    @Test("a timed turn off is noted and comes back to the same end, with its duration")
     func restoresTimedTurnOff() {
         let setup = Setup(now: now)
         setup.settings.snooze(.thirtyMinutes, now: now)
@@ -58,7 +58,8 @@ struct FocusAutoPauseTests {
 
         setup.focus.follow(nil, now: now)
         #expect(!setup.settings.isAutoPauseActive)
-        #expect(setup.preferences.autoPause == AutoPauseSetting(isEnabled: true, snoozedUntil: end))
+        #expect(setup.preferences.autoPause == AutoPauseSetting(isEnabled: true, snoozedUntil: end, snooze: .thirtyMinutes))
+        #expect(setup.settings.state.snooze == RunningSnooze(end: end, duration: .thirtyMinutes))
     }
 
     @Test("a timed turn off that ran out during the Focus comes back as on")
@@ -170,7 +171,7 @@ struct FocusAutoPauseTests {
         #expect(setup.settings.isAutoPauseActive)
 
         nextLaunch.follow(nil, now: now)
-        #expect(setup.preferences.autoPause == AutoPauseSetting(isEnabled: true, snoozedUntil: end))
+        #expect(setup.preferences.autoPause == AutoPauseSetting(isEnabled: true, snoozedUntil: end, snooze: .fifteenMinutes))
         #expect(setup.preferences.focusAutoPause == nil)
     }
 

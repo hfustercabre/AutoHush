@@ -128,13 +128,33 @@ struct PreferencesTests {
         #expect(Preferences(store: store).autoPause == AutoPauseSetting(isEnabled: false))
     }
 
-    @Test("a Focus's note of Auto-Pause persists with its timed turn off; nil removes it")
+    @Test("a snooze's duration persists with its end and goes with it; an end kept without one (before 1.3.0) loads without one")
+    func snoozeDurationPersists() {
+        let store = InMemoryPreferenceStore()
+        let until = Date(timeIntervalSinceReferenceDate: 1_000_000)
+        Preferences(store: store).autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: until, snooze: .thirtyMinutes)
+        let seconds = store.object(forKey: "autoPauseSnoozeDuration") as? Double
+        #expect(seconds == AutoPauseSnooze.thirtyMinutes.duration) // kept in seconds
+        #expect(Preferences(store: store).autoPause.snooze == .thirtyMinutes)
+
+        Preferences(store: store).autoPause = AutoPauseSetting(isEnabled: true)
+        #expect(store.object(forKey: "autoPauseSnoozeDuration") == nil)
+
+        store.set(until, forKey: "autoPauseSnoozedUntil")
+        #expect(Preferences(store: store).autoPause == AutoPauseSetting(isEnabled: true, snoozedUntil: until))
+        // A duration left without an end counts for nothing.
+        store.set(nil, forKey: "autoPauseSnoozedUntil")
+        store.set(Double(60 * 60), forKey: "autoPauseSnoozeDuration")
+        #expect(Preferences(store: store).autoPause.snooze == nil)
+    }
+
+    @Test("a Focus's note of Auto-Pause persists with its timed turn off and its duration; nil removes it")
     func focusAutoPauseNote() {
         let store = InMemoryPreferenceStore()
         let until = Date(timeIntervalSinceReferenceDate: 1_000_000)
         #expect(Preferences(store: store).focusAutoPause == nil)
 
-        let note = FocusAutoPauseNote(noted: AutoPauseSetting(isEnabled: true, snoozedUntil: until), applied: false)
+        let note = FocusAutoPauseNote(noted: AutoPauseSetting(isEnabled: true, snoozedUntil: until, snooze: .oneHour), applied: false)
         Preferences(store: store).focusAutoPause = note
         #expect(Preferences(store: store).focusAutoPause == note)
 
@@ -144,7 +164,7 @@ struct PreferencesTests {
 
         Preferences(store: store).focusAutoPause = nil
         #expect(Preferences(store: store).focusAutoPause == nil)
-        for key in ["focusNotedAutoPauseEnabled", "focusNotedAutoPauseSnoozedUntil", "focusAppliedAutoPause"] {
+        for key in ["focusNotedAutoPauseEnabled", "focusNotedAutoPauseSnoozedUntil", "focusNotedAutoPauseSnoozeDuration", "focusAppliedAutoPause"] {
             #expect(store.object(forKey: key) == nil)
         }
     }

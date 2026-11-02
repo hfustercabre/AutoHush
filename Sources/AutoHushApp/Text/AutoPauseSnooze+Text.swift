@@ -1,9 +1,20 @@
 import Foundation
 import AutoHushKit
 
-/// Turning Auto-Pause off for a while, in words: the menu's durations and
-/// when the snooze ends.
+/// Turning Auto-Pause off for a while, in words: the menu's headings over
+/// the durations, the durations and when the snooze ends.
 extension AutoPauseSnooze {
+    /// Over the menu's durations.
+    static var heading: String {
+        String(localized: "Turn off for", comment: "Menu: above the buttons that turn auto-pause off for a while")
+    }
+
+    /// Over them while one runs, which is selected.
+    static var runningHeading: String {
+        String(localized: "Turned off for",
+               comment: "Menu: above the buttons that turn auto-pause off for a while, while it's turned off for one of them (that one is selected); the time left shows beside it")
+    }
+
     /// The duration on its button in the menu, e.g. "15 min" or "1 hr", in
     /// the user's language.
     var shortTitle: String {

@@ -5,10 +5,20 @@ package struct AutoPauseSetting: Equatable, Sendable {
     package var isEnabled: Bool
     /// Temporarily off until this moment ("Turn Off For…").
     package var snoozedUntil: Date?
+    /// The duration chosen for that snooze, which the menu marks while it
+    /// runs; `nil` without a snooze, and for one an AutoHush before 1.3.0
+    /// started, which kept only its end.
+    package var snooze: AutoPauseSnooze?
 
-    package init(isEnabled: Bool = true, snoozedUntil: Date? = nil) {
+    package init(isEnabled: Bool = true, snoozedUntil: Date? = nil, snooze: AutoPauseSnooze? = nil) {
         self.isEnabled = isEnabled
         self.snoozedUntil = snoozedUntil
+        self.snooze = snoozedUntil == nil ? nil : snooze
+    }
+
+    /// Turned off for `snooze` from `now`, the duration kept with its end.
+    package static func snoozed(_ snooze: AutoPauseSnooze, from now: Date) -> AutoPauseSetting {
+        AutoPauseSetting(isEnabled: true, snoozedUntil: snooze.endDate(from: now), snooze: snooze)
     }
 
     package func isActive(at now: Date) -> Bool {
@@ -60,5 +70,11 @@ package enum AutoPauseSnooze: CaseIterable, Sendable {
     /// When the snooze ends.
     package func endDate(from now: Date) -> Date {
         now.addingTimeInterval(duration)
+    }
+
+    /// The choice that lasts `duration` (as `Preferences` keeps it), if one does.
+    package init?(duration: TimeInterval) {
+        guard let snooze = Self.allCases.first(where: { $0.duration == duration }) else { return nil }
+        self = snooze
     }
 }

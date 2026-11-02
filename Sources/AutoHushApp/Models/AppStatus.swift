@@ -81,6 +81,9 @@ struct AppStatus: Equatable {
     var playback: PlaybackState = .unknown
     var detection: DetectionMode = .pending
     var autoPause: AutoPause = .on
+    /// The "Turn off for" running while Auto-Pause is `.snoozed`: the menu's
+    /// bar marks its duration and says the time left.
+    var snooze: RunningSnooze?
     /// Sources playing right now, ignored ones included.
     private(set) var activeSources: [AudioSource] = []
     /// The sources that stopped playing, the most recent first, each with

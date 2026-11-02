@@ -33,4 +33,19 @@ struct AutoPauseSettingTests {
             TestDates.date(2, 23, 35), TestDates.date(2, 23, 45), TestDates.date(3, 0), TestDates.date(3, 0, 30), TestDates.date(3, 23, 30),
         ])
     }
+
+    @Test("a snooze keeps its duration with its end; with no end there's no duration; an expired one loses both")
+    func snoozeDuration() {
+        let now = TestDates.date(2, 12)
+        let snoozed = AutoPauseSetting.snoozed(.fifteenMinutes, from: now)
+        #expect(snoozed == AutoPauseSetting(isEnabled: true, snoozedUntil: TestDates.date(2, 12, 15), snooze: .fifteenMinutes))
+        #expect(AutoPauseSetting(isEnabled: true, snoozedUntil: nil, snooze: .oneHour).snooze == nil)
+        #expect(snoozed.clearingExpiredSnooze(at: TestDates.date(2, 13)) == AutoPauseSetting())
+    }
+
+    @Test("a duration in seconds is the choice that lasts that long, if one does")
+    func snoozeFromDuration() {
+        #expect(AutoPauseSnooze.allCases.map { AutoPauseSnooze(duration: $0.duration) } == AutoPauseSnooze.allCases)
+        #expect(AutoPauseSnooze(duration: 42) == nil)
+    }
 }

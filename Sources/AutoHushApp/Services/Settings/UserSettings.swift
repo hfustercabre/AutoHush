@@ -15,6 +15,8 @@ final class UserSettings: AutoPauseControlling {
     struct State: Equatable {
         /// Auto-Pause as the menu and Settings say it: on, off, or off until.
         var autoPause = AppStatus.AutoPause.on
+        /// The "Turn off for" running, for the menu's bar; `nil` unless snoozed.
+        var snooze: RunningSnooze?
         /// Auto-Pause is on now (neither off nor snoozed): the monitoring
         /// follows this.
         var autoPauseActive = true
@@ -77,7 +79,7 @@ final class UserSettings: AutoPauseControlling {
     }
 
     func snooze(_ snooze: AutoPauseSnooze, now: Date = Date()) {
-        preferences.autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: snooze.endDate(from: now))
+        preferences.autoPause = .snoozed(snooze, from: now)
         logAutoPause()
         applyAutoPause(now: now)
     }
@@ -114,6 +116,7 @@ final class UserSettings: AutoPauseControlling {
         }
         var next = state
         next.autoPause = AppStatus.AutoPause(setting, now: now)
+        next.snooze = RunningSnooze(setting)
         next.autoPauseActive = setting.isActive(at: now)
         state = next
         let snoozeEnd = setting.isEnabled ? setting.snoozedUntil : nil

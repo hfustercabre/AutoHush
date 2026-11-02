@@ -26,6 +26,7 @@ extension StatusMenuController {
         actions?.menuWillOpen()
         prepareContent()
         setMenuOpen(true)
+        followSnoozeClock()
         watchOtherWindows()
         guard showsPanel else { return }
         let panel = self.panel ?? makePanel()
@@ -47,6 +48,7 @@ extension StatusMenuController {
     func close() {
         guard isMenuOpen else { return }
         setMenuOpen(false)
+        stopSnoozeClock()
         sideOpenTask?.cancel()
         sideCloseTask?.cancel()
         sidePanel?.orderOut(nil)

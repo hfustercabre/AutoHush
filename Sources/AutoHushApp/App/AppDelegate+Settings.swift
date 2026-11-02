@@ -9,6 +9,7 @@ extension AppDelegate {
     /// monitoring follows on to the player session.
     func showUserSettings(_ settings: UserSettings.State) {
         status.autoPause = settings.autoPause
+        status.snooze = settings.snooze
         showApps()
         session.settings = settings.monitoring
     }
