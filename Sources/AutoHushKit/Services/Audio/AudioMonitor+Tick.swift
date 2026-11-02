@@ -110,6 +110,12 @@ extension AudioMonitor {
         let (started, stopped) = tracker.update(audible: audible, at: now, startConfirmations: slowStarts)
         let active = tracker.activeSources
         soundedSourceIDs = soundedSourceIDs.union(bySound).intersection(active)
+        // Judged afresh only while its sound counts: through a gap (the
+        // stop grace) an app keeps what was last known.
+        let openOutputOnly = bySound.filter { levels[$0] == nil && verdicts[$0] == nil }
+        openOutputSourceIDs = marksOpenOutput
+            ? openOutputSourceIDs.subtracting(bySound).union(openOutputOnly).intersection(active)
+            : []
         if !started.isEmpty || !stopped.isEmpty {
             logger.debug("[monitor] +[\(started.sorted().joined(separator: ","), privacy: .public)] -[\(stopped.sorted().joined(separator: ","), privacy: .public)]")
         }

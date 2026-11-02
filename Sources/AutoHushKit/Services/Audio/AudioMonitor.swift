@@ -172,6 +172,9 @@ final class AudioMonitor: @unchecked Sendable {
     /// The playing apps that made a sound since they started: the others
     /// count only for their microphone.
     var soundedSourceIDs: Set<String> = []
+    /// The playing apps that count only by their open output, as last
+    /// judged by their sound (`marksOpenOutput`).
+    var openOutputSourceIDs: Set<String> = []
     /// How loud the music was before AutoHush's pause, and the apps
     /// during it (Settings → Behavior).
     var resumeLevel = ResumeLevel()

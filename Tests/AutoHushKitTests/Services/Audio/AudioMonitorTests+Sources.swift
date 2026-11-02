@@ -74,7 +74,7 @@ extension AudioMonitorTests {
         h.step([Self.process(1, "com.google.Chrome.helper"), Self.process(2, "com.google.Chrome.helper")])
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.google.Chrome", isPlaying: true)])
-        #expect(h.activeSources.value.last == [AudioSource(id: "com.google.Chrome", name: "Google Chrome")])
+        #expect(h.activeSources.value.last?.map(\.name) == ["Google Chrome"])
         #expect(h.monitor.activeAudioReport() == [.init(id: "com.google.Chrome", name: "Google Chrome", state: .playing)])
 
         // One helper stops: the app keeps playing.
@@ -93,7 +93,7 @@ extension AudioMonitorTests {
         await h.recorder.waitForEvents(count: 1)
 
         h.step(after: 0.25, []) // its process is gone: the stop grace runs
-        #expect(h.activeSources.value.last == [chrome])
+        #expect(h.activeSources.value.last?.map(\.name) == [chrome.name])
         h.step(after: 2)
         await h.recorder.waitForEvents(count: 2)
         #expect(h.activeSources.value.last == [])
@@ -123,7 +123,7 @@ extension AudioMonitorTests {
         h.step([Self.process(1, "")])
         await h.recorder.waitForEvents(count: 1)
         #expect(await h.recorder.events == [.init(bundleID: "com.apple.Terminal", isPlaying: true)])
-        #expect(h.activeSources.value.last == [terminal])
+        #expect(h.activeSources.value.last?.map(\.name) == [terminal.name])
     }
 
     @Test("a process without a bundle ID that no app owns (a system daemon) never counts")

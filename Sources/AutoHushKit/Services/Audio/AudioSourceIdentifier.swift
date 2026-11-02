@@ -13,6 +13,13 @@ package struct AudioSource: Hashable, Sendable {
     /// It counts as playing only for its microphone (Pause for the
     /// microphone): it hasn't made a sound since it started.
     package var isMicrophoneOnly = false
+    /// It counts as playing only because its sound is open: nothing measured
+    /// its level and nothing it tells macOS decided, so it may be paused.
+    /// Set only where that's the exception (AntiDot mode's "What apps tell
+    /// macOS", and while nothing is measured outside AntiDot mode), never
+    /// for an app that counts only for its microphone
+    /// (`AudioMonitor.marksOpenOutput`).
+    package var isOpenOutputOnly = false
 
     package init(id: String, name: String, bundlePath: String? = nil) {
         self.id = id
