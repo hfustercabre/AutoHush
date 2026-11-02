@@ -41,7 +41,6 @@ extension AppDelegate {
         logger.notice("Media player chosen: \(chosen.name, privacy: .public)")
         setChosenPlayer(chosen)
         watchFolders(holding: appURL)
-        showApps()
         // From the welcome window: it goes on to what the player needs, and
         // closes once that's allowed; the learning window waits for it.
         let fromWelcome = isShowingPlayerChooser
@@ -191,11 +190,14 @@ extension AppDelegate {
     /// `player` is the chosen one now (`nil`: none, and the status line asks
     /// for one): it's stored, and the player session and the learning
     /// session are told together, so they always follow the same player.
+    /// The apps listed leave it out, and list the one it replaces again
+    /// (also when none is chosen any more: removed, or deleted).
     func setChosenPlayer(_ player: any MusicPlayer?) {
         preferences.musicPlayer = player?.bundleID
         session.choose(player)
         showChosenPlayer()
         learning.follow(player)
+        showApps()
     }
 
     /// Forgets the learned buttons of web apps that are gone: deleted, not

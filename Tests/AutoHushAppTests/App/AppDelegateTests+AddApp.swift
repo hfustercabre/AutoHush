@@ -205,6 +205,19 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("Remove on the app added with Add an App that's chosen lists it again among the apps heard and ignored, as any app")
+    func addedAppRemovedListedAgain() async throws {
+        let (_, _, sut, alerts) = try addedAppsBench(answers: [.alertFirstButtonReturn]) // Remove Added?: Remove
+        await useAdded(sut)
+        let added = AudioSource(id: "com.example.added", name: "Added")
+        sut.userSettings.setIgnored(added, true)
+        #expect(sut.status.ignoredApps.isEmpty) // the chosen player isn't listed
+        sut.removeAddedApp("com.example.added")
+        await TestWait.until { alerts.calls.count == 1 }
+        #expect(sut.player == nil && sut.status.ignoredApps == [added])
+    }
+
+    @MainActor
     @Test("an app added with Add an App that isn't chosen just leaves the list once removed")
     func addedAppNotChosenRemoved() async throws {
         let (scratch, added, sut, alerts) = try addedAppsBench(answers: [.alertFirstButtonReturn]) // Remove Kept?: Remove
