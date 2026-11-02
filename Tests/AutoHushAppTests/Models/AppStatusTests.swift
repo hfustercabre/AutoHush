@@ -72,6 +72,31 @@ struct AppStatusTests {
         #expect(!status.offersUnmute)
     }
 
+    @Test("the card's line says why in its help tag and VoiceOver hint when it surprises: muted (either way), held for a check, silent, on another device; nothing while Auto-Pause is off")
+    func statusLineHelp() {
+        var status = ready(.pausedByMonitor)
+        status.setActiveSources([chrome])
+        #expect(status.statusLineHelp == nil) // “Paused — Google Chrome is playing” says it all
+        status.playerMutedInstead = true
+        #expect(status.statusLineHelp == "It played on after its pause, so it’s muted until the other apps stop.")
+        status.playerMutedInstead = false
+        status.playerOptions[0].pausesByMuting = true
+        #expect(status.statusLineHelp == "It can’t be paused, so it’s muted until the other apps stop.")
+        status.playerOptions[0].pausesByMuting = false
+        status.playerHeldForCheck = true
+        #expect(status.statusLineHelp == "Kept paused until Add an App’s check ends.")
+        status.playerHeldForCheck = false
+        status.playback = .playingSilently
+        #expect(status.statusLineHelp == "Nothing of it is heard, so AutoHush doesn’t pause it.")
+        status.playback = .playingElsewhere
+        #expect(status.statusLineHelp == "AutoHush pauses only what plays on this Mac.")
+        status.autoPause = .off // the line says Auto-Pause is off instead
+        #expect(status.statusLineHelp == nil)
+        status.autoPause = .on
+        status.playerNeedsReopen = true // the line says that instead
+        #expect(status.statusLineHelp == nil)
+    }
+
     @Test("while the player is muted in place of the pause, the apps that interrupt it say “Mutes your player”; “Pauses” again once it's over")
     func mutesNow() {
         var status = ready(.pausedByMonitor)

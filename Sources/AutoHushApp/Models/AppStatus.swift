@@ -228,7 +228,8 @@ struct AppStatus: Equatable {
         health.presentation ?? (playerNeedsReopen ? .needingAttention(Self.needsReopenLine(playerName))
             : showsResumeFailure ? .needingAttention(Self.resumeFailedLine(playerName))
             : controlsNotLearned ? .needingAttention(Self.controlsNotLearnedLine)
-            : mutesNow && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name), microphone: onlyMicrophone)
+            : mutesNow && playback == .pausedByMonitor ? .muted(playing: pausingSources.map(\.name), microphone: onlyMicrophone,
+                                                                onlyMutes: playerMutes)
             : playerHeldForCheck && playback == .pausedByMonitor ? .heldForCheck
             : playback.presentation(playing: pausingSources.map(\.name), microphone: onlyMicrophone))
     }
@@ -328,6 +329,14 @@ struct AppStatus: Equatable {
         case .on:
             return presentation.line
         }
+    }
+
+    /// Why the card's line says so, for a line that surprises (its help tag
+    /// and VoiceOver hint, no visible text: U12, the user's pick, 2026-11-02);
+    /// none while `statusLine` says something else (Auto-Pause off).
+    var statusLineHelp: String? {
+        guard isReady, autoPause == .on else { return nil }
+        return presentation.help
     }
 
     /// The permission the player needs, said on the card's line with Allow…

@@ -38,7 +38,11 @@ struct StatusCardView: View {
                             .accessibilityLabel(Text(verbatim: status.statusLine))
                             .accessibilityHint(Text(verbatim: Self.whyLabel))
                     } else {
+                        // A line that surprises says why in its help tag
+                        // and to VoiceOver (U12, the user's pick, 2026-11-02).
                         statusLine(withInfo: false)
+                            .help(status.statusLineHelp.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
+                            .accessibilityHint(status.statusLineHelp.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
                     }
                     if status.canRetry { retryButton }
                     if status.showsResumeFailure {

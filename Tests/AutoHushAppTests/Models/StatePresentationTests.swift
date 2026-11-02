@@ -17,7 +17,29 @@ struct StatePresentationTests {
         (.playingElsewhere, .elsewhere, "AutoHush: your player is playing on another device", "Playing on another device"),
     ])
     func playbackState(state: PlaybackState, icon: MenuBarIcon, label: String, line: String) {
-        #expect(state.presentation() == StatePresentation(icon: icon, label: label, line: line))
+        let presentation = state.presentation()
+        #expect(presentation.icon == icon && presentation.label == label && presentation.line == line)
+    }
+
+    @Test("the lines that surprise say why in their help tag and VoiceOver hint; the others say nothing more", arguments: [
+        (PlaybackState.playingSilently, Optional("Nothing of it is heard, so AutoHush doesn’t pause it.")),
+        (.playingElsewhere, "AutoHush pauses only what plays on this Mac."),
+        (.musicPlaying, nil),
+        (.pausedByMonitor, nil),
+        (.musicIdle, nil),
+        (.pauseFailed, nil),
+    ])
+    func lineHelp(state: PlaybackState, help: String?) {
+        #expect(state.presentation().help == help)
+    }
+
+    @Test("a muted player's line says why it's muted, as it can only be muted or its pause didn't take; one held for a check, until when")
+    func mutedAndHeldHelp() {
+        #expect(StatePresentation.muted(playing: ["Safari"], onlyMutes: true).help
+            == "It can’t be paused, so it’s muted until the other apps stop.")
+        #expect(StatePresentation.muted(playing: ["Safari"], onlyMutes: false).help
+            == "It played on after its pause, so it’s muted until the other apps stop.")
+        #expect(StatePresentation.heldForCheck.help == "Kept paused until Add an App’s check ends.")
     }
 
     @Test("describes playing apps in natural language")
