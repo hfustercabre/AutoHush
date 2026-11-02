@@ -31,9 +31,6 @@ struct PlayerSignalsReader: Sendable {
         }
     )
 
-    /// Reads nothing: no app open, none playing.
-    static let none = PlayerSignalsReader(open: { _ in [:] }, playing: { _ in [] })
-
     /// Core Audio's reads and Now Playing's answer block: done here, off
     /// Swift's shared threads.
     private static let queue = DispatchQueue(label: "AutoHush.PlayerSignals", qos: .utility)
