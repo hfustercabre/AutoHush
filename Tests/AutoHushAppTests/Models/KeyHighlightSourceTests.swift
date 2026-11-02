@@ -74,4 +74,20 @@ struct KeyHighlightSourceTests {
         keyboard.update(enabled, isEnabled: false) // dimmed under the keys: it says why
         #expect(keyboard.highlighted == enabled)
     }
+
+    @Test("a reason that comes or goes after a control registered changes whether the keys stop on it, and a dimmed one losing its reason under the keys loses the highlight (K3-3)")
+    func reasonChanges() {
+        let keyboard = KeyHighlight()
+        let first = control(keyboard, 0)
+        let dimmed = control(keyboard, 50, enabled: false) // registered with no reason yet
+        #expect(keyboard.rows == [[first]])
+        keyboard.update(dimmed, explains: true) // its reason came (Option let go in the players)
+        #expect(keyboard.rows == [[first], [dimmed]])
+        keyboard.move(1)
+        keyboard.move(1)
+        #expect(keyboard.highlighted == dimmed && keyboard.shows(dimmed, isEnabled: false))
+        keyboard.update(dimmed, explains: false) // gone again: nothing to say, nothing to stop on
+        #expect(keyboard.rows == [[first]])
+        #expect(keyboard.highlighted == nil)
+    }
 }

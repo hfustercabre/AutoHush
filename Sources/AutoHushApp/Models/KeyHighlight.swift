@@ -143,6 +143,16 @@ final class KeyHighlight {
         point(at: innermostHovered(excluding: id))
     }
 
+    /// A reason to be dimmed came or went (`HighlightReason`) without the
+    /// control drawn anew: the keys stop on it while it has one; dimmed
+    /// and highlighted, it gives the highlight up once it has none, as
+    /// `update(_:isEnabled:)` does.
+    func update(_ id: UUID, explains: Bool) {
+        controls[id]?.explains = explains
+        guard !explains, highlighted == id, controls[id]?.isEnabled == false else { return }
+        point(at: innermostHovered(excluding: id))
+    }
+
     /// Whether `id` shows the highlight now: enabled, or dimmed but
     /// explaining itself to the keys.
     func shows(_ id: UUID, isEnabled: Bool) -> Bool {

@@ -154,6 +154,8 @@ struct Highlightable: ViewModifier {
                                                 isCurrent: isCurrent == nil ? nil : { actions.isCurrent?() == true }))
                 }
                 .onChange(of: enabled) { keyboard.update(id, isEnabled: enabled) }
+                // A reason that comes or goes while it stays (Option held in the players).
+                .onChange(of: reason != nil) { keyboard.update(id, explains: reason != nil) }
                 .onChange(of: lit) { removal?.lit(lit) }
                 .onChange(of: Drawing(), initial: true) {
                     actions.press = press
