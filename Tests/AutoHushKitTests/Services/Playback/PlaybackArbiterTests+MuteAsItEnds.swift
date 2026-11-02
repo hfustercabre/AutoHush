@@ -222,4 +222,34 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.pauseFailure == .playerCommandFailed(.pressFailed))
         if !sleeps { #expect(published.state == .pauseFailed) }
     }
+
+    @Test("muted, a player whose real pause is refused as the output goes away (Pause on disconnect) or the pause is kept (Resume playback off) stays muted, AutoHush's pause; paused, it's unmuted",
+          arguments: [(true, true), (true, false), (false, true), (false, false)])
+    func keptPauseRefusedStaysMuted(disconnects: Bool, refuses: Bool) async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), mutedInstead = Locked<[Bool]>([])
+        var configuration = AppConfiguration.testing
+        configuration.pausesOnOutputDisconnect = disconnects
+        configuration.resumesPlayback = disconnects
+        let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published,
+                                               configuration: configuration, mutedInstead: mutedInstead, scheduler: scheduler)
+        if refuses { await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed)) }
+        if disconnects {
+            await arbiter.handleOutputDisconnected()
+        } else {
+            await arbiter.sourceChanged("org.example.viewer", playing: false) // its resume keeps the pause instead
+        }
+        await arbiter.waitUntilIdle()
+        if refuses {
+            #expect(mute.unmuteCount == 0) // not heard: it plays on behind the mute
+            #expect(await arbiter.pausedByUs)
+            #expect(published.state == .pausedByMonitor)
+            #expect(mutedInstead.value.last == true) // the menu says Muted
+        } else {
+            await TestWait.until { mute.unmuteCount == 1 }
+            #expect(await arbiter.pausedByUs == false)
+            #expect(await player.state == .paused)
+        }
+        #expect(await player.playCallCount == 0)
+    }
 }
