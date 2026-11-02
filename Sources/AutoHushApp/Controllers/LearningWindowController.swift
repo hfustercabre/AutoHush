@@ -12,10 +12,12 @@ final class LearningWindowController: HostedWindowController, LearningWindowPres
 
     init(model: SettingsModel) {
         // Later closes the window, which exists only once this has run.
-        let hosting = Self.sizedToFit(LearningWindowView(model: model, later: {}))
+        // The arrow keys' highlight, as in Settings.
+        let keys = WindowKeys()
+        let hosting = Self.sizedToFit(LearningWindowView(model: model, later: {}).windowKeys(keys))
         // Floating: the web app comes in front while it's played and paused.
-        super.init(content: hosting, title: Self.title(model.chosenPlayer?.name), floatsInCorner: true)
-        hosting.rootView = LearningWindowView(model: model) { [weak self] in self?.close() }
+        super.init(content: hosting, title: Self.title(model.chosenPlayer?.name), floatsInCorner: true, keys: keys)
+        hosting.rootView = LearningWindowView(model: model) { [weak self] in self?.close() }.windowKeys(keys)
         followTitle { Self.title(model.chosenPlayer?.name) }
         window?.delegate = self
     }

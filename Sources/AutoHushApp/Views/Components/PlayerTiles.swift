@@ -6,9 +6,9 @@ import SwiftUI
 /// then the Safari web apps under their heading; each of the last two groups
 /// with a tile that adds one. A tile is a chip: the player's icon, then its name
 /// with what a row would say under it, shorter. The chosen (or picked)
-/// player's tile is tinted and outlined with the accent color, even while
-/// AntiDot mode keeps it from being chosen (an app only its sound tells
-/// about).
+/// player's tile is on macOS's selection color, its text white (S1,
+/// 2026-11-02), even while AntiDot mode keeps it from being chosen (an app
+/// only its sound tells about).
 /// Settings → Media Player and the welcome window show them; the menu keeps
 /// its rows. Without `maxVisibleRows` (Settings → Media Player), each group
 /// is a card of its own, its title and note above it, as System Settings'
@@ -18,10 +18,11 @@ import SwiftUI
 /// counting both groups, and they scroll inside it past them (the card
 /// stays put: scrolled itself, its rounded corners would be clipped); while
 /// `holdsHeight`, it keeps the height it has (a search narrowing the tiles
-/// doesn't shrink the window).
+/// doesn't shrink the window). The arrow keys' highlight scrolls into view
+/// there, above the fade at the bottom (A4c).
 struct PlayerTiles: View {
     let options: [PlayerOption]
-    /// The chosen or picked player, tinted and outlined.
+    /// The chosen or picked player, on the selection color.
     let selection: String?
     /// A click on an installed player, or on a suggested web app (which then
     /// opens "Add a Web App" filled in).
@@ -96,12 +97,17 @@ struct PlayerTiles: View {
             // is below, as in the menu (U4, the user, 2026-10-20).
             let moreBelow = reach?.moreBelow == true
             let visible = visibleHeight(rows: rows)
-            ScrollView {
-                groups.coordinateSpace(.named(Self.space))
-                    .onGeometryChange(for: CGFloat.self, of: \.size.height) { contentHeight = $0 }
-                    .fadesOutBelow(reach, moreBelow: moreBelow)
+            ScrollViewReader { scroller in
+                ScrollView {
+                    groups.coordinateSpace(.named(Self.space))
+                        .onGeometryChange(for: CGFloat.self, of: \.size.height) { contentHeight = $0 }
+                        .fadesOutBelow(reach, moreBelow: moreBelow)
+                        // A tile the keys go to shows whole, above the fade and its chevron.
+                        .environment(\.highlightRevealRoom, MoreBelow.fadeHeight)
+                }
+                .showsMoreBelow($reach, moreBelow: moreBelow)
+                .revealsKeyHighlight(with: scroller)
             }
-            .showsMoreBelow($reach, moreBelow: moreBelow)
             .frame(height: holdsHeight ? shownHeight ?? visible : visible)
             .onGeometryChange(for: CGFloat.self, of: \.size.height) { if !holdsHeight { shownHeight = $0 } }
         }
@@ -177,8 +183,8 @@ struct PlayerTiles: View {
     }
 
     /// A player: its icon, then its name with what a row would say under it
-    /// (Click to add, Untested, Not installed, Muted only); tinted and
-    /// outlined once chosen. Dimmed while it can't be chosen; in AntiDot
+    /// (Click to add, Untested, Not installed, Muted only); on the selection
+    /// color once chosen. Dimmed while it can't be chosen; in AntiDot
     /// mode, an app only its sound tells about says why in its help tag and
     /// VoiceOver hint, and under its group while the keys are on it. An app added with Add an App shows a × under the
     /// pointer or the keyboard, and can be removed from its right-click menu.
@@ -214,14 +220,15 @@ struct PlayerTiles: View {
                     // A long name takes two lines where the tile is narrow (T1, the user, 2026-10-18).
                     Text(verbatim: option.name).font(.appCallout).lineLimit(2).minimumScaleFactor(0.85)
                         .accessibilityLabel(Text(verbatim: option.spokenName(among: options)))
-                    note(option)
+                    note(option, isSelected: isSelected)
                 }
                 Spacer(minLength: 0)
             }
+            .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
             .padding(.horizontal, Self.inset)
             .frame(maxWidth: .infinity)
             .frame(height: Self.tileHeight)
-            .chosenOutline(isSelected)
+            .chosenOutline(isSelected, solid: true)
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 10)) // lights up under the pointer; dims while disabled
         // Beside the click, which picks it first (U4b, the user, 2026-11-02).
@@ -230,18 +237,20 @@ struct PlayerTiles: View {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
-    @ViewBuilder private func note(_ option: PlayerOption) -> some View {
+    /// Under its name; white, as the name, on a chosen tile.
+    @ViewBuilder private func note(_ option: PlayerOption, isSelected: Bool) -> some View {
+        let style = isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.appSecondary)
         if option.webAddress != nil {
             Text(verbatim: PlayerOption.clickToAddLabel)
-                .font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
+                .font(.appCaption).foregroundStyle(style).lineLimit(1)
         } else if option.isUntested {
-            HeadingBadge(text: PlayerOption.untestedBadge)
+            HeadingBadge(text: PlayerOption.untestedBadge, onSelection: isSelected)
         } else if !option.isInstalled {
-            Text(verbatim: PlayerOption.notInstalledLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
+            Text(verbatim: PlayerOption.notInstalledLabel).font(.appCaption).foregroundStyle(style).lineLimit(1)
         } else if option.isUnavailableInAntiDotMode {
-            Text(verbatim: PlayerOption.antiDotModeTileLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
+            Text(verbatim: PlayerOption.antiDotModeTileLabel).font(.appCaption).foregroundStyle(style).lineLimit(1)
         } else if option.pausesByMuting {
-            Text(verbatim: PlayerOption.mutedOnlyLabel).font(.appCaption).foregroundStyle(.appSecondary).lineLimit(1)
+            Text(verbatim: PlayerOption.mutedOnlyLabel).font(.appCaption).foregroundStyle(style).lineLimit(1)
         }
     }
 

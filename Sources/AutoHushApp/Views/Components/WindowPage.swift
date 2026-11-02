@@ -34,7 +34,10 @@ struct WindowPage<Content: View, Bar: View>: View {
                 content
             }
             .windowMargins()
+            // The keys go through the page, then its buttons (`HighlightBand`),
+            // which tiles scrolled out of sight under them never come between.
             BottomBar { bar }
+                .environment(\.highlightBand, .bottom)
         }
         .frame(width: width)
         .font(.appBody)

@@ -5,12 +5,17 @@ import SwiftUI
 /// the permissions it needs. It opens at launch while none is chosen, and
 /// again when a supported player opens then. Closing it leaves AutoHush
 /// waiting; the menu and Settings can choose too. Its title is its page's.
+/// The arrow keys move through its tiles and buttons (`WindowKeys`), and a
+/// letter typed while one is lit goes into the search (T1).
 @MainActor
 final class PlayerChooserWindowController: HostedWindowController, PlayerChooserPresenting {
     /// `tallestPage`: as for `PlayerChooserView`, else the screen's.
     init(model: SettingsModel, tallestPage: CGFloat? = nil) {
+        let keys = WindowKeys()
         let view = PlayerChooserView(model: model, tallestPage: tallestPage ?? PlayerChooserView.tallestOnScreen)
-        super.init(content: Self.sizedToFit(view), title: Self.title(asksPermissions: model.welcomeAsksPermissions))
+            .windowKeys(keys)
+        super.init(content: Self.sizedToFit(view), title: Self.title(asksPermissions: model.welcomeAsksPermissions), keys: keys)
+        keys.focusSearch = { [weak self] in self?.focusSearch() ?? false }
         followTitle { Self.title(asksPermissions: model.welcomeAsksPermissions) }
     }
 

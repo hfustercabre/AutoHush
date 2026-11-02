@@ -6,13 +6,17 @@ import SwiftUI
 /// no key of its own. `cancels`: Escape presses it instead (the check's Stop).
 /// `inStep`: a step's button, under its lines (a checklist's, Add an App's),
 /// on one line, so two that don't fit side by side go one under the other
-/// (`FlowingButtons`).
+/// (`FlowingButtons`). Return's, it tells its window's keys whether it can
+/// be pressed (`WindowKeys`: Return does nothing while it's dimmed).
 struct MainButton: View {
     let title: String
     var secondary = false
     var cancels = false
     var inStep = false
     let action: () -> Void
+    @Environment(\.windowKeys) private var windowKeys
+    @Environment(\.isEnabled) private var isEnabled
+    @State private var id = UUID()
 
     init(_ title: String, secondary: Bool = false, cancels: Bool = false, inStep: Bool = false, action: @escaping () -> Void) {
         self.title = title
@@ -27,8 +31,13 @@ struct MainButton: View {
             Text(verbatim: title).font(secondary ? .appBody : .appBody.weight(.semibold)).padding(.horizontal, 6)
         }
         .buttonStyle(ChipButtonStyle(filled: true, isSelected: !secondary))
-        .keyboardShortcut(cancels ? .cancelAction : secondary ? nil : .defaultAction)
+        .keyboardShortcut(cancels ? .cancelAction : takesReturn ? .defaultAction : nil)
         .fixedSize(horizontal: inStep, vertical: inStep)
         .padding(.top, inStep ? 2 : 0)
+        .onChange(of: isEnabled, initial: true) { if takesReturn { windowKeys?.mainButton(id, isEnabled: isEnabled) } }
+        .onDisappear { windowKeys?.mainButton(id, isEnabled: nil) }
     }
+
+    /// Return presses it (`.defaultAction`).
+    private var takesReturn: Bool { !secondary && !cancels }
 }

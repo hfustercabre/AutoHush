@@ -20,6 +20,9 @@ struct CheckWarningView: View {
     var openKeyboardSettings: () -> Void = {}
     let start: () -> Void
     let cancel: () -> Void
+    /// Its window's keys (`WindowKeys`), here as its window keeps this
+    /// view's type to change the note.
+    var keys: WindowKeys?
 
     /// The window's width, Add an App's, which its bottom bar's buttons fit
     /// in every language.
@@ -76,6 +79,7 @@ struct CheckWarningView: View {
             Spacer()
             MainButton(AddAppText.startCheck, action: start)
         }
+        .windowKeys(keys)
     }
 
     private func tile(_ state: CheckResult.WindowState) -> some View {

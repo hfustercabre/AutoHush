@@ -7,6 +7,8 @@ import SwiftUI
 /// Settings (no band, no line), with the title in bold as a Settings page's
 /// name. It's shown in front, and centered when it comes on screen, or,
 /// floating above other apps, in the top-right corner (`floatsInCorner`).
+/// Given `keys`, the arrow keys and the pointer move a highlight through its
+/// controls, as in Settings (`WindowKeys`).
 /// The welcome, learning, "Add a Web App", "Add an App", "Choose an App"
 /// and check warning windows are these; the learning and "Add a Web App"
 /// windows float. The logs window, which the user resizes, has its own
@@ -17,8 +19,9 @@ class HostedWindowController: NSWindowController {
     static let margin: CGFloat = 20
 
     /// `floatsInCorner`: whether it floats in the top-right corner, above
-    /// other apps' windows.
-    init(content: NSViewController, title: String, floatsInCorner: Bool = false) {
+    /// other apps' windows. `keys`: its keys (`WindowKeys`), given to
+    /// `content`'s view too (`windowKeys(_:)`).
+    init(content: NSViewController, title: String, floatsInCorner: Bool = false, keys: WindowKeys? = nil) {
         let window = NSWindow(contentViewController: content)
         window.title = title
         Self.styleTitleBar(of: window)
@@ -34,7 +37,9 @@ class HostedWindowController: NSWindowController {
         }
         window.isReleasedWhenClosed = false
         self.floatsInCorner = floatsInCorner
+        self.keys = keys
         super.init(window: window)
+        if let keys { connect(keys) }
     }
 
     /// Settings' title bar, with an empty toolbar. The content
@@ -116,6 +121,8 @@ class HostedWindowController: NSWindowController {
                 window.center()
             }
         }
+        if !window.isOpen { keys?.highlight.clear() } // nothing lit as it opens
+        watchKeys()
         window.showInFront()
     }
 
@@ -149,6 +156,70 @@ class HostedWindowController: NSWindowController {
     private func stopWatchingTopEdge() {
         edgeObservers.forEach(NotificationCenter.default.removeObserver)
         edgeObservers = []
+    }
+
+    // MARK: - The keys
+
+    /// The highlight the arrow keys and the pointer move (`WindowKeys`), if
+    /// the window has one.
+    let keys: WindowKeys?
+    /// The keys' monitor, from when it shows until it closes: each Learn
+    /// Again and each check makes a new window.
+    private var keyMonitor: Any?
+    private var keyCloseObserver: (any NSObjectProtocol)?
+
+    /// What the keys do to the window: the focus let go, Zoom told where
+    /// the highlight is (A3).
+    private func connect(_ keys: WindowKeys) {
+        keys.dropFocus = { [weak self] in _ = self?.window?.makeFirstResponder(nil) }
+        keys.highlight.screenFrame = { [weak self] rect in
+            self?.window?.contentView.flatMap { ZoomFocus.screenRect(of: rect, in: $0) }
+        }
+    }
+
+    /// Before the focused control, as Settings' keys are, until it closes.
+    private func watchKeys() {
+        guard keys != nil, keyMonitor == nil, let window else { return }
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let keyCode = event.keyCode, flags = event.modifierFlags, characters = event.characters
+            let windowNumber = event.windowNumber
+            let handled = MainActor.assumeIsolated {
+                self?.handleKey(keyCode, flags: flags, characters: characters, windowNumber: windowNumber) == true
+            }
+            return handled ? nil : event
+        }
+        keyCloseObserver = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window,
+                                                                  queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.stopWatchingKeys() }
+        }
+    }
+
+    private func stopWatchingKeys() {
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
+        if let keyCloseObserver { NotificationCenter.default.removeObserver(keyCloseObserver) }
+        keyCloseObserver = nil
+    }
+
+    /// The window's keys, as `WindowKeys` takes them (`HighlightKey`, the
+    /// menu's and Settings' mapping, and letters typed), not in a sheet.
+    /// `false` leaves the key to the window.
+    func handleKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, characters: String?, windowNumber: Int) -> Bool {
+        guard let keys, let window, windowNumber == window.windowNumber, window.attachedSheet == nil else { return false }
+        // With keyboard navigation on, Tab may have given a control the focus.
+        let focus: WindowKeys.Focus = window.firstResponder is NSText ? .textField // a field's editor
+            : NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow) ? .control : .none
+        if let key = HighlightKey(keyCode: keyCode, modifiers: flags) { return keys.handle(key, focus: focus) }
+        if WindowKeys.isTyped(characters, modifiers: flags) { keys.typed(focus: focus) }
+        return false
+    }
+
+    /// The window's search takes the keyboard, the caret after its text, for
+    /// what's typed (`WindowKeys.focusSearch`); `false` when none shows.
+    func focusSearch() -> Bool {
+        guard let window, let field = window.contentView?.firstEditableTextField, window.makeFirstResponder(field) else { return false }
+        field.currentEditor()?.selectedRange = NSRange(location: (field.stringValue as NSString).length, length: 0)
+        return true
     }
 
     /// Brings it in front of other apps' windows, on the desktop the user is

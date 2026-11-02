@@ -17,15 +17,18 @@ final class CheckWarningWindowController: HostedWindowController {
          openKeyboardSettings: @escaping () -> Void = { SystemSettingsPane.keyboard.open() },
          start: @escaping @MainActor () -> Void) {
         self.desktopShortcutsOff = desktopShortcutsOff
+        // The arrow keys' highlight, as in Settings.
+        let keys = WindowKeys()
         let hosting = Self.sizedToFit(CheckWarningView(app: app, muting: muting, desktopShortcutsOff: desktopShortcutsOff(),
-                                                       openKeyboardSettings: openKeyboardSettings, start: {}, cancel: {}))
+                                                       openKeyboardSettings: openKeyboardSettings, start: {}, cancel: {},
+                                                       keys: keys))
         self.hosting = hosting
-        super.init(content: hosting, title: AddAppText.warningTitle(app.name))
+        super.init(content: hosting, title: AddAppText.warningTitle(app.name), keys: keys)
         hosting.rootView = CheckWarningView(app: app, muting: muting, desktopShortcutsOff: hosting.rootView.desktopShortcutsOff,
                                             openKeyboardSettings: openKeyboardSettings, start: { [weak self] in
             self?.close()
             start()
-        }, cancel: { [weak self] in self?.close() })
+        }, cancel: { [weak self] in self?.close() }, keys: keys)
         let center = NotificationCenter.default
         let readAgain: @Sendable (Notification) -> Void = { [weak self] _ in
             MainActor.assumeIsolated { self?.readDesktopShortcuts() }

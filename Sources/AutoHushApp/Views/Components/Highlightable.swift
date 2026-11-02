@@ -18,6 +18,9 @@ struct HighlightableControl: ViewModifier {
     var inset: CGFloat = 0
     /// How far out around a control that fills its own frame (a switch).
     var outset: CGFloat = 0
+    /// A ring `outset` out, not the tint behind it: a filled control
+    /// (`HighlightTint.ring`).
+    var ring = false
     /// Kept on: a row whose side window is open.
     var isLit = false
     /// A row that lights up by itself (`MenuRowButtonStyle`), as a menu
@@ -36,7 +39,8 @@ struct HighlightableControl: ViewModifier {
                 .focused($isFocused)
                 .focusEffectDisabled()
                 .background {
-                    HighlightTint(isFocused: isFocused && !keyboard.hidesFocus, byKeys: true, cornerRadius: cornerRadius, inset: inset)
+                    HighlightTint(isFocused: isFocused && !keyboard.hidesFocus, byKeys: true, cornerRadius: cornerRadius, inset: inset,
+                                  ring: ring)
                         .padding(-outset)
                 }
         } else if keyboard == nil {
@@ -45,7 +49,7 @@ struct HighlightableControl: ViewModifier {
             content
                 .focused($isFocused)
                 .focusEffectDisabled()
-                .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset, outset: outset,
+                .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset, outset: outset, ring: ring,
                                         isLit: isLit, lightsItself: lightsItself, press: press, opensSide: opensSide))
         }
     }
@@ -70,6 +74,7 @@ struct Highlightable: ViewModifier {
     var cornerRadius: CGFloat = 8
     var inset: CGFloat = 0
     var outset: CGFloat = 0
+    var ring = false
     var isLit = false
     var lightsItself = false
     /// Whether it can be changed now, beyond the environment's `isEnabled`.
@@ -87,6 +92,7 @@ struct Highlightable: ViewModifier {
     @Environment(\.highlightRemoval) private var removal
     @Environment(\.highlightGroup) private var group
     @Environment(\.highlightReason) private var reason
+    @Environment(\.highlightRevealRoom) private var revealRoom
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     /// What pressing it does as it was drawn last: registered once, its
@@ -122,11 +128,15 @@ struct Highlightable: ViewModifier {
                 .environment(\.isInHighlightedRow, ownsControls)
                 .environment(\.highlightReason, nil)
                 .background {
-                    HighlightTint(isFocused: !lightsItself && lit, byKeys: byKeys, cornerRadius: cornerRadius, inset: inset)
+                    HighlightTint(isFocused: !lightsItself && lit, byKeys: byKeys, cornerRadius: cornerRadius, inset: inset, ring: ring)
                         .padding(-outset)
                 }
                 .preference(key: ShownHighlightReason.self, value: byKeys ? reason : nil)
+                // What the keys scroll into view (`RevealsKeyHighlight`): it,
+                // and the room under it that a fade at the bottom takes.
+                .padding(.bottom, revealRoom)
                 .id(id)
+                .padding(.bottom, -revealRoom)
                 .accessibilityFocused($hasVoiceOverCursor)
                 .onChange(of: keyboard.light(id).arrivals) {
                     // Only for VoiceOver: without it, nothing to move.
@@ -179,16 +189,26 @@ extension View {
 /// highlighted or has the keyboard's focus; outlined in the accent color
 /// (2 pt) where the keys put it, so it shows at 3:1, and always with
 /// Increase Contrast (A2a, 2026-11-01). Under the pointer, the tint alone.
+/// `ring`: around a filled control (a prominent button), which hides what's
+/// behind it, the outline alone, drawn out of it as macOS's focus ring
+/// (P1, the user's pick, 2026-11-02); nothing under the pointer.
 struct HighlightTint: View {
     let isFocused: Bool
     var byKeys = false
     var cornerRadius: CGFloat = 8
     var inset: CGFloat = 0
+    var ring = false
     var fill: Color = .focusTint
     @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
-        if isFocused {
+        if isFocused, ring {
+            if byKeys || contrast == .increased {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(Color.accentColor, lineWidth: 2)
+                    .allowsHitTesting(false)
+            }
+        } else if isFocused {
             let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             shape
                 .fill(fill)
@@ -225,6 +245,9 @@ extension EnvironmentValues {
     /// Set around a control (`highlightReason(_:)`): why it's dimmed, or
     /// what it does, shown while the keys' highlight is on it.
     @Entry var highlightReason: String?
+    /// Room left under a control the keys scroll into view: a fade at the
+    /// scroll view's bottom covers it (the welcome window's tiles, A4c).
+    @Entry var highlightRevealRoom: CGFloat = 0
 }
 
 extension View {

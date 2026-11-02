@@ -22,8 +22,10 @@ struct ChipButtonStyle: PrimitiveButtonStyle {
 
     @ViewBuilder func makeBody(configuration: Configuration) -> some View {
         if filled && isSelected {
+            // Its blue hides the tint: the keys' highlight a ring 2 pt out of it (P1).
             Button(configuration).buttonStyle(.borderedProminent)
-                .modifier(HighlightableControl(cornerRadius: 6, press: configuration.trigger))
+                .modifier(HighlightableControl(cornerRadius: 6 + Self.ringOutset, outset: Self.ringOutset, ring: true,
+                                               press: configuration.trigger))
         } else if filled {
             Button(configuration).buttonStyle(.bordered)
                 .modifier(HighlightableControl(cornerRadius: 6, press: configuration.trigger))
@@ -32,6 +34,10 @@ struct ChipButtonStyle: PrimitiveButtonStyle {
                 .modifier(HighlightableControl(cornerRadius: cornerRadius, press: configuration.trigger))
         }
     }
+
+    /// How far out of a prominent button the keys' ring is drawn: 2 pt off
+    /// it, then the ring's own 2 pt.
+    static let ringOutset: CGFloat = 4
 
     /// A label that lights up under the pointer, and a step more while pressed.
     private struct HoverHighlight: ButtonStyle {

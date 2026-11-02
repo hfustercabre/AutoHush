@@ -10,13 +10,15 @@ final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenti
 
     init(model: AddWebAppModel, settings: SettingsModel) {
         self.model = model
-        let hosting = Self.sizedToFit(AddWebAppView(model: model, settings: settings, close: {}))
+        // The arrow keys' highlight, as in Settings.
+        let keys = WindowKeys()
+        let hosting = Self.sizedToFit(AddWebAppView(model: model, settings: settings, close: {}).windowKeys(keys))
         // Floating: Safari, then the web app, come in front meanwhile.
         super.init(content: hosting,
                    title: String(localized: "Add a Web App", comment: "Title of the window that makes a website a Safari web app, in its title bar"),
-                   floatsInCorner: true)
+                   floatsInCorner: true, keys: keys)
         window?.delegate = self
-        hosting.rootView = AddWebAppView(model: model, settings: settings) { [weak self] in self?.close() }
+        hosting.rootView = AddWebAppView(model: model, settings: settings) { [weak self] in self?.close() }.windowKeys(keys)
     }
 
     /// Closing it (Cancel, Later or its close button) stops an add under way.
