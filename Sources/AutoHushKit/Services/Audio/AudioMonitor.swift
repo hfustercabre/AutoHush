@@ -175,6 +175,10 @@ final class AudioMonitor: @unchecked Sendable {
     /// The playing apps that count only by their open output, as last
     /// judged by their sound (`marksOpenOutput`).
     var openOutputSourceIDs: Set<String> = []
+    /// The playing apps that count only by their open output while their
+    /// sound can be measured: not measured yet (levels weren't needed when
+    /// they started), nor telling macOS they play (`appsNotMeasuredYet`).
+    var unmeasuredSourceIDs: Set<String> = []
     /// How loud the music was before AutoHush's pause, and the apps
     /// during it (Settings → Behavior).
     var resumeLevel = ResumeLevel()

@@ -23,6 +23,7 @@ extension AudioMonitorTests {
         h.step([Self.process(1, "com.example.player"), Self.process(2, "com.example.game")]) // pids 1001, 1002
         await h.recorder.waitForEvents(count: 2)
         #expect(Self.openOutput(h) == ["com.example.player": false, "com.example.game": true])
+        #expect(await h.monitor.appsNotMeasuredYet().isEmpty) // never measured here: known by what it has
     }
 
     @Test("with “Open audio streams only”, where every app counts by its open sound as the user chose, none is singled out")
@@ -46,6 +47,7 @@ extension AudioMonitorTests {
         await h.recorder.waitForEvents(count: 2)
         #expect(h.modes.value == [.unavailable])
         #expect(Self.openOutput(h) == ["com.example.player": false, "com.example.game": true])
+        #expect(await h.monitor.appsNotMeasuredYet().isEmpty) // never measured here: known by what it has
     }
 
     @Test("with audio levels measured, no app is singled out, measured or not")
@@ -57,6 +59,26 @@ extension AudioMonitorTests {
         await h.recorder.waitForEvents(count: 1)
         #expect(h.modes.value == [.audioLevel])
         #expect(Self.openOutput(h) == ["com.example.game": false])
+    }
+
+    @Test("where levels can be measured, an app counted by its open output while they weren't needed isn't measured yet until it's heard; one telling macOS it plays is known")
+    func appsNotMeasuredYetUntilHeard() async {
+        let assertions = MockPowerAssertions()
+        let h = Harness(configuration: Self.config(startConfirmation: 0), permission: MockAudioCapturePermission(.granted),
+                        levelsNeeded: false, assertions: assertions)
+        h.start()
+        assertions.held = [1001: MockPowerAssertions.playing]
+        h.step([Self.process(1, "com.example.player"), Self.process(2, "com.example.game")]) // no taps: judged without levels
+        await h.recorder.waitForEvents(count: 2)
+        #expect(h.modes.value == [.audioLevel])
+        #expect(await h.monitor.appsNotMeasuredYet() == ["com.example.game"])
+
+        h.monitor.setAudioLevelsNeeded(true) // the music plays
+        h.provider.flush()
+        h.step(after: 0.25, peaks: [1: 0, 2: 0]) // measured silent: still not known to play, until its stop grace ends
+        #expect(await h.monitor.appsNotMeasuredYet() == ["com.example.game"])
+        h.step(after: 0.25, peaks: [1: 0, 2: 0.5]) // heard
+        #expect(await h.monitor.appsNotMeasuredYet().isEmpty)
     }
 
     @Test("an app that counts only for its microphone keeps saying so, not that its sound is open")

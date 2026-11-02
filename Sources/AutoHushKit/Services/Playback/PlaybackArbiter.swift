@@ -104,6 +104,10 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// (`AudioMonitor.listenToQuietApps`): whether one plays again. Asked
     /// just before a resume (R2, the user, 2026-10-27).
     let quietAppPlaysAgain: @Sendable () async -> Bool
+    /// The apps playing that count only by their open output, not measured
+    /// yet though they can be (`AudioMonitor.appsNotMeasuredYet`): a player
+    /// starting among them waits for their measure (K1-1, the user, 2026-11-02).
+    let appsNotMeasuredYet: @Sendable () async -> Set<String>
     /// When AutoHush's pause, or its mute in place of one, took
     /// (`handleRestart`).
     var pausedAt: Date?
@@ -249,6 +253,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         resumeOffset: @escaping @Sendable () async -> Float? = { nil },
         hearsPlayer: @escaping @Sendable (_ since: Date?) async -> PlayerHearing = { _ in .unknown },
         quietAppPlaysAgain: @escaping @Sendable () async -> Bool = { false },
+        appsNotMeasuredYet: @escaping @Sendable () async -> Set<String> = { [] },
         inputToPlayer: @escaping @Sendable (Date) -> Bool = { _ in true },
         playerMute: (any PlayerMuting)? = nil,
         tapsAllowed: @escaping @Sendable () -> Bool = { true }
@@ -272,6 +277,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         self.resumeOffset = resumeOffset
         self.hearsPlayer = hearsPlayer
         self.quietAppPlaysAgain = quietAppPlaysAgain
+        self.appsNotMeasuredYet = appsNotMeasuredYet
         self.inputToPlayer = inputToPlayer
         self.playerMute = playerMute
         self.tapsAllowed = tapsAllowed

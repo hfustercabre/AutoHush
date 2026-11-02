@@ -116,6 +116,11 @@ extension AudioMonitor {
         openOutputSourceIDs = marksOpenOutput
             ? openOutputSourceIDs.subtracting(bySound).union(openOutputOnly).intersection(active)
             : []
+        // Whatever is shown: where levels can be measured, an app judged by
+        // its open output only isn't known to play until it's heard.
+        unmeasuredSourceIDs = detectionMethod == .audioLevels && detectionMode == .audioLevel
+            ? unmeasuredSourceIDs.subtracting(bySound).union(openOutputOnly).intersection(active)
+            : []
         if !started.isEmpty || !stopped.isEmpty {
             logger.debug("[monitor] +[\(started.sorted().joined(separator: ","), privacy: .public)] -[\(stopped.sorted().joined(separator: ","), privacy: .public)]")
         }

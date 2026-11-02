@@ -2,7 +2,7 @@ import CoreAudio
 import Foundation
 
 // AudioMonitor: whether the media player is heard, measured alongside
-// other apps (`playerHearing`).
+// other apps (`playerHearing`), and which of those apps aren't measured yet.
 extension AudioMonitor {
     /// Whether the media player is heard, from the levels measured while
     /// another app plays (the player is tapped alongside it): instant, so
@@ -25,6 +25,15 @@ extension AudioMonitor {
            playerMeasuredAt.timeIntervalSince(playerHeardAt) < Self.playerSilenceWindow { return .heard }
         let measured = playerMeasuredAt.timeIntervalSince(from)
         return measured >= Self.playerSilenceWindow ? .silent : .measuring(remaining: Self.playerSilenceWindow - measured)
+    }
+
+    /// The apps playing that count only by their open output, though their
+    /// sound can be measured: started while levels weren't needed (the music
+    /// idle), and neither heard since nor telling macOS they play. A player
+    /// starting among them waits for their measure before it's paused
+    /// (`PlaybackArbiter.playerStartedDuringApps`).
+    func appsNotMeasuredYet() async -> Set<String> {
+        await queue.run { self.unmeasuredSourceIDs }
     }
 
     /// Notes since when the player's processes are measured and when it was

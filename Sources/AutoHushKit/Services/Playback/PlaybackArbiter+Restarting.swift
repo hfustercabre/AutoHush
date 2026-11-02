@@ -78,18 +78,34 @@ extension PlaybackArbiter {
     /// silent): paused as at an app's start, unless the user started it
     /// (input to the player just before, `userPlayedJustNow`: the user,
     /// 2026-10-25), it's theirs already, its pause failed, or a pause is
-    /// under way.
+    /// under way. Apps that count only by their open output, not measured
+    /// yet (nothing was while the music was idle), are measured first, as
+    /// when Auto-Pause comes back on: it's paused once their stop grace is
+    /// over only if one still plays, heard (the user, 2026-11-02).
     func playerStartedDuringApps() async {
-        guard !isShutDown, !pausedByUs, !leftToUser, pauseFailure == nil, pauseTask == nil, !isFadingOut,
-              autoPauseEnabled, !isAsleep, !activeSources.isEmpty else { return }
+        guard mayPauseStartedPlayer else { return }
         if !playsSilently, let appsPlayingSince, userPlayedJustNow(after: appsPlayingSince) {
             leftToUser = true
             logger.info("[arbiter] \(self.player.name, privacy: .public) was started by the user while other apps play — left playing")
             return
         }
+        let notMeasured = await appsNotMeasuredYet()
+        guard mayPauseStartedPlayer else { return } // things may have changed meanwhile
+        if activeSources.isSubset(of: notMeasured) {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) plays while apps not measured yet do — pausing if they’re heard")
+            schedulePause(after: configuration.sourceStopGrace + Self.remeasureMargin)
+            return
+        }
         logger.info("[arbiter] \(self.player.name, privacy: .public) plays while other apps do — pausing")
         cancelPendingPause()
         startPause()
+    }
+
+    /// Nothing stops a pause of the player that started while apps play: no
+    /// pause of AutoHush's or failed one, nor one under way, and not the user's.
+    private var mayPauseStartedPlayer: Bool {
+        !isShutDown && !pausedByUs && !leftToUser && pauseFailure == nil && pauseTask == nil && !isFadingOut
+            && autoPauseEnabled && !isAsleep && !activeSources.isEmpty
     }
 
     /// Keeps what the player's sound said during the pause, for the resume:

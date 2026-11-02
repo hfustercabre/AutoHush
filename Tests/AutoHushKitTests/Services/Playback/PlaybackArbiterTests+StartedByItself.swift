@@ -20,6 +20,43 @@ extension PlaybackArbiterTests {
         #expect(published.state == .pausedByMonitor)
     }
 
+    @Test("the player starting by itself while the only app playing isn't measured yet (its open output counted, the music idle) is paused only once it's measured and still plays",
+          arguments: [true, false])
+    func startedDuringUnmeasuredApps(appStillPlays: Bool) async {
+        let player = MockMusicPlayer(state: .paused), scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      hearsPlayer: { _ in .unknown }, appsNotMeasuredYet: { ["org.example.viewer"] },
+                                      inputToPlayer: { _ in false })
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.waitForPause()
+        await player.setState(.playing)
+        await arbiter.handlePlayerStateChange(.playing)
+        await arbiter.waitForPause()
+        #expect(await player.pauseCallCount == 0) // not at once
+        #expect(scheduler.scheduledDelays.last == AppConfiguration.testing.sourceStopGrace + PlaybackArbiter.remeasureMargin)
+        // Measured silent, the app stops at its stop grace's end.
+        if !appStillPlays { await arbiter.sourceChanged("org.example.viewer", playing: false) }
+        for _ in scheduler.scheduledDelays { await scheduler.completeNext() }
+        await arbiter.waitUntilIdle()
+        await arbiter.waitForPause()
+        #expect(await player.pauseCallCount == (appStillPlays ? 1 : 0))
+    }
+
+    @Test("the player starting by itself while an app known to play does (measured, or telling macOS) is paused at once, though another isn't measured yet")
+    func startedDuringKnownAppPausedAtOnce() async {
+        let player = MockMusicPlayer(state: .paused), hearing = Hearing(.silent)
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      hearsPlayer: { await hearing.answer(since: $0) }, appsNotMeasuredYet: { ["org.example.viewer"] },
+                                      inputToPlayer: { _ in false })
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("com.apple.Safari", playing: true)
+        await arbiter.waitForPause()
+        hearing.now = .heard
+        await player.setState(.playing)
+        await arbiter.handlePlayerStateChange(.playing)
+        await TestWait.until { await player.pauseCallCount == 1 } // no wait completed
+    }
+
     @Test("the player started by the user while another app plays is left playing, until another app starts")
     func startedByUserDuringApps() async {
         let player = MockMusicPlayer(state: .paused), published = LastPublished()
