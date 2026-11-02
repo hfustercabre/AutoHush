@@ -48,7 +48,7 @@ extension StatusMenuControllerTests {
         reopen(sut)
         #expect(sut.model.snoozeHeading == "Turned off for")
         #expect(sut.model.runningSnoozeDuration == .fifteenMinutes)
-        #expect(sut.model.snoozeTimeLeft == "12 min left")
+        #expect(sut.model.snoozeTimeLeft == SnoozeTimeLeft.text(minutes: 12))
     }
 
     @Test("a snooze an older AutoHush started, its duration unknown, selects none but says the heading and the time left")
@@ -61,7 +61,7 @@ extension StatusMenuControllerTests {
         reopen(sut)
         #expect(sut.model.snoozeHeading == "Turned off for")
         #expect(sut.model.runningSnoozeDuration == nil)
-        #expect(sut.model.snoozeTimeLeft == "15 min left")
+        #expect(sut.model.snoozeTimeLeft == SnoozeTimeLeft.text(minutes: 15))
     }
 
     @Test("the time left is read as the menu opens, again as its minutes change while open, and not at all once it's closed or the snooze is over")
@@ -79,11 +79,11 @@ extension StatusMenuControllerTests {
         #expect(sut.model.now == clock)
         let timer = try #require(sut.snoozeClock)
         #expect(timer.fireDate == start.addingTimeInterval(60)) // 15 min left becomes 14
-        #expect(sut.model.snoozeTimeLeft == "15 min left")
+        #expect(sut.model.snoozeTimeLeft == SnoozeTimeLeft.text(minutes: 15))
 
         clock = start.addingTimeInterval(60)
         timer.fire()
-        #expect(sut.model.snoozeTimeLeft == "14 min left")
+        #expect(sut.model.snoozeTimeLeft == SnoozeTimeLeft.text(minutes: 14))
         #expect(sut.snoozeClock?.fireDate == start.addingTimeInterval(120))
 
         sut.close()
@@ -91,7 +91,7 @@ extension StatusMenuControllerTests {
 
         clock = start.addingTimeInterval(14 * 60 + 30) // the last minute: its end turns Auto-Pause on
         sut.open(showsPanel: false)
-        #expect(sut.model.snoozeTimeLeft == "1 min left")
+        #expect(sut.model.snoozeTimeLeft == SnoozeTimeLeft.text(minutes: 1))
         #expect(sut.snoozeClock == nil)
     }
 

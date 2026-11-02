@@ -39,8 +39,8 @@ struct RunningSnoozeTests {
     @Test("the time left says hours and minutes, never less than a minute")
     func timeLeft() {
         let snooze = RunningSnooze(end: end, duration: .twentyFourHours)
-        #expect(snooze.timeLeft(at: end.addingTimeInterval(-12 * 60)) == "12 min left")
-        #expect(snooze.timeLeft(at: end.addingTimeInterval(-65 * 60)) == "1 hr, 5 min left")
-        #expect(snooze.timeLeft(at: end) == "1 min left")
+        #expect(snooze.timeLeft(at: end.addingTimeInterval(-12 * 60)) == SnoozeTimeLeft.text(minutes: 12))
+        #expect(snooze.timeLeft(at: end.addingTimeInterval(-65 * 60)) == SnoozeTimeLeft.text(minutes: 65))
+        #expect(snooze.timeLeft(at: end) == SnoozeTimeLeft.text(minutes: 1))
     }
 }
