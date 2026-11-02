@@ -224,8 +224,12 @@ extension AddAppModel {
     /// 2026-10-31), the warning closed: it quit, its quit step as while it
     /// was waited for, also after Check Again (WA1, the user, 2026-10-31);
     /// after Check Again with its windows closed, its window closed again,
-    /// the wait for one (WA7, the user, 2026-10-31).
+    /// the wait for one (WA7, the user, 2026-10-31). Its window only every
+    /// 2 s: a look at one off screen reads the app by Accessibility and
+    /// searches the other desktops (up to 1 s), for as long as the user
+    /// stays on this step (the code check of 2026-11-02).
     private func watchUntilStart(_ app: CheckableApp) async {
+        var round = 0
         while !Task.isCancelled, stage == .ready {
             await sleep(.milliseconds(500))
             guard !Task.isCancelled, stage == .ready else { return }
@@ -234,7 +238,8 @@ extension AddAppModel {
                 quit(app)
                 return
             }
-            if waitsForWindow, !(await reader.hasWindowWithinReach(app)), !Task.isCancelled, stage == .ready {
+            round += 1
+            if waitsForWindow, round.isMultiple(of: 4), !(await reader.hasWindowWithinReach(app)), !Task.isCancelled, stage == .ready {
                 presenter?.closeWarning()
                 waitForPlaying()
                 return

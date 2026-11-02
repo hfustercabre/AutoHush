@@ -166,6 +166,38 @@ extension AddAppModelTests {
         #expect(!model.waitsForWindow)
     }
 
+    @Test("ready after Check Again with its windows closed, the window is looked for every 2 s, the app's quitting every 0.5 s")
+    func readyWindowLooksSlower() async {
+        let world = World()
+        let model = await AddAppModel.ready(on: world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .page, mark: .noWindow), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.panel(rememberedRow: nil)]),
+            windowsClosed: true)))
+        await TestWait.until { model.result != nil }
+        world.playing = true
+        model.checkAgain()
+        await TestWait.until { model.stage == .ready }
+        #expect(model.waitsForWindow)
+
+        // A look at a window off screen reads the app and searches the other
+        // desktops: 2 of 8 rounds of the watch, half a second apart.
+        let sleep = ManualSleep()
+        world.heldSleep = sleep
+        await TestWait.until { sleep.sleeping == 1 }
+        let looks = world.windowLooks
+        for _ in 0..<8 {
+            sleep.step()
+            await TestWait.until { sleep.sleeping == 1 }
+        }
+        #expect(world.windowLooks - looks == 2)
+        #expect(sleep.durations.allSatisfy { $0 == .milliseconds(500) })
+        model.windowClosed() // the watch ends (its sleeps over at once would spin)
+    }
+
     @Test("Check Again beside Use for Now Playing hidden (windows open) doesn't wait for a window")
     func checkAgainNoWindowWait() async {
         let world = World()

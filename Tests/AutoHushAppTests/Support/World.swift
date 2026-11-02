@@ -22,6 +22,8 @@ final class World {
     var playing = false
     /// Whether the app has a window the check can reach (`hasWindowWithinReach`).
     var windowOpen = true
+    /// How many times the model looked for that window.
+    var windowLooks = 0
     var now = Date(timeIntervalSince1970: 1000)
     var opened: [(String, Bool)] = []
     var reopened = 0
@@ -105,7 +107,10 @@ extension World: AppReading {
     }
 
     func isPlaying(_ app: CheckableApp, traits: CheckedAppTraits) async -> Bool { playing }
-    func hasWindowWithinReach(_ app: CheckableApp) async -> Bool { windowOpen }
+    func hasWindowWithinReach(_ app: CheckableApp) async -> Bool {
+        windowLooks += 1
+        return windowOpen
+    }
 }
 
 /// The check's helper.
