@@ -333,6 +333,12 @@ package final class MonitoringPipeline {
 }
 
 /// Lets the arbiter reach the monitor that is created after it.
+///
+/// Unchecked: `monitor` is set once, in `MonitoringPipeline.init`, right
+/// after the monitor is made and before any command can reach the arbiter;
+/// after that it's only read, by the arbiter's callbacks, which run only
+/// from commands (a weak load is atomic). Never set it again: a monitor
+/// rebuilt in place would race with those reads.
 private final class MonitorLink: @unchecked Sendable {
     weak var monitor: AudioMonitor?
 }
