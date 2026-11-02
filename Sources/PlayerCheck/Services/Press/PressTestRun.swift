@@ -9,7 +9,6 @@ import WebAppPlayers
 /// state they run in, the ways' plays, whether it still plays). Its window
 /// is put back as it was at the end.
 @MainActor final class PressTestRun {
-    private let running: NSRunningApplication
     private let pid: pid_t
     /// Its AppleScript play and pause (`scriptControls`), when it has them.
     private let script: (pause: ScriptCommand, play: ScriptCommand, toggles: Bool)?
@@ -46,7 +45,6 @@ import WebAppPlayers
     private var going = true
 
     init(running: NSRunningApplication, script: (pause: ScriptCommand, play: ScriptCommand, toggles: Bool)?) {
-        self.running = running
         self.script = script
         let pid = running.processIdentifier
         self.pid = pid
@@ -121,6 +119,23 @@ import WebAppPlayers
         return false
     }
 
+    /// A stop held back by a trial or a window move, said as it is: before
+    /// any trial, its window put back; after one, the app played again
+    /// first when the trial left it paused (a play that failed twice), as
+    /// the check starts it from where it was and ends there.
+    private func stopIfRequestedHere() {
+        guard stopState.isRequested else { return }
+        guard trialRan else { return stopIfRequested("stopped: its window is put back") }
+        stopIfRequested(playingAgain() ? nil : "stopped: \(appName) didn't play again")
+    }
+
+    /// After the last trial, or a stop after one: played again when a trial
+    /// left it paused; whether it plays. Nobody is asked: the check is ending.
+    private func playingAgain() -> Bool {
+        guard !isPlaying(pid) else { return true }
+        return going && playAgain()
+    }
+
     private func ready() -> Bool {
         guard going else { return false }
         if trialRan, !isPlaying(pid), playAgain() {
@@ -173,7 +188,7 @@ import WebAppPlayers
     func run() {
         let states: [WindowState?] = TestScope.windowTest.map { $0.states } ?? [TestScope.windowsClosed ? .windowsClosed : nil]
         for (index, next) in states.enumerated() where going {
-            stopIfRequested(trialRan ? nil : "stopped: its window is put back")
+            stopIfRequestedHere()
             state = next
             if let next {
                 say(CheckReportLine.windowState(index + 1, of: states.count, next))
@@ -184,7 +199,7 @@ import WebAppPlayers
                 stopState.setInTrial(true)
                 let why = windowTest.putIn(next)
                 stopState.setInTrial(false)
-                stopIfRequested()
+                stopIfRequestedHere()
                 if let why {
                     say("\(CheckReportLine.notTested): \(why)")
                     windowTest.untested[next] = why
@@ -200,7 +215,7 @@ import WebAppPlayers
                           pause: { _ in sendScript(script.pause) }, play: { _ in sendScript(script.play) },
                           whilePaused: firstState ? { [self] in checkVolume(); learnPageButton(pid: pid) } : nil)
                 })
-                stopIfRequested()
+                stopIfRequestedHere()
                 RunLoop.main.run(until: Date().addingTimeInterval(1))
             }
             if menu != nil, ready() {
@@ -209,7 +224,7 @@ import WebAppPlayers
                           pause: { _ in pressMenuToggle(pid: pid) }, play: { _ in pressMenuToggle(pid: pid) },
                           whilePaused: firstState ? { [self] in learnPageButton(pid: pid) } : nil)
                 })
-                stopIfRequested()
+                stopIfRequestedHere()
                 RunLoop.main.run(until: Date().addingTimeInterval(1))
             }
             // No other way paused it and no button is named Play or Pause: as
@@ -248,7 +263,7 @@ import WebAppPlayers
                     say("    a pause its page refuses: AutoHush would mute it instead")
                 }
                 record(.page, result)
-                stopIfRequested()
+                stopIfRequestedHere()
                 RunLoop.main.run(until: Date().addingTimeInterval(1))
             }
             if !canBeNowPlaying {
@@ -283,10 +298,14 @@ import WebAppPlayers
                 } else {
                     record(.panel, result)
                 }
-                stopIfRequested()
+                stopIfRequestedHere()
             }
             firstState = false
         }
+        // The last trial's play may have failed (`.pausedOnly`): played again
+        // before its window goes back, so the check ends where the app was
+        // (`playAgain` says by which way).
+        if trialRan, !playingAgain() { say("  it didn't play again") }
         WindowTest.currentState = nil
         if let windowTest = TestScope.windowTest {
             stopState.setInTrial(true)
