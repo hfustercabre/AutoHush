@@ -43,10 +43,14 @@ extension DiagnosticsReport {
                                           comment: "Diagnostics: whether AutoHush knows which button of the web app plays and pauses it"),
                             value: learned ? yes : no, mark: learned ? .ok : .problem, fix: learned ? nil : .learnControls))
         }
+        // Its No says what to do, unmarked: there's nothing to fix (T14c,
+        // the user's pick, 2026-11-02).
         if let reaches = facts.reachesOtherSpaces {
-            rows.append(Row(label: String(localized: "Reaches windows on other Spaces",
+            rows.append(Row(label: String(localized: "Reaches windows on other desktops",
                                           comment: "Diagnostics: whether AutoHush can control the web app while its window is on another desktop"),
-                            value: reaches ? yes : no, mark: reaches ? .ok : .problem))
+                            value: reaches ? yes : String(localized: "No: keep its window on this desktop",
+                                                          comment: "Diagnostics, the row “Reaches windows on other desktops”: AutoHush can't control the web app while its window is on another desktop, so keep it on the one in use"),
+                            mark: reaches ? .ok : nil))
         }
         if let read = facts.playerWordsRead {
             rows.append(Row(label: String(localized: "Play/Pause words read",

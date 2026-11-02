@@ -22,7 +22,7 @@ extension StatePresentation {
         StatePresentation(
             icon: .starting,
             label: String(localized: "AutoHush: starting", comment: "VoiceOver label of the menu bar icon"),
-            line: String(localized: "Starting services", comment: "Status line while AutoHush starts")
+            line: String(localized: "Starting…", comment: "Diagnostics: AutoHush is starting; also the status line at the top of the menu while it starts")
         )
     }
 

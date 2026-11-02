@@ -63,7 +63,7 @@ struct StatePresentationTests {
     }
 
     @Test("each health state has its icon, label and status line; problems show their message, which VoiceOver says too", arguments: [
-        (AppHealthState.starting, MenuBarIcon.starting, "AutoHush: starting", "Starting services"),
+        (AppHealthState.starting, MenuBarIcon.starting, "AutoHush: starting", "Starting…"),
         (.needsPlayer("Choose a media player"), .attention, "AutoHush: Choose a media player", "Choose a media player"),
         (.playerClosed("Jukebox isn’t running"), .noMusic, "AutoHush: Jukebox isn’t running", "Jukebox isn’t running"), // calm: nothing to do
         (.retrying("Jukebox isn’t responding"), .attention, "AutoHush: Jukebox isn’t responding", "Jukebox isn’t responding"),

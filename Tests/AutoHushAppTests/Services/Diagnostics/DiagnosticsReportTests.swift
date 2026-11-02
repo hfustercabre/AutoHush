@@ -331,7 +331,7 @@ struct DiagnosticsReportTests {
         #expect(try fades { $0.timings.fadesEnabled = false; $0.playerCanFade = false } == "No")
     }
 
-    @Test("a web app's section says whether its button is learned and its windows on other Spaces reachable")
+    @Test("a web app's section says whether its button is learned and its windows on other desktops reachable; if not, to keep it on this one, with nothing to fix")
     func webAppRows() throws {
         func rows(_ change: (inout DiagnosticsFacts) -> Void) throws -> [DiagnosticsSnapshot.Row] {
             let snapshot = DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts(change))
@@ -343,8 +343,10 @@ struct DiagnosticsReportTests {
             $0.reachesOtherSpaces = true
         }.suffix(2) == [
             .init(label: "Play/Pause button learned", value: "No", mark: .problem, fix: .learnControls),
-            .init(label: "Reaches windows on other Spaces", value: "Yes", mark: .ok),
+            .init(label: "Reaches windows on other desktops", value: "Yes", mark: .ok),
         ])
+        #expect(try rows { $0.reachesOtherSpaces = false }.last
+            == .init(label: "Reaches windows on other desktops", value: "No: keep its window on this desktop"))
         #expect(try rows { $0.playerLearned = true }.last == .init(label: "Play/Pause button learned", value: "Yes", mark: .ok))
     }
 

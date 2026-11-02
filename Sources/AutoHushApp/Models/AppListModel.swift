@@ -207,7 +207,7 @@ final class AppListModel {
     }
 
     /// The rows in `order`. Ties, and the apps that never played, go by name;
-    /// for a reversed On/Off order, only the groups swap.
+    /// for a reversed Status order, only the groups swap.
     static func ordered(_ rows: [Row], by order: AppListOrder) -> [Row] {
         let name = { (row: Row) in row.source.name.localizedLowercase }
         switch order.criterion {

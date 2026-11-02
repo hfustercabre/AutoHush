@@ -33,7 +33,7 @@ struct SoundSourcesSettingsView: View {
             Form {
                 Card(heading: AnyView(header)) {
                     if list.apps.isEmpty {
-                        Text("Apps appear here once they have played audio.", comment: "Settings → Sound Sources, while the list is empty")
+                        Text(verbatim: Self.emptyText)
                             .foregroundStyle(.appSecondary)
                     } else if list.shownApps.isEmpty, let search = list.search {
                         Text(verbatim: Self.noMatch(search))
@@ -44,9 +44,10 @@ struct SoundSourcesSettingsView: View {
                         SoundSourceRow(model: model, row: row)
                     }
                 } footer: {
-                    Text("Apps turned off don’t pause your player. Select apps to remove them.",
-                         comment: "Settings → Sound Sources, under the list; “Select” as in clicking apps in the list (⌘-click or ⇧-click selects several)")
-                        .captionStyle()
+                    if let footer = Self.footer(listIsEmpty: list.apps.isEmpty) {
+                        Text(verbatim: footer)
+                            .captionStyle()
+                    }
                 }
                 // Rows slide as the list changes, but with Reduce Motion on (A11, 2026-11-01).
                 .animation(reducesMotion ? nil : .default, value: list.apps)
@@ -88,7 +89,7 @@ struct SoundSourcesSettingsView: View {
     private func confirmReset() {
         let alert = PlayerAlerts.confirm(
             title: String(localized: "Reset the list of apps?", comment: "Settings → Sound Sources: title of the confirmation for Reset List"),
-            message: String(localized: "All apps are removed; those you turned off will pause your player again.",
+            message: String(localized: "All apps are removed; ignored ones will pause your player again.",
                             comment: "Settings → Sound Sources: what Reset List does, in its confirmation"),
             button: String(localized: "Reset List", comment: "Settings → Sound Sources: confirms forgetting every app in the list"))
         if InfoAlert.runInFront(alert) == .alertFirstButtonReturn { model.settings.forgetAll() }
@@ -100,18 +101,18 @@ struct SoundSourcesSettingsView: View {
         if InfoAlert.runInFront(alert) == .alertFirstButtonReturn { list.confirmRemoval() } else { list.cancelRemoval() }
     }
 
-    /// The removal's confirmation's message: the app turned off by its name
+    /// The removal's confirmation's message: the ignored app by its name
     /// when only one of those asked about is (the full check, 2026-10-18),
     /// else "some of them".
     static func removalMessage(_ rows: [AppListModel.Row]) -> String {
         let off = rows.filter(\.isIgnored)
         guard off.count > 1 else {
             let name = (off.first ?? rows.first)?.source.name ?? ""
-            return String(localized: "\(name) is turned off now. Removed from the list, it pauses your player again when it plays.",
-                          comment: "Settings → Sound Sources: what removing an app that's turned off does, in its confirmation; %@ is the app")
+            return String(localized: "\(name) is ignored now. Removed from the list, it pauses your player again when it plays.",
+                          comment: "Settings → Sound Sources: what removing an app that's ignored (its switch off) does, in its confirmation; %@ is the app")
         }
-        return String(localized: "Some of them are turned off now. Removed from the list, they pause your player again when they play.",
-                      comment: "Settings → Sound Sources: what removing several selected apps does when one of them at least is turned off, in its confirmation")
+        return String(localized: "Some of them are ignored now. Removed from the list, they pause your player again when they play.",
+                      comment: "Settings → Sound Sources: what removing several selected apps does when one of them at least is ignored (its switch off), in its confirmation")
     }
 
     /// The confirmation's title: the app's name for one, how many for several.
@@ -121,6 +122,24 @@ struct SoundSourcesSettingsView: View {
                      comment: "Settings → Sound Sources: title of the confirmation for removing an app that's turned off; %@ is the app")
             : String(localized: "Remove \(names.count) apps from the list?",
                      comment: "Settings → Sound Sources: title of the confirmation for removing several selected apps, one of them at least turned off; %lld is how many (2 or more)")
+    }
+
+    /// Instead of the apps while the list is empty: what fills it, and the
+    /// button that adds an app now, by its own title (T15b, the user's pick,
+    /// 2026-11-02). An empty list has no ignored app: the button is Ignore an
+    /// App….
+    static var emptyText: String {
+        let button = IgnoreAppsPicker.title(noneIgnored: true)
+        return String(localized: "Apps appear here once they play. \(button) adds one now.",
+                      comment: "Settings → Sound Sources, while the list is empty; %@ is the title of the button under the list, “Ignore an App…”, which opens a panel to pick apps to ignore")
+    }
+
+    /// Under the list, none while it's empty: there's nothing to select
+    /// (T15b, the user's pick, 2026-11-02).
+    static func footer(listIsEmpty: Bool) -> String? {
+        listIsEmpty ? nil
+            : String(localized: "Ignored apps don’t pause your player. Select apps to remove them.",
+                     comment: "Settings → Sound Sources, under the list; “Ignored” as the apps whose switch is off; “Select” as in clicking apps in the list (⌘-click or ⇧-click selects several)")
     }
 
     /// Instead of the apps when the search finds none.
@@ -205,7 +224,7 @@ extension AppListOrder.Criterion {
         switch self {
         case .lastPlayed: String(localized: "Last Played", comment: "Settings → Sound Sources, Sort by: the app that played most recently first")
         case .name:       String(localized: "Name", comment: "Settings → Sound Sources, Sort by: alphabetically")
-        case .state:      String(localized: "On/Off", comment: "Settings → Sound Sources, Sort by: apps that pause your player first, then the ignored ones")
+        case .state:      String(localized: "Status", comment: "Settings → Sound Sources, Sort by: by each app's switch, apps that pause your player first, then the ignored ones")
         }
     }
 }

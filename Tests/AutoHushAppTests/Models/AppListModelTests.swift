@@ -291,16 +291,29 @@ struct AppListModelTests {
         #expect(settings.state.seenApps.map(\.id) == [ids[4]])
     }
 
-    @Test("the removal's confirmation names the app for one, says how many for several, and names the one turned off when only one is")
+    @Test("the removal's confirmation names the app for one, says how many for several, and names the ignored one when only one is")
     func removalConfirmation() {
         let (model, _) = listing(ignored: [Self.listed[2]])
         let rows = model.apps
         #expect(SoundSourcesSettingsView.removalTitle(names: ["Chess"]) == "Remove Chess from the list?")
         #expect(SoundSourcesSettingsView.removalTitle(names: ["Books", "Chess"]) == "Remove 2 apps from the list?")
-        #expect(SoundSourcesSettingsView.removalMessage([rows[2]]).hasPrefix("Chess is turned off now."))
-        #expect(SoundSourcesSettingsView.removalMessage([rows[1], rows[2], rows[3]]).hasPrefix("Chess is turned off now."))
+        #expect(SoundSourcesSettingsView.removalMessage([rows[2]]).hasPrefix("Chess is ignored now."))
+        #expect(SoundSourcesSettingsView.removalMessage([rows[1], rows[2], rows[3]]).hasPrefix("Chess is ignored now."))
         let (both, _) = listing(ignored: [Self.listed[1], Self.listed[2]])
-        #expect(SoundSourcesSettingsView.removalMessage(Array(both.apps[1...2])).hasPrefix("Some of them are turned off now."))
+        #expect(SoundSourcesSettingsView.removalMessage(Array(both.apps[1...2])).hasPrefix("Some of them are ignored now."))
+    }
+
+    @Test("an empty list says what fills it and names Ignore an App… by its own title, with no footer under it (T15b)")
+    func emptyList() {
+        #expect(SoundSourcesSettingsView.emptyText == "Apps appear here once they play. Ignore an App… adds one now.")
+        #expect(SoundSourcesSettingsView.emptyText.contains(IgnoreAppsPicker.title(noneIgnored: true)))
+        #expect(SoundSourcesSettingsView.footer(listIsEmpty: true) == nil)
+        #expect(SoundSourcesSettingsView.footer(listIsEmpty: false) == "Ignored apps don’t pause your player. Select apps to remove them.")
+    }
+
+    @Test("Sort by names its choices Last Played, Name and Status (T6b)")
+    func sortTitles() {
+        #expect(AppListOrder.Criterion.allCases.map(\.title) == ["Last Played", "Name", "Status"])
     }
 
     @Test("Remove takes only the selected apps the search shows: the hidden ones stay selected, and a range skips them")

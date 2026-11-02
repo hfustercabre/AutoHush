@@ -194,7 +194,7 @@ struct AppStatusTests {
     func initialState() {
         let status = AppStatus()
         #expect(status.health == .starting)
-        #expect(status.statusLine == "Starting services")
+        #expect(status.statusLine == "Starting…")
         #expect(status.icon == .starting)
         #expect(status.warning == nil && !status.canRetry && !status.dimsIcon)
     }

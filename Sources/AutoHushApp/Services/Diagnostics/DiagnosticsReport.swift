@@ -55,7 +55,7 @@ enum DiagnosticsReport {
         // Ready, but the player's state not known yet: still starting.
         if status.health == .starting || status.isReady && status.playback == .unknown {
             return .init(kind: .starting,
-                         title: String(localized: "Starting…", comment: "Diagnostics: AutoHush is starting"),
+                         title: String(localized: "Starting…", comment: "Diagnostics: AutoHush is starting; also the status line at the top of the menu while it starts"),
                          detail: status.statusLine)
         }
         if status.needsAttention {
