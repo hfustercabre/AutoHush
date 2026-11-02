@@ -54,9 +54,14 @@ struct SearchField: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .background(RoundedRectangle(cornerRadius: 8).fill(.chipFill))
-        .onAppear {
-            // Once it's shown: a popover's field doesn't take it any sooner.
-            if focusesOnAppear { DispatchQueue.main.async { isFocused = true } }
+        // Once it's shown: a popover's field doesn't take it any sooner. In
+        // the view's own task, which ends with the view: a focus set once
+        // the view was gone crashed macOS's focus system (CI, 2026-11-01).
+        .task {
+            guard focusesOnAppear else { return }
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            isFocused = true
         }
         .onChange(of: focusRequest) { isFocused = true }
         // Each key starts the wait again; low priority, after what VoiceOver
