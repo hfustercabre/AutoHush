@@ -20,6 +20,17 @@ This project follows [Semantic Versioning](https://semver.org/).
   whose reason was only in its tooltip, it shows under it: why a player
   is dimmed in AntiDot mode (the keys now stop on it), why to reopen
   the player, what the update choice does.
+- **The arrow keys in the welcome window** and in Add a Web App, the
+  learning window, Add an App and the check's warning, as in Settings
+  (Space presses the lit control, Return the main button; typing goes to
+  the welcome's search), with VoiceOver and Zoom following.
+- **The welcome window starts with your player picked** when it can
+  tell which one it is (the one playing, else the one open, else the
+  only one installed), and a double-click on a tile chooses it.
+- **The welcome window says AutoHush lives in the menu bar**, and what
+  Use AntiDot Mode Instead trades ("No purple dot; a little less
+  precise."), there, in the menu and in Settings. Audio Recording's
+  notes say audio is never recorded.
 
 ### Changed
 
@@ -34,6 +45,13 @@ This project follows [Semantic Versioning](https://semver.org/).
   normal text color, easier to read; their icon stays orange.
 - **The menu bar icon** is slashed while Auto-Pause is off, not only
   dimmed.
+- **Adding a player from the welcome window** no longer leaves the
+  welcome waiting behind the new app for Done: it closes by itself when
+  nothing is missing, or comes forward to ask for what is.
+- **The chosen player's tile** is solid blue with white text, and a
+  highlighted blue button shows a ring around it, so neither looks like
+  the keyboard's highlight. Settings says "purple dot" for macOS's
+  recording indicator.
 
 ### Fixed
 

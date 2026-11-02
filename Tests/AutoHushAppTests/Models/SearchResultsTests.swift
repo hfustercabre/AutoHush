@@ -20,6 +20,7 @@ struct SearchResultsTests {
     }
 
     @Test("it goes out at low priority, after what VoiceOver is saying, and a typing pause is half a second")
+    @MainActor
     func priorityAndDelay() {
         let info = announcementInfo("3 results", priority: .low)
         #expect(info[.announcement] as? String == "3 results")

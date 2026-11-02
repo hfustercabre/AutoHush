@@ -80,14 +80,14 @@ From opening to quitting. The copy of AutoHush opened last is the one that runs:
 flowchart TD
   A(["First launch:<br/>no media player chosen"])
   NT["Notifications asked once,<br/>for updates (optional)"]
-  W["The welcome window:<br/>Choose Your Media Player"]
+  W["The welcome window:<br/>Choose Your Media Player<br/>(the likely player picked:<br/>playing, else open, else<br/>the only one installed)"]
   K{"Which tile?"}
   SUP["Supported Apps: Spotify,<br/>Apple Music, VLC, Apple<br/>Podcasts, TIDAL, QuickTime<br/>Player"]
   OTH["Other Apps: an app<br/>you added, Checked by you"]
   WEB["Safari Web Apps:<br/>the tested ones first,<br/>any other Untested"]
   ADDAPP["Add an App…"]
   ADDWEB["Add a Web App…<br/>(a tested site’s<br/>address filled in)"]
-  CONT["Continue:<br/>it’s the media player"]
+  CONT["Continue, Return or a<br/>double-click on the tile:<br/>it’s the media player"]
   PERM["Allow AutoHush to Work:<br/>only what this player needs"]
   CTRL{"How is it<br/>controlled?"}
   AUT["Automation: Spotify, Apple<br/>Music, VLC, QuickTime Player,<br/>an added app’s AppleScript.<br/>Open Spotify first, then<br/>macOS asks"]
@@ -100,6 +100,7 @@ flowchart TD
   LW["The learning window"]
   RUN(["Monitoring starts"])
   LOG["Settings → General:<br/>Launch at login, Keep icon<br/>next to system icons"]
+  BACK{"Chosen there:<br/>anything still missing?"}
 
   A --> W
   A -.-> NT
@@ -109,6 +110,10 @@ flowchart TD
   K -->|"a web app"| WEB --> CONT
   K -->|"Add… under Other Apps"| ADDAPP
   K -->|"a site to add, or Add…"| ADDWEB
+  ADDAPP -->|"Use: it’s the<br/>media player"| BACK
+  ADDWEB -->|"added: it’s the<br/>media player"| BACK
+  BACK -->|"yes: the welcome window<br/>comes forward"| PERM
+  BACK -->|"no: it closes,<br/>as with Done"| LRN
   CONT --> PERM
   PERM --> CTRL
   PERM --> AUD
@@ -131,7 +136,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-The welcome window opens whenever no media player is chosen. Its first page lists the players as tiles (dimmed when not installed; a search from eight players on). After **Continue**, its second page asks only for what that player needs, each line ticking by itself, with **Back** to change the player. A web app still to learn opens the learning window once the welcome window is done.
+The welcome window opens whenever no media player is chosen. Its first page lists the players as tiles (dimmed when not installed; a search from eight players on). After **Continue**, its second page asks only for what that player needs, each line ticking by itself, with **Back** to change the player. A web app still to learn opens the learning window once the welcome window is done. A player added from it with Add an App or Add a Web App is chosen there: the welcome window then closes by itself when nothing is missing, as Done does, or comes forward on Allow AutoHush to Work, above the app just opened, so only one window guides at a time. The welcome window and those windows take the arrow keys as Settings does: Space presses the lit control, Return always the main button (nothing while it’s dimmed), and a letter typed while a tile is lit goes to the search.
 
 ## Monitoring: pausing and resuming
 
@@ -402,6 +407,8 @@ flowchart TD
   MADE["The new web app appears<br/>(within 20 s); the Safari tab<br/>AutoHush opened is closed"]
   CHO["Chosen as the media<br/>player, and opened"]
   LRN["Learning its controls,<br/>in the same window"]
+  WEL{"The welcome<br/>window open?"}
+  BYW["This window closes; the welcome<br/>window closes too when nothing is<br/>missing (the learning window follows),<br/>else it comes forward to ask"]
   STOP["Cancel, or closing the<br/>window: nothing is added;<br/>the tab it opened closes,<br/>and a web app made all the<br/>same goes to the Trash"]
 
   ST --> ADDR
@@ -417,10 +424,12 @@ flowchart TD
   ASKS -->|"no"| BTN
   BTN --> DLG --> OUT
   OUT -->|"Cancel"| AGAIN --> BTN
-  OUT -->|"Add"| MADE --> CHO --> LRN
+  OUT -->|"Add"| MADE --> CHO --> WEL
+  WEL -->|"no"| LRN
+  WEL -->|"yes"| BYW
   BTN -.->|"before Add"| STOP
 
-  class LRN ref
+  class LRN,BYW ref
   class ERR,AGAIN,STOP warn
   classDef ref fill:#f1e7fc,stroke:#8a3fd1,stroke-width:1.5px,stroke-dasharray: 5 3,color:#1d1b22
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22

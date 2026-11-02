@@ -203,7 +203,7 @@ mode; only Settings' sidebar keeps one of its own.
 | `IconChipButton` | An action with only a symbol, beside a heading or a pop-up: macOS's push button with the symbol: Settings → Sound Sources' sort arrow and magnifier. |
 | `HeadingBadge` | A word in an orange capsule after a heading or a name that qualifies it: "Experimental" after "Safari Web Apps", "Checked by you" after "Other Apps", "Untested" after an untested web app, "Needed" after a permission a step can't go without, while it's missing. In `.appAccent` (`accent: true`, on `.selectedRowFill`) for a word that recommends: "Recommended" beside the way Add an App suggests. |
 | `BadgedHeading` | A title (`SectionLabel`: `appHeadline`, primary; in the menu `appMenuHeading`, grey) with a `HeadingBadge` after it and a note under it, over a group of players in the menu and the welcome window: `WebAppsHeading` and `OtherAppsHeading` ("Other Apps", "Checked by you", "Controlled the ways a check found to work.") are made of it; in Settings the same title, badge and note are the group's section header. While no app was added, `OtherAppsHeading` drops its badge and says what Add… does instead ("Add any other app: a check finds how to pause and play it."), so the empty group doesn't read as checked already. |
-| `PlayerTiles` | Where players are offered in a window (Settings → Media Player, the welcome window): tiles, three a row, each 44 pt tall. In Settings each group is a section of its own, its title (and badge) and note over it: "Supported Apps", "Other Apps" with an "Add…" tile, "Safari Web Apps" with an "Add…" tile (`plus`). In the welcome window, one box: the apps under "Supported Apps", a `CardDivider`, the apps added through a check under `OtherAppsHeading` with an "Add…" tile, a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile. A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` (on two lines where the tile is narrow) with what a row would say under it, shorter where it must fit: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, "Not installed" (dimmed), or, for an app added through a check that can only be muted, "Muted only" (its menu row: "Muted instead of paused"). In AntiDot mode, which hears no sound, such an app can't be chosen, nor one only its sound tells (a Now Playing row that never shows its state, Qobuz's): it's dimmed, saying "Not in AntiDot" ("Not in AntiDot mode" on its menu row), with why in its tooltip and VoiceOver hint; chosen already, its tile stays outlined. The other way round, while it's the player, Settings → Behavior's AntiDot mode switch is off and dimmed, with what the menu's card says of it in AntiDot mode under it ("AutoHush can only mute <player>, and muting needs Audio Recording, which AntiDot mode doesn't use." or "AutoHush needs Audio Recording to hear whether <player> is playing."; `AntiDotText`, one wording per fact), and no "Use AntiDot Mode Instead" is offered. Under the pointer, the arrow keys' highlight, or while it has the keyboard's focus, an added app's tile shows a × in its top-right corner (`xmark.circle.fill`, `title3`: 15 pt, white on `.appSecondary`), with its help tag "Remove <app>…"; a right-click offers "Remove <app>…" too, and VoiceOver gets it as an action. Delete, with the highlight or the focus on it, does the same. It asks first (`PlayerAlerts.remove`: **Remove**, the default button, which Return presses, and **Cancel**, Escape). Removing the chosen player opens the welcome window, to choose another. In the menu, holding Option turns each added app's row into "Remove <app>…" (an alternate item). The chosen (or picked) one is on `.selectedTileFill`, outlined in the accent color (2 pt), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
+| `PlayerTiles` | Where players are offered in a window (Settings → Media Player, the welcome window): tiles, three a row, each 44 pt tall. In Settings each group is a section of its own, its title (and badge) and note over it: "Supported Apps", "Other Apps" with an "Add…" tile, "Safari Web Apps" with an "Add…" tile (`plus`). In the welcome window, one box: the apps under "Supported Apps", a `CardDivider`, the apps added through a check under `OtherAppsHeading` with an "Add…" tile, a `CardDivider`, the web apps under `WebAppsHeading`, then an "Add…" tile. A tile is a chip (corner 10): the player's 24 pt icon, then its name in `appCallout` (on two lines where the tile is narrow) with what a row would say under it, shorter where it must fit: "Click to add" (a suggested web app), the "Untested" `HeadingBadge`, "Not installed" (dimmed), or, for an app added through a check that can only be muted, "Muted only" (its menu row: "Muted instead of paused"). In AntiDot mode, which hears no sound, such an app can't be chosen, nor one only its sound tells (a Now Playing row that never shows its state, Qobuz's): it's dimmed, saying "Not in AntiDot" ("Not in AntiDot mode" on its menu row), with why in its tooltip and VoiceOver hint; chosen already, its tile stays outlined. The other way round, while it's the player, Settings → Behavior's AntiDot mode switch is off and dimmed, with what the menu's card says of it in AntiDot mode under it ("AutoHush can only mute <player>, and muting needs Audio Recording, which AntiDot mode doesn't use." or "AutoHush needs Audio Recording to hear whether <player> is playing."; `AntiDotText`, one wording per fact), and no "Use AntiDot Mode Instead" is offered. Under the pointer, the arrow keys' highlight, or while it has the keyboard's focus, an added app's tile shows a × in its top-right corner (`xmark.circle.fill`, `title3`: 15 pt, white on `.appSecondary`), with its help tag "Remove <app>…"; a right-click offers "Remove <app>…" too, and VoiceOver gets it as an action. Delete, with the highlight or the focus on it, does the same. It asks first (`PlayerAlerts.remove`: **Remove**, the default button, which Return presses, and **Cancel**, Escape). Removing the chosen player opens the welcome window, to choose another. In the menu, holding Option turns each added app's row into "Remove <app>…" (an alternate item). The chosen (or picked) one is solid (see "Marking the chosen item"), without a check, so its whole name fits. `maxVisibleRows` makes the tiles scroll inside the card past that many rows; a search keeps its height while you type. The menu keeps its rows. |
 | `WebAppsHeading` | "Safari Web Apps", its "Experimental" badge and the note that every website works differently, over the web apps wherever players are offered. In the menu's player list it's the same view, as "Supported Apps" and "Other Apps" over their rows. |
 | Pop-ups | SwiftUI's `Picker` with `.pickerStyle(.menu)`, always **without a border** (`.buttonStyle(.borderless)`). |
 | `SearchField` | Every search. Its ✕ closes the search or, when the search can't close, clears it. |
@@ -287,8 +287,15 @@ browsers, are told apart.
   right, after its name, where the rows' pictures (the apps' icons) take
   the left (`MenuPlayerListView`).
 - Among tiles (Settings → Media Player, the welcome window), the chosen or picked
-  one is tinted and outlined with the accent color (no check, so the whole
-  name fits): `.chosenOutline(_:)`, as Add an App's choice cards.
+  one is on `.listSelectionFill` with its name, notes and "Untested" badge
+  in white, without an outline or a check (`.chosenOutline(_:solid: true)`;
+  S1, 2026-11-02: tinted and outlined, it looked like the keys' highlight);
+  where the keys' highlight is on it, a white 2 pt inner outline. Add an
+  App's choice cards keep the accent tint and the accent outline
+  (`.chosenOutline(_:)`). In the welcome window a tile can start picked:
+  the one playing (or in Now Playing), else the only one open, else the
+  only one installed (`PlayerSignals`); a click always wins, and a
+  double-click is the click plus Continue.
 
 ## Lists and searches
 
@@ -382,6 +389,17 @@ browsers, are told apart.
     apps, and puts the cursor in the welcome window's player search when it
     has one, in the logs window's search and in Add an App's list of apps.
     Elsewhere it's dimmed: it only ever acts on a search.
+- **A note in a window's bottom bar**, beside its main button: the
+  welcome's "AutoHush is now in the menu bar." after the menu bar's
+  template icon (`WelcomeMenuBarNote`), `.appCallout` in `.appSecondary`,
+  on one line (F1a, 2026-11-02).
+- **A trade-off beside the control that makes it**: "No purple dot; a
+  little less precise." beside Use AntiDot Mode Instead in the welcome,
+  under its row in the menu, and as that control's help tag and VoiceOver
+  hint everywhere; the visible caption is hidden from VoiceOver, which
+  hears the hint once (F2a). A caption inside a menu row that lights
+  itself uses `.foregroundStyle(.secondary)`, so it turns white with the
+  row. macOS's recording indicator is "the purple dot" in every text.
 - **Empty lists** say why they're empty and what fills them: "Apps appear
   here once they have played audio."
 - **Removing from a list** (Settings → Sound Sources): a click on a row, anywhere but
@@ -635,6 +653,20 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   kept as macOS draws them (Principles).
 
 ## Keyboard
+
+**The guiding windows** (the welcome window, Add a Web App, the learning
+window, Add an App and the check's warning; A4c, 2026-11-02) take the
+arrow keys as Settings does (`WindowKeys`, `HostedWindowController`'s
+`keys`): ↑ ↓ ← →, Page Up and Down, Home and End move the highlight,
+Space presses the lit control, and Return is always the window's main
+button (Continue, Done, Start the Check), doing nothing while it's
+dimmed, as in macOS's dialogs; Escape is as before. In the welcome
+window, a letter typed while something is lit goes to the search, ↓
+from the search goes into the tiles, and ↑ there stays the field's. A
+window's bottom bar is a band of its own, after its page. On a
+prominent (blue, filled) button the keys' highlight is a 2 pt accent ring
+2 pt outside it, as macOS's focus ring (P1), wherever one can be lit,
+Settings included.
 
 AutoHush has **no keyboard shortcuts of its own, and all of Apple's
 standard ones**:
