@@ -146,6 +146,25 @@ struct AppStatusTests {
         #expect(status.controlErrorAlert()?.title == "Can’t Control Jukebox")
     }
 
+    @Test("the info button's alert offers the fix for what the card says: a failed pause, a player it can't control, a given-up resume")
+    func controlErrorFix() {
+        var status = ready(.pauseFailed)
+        #expect(status.controlErrorFix(antiDot: false, audio: .allowed) == nil) // nothing to fix
+        status.controlError = ControlError(MusicPlayerError.playerCommandFailed(.pressIgnored), player: "Jukebox")
+        #expect(status.alertSituation == .pauseFailed)
+        #expect(status.controlErrorFix(antiDot: false, audio: .allowed) == .retryPause)
+        status.setHealth(.retrying("Can’t control Jukebox right now"))
+        #expect(status.alertSituation == .cantControl)
+        #expect(status.controlErrorFix(antiDot: false, audio: .allowed) == .retryStart)
+        // By the kind of player: the same failure on a web app learns it again.
+        status.playerOptions[0].kind = .safariWebApp
+        #expect(status.controlErrorFix(antiDot: false, audio: .allowed) == .learnAgain)
+        status = ready(.musicIdle)
+        status.resumeError = ControlError(MusicPlayerError.playerNotResponding, player: "Jukebox")
+        #expect(status.alertSituation == .resumeGivenUp)
+        #expect(status.controlErrorFix(antiDot: false, audio: .allowed) == .retryResume)
+    }
+
     @Test("starts in the starting state with nothing to fix")
     func initialState() {
         let status = AppStatus()

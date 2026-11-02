@@ -71,6 +71,8 @@ final class FakeMonitoring: SessionMonitoring {
     func holdResumes(_ held: Bool) { resumesHeld.append(held) }
     private(set) var resumeRetries = 0
     func retryResume() { resumeRetries += 1 }
+    private(set) var pauseRetries = 0
+    func retryPause() { pauseRetries += 1 }
     private(set) var unmutesInstead = 0
     func unmuteInstead() { unmutesInstead += 1 }
     func setConfiguration(_ configuration: AppConfiguration) { configurations.append(configuration) }

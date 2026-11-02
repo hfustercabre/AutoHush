@@ -28,8 +28,10 @@ extension ControlFailure {
         }
     }
 
-    /// The failure as the user reads it, about `player`.
-    func text(player: String) -> String {
+    /// The failure as the user reads it, about `player`; `antiDot`: AntiDot
+    /// mode is on, named only then as why a player only its sound tells
+    /// about can't be muted or heard.
+    func text(player: String, antiDot: Bool) -> String {
         switch self {
         case .menuItemNotFound:
             String(localized: "AutoHush can’t find Play/Pause in \(player)’s menus.",
@@ -50,15 +52,16 @@ extension ControlFailure {
             String(localized: "\(player) didn’t respond to its Play/Pause.",
                    comment: "Why the media player couldn't be controlled: a press didn't change it; %@ is the player")
         case .muteUnavailable:
-            AntiDotText.onlyMuted(player)
+            antiDot ? AntiDotText.onlyMuted(player) : AntiDotText.muteNeedsRecording(player)
         case .hearingUnavailable:
-            AntiDotText.onlyHeard(player)
+            antiDot ? AntiDotText.notHeardInAntiDotMode(player) : AntiDotText.onlyHeard(player)
         case .nowPlayingHidden:
             String(localized: "AutoHush controls \(player) with Now Playing in the menu bar, which is hidden: show it in \(Self.nowPlayingSettings).",
                    comment: "Why the media player (added with Add an App, paused and played through the menu bar's Now Playing panel) couldn't be paused or resumed; the first %@ is the player, the second where the setting is, e.g. “System Settings → Menu Bar”")
-        case .appleEventError(let number):
-            String(localized: "\(player) answered with an error (\(String(number))).",
-                   comment: "Why the media player couldn't be controlled; the first %@ is the player, the second the error's number, e.g. -1708")
+        case .appleEventError:
+            // Its number only in the log and Diagnostics' Last error (T5, 2026-11-02).
+            String(localized: "\(player) answered with an error.",
+                   comment: "Why the media player couldn't be controlled: it answered AutoHush's request with an error; %@ is the player")
         }
     }
 }

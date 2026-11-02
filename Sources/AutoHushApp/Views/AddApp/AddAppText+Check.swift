@@ -185,7 +185,7 @@ extension AddAppText {
 
     static var turnOffAntiDot: String {
         String(localized: "Turn Off AntiDot Mode",
-               comment: "Add an App window, button under the warning in the last step when no way that worked can be used in AntiDot mode: turns AntiDot mode off (Settings → Behavior), so muting or a way only the app's sound tells can be used")
+               comment: "Add an App window, button under the warning in the last step when no way that worked can be used in AntiDot mode: turns AntiDot mode off (Settings → Behavior), so muting or a way only the app's sound tells can be used. Also in the alert that says why such an app couldn't be paused or controlled in AntiDot mode")
     }
 
     static var muteNeedsAudio: String {

@@ -32,6 +32,6 @@ enum LearnText {
     /// The row's button, once they're learned.
     static var learnAgainButton: String {
         String(localized: "Learn Again…",
-               comment: "The menu's card and Settings → General, in the “Controls” row once the web app's controls are learned: button that learns them again in a new window; what was learned keeps working until the user clicks “It’s Playing” there")
+               comment: "The menu's card and Settings → General, in the “Controls” row once the web app's controls are learned: button that learns them again in a new window (also in the alert that says why the web app couldn't be paused or controlled); what was learned keeps working until the user clicks “It’s Playing” there")
     }
 }

@@ -29,13 +29,23 @@ struct AppHealthStateTests {
         let menu = ControlError(MusicPlayerError.playerCommandFailed(.menuItemNotFound), player: "Tides")
         #expect(menu.text == "AutoHush can’t find Play/Pause in Tides’s menus.")
         #expect(menu.detail == "Controlling the media player failed: its Play/Pause menu item wasn’t found.")
-        #expect(ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708)), player: "Streamer").text
-                == "Streamer answered with an error (-1708).")
+        // An Apple event's error without its number, which stays in the log's words (T5).
+        let refused = ControlError(MusicPlayerError.playerCommandFailed(.appleEventError(-1708)), player: "Streamer")
+        #expect(refused.text == "Streamer answered with an error.")
+        #expect(refused.detail.contains("-1708"))
+        // An app only its sound tells about: AntiDot mode named only while it's on (T5).
+        let muted = MusicPlayerError.playerCommandFailed(.muteUnavailable), heard = MusicPlayerError.playerCommandFailed(.hearingUnavailable)
+        #expect(ControlError(muted, player: "Quartet").text == "AutoHush can only mute Quartet, and muting needs Audio Recording.")
+        #expect(ControlError(muted, player: "Quartet", antiDot: true).text
+                == "AutoHush can only mute Quartet, and muting needs Audio Recording, which AntiDot mode doesn’t use.")
+        #expect(ControlError(heard, player: "Quartet").text == "AutoHush needs Audio Recording to hear whether Quartet is playing.")
+        #expect(ControlError(heard, player: "Quartet", antiDot: true).text
+                == "AutoHush needs Audio Recording to hear whether Quartet is playing, which AntiDot mode doesn’t use.")
         #expect(ControlError(MusicPlayerError.playerNotResponding, player: "Viewer").text == "Viewer isn’t responding.")
         #expect(ControlError(MusicPlayerError.automationPermissionDenied, player: "Viewer").text == "AutoHush may no longer control Viewer.")
         #expect(ControlError(StubError.failed, player: "Jukebox").text == "stub failed") // any other error: in its own words
         for failure: ControlFailure in [.stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed, .pressIgnored] {
-            #expect(failure.text(player: "Yodel Music").contains("Yodel Music"))
+            #expect(failure.text(player: "Yodel Music", antiDot: false).contains("Yodel Music"))
         }
         // Only Now Playing hidden in the menu bar opens the pane where it's shown.
         #expect(ControlError(MusicPlayerError.playerCommandFailed(.nowPlayingHidden), player: "Quartet").opensMenuBarSettings)

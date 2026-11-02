@@ -61,19 +61,28 @@ extension AppDelegate {
     }
 
     /// The info button after the card's line: why the player couldn't be
-    /// controlled (also in Settings → Diagnostics, as "Last error").
+    /// controlled (also in Settings → Diagnostics, as "Last error"), with
+    /// the one button that can help, if any (`ControlErrorFix`).
     func showControlError() {
         guard let alert = status.controlErrorAlert() else { return }
-        // Now Playing hidden in the menu bar: the pane where it's shown;
-        // otherwise a given-up resume offers Try Again (the user, 2026-10-25).
-        let action: (title: String, perform: () -> Void)? =
-            if status.alertError?.opensMenuBarSettings == true {
-                (ControlFailure.openMenuBarSettings, { SystemSettingsPane.menuBar.open() })
-            } else if status.showsResumeFailure {
-                (TryAgainText.title, { [weak self] in self?.session.retryResume() })
-            } else {
-                nil
-            }
+        let fix = status.controlErrorFix(antiDot: isAntiDot, audio: permissionCenter.chosen.audio)
+        let action = fix.map { fix in (title: fix.title, perform: { [weak self] () -> Void in self?.apply(fix) }) }
         InfoAlert.show(alert.title, alert.message, action: action, run: runAlert)
+    }
+
+    /// Does what the alert's button says.
+    func apply(_ fix: ControlErrorFix) {
+        switch fix {
+        case .openMenuBarSettings: SystemSettingsPane.menuBar.open()
+        case .retryResume: session.retryResume()
+        case .retryPause: session.retryPause()
+        case .retryStart: session.retry()
+        case .checkForUpdates: Task { await updates.checkNow() }
+        case .learnAgain: learnControlsAgain()
+        case .checkAgain: if let url = status.chosenPlayer?.appURL { addApp.open(on: url) }
+        case .turnOffAntiDot: turnOffAntiDot()
+        case .allowAudioRecording: requestPermission(.systemAudioRecording)
+        case .reopenAutoHush: reopenAutoHush()
+        }
     }
 }

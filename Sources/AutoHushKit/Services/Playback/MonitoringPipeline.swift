@@ -23,6 +23,7 @@ package final class MonitoringPipeline {
         case outputDisconnected
         case tapsAllowed(Bool)
         case retryResume
+        case retryPause
         case unmuteInstead
         /// Nothing for the arbiter: resumed once the commands sent before it
         /// have reached it (`settled`).
@@ -177,6 +178,7 @@ package final class MonitoringPipeline {
                     case .outputDisconnected: await arbiter.handleOutputDisconnected()
                     case .tapsAllowed(let allowed): await arbiter.setTapsAllowed(allowed)
                     case .retryResume: await arbiter.retryResume()
+                    case .retryPause: await arbiter.retryPause()
                     case .unmuteInstead: await arbiter.unmuteInstead()
                     case .delivered(let continuation): continuation.resume()
                     }
@@ -262,6 +264,12 @@ package final class MonitoringPipeline {
     /// Try Again on the menu's "Couldn't resume" (`PlaybackArbiter.retryResume`).
     package func retryResume() {
         arbiterCommands.yield(.retryResume)
+    }
+
+    /// Try Again in the alert after the menu's "Couldn't pause"
+    /// (`PlaybackArbiter.retryPause`).
+    package func retryPause() {
+        arbiterCommands.yield(.retryPause)
     }
 
     /// Unmute on the menu's card, for a player muted in place of its pause

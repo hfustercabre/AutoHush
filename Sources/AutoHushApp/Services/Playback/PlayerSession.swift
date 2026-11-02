@@ -14,6 +14,8 @@ protocol SessionMonitoring: HeldMonitoring {
     func activeAudioReport() -> [ActiveAudioReport.Entry]
     /// Try Again on "Couldn't resume": see `MonitoringPipeline.retryResume`.
     func retryResume()
+    /// Try Again after "Couldn't pause": see `MonitoringPipeline.retryPause`.
+    func retryPause()
     /// Unmute, muted in place of the pause: see `MonitoringPipeline.unmuteInstead`.
     func unmuteInstead()
 }

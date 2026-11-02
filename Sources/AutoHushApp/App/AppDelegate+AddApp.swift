@@ -78,9 +78,10 @@ extension AppDelegate: AddAppHost {
         defaults.removeObject(forKey: Self.addAppAfterRelaunchKey)
         guard let at = note[Self.reopenedAtKey] as? Date,
               abs(clock().timeIntervalSince(at)) < Self.addAppAfterRelaunchWithin else { return }
-        addApp.open()
-        if let path = note[Self.reopenedAppKey] as? String, !path.isEmpty, addApp.model?.stage == .choosing {
-            addApp.model?.chooseOther(at: URL(fileURLWithPath: path))
+        if let path = note[Self.reopenedAppKey] as? String, !path.isEmpty {
+            addApp.open(on: URL(fileURLWithPath: path))
+        } else {
+            addApp.open()
         }
     }
 

@@ -14,7 +14,8 @@ extension Permission {
             return String(localized: "Allow Accessibility Access…",
                           comment: "Menu item: lets AutoHush control a media player through its menu")
         case .systemAudioRecording:
-            return String(localized: "Allow Audio Recording Access…", comment: "Menu item")
+            return String(localized: "Allow Audio Recording Access…",
+                          comment: "Menu item; also the button in the alert that says why an app added with Add an App (muted, or only its sound tells) couldn't be paused or controlled without Audio Recording")
         }
     }
 

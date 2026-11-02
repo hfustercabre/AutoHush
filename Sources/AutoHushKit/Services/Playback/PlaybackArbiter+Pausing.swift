@@ -40,6 +40,16 @@ extension PlaybackArbiter {
         if !activeSources.isEmpty { startPause() }
     }
 
+    /// Try Again in the alert after the menu's "Couldn't pause" (U2a, the
+    /// user's pick, 2026-11-02): the pause once more, while apps still play
+    /// and Auto-Pause is on. Its failure stands until a pause works.
+    func retryPause() {
+        guard !isShutDown, pauseFailure != nil, autoPauseEnabled, !isAsleep, !activeSources.isEmpty else { return }
+        logger.info("[arbiter] the user asked to try pausing \(self.player.name, privacy: .public) again")
+        cancelPendingPause()
+        startPause()
+    }
+
     func cancelPendingPause() {
         if let pendingPauseID, let pendingPauseTask { calledOff[pendingPauseID] = (pendingPauseTask, pendingPauseWait) }
         pendingPauseTask?.cancel()

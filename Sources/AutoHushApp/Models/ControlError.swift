@@ -9,19 +9,24 @@ struct ControlError: Equatable {
     let text: String
     /// E.g. "Controlling the media player failed: its Play/Pause menu item wasn’t found."
     let detail: String
+    /// What failed, when the player said (`MusicPlayerError.playerCommandFailed`):
+    /// it picks the alert's button (`ControlErrorFix`).
+    private(set) var failure: ControlFailure?
     /// Now Playing is hidden in the menu bar: its alert opens the pane to show it.
-    var opensMenuBarSettings = false
+    var opensMenuBarSettings: Bool { failure == .nowPlayingHidden }
 
     /// `detail`, unless it says what `text` does (an error AutoHush has no
     /// words of its own for): then it's said once.
     var ownDetail: String? { detail == text ? nil : detail }
 
-    init(_ error: any Error, player: String) {
+    /// `antiDot`: AntiDot mode is on, which a player only its sound tells
+    /// about can't work with (said only then).
+    init(_ error: any Error, player: String, antiDot: Bool = false) {
         detail = error.localizedDescription
         switch error as? MusicPlayerError {
         case .playerCommandFailed(let failure)?:
-            text = failure.text(player: player)
-            opensMenuBarSettings = failure == .nowPlayingHidden
+            text = failure.text(player: player, antiDot: antiDot)
+            self.failure = failure
         case .automationPermissionDenied?, .accessibilityPermissionDenied?:
             text = String(localized: "AutoHush may no longer control \(player).",
                           comment: "Why the media player couldn't be controlled: its permission was taken away; %@ is the player")

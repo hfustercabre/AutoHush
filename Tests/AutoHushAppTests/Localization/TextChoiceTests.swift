@@ -185,6 +185,8 @@ struct TextChoiceTests {
                 return [
                     Row("muted only", AntiDotText.onlyMuted(app), namesApp: true),
                     Row("only its sound tells", AntiDotText.onlyHeard(app), namesApp: true),
+                    Row("muted only, out of AntiDot mode", AntiDotText.muteNeedsRecording(app), namesApp: true),
+                    Row("only its sound tells, in AntiDot mode", AntiDotText.notHeardInAntiDotMode(app), namesApp: true),
                 ]
             case .updateTitle:
                 return AutomaticUpdates.allCases.map { Row("\($0)", $0.title) }
@@ -208,7 +210,10 @@ struct TextChoiceTests {
                 let failures: [ControlFailure] = [.menuItemNotFound, .stateUnknown, .nothingToPlay, .buttonDisabled, .pressFailed,
                                                   .pressIgnored, .muteUnavailable, .hearingUnavailable, .nowPlayingHidden,
                                                   .appleEventError(-1708)]
-                return failures.map { Row("\($0)", $0.text(player: app), namesApp: true) }
+                return failures.map { Row("\($0)", $0.text(player: app, antiDot: false), namesApp: true) }
+                    + [ControlFailure.muteUnavailable, .hearingUnavailable].map {
+                        Row("\($0), in AntiDot mode", $0.text(player: app, antiDot: true), namesApp: true)
+                    }
             case .controlError:
                 func text(_ error: MusicPlayerError) -> String { ControlError(error, player: app).text }
                 return [

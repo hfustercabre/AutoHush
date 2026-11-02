@@ -358,7 +358,7 @@ extension AppDelegateTests {
     }
 
     @MainActor
-    @Test("the info button after why the player can't be controlled has an alert say what failed, then why, with OK only")
+    @Test("the info button after why the player can't be controlled has an alert say what failed, then why, with the fix that can help, then OK")
     func controlErrorAlert() async {
         let (_, sut, alerts) = await controlFailed()
         sut.showControlError() // the info button after the card's line
@@ -366,7 +366,8 @@ extension AppDelegateTests {
         #expect(alerts.calls.first?.hasPrefix("Can’t Control First | AutoHush can’t find Play/Pause in First’s menus.") == true)
         // The log's English after it only when AutoHush speaks another language.
         #expect(alerts.calls.first?.contains("\n\n") == !AppStatus.speaksEnglish)
-        #expect(alerts.calls.first?.contains(ControlFailure.openMenuBarSettings) == false)
+        // A supported app's menus changed: an update of AutoHush may know them.
+        #expect(alerts.calls.first?.hasSuffix(" | Check for Updates | OK") == true)
     }
 
     @MainActor

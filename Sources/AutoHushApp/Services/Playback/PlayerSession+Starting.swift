@@ -68,7 +68,8 @@ extension PlayerSession {
             // The line says AutoHush can't control it: the menu tells why.
             var failed = state
             switch error as? MusicPlayerError {
-            case .playerCommandFailed?, .stillLearning?, nil: failed.controlError = ControlError(error, player: player.name)
+            case .playerCommandFailed?, .stillLearning?, nil:
+                failed.controlError = ControlError(error, player: player.name, antiDot: settings.detection.isAntiDot)
             default: failed.controlError = nil
             }
             state = failed

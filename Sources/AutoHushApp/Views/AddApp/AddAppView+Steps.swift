@@ -209,7 +209,7 @@ extension AddAppView {
                 // user, 2026-10-15); in AntiDot mode neither (2026-10-16).
                 StepNote(AddAppText.muteInstead(app)).padding(.top, 4)
                 if model.antiDot {
-                    NoteLabel(ControlFailure.muteUnavailable.text(player: app)).padding(.top, 2)
+                    NoteLabel(ControlFailure.muteUnavailable.text(player: app, antiDot: true)).padding(.top, 2)
                     Button { model.turnOffAntiDot() } label: { Text(verbatim: AddAppText.turnOffAntiDot) }
                         .buttonStyle(.chip)
                 } else if !model.canMute {

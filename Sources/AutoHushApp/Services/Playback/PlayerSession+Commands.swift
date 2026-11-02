@@ -143,6 +143,13 @@ extension PlayerSession {
         monitoring?.retryResume()
     }
 
+    /// Try Again in the alert after the menu's "Couldn't pause": the pause
+    /// once more.
+    func retryPause() {
+        guard !hasQuit else { return }
+        monitoring?.retryPause()
+    }
+
     /// Unmute on the menu's card, for the player muted in place of its pause.
     func unmuteInstead() {
         guard !hasQuit else { return }

@@ -181,6 +181,29 @@ extension PlaybackArbiterTests {
         #expect(mute.muteCount == 0)
     }
 
+    @Test("Try Again after a failed pause pauses once more while the app plays; nothing to try once none plays or nothing failed")
+    func retryPause() async {
+        let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressFailed))
+        let failures = Locked<[MusicPlayerError?]>([])
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      onStatusUpdate: statuses(pauseFailure: { failures.append($0) }))
+
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        #expect(await player.pauseCallCount == 1)
+        await arbiter.retryPause() // it fails again: still said
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 2)
+        #expect(failures.value == [.playerCommandFailed(.pressFailed)])
+        await player.setFailPause(nil)
+        await arbiter.retryPause() // it works now
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 3)
+        #expect(failures.value == [.playerCommandFailed(.pressFailed), nil])
+        await arbiter.retryPause() // nothing failed
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 3)
+    }
+
     /// What ends a failed pause, for `failedPauseOver`.
     enum FailedPauseEnd: CaseIterable {
         case laterPauseWorks, userPauses, playsElsewhere, autoPauseOff, macSleeps

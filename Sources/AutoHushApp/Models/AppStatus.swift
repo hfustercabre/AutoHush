@@ -125,7 +125,7 @@ struct AppStatus: Equatable {
                     message(resumeError))
         }
         guard let controlError else { return nil }
-        let title = playback == .pauseFailed && isReady
+        let title = alertSituation == .pauseFailed
             ? String(localized: "Couldn’t Pause \(playerName)",
                      comment: "Title of the alert that says why the media player refused to pause or failed to; %@ is the player")
             : String(localized: "Can’t Control \(playerName)",
@@ -140,6 +140,18 @@ struct AppStatus: Equatable {
     /// What the info button's alert is about: the given-up resume while the
     /// card says so, else why the player couldn't be controlled.
     var alertError: ControlError? { showsResumeFailure ? resumeError : controlError }
+    /// What the card says that alert is about.
+    var alertSituation: ControlErrorFix.Situation {
+        if showsResumeFailure { return .resumeGivenUp }
+        return playback == .pauseFailed && isReady ? .pauseFailed : .cantControl
+    }
+    /// The button in that alert that can help (`ControlErrorFix`), if any:
+    /// `antiDot`, AntiDot mode is on; `audio`, where Audio Recording stands.
+    func controlErrorFix(antiDot: Bool, audio: PermissionAccess) -> ControlErrorFix? {
+        guard let alertError, let chosenPlayer else { return nil }
+        return ControlErrorFix.fix(for: alertError.failure, kind: chosenPlayer.kind, situation: alertSituation,
+                                   antiDot: antiDot, audio: audio)
+    }
     /// The user went to allow System Audio Recording during this launch.
     /// macOS applies it only from the next launch, so the menu then offers to
     /// reopen AutoHush instead of asking again.

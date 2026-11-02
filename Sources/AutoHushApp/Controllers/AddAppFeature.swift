@@ -54,6 +54,15 @@ final class AddAppFeature {
         window?.show()
     }
 
+    /// The window on the app at `url`, chosen and taken through its steps to
+    /// its check (Check Again… in the alert after the menu's card), when it
+    /// shows its first step; else as it is (a check of another app under way,
+    /// or a result kept).
+    func open(on url: URL) {
+        open()
+        if model?.stage == .choosing { model?.chooseOther(at: url) }
+    }
+
     /// AutoHush quits: the Mac's output, muted for a check, is put back.
     func quit() {
         system.outputMute.restore()

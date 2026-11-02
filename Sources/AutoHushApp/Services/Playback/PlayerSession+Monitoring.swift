@@ -48,11 +48,11 @@ extension PlayerSession {
         case .learnedAssertions(let id, let assertions):
             preferences.playbackAssertions[id] = assertions
         case .pauseFailure(let error):
-            state.controlError = error.map { ControlError($0, player: player?.name ?? "") }
+            state.controlError = error.map { ControlError($0, player: player?.name ?? "", antiDot: settings.detection.isAntiDot) }
         case .mutedInstead(let muted):
             state.mutedInstead = muted
         case .resumeFailure(let error):
-            state.resumeError = error.map { ControlError($0, player: player?.name ?? "") }
+            state.resumeError = error.map { ControlError($0, player: player?.name ?? "", antiDot: settings.detection.isAntiDot) }
         }
     }
 
