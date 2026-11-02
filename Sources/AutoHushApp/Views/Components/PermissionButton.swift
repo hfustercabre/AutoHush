@@ -3,8 +3,9 @@ import AutoHushKit
 
 // What AutoHush needs before it can work for the chosen player, wherever it
 // waits for it: the welcome window's second page, the learning window, the
-// Add a Web App window and Settings → General. Each says what's missing,
-// offers the way to allow it, and goes on by itself once it's allowed.
+// Add a Web App window, Settings → General and Settings → Media Player.
+// Each says what's missing, offers the way to allow it, and goes on by
+// itself once it's allowed.
 
 /// The button that allows a missing permission: "Open <player>" while
 /// Automation waits for the player to run, "Reopen AutoHush" once Audio

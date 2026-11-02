@@ -8,6 +8,7 @@ import PlayerCheckKit
 
 /// The texts that pick their words by what they're given, wherever they
 /// are: Add an App's (`AddAppText`), the permissions' notes and button,
+/// what Settings says the chosen player lacks (`ControlPermissionNote`),
 /// Settings' choices, the logs window's filters, why a player couldn't be
 /// controlled, the update notices, Add a Web App's problems, and learning's
 /// buttons and notes. Every case gives a text of its own, so a case mapped
@@ -45,7 +46,7 @@ struct TextChoiceTests {
     enum Choice: String, CaseIterable {
         case chosen, otherAppProblem, withoutWarning, allowedSummary, timeLeft, playTitle, checkNote,
              wayTitle, wayNote, stateInSentence, stateLabel, stage, activity, request, checkFailed,
-             controlNote, audioNote, permissionButton, detectionTitle, detectionSummary, unavailableNote,
+             controlNote, missingControlNote, audioNote, permissionButton, detectionTitle, detectionSummary, unavailableNote,
              updateTitle, updateExplanation, noticeBody, stepButton, learningNote, controlFailure, controlError,
              webAppProblem, logsFilter, sortDirection
 
@@ -157,6 +158,17 @@ struct TextChoiceTests {
                     Row("player not running", PermissionText.controlNote(app, .playerNotRunning), namesApp: true),
                     Row("not asked", PermissionText.controlNote(app, .notAsked)),
                     Row("denied", PermissionText.controlNote(app, .denied)),
+                ]
+            case .missingControlNote:
+                func note(_ permission: Permission, _ access: PermissionAccess) -> String {
+                    ControlPermissionNote.note(permission, access: access, player: app) ?? ""
+                }
+                return [
+                    Row("Automation", note(.automation(player: app), .denied), note(.automation(player: app), .notAsked), namesApp: true),
+                    Row("Accessibility", note(.accessibility(player: app), .denied), note(.accessibility(player: app), .notAsked),
+                        namesApp: true),
+                    Row("player not running", note(.automation(player: app), .playerNotRunning),
+                        PermissionText.controlNote(app, .playerNotRunning), namesApp: true),
                 ]
             case .audioNote:
                 return [

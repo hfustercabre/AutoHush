@@ -185,6 +185,12 @@ final class SettingsModel {
         actions?.openSettings(page: .fineTuning)
     }
 
+    /// Shows Sound Sources: General's row under the Auto-Pause switch (A1,
+    /// the user's pick, 2026-11-02).
+    func showSoundSources() {
+        actions?.openSettings(page: .soundSources)
+    }
+
     /// The row with Check Now: what the last check found ("AutoHush 0.3.11
     /// is up to date.", "Checking…"), or this version before any check.
     var updateTitle: String {

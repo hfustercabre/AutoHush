@@ -491,6 +491,13 @@ struct SettingsModelTests {
         #expect(model.fineTuningFocus == .detection && model.fineTuningFocusTakesHighlight)
     }
 
+    @Test("General's row under the Auto-Pause switch shows Sound Sources (A1)")
+    func showSoundSources() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.showSoundSources()
+        #expect(log.calls.last == "soundSources")
+    }
+
     @Test("greyed out, a Fine-Tuning setting is left as it is: the fade lengths while the fades are off, the fade-in and the wait to resume while nothing resumes, the threshold in AntiDot mode, where Detection restores the way")
     func fineTuningRestoresWhatShows() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))

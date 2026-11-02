@@ -60,6 +60,37 @@ struct SettingsPageViewTests {
         #expect(draws(.general, model))
     }
 
+    @Test("General and Media Player show what the chosen player lacks, with its button, and drop it once it's allowed (U7a)",
+          arguments: [SettingsPage.general, .mediaPlayer])
+    func missingControl(_ page: SettingsPage) async {
+        let status = Locked(OSStatus(errAEEventNotPermitted))
+        let center = PermissionCenter(system: .init(
+            isTrusted: { true },
+            promptAccessibility: {},
+            automation: { _, _ in status.value },
+            runningPID: { _ in 4242 },
+            audio: { .granted },
+            requestAudio: { _ in },
+            openPane: { _ in }
+        ))
+        let player = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
+        let refresh = { await center.refresh(chosenPlayer: { player }, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false) }
+        await refresh()
+        let model = SettingsModel(settings: .inMemory(), updates: FakeUpdateCommands(), permissionCenter: center, actions: actions,
+                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
+                                  menuBarIcon: MenuBarIconPlace(defaults: MemoryDefaults()))
+        model.state.status.choosePlayer(named: "Jukebox")
+        #expect(model.permissions.controlAccess == .denied)
+        let missing = drawn(pageView(page, model), width: Self.pageWidth).height
+        status.value = noErr
+        await refresh()
+        #expect(model.permissions.controlAccess == .allowed)
+        let allowed = drawn(pageView(page, model), width: Self.pageWidth).height
+        let note = drawn(NoteLabel("AutoHush can’t control Jukebox without Automation access."), width: Self.pageWidth).height
+        // Taller by the note at least, with the button under it.
+        #expect(missing >= allowed + note, "\(missing) missing, \(allowed) allowed, the note \(note)")
+    }
+
     @Test("Behavior, Fine-Tuning, General and About draw with every card changed, each with its Restore Defaults; Behavior and Fine-Tuning in AntiDot mode too", arguments: [
         (SettingsPage.behavior, false), (.behavior, true), (.fineTuning, false), (.fineTuning, true), (.general, false), (.about, false),
     ])
