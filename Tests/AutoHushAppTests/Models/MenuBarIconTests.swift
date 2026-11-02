@@ -7,20 +7,25 @@ import Testing
 struct MenuBarIconTests {
     /// Draws an icon at 2×, optionally over a background colour.
     private func render(_ icon: MenuBarIcon, over background: NSColor? = nil) -> NSBitmapImageRep {
+        render(icon.image(), over: background)
+    }
+
+    /// Draws an icon's image at 2×, at its own size, optionally over a background colour.
+    private func render(_ image: NSImage, over background: NSColor? = nil) -> NSBitmapImageRep {
         let rep = NSBitmapImageRep(
             bitmapDataPlanes: nil,
-            pixelsWide: Int(MenuBarIcon.size.width * 2), pixelsHigh: Int(MenuBarIcon.size.height * 2),
+            pixelsWide: Int(image.size.width * 2), pixelsHigh: Int(image.size.height * 2),
             bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
             colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
         )!
-        rep.size = MenuBarIcon.size
+        rep.size = image.size
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
         if let background {
             background.setFill()
-            NSRect(origin: .zero, size: MenuBarIcon.size).fill()
+            NSRect(origin: .zero, size: image.size).fill()
         }
-        icon.image().draw(in: NSRect(origin: .zero, size: MenuBarIcon.size))
+        image.draw(in: NSRect(origin: .zero, size: image.size))
         NSGraphicsContext.restoreGraphicsState()
         return rep
     }
@@ -82,6 +87,20 @@ struct MenuBarIconTests {
         #expect(color(rep, at: 18, 18).alphaComponent < 0.1)   // its arrow
         #expect(color(rep, at: 13, 18).alphaComponent < 0.1)   // the gap cut out of the tile around it
         #expect(color(rep, at: 11, 18).alphaComponent > 0.9)   // the tile beside the gap
+    }
+
+    @Test("Auto-Pause off draws a solid slash across every state, a gap cut out beside it, with the update badge too",
+          arguments: [false, true])
+    func offSlash(showsUpdate: Bool) {
+        // Where the tile is in the image: centered in the badge's room.
+        let tile = showsUpdate ? (MenuBarIcon.updateSize.width - MenuBarIcon.size.width) / 2 : 0
+        for icon in MenuBarIcon.allCases {
+            let off = render(icon.image(showsUpdate: showsUpdate, isOff: true))
+            let on = render(icon.image(showsUpdate: showsUpdate))
+            #expect(off.representation(using: .png, properties: [:]) != on.representation(using: .png, properties: [:]), "\(icon)")
+            #expect(color(off, at: tile + 9, tile + 9).alphaComponent > 0.9, "\(icon): the slash, on the diagonal")
+            #expect(color(off, at: tile + 10.5, tile + 8.5).alphaComponent < 0.1, "\(icon): the gap beside it")
+        }
     }
 
     @Test("each state looks different")
