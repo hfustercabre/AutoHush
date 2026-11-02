@@ -51,6 +51,18 @@ struct ProcessPlayerMuteTests {
         #expect(muter.log == ["mute 42", "unmute 42", "mute 43", "unmute 43"])
     }
 
+    @Test("relaunched while muted and muted again before a look followed it, the old process is let through: no tap of it stays")
+    func muteAfterRelaunch() async {
+        let muter = FakeMuter(), pid = Locked<pid_t?>(42)
+        let mute = playerMute(running: pid, muter: muter)
+        #expect(await mute.mute())
+        pid.value = 43
+        #expect(await mute.mute())
+        #expect(muter.muted == [43])
+        await mute.unmute()
+        #expect(muter.log == ["mute 42", "unmute 42", "mute 43", "unmute 43"])
+    }
+
     @Test("not muted, a relaunch needs nothing")
     func relaunchUnmuted() async {
         let muter = FakeMuter()

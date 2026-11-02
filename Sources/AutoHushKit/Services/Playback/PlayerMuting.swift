@@ -48,6 +48,12 @@ package final class ProcessPlayerMute: PlayerMuting {
         guard tapsAllowed(), let pid = running(bundleID) else { return false }
         let muter = muter, allowed = audioRecordingAllowed, mutedPID = mutedPID
         return await Self.queue.run {
+            // A process muted before and gone since (a relaunch not followed
+            // yet) is let through first: its tap would stay, rechecked for good.
+            if let old = mutedPID.withLock({ $0 }), old != pid {
+                muter.unmute(appPID: old)
+                mutedPID.withLock { $0 = nil }
+            }
             guard allowed(), muter.mute(appPID: pid) else { return false }
             mutedPID.withLock { $0 = pid }
             return true
