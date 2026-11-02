@@ -34,8 +34,16 @@ struct MenuPanelViewTests {
         /// Paused for two apps, one played before, one ignored; an update found.
         case paused
         case playing
-        /// Audio Recording missing: its warning, and AntiDot mode offered.
+        /// Audio Recording missing for the player: the card asks for it (no
+        /// warning row: `StatusMenuModel.sections`), and AntiDot mode offered.
         case needsPermission
+        /// Audio Recording missing while monitoring runs: its warning row
+        /// ("Allow Audio Recording Access…") under the card, and AntiDot mode offered.
+        case audioRecordingMissing
+        /// Audio Recording allowed, AutoHush yet to reopen for it: Reopen AutoHush in the warning's place.
+        case awaitsReopen
+        /// Auto-Pause turned off for 15 minutes: "Turned off for", its duration selected and the time left.
+        case snoozed
         /// No player chosen yet.
         case noPlayer
         /// The player must be reopened, and is muted for another app: the
@@ -68,6 +76,14 @@ struct MenuPanelViewTests {
             status.updateOffer = UpdateOffer(release: release, state: .available)
         case .needsPermission:
             status.setHealth(.needsPermission(.systemAudioRecording))
+        case .audioRecordingMissing, .awaitsReopen:
+            status.detection = .unavailable
+            status.awaitsReopenForAudioRecording = state == .awaitsReopen
+            status.playback = .musicPlaying
+        case .snoozed:
+            status.autoPause = .snoozed("until 15:42")
+            status.snooze = RunningSnooze(end: Date().addingTimeInterval(15 * 60), duration: .fifteenMinutes)
+            status.playback = .musicPlaying
         case .fixes:
             status.playerOptions[0].pausesByMuting = true
             status.playerNeedsReopen = true
@@ -111,7 +127,19 @@ struct MenuPanelViewTests {
                 #expect(sut.model.sections.contains(.playingNow) && sut.model.sections.contains(.recentlyPlayed))
                 #expect(sut.model.sections.contains(.update))
             }
-            if state == .needsPermission { #expect(sut.model.sections.contains(.useAntiDot)) }
+            if state == .needsPermission {
+                #expect(sut.model.sections.contains(.useAntiDot))
+                #expect(!sut.model.sections.contains(.warning(.systemAudioRecording))) // the card's to ask
+            }
+            if state == .audioRecordingMissing {
+                #expect(sut.model.sections.contains(.warning(.systemAudioRecording)) && sut.model.sections.contains(.useAntiDot))
+            }
+            if state == .awaitsReopen {
+                #expect(sut.model.sections.contains(.reopenAutoHush) && !sut.model.sections.contains(.warning(.systemAudioRecording)))
+            }
+            if state == .snoozed {
+                #expect(sut.model.runningSnoozeDuration == .fifteenMinutes && sut.model.snoozeTimeLeft != nil)
+            }
             if state == .fixes { #expect(sut.status.playerNeedsReopen && sut.status.isReady && sut.status.offersUnmute) }
             if state == .playingSilently { #expect(sut.status.statusLine == "Playing silently") }
             if state == .learnedControls { #expect(sut.status.canLearnControlsAgain) }
