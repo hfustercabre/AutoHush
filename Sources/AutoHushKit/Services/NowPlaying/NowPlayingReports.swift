@@ -79,6 +79,9 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// Until when the log rests after its short runs (`shortRunsRest`).
     private var restsUntil = Date.distantPast
     private let shortRunsRest: TimeInterval
+    /// What the short runs and the rest are timed by: the time now (tests
+    /// stand in).
+    private let clock: @Sendable () -> Date
     private var ready = false
     private var starting = false
     /// The log couldn't be opened: it isn't asked again.
@@ -102,16 +105,18 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// `isAdministrator`: whether this account may read the log (tests that
     /// stand in for it, on any account, say yes).
     /// `processRuns`: whether a client's process still runs (`stillRuns`;
-    /// tests whose reports name no real process say yes). Last, so a
-    /// trailing closure is still `readPast`.
+    /// tests whose reports name no real process say yes). It and `clock`
+    /// last, so a trailing closure is still `readPast`.
     package init(lookBack: TimeInterval = NowPlayingReports.firstLookBack, idleLimit: TimeInterval? = NowPlayingReports.idleLimit,
                  streamCommand: [String] = NowPlayingReports.streamCommand,
                  isAdministrator: Bool = NowPlayingReports.isAdministrator,
                  shortRunsRest: TimeInterval = NowPlayingReports.shortRunsRest,
                  readPast: @escaping @Sendable (Date) -> [pid_t: Client]? = NowPlayingReports.readPast(since:),
-                 processRuns: @escaping @Sendable (pid_t) -> Bool = NowPlayingReports.stillRuns) {
+                 processRuns: @escaping @Sendable (pid_t) -> Bool = NowPlayingReports.stillRuns,
+                 clock: @escaping @Sendable () -> Date = { Date() }) {
         self.lookBack = lookBack
         self.shortRunsRest = shortRunsRest
+        self.clock = clock
         self.processRuns = processRuns
         idle = idleLimit
         self.streamCommand = streamCommand
@@ -133,7 +138,7 @@ package final class NowPlayingReports: @unchecked Sendable {
     /// Whether the log can be read: an administrator's account (the admin
     /// group) can, until opening it showed otherwise, but not while it rests
     /// after short runs. Told without opening it.
-    package var isAvailable: Bool { lock.withLock { given || (administrator && !failed && Date() >= restsUntil) } }
+    package var isAvailable: Bool { lock.withLock { given || (administrator && !failed && clock() >= restsUntil) } }
 
     /// Whether this account is an administrator's: macOS's log opens only to
     /// the admin group (80). Unknown, it's taken as one, and opening the log tells.
@@ -222,7 +227,7 @@ package final class NowPlayingReports: @unchecked Sendable {
             streamsStarted += 1
             clients = [:]
             streamID = streamsStarted
-            streamStart = Date()
+            streamStart = clock()
             return streamsStarted
         }
         let run = ToolRun(URL(fileURLWithPath: streamCommand[0]), Array(streamCommand.dropFirst()))
@@ -291,10 +296,10 @@ package final class NowPlayingReports: @unchecked Sendable {
             streamID = nil
             ready = false
             clients = [:]
-            shortRuns = Date().timeIntervalSince(streamStart) < Self.shortRun ? shortRuns + 1 : 0
+            shortRuns = clock().timeIntervalSince(streamStart) < Self.shortRun ? shortRuns + 1 : 0
             if shortRuns >= Self.shortRunsLimit {
                 shortRuns = 0
-                restsUntil = Date().addingTimeInterval(shortRunsRest)
+                restsUntil = clock().addingTimeInterval(shortRunsRest)
             }
         }
     }

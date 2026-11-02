@@ -155,14 +155,14 @@ struct NowPlayingReportsTests {
     }
 
     @Test("a stream that keeps ending by itself soon after it starts is followed again a few times, then rests, then is followed again")
-    func shortRuns() async throws {
-        let reads = Locked(0)
+    func shortRuns() async {
+        let reads = Locked(0), clock = ManualClock()
         // A `log stream` that no longer takes what it's asked: it ends at once, while the past still reads.
         let reports = NowPlayingReports(idleLimit: nil, streamCommand: ["/usr/bin/true"], isAdministrator: true,
-                                        shortRunsRest: 0.5) { _ in
-            reads.increment()
-            return [:]
-        }
+                                        shortRunsRest: 60, readPast: { _ in
+                                            reads.increment()
+                                            return [:]
+                                        }, clock: { clock.now })
         defer { reports.stop() }
         await TestWait.until {
             _ = reports.latest(of: "com.example.app")
@@ -174,7 +174,7 @@ struct NowPlayingReportsTests {
         #expect(reads.value == NowPlayingReports.shortRunsLimit)
 
         // Rested, it's followed again at the next question.
-        try await Task.sleep(for: .milliseconds(600))
+        clock.advance(by: 60)
         #expect(reports.isAvailable)
         await TestWait.until {
             _ = reports.latest(of: "com.example.app")
