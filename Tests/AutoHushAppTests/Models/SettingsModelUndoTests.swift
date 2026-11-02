@@ -6,7 +6,7 @@ import AutoHushTestSupport
 
 /// Settings' Undo and Redo of a card's Restore Defaults (U10a, the user's
 /// pick, 2026-11-02): one step per press, putting back every setting it
-/// changed, on the card's page.
+/// changed (and only those), on the card's page.
 @Suite("SettingsModel's Undo", .waitsTimeLimit)
 @MainActor
 struct SettingsModelUndoTests {
@@ -105,6 +105,32 @@ struct SettingsModelUndoTests {
         undo.undo()
         #expect(everything == changed && !undo.canUndo)
         #expect(log.calls.last == "fineTuning")
+    }
+
+    @Test("Undo and Redo put back only what the restore changed: a setting changed since, on the card or another, stays")
+    func otherChangesStay() {
+        changeEverything(for: .fades)
+        press(.fades)
+        // Changed since by controls that register no undo of their own: the
+        // card's own page (a slider) and another card's (About's switch).
+        var timings = model.timings
+        timings.startConfirmation = 4
+        model.setTimings(timings)
+        updates.checksAutomatically = true
+
+        undo.undo()
+        #expect(!model.timings.fadesEnabled) // what the restore changed, put back
+        #expect(model.timings.startConfirmation == 4 && updates.checksAutomatically)
+
+        timings = model.timings
+        timings.fadeOutDuration = 5
+        model.setTimings(timings)
+        updates.getsReleaseCandidates = false
+
+        undo.redo()
+        #expect(model.timings.fadesEnabled)
+        #expect(model.timings.startConfirmation == 4 && model.timings.fadeOutDuration == 5)
+        #expect(updates.checksAutomatically && !updates.getsReleaseCandidates)
     }
 
     @Test("without the Settings window's undo manager, Restore Defaults only restores")

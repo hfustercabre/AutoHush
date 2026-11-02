@@ -14,11 +14,14 @@ extension SettingsModel {
 
     /// Sets the card's settings back to their defaults, leaving what's
     /// greyed out as it is: one step for Settings' Undo, which puts back
-    /// every setting it changed (U10a, the user's pick, 2026-11-02).
+    /// every setting it changed (U10a, the user's pick, 2026-11-02), and
+    /// only those: one changed since by a control without an Undo of its
+    /// own (a slider, a switch) stays as it is now.
     func restoreDefaults(_ card: SettingsCard) {
         let before = currentSettings
-        apply(restoredSettings(card))
-        registerUndo(putting: before, backOn: card)
+        let after = restoredSettings(card)
+        apply(after)
+        registerUndo(changing: after, backTo: before, on: card)
     }
 
     /// Sets the settings a card's Restore Defaults can change to `settings`,
@@ -39,15 +42,16 @@ extension SettingsModel {
         }
     }
 
-    /// Undo ("Undo Restore Defaults") puts `settings` back, on the card's
-    /// page if another shows, and Redo restores them again, the same way.
-    private func registerUndo(putting settings: CardSettings, backOn card: SettingsCard) {
+    /// Undo ("Undo Restore Defaults") sets each setting that differs
+    /// between `changed` and `target` back to `target`'s value, on the
+    /// card's page if another shows, and Redo restores them again, the
+    /// same way. The other settings stay as they are now.
+    private func registerUndo(changing changed: CardSettings, backTo target: CardSettings, on card: SettingsCard) {
         guard let undoManager else { return }
         undoManager.registerUndo(withTarget: self) { model in
-            let current = model.currentSettings
-            model.apply(settings)
+            model.apply(model.currentSettings.changing(from: changed, to: target))
             model.actions?.openSettings(page: card.page)
-            model.registerUndo(putting: current, backOn: card)
+            model.registerUndo(changing: target, backTo: changed, on: card)
         }
         undoManager.setActionName(ButtonText.restoreDefaults)
     }
@@ -127,6 +131,36 @@ private struct CardSettings: Equatable {
     var checksForUpdatesAutomatically: Bool
     var automaticUpdates: AutomaticUpdates
     var getsReleaseCandidates: Bool
+
+    /// These settings with each one that differs between `old` and `new`
+    /// set as in `new`, timing by timing: what a restore (or its Undo)
+    /// changed, the rest as it is here. A setting missing below would be
+    /// left out of Undo; SettingsModelUndoTests restores every card.
+    func changing(from old: CardSettings, to new: CardSettings) -> CardSettings {
+        var settings = self
+        func take<Value: Equatable>(_ path: WritableKeyPath<CardSettings, Value>) {
+            if old[keyPath: path] != new[keyPath: path] { settings[keyPath: path] = new[keyPath: path] }
+        }
+        take(\.timings.startConfirmation)
+        take(\.timings.stopGrace)
+        take(\.timings.silenceThresholdDB)
+        take(\.timings.fadeOutDuration)
+        take(\.timings.fadeInDuration)
+        take(\.timings.fadesEnabled)
+        take(\.timings.levelsMusic)
+        take(\.timings.levelingMaxCutDB)
+        take(\.timings.levelingMinCutDB)
+        take(\.timings.pausesOnOutputDisconnect)
+        take(\.timings.resumesPlayback)
+        take(\.timings.pausesForMicrophone)
+        take(\.timings.staysPausedAfterCalls)
+        take(\.detectionMethod)
+        take(\.keepsMenuBarIconNearSystemIcons)
+        take(\.checksForUpdatesAutomatically)
+        take(\.automaticUpdates)
+        take(\.getsReleaseCandidates)
+        return settings
+    }
 }
 
 private extension TimingSettings {
