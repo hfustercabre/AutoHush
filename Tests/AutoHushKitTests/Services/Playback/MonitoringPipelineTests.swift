@@ -91,6 +91,17 @@ struct MonitoringPipelineTests {
         setup.pipeline.stop()
     }
 
+    @Test("stopped while it tells the arbiter the Mac sleeps, as it starts, it doesn't observe the player after its stop")
+    func stopWhileStartingAsleep() async {
+        let player = MockMusicPlayer(state: .playing)
+        let setup = Setup(player: player)
+        let start = Task { await setup.pipeline.start(asleep: true) }
+        await Task.yield() // the start runs up to telling the arbiter
+        setup.pipeline.stop()
+        #expect(await start.value == false)
+        #expect(player.stateReports.observer?.isObserving == false)
+    }
+
     /// Another app playing paused the player, which `setup` started.
     private func pausedForOtherApp(_ setup: Setup, _ mock: MockMusicPlayer) async {
         await setup.pipeline.start()

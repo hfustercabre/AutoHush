@@ -204,6 +204,8 @@ package final class MonitoringPipeline {
         if asleep {
             sleepChanges += 1
             await arbiter.setAsleep(true, change: sleepChanges)
+            // Stopped meanwhile: its observer, stopped already, isn't started.
+            guard !isStopped else { return false }
         }
         // Observe before seeding so no state change can slip in between.
         playerObserver.start()

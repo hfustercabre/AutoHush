@@ -4,5 +4,7 @@ import AutoHushKit
 @MainActor
 package final class StateReports {
     var onChange: (@MainActor (PlayerState) -> Void)?
+    /// The observer made last.
+    package internal(set) var observer: MockStateObserver?
     nonisolated init() {}
 }

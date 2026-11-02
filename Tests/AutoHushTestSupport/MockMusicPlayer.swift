@@ -138,7 +138,9 @@ package actor MockMusicPlayer: MusicPlayer {
     @MainActor
     package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
         stateReports.onChange = onChange
-        return MockStateObserver()
+        let observer = MockStateObserver()
+        stateReports.observer = observer
+        return observer
     }
 
     /// Lets tests override the reported state without going through pause/play.
