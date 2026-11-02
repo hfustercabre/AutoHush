@@ -195,6 +195,31 @@ struct SafariWebAppMakerTests {
         #expect(setup.safari.log.value.last == "close tab 2") // the tab the site then showed in
     }
 
+    @Test("a web app of another site, added to the Dock by the user meanwhile, isn't taken for this add's")
+    func anotherSiteMeanwhile() async throws {
+        let setup = Setup()
+        let radio = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "RADIO", name: "Radio",
+                                 url: URL(fileURLWithPath: "/Users/test/Applications/Radio.app"),
+                                 startURL: URL(string: "https://radio.example.com/"))
+        // The user adds another site in Safari while AutoHush waits at "Add to Dock".
+        setup.onClick.withLock { $0 = { [installed = setup.installed] _ in installed.append(radio) } }
+        setup.safari.onAdd = { [installed = setup.installed] in installed.append(Self.made) }
+        let made = try await setup.make("play.qobuz.com")
+        #expect(made.bundleID == Self.made.bundleID)
+    }
+
+    @Test("a new web app is the add's when its start page is the site as the add judges the page (a part of it, another country's) or a tested service's; one whose start page can't be read is taken, never trashed")
+    func newWebAppOfTheSite() {
+        let never: (SafariWebApp, URL) -> Bool = { _, _ in false }
+        let qobuz = URL(string: "https://qobuz.com")!
+        #expect(SafariWebAppMaker.isOfSite(Self.made, qobuz, unread: false, sameSite: never)) // play.qobuz.com
+        #expect(!SafariWebAppMaker.isOfSite(Self.existing, qobuz, unread: true, sameSite: never)) // music.youtube.com
+        #expect(SafariWebAppMaker.isOfSite(Self.existing, qobuz, unread: false, sameSite: { _, _ in true }))
+        let unread = SafariWebApp(bundleID: SafariWebApp.bundleIDPrefix + "X", name: "X", url: URL(fileURLWithPath: "/Users/test/Applications/X.app"))
+        #expect(SafariWebAppMaker.isOfSite(unread, qobuz, unread: true, sameSite: never))
+        #expect(!SafariWebAppMaker.isOfSite(unread, qobuz, unread: false, sameSite: never))
+    }
+
     @Test("nothing is added until the user clicks Add to Dock; cancelling instead adds nothing and closes the tab it opened")
     func waitsForTheClick() async throws {
         let setup = Setup()

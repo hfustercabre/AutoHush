@@ -136,7 +136,7 @@ package final class SafariWebAppMaker: WebAppMaking {
             guard await confirmAdd() else { throw CancellationError() }
             try Task.checkCancellation()
             // Added after all, later than AutoHush waited for it.
-            if let made = await newWebApp(since: before, tab: addedTab, onStep: onStep) { return made }
+            if let made = await newWebApp(of: url, since: before, tab: addedTab, onStep: onStep) { return made }
             // The user may have gone elsewhere since.
             if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) { continue }
             onStep(.adding)
@@ -152,7 +152,7 @@ package final class SafariWebAppMaker: WebAppMaking {
             // Added, the new web app comes; closed with Cancel, none does.
             let deadline = clock().addingTimeInterval(Self.appearTimeout)
             while clock() < deadline {
-                if let made = await newWebApp(since: before, tab: addedTab, onStep: onStep) { return made }
+                if let made = await newWebApp(of: url, since: before, tab: addedTab, onStep: onStep) { return made }
                 await sleep(Self.pollInterval)
                 try Task.checkCancellation()
             }
@@ -165,7 +165,8 @@ package final class SafariWebAppMaker: WebAppMaking {
     /// yet, the page still loading: the tab in front, if it shows the site),
     /// then, when Add was clicked in Safari's dialog, the web app Safari
     /// makes all the same for that site (as long as `appearTimeout`), quit
-    /// and moved to the Trash: never one of another site, made meanwhile.
+    /// and moved to the Trash: never one of another site, made meanwhile
+    /// (`isOfSite`).
     /// Off the cancelled task, so its waits aren't cut short.
     private func takeAway(_ url: URL, since before: Set<String>, tab: SafariTab?, waitsForApp: Bool) async {
         let (safari, webApps, sameSite, isSealed, discard, sleep, clock, logger)
@@ -181,7 +182,9 @@ package final class SafariWebAppMaker: WebAppMaking {
             let deadline = clock().addingTimeInterval(Self.appearTimeout)
             while clock() < deadline {
                 // Once Safari is done with it (sealed), so nothing of it is left behind.
-                if let app = webApps().first(where: { !before.contains($0.bundleID) && sameSite($0, url) }), isSealed(app.url) {
+                if let app = webApps().first(where: {
+                    !before.contains($0.bundleID) && Self.isOfSite($0, url, unread: false, sameSite: sameSite)
+                }), isSealed(app.url) {
                     logger.notice("A web app made by a cancelled add: quit and moved to the Trash")
                     discard(app)
                     return
@@ -189,6 +192,19 @@ package final class SafariWebAppMaker: WebAppMaking {
                 await sleep(Self.pollInterval)
             }
         }.value
+    }
+
+    /// Whether `app`, new since an add of `url` began, is that add's: its
+    /// start page is the site as the add judged the page it added
+    /// (`WebAddress.isSameSite`: a part of the site, or another country's,
+    /// counts), or `sameSite` says so (a tested service's other sites).
+    /// Never another site's, which the user may add to the Dock meanwhile.
+    /// One whose start page can't be read counts as `unread` says: taken as
+    /// the add's, but never moved to the Trash.
+    static func isOfSite(_ app: SafariWebApp, _ url: URL, unread: Bool, sameSite: (SafariWebApp, URL) -> Bool) -> Bool {
+        if sameSite(app, url) { return true }
+        guard let start = app.startURL else { return unread }
+        return WebAddress.isSameSite(start, as: url)
     }
 
     /// Quits `app` if it runs, and moves it to the Trash (never deleted).
@@ -201,13 +217,15 @@ package final class SafariWebAppMaker: WebAppMaking {
         }
     }
 
-    /// The web app Safari made since `before`, once it's complete: Safari
-    /// seals it last, and it can't be opened before. Then it's registered
-    /// (Launch Services learns of it only later, and opening it by its
-    /// bundle ID needs it) and AutoHush's Safari tab closed.
-    private func newWebApp(since before: Set<String>, tab: SafariTab,
+    /// The web app Safari made for `url`'s site since `before` (`isOfSite`),
+    /// once it's complete: Safari seals it last, and it can't be opened
+    /// before. Then it's registered (Launch Services learns of it only
+    /// later, and opening it by its bundle ID needs it) and AutoHush's
+    /// Safari tab closed.
+    private func newWebApp(of url: URL, since before: Set<String>, tab: SafariTab,
                            onStep: @Sendable (WebAppMakingStep) -> Void) async -> MadeWebApp? {
-        guard let app = webApps().first(where: { !before.contains($0.bundleID) }), isSealed(app.url) else { return nil }
+        let new = webApps().first { !before.contains($0.bundleID) && Self.isOfSite($0, url, unread: true, sameSite: sameSite) }
+        guard let app = new, isSealed(app.url) else { return nil }
         LSRegisterURL(app.url as CFURL, true)
         await safari.closeTab(tab)
         logger.notice("Added a web app in Safari")
