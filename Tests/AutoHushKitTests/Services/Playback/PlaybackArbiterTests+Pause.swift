@@ -204,6 +204,30 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 3)
     }
 
+    @Test("Try Again calls off a look still pending (a silent player's next one): its pause is the one tried, not one more after it")
+    func retryPauseCallsOffPendingLook() async {
+        let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressFailed))
+        let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      onStatusUpdate: statuses(), hearsPlayer: { await hearing.answer(since: $0) })
+
+        await arbiter.sourceChanged("org.example.viewer", playing: true) // heard: the pause fails
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 1)
+        hearing.now = .silent
+        await arbiter.sourceChanged("com.apple.Safari", playing: true) // not heard: looked at again later
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 1)
+        #expect(scheduler.scheduledDelays.last == PlaybackArbiter.silentRecheckInterval)
+        hearing.now = .heard
+        await arbiter.retryPause() // tried at once, and fails again
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 2)
+        for _ in scheduler.scheduledDelays { await scheduler.completeNext() } // the look that was pending
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 2)
+    }
+
     /// What ends a failed pause, for `failedPauseOver`.
     enum FailedPauseEnd: CaseIterable {
         case laterPauseWorks, userPauses, playsElsewhere, autoPauseOff, macSleeps

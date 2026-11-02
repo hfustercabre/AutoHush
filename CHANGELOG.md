@@ -34,6 +34,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **When something goes wrong, AutoHush says what to do:** a web app
+  whose controls aren't learned says "Controls not learned" in orange,
+  with Learn Controls… under it; the alert after a failed pause or
+  control offers the one fix that can help (Learn Again…, Check Again…,
+  Try Again, Check for Updates, Turn Off AntiDot Mode, Allow Audio
+  Recording Access… or Reopen AutoHush), without error numbers; a failed
+  update check says "GitHub didn't answer. Try again later."
+- **In AntiDot mode**, Playing Now marks an app that counts only because
+  its sound is on ("Sound on, may be paused"), and the menu's surprising
+  status lines say why in a tooltip and to VoiceOver.
 - **The keyboard's highlight is easier to see:** outlined where the
   arrow keys put it, and only one control lit at a time (the pointer's or
   Tab's, whichever moved last).
@@ -55,6 +65,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **An app that can only be muted** no longer blames AntiDot mode for
+  it while AntiDot mode is off: muting needs Audio Recording.
 - **Settings → Diagnostics** scrolls to the arrow keys' highlight; it
   went below the window's edge.
 - **Reduce Motion:** the highlight scrolls into view without an

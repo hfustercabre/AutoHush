@@ -455,7 +455,7 @@ flowchart TD
   FAILK["Pressed again to undo it:<br/>Try Again, or<br/>Pause It Yourself"]
   MAN["Pause it yourself, then<br/>It’s Paused (within a minute,<br/>else it starts over)"]
   DONE["Learned: the button’s two<br/>words and place; played<br/>again, the window closes"]
-  LATER["Later: the Controls row says<br/>not learned, with Learn<br/>Controls…; nothing is pressed"]
+  LATER["Later: nothing is pressed; the<br/>card says Controls not learned in<br/>orange (the icon’s !), with Learn<br/>Controls… under it"]
   PRESS["Another app plays: AutoHush<br/>presses the site’s Pause,<br/>without a fade, and checks it"]
   REF{"Did the<br/>site pause?"}
   MUTE["It won’t (an ad, a disabled<br/>button, a press ignored or<br/>failed): muted instead (Audio<br/>Recording, not in AntiDot mode)"]
