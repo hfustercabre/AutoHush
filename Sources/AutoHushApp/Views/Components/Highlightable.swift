@@ -81,6 +81,7 @@ struct Highlightable: ViewModifier {
     var isAvailable = true
     var ownsControls = false
     var press: (() -> Void)?
+    var select: (() -> Void)?
     var adjust: ((Int) -> Void)?
     var opensSide = false
     var isCurrent: (() -> Bool)?
@@ -100,6 +101,7 @@ struct Highlightable: ViewModifier {
     /// drew: an order, a permission).
     @MainActor private final class Actions {
         var press: (() -> Void)?
+        var select: (() -> Void)?
         var adjust: ((Int) -> Void)?
         var delete: (() -> Void)?
         var isCurrent: (() -> Bool)?
@@ -148,6 +150,7 @@ struct Highlightable: ViewModifier {
                     let actions = actions
                     keyboard.register(id, .init(band: band, group: group, isEnabled: enabled, explains: reason != nil,
                                                 press: press == nil ? nil : { actions.press?() },
+                                                select: select == nil ? nil : { actions.select?() },
                                                 adjust: adjust == nil ? nil : { actions.adjust?($0) },
                                                 delete: removal == nil ? nil : { actions.delete?() },
                                                 opensSide: opensSide,
@@ -159,6 +162,7 @@ struct Highlightable: ViewModifier {
                 .onChange(of: lit) { removal?.lit(lit) }
                 .onChange(of: Drawing(), initial: true) {
                     actions.press = press
+                    actions.select = select
                     actions.adjust = adjust
                     actions.delete = removal?.remove
                     actions.isCurrent = isCurrent
@@ -176,12 +180,13 @@ extension View {
     /// below it: 6 and 3, as the menu's rows, unless it says otherwise.
     func highlightableRow(isFocused: Bool = false, isAvailable: Bool = true, ownsControls: Bool = false,
                           cornerRadius: CGFloat = 8, horizontal: CGFloat = 6, vertical: CGFloat = 3,
-                          press: (() -> Void)? = nil, adjust: ((Int) -> Void)? = nil,
+                          press: (() -> Void)? = nil, select: (() -> Void)? = nil, adjust: ((Int) -> Void)? = nil,
                           isCurrent: (() -> Bool)? = nil) -> some View {
         padding(.horizontal, horizontal)
             .padding(.vertical, vertical)
             .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, isAvailable: isAvailable,
-                                    ownsControls: ownsControls, press: press, adjust: adjust, isCurrent: isCurrent))
+                                    ownsControls: ownsControls, press: press, select: select, adjust: adjust,
+                                    isCurrent: isCurrent))
             .padding(.horizontal, -horizontal)
             .padding(.vertical, -vertical)
     }

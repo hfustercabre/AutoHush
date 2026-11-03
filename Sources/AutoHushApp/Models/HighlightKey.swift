@@ -4,11 +4,11 @@ import AppKit
 /// mapping for both so they never differ (the full check, 2026-10-18): the
 /// plain arrows, Page Up and Page Down, Home and End (fn with the arrows on
 /// a laptop, 2026-11-01), Return (or Enter), Space, Delete (or Forward
-/// Delete), and Tab, which hands over to the keyboard's focus with or
-/// without Shift. With ⌘, ⌥ or ⌃ (or ⇧, but for Tab), a key is left to the
-/// window.
+/// Delete), and Tab, which moves as ↓ does, Shift-Tab as ↑ (the user,
+/// 2026-11-03: Tab moves and shows as the arrows do). With ⌘, ⌥ or ⌃ (or
+/// ⇧, but for Tab), a key is left to the window.
 enum HighlightKey: Equatable {
-    case up, down, left, right, pageUp, pageDown, home, end, returnKey, space, delete, tab
+    case up, down, left, right, pageUp, pageDown, home, end, returnKey, space, delete
 
     init?(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) {
         let others: NSEvent.ModifierFlags = keyCode == 48 ? [.command, .option, .control] : [.command, .option, .control, .shift]
@@ -25,7 +25,7 @@ enum HighlightKey: Equatable {
         case 36, 76: self = .returnKey // Return, Enter
         case 49: self = .space
         case 51, 117: self = .delete // Delete, Forward Delete
-        case 48: self = .tab
+        case 48: self = modifiers.contains(.shift) ? .up : .down // Tab, Shift-Tab
         default: return nil
         }
     }

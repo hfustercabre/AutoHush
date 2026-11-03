@@ -206,7 +206,7 @@ class HostedWindowController: NSWindowController {
     /// `false` leaves the key to the window.
     func handleKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, characters: String?, windowNumber: Int) -> Bool {
         guard let keys, let window, windowNumber == window.windowNumber, window.attachedSheet == nil else { return false }
-        // With keyboard navigation on, Tab may have given a control the focus.
+        // With keyboard navigation on, a click may have given a control the focus.
         let focus: WindowKeys.Focus = window.firstResponder is NSText ? .textField // a field's editor
             : NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow) ? .control : .none
         if let key = HighlightKey(keyCode: keyCode, modifiers: flags) { return keys.handle(key, focus: focus) }

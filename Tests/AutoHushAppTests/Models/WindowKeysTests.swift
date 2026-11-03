@@ -66,15 +66,14 @@ struct WindowKeysTests {
         #expect(log.calls == ["drop focus", "tile 0"])
     }
 
-    @Test("a focused control keeps Return, Space, ← and →; Tab hands the highlight over to the focus")
+    @Test("a focused control keeps Return, Space, ← and →; the arrows, Tab too, move the highlight")
     func focusedControl() {
         let log = CallLog()
         let (keys, _, _) = makeKeys(log: log)
         keys.handle(.down)
         for key: HighlightKey in [.returnKey, .space, .left, .right] { #expect(!keys.handle(key, focus: .control)) }
         #expect(keys.handle(.down, focus: .control)) // the arrows still move the highlight
-        #expect(!keys.handle(.tab))
-        #expect(keys.highlight.highlighted == nil)
+        #expect(keys.highlight.highlighted != nil)
         #expect(log.calls == ["drop focus", "drop focus"])
     }
 
@@ -83,7 +82,7 @@ struct WindowKeysTests {
         let log = CallLog()
         let (keys, tiles, button) = makeKeys(log: log)
         keys.highlight.hover(button, true)
-        for key: HighlightKey in [.up, .returnKey, .space, .left, .right, .home, .delete, .tab] {
+        for key: HighlightKey in [.up, .returnKey, .space, .left, .right, .home, .delete] {
             #expect(!keys.handle(key, focus: .textField))
         }
         #expect(keys.highlight.highlighted == button)

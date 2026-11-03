@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Foundation
 import Testing
@@ -25,6 +26,22 @@ struct SettingsKeysTests {
         keys.page.register(toggle, .init(frame: CGRect(x: 0, y: 0, width: 400, height: 40), press: { log.calls.append("switch") }))
         keys.page.register(slider, .init(frame: CGRect(x: 0, y: 60, width: 400, height: 40), adjust: { log.calls.append("slider \($0)") }))
         return (keys, rows, [toggle, slider])
+    }
+
+    @Test("on a row that selects (Sound Sources' apps), Return presses it (its switch) and Space selects it; elsewhere Space presses, as Return")
+    func spaceSelects() {
+        let log = CallLog()
+        let (keys, _, controls) = makeKeys(log: log)
+        let app = UUID()
+        keys.page.register(app, .init(frame: CGRect(x: 0, y: 120, width: 400, height: 40),
+                                      press: { log.calls.append("switch app") }, select: { log.calls.append("select app") }))
+        keys.page.hover(app, true)
+        #expect(keys.handle(.returnKey))
+        #expect(keys.handle(.space))
+        keys.page.hover(app, false)
+        keys.page.hover(controls[0], true)
+        #expect(keys.handle(.space))
+        #expect(log.calls == ["switch app", "select app", "switch"])
     }
 
     @Test("Delete removes the highlighted control that can be removed (an added app's tile); on another, or with none, it isn't taken")
@@ -124,13 +141,17 @@ struct SettingsKeysTests {
         #expect(keys.sidebar.highlighted == nil)
     }
 
-    @Test("Tab leaves the keys to the keyboard's focus")
-    func focus() {
+    @Test("Tab and Shift-Tab move the highlight as ↓ and ↑ (the user, 2026-11-03)")
+    func tab() throws {
         let log = CallLog()
-        let (keys, _, _) = makeKeys(log: log)
-        keys.handle(.down)
-        #expect(!keys.handle(.tab))
-        #expect(keys.page.highlighted == nil && keys.sidebar.highlighted == nil)
+        let (keys, _, controls) = makeKeys(log: log)
+        let tab = try #require(HighlightKey(keyCode: 48, modifiers: [])), backTab = try #require(HighlightKey(keyCode: 48, modifiers: .shift))
+        #expect(keys.handle(tab))
+        #expect(keys.page.highlighted == controls[0])
+        #expect(keys.handle(tab))
+        #expect(keys.page.highlighted == controls[1])
+        #expect(keys.handle(backTab))
+        #expect(keys.page.highlighted == controls[0])
     }
 
     @Test("a control with the focus keeps Return, Space, ← and → even while the pointer highlights another, as in the menu")
@@ -156,7 +177,7 @@ struct SettingsKeysTests {
         #expect(keys.side == .page && keys.sidebar.highlighted == nil)
     }
 
-    @Test("once the sidebar lets go of the highlight (the pointer left it, Tab), ↓ moves in the page, never showing the first page by itself")
+    @Test("once the sidebar lets go of the highlight (the pointer left it), ↓ moves in the page, never showing the first page by itself")
     func sidebarLetGo() {
         let log = CallLog()
         let (keys, rows, controls) = makeKeys(log: log)
@@ -166,7 +187,7 @@ struct SettingsKeysTests {
         #expect(keys.page.highlighted == controls[0])
         #expect(log.calls.isEmpty) // no page shown
         keys.sidebar.hover(rows[0], true)
-        #expect(!keys.handle(.tab))
+        keys.sidebar.hover(rows[0], false)
         #expect(keys.handle(.down))
         #expect(keys.side == .page && keys.page.highlighted == controls[0] && log.calls.isEmpty)
     }

@@ -248,10 +248,10 @@ extension AppListOrder {
 /// white, as macOS's lists (A1a, the user's pick, 2026-11-01: the faint
 /// selection looked like the pointer's highlight). A click selects the row anywhere but on the
 /// switch, which keeps its own clicks, ⌘ and ⇧ as in macOS's lists; from
-/// the keyboard, Space adds the row in focus to the selection or takes it
-/// out (Tab reaches it with keyboard navigation on), so several can be
-/// removed too. The arrow keys and the pointer highlight it, as Settings'
-/// other rows.
+/// the keyboard, Return switches the highlighted app on or off and Space
+/// adds its row to the selection or takes it out, so several can be
+/// removed too (the user, 2026-11-03). The arrow keys (Tab too) and the
+/// pointer highlight it, as Settings' other rows.
 private struct SoundSourceRow: View {
     let model: SettingsModel
     let row: AppListModel.Row
@@ -278,10 +278,7 @@ private struct SoundSourceRow: View {
                 let keys = NSEvent.modifierFlags
                 list.click(on: row.id, command: keys.contains(.command), shift: keys.contains(.shift))
             }
-            Toggle(isOn: Binding(
-                get: { !row.isIgnored },
-                set: { model.settings.setIgnored(row.source, !$0) }
-            )) {
+            Toggle(isOn: isOn) {
                 Text(verbatim: row.source.name)
             }
             .toggleStyle(PillToggleStyle())
@@ -298,10 +295,11 @@ private struct SoundSourceRow: View {
         .focused($rowFocused)
         .focusEffectDisabled(keyboard != nil) // the row's tint shows it
         // The arrow keys and the pointer highlight it, its tint as far out as
-        // the selection's; Return or Space adds it to the selection or takes
-        // it out.
+        // the selection's; Return switches the app on or off, Space adds it
+        // to the selection or takes it out.
         .highlightableRow(isFocused: rowFocused || switchFocused, cornerRadius: 6, vertical: 4,
-                          press: { list.toggleSelection(of: row.id) })
+                          press: { isOn.wrappedValue.toggle() },
+                          select: { list.toggleSelection(of: row.id) })
         .onKeyPress(.space) {
             list.toggleSelection(of: row.id)
             return .handled
@@ -316,6 +314,10 @@ private struct SoundSourceRow: View {
 
     private var list: AppListModel { model.appList }
     private var isSelected: Bool { list.selectedAppIDs.contains(row.id) }
+    /// The switch: on while the app pauses the player, off while it's ignored.
+    private var isOn: Binding<Bool> {
+        Binding(get: { !row.isIgnored }, set: { model.settings.setIgnored(row.source, !$0) })
+    }
 
     private static var removeFromListTitle: Text {
         Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")

@@ -8,8 +8,8 @@ import Testing
 @MainActor
 struct MenuPanelTests {
     /// A key press, as the panel gets it.
-    static func key(_ code: UInt16) -> NSEvent {
-        NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: 0, context: nil,
+    static func key(_ code: UInt16, flags: NSEvent.ModifierFlags = []) -> NSEvent {
+        NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: flags, timestamp: 0, windowNumber: 0, context: nil,
                          characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code)!
     }
 

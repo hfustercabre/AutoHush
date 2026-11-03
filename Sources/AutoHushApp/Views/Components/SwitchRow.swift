@@ -3,7 +3,8 @@ import SwiftUI
 /// A title, an optional description under it, and a switch. VoiceOver
 /// hears it as one: the switch, named by the title, the description its hint.
 /// In Settings, the whole row takes the highlight (`highlightableRow`):
-/// Return or Space turns the switch.
+/// Return or Space turns the switch, as a click anywhere in its tint does
+/// (the user, 2026-11-03: a click on the row did nothing).
 struct SwitchRow: View {
     let title: Text
     var subtitle: Text?
@@ -28,6 +29,14 @@ struct SwitchRow: View {
                 .focusEffectDisabled(keyboard != nil) // the row's tint shows it
                 .accessibilityHint(subtitle ?? Text(verbatim: ""))
         }
+        // A click anywhere in the tint (`highlightableRow`'s 6 and 3 pt
+        // around it), as one on the switch, which takes its own clicks.
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .contentShape(Rectangle())
+        .onTapGesture { isOn.toggle() }
+        .padding(.horizontal, -6)
+        .padding(.vertical, -3)
         .highlightableRow(isFocused: isFocused, press: { isOn.toggle() })
     }
 }

@@ -185,15 +185,18 @@ extension StatusMenuControllerTests {
         #expect(sut.model.sideKeyboard.highlighted == appRow)
     }
 
-    @Test("in the menu, Tab leaves the highlight to the keyboard's focus; a menu opens with nothing highlighted")
-    func tabLeavesToFocus() {
+    @Test("in the menu, Tab moves the highlight as ↓ does, Shift-Tab as ↑; a menu opens with nothing highlighted")
+    func tabMovesAsArrows() {
         let (sut, _, _, _) = menuWithRows()
         defer { sut.remove() }
         let keyboard = sut.model.keyboard
-        #expect(sut.handleKey(MenuPanelTests.key(125)))
-        #expect(!sut.handleKey(MenuPanelTests.key(48))) // Tab: the keyboard's focus takes over
-        #expect(keyboard.highlighted == nil)
-        keyboard.move(1)
+        #expect(sut.handleKey(MenuPanelTests.key(48))) // Tab: the first row, as ↓
+        let first = keyboard.highlighted
+        #expect(first != nil)
+        #expect(sut.handleKey(MenuPanelTests.key(48)))
+        #expect(keyboard.highlighted != first)
+        #expect(sut.handleKey(MenuPanelTests.key(48, flags: .shift))) // Shift-Tab: back, as ↑
+        #expect(keyboard.highlighted == first)
         reopen(sut) // a menu opens with nothing highlighted
         #expect(keyboard.highlighted == nil)
     }
@@ -223,7 +226,7 @@ extension StatusMenuControllerTests {
         #expect(!StatusMenuController.composes(try Self.keyDown("\u{F701}", code: 125), inputMethod: true))
     }
 
-    @Test("one key mapping for the menu and Settings: plain arrows, Page Up and Down, Home and End, Return or Enter, Space, Tab with or without Shift; others, or with ⌘ ⌥ ⌃ ⇧, are the window's")
+    @Test("one key mapping for the menu and Settings: plain arrows, Page Up and Down, Home and End, Return or Enter, Space, Tab as ↓ and Shift-Tab as ↑; others, or with ⌘ ⌥ ⌃ ⇧, are the window's")
     func highlightKeys() {
         #expect(HighlightKey(keyCode: 125, modifiers: []) == .down)
         // fn with the arrows on a laptop: the same key codes, with fn.
@@ -237,7 +240,8 @@ extension StatusMenuControllerTests {
         #expect(HighlightKey(keyCode: 126, modifiers: [.numericPad, .function]) == .up) // arrows carry these
         #expect(HighlightKey(keyCode: 76, modifiers: []) == .returnKey)
         #expect(HighlightKey(keyCode: 49, modifiers: []) == .space)
-        #expect(HighlightKey(keyCode: 48, modifiers: .shift) == .tab)
+        #expect(HighlightKey(keyCode: 48, modifiers: []) == .down)
+        #expect(HighlightKey(keyCode: 48, modifiers: .shift) == .up)
         #expect(HighlightKey(keyCode: 125, modifiers: .command) == nil)
         #expect(HighlightKey(keyCode: 124, modifiers: .shift) == nil)
         #expect(HighlightKey(keyCode: 48, modifiers: .control) == nil)

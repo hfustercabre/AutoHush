@@ -417,9 +417,8 @@ browsers, are told apart.
   selected row is outlined inside in white (2 pt); a second click on the only one selected deselects it. As in
   macOS's lists, ⌘-click adds a row or takes it
   out, and ⇧-click selects the rows from the last one clicked. From the
-  keyboard, Tab reaches the rows (with keyboard navigation on) and Space
-  adds the focused one or takes it out, as Return or Space on the arrow
-  keys' highlight does. **Remove** sits in the bottom bar after the button
+  keyboard, on the arrow keys' (or Tab's) highlight, Return switches the
+  app on or off and Space adds the row to the selection or takes it out. **Remove** sits in the bottom bar after the button
   that adds, disabled while nothing shown is selected, and removes every
   selected row the search shows. Removing something whose loss changes
   what AutoHush does (an app turned off would pause the player again) asks
@@ -724,13 +723,14 @@ standard ones**:
   pointer moves the same highlight, one at a time on either side; it never
   jumps to the sidebar's first page by itself. A key with nothing to act
   on doesn't beep. A field being typed in keeps its keys.
-- **Tab and Space** move and press as macOS's keyboard navigation does
-  (when it's on), the focused control tinted as the highlight; in the
-  menu and Settings, a control Tab reached takes Return, Space, ← and →
-  itself.
-  Settings → Sound Sources' rows take the focus too, and Space adds
-  the focused one to the selection or takes it out, so **Remove** can
-  take several. **Delete** removes what's selected there, as Remove does,
+- **Tab and Shift-Tab** move the highlight as ↓ and ↑ do, everywhere
+  but in a field being typed in (Tab leaves a search for the rows under
+  it, as ↓). A control that took the focus from a click (with keyboard
+  navigation on) takes Return, Space, ← and → itself.
+  In Settings → Sound Sources, Return switches the highlighted app and
+  Space adds its row to the selection or takes it out, so **Remove** can
+  take several. A switch row (Settings' `SwitchRow`, the menu's app rows)
+  switches from a click anywhere on its tint. **Delete** removes what's selected there, as Remove does,
   and an added app's tile the highlight or focus is on (asking first). In Add an App's list of apps, ↑ and ↓ in its search move
   the selection, and Return chooses it.
 - **Escape** presses Cancel or Later (`.cancelAction`, or
@@ -756,9 +756,8 @@ mapping of the keys for the menu and Settings). A key with nothing to act
 on doesn't beep. The pointer moves the same highlight, as in a menu. In
 the player list, ↑ and ↓ move among the players, Return chooses the one
 lit (with none, the first the search left while something is typed, else
-nothing), and typing searches. With
-keyboard navigation on, Tab and Space work too, the focus taking over from
-the highlight. Both show as a tint of the accent color (`.focusTint`)
+nothing), and typing searches. Tab and Shift-Tab move as ↓ and ↑. A
+switch row takes a click anywhere on its tint. Both show as a tint of the accent color (`.focusTint`)
 rather than a focus ring, outlined where the keys put it; rows that light up as menu items
 (`MenuRowButtonStyle`) light up instead.
 

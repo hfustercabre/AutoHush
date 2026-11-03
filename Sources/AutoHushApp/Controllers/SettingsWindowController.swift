@@ -112,7 +112,7 @@ final class SettingsWindowController: PlacedWindowController {
         guard let window, windowNumber == window.windowNumber, window.attachedSheet == nil,
               !(window.firstResponder is NSText), // a search field's editor
               let key = HighlightKey(keyCode: keyCode, modifiers: flags) else { return false }
-        // With keyboard navigation on, Tab may have given a control the focus.
+        // With keyboard navigation on, a click may have given a control the focus.
         let controlHasFocus = NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow)
         // One highlight at a time: the arrows (and Page Up…End) take it from the focus.
         if key == .up || key == .down || key.jump != nil { window.makeFirstResponder(nil) }

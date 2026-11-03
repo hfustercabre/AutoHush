@@ -12,8 +12,8 @@ import AppKit
 /// In a text field, what's typed stays there: ↓ leaves it for the controls,
 /// from the first, and ↑ stays the field's (the search is the top). With a
 /// search (the welcome's), a letter typed while a control is lit goes into
-/// it (T1). Tab and a focused control keep their keys as in Settings;
-/// Escape stays the window's. Keys with nothing to act on do nothing,
+/// it (T1). Tab and Shift-Tab move as ↓ and ↑ (`HighlightKey`); a focused
+/// control keeps its keys as in Settings; Escape stays the window's. Keys with nothing to act on do nothing,
 /// without a beep.
 @MainActor
 final class WindowKeys {
@@ -21,7 +21,7 @@ final class WindowKeys {
     enum Focus {
         /// Nothing: the window itself.
         case none
-        /// A control Tab put it on (with keyboard navigation on).
+        /// A control a click put it on (with keyboard navigation on).
         case control
         /// A text field, typing.
         case textField
@@ -40,7 +40,7 @@ final class WindowKeys {
     var focusSearch: (@MainActor () -> Bool)?
 
     /// Handles `key` with `focus` on what has the keyboard; `false` leaves
-    /// it to the window: Tab, Return while a main button can be pressed, a
+    /// it to the window: Return while a main button can be pressed, a
     /// text field's keys but ↓, and Return, Space, ← and → while a control
     /// has the focus.
     @discardableResult func handle(_ key: HighlightKey, focus: Focus = .none) -> Bool {
@@ -59,9 +59,6 @@ final class WindowKeys {
             break
         }
         switch key {
-        case .tab:
-            highlight.clear()
-            return false
         case .up, .down:
             dropFocus()
             highlight.move(key == .down ? 1 : -1)
@@ -88,7 +85,7 @@ final class WindowKeys {
     }
 
     /// A letter typed with `focus`: while a control is lit, the search takes
-    /// the keyboard and the highlight goes, as for Tab. The letter itself
+    /// the keyboard and the highlight goes. The letter itself
     /// goes on to the window, so into the search.
     func typed(focus: Focus = .none) {
         guard focus != .textField, highlight.highlighted != nil, let focusSearch, focusSearch() else { return }

@@ -17,8 +17,8 @@ extension StatusMenuController {
     /// too, once something is typed: before, it chooses, as in macOS's
     /// menus), and Return with nothing highlighted chooses the first one it
     /// left, only while something is typed. Keys with nothing to act on do nothing,
-    /// without a beep, as in Settings. Tab leaves the highlight to the
-    /// keyboard's focus.
+    /// without a beep, as in Settings. Tab and Shift-Tab move as ↓ and ↑
+    /// (`HighlightKey`).
     func handleKey(_ event: NSEvent) -> Bool {
         // Space presses the highlighted player until something is typed.
         let spaceChooses = HighlightKey(event) == .space && model.playerSearch.isEmpty
@@ -38,18 +38,14 @@ extension StatusMenuController {
         return handle(key)
     }
 
-    /// `key`, as `handleKey` takes it; `false` for Tab, which goes on to the
-    /// keyboard's focus, and Delete, which removes nothing in the menu.
+    /// `key`, as `handleKey` takes it; `false` for Delete, which removes
+    /// nothing in the menu.
     @discardableResult func handle(_ key: HighlightKey) -> Bool {
         let inSide = model.openSide != nil
         let keyboard = inSide ? model.sideKeyboard : model.keyboard
         switch key {
-        case .tab: // the keyboard's focus takes over
-            model.keyboard.clear()
-            model.sideKeyboard.clear()
-            return false
         case .up, .down:
-            // One highlight at a time: the keyboard's focus, if Tab gave it, goes.
+            // One highlight at a time: the keyboard's focus, if a click gave it, goes.
             panel?.makeFirstResponder(nil)
             keyboard.move(key == .down ? 1 : -1)
         case .pageUp, .pageDown, .home, .end:

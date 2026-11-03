@@ -42,6 +42,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Tab and Shift-Tab** move the highlight as ↓ and ↑ do, in the menu,
+  Settings and AutoHush's windows, with the same highlight.
 - **When something goes wrong, AutoHush says what to do:** a web app
   whose controls aren't learned says "Controls not learned" in orange,
   with Learn Controls… under it; the alert after a failed pause or
@@ -89,6 +91,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Clicking a row with a switch** in Settings, or an app's row in the
+  menu, switches it wherever you click on the row, not only on the
+  switch.
+- **Settings → Sound Sources:** Return switches the highlighted app on or
+  off; Space still selects it for Remove.
 - **An app that can only be muted** no longer blames AntiDot mode for
   it while AntiDot mode is off: muting needs Audio Recording.
 - **Settings → Diagnostics** scrolls to the arrow keys' highlight; it

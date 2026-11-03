@@ -34,6 +34,10 @@ final class KeyHighlight {
         /// dimmed (`HighlightReason`, A13a, 2026-11-01); pressing it does nothing.
         var explains = false
         var press: (() -> Void)?
+        /// What Space does instead of `press`, where the two differ: a list's
+        /// row, selected (Sound Sources, the user, 2026-11-03: Return
+        /// switches it, Space selects it).
+        var select: (() -> Void)?
         /// ← (-1) or → (1): a slider's step, a choice's next option.
         var adjust: ((Int) -> Void)?
         /// What Delete does: removes it (an added app's tile), once confirmed.
@@ -366,6 +370,13 @@ final class KeyHighlight {
         isPressing = true
         defer { isPressing = false }
         press()
+        return true
+    }
+
+    /// Space on the highlighted control: its `select`, else `press`.
+    @discardableResult func select() -> Bool {
+        guard let select = highlightedControl?.select else { return press() }
+        select()
         return true
     }
 

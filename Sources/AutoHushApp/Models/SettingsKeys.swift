@@ -10,8 +10,8 @@ import Foundation
 /// into the page; ← goes back, unless the highlight is on a slider or a
 /// choice, which ← and → change, or in a row of several (tiles), which they
 /// move along first. Return or Space presses the page's control. The
-/// pointer moves the highlight to its side too. Tab leaves it to the
-/// keyboard's focus, and a control that has the focus takes Return, Space,
+/// pointer moves the highlight to its side too. Tab and Shift-Tab move as
+/// ↓ and ↑ (`HighlightKey`), and a control that has the focus takes Return, Space,
 /// ← and → itself, as in the menu (the full check, 2026-10-18). Delete
 /// removes the highlighted control if it can be (an added app's tile).
 /// Keys with nothing to act on do nothing, without a beep.
@@ -45,15 +45,11 @@ final class SettingsKeys {
         side = .page
     }
 
-    /// Handles `key`; `false` leaves it to the window: Tab, and Return,
-    /// Space, ← and → while a control has the keyboard's focus
-    /// (`controlHasFocus`).
+    /// Handles `key`; `false` leaves it to the window: Return, Space, ←
+    /// and → while a control has the keyboard's focus (`controlHasFocus`).
     @discardableResult func handle(_ key: HighlightKey, controlHasFocus: Bool = false) -> Bool {
         if controlHasFocus, [.returnKey, .space, .left, .right].contains(key) { return false }
         switch key {
-        case .tab:
-            clear()
-            return false
         case .delete:
             return page.delete()
         case .up, .down:
@@ -62,7 +58,7 @@ final class SettingsKeys {
                 sidebar.move(step)
                 sidebar.press() // its page shows at once
             } else {
-                // The sidebar let go of it (the pointer left, Tab): the page's.
+                // The sidebar let go of it (the pointer left): the page's.
                 side = .page
                 page.move(step)
             }
@@ -80,6 +76,8 @@ final class SettingsKeys {
         case .returnKey, .space:
             if side == .sidebar, sidebar.highlighted != nil {
                 page.move(1) // into the page: its first control
+            } else if key == .space {
+                page.select()
             } else {
                 page.press()
             }
