@@ -78,19 +78,17 @@ extension PlaybackArbiter {
     /// Our pause, kept instead of resumed (or as the output went away),
     /// becomes the user's.
     func keepPaused() async {
+        putBackResumeLevel()
         // Muted while it plays on (its pause didn't take, or it started again
         // by itself): paused for real before the mute is lifted, as it's to
         // stay paused. Refused, it stays muted, still AutoHush's pause, as
         // any mute in place of a pause: lifting it would play the music out
         // loud (the user, 2026-11-02).
         if mutedInstead, await pauseForReal() != nil {
-            guard !isShutDown else { return }
             logger.info("[arbiter] \(self.player.name, privacy: .public) refused its pause: it stays muted")
-            putBackResumeLevel()
             return
         }
         pausedByUs = false
-        putBackResumeLevel()
         // A mute standing in for the pause: the player is paused for real
         // and the mute lifted, as when the Mac slept (`forgetPause`).
         if let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }

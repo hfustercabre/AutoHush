@@ -118,6 +118,14 @@ This project follows [Semantic Versioning](https://semver.org/).
   Now Playing is hidden in the menu bar.
 - **The arrow keys** reach an added app whose reason for being dimmed
   goes away while the list is open.
+- **Unplugging headphones** (Pause on disconnect), or Resume playback
+  off, no longer unmutes a player that refused its pause: it stays muted
+  rather than playing out loud.
+- **Music you start with a media key, AirPods or Control Center** while
+  another app only holds its sound open is no longer paused for a moment:
+  AutoHush first listens whether that app really plays.
+- **Switching player or quitting AutoHush while it pauses your player**
+  plays it again instead of leaving it paused.
 
 ---
 
