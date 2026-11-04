@@ -136,6 +136,14 @@ struct CheckedPlayerTests {
         #expect(!CheckedPlayer(setup: setup([.menu(menuName: "Controls")]), reports: nil, store: MemorySetupStore()).canFade)
     }
 
+    @Test("its backups are kept, not pressed yet: only its ways get players, and only theirs read its state")
+    func backupsNotPressed() {
+        var backed = setup([.menu(menuName: "Controls")])
+        backed.backups = [.page(.webKit), .panel(rememberedRow: nil)]
+        let parts = CheckedPlayer.parts(for: backed, store: MemorySetupStore())
+        #expect(parts.ways.count == 1 && parts.signs.count == 1 && parts.page == nil && parts.hearing == nil)
+    }
+
     /// The parts of a setup whose script only toggles, with no state, then
     /// has a page and a menu.
     private var toggleParts: CheckedPlayer.Parts {

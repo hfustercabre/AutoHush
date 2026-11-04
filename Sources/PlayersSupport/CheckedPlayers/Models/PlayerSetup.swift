@@ -3,8 +3,8 @@ import ScriptablePlayers
 import WebAppPlayers
 
 /// What a check found for an app AutoHush has no module for: the ways to
-/// pause and play it (kept, the one the user chose), and what reads its
-/// state. Kept (`PlayerSetupStore`), so the app is offered as a player from
+/// pause and play it (kept, the one the user chose, and the others that
+/// worked as its backups), and what reads its state. Kept (`PlayerSetupStore`), so the app is offered as a player from
 /// then on (the user, 2026-10-15: apps are added through Player Check).
 package struct PlayerSetup: Codable, Equatable, Sendable {
     /// A way to pause and play it, as the check tried them.
@@ -45,6 +45,24 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     /// ways that worked; kept, only the one the user chose at Use (an older
     /// setup may hold several, tried in that order).
     package var ways: [Way]
+    /// Kept, the other ways that worked, in the check's order (the panel
+    /// last), as backups of the one chosen (the user, 2026-11-04); not yet
+    /// pressed. Empty in a check's result, where `ways` holds them all, and
+    /// in a setup kept before.
+    package var backups: [Way]
+    /// Kept, how each of its ways and backups did in the check, in each
+    /// window state (`CheckResult.WayResult.states`), so the way pressed can
+    /// follow the window's state. Empty in a check's result, which holds
+    /// them itself, and in a setup kept before 2026-11-04 (Check Again adds
+    /// them).
+    package var wayResults: [CheckResult.WayResult]
+    /// Whether its backups are used when the chosen way can't pause or play
+    /// it (on unless the user turns it off; the user, 2026-11-04).
+    package var usesBackups: Bool
+    /// Whether, with its backups on, the Now Playing panel may be pressed
+    /// while the app is muted in place of a pause, which no other way
+    /// shows on screen (on unless the user turns it off; the user, 2026-11-04).
+    package var panelWhileMuted: Bool
     /// The notification that announced its pauses and plays in the check.
     var stateNotification: String?
     /// An Electron app that takes presses while covered or on another desktop
@@ -61,16 +79,48 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     /// panel, or with nothing more than its titles.
     var panelClues: PanelClues?
 
-    package init(bundleID: String, name: String, appURL: URL, ways: [Way], stateNotification: String? = nil,
-                 needsLaunchOption: Bool = false, panelRowIsStale: Bool? = nil, panelClues: PanelClues? = nil) {
+    package init(bundleID: String, name: String, appURL: URL, ways: [Way], backups: [Way] = [],
+                 wayResults: [CheckResult.WayResult] = [], usesBackups: Bool = true, panelWhileMuted: Bool = true,
+                 stateNotification: String? = nil, needsLaunchOption: Bool = false, panelRowIsStale: Bool? = nil,
+                 panelClues: PanelClues? = nil) {
         self.bundleID = bundleID
         self.name = name
         self.appURL = appURL
         self.ways = ways.sorted { ($0.isPanel ? 1 : 0) < ($1.isPanel ? 1 : 0) }
+        self.backups = backups.sorted { ($0.isPanel ? 1 : 0) < ($1.isPanel ? 1 : 0) }
+        self.wayResults = wayResults
+        self.usesBackups = usesBackups
+        self.panelWhileMuted = panelWhileMuted
         self.stateNotification = stateNotification
         self.needsLaunchOption = needsLaunchOption
         self.panelRowIsStale = panelRowIsStale
         self.panelClues = panelClues
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case bundleID, name, appURL, ways, backups, wayResults, usesBackups, panelWhileMuted, stateNotification,
+             needsLaunchOption, panelRowIsStale, panelClues
+    }
+
+    /// A setup kept before 2026-11-04 reads with no backups, no window-state
+    /// results and both switches on; the rest reads as it always has. Its
+    /// backups and results that can't be read (a way or a window state of a
+    /// later AutoHush, after going back to this one) read as none, so the
+    /// app isn't lost for them: it's still pressed by its ways.
+    package init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        bundleID = try values.decode(String.self, forKey: .bundleID)
+        name = try values.decode(String.self, forKey: .name)
+        appURL = try values.decode(URL.self, forKey: .appURL)
+        ways = try values.decode([Way].self, forKey: .ways)
+        backups = (try? values.decodeIfPresent([Way].self, forKey: .backups)) ?? []
+        wayResults = (try? values.decodeIfPresent([CheckResult.WayResult].self, forKey: .wayResults)) ?? []
+        usesBackups = try values.decodeIfPresent(Bool.self, forKey: .usesBackups) ?? true
+        panelWhileMuted = try values.decodeIfPresent(Bool.self, forKey: .panelWhileMuted) ?? true
+        stateNotification = try values.decodeIfPresent(String.self, forKey: .stateNotification)
+        needsLaunchOption = try values.decode(Bool.self, forKey: .needsLaunchOption)
+        panelRowIsStale = try values.decodeIfPresent(Bool.self, forKey: .panelRowIsStale)
+        panelClues = try values.decodeIfPresent(PanelClues.self, forKey: .panelClues)
     }
 }
 

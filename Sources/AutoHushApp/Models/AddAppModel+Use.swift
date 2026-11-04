@@ -7,9 +7,17 @@ extension AddAppModel {
     /// can run, the recommended first (the setup's order): the user chooses
     /// one (U2, the user's pick, 2026-10-15). None: nothing it can use worked.
     var choosableWays: [CheckResult.WayKind] {
+        workingWays.compactMap(\.kind).filter { !($0 == .panel && panelNeedsSound && antiDot) }
+    }
+
+    /// The ways that worked, in every window state or in some, that AutoHush
+    /// can run, in the setup's order (the panel last): Use keeps the chosen
+    /// one and the others as its backups, a panel only its sound tells in
+    /// AntiDot mode too.
+    private var workingWays: [PlayerSetup.Way] {
         guard let result, let setup = result.setup else { return [] }
         let worked = Set(result.ways.filter(\.worked).map(\.kind))
-        return setup.ways.compactMap(\.kind).filter { worked.contains($0) && !($0 == .panel && panelNeedsSound && antiDot) }
+        return setup.ways.filter { $0.kind.map(worked.contains) == true }
     }
 
     /// The Now Playing panel worked, but its row doesn't follow the app: only
@@ -87,15 +95,20 @@ extension AddAppModel {
     }
 
     /// The last step's Use: keeps what worked and makes the app the player
-    /// (asking to reopen it unless the user skipped that here).
+    /// (asking to reopen it unless the user skipped that here). The chosen
+    /// way is pressed; the others that worked are kept as its backups, with
+    /// how each did in each window state (the user, 2026-11-04).
     func use() {
         guard let result, var setup = result.setup, let way = chosenWay else { return }
-        // Only the chosen way: the others as its backup are parked (the user, 2026-10-15).
-        setup.ways = setup.ways.filter { $0.kind == way }
+        let working = workingWays
+        setup.ways = working.filter { $0.kind == way }
+        setup.backups = working.filter { $0.kind != way }
+        let kept = Set(working.compactMap(\.kind))
+        setup.wayResults = result.ways.filter { kept.contains($0.kind) }
         keptChecks.forget()
-        // The page's learned Play/Pause goes with the page: without it, the
-        // app would wait to learn it and never pause (2026-10-18).
-        host?.useCheckedApp(CheckResult(ways: result.ways, setup: setup, pageButton: way == .page ? result.pageButton : nil),
+        // The page's learned Play/Pause goes with the page, a backup's too:
+        // without it, the app would wait to learn it and never pause (2026-10-18).
+        host?.useCheckedApp(CheckResult(ways: result.ways, setup: setup, pageButton: kept.contains(.page) ? result.pageButton : nil),
                             asksToReopen: reopenOutcome != .skipped)
         presenter?.closeWindow()
     }

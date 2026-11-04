@@ -19,7 +19,7 @@ extension AddAppModelTests {
         again.reset()
         #expect(again.result == result && again.chosen?.bundleID == "com.example.player")
         again.use()
-        #expect(world.kept.load() == nil && world.used == [result])
+        #expect(world.kept.load() == nil && world.used == [usedResult])
     }
 
     @Test("with Now Playing hidden in the menu bar, Check Again is offered beside Use and checks again")

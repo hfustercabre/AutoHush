@@ -22,10 +22,10 @@ extension AddAppModelTests {
         #expect(world.panel == ["shown", "hidden"])
         #expect(model.state(of: .check) == .done && model.state(of: .use) == .current && !model.nowPlayingHidden)
         model.use()
-        #expect(world.used == [result] && world.closed == 1 && world.asksToReopen == [true])
+        #expect(world.used == [usedResult] && world.closed == 1 && world.asksToReopen == [true])
     }
 
-    @Test("only the ways that worked, fully or partly, can be chosen; the first is recommended and used unless another is chosen, and only the chosen one is kept")
+    @Test("only the ways that worked, fully or partly, can be chosen; the first is recommended and used unless another is chosen; the chosen one is kept first, the others that worked as its backups, with how each did")
     func choosingTheWay() async {
         let world = World()
         let model = await AddAppModel.ready(on: world)
@@ -44,7 +44,10 @@ extension AddAppModelTests {
         model.choose(.panel)
         #expect(model.chosenWay == .panel)
         model.use()
-        #expect(world.used.first?.setup?.ways == [.panel(rememberedRow: nil)] && world.used.first?.ways == found.ways)
+        let kept = world.used.first?.setup
+        #expect(kept?.ways == [.panel(rememberedRow: nil)] && kept?.backups == [.menu(menuName: "Playback")])
+        #expect(kept?.wayResults == [found.ways[1], found.ways[3]] && kept?.usesBackups == true && kept?.panelWhileMuted == true)
+        #expect(world.used.first?.ways == found.ways)
     }
 
     @Test("Change… asks first once the check has run, since it forgets what was found; not before")
@@ -101,13 +104,14 @@ extension AddAppModelTests {
         #expect(model.checkMuting == .none && world.macCanMuteReads == reads + 1)
     }
 
-    @Test("Use keeps the page's learned Play/Pause button when the page is the way chosen, and not with another way",
-          arguments: [CheckResult.WayKind.page, .panel])
-    func keepsThePageButton(_ way: CheckResult.WayKind) async {
+    @Test("Use keeps the page's learned Play/Pause button whenever the page is kept, chosen or as a backup, and not when it didn't work",
+          arguments: [(CheckResult.WayKind.page, CheckResult.Mark.some), (.panel, .some), (.panel, .none)])
+    func keepsThePageButton(_ way: CheckResult.WayKind, page: CheckResult.Mark) async {
         let button = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause",
                                      places: [ButtonPlace(path: ["AXGroup", "AXToolbar"], distanceFromBottom: 51)])
         let found = CheckResult(
-            ways: [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.hidden]), CheckResult.WayResult(kind: .panel, mark: .works)],
+            ways: [CheckResult.WayResult(kind: .page, mark: page, failedStates: page == .some ? [.hidden] : []),
+                   CheckResult.WayResult(kind: .panel, mark: .works)],
             setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                                ways: [.page(PageAccess(interface: .electron, switchAttribute: PageAccess.electronSwitch)), .panel(rememberedRow: nil)]),
             pageButton: button)
@@ -119,7 +123,8 @@ extension AddAppModelTests {
         await TestWait.until { model.result != nil }
         model.choose(way)
         model.use()
-        #expect(world.used.first?.pageButton == (way == .page ? button : nil))
+        #expect(world.used.first?.pageButton == (page == .some ? button : nil))
+        #expect(world.used.first?.setup?.backups.contains { $0.kind == .page } == (way == .panel && page == .some))
     }
 
     @Test("a stopped check can run again; a check that found no way says so")

@@ -12,6 +12,12 @@ struct AddAppModelTests {
         ways: [CheckResult.WayResult(kind: .menu, mark: .none), CheckResult.WayResult(kind: .panel, mark: .works)],
         setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                            ways: [.panel(rememberedRow: nil)]))
+    /// `result` as Use keeps it: the panel, with how it did in the check.
+    var usedResult: CheckResult {
+        var used = result
+        used.setup?.wayResults = [CheckResult.WayResult(kind: .panel, mark: .works)]
+        return used
+    }
 
     @Test("the app playing in Now Playing is picked, or the only one there; the others that can play come after those in Now Playing")
     func choosing() async {

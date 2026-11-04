@@ -90,7 +90,8 @@ extension AppDelegate: AddAppHost {
     func useCheckedApp(_ result: CheckResult, asksToReopen: Bool) {
         guard let setup = result.setup else { return }
         checkedPlayers.keep(result)
-        logger.notice("Add an App: \(setup.name, privacy: .public) added, by \(setup.ways.map(\.logName).joined(separator: ", "), privacy: .public)")
+        let backups = setup.backups.isEmpty ? "" : "; backups: " + setup.backups.map(\.logName).joined(separator: ", ")
+        logger.notice("Add an App: \(setup.name, privacy: .public) added, by \(setup.ways.map(\.logName).joined(separator: ", "), privacy: .public)\(backups, privacy: .public)")
         refreshPlayerOptions()
         switchPlayer(to: setup.bundleID, replacing: setup.bundleID == player?.bundleID, asksToReopen: asksToReopen,
                      fromAddWindow: true)

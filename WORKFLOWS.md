@@ -617,7 +617,7 @@ flowchart TD
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-The check runs in AutoHush’s helper, playercheck, so a check that ends, stops or crashes takes its block on the mouse and keyboard with it; the pointer still moves, and the panel shows on every desktop. The ways come surest first (AppleScript, page, menu), the Now Playing panel last, since it opens on screen for a moment. **Use** keeps only the way you chose.
+The check runs in AutoHush’s helper, playercheck, so a check that ends, stops or crashes takes its block on the mouse and keyboard with it; the pointer still moves, and the panel shows on every desktop. The ways come surest first (AppleScript, page, menu), the Now Playing panel last, since it opens on screen for a moment. **Use** keeps the way you chose, the one AutoHush presses, and the others that worked, with how each did in each window state.
 
 ## An added app in use
 
