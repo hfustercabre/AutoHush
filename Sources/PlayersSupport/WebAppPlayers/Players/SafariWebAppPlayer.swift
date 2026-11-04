@@ -48,6 +48,16 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
     /// again: asked off `queue`, since a fresh process answers.
     private let nowPlaying: @Sendable () -> NowPlayingApp.Answer
     private let sleep: @Sendable (TimeInterval) -> Void
+    private let clock: @Sendable () -> Date
+    /// Waits while its other signs are asked again (`otherSignsSay`).
+    private let asyncSleep: @Sendable (TimeInterval) async -> Void
+    /// The player it's a way of (an added app's `CheckedPlayer`): what its
+    /// other signs say of its state (its Now Playing report, else its
+    /// level), asked for a press while its page's words lag out of sight;
+    /// `.unknown` when none tells, or for a Safari web app, whose words
+    /// never lag.
+    package nonisolated let otherSigns = LateState()
+    private let logger = AutoHushLogger(category: "WebAppPlayer")
     /// Where Now Playing is asked, so the page's polls don't wait for it.
     private static let nowPlayingQueue = DispatchQueue(label: "AutoHush.WebApp.NowPlaying", qos: .userInitiated)
 
@@ -63,6 +73,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         processIdentifier: (@Sendable () -> pid_t?)? = nil,
         clock: @escaping @Sendable () -> Date = { Date() },
         sleep: @escaping @Sendable (TimeInterval) -> Void = { Thread.sleep(forTimeInterval: $0) },
+        asyncSleep: @escaping @Sendable (TimeInterval) async -> Void = { try? await Task.sleep(for: .seconds($0)) },
         pressKey: @escaping @Sendable () -> Void = { DispatchQueue.main.async { PlayPauseKey.press() } },
         nowPlaying: @escaping @Sendable () -> NowPlayingApp.Answer = { NowPlayingApp.current() },
         audioRecordingAllowed: @escaping @Sendable () -> Bool = { AudioCapturePermission.allowsTaps }
@@ -84,6 +95,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
         self.nowPlaying = nowPlaying
         self.sleep = sleep
+        self.clock = clock
+        self.asyncSleep = asyncSleep
     }
 
     package nonisolated var learningStatus: LearningStatus { status.current }
@@ -205,9 +218,39 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         await queue.run { control.releaseMute() }
     }
 
+    /// Out of sight, a Chromium or Flutter page's words lag: its state is what
+    /// its other signs tell (`otherSigns`), asked before the press, and again
+    /// when its words don't follow it (a minimized page's stay): only when
+    /// they say it didn't take either is it muted or refused.
     private func press(from state: PlayerState) async throws {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        let control = control
-        try await queue.runThrowing { try control.press(from: state, pid: pid) }
+        let control = control, page = page
+        let lagging = await queue.run { !page.wordsAreCurrent(pid: pid) }
+        let outOfSight = lagging ? WebAppControl.OutOfSight(told: Self.told(await otherSigns.state())) : nil
+        let outcome = try await queue.runThrowing { try control.press(from: state, pid: pid, outOfSight: outOfSight) }
+        guard outcome == .unconfirmed else { return }
+        if await otherSignsSay(left: state) {
+            logger.notice("\(self.name, privacy: .public)’s other signs say its press took")
+            return
+        }
+        logger.error("\(self.name, privacy: .public)’s Play/Pause didn’t change after a press, nor did its other signs")
+        try await queue.runThrowing { try control.pressNotTaken(from: state, pid: pid) }
+    }
+
+    /// Whether its other signs say it left `state` within
+    /// `WebAppControl.otherSignsWait`; `false` at once when none tells.
+    private func otherSignsSay(left state: PlayerState) async -> Bool {
+        let deadline = clock().addingTimeInterval(WebAppControl.otherSignsWait)
+        while true {
+            guard let told = Self.told(await otherSigns.state()) else { return false }
+            if state == .playing ? told != .playing : told == .playing { return true }
+            guard clock() < deadline else { return false }
+            await asyncSleep(WebAppControl.otherSignsInterval)
+        }
+    }
+
+    /// What its other signs told, when it's a state a press can go by.
+    private static func told(_ state: PlayerState) -> PlayerState? {
+        [.playing, .paused, .stopped].contains(state) ? state : nil
     }
 }

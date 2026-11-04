@@ -94,6 +94,7 @@ package actor CheckedPlayer: AddedAppPlayer {
         self.pressSleep = pressSleep
         self.audioRecordingAllowed = audioRecordingAllowed
         parts.toggleState?.set { [weak self] in await self?.sureState() ?? .unknown }
+        parts.page?.otherSigns.set { [weak self] in await self?.stateBesidesPage() ?? .unknown }
         parts.hearing?.set { [weak self] pid in await self?.heardNow(pid) }
     }
 

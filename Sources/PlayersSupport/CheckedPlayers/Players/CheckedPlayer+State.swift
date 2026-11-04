@@ -80,6 +80,22 @@ extension CheckedPlayer {
         return await reported(pid: pid, polled: polled) ?? .unknown
     }
 
+    /// What tells its state while its page's words lag, out of sight: its
+    /// other ways' signs (its script's state, its menu's item), what it
+    /// reported to Now Playing, else its level (`heardNow`); never whether
+    /// its output is open (the user's rule, 2026-10-16); `.unknown` when none
+    /// tells. Its page asks it before a press, and after one its words didn't
+    /// follow (a minimized Deezer's stay, 2026-11-03).
+    func stateBesidesPage() async -> PlayerState {
+        guard let pid = processIdentifier() else { return .notRunning }
+        for sign in parts.signs where !(sign is SafariWebAppPlayer) {
+            let state = await sign.playerState()
+            if state != .unknown { return state }
+        }
+        if parts.hearing == nil, let reported = await reported(pid: pid, polled: false) { return reported }
+        return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
+    }
+
     /// Whether it's heard now, by its level (half a second of listening),
     /// only when AutoHush is about to pause or play it, or checks a press:
     /// one with no sound output open isn't; `nil` without Audio Recording

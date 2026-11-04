@@ -50,6 +50,12 @@ final class WebAppControl: @unchecked Sendable {
     /// After a press, how long the button gets to change its words.
     static let pressConfirmation: TimeInterval = 2
     static let pressCheckInterval: TimeInterval = 0.1
+    /// After a press out of sight whose words didn't change, how long its
+    /// player's other signs get to tell it took, and how often they're asked
+    /// (Deezer's Now Playing report said so within 2.4 s, minimized,
+    /// 2026-11-03).
+    static let otherSignsWait: TimeInterval = 2
+    static let otherSignsInterval: TimeInterval = 0.25
     /// While the button says the music isn't playing, how often the other
     /// windows are checked for one that plays.
     static let otherWindowsInterval: TimeInterval = 2
@@ -115,6 +121,26 @@ final class WebAppControl: @unchecked Sendable {
 
     /// The web app muted in place of a pause, by its pid.
     var muted: (pid: pid_t, reason: MuteReason)?
+
+    /// A press made while the page is out of sight, where a Chromium or
+    /// Flutter page's words lag: what its player's other signs told of its
+    /// state before it (`SafariWebAppPlayer.otherSigns`: an added app's Now
+    /// Playing report, else its level), `nil` when none could.
+    struct OutOfSight {
+        let told: PlayerState?
+    }
+
+    /// Set while such a press runs.
+    var outOfSight: OutOfSight?
+
+    /// How a press ended, when it didn't throw.
+    enum PressOutcome {
+        case done
+        /// Out of sight, its words didn't follow the press (a minimized
+        /// page's stay, measured 2026-11-03): its player asks its other
+        /// signs whether it took (`pressNotTaken` when they say it didn't).
+        case unconfirmed
+    }
 
     /// What a look for the learned button found.
     enum Lookup {
@@ -194,8 +220,7 @@ final class WebAppControl: @unchecked Sendable {
                     logger.notice("\(self.name, privacy: .public)’s Play/Pause button is back")
                     status.send(relearning ? .relearning : .learned)
                 }
-                // A Chromium or Flutter page out of sight keeps an old word: its sound tells instead.
-                guard page.wordsAreCurrent(pid: pid) else { return page.isPlayingSound(pid: pid) ? .playing : .paused }
+                guard page.wordsAreCurrent(pid: pid) else { return stateOutOfSight(pid: pid) }
                 let state = Self.state(of: found, recipe: recipe)
                 if state == .playing || state == .paused { page.noteState(playing: state == .playing, pid: pid) }
                 return state
@@ -214,35 +239,59 @@ final class WebAppControl: @unchecked Sendable {
         return hasWindow ? .paused : .stopped
     }
 
+    /// A Chromium or Flutter page out of sight keeps an old word, and its
+    /// output stays open, silent, about 10 s after a pause (Deezer's,
+    /// 2026-11-03): it can't tell, so its player asks its other signs (an
+    /// added app's Now Playing report, else its level: the user's rule,
+    /// 2026-10-16). A press goes by what they told, else by its sound, as
+    /// before.
+    private func stateOutOfSight(pid: pid_t) -> PlayerState {
+        guard let outOfSight else { return .unknown }
+        return outOfSight.told ?? (page.isPlayingSound(pid: pid) ? .playing : .paused)
+    }
+
     /// Presses the button if the music is in `state`; does nothing if it's
     /// already in the other one. Throws when the button can't be pressed, or
     /// the page doesn't follow. A pause the site refuses mutes the web app
-    /// instead; playing it again unmutes it.
-    func press(from state: PlayerState, pid: pid_t) throws {
-        if state == .paused, muted != nil {
-            try unmute(pid: pid)
-            return
-        }
+    /// instead; playing it again unmutes it. `outOfSight`: the page is, and
+    /// its state is what its player's other signs told; a press its words
+    /// don't follow is then `.unconfirmed`, not judged here.
+    @discardableResult
+    func press(from state: PlayerState, pid: pid_t, outOfSight: OutOfSight? = nil) throws -> PressOutcome {
+        self.outOfSight = outOfSight
+        defer { self.outOfSight = nil }
+        if state == .paused, muted != nil { return try unmute(pid: pid) }
         let current = self.state(pid: pid)
         guard current == state else {
             if current == .unknown { throw MusicPlayerError.playerCommandFailed(.stateUnknown) }
             if current == .stopped { throw MusicPlayerError.playerCommandFailed(.nothingToPlay) }
-            return
+            return .done
         }
         guard learner == nil, let recipe, let button else { throw MusicPlayerError.stillLearning }
         // Sites disable it while they can't be paused, such as during an ad.
         guard page.button(button)?.isEnabled == true else {
             logger.notice("\(self.name, privacy: .public)’s Play/Pause is disabled: not pressed")
-            if state == .playing, mute(pid: pid, reason: .buttonDisabled) { return }
+            if state == .playing, mute(pid: pid, reason: .buttonDisabled) { return .done }
             throw MusicPlayerError.playerCommandFailed(.buttonDisabled)
         }
         guard page.press(button) else {
             logger.error("Pressing \(self.name, privacy: .public)’s Play/Pause failed")
-            if state == .playing, mute(pid: pid, reason: .pressFailed) { return }
+            if state == .playing, mute(pid: pid, reason: .pressFailed) { return .done }
             throw MusicPlayerError.playerCommandFailed(.pressFailed)
         }
-        if follows(button, recipe: recipe, from: state, pid: pid) { return }
+        if follows(button, recipe: recipe, from: state, pid: pid) { return .done }
+        if outOfSight != nil {
+            logger.notice("\(self.name, privacy: .public)’s Play/Pause didn’t change after a press out of sight: asking its other signs")
+            return .unconfirmed
+        }
         logger.error("\(self.name, privacy: .public)’s Play/Pause didn’t change after a press")
+        try pressNotTaken(from: state, pid: pid)
+        return .done
+    }
+
+    /// A press from `state` that didn't take: a pause mutes the web app
+    /// instead (when it can be muted); else it throws.
+    func pressNotTaken(from state: PlayerState, pid: pid_t) throws {
         if state == .playing, mute(pid: pid, reason: .pressIgnored) { return }
         throw MusicPlayerError.playerCommandFailed(.pressIgnored)
     }

@@ -77,18 +77,84 @@ extension SafariWebAppPlayerTests {
         #expect(setup.page.presses == [1])
     }
 
-    @Test("a Chromium or Flutter page out of sight keeps an old word: its sound tells instead")
+    @Test("a Chromium or Flutter page out of sight keeps an old word: it can't tell, its player's other signs do")
     func staleWords() async {
         let setup = Setup(recipe: Self.learned)
         setup.showPage("Pause")
         setup.page.wordsCurrent = false
         setup.page.sound = false
-        #expect(await setup.player.playerState() == .paused)
-        setup.page.sound = true
-        #expect(await setup.player.playerState() == .playing)
+        #expect(await setup.player.playerState() == .unknown)
+        setup.page.sound = true // its output stays open ~10 s after a pause: it tells nothing either
+        #expect(await setup.player.playerState() == .unknown)
+        #expect(await setup.player.polledPlayerState() == .unknown)
         setup.page.wordsCurrent = true
         setup.page.set(1, label: "Play")
         #expect(await setup.player.playerState() == .paused)
+    }
+
+    @Test("out of sight, a press goes by its other signs: played back within 10 s of its pause, its output still open, it's pressed")
+    func outOfSightPressByOtherSigns() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Play")
+        setup.page.wordsCurrent = false
+        setup.page.sound = true // open, silent: it read as playing, and the press was skipped (2026-11-03)
+        setup.player.otherSigns.set { .paused }
+        try await setup.player.play()
+        #expect(setup.page.presses == [1])
+    }
+
+    @Test("out of sight with no other sign, a press goes by its sound, as before")
+    func outOfSightPressBySound() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Pause")
+        setup.page.wordsCurrent = false
+        setup.page.sound = true
+        try await setup.player.pause()
+        #expect(setup.page.presses == [1])
+        #expect(setup.muter.log.isEmpty) // its words followed
+    }
+
+    @Test("out of sight, a press its words don't follow (a minimized page's) took when its other signs say so: not muted")
+    func outOfSightPressConfirmedByOtherSigns() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Pause")
+        setup.page.wordsCurrent = false
+        let told = Locked(PlayerState.playing)
+        setup.page.onPress = { _, _ in told.value = .paused } // its word stays
+        setup.player.otherSigns.set { told.value }
+        try await setup.player.pause()
+        #expect(setup.page.presses == [1])
+        #expect(setup.muter.log.isEmpty)
+        // And played: its word still stays, its other signs tell.
+        setup.page.onPress = { _, _ in told.value = .playing }
+        try await setup.player.play()
+        #expect(setup.page.presses == [1, 1])
+    }
+
+    @Test("out of sight, a press its words don't follow is muted once its other signs say it didn't take either, after their wait")
+    func outOfSightPressRefusedByOtherSigns() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Pause")
+        setup.page.wordsCurrent = false
+        setup.page.onPress = { _, _ in }
+        setup.player.otherSigns.set { .playing }
+        let start = setup.clock.now
+        try await setup.player.pause()
+        #expect(setup.muter.muted == [4242])
+        #expect(setup.clock.now.timeIntervalSince(start) >= WebAppControl.pressConfirmation + WebAppControl.otherSignsWait)
+    }
+
+    @Test("out of sight with no other sign, a press its words don't follow mutes at once, as before")
+    func outOfSightPressWithoutOtherSigns() async throws {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Pause")
+        setup.page.wordsCurrent = false
+        setup.page.sound = true
+        setup.page.onPress = { _, _ in }
+        let start = setup.clock.now
+        try await setup.player.pause()
+        #expect(setup.muter.muted == [4242])
+        #expect(setup.clock.now.timeIntervalSince(start) < WebAppControl.pressConfirmation + 1)
     }
 
     @Test("an app that plays through its browser (a Chromium web app) isn't muted: a refused pause is an error")

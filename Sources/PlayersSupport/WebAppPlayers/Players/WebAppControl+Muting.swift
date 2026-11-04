@@ -63,11 +63,11 @@ extension WebAppControl {
 
     /// Lets the web app be heard again. If the press that didn't take paused
     /// the page after all, it's played again; if the user paused it during an
-    /// ad, it's left paused.
-    func unmute(pid: pid_t) throws {
-        guard let muted else { return }
+    /// ad, it's left paused. Out of sight, as `press(from:pid:outOfSight:)`.
+    func unmute(pid: pid_t) throws -> PressOutcome {
+        guard let muted else { return .done }
         releaseMute()
-        guard muted.reason == .pressIgnored, muted.pid == pid, state(pid: pid) == .paused else { return }
-        try press(from: .paused, pid: pid)
+        guard muted.reason == .pressIgnored, muted.pid == pid, state(pid: pid) == .paused else { return .done }
+        return try press(from: .paused, pid: pid, outOfSight: outOfSight)
     }
 }

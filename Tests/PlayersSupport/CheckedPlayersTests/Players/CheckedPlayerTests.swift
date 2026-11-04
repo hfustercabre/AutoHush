@@ -47,6 +47,36 @@ struct CheckedPlayerTests {
         #expect(!CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore()).releasesOnQuit)
     }
 
+    @Test("its page out of sight can't tell: its Now Playing report does, not its output left open after a pause")
+    func pageOutOfSightByReport() async {
+        var clients: [pid_t: NowPlayingReports.Client] = [:]
+        NowPlayingReports.apply("[com.example.jukebox (\(getpid())) Jukebox ❯] PlaybackState changed from Playing to Paused", to: &clients)
+        let page = StubPage()
+        page.wordsCurrent = false
+        let player = page.player()
+        let paged = CheckedPlayer(setup: setup([.page(.webKit)]), parts: .init(ways: [player], signs: [player], page: player),
+                                  reports: NowPlayingReports(clients: clients, processRuns: { _ in true }), processIdentifier: { 4242 },
+                                  levelProbe: FakeLevelProbe(audible: false), soundOn: { _ in true }, audioRecordingAllowed: { true })
+        #expect(await paged.playerState() == .paused) // read as playing by its open output before (2026-11-03)
+        #expect(await paged.stateBesidesPage() == .paused)
+    }
+
+    @Test("its page's press out of sight, its word unchanged (minimized), took by its level: not muted")
+    func pageOutOfSightPressByLevel() async throws {
+        let page = StubPage()
+        page.wordsCurrent = false
+        let muter = FakeMuter()
+        let player = page.player(muter: muter)
+        let level = FakeLevelProbe(audible: false)
+        page.onPress.value = { level.audible = true }
+        let paged = CheckedPlayer(setup: setup([.page(.webKit)]), parts: .init(ways: [player], signs: [player], page: player),
+                                  reports: nil, processIdentifier: { 4242 }, levelProbe: level, soundOn: { _ in true },
+                                  pressSleep: { _ in }, audioRecordingAllowed: { true })
+        try await paged.play() // paused by its level, its output open: pressed, and heard after
+        #expect(page.presses == 1)
+        #expect(muter.log.isEmpty)
+    }
+
     @Test("its page's mute in place of a pause is its own: allowed taps, a forgotten pause, AntiDot mode")
     func pageMute() async {
         let page = StubPage()

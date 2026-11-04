@@ -29,6 +29,7 @@ struct SafariWebAppPlayerTests {
                 processIdentifier: { [pid] in running ? pid.value : nil },
                 clock: { [clock] in clock.now },
                 sleep: { [clock] in clock.advance(by: $0) },
+                asyncSleep: { [clock] in clock.advance(by: $0) },
                 pressKey: { [key] in key.press() },
                 nowPlaying: { [nowPlaying] in nowPlaying.answer }, audioRecordingAllowed: { true })
         }

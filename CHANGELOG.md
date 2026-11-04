@@ -91,6 +91,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **An added app paused through its page while its window is out of
+  sight** (minimized, hidden or on another desktop) plays again when the
+  other app stops within 10 s of the pause; it stayed paused. Minimized
+  or hidden, its pause is no longer taken for a refusal that muted it
+  too: what it reports to Now Playing, or its sound, tells.
 - **Clicking a row with a switch** in Settings, or an app's row in the
   menu, switches it wherever you click on the row, not only on the
   switch.
