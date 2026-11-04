@@ -16,18 +16,40 @@ package struct CheckFindings: Sendable {
         var notChecked: CheckResult.Mark?
         /// How it did in each window state tested; none when there were none.
         var trials: [(state: CheckResult.WindowState, result: TrialResult)]
+        /// Why it failed in a window state it was tested in, as the report says it.
+        var failedWhy: [CheckResult.WindowState: String]
+        /// The window states of the trip it wasn't tested in, and why.
+        var untested: [(state: CheckResult.WindowState, why: String)]
         /// How it did in the first window state (visible), or in its only run.
         var first: TrialResult?
         /// How AutoHush runs it, when it works.
         var setup: PlayerSetup.Way?
 
         package init(isThere: Bool, notChecked: CheckResult.Mark? = nil, trials: [(state: CheckResult.WindowState, result: TrialResult)] = [],
+                     failedWhy: [CheckResult.WindowState: String] = [:], untested: [(state: CheckResult.WindowState, why: String)] = [],
                      first: TrialResult? = nil, setup: PlayerSetup.Way? = nil) {
             self.isThere = isThere
             self.notChecked = notChecked
             self.trials = trials
+            self.failedWhy = failedWhy
+            self.untested = untested
             self.first = first
             self.setup = setup
+        }
+
+        /// How it did in each window state, in `WindowState`'s order: its
+        /// trials, then the states it wasn't tested in.
+        var states: [CheckResult.StateResult] {
+            let tested = trials.map { trial -> CheckResult.StateResult in
+                switch trial.result {
+                case .worked: CheckResult.StateResult(state: trial.state, outcome: .worked)
+                case .pausedOnly: CheckResult.StateResult(state: trial.state, outcome: .pausedOnly, reason: failedWhy[trial.state])
+                case .didNotPause: CheckResult.StateResult(state: trial.state, outcome: .failed, reason: failedWhy[trial.state])
+                }
+            }
+            let all = tested + untested.map { CheckResult.StateResult(state: $0.state, outcome: .untested, reason: $0.why) }
+            let order = CheckResult.WindowState.allCases
+            return all.sorted { order.firstIndex(of: $0.state) ?? 0 < order.firstIndex(of: $1.state) ?? 0 }
         }
 
         /// Its mark over the window states it was tested in (its only run
@@ -84,7 +106,7 @@ package struct CheckFindings: Sendable {
                 continue
             }
             let (mark, failed) = way.mark
-            let result = CheckResult.WayResult(kind: kind, mark: mark, failedStates: mark == .some ? failed : [])
+            let result = CheckResult.WayResult(kind: kind, mark: mark, failedStates: mark == .some ? failed : [], states: way.states)
             marks.append(result)
             if result.worked, let setup = way.setup { working.append(ResultWays.Working(way: setup, kind: kind, everywhere: mark == .works)) }
         }

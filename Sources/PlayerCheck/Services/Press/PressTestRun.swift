@@ -20,14 +20,13 @@ import WebAppPlayers
     /// or with a player's slider around it), so a pause that didn't take
     /// was the site's refusal, not a wrong button.
     private var pressedPlayersPause = false
-    /// After the first window state, the page is pressed as Player Check's
-    /// own presses press it: its switch off between presses, each press
-    /// turning it on, giving the page up to 4 s to show, and turning it off
-    /// once it's seen whether it took. Kept on instead, a page built in view
-    /// stays usable out of view (an Electron player's passed every state), which those
-    /// presses don't get. The first state keeps it on, for learning the
-    /// button. Only a switch this tool may turn off: Electron's, or one it
-    /// turned on.
+    /// The page's switch stays on through every window state, as AutoHush
+    /// keeps it from its first look, so the check judges the page as
+    /// AutoHush will press it (2026-11-04): turned off before the window
+    /// left sight and on again out of sight, an Electron player's page wasn't built
+    /// minimized or hidden, and no press reached it. Put back as it was
+    /// found at the end. Only a switch this tool may turn off: Electron's,
+    /// or one it turned on.
     private let pressSwitch: String?
     /// Left on by the check (the page was readable already): on again at the end.
     private let pressSwitchLeftOn: Bool
@@ -56,7 +55,6 @@ import WebAppPlayers
         if menu != nil { plays.append((.menu, "its menu", { pressMenuToggle(pid: pid) })) }
         plays.append((.page, "its page's button", { [unowned self] in
             guard page?.toggle != nil else { return false }
-            self.switchForPress(true)
             return self.pressPage(pausing: false)
         }))
         if panelReachable { plays.append((.panel, "the Now Playing panel", { pressInPanel(pid: pid, pausing: false) })) }
@@ -83,11 +81,6 @@ import WebAppPlayers
         return true
     }
 
-    private func switchForPress(_ on: Bool) {
-        guard let pressSwitch, !firstState else { return }
-        setPageSwitch(pressSwitch, on: on, pid: pid)
-    }
-
     /// Whether a way worked in this window state (with no window, in the one run).
     private func workedHere(_ way: Way) -> Bool {
         guard let state else { return TestResults.first[way] == .worked }
@@ -110,7 +103,6 @@ import WebAppPlayers
             guard !sign.playing(before) else { return true }
             guard play.play() else { continue }
             let after = waitFor(4, pid: pid, level: sign.byLevel, until: sign.playing)
-            if play.way == .page { switchForPress(false) }
             if sign.playing(after) {
                 say("    played again by \(play.title)")
                 return true
@@ -194,8 +186,6 @@ import WebAppPlayers
                 say(CheckReportLine.windowState(index + 1, of: states.count, next))
             }
             if let next, let windowTest = TestScope.windowTest {
-                // Off, as between two presses, before the window goes.
-                switchForPress(false)
                 stopState.setInTrial(true)
                 let why = windowTest.putIn(next)
                 stopState.setInTrial(false)
@@ -253,12 +243,10 @@ import WebAppPlayers
                 let result = trialAgainIfEnded(.page) {
                     pressedPlayersPause = false
                     return trial(CheckReportLine.trial(.page, learned: learned != nil), pid: pid,
-                                 pause: { _ in switchForPress(true); return pressPage(pausing: true) },
-                                 play: { _ in switchForPress(true); return pressPage(pausing: false) },
-                                 undo: { [self] in switchForPress(false) },
-                                 whilePaused: firstState ? { [self] in learnPageButton(pid: pid) } : { [self] in switchForPress(false) })
+                                 pause: { _ in pressPage(pausing: true) },
+                                 play: { _ in pressPage(pausing: false) },
+                                 whilePaused: firstState ? { [self] in learnPageButton(pid: pid) } : nil)
                 }
-                switchForPress(false)
                 if result == .didNotPause, pressedPlayersPause, (state ?? .visible) == .visible {
                     say("    a pause its page refuses: AutoHush would mute it instead")
                 }

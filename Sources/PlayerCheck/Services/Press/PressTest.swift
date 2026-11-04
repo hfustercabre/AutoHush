@@ -70,9 +70,11 @@ import ScriptablePlayers
             }
             if let hidden = hiddenInterface {
                 let pid = running.processIdentifier
+                // Turned on for a drag, and left on: the press test keeps it
+                // on through every window state, as AutoHush does (2026-11-04).
                 test.revealPage = { on in
-                    guard let attribute = PageState.shownBySwitch ?? hidden.switches.first else { return }
-                    setPageSwitch(attribute, on: on, pid: pid)
+                    guard on, let attribute = PageState.shownBySwitch ?? hidden.switches.first else { return }
+                    setPageSwitch(attribute, on: true, pid: pid)
                 }
             }
             say("  each way is tested with its window in each state: " + WindowState.trip.map(\.title).joined(separator: ", ")

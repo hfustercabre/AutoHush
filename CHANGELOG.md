@@ -91,6 +91,11 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Add an App's check** no longer marks an app's page as not working
+  minimized or hidden when AutoHush can press it there: it keeps the
+  page readable through every window state, as AutoHush does. It also
+  keeps how each way did in each window state, and why one failed or
+  wasn't tested.
 - **An added app paused through its page while its window is out of
   sight** (minimized, hidden or on another desktop) plays again when the
   other app stops within 10 s of the pause; it stayed paused. Minimized

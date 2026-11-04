@@ -34,11 +34,17 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         ? " (" + (passed == all ? "all \(all) window states" : passed == 1 ? "the one window state tested" : "the \(passed) window states tested") + ")"
         : passed == 0 ? " (in every window state tested)" : ", in \(passed) of \(results.count) window states"
     var lines = mark == .some ? results.filter { $0.result != .worked }.map { CheckReportLine.wayState(.none, $0.state.title, $0.why) } : []
-    for state in WindowState.trip where !results.contains(where: { $0.state == state }) {
-        let why = TestResults.untested[key]?[state] ?? windowTest.untested[state] ?? TestResults.notTried.replacingOccurrences(of: "not tried: ", with: "")
-        lines.append(CheckReportLine.wayState(.notChecked, state.title, "not tested (\(why))"))
-    }
+    lines += untestedStates(key, in: windowTest).map { CheckReportLine.wayState(.notChecked, $0.state.title, "not tested (\($0.why))") }
     return (mark, suffix, lines)
+}
+
+/// The window states of the trip a way tried in some state wasn't tested in,
+/// and why, as its report and the result file say them; none without a trip.
+@MainActor func untestedStates(_ key: Way, in windowTest: WindowTest? = TestScope.windowTest) -> [(state: WindowState, why: String)] {
+    guard let windowTest, let results = TestResults.byState[key], !results.isEmpty else { return [] }
+    return WindowState.trip.filter { state in !results.contains { $0.state == state } }.map { state in
+        (state, TestResults.untested[key]?[state] ?? windowTest.untested[state] ?? TestResults.notTried.replacingOccurrences(of: "not tried: ", with: ""))
+    }
 }
 
 /// A tried way's line: ✓, ⚠ or ✗ over the window states tested (✓ or ✗ by

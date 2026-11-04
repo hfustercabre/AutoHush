@@ -8,15 +8,19 @@ import WebAppPlayers
 // MARK: - What a check found, for AutoHush (--result)
 
 /// Writes what the check found to --result's file (`CheckFindings`): each
-/// way's mark (as `reportWays` says it), and the setup of those that worked
+/// way's mark (as `reportWays` says it) and how it did in each window state
+/// (why it failed or wasn't tested, too), and the setup of those that worked
 /// and AutoHush can run by itself. Its menu and its page were found as
 /// AutoHush finds them, so AutoHush can press what worked.
 @MainActor func writeResult() {
     guard let resultFile, testing else { return }
     func found(_ kind: CheckResult.WayKind, _ isThere: Bool, notChecked: CheckResult.Mark?, setup: PlayerSetup.Way?) -> CheckFindings.Way {
         let way = Way(rawValue: kind.rawValue)
+        let trials = way.map { TestResults.byState[$0] ?? [] } ?? []
         return CheckFindings.Way(isThere: isThere, notChecked: notChecked,
-                                 trials: way.map { (TestResults.byState[$0] ?? []).map { ($0.state, $0.result) } } ?? [],
+                                 trials: trials.map { ($0.state, $0.result) },
+                                 failedWhy: Dictionary(trials.filter { $0.result != .worked }.map { ($0.state, $0.why) }) { first, _ in first },
+                                 untested: way.map { untestedStates($0) } ?? [],
                                  first: way.flatMap { TestResults.first[$0] }, setup: isThere ? setup : nil)
     }
     let unread: CheckResult.Mark? = running == nil ? .notChecked : !AXIsProcessTrusted() ? .noAccessibility : nil

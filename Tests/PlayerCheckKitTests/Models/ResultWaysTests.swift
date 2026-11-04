@@ -84,9 +84,28 @@ struct ResultWaysTests {
     @Test("each way's mark is its trials' over the window states, with the states it failed in; one not checked says why")
     func marksOverTheStates() {
         let (result, _) = overTheStates.result()
-        #expect(result.ways == [CheckResult.WayResult(kind: .script, mark: .some, failedStates: [.minimized, .hidden]),
-                                CheckResult.WayResult(kind: .menu, mark: .works), CheckResult.WayResult(kind: .page, mark: .noAccessibility),
-                                CheckResult.WayResult(kind: .panel, mark: .none)])
+        #expect(result.ways.map { CheckResult.WayResult(kind: $0.kind, mark: $0.mark, failedStates: $0.failedStates) }
+                == [CheckResult.WayResult(kind: .script, mark: .some, failedStates: [.minimized, .hidden]),
+                    CheckResult.WayResult(kind: .menu, mark: .works), CheckResult.WayResult(kind: .page, mark: .noAccessibility),
+                    CheckResult.WayResult(kind: .panel, mark: .none)])
+    }
+
+    @Test("each way keeps how it did in each window state, why it failed and why a state wasn't tested, in the states' order")
+    func statesKept() {
+        let found = findings([
+            .page: .init(isThere: true, trials: [(.minimized, .didNotPause), (.visible, .worked), (.hidden, .pausedOnly)],
+                         failedWhy: [.minimized: "it didn't pause in 4 s", .hidden: "it didn't play again in 4 s"],
+                         untested: [(.fullScreen, "its window can't go full screen")], first: .worked, setup: .page(.webKit)),
+            .menu: .init(isThere: true, notChecked: .noAccessibility),
+        ])
+        let (result, _) = found.result()
+        #expect(result.ways.first { $0.kind == .page }?.states == [
+            CheckResult.StateResult(state: .visible, outcome: .worked),
+            CheckResult.StateResult(state: .fullScreen, outcome: .untested, reason: "its window can't go full screen"),
+            CheckResult.StateResult(state: .minimized, outcome: .failed, reason: "it didn't pause in 4 s"),
+            CheckResult.StateResult(state: .hidden, outcome: .pausedOnly, reason: "it didn't play again in 4 s"),
+        ])
+        #expect(result.ways.first { $0.kind == .menu }?.states == []) // not looked for
     }
 
     @Test("the setup has the ways that worked, everywhere first, with the check's notification and launch option; no stale row without the panel")
@@ -115,7 +134,8 @@ struct ResultWaysTests {
         #expect(worked.setup?.ways == [.panel(rememberedRow: nil)])
         #expect(worked.windowsClosed && !onlyRuns.result().result.windowsClosed)
         let pausedOnly = panel(.pausedOnly).result().result
-        #expect(pausedOnly.ways.last == CheckResult.WayResult(kind: .panel, mark: .none) && pausedOnly.setup == nil)
+        #expect(pausedOnly.ways.last == CheckResult.WayResult(kind: .panel, mark: .none, states: [.init(state: .windowsClosed, outcome: .pausedOnly)])
+                && pausedOnly.setup == nil)
     }
 
     @Test("a toggle with no state is kept when the page tells the app's state")

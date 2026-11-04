@@ -233,7 +233,11 @@ forward a moment, once; a press never does. Electron takes presses only
 a page whose window is fully out of view as hidden: no page is built, and
 presses are lost. Opened with `--disable-backgrounding-occluded-windows`,
 an Electron app's page takes presses covered and on another desktop
-(`--relaunch` opens it so); minimized or hidden, still not.
+(`--relaunch` opens it so); minimized or hidden, only when its switch went
+on while its window could be seen and stayed on (turned on out of sight,
+its page isn't built: Deezer, 2026-11-04). The press test keeps the
+switch on through every window state, as AutoHush does, so what it
+approves is what AutoHush will do; a single press turns it on for itself.
 
 A Chromium browser's web app is a launcher in `~/Applications/<Browser>
 Apps.localized/` whose Info.plist names its site (`CrAppModeShortcutURL`)
@@ -244,8 +248,8 @@ waits). Set on the web app, or read without it (the page shows once
 anything asked the browser for it), presses are silently ignored. The
 browser makes a page pressable only while its window can be seen: turned
 on then and kept on, presses take in every state (hidden or minimized, its
-word lags); turned on for each press, as this tool's presses and trials
-do, they fail minimized or hidden. Since Chromium 130 it reports to Now
+word lags); turned on for each press, as this tool's single presses do,
+they fail minimized or hidden. Since Chromium 130 it reports to Now
 Playing as itself, with its own row in the panel. Its sound and keep-awake
 assertions are the browser's, shared with its tabs: the browser holds one
 "Playing audio" assertion per playing page (a tab, a call, another web

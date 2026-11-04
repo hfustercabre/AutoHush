@@ -37,8 +37,9 @@ import PlayerCheckKit
     /// Why each state that can't be tested isn't.
     var untested: [WindowState: String] = [:]
     /// Shows the app's page to Accessibility (its switch on) while its window
-    /// is dragged, and hides it after: an Electron app's top bar has buttons
-    /// Accessibility sees only then (an account's avatar).
+    /// is dragged: an Electron app's top bar has buttons Accessibility sees
+    /// only then (an account's avatar). Called with false after the drag,
+    /// which the press test ignores: it keeps the switch on (2026-11-04).
     var revealPage: ((Bool) -> Void)?
     var states: [WindowState] { WindowState.trip.filter { untested[$0] == nil } }
 

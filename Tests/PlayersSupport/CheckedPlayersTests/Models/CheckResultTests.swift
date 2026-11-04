@@ -15,7 +15,10 @@ struct CheckResultTests {
 
     @Test("what a check found reads back as playercheck wrote it")
     func codable() throws {
-        let result = CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.minimized, .hidden]),
+        let result = CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.minimized, .hidden],
+                                                              states: [.init(state: .visible, outcome: .worked),
+                                                                       .init(state: .minimized, outcome: .failed, reason: "it didn't pause in 4 s"),
+                                                                       .init(state: .hidden, outcome: .untested, reason: "it didn't play")]),
                                         CheckResult.WayResult(kind: .script, mark: .notThere)],
                                  setup: setup, pageButton: recipe)
         #expect(try JSONDecoder().decode(CheckResult.self, from: JSONEncoder().encode(result)) == result)
@@ -31,6 +34,7 @@ struct CheckResultTests {
         #expect(read.ways == [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.otherDesktopCovered, .hidden]),
                               CheckResult.WayResult(kind: .panel, mark: .works)])
         #expect(read.setup == nil && read.pageButton == nil && !read.windowsClosed)
+        #expect(read.ways.allSatisfy { $0.states.isEmpty }) // saved before each window state's result was kept
         let found = CheckResult(ways: [CheckResult.WayResult(kind: .page, mark: .noWindow)], setup: nil, windowsClosed: true)
         #expect(try JSONDecoder().decode(CheckResult.self, from: JSONEncoder().encode(found)) == found)
         let closed = CheckResult.WayResult(kind: .panel, mark: .some, failedStates: [.windowsClosed])

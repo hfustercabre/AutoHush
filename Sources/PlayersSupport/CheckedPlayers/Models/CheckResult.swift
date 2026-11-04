@@ -50,21 +50,65 @@ package struct CheckResult: Codable, Equatable, Sendable {
     }
 
     /// How one way did over the window states it was tested in: its mark,
-    /// and the states it failed in when it worked in only some.
+    /// the states it failed in when it worked in only some, and how it did in
+    /// each state of the trip.
     package struct WayResult: Codable, Equatable, Sendable {
         package var kind: WayKind
         package var mark: Mark
         /// For `.some`: the window states it didn't work in.
         package var failedStates: [WindowState]
+        /// How it did in each window state, in the trip's order (its windows
+        /// closed, that one state): tested or not, and why it failed or
+        /// wasn't tested. Empty when it wasn't tried, or in a check saved
+        /// before (2026-11-04: AutoHush picks a way by its window state).
+        package var states: [StateResult]
 
-        package init(kind: WayKind, mark: Mark, failedStates: [WindowState] = []) {
+        package init(kind: WayKind, mark: Mark, failedStates: [WindowState] = [], states: [StateResult] = []) {
             self.kind = kind
             self.mark = mark
             self.failedStates = failedStates
+            self.states = states
         }
 
         /// It paused and played the app in at least one window state.
         package var worked: Bool { mark == .works || mark == .some }
+
+        private enum CodingKeys: String, CodingKey {
+            case kind, mark, failedStates, states
+        }
+
+        package init(from decoder: any Decoder) throws {
+            let values = try decoder.container(keyedBy: CodingKeys.self)
+            kind = try values.decode(WayKind.self, forKey: .kind)
+            mark = try values.decode(Mark.self, forKey: .mark)
+            failedStates = try values.decode([WindowState].self, forKey: .failedStates)
+            states = try values.decodeIfPresent([StateResult].self, forKey: .states) ?? []
+        }
+    }
+
+    /// How a way did in one window state.
+    package struct StateResult: Codable, Equatable, Sendable {
+        package enum Outcome: String, Codable, Sendable {
+            /// It paused and played the app.
+            case worked
+            /// It paused it, but didn't play it again.
+            case pausedOnly
+            /// It didn't pause it.
+            case failed
+            /// It wasn't tried in that state (its reason says why).
+            case untested
+        }
+
+        package var state: WindowState
+        package var outcome: Outcome
+        /// Why it failed or wasn't tested, as the check's report says it.
+        package var reason: String?
+
+        package init(state: WindowState, outcome: Outcome, reason: String? = nil) {
+            self.state = state
+            self.outcome = outcome
+            self.reason = reason
+        }
     }
 
     /// Each way, in the check's order.
