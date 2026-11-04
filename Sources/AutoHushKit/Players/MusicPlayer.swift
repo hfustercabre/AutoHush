@@ -51,7 +51,9 @@ package protocol MusicPlayer: Sendable {
 
     /// Its pause by a way that shows nothing on screen: pressed again while
     /// it's muted in place of a pause, every couple of seconds (the user,
-    /// 2026-10-25: never the Now Playing panel). Its plain pause by default.
+    /// 2026-10-25: never the Now Playing panel; an added app's backups may
+    /// try it once in each pause, while their switch says so, 2026-11-04).
+    /// Its plain pause by default.
     func pauseQuietly() async throws
 
     /// The player's own volume, 0–100, or `nil` when it can't be read.

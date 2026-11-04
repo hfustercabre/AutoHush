@@ -177,10 +177,12 @@ that needs none is tried once.
 
 **Checked app** (`AddedAppPlayer`, kind `.checkedApp`): an app added with
 Add an App, offered under "Other Apps" with its "Checked by you" badge, and
-controlled the one way the user chose among those its check found (a setup
-kept before that choice may hold several, a press handed to the next when
-one fails): pressed by it (`CheckedPlayer`), or muted instead of paused
-(`MutedApp`). That way is kept as its **player setup** (`PlayerSetup`).
+controlled the way the user chose among those its check found, the others
+that worked kept as its **backups**, pressed by its window's state
+(`WayOrder`; a setup kept before that choice may hold several, a press
+handed to the next when one fails): pressed by them (`CheckedPlayer`), or
+muted instead of paused (`MutedApp`). They're kept as its **player setup**
+(`PlayerSetup`).
 _Avoid_: custom player.
 
 **Needs reopening** (`MusicPlayer.needsReopen`): the chosen player runs,

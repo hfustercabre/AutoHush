@@ -9,6 +9,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Backups for an app added with Add an App:** the other ways that
+  worked in its check now back up the one you chose. With its window as
+  it is now (minimized, hidden, on another desktop…), a way that didn't
+  work there in the check is passed over for one that did, the Now
+  Playing panel last. A pause that doesn't take is muted instead, as
+  before, and the other ways are then tried while it's muted (the panel
+  once); when it can't be muted (AntiDot mode, no Audio Recording) and
+  for a refused resume, at once. Apps added before keep their one way
+  until they're checked again.
 - **Page Up, Page Down, Home and End** move the keyboard's highlight in
   the menu and Settings, a page at a time or to the first and last row.
 - **VoiceOver** follows the arrow keys' highlight, and Zoom shows where

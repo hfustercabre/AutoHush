@@ -37,6 +37,16 @@ struct PanelWayTests {
         #expect(await way(panel, store: store).volume() == nil)
     }
 
+    @Test("a panel kept as a backup keeps its row there")
+    func backupRow() async throws {
+        let store = MemorySetupStore()
+        store.save(PlayerSetup(bundleID: setup.bundleID, name: "Jukebox", appURL: setup.appURL, ways: [.menu(menuName: "Play")],
+                               backups: [.panel(rememberedRow: nil)]))
+        try await way(FakePanel(rows), store: store).pause()
+        let saved = try #require(store.setups().first)
+        #expect(saved.ways == [.menu(menuName: "Play")] && saved.backups == [.panel(rememberedRow: "Song, Artist – Album")])
+    }
+
     @Test("a setup no longer kept isn't added back, nor one without the panel any more")
     func notAddedBack() async throws {
         let store = MemorySetupStore()

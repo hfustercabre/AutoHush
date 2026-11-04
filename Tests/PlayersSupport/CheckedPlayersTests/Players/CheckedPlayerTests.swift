@@ -136,12 +136,19 @@ struct CheckedPlayerTests {
         #expect(!CheckedPlayer(setup: setup([.menu(menuName: "Controls")]), reports: nil, store: MemorySetupStore()).canFade)
     }
 
-    @Test("its backups are kept, not pressed yet: only its ways get players, and only theirs read its state")
-    func backupsNotPressed() {
+    @Test("its backups get players, and their signs tell its state after its own; a backup row its sound tells doesn't make the app told by its level; with its backups off, none")
+    func backupParts() {
         var backed = setup([.menu(menuName: "Controls")])
         backed.backups = [.page(.webKit), .panel(rememberedRow: nil)]
+        backed.panelRowIsStale = true
         let parts = CheckedPlayer.parts(for: backed, store: MemorySetupStore())
-        #expect(parts.ways.count == 1 && parts.signs.count == 1 && parts.page == nil && parts.hearing == nil)
+        #expect(parts.ways.count == 1 && parts.backups.map(\.kind) == [.page, .panel])
+        #expect(parts.signs.count == 1 && parts.backupSigns.count == 1 && parts.backupSigns.first is SafariWebAppPlayer)
+        #expect(parts.hearing == nil && parts.backupHearing != nil)
+        #expect(!CheckedPlayer(setup: backed, reports: nil, store: MemorySetupStore()).needsAudioLevels)
+        backed.usesBackups = false
+        let off = CheckedPlayer.parts(for: backed, store: MemorySetupStore())
+        #expect(off.backups.isEmpty && off.signs.count == 1 && off.backupSigns.isEmpty && off.page == nil && off.backupHearing == nil)
     }
 
     /// The parts of a setup whose script only toggles, with no state, then

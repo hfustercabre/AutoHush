@@ -26,6 +26,9 @@ import WebAppPlayers
 /// seconds after a pause; a page checks its own, a toggle judged by another
 /// sign (a row that doesn't follow it, a script without a state) checks its
 /// own without pressing again. One muted instead of paused is a `MutedApp`.
+///
+/// With its backups on, the other ways that worked are pressed by the
+/// window's state (`CheckedPlayer+Backups`, the user, 2026-11-04).
 package actor CheckedPlayer: AddedAppPlayer {
     package nonisolated let setup: PlayerSetup
 
@@ -65,6 +68,24 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// The report last checked against its level, by when it came.
     private var reportHeardAt: Date?
     static let probeQueue = DispatchQueue(label: "AutoHush.CheckedPlayer.level", qos: .userInitiated)
+    /// Its ways' order in each window state, with its backups on; `nil`
+    /// without backups: its ways are pressed in turn, as before them.
+    let wayOrder: WayOrder?
+    /// The state its window is in now (`AppWindows`, up to 1 s).
+    let windowState: @Sendable (pid_t) async -> CheckResult.WindowState
+    /// Whether a backup way may be pressed without macOS asking anything
+    /// (Automation for its AppleScript, Accessibility for the others).
+    let backupAllowed: @Sendable (CheckResult.WayKind, pid_t) async -> Bool
+    /// The ways tried in this muted pause, by their place in `wayOrder`
+    /// (`pauseWhileMuted`): the panel once only (the user, 2026-11-04); a
+    /// pause or a play starts again.
+    var mutedTried: Set<Int> = []
+    /// When a play by the panel last failed (`panelPlayRest`).
+    var panelPlayFailedAt: Date?
+    /// Each pause or play begun counts one: one going down its ways stops
+    /// once another has begun.
+    var pressCalls = 0
+    let now: @Sendable () -> Date
 
     package init(setup: PlayerSetup, reports: NowPlayingReports? = CheckedPlayer.sharedReports, store: any PlayerSetupStore = DefaultsPlayerSetupStore()) {
         self.init(setup: setup, parts: Self.parts(for: setup, store: store), reports: reports)
@@ -78,9 +99,16 @@ package actor CheckedPlayer: AddedAppPlayer {
          soundOn: (@Sendable (pid_t) -> Bool)? = nil,
          assertionsHeld: @escaping @Sendable (pid_t) -> Set<PowerAssertion> = PlaybackAssertions.read,
          pressSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
-         audioRecordingAllowed: @escaping @Sendable () -> Bool = { AudioCapturePermission.allowsTaps }) {
+         audioRecordingAllowed: @escaping @Sendable () -> Bool = { AudioCapturePermission.allowsTaps },
+         windowState: @escaping @Sendable (pid_t) async -> CheckResult.WindowState = CheckedPlayer.readWindowState(of:),
+         backupAllowed: @escaping @Sendable (CheckResult.WayKind, pid_t) async -> Bool = CheckedPlayer.mayPressBackup(_:pid:),
+         now: @escaping @Sendable () -> Date = { Date() }) {
         self.setup = setup
         self.parts = parts
+        self.wayOrder = Self.wayOrder(for: setup, backups: parts.backups)
+        self.windowState = windowState
+        self.backupAllowed = backupAllowed
+        self.now = now
         self.reports = reports?.isAvailable == true ? reports : nil
         self.processIdentifier = processIdentifier ?? { [bundleID = setup.bundleID] in
             NSRunningApplication.running(bundleID)?.processIdentifier
@@ -96,6 +124,7 @@ package actor CheckedPlayer: AddedAppPlayer {
         parts.toggleState?.set { [weak self] in await self?.sureState() ?? .unknown }
         parts.page?.otherSigns.set { [weak self] in await self?.stateBesidesPage() ?? .unknown }
         parts.hearing?.set { [weak self] pid in await self?.heardNow(pid) }
+        parts.backupHearing?.set { [weak self] pid in await self?.heardNow(pid) }
     }
 
     /// Read where macOS's log can be read (an administrator's account),
@@ -117,16 +146,21 @@ package actor CheckedPlayer: AddedAppPlayer {
     }
 
     package func pause() async throws {
+        if wayOrder != nil { return try await pressByBackups(to: .paused) }
         try await press(to: .paused)
     }
 
     package func play() async throws {
+        if wayOrder != nil { return try await pressByBackups(to: .playing) }
         try await press(to: .playing)
     }
 
     /// By its ways that show nothing: never the Now Playing panel, which
-    /// shows on screen and takes the keyboard.
+    /// shows on screen and takes the keyboard; with its backups on, one way
+    /// at a time, the panel once in each muted pause while "the panel while
+    /// muted" is on (`pauseWhileMuted`).
     package func pauseQuietly() async throws {
+        if wayOrder != nil { return try await pauseWhileMuted() }
         try await press(to: .paused, quietly: true)
     }
 
@@ -137,22 +171,10 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// (`quietly`: not the panel).
     private func press(to target: PlayerState, quietly: Bool = false) async throws {
         var firstError: any Error?
-        // A sign that says nothing now (a Now Playing report of Unknown:
-        // Apple TV's trailers) would only be waited on: not checked then.
-        // Asked once, at the first way that doesn't check its own presses.
         var checkable: Bool?
         for way in parts.ways where !(quietly && way is PanelWay) {
             do {
-                if !way.checksItsPresses, checkable == nil {
-                    checkable = (!parts.signs.isEmpty || reports != nil) ? await sureState() != .unknown : false
-                }
-                if way.checksItsPresses || checkable != true {
-                    if target == .playing { try await way.play() } else { try await way.pause() }
-                } else {
-                    try await PressCheck(name: "\(name) (\(type(of: way)))",
-                                         press: { target in if target == .playing { try await way.play() } else { try await way.pause() } },
-                                         state: { [self] in await self.sureState() }, sleep: pressSleep).press(to: target)
-                }
+                try await press(way, to: target, checkable: &checkable)
                 return
             } catch {
                 logger.notice("\(self.name, privacy: .public): \(String(describing: type(of: way)), privacy: .public) failed: \(error)")
@@ -160,6 +182,24 @@ package actor CheckedPlayer: AddedAppPlayer {
             }
         }
         throw firstError ?? MusicPlayerError.playerCommandFailed(.pressFailed)
+    }
+
+    /// Presses by `way`, checked as it allows: a way that checks its own
+    /// presses, or one whose press can't be checked (`checkable`, asked once
+    /// per press at the first way that doesn't: a sign saying nothing now,
+    /// as a report of Unknown, would only be waited on), as it is; any
+    /// other through `PressCheck`, by `sureState`.
+    func press(_ way: any MusicPlayer, to target: PlayerState, checkable: inout Bool?) async throws {
+        if !way.checksItsPresses, checkable == nil {
+            checkable = (!parts.signs.isEmpty || reports != nil) ? await sureState() != .unknown : false
+        }
+        if way.checksItsPresses || checkable != true {
+            if target == .playing { try await way.play() } else { try await way.pause() }
+        } else {
+            try await PressCheck(name: "\(name) (\(type(of: way)))",
+                                 press: { target in if target == .playing { try await way.play() } else { try await way.pause() } },
+                                 state: { [self] in await self.sureState() }, sleep: pressSleep).press(to: target)
+        }
     }
 
     package func volume() async -> Int? { await parts.volume?.volume() }

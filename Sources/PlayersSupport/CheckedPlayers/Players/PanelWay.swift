@@ -175,8 +175,8 @@ actor PanelWay: MusicPlayer {
         // may have other ways), and only while it's kept: a setup the user
         // removed isn't added back.
         store.update(bundleID) { setup in
-            guard setup.ways.contains(where: \.isPanel) else { return }
             setup.ways = setup.ways.map { $0.isPanel ? .panel(rememberedRow: kept) : $0 }
+            setup.backups = setup.backups.map { $0.isPanel ? .panel(rememberedRow: kept) : $0 }
         }
     }
 

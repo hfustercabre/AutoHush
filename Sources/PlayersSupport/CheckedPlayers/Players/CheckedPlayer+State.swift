@@ -1,6 +1,7 @@
 import Foundation
 import os
 import AutoHushKit
+import ScriptablePlayers
 import WebAppPlayers
 
 // CheckedPlayer: its state, from its sure signs, its level and its reports.
@@ -46,7 +47,7 @@ extension CheckedPlayer {
     /// What its sure signs say: its ways' own (its script's state, its
     /// page's word, its menu's item), else, for one whose Now Playing row
     /// doesn't follow it, its level (`heardNow`), else what it reported to
-    /// Now Playing; `.unknown` when none answers. Whether its output is open
+    /// Now Playing, else its backups' signs; `.unknown` when none answers. Whether its output is open
     /// can't tell: an output stays open for seconds after a pause. Its
     /// presses are checked by this, and a script that only toggles asks it.
     func sureState() async -> PlayerState {
@@ -59,15 +60,7 @@ extension CheckedPlayer {
     /// its level goes by its keep-awake assertion then, and a report isn't
     /// checked against its level.
     private func sureState(pid: pid_t, polled: Bool) async -> PlayerState {
-        for sign in parts.signs {
-            let state: PlayerState
-            if polled, let page = sign as? SafariWebAppPlayer {
-                state = await page.polledPlayerState()
-            } else {
-                state = await sign.playerState()
-            }
-            if state != .unknown { return state }
-        }
+        if let state = await signsSay(parts.signs, pid: pid, polled: polled) { return state }
         // Its Now Playing row (and report) doesn't follow it: only its sound
         // tells, and between decisions its keep-awake assertion.
         if parts.hearing != nil {
@@ -77,7 +70,25 @@ extension CheckedPlayer {
             }
             return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
         }
-        return await reported(pid: pid, polled: polled) ?? .unknown
+        if let reported = await reported(pid: pid, polled: polled) { return reported }
+        return await signsSay(parts.backupSigns, pid: pid, polled: polled, backups: true) ?? .unknown
+    }
+
+    /// The first of `signs` that tells its state; a backup's AppleScript is
+    /// asked only once Automation for it is allowed, so macOS asks nothing.
+    private func signsSay(_ signs: [any MusicPlayer], pid: pid_t, polled: Bool, backups: Bool = false,
+                          besidesPage: Bool = false) async -> PlayerState? {
+        for sign in signs where !(besidesPage && sign is SafariWebAppPlayer) {
+            if backups, sign is ScriptedAppPlayer, await !backupAllowed(.script, pid) { continue }
+            let state: PlayerState
+            if polled, let page = sign as? SafariWebAppPlayer {
+                state = await page.polledPlayerState()
+            } else {
+                state = await sign.playerState()
+            }
+            if state != .unknown { return state }
+        }
+        return nil
     }
 
     /// What tells its state while its page's words lag, out of sight: its
@@ -88,11 +99,9 @@ extension CheckedPlayer {
     /// follow (a minimized Deezer's stay, 2026-11-03).
     func stateBesidesPage() async -> PlayerState {
         guard let pid = processIdentifier() else { return .notRunning }
-        for sign in parts.signs where !(sign is SafariWebAppPlayer) {
-            let state = await sign.playerState()
-            if state != .unknown { return state }
-        }
+        if let state = await signsSay(parts.signs, pid: pid, polled: false, besidesPage: true) { return state }
         if parts.hearing == nil, let reported = await reported(pid: pid, polled: false) { return reported }
+        if let state = await signsSay(parts.backupSigns, pid: pid, polled: false, backups: true, besidesPage: true) { return state }
         return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
     }
 
