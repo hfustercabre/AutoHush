@@ -28,18 +28,20 @@ struct CheckedPlayerBackupsTests {
     }
 
     /// The app, its page chosen (`chosen`, failing in `failing`), backed up
-    /// by `backups`, its window in `window` (each look counted in `looks`).
+    /// by `backups`, then by the Play/Pause key (`key`), its window in
+    /// `window` (each look counted in `looks`).
     private func jukebox(_ chosen: MockMusicPlayer, chosenKind: CheckResult.WayKind = .page, failing: [CheckResult.WindowState] = [],
-                         backups: [(MockMusicPlayer, CheckResult.WayKind)], signs: [any MusicPlayer] = [],
+                         backups: [(MockMusicPlayer, CheckResult.WayKind)], key: MockMusicPlayer? = nil, signs: [any MusicPlayer] = [],
                          window: CheckResult.WindowState = .visible, looks: Locked<Int> = Locked(0),
-                         allowed: @escaping @Sendable (CheckResult.WayKind) -> Bool = { _ in true },
+                         allowed: @escaping @Sendable (WayOrder.Kind) -> Bool = { _ in true },
                          audioRecording: Bool = true, usesBackups: Bool = true, panelWhileMuted: Bool = true,
                          clock: Locked<Date> = Locked(Date(timeIntervalSince1970: 0))) -> CheckedPlayer {
         let setup = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: app, ways: [Self.way(chosenKind)],
                                 backups: backups.map { Self.way($0.1) },
                                 wayResults: [Self.result(chosenKind, failing: failing)] + backups.map { Self.result($0.1) },
                                 usesBackups: usesBackups, panelWhileMuted: panelWhileMuted)
-        return CheckedPlayer(setup: setup, parts: .init(ways: [chosen], signs: signs, backups: backups.map { .init(player: $0.0, kind: $0.1) }),
+        let kept = backups.map { CheckedPlayer.Backup(player: $0.0, kind: WayOrder.Kind($0.1)) } + (key.map { [.init(player: $0, kind: .mediaKey)] } ?? [])
+        return CheckedPlayer(setup: setup, parts: .init(ways: [chosen], signs: signs, backups: kept),
                              reports: nil, processIdentifier: { 4242 }, pressSleep: { _ in }, audioRecordingAllowed: { audioRecording },
                              windowState: { _ in looks.withLock { $0 += 1 }; return window }, backupAllowed: { kind, _ in allowed(kind) },
                              now: { clock.value })
@@ -96,6 +98,51 @@ struct CheckedPlayerBackupsTests {
         await #expect(throws: Self.refused) { try await off.pause() }
         await #expect(throws: Self.refused) { try await off.pauseQuietly() }
         #expect(await pauses(shy, shyPanel) == [2, 0])
+    }
+
+    @Test("while it's muted, the Play/Pause key is tried once in each pause, after the quiet ways and before the panel")
+    func keyWhileMuted() async throws {
+        let page = await failing(), menu = await failing(), key = await failing(), panel = await failing()
+        let muted = jukebox(page, backups: [(menu, .menu), (panel, .panel)], key: key)
+        await #expect(throws: Self.refused) { try await muted.pause() }
+        for _ in 1...5 { await #expect(throws: Self.refused) { try await muted.pauseQuietly() } }
+        #expect(await pauses(page, menu, key, panel) == [2, 2, 1, 1]) // the pause, then the menu, the key, the panel, the page, the menu
+        // Its switch off, the panel isn't tried, the key still is, once.
+        let shy = await failing(), shyKey = await failing(), shyPanel = await failing()
+        let off = jukebox(shy, backups: [(shyPanel, .panel)], key: shyKey, panelWhileMuted: false)
+        await #expect(throws: Self.refused) { try await off.pause() }
+        for _ in 1...3 { await #expect(throws: Self.refused) { try await off.pauseQuietly() } }
+        #expect(await pauses(shy, shyKey, shyPanel) == [3, 1, 0])
+    }
+
+    @Test("a Play/Pause key that isn't pressed (another app is Now Playing) hands the pause on, as one passed over, and while muted, the same retry")
+    func keyNotPressed() async throws {
+        let page = MockMusicPlayer(state: .playing), key = MockMusicPlayer(state: .playing), panel = MockMusicPlayer(state: .playing)
+        await key.setFailPause(MediaKeyWay.NotPressed(description: "another app is Now Playing"))
+        try await jukebox(page, failing: [.minimized], backups: [(panel, .panel)], key: key, window: .minimized, panelWhileMuted: false).pause()
+        #expect(await pauses(page, key, panel) == [0, 1, 1])
+        // Muted, its quiet way refused: the key passes, then the panel, in one retry.
+        let refusing = await failing(), mutedKey = MockMusicPlayer(state: .playing), mutedPanel = MockMusicPlayer(state: .playing)
+        await mutedKey.setFailPause(MediaKeyWay.NotPressed(description: "no app is Now Playing"))
+        let muted = jukebox(refusing, backups: [(mutedPanel, .panel)], key: mutedKey)
+        await #expect(throws: Self.refused) { try await muted.pause() }
+        try await muted.pauseQuietly()
+        #expect(await pauses(refusing, mutedKey, mutedPanel) == [1, 1, 1])
+        // Declined at the first press, it isn't asked again in that pause.
+        let shy = MockMusicPlayer(state: .playing), declining = MockMusicPlayer(state: .playing), refusingPanel = await failing()
+        await declining.setFailPause(MediaKeyWay.NotPressed(description: "another app is Now Playing"))
+        let once = jukebox(shy, failing: [.minimized], backups: [(refusingPanel, .panel)], key: declining, window: .minimized)
+        await #expect(throws: Self.refused) { try await once.pause() }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressFailed)) { try await once.pauseQuietly() }
+        #expect(await pauses(shy, declining, refusingPanel) == [0, 1, 1])
+    }
+
+    @Test("a refused play goes to the Play/Pause key after the other ways, before the panel")
+    func keyPlay() async throws {
+        let page = await failing(.paused, pause: false), menu = await failing(.paused, pause: false)
+        let key = MockMusicPlayer(state: .paused), panel = MockMusicPlayer(state: .paused)
+        try await jukebox(page, backups: [(menu, .menu), (panel, .panel)], key: key).play()
+        #expect(await plays(page, menu, key, panel) == [1, 1, 1, 0])
     }
 
     @Test("while it's muted, its retries follow the window's state too: a way that failed there isn't pressed")
@@ -194,10 +241,11 @@ struct CheckedPlayerBackupsTests {
         #expect(await menu.pauseCallCount == 0)
     }
 
-    @Test("its page mutes it itself only with no backups in use, and never a Chromium web app's")
+    @Test("its page mutes it itself only with no backups in use (the Play/Pause key alone counts), and never a Chromium web app's")
     func pageMute() {
-        #expect(CheckedPlayer.pageMutesItself(.webKit, backups: []))
-        #expect(!CheckedPlayer.pageMutesItself(.webKit, backups: [.panel(rememberedRow: nil)]))
-        #expect(!CheckedPlayer.pageMutesItself(PageAccess(interface: .chromiumWebApp(browserID: "com.google.Chrome"), switchAttribute: nil), backups: []))
+        #expect(CheckedPlayer.pageMutesItself(.webKit, backups: [], mediaKey: false))
+        #expect(!CheckedPlayer.pageMutesItself(.webKit, backups: [.panel(rememberedRow: nil)], mediaKey: false))
+        #expect(!CheckedPlayer.pageMutesItself(.webKit, backups: [], mediaKey: true))
+        #expect(!CheckedPlayer.pageMutesItself(PageAccess(interface: .chromiumWebApp(browserID: "com.google.Chrome"), switchAttribute: nil), backups: [], mediaKey: false))
     }
 }

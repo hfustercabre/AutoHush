@@ -67,6 +67,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         isUntested: Bool = false,
         page: any WebPage = AccessibilityWebPage(),
         canMute: Bool = true,
+        mutesRefusals: Bool = true,
         store: any PlayPauseRecipeStore = DefaultsRecipeStore(),
         muter: any AudioMuting = ProcessTapMuter(),
         levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
@@ -91,6 +92,9 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
                                 // A Chromium web app plays through its browser: muting it would mute every tab.
                                 // Without Audio Recording a tap mutes nothing (the user, 2026-10-20).
                                 mayMute: { [tapsAllowed] in canMute && tapsAllowed.withLock { $0 } && audioRecordingAllowed() },
+                                // An added app with backups leaves a refused pause to AutoHush's mute,
+                                // which tries them meanwhile (the user, 2026-11-04).
+                                mutesRefusals: mutesRefusals,
                                 pressKey: pressKey, clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
         self.nowPlaying = nowPlaying

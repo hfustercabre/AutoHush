@@ -9,7 +9,7 @@ extension CheckedPlayer {
     /// A backup way's player, and which way it is.
     struct Backup: Sendable {
         let player: any MusicPlayer
-        let kind: CheckResult.WayKind
+        let kind: WayOrder.Kind
     }
 
     /// How long a play by the panel that failed keeps it out of the next
@@ -20,10 +20,18 @@ extension CheckedPlayer {
     /// each backup, with how its check found it; `nil` without backups.
     static func wayOrder(for setup: PlayerSetup, backups: [Backup]) -> WayOrder? {
         guard setup.usesBackups, !backups.isEmpty, let chosen = setup.ways.first?.kind else { return nil }
-        func way(_ kind: CheckResult.WayKind) -> WayOrder.Way {
-            WayOrder.Way(kind: kind, result: setup.wayResults.first { $0.kind == kind })
+        func way(_ kind: WayOrder.Kind) -> WayOrder.Way {
+            WayOrder.Way(kind: kind, result: kind.checked.flatMap { checked in setup.wayResults.first { $0.kind == checked } })
         }
-        return WayOrder(ways: [way(chosen)] + backups.map { way($0.kind) })
+        return WayOrder(ways: [way(WayOrder.Kind(chosen))] + backups.map { way($0.kind) })
+    }
+
+    /// Whether it gets the keyboard's Play/Pause key as a backup
+    /// (`MediaKeyWay`): with its backups on, once checked since they were
+    /// kept (2026-11-04); one added before keeps its one way until it's
+    /// checked again (the user, 2026-11-04).
+    static func hasMediaKey(_ setup: PlayerSetup) -> Bool {
+        setup.usesBackups && !setup.wayResults.isEmpty
     }
 
     /// Presses by its ways in their order for the window's state (`WayOrder`):
@@ -72,15 +80,20 @@ extension CheckedPlayer {
             do {
                 try await press(way, to: target, checkable: &checkable)
                 if index != 0 || state != nil {
-                    logger.notice("\(self.name, privacy: .public): \(target == .playing ? "played" : "paused", privacy: .public) by its \(kind.rawValue, privacy: .public)\(index == 0 ? "" : " (a backup)", privacy: .public)\(window, privacy: .public)")
+                    logger.notice("\(self.name, privacy: .public): \(target == .playing ? "played" : "paused", privacy: .public) by its \(kind.logName, privacy: .public)\(index == 0 ? "" : " (a backup)", privacy: .public)\(window, privacy: .public)")
                 }
                 return
+            } catch let notPressed as MediaKeyWay.NotPressed {
+                // Not pressed: as one passed over; asked once in a pause.
+                logger.notice("\(self.name, privacy: .public): its Play/Pause key isn’t pressed, \(notPressed.description, privacy: .public): the next way")
+                pressed -= 1
+                if target == .paused { mutedTried.insert(index) }
             } catch MusicPlayerError.stillLearning {
-                logger.notice("\(self.name, privacy: .public): its \(kind.rawValue, privacy: .public) can’t press yet: the next way")
+                logger.notice("\(self.name, privacy: .public): its \(kind.logName, privacy: .public) can’t press yet: the next way")
                 learning = true
                 pressed -= 1
             } catch {
-                logger.notice("\(self.name, privacy: .public): its \(kind.rawValue, privacy: .public) failed\(window, privacy: .public): \(error)")
+                logger.notice("\(self.name, privacy: .public): its \(kind.logName, privacy: .public) failed\(window, privacy: .public): \(error)")
                 firstError = firstError ?? error
                 if kind == .panel, target == .playing { panelPlayFailedAt = now() }
                 // Its muted retries start with the next way.
@@ -92,29 +105,34 @@ extension CheckedPlayer {
 
     /// Muted in place of its pause, and still heard: one way, the next in
     /// the order for the window's state not yet tried in this pause, the
-    /// quiet ways first (round again once all were tried), the panel last,
-    /// once in the pause, while "the panel while muted" is on. AutoHush asks
-    /// again only while it's still muted and heard, so each retry is one
-    /// press: a resume meanwhile isn't followed by a pause.
+    /// quiet ways first (round again once all were tried), then the
+    /// Play/Pause key once in the pause, the panel last, once in the pause,
+    /// while "the panel while muted" is on (the user, 2026-11-04). AutoHush
+    /// asks again only while it's still muted and heard, so each retry is
+    /// one press: a resume meanwhile isn't followed by a pause.
     func pauseWhileMuted() async throws {
         guard let wayOrder, let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         pressCalls += 1
         let state: CheckResult.WindowState? = wayOrder.dependsOnWindow(for: .paused) ? await windowState(pid) : nil
         let order = wayOrder.order(in: state ?? .visible, for: .paused)
-        let quiet = order.filter { wayOrder.ways[$0].kind != .panel }
+        let quiet = order.filter { ![.panel, .mediaKey].contains(wayOrder.ways[$0].kind) }
+        let key = order.filter { wayOrder.ways[$0].kind == .mediaKey }
         let panel = setup.panelWhileMuted ? order.filter { wayOrder.ways[$0].kind == .panel } : []
-        if (quiet + panel).allSatisfy(mutedTried.contains) { mutedTried.subtract(quiet) }
-        for index in quiet + panel where !mutedTried.contains(index) {
+        // The quiet ways again, once each was tried; the key and the panel once.
+        if (quiet + key + panel).allSatisfy(mutedTried.contains) { mutedTried.subtract(quiet) }
+        for index in quiet + key + panel where !mutedTried.contains(index) {
             mutedTried.insert(index)
             let kind = wayOrder.ways[index].kind
             guard let way = await allowedWay(index, kind: kind, pid: pid) else { continue }
             var checkable: Bool?
             do {
                 try await press(way, to: .paused, checkable: &checkable)
-                logger.notice("\(self.name, privacy: .public): paused by its \(kind.rawValue, privacy: .public)\(index == 0 ? "" : " (a backup)", privacy: .public) while muted")
+                logger.notice("\(self.name, privacy: .public): paused by its \(kind.logName, privacy: .public)\(index == 0 ? "" : " (a backup)", privacy: .public) while muted")
                 return
+            } catch let notPressed as MediaKeyWay.NotPressed {
+                logger.notice("\(self.name, privacy: .public): muted, its Play/Pause key isn’t pressed, \(notPressed.description, privacy: .public): the next way")
             } catch {
-                logger.notice("\(self.name, privacy: .public): muted, its \(kind.rawValue, privacy: .public) failed: \(error)")
+                logger.notice("\(self.name, privacy: .public): muted, its \(kind.logName, privacy: .public) failed: \(error)")
                 throw error
             }
         }
@@ -123,10 +141,10 @@ extension CheckedPlayer {
 
     /// The player of its way at `index` (its chosen way at 0), unless it's a
     /// backup macOS would ask something for.
-    private func allowedWay(_ index: Int, kind: CheckResult.WayKind, pid: pid_t) async -> (any MusicPlayer)? {
+    private func allowedWay(_ index: Int, kind: WayOrder.Kind, pid: pid_t) async -> (any MusicPlayer)? {
         guard index != 0 else { return parts.ways.first }
         guard await backupAllowed(kind, pid) else {
-            logger.notice("\(self.name, privacy: .public): its \(kind.rawValue, privacy: .public) isn’t allowed without macOS asking: passed over")
+            logger.notice("\(self.name, privacy: .public): its \(kind.logName, privacy: .public) isn’t allowed without macOS asking: passed over")
             return nil
         }
         return parts.backups[index - 1].player
@@ -159,11 +177,15 @@ extension CheckedPlayer {
 
     /// Whether a backup may be pressed, or a backup's AppleScript read,
     /// without macOS asking for anything: Automation for its AppleScript,
-    /// already allowed; Accessibility for its page, menu or panel.
-    package static func mayPressBackup(_ kind: CheckResult.WayKind, pid: pid_t) async -> Bool {
+    /// already allowed; Accessibility for its page, menu or panel, and for
+    /// posting the Play/Pause key.
+    static func mayPressBackup(_ kind: WayOrder.Kind, pid: pid_t) async -> Bool {
         await windowQueue.run {
-            if kind == .script { return AutomationPermission(status: AutomationPermission.check(pid: pid, ask: false)) == .allowed }
-            return AXIsProcessTrusted()
+            switch kind {
+            case .script: AutomationPermission(status: AutomationPermission.check(pid: pid, ask: false)) == .allowed
+            case .mediaKey: CGPreflightPostEventAccess()
+            case .menu, .page, .panel: AXIsProcessTrusted()
+            }
         }
     }
 

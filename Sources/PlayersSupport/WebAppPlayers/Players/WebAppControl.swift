@@ -84,6 +84,9 @@ final class WebAppControl: @unchecked Sendable {
     /// Whether muting may stand in for a pause now (not in AntiDot mode, and
     /// with Audio Recording).
     let mayMute: @Sendable () -> Bool
+    /// Whether a refused pause mutes it (`mayMute` too); `false` leaves it to
+    /// the caller, while its mute during an ad (`.playsAnyway`) stays.
+    let mutesRefusals: Bool
     /// Presses the keyboard's Play/Pause key (`PlayPauseKey`).
     let pressKey: @Sendable () -> Void
     let logger = AutoHushLogger(category: "WebAppPlayer")
@@ -159,6 +162,7 @@ final class WebAppControl: @unchecked Sendable {
         muter: any AudioMuting,
         levelProbe: any AudioLevelProbing,
         mayMute: @escaping @Sendable () -> Bool,
+        mutesRefusals: Bool = true,
         pressKey: @escaping @Sendable () -> Void,
         clock: @escaping @Sendable () -> Date,
         sleep: @escaping @Sendable (TimeInterval) -> Void
@@ -171,6 +175,7 @@ final class WebAppControl: @unchecked Sendable {
         self.muter = muter
         self.levelProbe = levelProbe
         self.mayMute = mayMute
+        self.mutesRefusals = mutesRefusals
         self.pressKey = pressKey
         self.clock = clock
         self.sleep = sleep

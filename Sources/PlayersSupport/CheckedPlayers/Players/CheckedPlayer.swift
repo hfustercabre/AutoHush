@@ -75,10 +75,10 @@ package actor CheckedPlayer: AddedAppPlayer {
     let windowState: @Sendable (pid_t) async -> CheckResult.WindowState
     /// Whether a backup way may be pressed without macOS asking anything
     /// (Automation for its AppleScript, Accessibility for the others).
-    let backupAllowed: @Sendable (CheckResult.WayKind, pid_t) async -> Bool
+    let backupAllowed: @Sendable (WayOrder.Kind, pid_t) async -> Bool
     /// The ways tried in this muted pause, by their place in `wayOrder`
-    /// (`pauseWhileMuted`): the panel once only (the user, 2026-11-04); a
-    /// pause or a play starts again.
+    /// (`pauseWhileMuted`): the Play/Pause key and the panel once only (the
+    /// user, 2026-11-04); a pause or a play starts again.
     var mutedTried: Set<Int> = []
     /// When a play by the panel last failed (`panelPlayRest`).
     var panelPlayFailedAt: Date?
@@ -101,7 +101,7 @@ package actor CheckedPlayer: AddedAppPlayer {
          pressSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
          audioRecordingAllowed: @escaping @Sendable () -> Bool = { AudioCapturePermission.allowsTaps },
          windowState: @escaping @Sendable (pid_t) async -> CheckResult.WindowState = CheckedPlayer.readWindowState(of:),
-         backupAllowed: @escaping @Sendable (CheckResult.WayKind, pid_t) async -> Bool = CheckedPlayer.mayPressBackup(_:pid:),
+         backupAllowed: @escaping @Sendable (WayOrder.Kind, pid_t) async -> Bool = CheckedPlayer.mayPressBackup(_:pid:),
          now: @escaping @Sendable () -> Date = { Date() }) {
         self.setup = setup
         self.parts = parts
@@ -125,6 +125,7 @@ package actor CheckedPlayer: AddedAppPlayer {
         parts.page?.otherSigns.set { [weak self] in await self?.stateBesidesPage() ?? .unknown }
         parts.hearing?.set { [weak self] pid in await self?.heardNow(pid) }
         parts.backupHearing?.set { [weak self] pid in await self?.heardNow(pid) }
+        parts.mediaKeyState?.set { [weak self] in await self?.sureState() ?? .unknown }
     }
 
     /// Read where macOS's log can be read (an administrator's account),

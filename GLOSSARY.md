@@ -178,7 +178,8 @@ that needs none is tried once.
 **Checked app** (`AddedAppPlayer`, kind `.checkedApp`): an app added with
 Add an App, offered under "Other Apps" with its "Checked by you" badge, and
 controlled the way the user chose among those its check found, the others
-that worked kept as its **backups**, pressed by its window's state
+that worked kept as its **backups** (the keyboard's Play/Pause key too),
+pressed by its window's state
 (`WayOrder`; a setup kept before that choice may hold several, a press
 handed to the next when one fails): pressed by them (`CheckedPlayer`), or
 muted instead of paused (`MutedApp`). They're kept as its **player setup**

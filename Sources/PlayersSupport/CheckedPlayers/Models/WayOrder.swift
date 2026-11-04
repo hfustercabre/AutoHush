@@ -3,15 +3,46 @@ import AutoHushKit
 /// Which of an added app's kept ways to press, and in which order, with its
 /// window in a given state (the user, 2026-11-04): the chosen way, if it
 /// worked there; the other ways that show nothing (AppleScript, its page,
-/// its menu) that worked there; those not tested there; the Now Playing
-/// panel last, where it worked or wasn't tested. A way that failed there is
-/// left out; when every way did, the chosen one is pressed, as before
-/// backups.
+/// its menu) that worked there; those not tested there (the keyboard's
+/// Play/Pause key, which no check tests, after the others); the Now
+/// Playing panel last, where it worked or wasn't tested. A way that failed
+/// there is left out; when every way did, the chosen one is pressed, as
+/// before backups.
 struct WayOrder: Sendable, Equatable {
-    /// One kept way, as its check found it.
+    /// A way to press: one a check tests (`CheckResult.WayKind`), or the
+    /// keyboard's Play/Pause key (`MediaKeyWay`), which it doesn't.
+    enum Kind: String, Sendable, Equatable {
+        case script, menu, page, panel, mediaKey
+
+        init(_ kind: CheckResult.WayKind) {
+            switch kind {
+            case .script: self = .script
+            case .menu: self = .menu
+            case .page: self = .page
+            case .panel: self = .panel
+            }
+        }
+
+        /// As the log names it ("paused by its Play/Pause key").
+        var logName: String { self == .mediaKey ? "Play/Pause key" : rawValue }
+
+        /// The check's kind of way; `nil` for the key.
+        var checked: CheckResult.WayKind? {
+            switch self {
+            case .script: .script
+            case .menu: .menu
+            case .page: .page
+            case .panel: .panel
+            case .mediaKey: nil
+            }
+        }
+    }
+
+    /// One way, as its check found it.
     struct Way: Sendable, Equatable {
-        var kind: CheckResult.WayKind
-        /// How it did in the check; `nil` for a setup kept before 2026-11-04.
+        var kind: Kind
+        /// How it did in the check; `nil` for a setup kept before
+        /// 2026-11-04, and for the key, untested everywhere.
         var result: CheckResult.WayResult?
     }
 

@@ -4,9 +4,11 @@ import AutoHushKit
 
 // WebAppControl: muting in place of a pause.
 extension WebAppControl {
-    /// Mutes the web app since it refused to pause; `false` when it couldn't.
+    /// Mutes the web app since it refused to pause (unless refusals are left
+    /// to the caller, `mutesRefusals`), or plays during an ad; `false` when
+    /// it couldn't.
     func mute(pid: pid_t, reason: MuteReason) -> Bool {
-        guard mayMute(), muter.mute(appPID: pid) else { return false }
+        guard reason == .playsAnyway || mutesRefusals, mayMute(), muter.mute(appPID: pid) else { return false }
         muted = (pid, reason)
         if reason == .playsAnyway {
             logger.notice("\(self.name, privacy: .public) plays while its button says it’s paused: muted instead")

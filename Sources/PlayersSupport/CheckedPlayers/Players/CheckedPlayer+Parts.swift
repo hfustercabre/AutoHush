@@ -20,9 +20,9 @@ extension CheckedPlayer {
         /// backup page with no window, which says stopped, can't speak over
         /// them.
         var backupSigns: [any MusicPlayer] = []
-        /// Its backups' players, in the setup's order (the panel last),
-        /// with its backups on: pressed by the window's state
-        /// (`CheckedPlayer+Backups`).
+        /// Its backups' players, in the setup's order (the panel last), then
+        /// the Play/Pause key (`hasMediaKey`), with its backups on: pressed
+        /// by the window's state (`CheckedPlayer+Backups`).
         var backups: [Backup] = []
         /// Its script, when it has a volume (fades).
         var volume: any MusicPlayer?
@@ -41,11 +41,14 @@ extension CheckedPlayer {
         var backupHearing: LateHearing?
         /// What a script that only toggles, with no state of its own, asks before it's sent.
         var toggleState: LateState?
+        /// What the Play/Pause key asks before it's pressed, and to judge it.
+        var mediaKeyState: LateState?
     }
 
-    /// The players of `setup`'s ways, and of its backups while it uses them:
-    /// a backup's sign tells its state too (the user, 2026-11-04), but only
-    /// the chosen way fades it and announces its changes.
+    /// The players of `setup`'s ways, and of its backups while it uses them,
+    /// the Play/Pause key after them: a backup's sign tells its state too
+    /// (the user, 2026-11-04), but only the chosen way fades it and
+    /// announces its changes.
     static func parts(for setup: PlayerSetup, store: any PlayerSetupStore) -> Parts {
         var parts = Parts(ways: [], signs: [])
         var scripted: ScriptedAppPlayer?, menu: MenuPlayer?
@@ -73,7 +76,8 @@ extension CheckedPlayer {
             case .page(let access):
                 let page = SafariWebAppPlayer(app: SafariWebApp(bundleID: setup.bundleID, name: setup.name, url: setup.appURL),
                                               kind: .app, page: AccessibilityWebPage(access: access),
-                                              canMute: pageMutesItself(access, backups: backups))
+                                              canMute: access.browserID == nil,
+                                              mutesRefusals: pageMutesItself(access, backups: backups, mediaKey: hasMediaKey(setup)))
                 parts.page = page
                 player = page
             case .panel(let remembered):
@@ -90,11 +94,16 @@ extension CheckedPlayer {
                 continue // a `MutedApp`'s
             }
             if isBackup, let kind = way.kind {
-                parts.backups.append(Backup(player: player, kind: kind))
+                parts.backups.append(Backup(player: player, kind: WayOrder.Kind(kind)))
                 backupKinds.insert(kind)
             } else {
                 parts.ways.append(player)
             }
+        }
+        if hasMediaKey(setup) {
+            let state = LateState()
+            parts.mediaKeyState = state
+            parts.backups.append(Backup(player: MediaKeyWay(bundleID: setup.bundleID, name: setup.name, state: state), kind: .mediaKey))
         }
         func sign(_ player: (any MusicPlayer)?, _ kind: CheckResult.WayKind) {
             guard let player else { return }
@@ -106,11 +115,13 @@ extension CheckedPlayer {
         return parts
     }
 
-    /// Whether its page mutes the app itself when its pause is refused: not
+    /// Whether its page mutes the app itself when its pause is refused (its
+    /// mute while an ad plays, its button saying paused, stays): not
     /// a Chromium web app's, which plays through its browser (muting it would
-    /// mute every tab), nor one with backups in use, whose refusal goes to
-    /// AutoHush's mute, which tries them meanwhile (the user, 2026-11-04).
-    static func pageMutesItself(_ access: PageAccess, backups: [PlayerSetup.Way]) -> Bool {
-        access.browserID == nil && backups.isEmpty
+    /// mute every tab), nor one with backups in use, the Play/Pause key
+    /// alone included, whose refusal goes to AutoHush's mute, which tries
+    /// them meanwhile (the user, 2026-11-04).
+    static func pageMutesItself(_ access: PageAccess, backups: [PlayerSetup.Way], mediaKey: Bool) -> Bool {
+        access.browserID == nil && backups.isEmpty && !mediaKey
     }
 }

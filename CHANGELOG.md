@@ -13,9 +13,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   worked in its check now back up the one you chose. With its window as
   it is now (minimized, hidden, on another desktop…), a way that didn't
   work there in the check is passed over for one that did, the Now
-  Playing panel last. A pause that doesn't take is muted instead, as
-  before, and the other ways are then tried while it's muted (the panel
-  once); when it can't be muted (AntiDot mode, no Audio Recording) and
+  Playing panel last; the keyboard's Play/Pause key backs it up too,
+  before the panel, only while macOS says the app is Now Playing. A pause
+  that doesn't take is muted instead, as before, and the other ways are
+  then tried while it's muted (the key and the panel once); when it can't be muted (AntiDot mode, no Audio Recording) and
   for a refused resume, at once. Apps added before keep their one way
   until they're checked again.
 - **Page Up, Page Down, Home and End** move the keyboard's highlight in

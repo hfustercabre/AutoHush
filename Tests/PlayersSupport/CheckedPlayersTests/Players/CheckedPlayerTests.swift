@@ -151,6 +151,38 @@ struct CheckedPlayerTests {
         #expect(off.backups.isEmpty && off.signs.count == 1 && off.backupSigns.isEmpty && off.page == nil && off.backupHearing == nil)
     }
 
+    @Test("the Play/Pause key reads the app's state from its surest signs")
+    func mediaKeyState() async {
+        let menu = MockMusicPlayer(state: .playing), key = MediaKeyWay(bundleID: "com.example.jukebox", name: "Jukebox")
+        var parts = CheckedPlayer.Parts(ways: [menu], signs: [menu], backups: [.init(player: key, kind: .mediaKey)])
+        parts.mediaKeyState = key.state
+        let player = CheckedPlayer(setup: setup([.menu(menuName: "Controls")]), parts: parts, reports: nil, processIdentifier: { 4242 })
+        #expect(await key.state.state() == .playing)
+        await menu.setState(.paused)
+        #expect(await key.state.state() == .paused)
+        withExtendedLifetime(player) {}
+    }
+
+    @Test("an app checked since backups were kept gets the Play/Pause key after them, one added before keeps its ways, and with its backups off, neither")
+    func mediaKeyPart() {
+        var checked = setup([.menu(menuName: "Controls")])
+        checked.backups = [.panel(rememberedRow: nil)]
+        checked.wayResults = [CheckResult.WayResult(kind: .menu, mark: .works), CheckResult.WayResult(kind: .panel, mark: .works)]
+        let parts = CheckedPlayer.parts(for: checked, store: MemorySetupStore())
+        #expect(parts.backups.map(\.kind) == [.panel, .mediaKey] && parts.backups.last?.player is MediaKeyWay && parts.mediaKeyState != nil)
+        #expect(parts.signs.count == 1 && parts.backupSigns.isEmpty)
+        // Only the key, for one with no other way: still pressed by its order.
+        var single = checked
+        single.backups = []
+        #expect(CheckedPlayer.parts(for: single, store: MemorySetupStore()).backups.map(\.kind) == [.mediaKey])
+        var older = checked
+        older.wayResults = []
+        #expect(CheckedPlayer.parts(for: older, store: MemorySetupStore()).backups.map(\.kind) == [.panel])
+        checked.usesBackups = false
+        let off = CheckedPlayer.parts(for: checked, store: MemorySetupStore())
+        #expect(off.backups.isEmpty && off.mediaKeyState == nil)
+    }
+
     /// The parts of a setup whose script only toggles, with no state, then
     /// has a page and a menu.
     private var toggleParts: CheckedPlayer.Parts {

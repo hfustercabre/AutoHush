@@ -22,10 +22,12 @@ struct SafariWebAppPlayerTests {
         let nowPlaying = NowPlayingBox()
         let player: SafariWebAppPlayer
 
-        init(recipe: PlayPauseRecipe? = nil, running: Bool = true, kind: MusicPlayerKind = .safariWebApp, canMute: Bool = true) {
+        init(recipe: PlayPauseRecipe? = nil, running: Bool = true, kind: MusicPlayerKind = .safariWebApp, canMute: Bool = true,
+             mutesRefusals: Bool = true) {
             store = MemoryRecipeStore(recipe.map { [SafariWebAppPlayerTests.app.bundleID: $0] } ?? [:])
             player = SafariWebAppPlayer(
-                app: SafariWebAppPlayerTests.app, kind: kind, page: page, canMute: canMute, store: store, muter: muter, levelProbe: probe,
+                app: SafariWebAppPlayerTests.app, kind: kind, page: page, canMute: canMute, mutesRefusals: mutesRefusals, store: store,
+                muter: muter, levelProbe: probe,
                 processIdentifier: { [pid] in running ? pid.value : nil },
                 clock: { [clock] in clock.now },
                 sleep: { [clock] in clock.advance(by: $0) },

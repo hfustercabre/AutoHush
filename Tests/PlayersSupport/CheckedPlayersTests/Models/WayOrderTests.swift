@@ -30,6 +30,21 @@ struct WayOrderTests {
         #expect(ways.order(in: .minimized, for: .playing) == [2, 3, 1])
     }
 
+    @Test("the Play/Pause key, which no check tests, comes after the other untested ways, before the panel, in every state")
+    func mediaKey() {
+        let ways = WayOrder(ways: [
+            .init(kind: .page, result: result(.page, [.visible: .worked, .minimized: .failed])),
+            .init(kind: .panel, result: everywhere(.panel)),
+            .init(kind: .script, result: nil),
+            .init(kind: .mediaKey, result: nil),
+        ])
+        #expect(ways.order(in: .visible, for: .paused) == [0, 2, 3, 1])
+        #expect(ways.order(in: .minimized, for: .playing) == [2, 3, 1])
+        let keyOnly = WayOrder(ways: [.init(kind: .menu, result: result(.menu, [.hidden: .failed])), .init(kind: .mediaKey, result: nil)])
+        #expect(keyOnly.order(in: .hidden, for: .paused) == [1])
+        #expect(WayOrder.Kind.mediaKey.checked == nil && WayOrder.Kind(.panel) == .panel && WayOrder.Kind.mediaKey.logName == "Play/Pause key")
+    }
+
     @Test("a chosen panel that worked there comes first; when every way failed there, the chosen one is still pressed")
     func panelAndNoneLeft() {
         let panelFirst = WayOrder(ways: [.init(kind: .panel, result: everywhere(.panel)), .init(kind: .menu, result: everywhere(.menu))])

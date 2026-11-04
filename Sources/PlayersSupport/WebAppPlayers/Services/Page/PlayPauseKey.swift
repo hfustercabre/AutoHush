@@ -5,7 +5,7 @@ import AutoHushKit
 /// the app it counts as playing now ("Now Playing"), not to one AutoHush
 /// picks: a web app playing a song is that app, but one that played last can
 /// be too. Posting it needs Accessibility, which web apps need anyway.
-enum PlayPauseKey {
+package enum PlayPauseKey {
     /// `NX_KEYTYPE_PLAY` in IOKit's ev_keymap.h.
     private static let playKey = 16
 
@@ -13,7 +13,7 @@ enum PlayPauseKey {
 
     /// Down, then up. On the main thread, where AppKit builds events.
     @MainActor
-    static func press() {
+    package static func press() {
         // Without it macOS drops the key silently: the log says why.
         if !CGPreflightPostEventAccess() { logger.error("macOS doesn’t let AutoHush post the Play/Pause key") }
         post(down: true)

@@ -166,6 +166,20 @@ extension SafariWebAppPlayerTests {
         #expect(setup.muter.muted.isEmpty)
     }
 
+    @Test("with refusals left to its caller (an added app's backups), a refused pause isn't muted, while an ad still is")
+    func refusalsLeftToTheCaller() async throws {
+        let setup = Setup(recipe: Self.learned, mutesRefusals: false)
+        setup.showPage("Pause")
+        setup.page.onPress = { _, _ in }
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.pressIgnored)) { try await setup.player.pause() }
+        #expect(setup.muter.muted.isEmpty)
+        setup.showPage("Play")
+        setup.page.sound = true
+        setup.probe.audible = true
+        #expect(await setup.player.muteIfPlayingAnyway())
+        #expect(setup.muter.muted == [4242])
+    }
+
     @Test("a pause that takes never mutes")
     func pauseNeverMutes() async throws {
         let setup = Setup(recipe: Self.learned)
