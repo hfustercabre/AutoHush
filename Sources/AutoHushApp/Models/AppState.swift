@@ -26,6 +26,8 @@ final class AppState {
     private(set) var learningPause = LearningPause()
     private(set) var statusLine = ""
     private(set) var needsAttention = false
+    /// The player's own control permission, missing so AutoHush can't control it (`AppStatus.missingPermission`).
+    private(set) var missingPermission: Permission?
     private(set) var autoPause = AppStatus.AutoPause.on
     private(set) var seenApps: [AudioSource] = []
     private(set) var ignoredApps: [AudioSource] = []
@@ -45,6 +47,7 @@ final class AppState {
         show(\.learningPause, status.learningPause)
         show(\.statusLine, status.statusLine)
         show(\.needsAttention, status.needsAttention)
+        show(\.missingPermission, status.missingPermission)
         show(\.autoPause, status.autoPause)
         show(\.seenApps, status.seenApps)
         show(\.ignoredApps, status.ignoredApps)

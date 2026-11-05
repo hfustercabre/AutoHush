@@ -1,4 +1,5 @@
 import AutoHushKit
+import CheckedPlayers
 
 /// What Settings greys out beyond a switch's own rules
 /// (`SettingsSwitch.isUnavailable(_:)`): the fade lengths, the fade-in, and
@@ -32,5 +33,19 @@ extension SettingsModel {
     var levelingUnavailableNote: String? {
         guard levelingUnavailable else { return nil }
         return isAntiDotMode ? AntiDotText.featureOff : SettingsSwitch.resumeOffNote
+    }
+
+    /// The chosen player's own control permission, missing while its
+    /// backup controls stand in for it: macOS doesn't allow its own way,
+    /// but AutoHush still controls it by the others (`passesOverOwnWay`).
+    /// The menu warns with it, and Settings' note says so (the user,
+    /// 2026-11-05). `nil` while it can't be controlled at all (the card and
+    /// the note ask then), or while another main control is chosen (its own
+    /// way is only a backup then).
+    var backupsStandIn: Permission? {
+        guard state.missingPermission == nil, let control = permissions.control,
+              permissions.controlMissing(for: chosenPlayerID), permissions.controlAccess != .playerNotRunning,
+              let controls = chosenControls, controls.backupsInUse, !controls.mainChanged else { return nil }
+        return control
     }
 }

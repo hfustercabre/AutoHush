@@ -11,6 +11,9 @@ enum MenuSection: Equatable {
     case card
     /// What the chosen player lacks, with the way to fix it.
     case warning(Permission)
+    /// The player's own permission, missing while its backup controls
+    /// stand in for it (`SettingsModel.backupsStandIn`), with the way to allow it.
+    case backupsStandIn(Permission)
     /// Once the user went to allow Audio Recording: Reopen AutoHush.
     case reopenAutoHush
     /// Under Audio Recording's warning: AntiDot mode instead.

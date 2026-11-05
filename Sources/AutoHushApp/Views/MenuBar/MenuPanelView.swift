@@ -84,7 +84,7 @@ struct MenuPanelView: View {
     private func needsLine(before section: MenuSection, at index: Int) -> Bool {
         let previous = index > 0 ? model.sections[index - 1] : nil
         switch section {
-        case .warning, .reopenAutoHush, .snooze, .playingNow: return true
+        case .warning, .backupsStandIn, .reopenAutoHush, .snooze, .playingNow: return true
         case .recentlyPlayed: return previous != .playingNow
         case .ignoredApps, .update: return true
         default: return false
@@ -104,6 +104,7 @@ struct MenuPanelView: View {
         case .card: StatusCardView(model: model, settings: settings)
         case .warning(let permission):
             actionRow(permission.grantTitle, symbol: "exclamationmark.triangle.fill", .resolveWarning(permission))
+        case .backupsStandIn(let permission): backupsStandInRow(permission)
         case .reopenAutoHush:
             actionRow(PermissionText.reopen, symbol: "exclamationmark.triangle.fill", .reopenAutoHush)
         case .useAntiDot: useAntiDotRow
@@ -131,6 +132,29 @@ struct MenuPanelView: View {
         } content: {
             Text(verbatim: title)
         }
+    }
+
+    /// The player's own permission, missing while its backup controls stand
+    /// in for it: allowing it, with why under it, as Use AntiDot Mode
+    /// Instead says what it trades (the user, 2026-11-05).
+    private func backupsStandInRow(_ permission: Permission) -> some View {
+        MenuActionRow(action: { model.perform(.resolveWarning(permission)) }) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.appWarning)
+                .accessibilityLabel(Text("Warning", comment: "VoiceOver label: this menu item needs attention"))
+        } content: {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: permission.grantTitle)
+                // Grey, white with the row's text while it's lit.
+                Text(verbatim: BackupText.standingIn)
+                    .font(.appCaption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityHidden(true)
+            }
+        }
+        .help(BackupText.standingIn)
+        .accessibilityHint(Text(verbatim: BackupText.standingIn))
     }
 
     /// Use AntiDot Mode Instead, with what it trades under it (F2a,

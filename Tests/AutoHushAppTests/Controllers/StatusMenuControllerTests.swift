@@ -63,6 +63,7 @@ struct StatusMenuControllerTests {
             switch section {
             case .card: "card"
             case .warning(let permission): permission.grantTitle
+            case .backupsStandIn(let permission): "standIn: " + permission.grantTitle
             case .reopenAutoHush: PermissionText.reopen
             case .useAntiDot: PermissionText.useAntiDot
             case .snooze: "snooze"

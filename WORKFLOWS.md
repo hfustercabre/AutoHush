@@ -781,7 +781,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What the menu’s card says when AutoHush can’t start controlling the player, and how it recovers. A missing permission stops it only when none of the player's backup controls (while they're on) can be pressed without it. Most fixes need nothing more from you: AutoHush starts again by itself, at once when the player opens or is installed again. A permission taken away while it runs is caught the next time it matters.
+What the menu’s card says when AutoHush can’t start controlling the player, and how it recovers. A missing permission stops it only when none of the player's backup controls (while they're on) can be pressed without it; while they stand in, the menu shows the permission to allow under the card, saying the backup controls are used until then. Most fixes need nothing more from you: AutoHush starts again by itself, at once when the player opens or is installed again. A permission taken away while it runs is caught the next time it matters.
 
 ## Problems: while it runs, and quitting
 

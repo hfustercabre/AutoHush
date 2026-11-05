@@ -13,8 +13,11 @@ struct ControlPermissionNote: View {
     var ownCard = false
 
     var body: some View {
-        if let control = model.permissions.control, let note = Self.note(control, access: model.permissions.controlAccess,
-                                                                        player: model.chosenPlayerName ?? "") {
+        let player = model.chosenPlayerName ?? ""
+        // Its backup controls standing in, it's still controlled: said so (the user, 2026-11-05).
+        if let control = model.permissions.control,
+           let note = model.backupsStandIn.map({ Self.standInNote($0, player: player) })
+                ?? Self.note(control, access: model.permissions.controlAccess, player: player) {
             if ownCard {
                 Card { content(note, control) }
             } else {
@@ -26,6 +29,17 @@ struct ControlPermissionNote: View {
     @ViewBuilder private func content(_ note: String, _ control: Permission) -> some View {
         NoteLabel(note)
         PermissionButton(model: model, permission: control, access: model.permissions.controlAccess, long: true)
+    }
+
+    /// What it says of `player` while its control `permission` is missing
+    /// and its backup controls stand in for it (`SettingsModel.backupsStandIn`).
+    static func standInNote(_ permission: Permission, player: String) -> String {
+        if case .automation = permission {
+            return String(localized: "Without Automation access, AutoHush controls \(player) by its backup controls.",
+                          comment: "Settings → General under the media player, and Settings → Media Player above the players: Automation isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player")
+        }
+        return String(localized: "Without Accessibility access, AutoHush controls \(player) by its backup controls.",
+                      comment: "Settings → General under the media player, and Settings → Media Player above the players: Accessibility isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player")
     }
 
     /// What it says of `player` while its control `permission` stands at

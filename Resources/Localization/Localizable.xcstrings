@@ -152926,6 +152926,233 @@
         }
       }
     },
+    "Until then, its backup controls are used." : {
+      "comment" : "The menu, under “Allow <player> Automation Access…” (or Accessibility): the player's own way to be controlled isn't allowed, so AutoHush pauses and plays it by its other ways (backup controls) meanwhile",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حتى ذلك الحين، تُستخدم طرق التحكم الاحتياطية."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mentrestant, s’utilitzen els seus controls de reserva."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do té doby se používá záložní ovládání."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Indtil da bruges reservebetjeningen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bis dahin wird die Ersatzsteuerung verwendet."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μέχρι τότε, χρησιμοποιούνται οι εφεδρικοί τρόποι ελέγχου."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hasta entonces, se usan sus controles de reserva."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hasta entonces, se usan sus controles de respaldo."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Siihen asti käytetään varasäätimiä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’ici là, ses commandes de secours sont utilisées."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "D’ici là, ses commandes de secours sont utilisées."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "עד אז נעשה שימוש בדרכי השליטה החלופיות."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "तब तक इसके बैकअप नियंत्रण इस्तेमाल होते हैं।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do tada se koristi rezervno upravljanje."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Addig a tartalék vezérlők működnek."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sampai saat itu, kontrol cadangannya digunakan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fino ad allora, si usano i controlli di riserva."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "それまでは予備の操作を使います。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그때까지는 예비 컨트롤을 사용합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sehingga itu, kawalan sandarannya digunakan."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inntil da brukes reservekontrollene."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tot die tijd wordt de reservebediening gebruikt."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do tego czasu używane jest zapasowe sterowanie."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Até lá, são usados os controles de reserva."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Até lá, são usados os controlos de reserva."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Până atunci, se folosesc comenzile de rezervă."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До тех пор используются резервные способы."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dovtedy sa používa záložné ovládanie."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do takrat se uporablja rezervno upravljanje."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tills dess används reservreglagen."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ระหว่างนี้จะใช้ตัวควบคุมสำรองแทน"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O zamana kadar yedek denetimler kullanılır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До того часу використовуються резервні способи."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trong lúc đó, các điều khiển dự phòng được dùng."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此之前，會使用備用控制方式。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此之前，将使用备用控制方式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此之前，會使用備用控制方式。"
+          }
+        }
+      }
+    },
     "Update" : {
       "comment" : "VoiceOver label of the update icon",
       "localizations" : {
@@ -161098,6 +161325,233 @@
         }
       }
     },
+    "Without Accessibility access, AutoHush controls %@ by its backup controls." : {
+      "comment" : "Settings → General under the media player, and Settings → Media Player above the players: Accessibility isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدون الوصول إلى تسهيلات الاستخدام، يتحكم AutoHush في %@ بطرق التحكم الاحتياطية."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense accés a Accessibilitat, l’AutoHush controla %@ amb els seus controls de reserva."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez přístupu ke Zpřístupnění ovládá AutoHush aplikaci %@ záložním ovládáním."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uden adgang til Tilgængelighed styrer AutoHush %@ med reservebetjeningen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Zugriff auf „Bedienungshilfen“ steuert AutoHush %@ über die Ersatzsteuerung."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χωρίς πρόσβαση στην Προσβασιμότητα, το AutoHush ελέγχει το %@ με τους εφεδρικούς τρόπους ελέγχου."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin acceso a Accesibilidad, AutoHush controla %@ con sus controles de reserva."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin acceso a Accesibilidad, AutoHush controla %@ con sus controles de respaldo."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilman Käyttöapu-pääsyä AutoHush ohjaa appia %@ varasäätimillä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans l’accès « Accessibilité », AutoHush contrôle %@ avec ses commandes de secours."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans l’accès « Accessibilité », AutoHush contrôle %@ avec ses commandes de secours."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "בלי הרשאת נגישות, AutoHush שולט ב-%@ בדרכי השליטה החלופיות."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐक्सेसिबिलिटी ऐक्सेस के बिना AutoHush %@ को बैकअप नियंत्रणों से नियंत्रित करता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez pristupa Pristupačnosti AutoHush upravlja aplikacijom %@ rezervnim upravljanjem."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A Kisegítő lehetőségek hozzáférése nélkül az AutoHush a tartalék vezérlőkkel vezérli ezt: %@."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanpa akses Aksesibilitas, AutoHush mengontrol %@ dengan kontrol cadangannya."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza l’accesso ad Accessibilità, AutoHush controlla %@ con i controlli di riserva."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アクセシビリティへのアクセスがないため、AutoHushは予備の操作で%@を操作します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "손쉬운 사용 접근이 없으면 AutoHush가 예비 컨트롤로 %@을(를) 제어합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanpa akses Kebolehcapaian, AutoHush mengawal %@ dengan kawalan sandarannya."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uten tilgang til Tilgjengelighet styrer AutoHush %@ med reservekontrollene."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zonder toegang tot Toegankelijkheid bedient AutoHush %@ met de reservebediening."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez dostępu do Dostępności AutoHush steruje aplikacją %@ za pomocą zapasowego sterowania."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem acesso de Acessibilidade, o AutoHush controla o %@ com os controles de reserva."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem acesso de Acessibilidade, o AutoHush controla %@ com os controlos de reserva."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fără acces la Accesibilitate, AutoHush controlează %@ prin comenzile de rezervă."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без доступа к «Универсальному доступу» AutoHush управляет %@ резервными способами."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez prístupu k Prístupnosti ovláda AutoHush apku %@ záložným ovládaním."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brez dostopa do dostopnosti AutoHush upravlja aplikacijo %@ z rezervnim upravljanjem."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utan åtkomst till Hjälpmedel styr AutoHush %@ med reservreglagen."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หากไม่มีสิทธิ์การช่วยการเข้าถึง AutoHush จะควบคุม %@ ด้วยตัวควบคุมสำรอง"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erişilebilirlik erişimi olmadan AutoHush, %@ uygulamasını yedek denetimlerle denetler."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без доступу до «Доступності» AutoHush керує %@ резервними способами."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi không có quyền Trợ năng, AutoHush điều khiển %@ bằng các điều khiển dự phòng."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有輔助使用權限，AutoHush 會以備用控制方式控制 %@。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有辅助功能权限，AutoHush 使用备用控制方式控制 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有輔助使用權限，AutoHush 會以備用控制方式控制 %@。"
+          }
+        }
+      }
+    },
     "Without Audio Recording, a silent app with its sound open keeps your player paused. Audio is never recorded." : {
       "comment" : "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed; AutoHush only measures how loud apps play, and never records their audio",
       "localizations" : {
@@ -162229,6 +162683,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "沒有錄音權限時，檢查期間你會聽到 %@，是否在播放則由其他跡象判斷。沒有「自動化」權限時，不會嘗試最可靠的 AppleScript。"
+          }
+        }
+      }
+    },
+    "Without Automation access, AutoHush controls %@ by its backup controls." : {
+      "comment" : "Settings → General under the media player, and Settings → Media Player above the players: Automation isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدون الوصول إلى التحكم التلقائي، يتحكم AutoHush في %@ بطرق التحكم الاحتياطية."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sense accés a Automatització, l’AutoHush controla %@ amb els seus controls de reserva."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez přístupu k Automatizaci ovládá AutoHush aplikaci %@ záložním ovládáním."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uden adgang til Automatisering styrer AutoHush %@ med reservebetjeningen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ohne Zugriff auf „Automation“ steuert AutoHush %@ über die Ersatzsteuerung."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Χωρίς πρόσβαση στην Αυτοματοποίηση, το AutoHush ελέγχει το %@ με τους εφεδρικούς τρόπους ελέγχου."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin acceso a Automatización, AutoHush controla %@ con sus controles de reserva."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin acceso a Automatización, AutoHush controla %@ con sus controles de respaldo."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ilman Automaatio-pääsyä AutoHush ohjaa appia %@ varasäätimillä."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans l’accès « Automatisation », AutoHush contrôle %@ avec ses commandes de secours."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans l’accès « Automatisation », AutoHush contrôle %@ avec ses commandes de secours."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "בלי הרשאת אוטומציה, AutoHush שולט ב-%@ בדרכי השליטה החלופיות."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऑटोमेशन ऐक्सेस के बिना AutoHush %@ को बैकअप नियंत्रणों से नियंत्रित करता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez pristupa Automatizaciji AutoHush upravlja aplikacijom %@ rezervnim upravljanjem."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az Automatizálás hozzáférése nélkül az AutoHush a tartalék vezérlőkkel vezérli ezt: %@."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanpa akses Automasi, AutoHush mengontrol %@ dengan kontrol cadangannya."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senza l’accesso ad Automazione, AutoHush controlla %@ con i controlli di riserva."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オートメーションへのアクセスがないため、AutoHushは予備の操作で%@を操作します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "자동화 접근이 없으면 AutoHush가 예비 컨트롤로 %@을(를) 제어합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tanpa akses Automasi, AutoHush mengawal %@ dengan kawalan sandarannya."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uten tilgang til Automatisering styrer AutoHush %@ med reservekontrollene."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zonder toegang tot Automatisering bedient AutoHush %@ met de reservebediening."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez dostępu do Automatyzacji AutoHush steruje aplikacją %@ za pomocą zapasowego sterowania."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem acesso de Automação, o AutoHush controla o %@ com os controles de reserva."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem acesso de Automação, o AutoHush controla %@ com os controlos de reserva."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fără acces la Automatizare, AutoHush controlează %@ prin comenzile de rezervă."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без доступа к «Автоматизации» AutoHush управляет %@ резервными способами."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bez prístupu k Automatizácii ovláda AutoHush apku %@ záložným ovládaním."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brez dostopa do avtomatizacije AutoHush upravlja aplikacijo %@ z rezervnim upravljanjem."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utan åtkomst till Automatisering styr AutoHush %@ med reservreglagen."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หากไม่มีสิทธิ์การทำงานอัตโนมัติ AutoHush จะควบคุม %@ ด้วยตัวควบคุมสำรอง"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Otomasyon erişimi olmadan AutoHush, %@ uygulamasını yedek denetimlerle denetler."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без доступу до «Автоматизації» AutoHush керує %@ резервними способами."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khi không có quyền Tự động hóa, AutoHush điều khiển %@ bằng các điều khiển dự phòng."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有「自動化」權限，AutoHush 會以備用控制方式控制 %@。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有“自动化”权限，AutoHush 使用备用控制方式控制 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有「自動化」權限，AutoHush 會以備用控制方式控制 %@。"
           }
         }
       }

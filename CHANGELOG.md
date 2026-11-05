@@ -36,7 +36,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   Playing panel), and its backup controls can do without it (one that
   tells whether it plays, its menu or its page, among them), AutoHush
   controls it by its backups instead of saying it can't control it, and
-  goes back to its main control once you allow it. A main control chosen
+  goes back to its main control once you allow it. Meanwhile the menu
+  shows "Allow … Access…" with "Until then, its backup controls are
+  used.", and Settings says AutoHush controls it by its backup controls. A main control chosen
   in Fine-Tuning while backup controls are off needs its own permission.
 - **Use backup controls** and **Use the Now Playing panel while muted**
   (while the panel is a backup control), both on, in Settings → Fine-Tuning for your player (Media Player has a
@@ -85,6 +87,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **Tab and Shift-Tab** move the highlight as ↓ and ↑ do, in the menu,
   Settings and AutoHush's windows, with the same highlight.
+- **A click anywhere on a row with a list** shows its choices, as a click
+  on a switch's row turns it: "When an update is found" in Settings →
+  About, "Your account's country" in Add a Web App.
 - **When something goes wrong, AutoHush says what to do:** a web app
   whose controls aren't learned says "Controls not learned" in orange,
   with Learn Controls… under it; the alert after a failed pause or

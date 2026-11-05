@@ -55,7 +55,12 @@ struct UpdatesCard: View {
                 }
             }
             // ← and → choose, while the arrow keys' highlight is on it;
-            // Return or Space shows the choices (`PopUpOpener`).
+            // Return or Space, or a click anywhere on it, shows the choices
+            // (`PopUpOpener`).
+            .clickAnywhere {
+                guard model.updateInstallNote == nil else { return }
+                popUp.open()
+            }
             .highlightableRow(press: {
                 guard model.updateInstallNote == nil else { return }
                 popUp.open()

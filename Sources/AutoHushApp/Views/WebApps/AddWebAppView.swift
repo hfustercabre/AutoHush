@@ -30,6 +30,8 @@ struct AddWebAppView: View {
     /// That move, waiting for its second: one coming back in front again
     /// replaces it, so they don't pile up.
     @State private var refocus: Task<Void, Never>?
+    /// Opens the country pop-up from a click anywhere on its row.
+    @State private var countryPopUp = PopUpOpener()
 
     /// The window's width, which its bottom bar's buttons fit in every language.
     static let width: CGFloat = 440
@@ -157,7 +159,13 @@ struct AddWebAppView: View {
             .pickerStyle(.menu)
             .buttonStyle(.borderless)
             .fixedSize()
+            .opened(by: countryPopUp)
             .disabled(model.phase != .entering)
+        }
+        // A click anywhere on the row shows the countries, as on Settings' pop-up rows.
+        .clickAnywhere {
+            guard model.phase == .entering else { return }
+            countryPopUp.open()
         }
     }
 

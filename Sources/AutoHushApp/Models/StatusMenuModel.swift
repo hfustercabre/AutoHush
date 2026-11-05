@@ -87,7 +87,8 @@ final class StatusMenuModel {
 
     /// The menu's parts, in order: the card (with the media player's row,
     /// H4, the user's pick, 2026-10-25), a warning and its fix (not the
-    /// player's own missing permission, which the card asks for), Turn off
+    /// player's own missing permission, which the card asks for), the
+    /// player's own permission while its backup controls stand in, Turn off
     /// for (unless Auto-Pause is off), the apps playing and played, Ignored Apps, the update found, and
     /// the buttons. The settings are Settings' only (A1, the user's pick,
     /// 2026-10-25).
@@ -100,6 +101,8 @@ final class StatusMenuModel {
             // Not for a player that can only be muted: AntiDot mode can't mute it.
             if warning == .systemAudioRecording, !status.playerNeedsLevels { sections.append(.useAntiDot) }
         }
+        // Controlled all the same, by its backup controls (the user, 2026-11-05).
+        if let permission = settings?.backupsStandIn { sections.append(.backupsStandIn(permission)) }
         // Not while Auto-Pause is off: a duration would turn it on, not off
         // (U9c, the user's pick, 2026-11-02).
         if status.autoPause != .off { sections.append(.snooze) }
