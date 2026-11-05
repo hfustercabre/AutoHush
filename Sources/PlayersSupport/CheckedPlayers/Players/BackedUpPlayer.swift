@@ -255,7 +255,9 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
                               choosable: { CheckedPlayer.choosable($0, at: $1) && (learned || $0.kind != .page) },
                               switches: switches(),
                               notLearned: (inner as? any LearningMusicPlayer)?.learningStatus.isLearned == false,
-                              last: lastUsed.withLock { $0 })
+                              last: lastUsed.withLock { $0 },
+                              // Its page, before it's learned: listed dimmed, choosable once learned.
+                              notYet: { !learned && $0.kind == .page && CheckedPlayer.choosable($0, at: $1) })
     }
 
     // MARK: - BackupRouting

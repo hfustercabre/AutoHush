@@ -48,7 +48,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   and played it last marked, then the switches.
 - **Choose your player's main control** in Settings → Fine-Tuning,
   among the ways that worked for it, the recommended one first; **Restore
-  Defaults** puts it back.
+  Defaults** puts it back. A page AutoHush hasn't learned yet shows
+  dimmed until it has.
 - **Page Up, Page Down, Home and End** move the keyboard's highlight in
   the menu and Settings, a page at a time or to the first and last row.
 - **VoiceOver** follows the arrow keys' highlight, and Zoom shows where

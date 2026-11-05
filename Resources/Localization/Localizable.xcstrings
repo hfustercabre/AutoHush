@@ -464,22 +464,40 @@
     "%@ (Recommended)" : {
       "comment" : "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, the control AutoHush recommends (the player's own, or the one chosen in Add an App). %@ is the control (AppleScript, Its playback menu…)",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (مُوصى به)"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (recomanat)"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (doporučeno)"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (anbefalet)"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ (empfohlen)"
           }
         },
-        "fr" : {
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ (recommandé)"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (recommandé)"
+            "value" : "%@ (προτείνεται)"
           }
         },
         "es" : {
@@ -494,130 +512,22 @@
             "value" : "%@ (recomendado)"
           }
         },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (recomanat)"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (consigliato)"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (recomendado)"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (recomendado)"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (aanbevolen)"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (rekommenderas)"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (anbefalet)"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (anbefalt)"
-          }
-        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ (suositeltu)"
           }
         },
-        "pl" : {
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ (zalecane)"
+            "value" : "%@ (recommandé)"
           }
         },
-        "cs" : {
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ (doporučeno)"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (odporúčané)"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (рекомендовано)"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (рекомендуется)"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (preporučeno)"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (priporočeno)"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (recomandat)"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (ajánlott)"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (προτείνεται)"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (önerilen)"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (مُوصى به)"
+            "value" : "%@ (recommandé)"
           }
         },
         "he" : {
@@ -632,28 +542,28 @@
             "value" : "%@ (अनुशंसित)"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (preporučeno)"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ajánlott)"
+          }
+        },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@ (Direkomendasikan)"
           }
         },
-        "ms" : {
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ (Disyorkan)"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (แนะนำ)"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ (Đề xuất)"
+            "value" : "%@ (consigliato)"
           }
         },
         "ja" : {
@@ -668,6 +578,102 @@
             "value" : "%@(추천)"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Disyorkan)"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (anbefalt)"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (aanbevolen)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (zalecane)"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (recomendado)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (recomendado)"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (recomandat)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (рекомендуется)"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (odporúčané)"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (priporočeno)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (rekommenderas)"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (แนะนำ)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (önerilen)"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (рекомендовано)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Đề xuất)"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（推薦）"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -675,12 +681,6 @@
           }
         },
         "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@（推薦）"
-          }
-        },
-        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@（推薦）"
@@ -1144,6 +1144,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@（備用，%2$@）"
+          }
+        }
+      }
+    },
+    "%@ (not learned yet)" : {
+      "comment" : "Settings → Fine-Tuning, the player's card: a dimmed item of the “Main control” pop-up, a control that can't be chosen until AutoHush has learned its Play/Pause button (it learns it the first time it pauses the player another way). %@ is the control (Its page’s Play/Pause)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (لم يتم تعلّمه بعد)"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (encara no après)"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (zatím nenaučeno)"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ikke lært endnu)"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (noch nicht gelernt)"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (δεν έχει μαθευτεί ακόμη)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (aún sin aprender)"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (aún sin aprender)"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ei vielä opittu)"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (pas encore appris)"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (pas encore appris)"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (טרם נלמד)"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (अभी तक नहीं सीखा गया)"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (još nije naučeno)"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (még nincs megtanulva)"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Belum dipelajari)"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (non ancora appreso)"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（未学習）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@(아직 학습 안 됨)"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Belum dipelajari)"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ikke lært ennå)"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (nog niet geleerd)"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (jeszcze nie nauczone)"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ainda não aprendido)"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ainda não aprendido)"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (încă neînvățat)"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ещё не изучено)"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (zatiaľ nenaučené)"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (še ni naučeno)"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (inte inlärt än)"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ยังไม่ได้เรียนรู้)"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (henüz öğrenilmedi)"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (ще не вивчено)"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ (Chưa học)"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（尚未學會）"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（尚未学会）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@（尚未學會）"
           }
         }
       }
@@ -90485,22 +90712,40 @@
     "Main control" : {
       "comment" : "Settings → Fine-Tuning, the player's card: title of its first row, beside a pop-up of the controls AutoHush can pause and play the player by first (or beside its only one)",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طريقة التحكم الرئيسية"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Control principal"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlavní ovládání"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hovedbetjening"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hauptsteuerung"
           }
         },
-        "fr" : {
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Commande principale"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Commande principale"
+            "value" : "Κύριος τρόπος ελέγχου"
           }
         },
         "es" : {
@@ -90515,130 +90760,22 @@
             "value" : "Control principal"
           }
         },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Control principal"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Controllo principale"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Controle principal"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Controlo principal"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoofdbediening"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Huvudreglage"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hovedbetjening"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hovedkontroll"
-          }
-        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Pääsäädin"
           }
         },
-        "pl" : {
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Główne sterowanie"
+            "value" : "Commande principale"
           }
         },
-        "cs" : {
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hlavní ovládání"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hlavné ovládanie"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Основний спосіб"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Основной способ"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Glavno upravljanje"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Glavno upravljanje"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comandă principală"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fő vezérlő"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Κύριος τρόπος ελέγχου"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ana denetim"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "طريقة التحكم الرئيسية"
+            "value" : "Commande principale"
           }
         },
         "he" : {
@@ -90653,28 +90790,28 @@
             "value" : "मुख्य नियंत्रण"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glavno upravljanje"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fő vezérlő"
+          }
+        },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kontrol utama"
           }
         },
-        "ms" : {
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kawalan utama"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ตัวควบคุมหลัก"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Điều khiển chính"
+            "value" : "Controllo principale"
           }
         },
         "ja" : {
@@ -90689,6 +90826,102 @@
             "value" : "기본 컨트롤"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kawalan utama"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hovedkontroll"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoofdbediening"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Główne sterowanie"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controle principal"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlo principal"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comandă principală"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Основной способ"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hlavné ovládanie"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glavno upravljanje"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Huvudreglage"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวควบคุมหลัก"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ana denetim"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Основний спосіб"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Điều khiển chính"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "主要控制方式"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -90696,12 +90929,6 @@
           }
         },
         "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "主要控制方式"
-          }
-        },
-        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "主要控制方式"
@@ -168843,22 +169070,40 @@
     "backups off" : {
       "comment" : "Settings → Media Player, the “Controls” row's value after the main control's name (“AppleScript · backups off”): the switch “Use backup controls” is off. Lowercase, as a part of a list",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طرق التحكم الاحتياطية: إيقاف"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "controls de reserva desactivats"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "záložní ovládání: vypnuto"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reservebetjening: fra"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ersatzsteuerung aus"
           }
         },
-        "fr" : {
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "commandes de secours désactivées"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "commandes de secours désactivées"
+            "value" : "εφεδρικοί τρόποι ανενεργοί"
           }
         },
         "es" : {
@@ -168873,130 +169118,22 @@
             "value" : "controles de respaldo desactivados"
           }
         },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "controls de reserva desactivats"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "controlli di riserva disattivati"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "controles de reserva desativados"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "controlos de reserva desativados"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "reservebediening uit"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "reservreglage: av"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "reservebetjening: fra"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "reservekontroller: av"
-          }
-        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "varasäätimet: pois"
           }
         },
-        "pl" : {
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "zapasowe sterowanie: wył."
+            "value" : "commandes de secours désactivées"
           }
         },
-        "cs" : {
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "záložní ovládání: vypnuto"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "záložné ovládanie: vypnuté"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "резервні способи: вимк."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "резервные способы: выкл."
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "rezervno upravljanje isključeno"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "rezervno upravljanje izklopljeno"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "comenzi de rezervă dezactivate"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "tartalék vezérlők ki"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "εφεδρικοί τρόποι ανενεργοί"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "yedek denetimler kapalı"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "طرق التحكم الاحتياطية: إيقاف"
+            "value" : "commandes de secours désactivées"
           }
         },
         "he" : {
@@ -169011,28 +169148,28 @@
             "value" : "बैकअप नियंत्रण बंद"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rezervno upravljanje isključeno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tartalék vezérlők ki"
+          }
+        },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "kontrol cadangan mati"
           }
         },
-        "ms" : {
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "kawalan sandaran tak aktif"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ตัวควบคุมสำรองปิดอยู่"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "đã tắt điều khiển dự phòng"
+            "value" : "controlli di riserva disattivati"
           }
         },
         "ja" : {
@@ -169047,6 +169184,102 @@
             "value" : "예비 컨트롤 끔"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kawalan sandaran tak aktif"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reservekontroller: av"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reservebediening uit"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zapasowe sterowanie: wył."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "controles de reserva desativados"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "controlos de reserva desativados"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "comenzi de rezervă dezactivate"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "резервные способы: выкл."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "záložné ovládanie: vypnuté"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rezervno upravljanje izklopljeno"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reservreglage: av"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวควบคุมสำรองปิดอยู่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "yedek denetimler kapalı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "резервні способи: вимк."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "đã tắt điều khiển dự phòng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "備用控制方式已關閉"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -169058,34 +169291,46 @@
             "state" : "translated",
             "value" : "備用控制方式已關閉"
           }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "備用控制方式已關閉"
-          }
         }
       }
     },
     "backups on" : {
       "comment" : "Settings → Media Player, the “Controls” row's value after the main control's name (“AppleScript · backups on”): the switch “Use backup controls” is on. Lowercase, as a part of a list",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طرق التحكم الاحتياطية: تشغيل"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "controls de reserva activats"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "záložní ovládání: zapnuto"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reservebetjening: til"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ersatzsteuerung ein"
           }
         },
-        "fr" : {
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "commandes de secours activées"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "commandes de secours activées"
+            "value" : "εφεδρικοί τρόποι ενεργοί"
           }
         },
         "es" : {
@@ -169100,130 +169345,22 @@
             "value" : "controles de respaldo activados"
           }
         },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "controls de reserva activats"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "controlli di riserva attivati"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "controles de reserva ativados"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "controlos de reserva ativados"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "reservebediening aan"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "reservreglage: på"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "reservebetjening: til"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "reservekontroller: på"
-          }
-        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "varasäätimet: päällä"
           }
         },
-        "pl" : {
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "zapasowe sterowanie: wł."
+            "value" : "commandes de secours activées"
           }
         },
-        "cs" : {
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "záložní ovládání: zapnuto"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "záložné ovládanie: zapnuté"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "резервні способи: увімк."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "резервные способы: вкл."
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "rezervno upravljanje uključeno"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "rezervno upravljanje vklopljeno"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "comenzi de rezervă activate"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "tartalék vezérlők be"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "εφεδρικοί τρόποι ενεργοί"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "yedek denetimler açık"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "طرق التحكم الاحتياطية: تشغيل"
+            "value" : "commandes de secours activées"
           }
         },
         "he" : {
@@ -169238,28 +169375,28 @@
             "value" : "बैकअप नियंत्रण चालू"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rezervno upravljanje uključeno"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tartalék vezérlők be"
+          }
+        },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "kontrol cadangan nyala"
           }
         },
-        "ms" : {
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "kawalan sandaran aktif"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ตัวควบคุมสำรองเปิดอยู่"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "đã bật điều khiển dự phòng"
+            "value" : "controlli di riserva attivati"
           }
         },
         "ja" : {
@@ -169274,6 +169411,102 @@
             "value" : "예비 컨트롤 켬"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "kawalan sandaran aktif"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reservekontroller: på"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reservebediening aan"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "zapasowe sterowanie: wł."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "controles de reserva ativados"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "controlos de reserva ativados"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "comenzi de rezervă activate"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "резервные способы: вкл."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "záložné ovládanie: zapnuté"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rezervno upravljanje vklopljeno"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "reservreglage: på"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตัวควบคุมสำรองเปิดอยู่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "yedek denetimler açık"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "резервні способи: увімк."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "đã bật điều khiển dự phòng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "備用控制方式已開啟"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -169281,12 +169514,6 @@
           }
         },
         "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "備用控制方式已開啟"
-          }
-        },
-        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "備用控制方式已開啟"
@@ -172475,22 +172702,40 @@
     "panel while muted off" : {
       "comment" : "Settings → Media Player, the “Controls” row's value, last (“AppleScript · backups on · panel while muted off”): the switch “Use the Now Playing panel while muted” is off. Lowercase, as a part of a list",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اللوحة أثناء كتم الصوت: إيقاف"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tauler en silenciar desactivat"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel při ztlumení: vypnuto"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel ved lydløs: fra"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "„Jetzt läuft“ bei Stummschaltung aus"
           }
         },
-        "fr" : {
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "panneau si son coupé : désactivé"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panneau si son coupé : désactivé"
+            "value" : "πλαίσιο κατά τη σίγαση ανενεργό"
           }
         },
         "es" : {
@@ -172505,130 +172750,22 @@
             "value" : "panel al silenciar desactivado"
           }
         },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "tauler en silenciar desactivat"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "pannello se silenziato disattivato"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "painel ao silenciar desativado"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "painel ao silenciar desativado"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "paneel bij dempen uit"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel vid avstängt ljud: av"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel ved lydløs: fra"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel ved demping: av"
-          }
-        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "paneeli mykistettynä: pois"
           }
         },
-        "pl" : {
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "panel podczas wyciszenia: wył."
+            "value" : "panneau si son coupé : désactivé"
           }
         },
-        "cs" : {
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "panel při ztlumení: vypnuto"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel pri stlmení: vypnuté"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "панель за вимкненого звуку: вимк."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "панель при выключенном звуке: выкл."
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ploča tijekom utišavanja isključena"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "plošča med utišanjem izklopljena"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panou când sunetul e oprit: dezactivat"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel némítás közben ki"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "πλαίσιο κατά τη σίγαση ανενεργό"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "sessizken panel kapalı"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اللوحة أثناء كتم الصوت: إيقاف"
+            "value" : "panneau si son coupé : désactivé"
           }
         },
         "he" : {
@@ -172643,28 +172780,28 @@
             "value" : "म्यूट रहते हुए पैनल बंद"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ploča tijekom utišavanja isključena"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel némítás közben ki"
+          }
+        },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "panel saat dibisukan mati"
           }
         },
-        "ms" : {
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "panel semasa disenyapkan tak aktif"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "แผงขณะปิดเสียง ปิดอยู่"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "đã tắt bảng khi tắt tiếng"
+            "value" : "pannello se silenziato disattivato"
           }
         },
         "ja" : {
@@ -172679,6 +172816,102 @@
             "value" : "음소거 중 패널 끔"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel semasa disenyapkan tak aktif"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel ved demping: av"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "paneel bij dempen uit"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel podczas wyciszenia: wył."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "painel ao silenciar desativado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "painel ao silenciar desativado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panou când sunetul e oprit: dezactivat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "панель при выключенном звуке: выкл."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel pri stlmení: vypnuté"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "plošča med utišanjem izklopljena"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel vid avstängt ljud: av"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แผงขณะปิดเสียง ปิดอยู่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sessizken panel kapalı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "панель за вимкненого звуку: вимк."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "đã tắt bảng khi tắt tiếng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "靜音時面板已關閉"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -172690,34 +172923,46 @@
             "state" : "translated",
             "value" : "靜音時面板已關閉"
           }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "靜音時面板已關閉"
-          }
         }
       }
     },
     "panel while muted on" : {
       "comment" : "Settings → Media Player, the “Controls” row's value, last (“AppleScript · backups on · panel while muted on”): the switch “Use the Now Playing panel while muted” is on. Lowercase, as a part of a list",
       "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اللوحة أثناء كتم الصوت: تشغيل"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "tauler en silenciar activat"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel při ztlumení: zapnuto"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel ved lydløs: til"
+          }
+        },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "„Jetzt läuft“ bei Stummschaltung ein"
           }
         },
-        "fr" : {
+        "el" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "panneau si son coupé : activé"
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panneau si son coupé : activé"
+            "value" : "πλαίσιο κατά τη σίγαση ενεργό"
           }
         },
         "es" : {
@@ -172732,130 +172977,22 @@
             "value" : "panel al silenciar activado"
           }
         },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "tauler en silenciar activat"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "pannello se silenziato attivato"
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "painel ao silenciar ativado"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "painel ao silenciar ativado"
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "paneel bij dempen aan"
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel vid avstängt ljud: på"
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel ved lydløs: til"
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel ved demping: på"
-          }
-        },
         "fi" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "paneeli mykistettynä: päällä"
           }
         },
-        "pl" : {
+        "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "panel podczas wyciszenia: wł."
+            "value" : "panneau si son coupé : activé"
           }
         },
-        "cs" : {
+        "fr-CA" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "panel při ztlumení: zapnuto"
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel pri stlmení: zapnuté"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "панель за вимкненого звуку: увімк."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "панель при выключенном звуке: вкл."
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ploča tijekom utišavanja uključena"
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "plošča med utišanjem vklopljena"
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panou când sunetul e oprit: activat"
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "panel némítás közben be"
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "πλαίσιο κατά τη σίγαση ενεργό"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "sessizken panel açık"
-          }
-        },
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اللوحة أثناء كتم الصوت: تشغيل"
+            "value" : "panneau si son coupé : activé"
           }
         },
         "he" : {
@@ -172870,28 +173007,28 @@
             "value" : "म्यूट रहते हुए पैनल चालू"
           }
         },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ploča tijekom utišavanja uključena"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel némítás közben be"
+          }
+        },
         "id" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "panel saat dibisukan nyala"
           }
         },
-        "ms" : {
+        "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "panel semasa disenyapkan aktif"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "แผงขณะปิดเสียง เปิดอยู่"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "đã bật bảng khi tắt tiếng"
+            "value" : "pannello se silenziato attivato"
           }
         },
         "ja" : {
@@ -172906,6 +173043,102 @@
             "value" : "음소거 중 패널 켬"
           }
         },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel semasa disenyapkan aktif"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel ved demping: på"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "paneel bij dempen aan"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel podczas wyciszenia: wł."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "painel ao silenciar ativado"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "painel ao silenciar ativado"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panou când sunetul e oprit: activat"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "панель при выключенном звуке: вкл."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel pri stlmení: zapnuté"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "plošča med utišanjem vklopljena"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "panel vid avstängt ljud: på"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แผงขณะปิดเสียง เปิดอยู่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sessizken panel açık"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "панель за вимкненого звуку: увімк."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "đã bật bảng khi tắt tiếng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "靜音時面板已開啟"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -172913,12 +173146,6 @@
           }
         },
         "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "靜音時面板已開啟"
-          }
-        },
-        "zh-HK" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "靜音時面板已開啟"

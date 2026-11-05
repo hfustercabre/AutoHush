@@ -45,6 +45,12 @@ enum BackupText {
         String(localized: "\(control) (Recommended)",
                comment: "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, the control AutoHush recommends (the player's own, or the one chosen in Add an App). %@ is the control (AppleScript, Its playback menu…)")
     }
+    /// An item of the pop-up, dimmed: a control that can be the main one
+    /// once AutoHush has learned it (a built-in player's page, 2026-11-05).
+    static func notLearnedYet(_ control: String) -> String {
+        String(localized: "\(control) (not learned yet)",
+               comment: "Settings → Fine-Tuning, the player's card: a dimmed item of the “Main control” pop-up, a control that can't be chosen until AutoHush has learned its Play/Pause button (it learns it the first time it pauses the player another way). %@ is the control (Its page’s Play/Pause)")
+    }
     /// Media Player's row to the card: the word of a web app's Controls row.
     static var controls: String { LearnText.controlsTitle }
     static let backupsOn = String(localized: "backups on",

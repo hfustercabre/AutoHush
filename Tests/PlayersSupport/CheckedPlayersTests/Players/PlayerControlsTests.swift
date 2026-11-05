@@ -29,6 +29,20 @@ struct PlayerControlsTests {
         #expect(controls.hasPanel && controls.backupsInUse)
     }
 
+    @Test("a control that will be choosable once learned is listed among the choices, in its place, but isn't one")
+    func notYetChoices() {
+        let all: [PlayerControls.Control] = [CheckResult.WayKind.script, .menu, .page].map {
+            PlayerControls.Control(kind: WayOrder.Kind($0), result: CheckResult.WayResult(kind: $0, mark: .works))
+        } + [PlayerControls.Control(kind: .mediaKey, result: nil),
+             PlayerControls.Control(kind: .panel, result: CheckResult.WayResult(kind: .panel, mark: .works))]
+        let controls = PlayerControls(all: all, chosen: nil, choosable: { control, _ in control.kind != .page && control.kind != .mediaKey }, switches: BackupSwitches(),
+                                      notYet: { control, _ in control.kind == .page })
+        #expect(controls.choices.map(\.kind) == [.script, .menu, .panel])
+        #expect(controls.notYetChoices.map(\.kind) == [.page])
+        let listed: [WayOrder.Kind] = controls.listedChoices.map(\.kind)
+        #expect(listed == [.script, .menu, .page, .panel])
+    }
+
     @Test("the panel's switch shows when the panel is any of its controls, its main one too")
     func panelSwitch() {
         let panel = PlayerControls.Control(kind: .panel, result: nil), menu = PlayerControls.Control(kind: .menu, result: nil)

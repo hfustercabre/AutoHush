@@ -27,7 +27,7 @@ struct PlayerControlsCard: View {
             let unavailable = controls.needsCheckAgain || controls.notLearned
             Card(Text(verbatim: name)) {
                 Group {
-                    if controls.choices.count > 1, !unavailable {
+                    if controls.listedChoices.count > 1, !unavailable {
                         mainControlPopUp(controls, player: name)
                     } else {
                         PlainMainControlRow(control: controls.main.kind).unavailable(unavailable)
@@ -73,8 +73,9 @@ struct PlayerControlsCard: View {
     /// control's note under it.
     private func mainControlPopUp(_ controls: PlayerControls, player: String) -> some View {
         // The panel last, apart: it opens on screen for a moment.
-        let quiet = controls.choices.filter { $0.kind != .panel }
-        let panel = controls.choices.first { $0.kind == .panel }
+        // A control not learned yet among them, dimmed (the user, 2026-11-05).
+        let quiet = controls.listedChoices.filter { $0.kind != .panel }
+        let panel = controls.listedChoices.first { $0.kind == .panel }
         return VStack(alignment: .leading, spacing: 2) {
             HStack {
                 Text(verbatim: BackupText.mainControlRow) // a row's title
@@ -84,10 +85,10 @@ struct PlayerControlsCard: View {
                     get: { (model.chosenControls ?? controls).main.kind },
                     set: { model.chooseMainControl($0) }
                 )) {
-                    ForEach(quiet, id: \.kind) { item($0, recommended: controls.recommended) }
+                    ForEach(quiet, id: \.kind) { item($0, controls: controls) }
                     if let panel {
                         Divider()
-                        item(panel, recommended: controls.recommended)
+                        item(panel, controls: controls)
                     }
                 } label: {
                     Text(verbatim: BackupText.mainControlRow)
@@ -110,14 +111,18 @@ struct PlayerControlsCard: View {
 
     /// A pop-up item: the control's name ("… (Recommended)" for its own),
     /// with how its check found it.
-    private func item(_ control: PlayerControls.Control, recommended: WayOrder.Kind) -> some View {
+    /// One not learned yet ("… (not learned yet)") is dimmed and can't be chosen.
+    private func item(_ control: PlayerControls.Control, controls: PlayerControls) -> some View {
         let name = WayText.control(control.kind)
+        let notYet = controls.notYetChoices.contains(control)
+        let title = notYet ? BackupText.notLearnedYet(name) : control.kind == controls.recommended ? BackupText.recommended(name) : name
         return Label {
-            Text(verbatim: control.kind == recommended ? BackupText.recommended(name) : name)
+            Text(verbatim: title)
         } icon: {
             Image(nsImage: Self.markImage(control.found?.mark ?? .notTried))
         }
         .tag(control.kind)
+        .selectionDisabled(notYet)
     }
 
     /// The card's rows stand for what Media Player's Controls row opened:
