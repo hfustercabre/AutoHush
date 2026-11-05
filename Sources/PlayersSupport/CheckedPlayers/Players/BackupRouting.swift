@@ -29,6 +29,8 @@ protocol BackupRouting: Actor {
     var panelPlayFailedAt: Date? { get set }
     /// Whether the panel may be pressed while it's muted (its switch).
     var panelWhileMuted: Bool { get }
+    /// Which control paused and played it last (`PlayerControls`).
+    var lastUsed: OSAllocatedUnfairLock<LastControls> { get }
     /// The player of its way at `index` in `wayOrder` (its own at 0).
     func way(at index: Int) -> any MusicPlayer
     /// Its state by its surest signs, which judge its presses.
@@ -41,6 +43,15 @@ protocol BackupRouting: Actor {
 }
 
 extension BackupRouting {
+    /// A press by its own way alone, with its backups off: a pause or a
+    /// play begun all the same, so one going down its backups (begun
+    /// before they were turned off) stops, and a muted pause starts its
+    /// tries again (`mutedTried`).
+    func ownPressBegins() {
+        pressCalls += 1
+        mutedTried = []
+    }
+
     /// How long a play by the panel that failed keeps it out of the next
     /// plays (the engine's retries, a second apart): it shows on screen.
     static var panelPlayRest: TimeInterval { 10 }
@@ -92,6 +103,7 @@ extension BackupRouting {
             pressed += 1
             do {
                 try await press(way, to: target, checkable: &checkable)
+                lastUsed.withLock { $0.note(kind, for: target) }
                 if index != 0 || state != nil {
                     logger.notice("\(self.name, privacy: .public): \(target == .playing ? "played" : "paused", privacy: .public) by its \(kind.logName, privacy: .public)\(index == 0 ? "" : " (a backup)", privacy: .public)\(window, privacy: .public)")
                 }
@@ -150,6 +162,7 @@ extension BackupRouting {
                 var checkable: Bool?
                 do {
                     try await press(way, to: .paused, checkable: &checkable)
+                    lastUsed.withLock { $0.note(kind, for: .paused) }
                     logger.notice("\(self.name, privacy: .public): paused by its \(kind.logName, privacy: .public)\(index == 0 ? "" : " (a backup)", privacy: .public) while muted")
                     return
                 } catch let notPressed as MediaKeyWay.NotPressed {

@@ -1,4 +1,5 @@
 import Foundation
+import AutoHushKit
 import CheckedPlayers
 
 // AddAppModel: what worked, and Use (or Mute It Instead).
@@ -44,6 +45,28 @@ extension AddAppModel {
     /// The way Use makes AutoHush use: the user's choice, else the recommended.
     var chosenWay: CheckResult.WayKind? {
         pickedWay.flatMap { choosableWays.contains($0) ? $0 : nil } ?? choosableWays.first
+    }
+
+    /// The last step's backup switches (the user, 2026-11-05): as the user
+    /// set them, else as the app kept them when it's checked again, else
+    /// both on.
+    var backupSwitches: BackupSwitches {
+        get { pickedSwitches ?? chosen.flatMap { host?.backupSwitches(for: $0.bundleID) } ?? BackupSwitches() }
+        set { pickedSwitches = newValue }
+    }
+
+    /// What would control the app with the chosen way, for the last step's
+    /// switches: the chosen way, then the others that worked and the
+    /// Play/Pause key, the panel last, as they're pressed.
+    var backupControls: PlayerControls? {
+        guard let result, let way = chosenWay, let main = result.ways.first(where: { $0.kind == way }) else { return nil }
+        let others = workingWays.compactMap(\.kind).filter { $0 != way }
+            .compactMap { kind in result.ways.first { $0.kind == kind } }
+            .map { PlayerControls.Control(kind: WayOrder.Kind($0.kind), result: $0) }
+        let key = PlayerControls.Control(kind: .mediaKey, result: nil)
+        return PlayerControls(main: .init(kind: WayOrder.Kind(main.kind), result: main),
+                              backups: others.filter { $0.kind != .panel } + [key] + others.filter { $0.kind == .panel },
+                              switches: backupSwitches)
     }
 
     func choose(_ way: CheckResult.WayKind) {
@@ -105,6 +128,8 @@ extension AddAppModel {
         setup.backups = working.filter { $0.kind != way }
         let kept = Set(working.compactMap(\.kind))
         setup.wayResults = result.ways.filter { kept.contains($0.kind) }
+        setup.usesBackups = backupSwitches.usesBackups
+        setup.panelWhileMuted = backupSwitches.panelWhileMuted
         keptChecks.forget()
         // The page's learned Play/Pause goes with the page, a backup's too:
         // without it, the app would wait to learn it and never pause (2026-10-18).

@@ -40,6 +40,7 @@ extension AddAppModel {
         progress = CheckProgress()
         failureReason = nil
         pickedWay = nil
+        pickedSwitches = nil
         isStopping = false
         stage = .checking
         Task { [weak self] in

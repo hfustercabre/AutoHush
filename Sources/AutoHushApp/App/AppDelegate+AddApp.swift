@@ -85,6 +85,12 @@ extension AppDelegate: AddAppHost {
         }
     }
 
+    /// The backup switches the app added with `bundleID` keeps, carried
+    /// over to its next check's last step; `nil` when it keeps none.
+    func backupSwitches(for bundleID: String) -> BackupSwitches? {
+        checkedPlayers.switches(for: bundleID)
+    }
+
     /// Keeps what the check found, then makes the app the player: chosen
     /// again when it was already (checked again, its new setup is used).
     func useCheckedApp(_ result: CheckResult, asksToReopen: Bool) {

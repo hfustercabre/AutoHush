@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Testing
 @testable import CheckedPlayers
 import ScriptablePlayers
@@ -79,6 +80,19 @@ struct CheckedPlayerBackupsTests {
         let shown = MockMusicPlayer(state: .playing), other = MockMusicPlayer(state: .playing)
         try await jukebox(shown, failing: [.minimized], backups: [(other, .menu)], window: .visible).pause()
         #expect(await pauses(shown, other) == [1, 0])
+    }
+
+    @Test("the control that paused and played it last is kept, a backup's too; with its backups off, its own way's")
+    func lastUsed() async throws {
+        let page = MockMusicPlayer(state: .playing), menu = MockMusicPlayer(state: .playing)
+        let minimized = jukebox(page, failing: [.minimized], backups: [(menu, .menu)], window: .minimized)
+        try await minimized.pause()
+        #expect(minimized.controls.last == LastControls(paused: .menu))
+        let own = MockMusicPlayer(state: .playing)
+        let off = jukebox(own, backups: [(MockMusicPlayer(state: .playing), .menu)], usesBackups: false)
+        try await off.pause()
+        try await off.play()
+        #expect(off.controls.last == LastControls(paused: .page, played: .page))
     }
 
     @Test("while it's muted, each retry presses one way, the next in the order after its first press's, the quiet ones round again, the panel once in each pause, and only while its switch is on")
@@ -263,11 +277,55 @@ struct CheckedPlayerBackupsTests {
         #expect(await menu.pauseCallCount == 0)
     }
 
-    @Test("its page mutes it itself only with no backups in use (the Play/Pause key alone counts), and never a Chromium web app's")
+    @Test("its page mutes it itself only with no backups in use, and never a Chromium web app's")
     func pageMute() {
-        #expect(CheckedPlayer.pageMutesItself(.webKit, backups: [], mediaKey: false))
-        #expect(!CheckedPlayer.pageMutesItself(.webKit, backups: [.panel(rememberedRow: nil)], mediaKey: false))
-        #expect(!CheckedPlayer.pageMutesItself(.webKit, backups: [], mediaKey: true))
-        #expect(!CheckedPlayer.pageMutesItself(PageAccess(interface: .chromiumWebApp(browserID: "com.google.Chrome"), switchAttribute: nil), backups: [], mediaKey: false))
+        #expect(CheckedPlayer.pageMutesItself(.webKit, backedUp: false))
+        #expect(!CheckedPlayer.pageMutesItself(.webKit, backedUp: true))
+        #expect(!CheckedPlayer.pageMutesItself(PageAccess(interface: .chromiumWebApp(browserID: "com.google.Chrome"), switchAttribute: nil), backedUp: false))
+    }
+
+    @Test("its page's mute follows the backup switch as it is now: backups (the Play/Pause key alone counts) in use mean AutoHush's mute")
+    func pageMuteFollowsSwitch() async throws {
+        func page(_ setup: PlayerSetup) -> SafariWebAppPlayer? {
+            let switches = OSAllocatedUnfairLock(initialState: setup.switches)
+            let parts = CheckedPlayer.parts(for: setup, store: MemorySetupStore(), switches: switches)
+            switches.withLock { $0.usesBackups = false }
+            let off = parts.page?.control.mutesRefusals()
+            switches.withLock { $0.usesBackups = true }
+            #expect(off == true && parts.page?.control.mutesRefusals() == false)
+            return parts.page
+        }
+        let checked = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: app, ways: [.page(.webKit)],
+                                  wayResults: [Self.result(.page)]) // the key alone
+        #expect(page(checked) != nil)
+        var older = checked
+        older.wayResults = [] // no backup at all: it mutes itself, switch or not
+        let parts = CheckedPlayer.parts(for: older, store: MemorySetupStore())
+        #expect(parts.page?.control.mutesRefusals() == true)
+    }
+
+    @Test("its switches change at once, with no new player: off, its own way alone; on again, its backups")
+    func switchesLive() async throws {
+        let page = await failing(), menu = MockMusicPlayer(state: .playing)
+        let player = jukebox(page, backups: [(menu, .menu)], audioRecording: false)
+        player.setSwitches(BackupSwitches(usesBackups: false))
+        #expect(!player.usesBackups && !player.controls.switches.usesBackups && !player.setupNow.usesBackups)
+        await #expect(throws: Self.refused) { try await player.pause() }
+        #expect(await menu.pauseCallCount == 0)
+        // A press by its own way alone is a press begun all the same.
+        #expect(await player.pressCalls == 1)
+        #expect(await player.mutedTried.isEmpty)
+        player.setSwitches(BackupSwitches())
+        try await player.pause()
+        #expect(await menu.pauseCallCount == 1)
+    }
+
+    @Test("a backup page mutes nothing new while its backups are off")
+    func backupPageOff() async {
+        let setup = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: app, ways: [.menu(menuName: "Controls")],
+                                backups: [.page(.webKit)], wayResults: [Self.result(.menu), Self.result(.page)], usesBackups: false)
+        let player = CheckedPlayer(setup: setup, reports: nil, store: MemorySetupStore())
+        #expect(player.parts.pageIsBackup && player.parts.page != nil)
+        #expect(await !player.muteIfPlayingAnyway())
     }
 }

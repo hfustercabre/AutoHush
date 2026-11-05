@@ -1,4 +1,5 @@
 import Foundation
+import AutoHushKit
 import CheckedPlayers
 import PlayerCheckKit
 
@@ -94,6 +95,8 @@ final class AddAppModel {
     var isStopping = false
     /// The way the user chose among those that worked (`chosenWay`).
     var pickedWay: CheckResult.WayKind?
+    /// The backup switches the user set in the last step (`backupSwitches`).
+    var pickedSwitches: BackupSwitches?
     /// What Check Again beside Use left until the new check ends, the app
     /// changes or Back to Result: one value, so none is left half set.
     struct CheckAgainState {

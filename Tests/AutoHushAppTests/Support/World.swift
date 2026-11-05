@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushKit
 import AutoHushTestSupport
 import CheckedPlayers
 
@@ -35,6 +36,8 @@ final class World {
     var warningsClosed = 0
     var panel: [String] = []
     var antiDot = false
+    /// The backup switches an app checked again kept (`backupSwitches(for:)`).
+    var keptSwitches: [String: BackupSwitches] = [:]
     var macCanMute = true
     /// How many times the model asked whether the Mac can mute (Core Audio, live).
     var macCanMuteReads = 0
@@ -153,6 +156,8 @@ extension World: AddAppHost {
     func holdsPlayerForCheck(_ held: Bool) { holds.append(held) }
     func reopenForAudioRecording() { autoHushReopened += 1 }
     func reopenKeepingAddApp() { autoHushReopened += 1 }
+
+    func backupSwitches(for bundleID: String) -> BackupSwitches? { keptSwitches[bundleID] }
 
     func useCheckedApp(_ result: CheckResult, asksToReopen: Bool) {
         used.append(result)

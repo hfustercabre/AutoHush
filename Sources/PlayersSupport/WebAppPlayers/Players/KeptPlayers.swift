@@ -39,6 +39,11 @@ package final class KeptPlayers<Source: Equatable & Sendable, Player: Sendable>:
         }
     }
 
+    /// The player kept for the app with `bundleID`, if any, as it is.
+    package func kept(_ bundleID: String) -> Player? {
+        players.withLock { $0[bundleID] }
+    }
+
     /// Forgets the player kept for the app with `bundleID`: the next
     /// `current` makes a new one.
     package func forget(_ bundleID: String) {

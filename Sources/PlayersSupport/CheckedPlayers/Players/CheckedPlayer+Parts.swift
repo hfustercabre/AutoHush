@@ -1,4 +1,5 @@
 import Foundation
+import os
 import AutoHushKit
 import MenuPlayers
 import ScriptablePlayers
@@ -30,6 +31,8 @@ extension CheckedPlayer {
         var announcing: any MusicPlayer?
         /// Its page's player, whose switch is released with it.
         var page: SafariWebAppPlayer?
+        /// Its page is a backup: it mutes nothing new while they're off.
+        var pageIsBackup = false
         /// The page its panel way reads its player bar through
         /// (`PanelClues.page`), whose switch is released with it too.
         var cluePage: AccessibilityWebPage?
@@ -45,15 +48,18 @@ extension CheckedPlayer {
         var mediaKeyState: LateState?
     }
 
-    /// The players of `setup`'s ways, and of its backups while it uses them,
-    /// the Play/Pause key after them: a backup's sign tells its state too
+    /// The players of `setup`'s ways and of its backups, the Play/Pause key
+    /// after them, made whether its backups are on or not (`switches`, read
+    /// at each press): a backup's sign tells its state too while they're on
     /// (the user, 2026-11-04), but only the chosen way fades it and
     /// announces its changes.
-    static func parts(for setup: PlayerSetup, store: any PlayerSetupStore) -> Parts {
+    static func parts(for setup: PlayerSetup, store: any PlayerSetupStore,
+                      switches: OSAllocatedUnfairLock<BackupSwitches>? = nil) -> Parts {
+        let switches = switches ?? OSAllocatedUnfairLock(initialState: setup.switches)
         var parts = Parts(ways: [], signs: [])
         var scripted: ScriptedAppPlayer?, menu: MenuPlayer?
         var backupKinds: Set<CheckResult.WayKind> = []
-        let backups = setup.usesBackups ? setup.backups : []
+        let backups = setup.backups
         for (index, way) in (setup.ways + backups).enumerated() {
             let isBackup = index >= setup.ways.count
             let player: any MusicPlayer
@@ -77,8 +83,11 @@ extension CheckedPlayer {
                 let page = SafariWebAppPlayer(app: SafariWebApp(bundleID: setup.bundleID, name: setup.name, url: setup.appURL),
                                               kind: .app, page: AccessibilityWebPage(access: access),
                                               canMute: access.browserID == nil,
-                                              mutesRefusals: { [mutes = pageMutesItself(access, backups: backups, mediaKey: hasMediaKey(setup))] in mutes })
+                                              mutesRefusals: { [backedUp = !backups.isEmpty || hasMediaKey(setup)] in
+                                                  pageMutesItself(access, backedUp: backedUp && switches.withLock { $0.usesBackups })
+                                              })
                 parts.page = page
+                parts.pageIsBackup = isBackup
                 player = page
             case .panel(let remembered):
                 let hearing = setup.panelRowIsStale == true ? LateHearing() : nil
@@ -121,7 +130,7 @@ extension CheckedPlayer {
     /// mute every tab), nor one with backups in use, the Play/Pause key
     /// alone included, whose refusal goes to AutoHush's mute, which tries
     /// them meanwhile (the user, 2026-11-04).
-    static func pageMutesItself(_ access: PageAccess, backups: [PlayerSetup.Way], mediaKey: Bool) -> Bool {
-        access.browserID == nil && backups.isEmpty && !mediaKey
+    static func pageMutesItself(_ access: PageAccess, backedUp: Bool) -> Bool {
+        access.browserID == nil && !backedUp
     }
 }

@@ -38,7 +38,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
     private let status = LearningStatusBroadcast()
     private let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     /// Used only on `queue`.
-    private nonisolated let control: WebAppControl
+    nonisolated let control: WebAppControl
     /// macOS's request for Accessibility is shown once per launch, not at
     /// every check.
     private var hasAskedForAccess = false

@@ -6,6 +6,9 @@ import Foundation
 /// Settings → About's link), and Restore Defaults (under Settings' cards,
 /// and the Edit menu's Undo and Redo of it).
 enum ButtonText {
+    static var done: String {
+        String(localized: "Done", comment: "Button that closes the welcome window once the permissions are allowed, and the sheet listing the player's controls (Details…)")
+    }
     static var cancel: String {
         String(localized: "Cancel", comment: "Button that closes the window without going on: the Add a Web App and Add an App windows (stopping what they do), the window listing the apps to check, the window shown before a check, and the alerts that ask to reopen the media player or to remove an app added with Add an App")
     }

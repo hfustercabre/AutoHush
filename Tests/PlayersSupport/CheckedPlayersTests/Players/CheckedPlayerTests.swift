@@ -146,9 +146,11 @@ struct CheckedPlayerTests {
         #expect(parts.signs.count == 1 && parts.backupSigns.count == 1 && parts.backupSigns.first is SafariWebAppPlayer)
         #expect(parts.hearing == nil && parts.backupHearing != nil)
         #expect(!CheckedPlayer(setup: backed, reports: nil, store: MemorySetupStore()).needsAudioLevels)
+        // With its backups off, the same parts: its switches are read at each press.
         backed.usesBackups = false
         let off = CheckedPlayer.parts(for: backed, store: MemorySetupStore())
-        #expect(off.backups.isEmpty && off.signs.count == 1 && off.backupSigns.isEmpty && off.page == nil && off.backupHearing == nil)
+        #expect(off.backups.map(\.kind) == [.page, .panel] && off.backupSigns.count == 1)
+        #expect(!CheckedPlayer(setup: backed, reports: nil, store: MemorySetupStore()).usesBackups)
     }
 
     @Test("the Play/Pause key reads the app's state from its surest signs")
@@ -163,7 +165,7 @@ struct CheckedPlayerTests {
         withExtendedLifetime(player) {}
     }
 
-    @Test("an app checked since backups were kept gets the Play/Pause key after them, one added before keeps its ways, and with its backups off, neither")
+    @Test("an app checked since backups were kept gets the Play/Pause key after them, one added before keeps its ways; with its backups off, the same, not pressed")
     func mediaKeyPart() {
         var checked = setup([.menu(menuName: "Controls")])
         checked.backups = [.panel(rememberedRow: nil)]
@@ -180,7 +182,8 @@ struct CheckedPlayerTests {
         #expect(CheckedPlayer.parts(for: older, store: MemorySetupStore()).backups.map(\.kind) == [.panel])
         checked.usesBackups = false
         let off = CheckedPlayer.parts(for: checked, store: MemorySetupStore())
-        #expect(off.backups.isEmpty && off.mediaKeyState == nil)
+        #expect(off.backups.map(\.kind) == [.panel, .mediaKey])
+        #expect(!CheckedPlayer(setup: checked, reports: nil, store: MemorySetupStore()).usesBackups)
     }
 
     /// The parts of a setup whose script only toggles, with no state, then

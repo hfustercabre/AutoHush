@@ -15,7 +15,8 @@ enum DiagnosticsReport {
         status: AppStatus,
         facts: DiagnosticsFacts,
         bundlePath: (String) -> String? = { _ in nil },
-        ways: (String) -> [PlayerSetup.Way]? = { _ in nil }
+        ways: (String) -> [PlayerSetup.Way]? = { _ in nil },
+        controls: PlayerControls? = nil
     ) -> DiagnosticsSnapshot {
         let apps = activeAudio.map { entry in
             DiagnosticsSnapshot.App(
@@ -27,7 +28,7 @@ enum DiagnosticsReport {
             )
         }
         let overview = overview(status: status)
-        let sections = sections(status: status, facts: facts, ways: ways)
+        let sections = sections(status: status, facts: facts, ways: ways, controls: controls)
         let appsSummary = apps.isEmpty
             ? NoneText.title
             : apps.map(\.name).formatted(.list(type: .and, width: .narrow))

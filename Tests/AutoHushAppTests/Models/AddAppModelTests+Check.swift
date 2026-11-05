@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import AutoHushApp
+import AutoHushKit
 import AutoHushTestSupport
 import CheckedPlayers
 import WebAppPlayers
@@ -23,6 +24,26 @@ extension AddAppModelTests {
         #expect(model.state(of: .check) == .done && model.state(of: .use) == .current && !model.nowPlayingHidden)
         model.use()
         #expect(world.used == [usedResult] && world.closed == 1 && world.asksToReopen == [true])
+    }
+
+    @Test("the last step's backup switches start on, or as the app checked again kept them, and Use keeps the user's; its controls are the chosen way, then the others that worked and the Play/Pause key, the panel last")
+    func backupSwitches() async {
+        let world = World()
+        world.keptSwitches["com.example.player"] = BackupSwitches(usesBackups: true, panelWhileMuted: false)
+        let model = await AddAppModel.ready(on: world)
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        world.run.finish(.finished(CheckResult(
+            ways: [CheckResult.WayResult(kind: .script, mark: .notThere), CheckResult.WayResult(kind: .menu, mark: .works),
+                   CheckResult.WayResult(kind: .page, mark: .none), CheckResult.WayResult(kind: .panel, mark: .works)],
+            setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
+                               ways: [.menu(menuName: "Playback"), .panel(rememberedRow: nil)]))))
+        await TestWait.until { model.result != nil }
+        #expect(model.backupSwitches == BackupSwitches(usesBackups: true, panelWhileMuted: false))
+        #expect(model.backupControls?.main.kind == .menu && model.backupControls?.backups.map(\.kind) == [.mediaKey, .panel])
+        model.backupSwitches.usesBackups = false
+        model.use()
+        #expect(world.used.first?.setup?.usesBackups == false && world.used.first?.setup?.panelWhileMuted == false)
     }
 
     @Test("only the ways that worked, fully or partly, can be chosen; the first is recommended and used unless another is chosen; the chosen one is kept first, the others that worked as its backups, with how each did")

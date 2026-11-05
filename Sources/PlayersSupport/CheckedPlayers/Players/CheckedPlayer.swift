@@ -28,7 +28,10 @@ import WebAppPlayers
 /// own without pressing again. One muted instead of paused is a `MutedApp`.
 ///
 /// With its backups on, the other ways that worked are pressed by the
-/// window's state (`CheckedPlayer+Backups`, the user, 2026-11-04).
+/// window's state (`CheckedPlayer+Backups`, the user, 2026-11-04). Its
+/// backup switches are read at each press (`switches`), so Settings changes
+/// them without a new player, which would drop a pause AutoHush holds (the
+/// user, 2026-11-05).
 package actor CheckedPlayer: AddedAppPlayer {
     package nonisolated let setup: PlayerSetup
 
@@ -85,13 +88,20 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// Each pause or play begun counts one: one going down its ways stops
     /// once another has begun.
     var pressCalls = 0
+    /// Which control paused and played it last (`PlayerControls`).
+    nonisolated let lastUsed = OSAllocatedUnfairLock(initialState: LastControls())
+    /// Its backup switches as they are now: its setup's, until Settings
+    /// changes them (`setSwitches`).
+    nonisolated let switches: OSAllocatedUnfairLock<BackupSwitches>
     let now: @Sendable () -> Date
 
     package init(setup: PlayerSetup, reports: NowPlayingReports? = CheckedPlayer.sharedReports, store: any PlayerSetupStore = DefaultsPlayerSetupStore()) {
-        self.init(setup: setup, parts: Self.parts(for: setup, store: store), reports: reports)
+        let switches = OSAllocatedUnfairLock(initialState: setup.switches)
+        self.init(setup: setup, parts: Self.parts(for: setup, store: store, switches: switches), reports: reports, switches: switches)
     }
 
     init(setup: PlayerSetup, parts: Parts, reports: NowPlayingReports?,
+         switches: OSAllocatedUnfairLock<BackupSwitches>? = nil,
          processIdentifier: (@Sendable () -> pid_t?)? = nil,
          processArguments: @escaping @Sendable (pid_t) -> [String] = { ProcessArguments.of($0) },
          openWithLaunchOption: @escaping @Sendable (URL) async -> Bool = CheckedPlayer.openWithLaunchOption,
@@ -105,6 +115,7 @@ package actor CheckedPlayer: AddedAppPlayer {
          now: @escaping @Sendable () -> Date = { Date() }) {
         self.setup = setup
         self.parts = parts
+        self.switches = switches ?? OSAllocatedUnfairLock(initialState: setup.switches)
         self.wayOrder = Self.wayOrder(for: setup, backups: parts.backups)
         self.windowState = windowState
         self.backupAllowed = backupAllowed
@@ -147,18 +158,18 @@ package actor CheckedPlayer: AddedAppPlayer {
     }
 
     package func pause() async throws {
-        if wayOrder != nil { return try await pressByBackups(to: .paused) }
+        if usesBackups { return try await pressByBackups(to: .paused) }
         try await press(to: .paused)
     }
 
     package func play() async throws {
-        if wayOrder != nil { return try await pressByBackups(to: .playing) }
+        if usesBackups { return try await pressByBackups(to: .playing) }
         try await press(to: .playing)
     }
 
     /// No mute stands in if it's refused: its backups at once.
     package func pauseUncovered() async throws {
-        if wayOrder != nil { return try await pressByBackups(to: .paused, covered: false) }
+        if usesBackups { return try await pressByBackups(to: .paused, covered: false) }
         try await press(to: .paused)
     }
 
@@ -167,7 +178,7 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// at a time, the panel once in each muted pause while "the panel while
     /// muted" is on (`pauseWhileMuted`).
     package func pauseQuietly() async throws {
-        if wayOrder != nil { return try await pauseWhileMuted() }
+        if usesBackups { return try await pauseWhileMuted() }
         try await press(to: .paused, quietly: true)
     }
 
@@ -177,11 +188,15 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// whose press doesn't take, hands it to the next, the panel last
     /// (`quietly`: not the panel).
     private func press(to target: PlayerState, quietly: Bool = false) async throws {
+        ownPressBegins()
         var firstError: any Error?
         var checkable: Bool?
-        for way in parts.ways where !(quietly && way is PanelWay) {
+        for (index, way) in parts.ways.enumerated() where !(quietly && way is PanelWay) {
             do {
                 try await press(way, to: target, checkable: &checkable)
+                if setup.ways.indices.contains(index), let kind = setup.ways[index].kind {
+                    lastUsed.withLock { $0.note(WayOrder.Kind(kind), for: target) }
+                }
                 return
             } catch {
                 logger.notice("\(self.name, privacy: .public): \(String(describing: type(of: way)), privacy: .public) failed: \(error)")

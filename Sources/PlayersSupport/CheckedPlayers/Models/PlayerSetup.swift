@@ -1,4 +1,5 @@
 import Foundation
+import AutoHushKit
 import ScriptablePlayers
 import WebAppPlayers
 
@@ -63,6 +64,10 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     /// while the app is muted in place of a pause, which no other way
     /// shows on screen (on unless the user turns it off; the user, 2026-11-04).
     package var panelWhileMuted: Bool
+    /// Both switches together.
+    package var switches: BackupSwitches {
+        BackupSwitches(usesBackups: usesBackups, panelWhileMuted: panelWhileMuted)
+    }
     /// The notification that announced its pauses and plays in the check.
     var stateNotification: String?
     /// An Electron app that takes presses while covered or on another desktop

@@ -7,14 +7,14 @@ extension DiagnosticsReport {
     private typealias Row = DiagnosticsSnapshot.Row
 
     static func sections(status: AppStatus, facts: DiagnosticsFacts,
-                                 ways: (String) -> [PlayerSetup.Way]?) -> [DiagnosticsSnapshot.Section] {
-        [player(status: status, facts: facts, ways: ways), behavior(status: status, facts: facts),
+                         ways: (String) -> [PlayerSetup.Way]?, controls: PlayerControls? = nil) -> [DiagnosticsSnapshot.Section] {
+        [player(status: status, facts: facts, ways: ways, controls: controls), behavior(status: status, facts: facts),
          detection(status: status, facts: facts), permissions(facts: facts), autoHush(status: status, facts: facts),
          mac(facts: facts)]
     }
 
     private static func player(status: AppStatus, facts: DiagnosticsFacts,
-                               ways: (String) -> [PlayerSetup.Way]?) -> DiagnosticsSnapshot.Section {
+                               ways: (String) -> [PlayerSetup.Way]?, controls: PlayerControls?) -> DiagnosticsSnapshot.Section {
         let title = PlayerOption.mediaPlayerHeading
         guard let player = status.chosenPlayer else {
             let none = PlayerOption.noneChosenLabel
@@ -32,10 +32,15 @@ extension DiagnosticsReport {
             Row(label: FadesText.title,
                 value: !facts.playerCanFade ? no : facts.timings.fadesEnabled ? yes : off),
         ]
-        // An app added with Add an App: its ways, the first tried first.
-        if player.kind == .checkedApp, let ways = ways(player.bundleID), !ways.isEmpty {
+        // Every player with backup controls (B1 with B2's rows, the user,
+        // 2026-11-05): its controls, the main one first, each marked when it
+        // paused or played it last, then the two switches.
+        if let controls {
+            rows += controlRows(controls)
+        } else if player.kind == .checkedApp, let ways = ways(player.bundleID), !ways.isEmpty {
+            // An app that's only muted: so it says.
             rows.append(Row(label: String(localized: "Controlled by",
-                                          comment: "Diagnostics: how AutoHush pauses and plays the media player, an app added with Add an App: the ways its check found, one a line, the first tried first (AppleScript, Its playback menu…), or “Muted instead of paused”"),
+                                          comment: "Diagnostics: how AutoHush pauses and plays the media player: its main control, then its backup controls, one a line, the first tried first (AppleScript, Its playback menu (backup)…), or “Muted instead of paused” for an app that’s only muted"),
                             value: ways.map(describe).joined(separator: "\n")))
         }
         if let learned = facts.playerLearned {
@@ -216,5 +221,34 @@ extension DiagnosticsReport {
                 Row(label: "macOS", value: facts.macOS),
                 Row(label: String(localized: "Processor", comment: "Diagnostics: the Mac's processor"), value: facts.processor),
               ])
+    }
+
+    /// “Controlled by” (the main control, then the backups in use, each
+    /// marked when it paused or played last), “Use backup controls” (On,
+    /// Off, or No for an app checked before them or a web app not learned)
+    /// and, with the panel among them, “Use the Now Playing panel while muted”.
+    private static func controlRows(_ controls: PlayerControls) -> [Row] {
+        func line(_ control: PlayerControls.Control, backup: Bool) -> String {
+            let name = WayText.control(control.kind)
+            let paused = controls.last.paused == control.kind, played = controls.last.played == control.kind
+            let mark: String? = paused && played ? BackupText.pausedAndPlayedLast : paused ? BackupText.pausedLast : played ? BackupText.playedLast : nil
+            switch (backup, mark) {
+            case (false, nil): return name
+            case (false, let mark?): return BackupText.marked(name, mark)
+            case (true, nil): return BackupText.backup(name)
+            case (true, let mark?): return BackupText.backupMarked(name, mark)
+            }
+        }
+        let inUse = controls.backupsInUse
+        let lines = [line(controls.main, backup: false)] + (inUse ? controls.backups.map { line($0, backup: true) } : [])
+        var rows = [Row(label: String(localized: "Controlled by",
+                                      comment: "Diagnostics: how AutoHush pauses and plays the media player: its main control, then its backup controls, one a line, the first tried first (AppleScript, Its playback menu (backup)…), or “Muted instead of paused” for an app that’s only muted"),
+                        value: lines.joined(separator: "\n"))]
+        let available = !controls.needsCheckAgain && !controls.notLearned && !controls.backups.isEmpty
+        rows.append(Row(label: BackupText.uses, value: !available ? no : controls.switches.usesBackups ? on : off))
+        if available, controls.hasPanel {
+            rows.append(Row(label: BackupText.panelWhileMuted, value: controls.switches.panelWhileMuted && controls.switches.usesBackups ? on : off))
+        }
+        return rows
     }
 }

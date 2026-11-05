@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import AutoHushKit
+import CheckedPlayers
 
 /// What the Settings window shows and edits, and the welcome, learning and
 /// Add a Web App windows with it. It reads each part from its owner: what
@@ -50,6 +51,8 @@ final class SettingsModel {
     var chosenPlayer: PlayerOption? { state.chosenPlayer }
     /// The chosen player's name, e.g. "Jukebox".
     var chosenPlayerName: String? { chosenPlayer?.name }
+    /// What controls the chosen player (Settings → Media Player's card).
+    var chosenControls: PlayerControls? { state.status.chosenControls }
     /// How far AutoHush has come learning to control the chosen player;
     /// `nil` for a player it controls without learning.
     var learning: LearningStatus? { state.learning }

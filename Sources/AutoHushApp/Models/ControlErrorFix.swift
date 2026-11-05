@@ -85,7 +85,7 @@ enum ControlErrorFix: Equatable {
         case .learnAgain: LearnText.learnAgainButton
         case .checkAgain:
             String(localized: "Check Again…",
-                   comment: "Button in the alert that says why AutoHush couldn't pause or control an app added with Add an App: opens the Add an App window on that app, to check it again")
+                   comment: "Button in the alert that says why AutoHush couldn't pause or control an app added with Add an App: opens the Add an App window on that app, to check it again. Also in Settings → Media Player, on the card of an app added before backup controls were kept")
         case .turnOffAntiDot: AddAppText.turnOffAntiDot
         case .allowAudioRecording: Permission.systemAudioRecording.grantTitle
         case .reopenAutoHush: PermissionText.reopen

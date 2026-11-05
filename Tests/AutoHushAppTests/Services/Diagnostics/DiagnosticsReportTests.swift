@@ -301,6 +301,27 @@ struct DiagnosticsReportTests {
         #expect(rows.last?.value == "No")
     }
 
+    @Test("a player's controls: its main one, its backups in use, each marked when it paused and played it last, then both switches; with them off, its main one alone; one checked before them, No")
+    func controls() throws {
+        func rows(_ controls: PlayerControls) throws -> [DiagnosticsSnapshot.Row] {
+            try #require(DiagnosticsReport.snapshot(activeAudio: [], status: workingStatus(), facts: facts(), controls: controls)
+                .sections.first { $0.kind == .player }).rows
+        }
+        let script = PlayerControls.Control(kind: .script, result: nil), menu = PlayerControls.Control(kind: .menu, result: nil)
+        let key = PlayerControls.Control(kind: .mediaKey, result: nil), panel = PlayerControls.Control(kind: .panel, result: nil)
+        let on = try rows(PlayerControls(main: script, backups: [menu, key, panel], switches: BackupSwitches(),
+                                         last: LastControls(paused: .menu, played: .script)))
+        #expect(on.contains(.init(label: "Controlled by", value: "AppleScript (played last)\nIts playback menu (backup, paused last)\nThe Play/Pause key (backup)\nThe menu bar’s Now Playing panel (backup)")))
+        #expect(on.contains(.init(label: "Use backup controls", value: "On")) && on.contains(.init(label: "Use the Now Playing panel while muted", value: "On")))
+        let off = try rows(PlayerControls(main: script, backups: [menu, panel], switches: BackupSwitches(usesBackups: false),
+                                          last: LastControls(paused: .script, played: .script)))
+        #expect(off.contains(.init(label: "Controlled by", value: "AppleScript (paused and played last)")))
+        #expect(off.contains(.init(label: "Use backup controls", value: "Off")) && off.contains(.init(label: "Use the Now Playing panel while muted", value: "Off")))
+        let older = try rows(PlayerControls(main: menu, backups: [panel], switches: BackupSwitches(), needsCheckAgain: true))
+        #expect(older.contains(.init(label: "Controlled by", value: "Its playback menu")) && older.contains(.init(label: "Use backup controls", value: "No")))
+        #expect(older.allSatisfy { $0.label != "Use the Now Playing panel while muted" })
+    }
+
     @Test("an app added with Add an App says the ways it's controlled by, in order; one muted instead says so; with its ways unknown, nothing")
     func checkedApp() throws {
         func player(_ ways: [PlayerSetup.Way]?, mutes: Bool = false) throws -> DiagnosticsSnapshot.Section {

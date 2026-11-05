@@ -10,7 +10,10 @@ import WebAppPlayers
 /// supported app is; one moved since its check gets its new place.
 package final class CheckedPlayers: Sendable {
     let store: any PlayerSetupStore
-    private let players = KeptPlayers<PlayerSetup, any AddedAppPlayer>(key: { $0.bundleID }, source: { $0.setup })
+    /// Kept by their setup with their backup switches as they are now
+    /// (`CheckedPlayer.setupNow`): Settings changing them keeps the player.
+    private let players = KeptPlayers<PlayerSetup, any AddedAppPlayer>(key: { $0.bundleID },
+                                                                       source: { ($0 as? CheckedPlayer)?.setupNow ?? $0.setup })
     /// Where Launch Services finds an app now, by bundle ID; tests stand in for it.
     private let locate: @Sendable (String) -> URL?
 
@@ -52,6 +55,28 @@ package final class CheckedPlayers: Sendable {
         if let button = result.pageButton { recipes.save(button, for: setup.bundleID) }
         store.save(setup)
         players.forget(setup.bundleID)
+    }
+
+    /// The backup switches of the app added with `bundleID`, once checked
+    /// since backup controls were kept; `nil` otherwise.
+    package func switches(for bundleID: String) -> BackupSwitches? {
+        guard let setup = store.setups().first(where: { $0.bundleID == bundleID }), !setup.wayResults.isEmpty else { return nil }
+        return setup.switches
+    }
+
+    /// Sets the backup switches of the app added with `bundleID` (Settings →
+    /// Media Player): its setup keeps them, and its player follows them from
+    /// its next press, the same player (a new one would drop a pause
+    /// AutoHush holds in it; the user, 2026-11-05). `player` is the one in
+    /// use, which may no longer be the one kept (made again once its setup
+    /// changed, its app moved or its panel row saved). The players first,
+    /// so the kept one still matches its setup once that's saved.
+    package func setSwitches(_ switches: BackupSwitches, for bundleID: String, player: (any AddedAppPlayer)? = nil) {
+        for used in [player, players.kept(bundleID)] { (used as? CheckedPlayer)?.setSwitches(switches) }
+        store.update(bundleID) {
+            $0.usesBackups = switches.usesBackups
+            $0.panelWhileMuted = switches.panelWhileMuted
+        }
     }
 
     /// Removes the app added with `bundleID` (the user's Remove…): its setup

@@ -1,5 +1,6 @@
 import Foundation
 import AutoHushKit
+import CheckedPlayers
 
 /// Each card's Restore Defaults (the user, 2026-10-25: one for every card
 /// with settings), shown only once something on it differs (RD1,
@@ -40,6 +41,12 @@ extension SettingsModel {
         if settings.getsReleaseCandidates != current.getsReleaseCandidates {
             updates.setGetsReleaseCandidates(settings.getsReleaseCandidates)
         }
+        // Only to the player they were the switches of: Undo after another
+        // was chosen leaves the new one's alone.
+        if settings.backupSwitches != current.backupSwitches, let wanted = settings.backupSwitches,
+           wanted.bundleID == current.backupSwitches?.bundleID {
+            actions?.setBackupSwitches(wanted.switches)
+        }
     }
 
     /// Undo ("Undo Restore Defaults") sets each setting that differs
@@ -61,7 +68,16 @@ extension SettingsModel {
         CardSettings(timings: timings, detectionMethod: detectionMethod,
                      keepsMenuBarIconNearSystemIcons: keepsMenuBarIconNearSystemIcons,
                      checksForUpdatesAutomatically: checksForUpdatesAutomatically,
-                     automaticUpdates: automaticUpdates, getsReleaseCandidates: getsReleaseCandidates)
+                     automaticUpdates: automaticUpdates, getsReleaseCandidates: getsReleaseCandidates,
+                     backupSwitches: chosenBackupSwitches)
+    }
+
+    /// The chosen player's backup switches while its card shows them (not
+    /// for an app to check again, nor a web app not learned yet).
+    private var chosenBackupSwitches: ChosenBackupSwitches? {
+        guard let bundleID = chosenPlayerID, let controls = chosenControls, !controls.needsCheckAgain, !controls.notLearned
+        else { return nil }
+        return ChosenBackupSwitches(bundleID: bundleID, switches: controls.switches)
     }
 
     /// The settings as the card's Restore Defaults leaves them: its own back
@@ -116,14 +132,26 @@ extension SettingsModel {
             restored.checksForUpdatesAutomatically = true
             if updateInstallNote == nil { restored.automaticUpdates = .install }
             restored.getsReleaseCandidates = false
+        // The chosen player's backup controls': both on, as when it's
+        // added; the panel's alone while it isn't among them (hidden).
+        case .playerControls:
+            restored.backupSwitches?.switches.usesBackups = true
+            if chosenControls?.hasPanel == true { restored.backupSwitches?.switches.panelWhileMuted = true }
         }
         return restored
     }
 }
 
+/// The chosen player's backup switches, with whose they are.
+private struct ChosenBackupSwitches: Equatable {
+    let bundleID: String
+    var switches: BackupSwitches
+}
+
 /// The settings a card's Restore Defaults can change: the timings, the
-/// detection, the menu bar icon's place and the updates' choices. It sets
-/// them through these alone, so they're also all its Undo needs to keep.
+/// detection, the menu bar icon's place, the chosen player's backup
+/// switches and the updates' choices. It sets them through these alone, so
+/// they're also all its Undo needs to keep.
 private struct CardSettings: Equatable {
     var timings: TimingSettings
     var detectionMethod: DetectionMethod
@@ -131,6 +159,7 @@ private struct CardSettings: Equatable {
     var checksForUpdatesAutomatically: Bool
     var automaticUpdates: AutomaticUpdates
     var getsReleaseCandidates: Bool
+    var backupSwitches: ChosenBackupSwitches?
 
     /// These settings with each one that differs between `old` and `new`
     /// set as in `new`, timing by timing: what a restore (or its Undo)
@@ -159,6 +188,13 @@ private struct CardSettings: Equatable {
         take(\.checksForUpdatesAutomatically)
         take(\.automaticUpdates)
         take(\.getsReleaseCandidates)
+        // Switch by switch, and only for the player they were the switches of.
+        if var now = settings.backupSwitches, old.backupSwitches?.bundleID == now.bundleID, new.backupSwitches?.bundleID == now.bundleID,
+           let before = old.backupSwitches?.switches, let after = new.backupSwitches?.switches {
+            if before.usesBackups != after.usesBackups { now.switches.usesBackups = after.usesBackups }
+            if before.panelWhileMuted != after.panelWhileMuted { now.switches.panelWhileMuted = after.panelWhileMuted }
+            settings.backupSwitches = now
+        }
         return settings
     }
 }

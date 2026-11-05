@@ -40,10 +40,14 @@ package struct BuiltInBackups: Sendable {
             self.states = states
         }
 
-        /// As a check's result, for `WayOrder`.
+        /// As a check's result, for `WayOrder` and its Details: worked
+        /// wherever it was tried (`.works`), failed in some (`.some`), or
+        /// tried nowhere (`.notTried`).
         var result: CheckResult.WayResult {
-            CheckResult.WayResult(kind: way.kind, mark: .some,
-                                  states: CheckResult.WindowState.allCases.compactMap { state in states[state].map { .init(state: state, outcome: $0) } })
+            let failed = CheckResult.WindowState.trip.filter { states[$0] == .failed }
+            let mark: CheckResult.Mark = states.isEmpty ? .notTried : failed.isEmpty ? .works : .some
+            return CheckResult.WayResult(kind: way.kind, mark: mark, failedStates: failed,
+                                         states: CheckResult.WindowState.allCases.compactMap { state in states[state].map { .init(state: state, outcome: $0) } })
         }
     }
 

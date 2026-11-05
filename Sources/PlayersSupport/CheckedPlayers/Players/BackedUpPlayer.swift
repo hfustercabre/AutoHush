@@ -15,10 +15,14 @@ import WebAppPlayers
 /// (`inner`), which a web app keeps learning and muting through
 /// (`LearningMusicPlayer`, `MutingMusicPlayer`). Made once per player, so it
 /// stays the same object while it's the player.
-package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlayer, BackupRouting {
+package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlayer, BackupRouting, ControlsReporting {
     package nonisolated let inner: Inner
     /// Its backups' players, in their order (the Play/Pause key, then the panel, last).
     nonisolated let backups: [CheckedPlayer.Backup]
+    /// How its own way did, and each backup (`nil` where untested).
+    private nonisolated let ownResult: CheckResult.WayResult
+    private nonisolated let backupResults: [CheckResult.WayResult?]
+    nonisolated let lastUsed = OSAllocatedUnfairLock(initialState: LastControls())
     let wayOrder: WayOrder?
     /// Its page way, learned as AutoHush pauses it its own way (Spotify's);
     /// `nil` for the others.
@@ -50,6 +54,8 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
          now: @escaping @Sendable () -> Date = { Date() }) {
         self.inner = inner
         self.backups = backups
+        ownResult = own
+        backupResults = results
         wayOrder = backups.isEmpty ? nil : WayOrder(ways: [WayOrder.Way(kind: WayOrder.Kind(own.kind), result: own)]
             + zip(backups, results).map { WayOrder.Way(kind: $0.kind, result: $1) })
         self.learningPage = learningPage
@@ -125,13 +131,21 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     // MARK: - Pressed with its backups
 
     package func pause() async throws {
-        guard usesBackups else { return try await inner.pause() }
+        guard usesBackups else { return try await own(.paused) { try await inner.pause() } }
         try await pause(covered: true)
     }
 
     package func pauseUncovered() async throws {
-        guard usesBackups else { return try await inner.pauseUncovered() }
+        guard usesBackups else { return try await own(.paused) { try await inner.pauseUncovered() } }
         try await pause(covered: false)
+    }
+
+    /// A press by its own player alone (its backups off), noted as its own.
+    private func own(_ target: PlayerState, _ press: () async throws -> Void) async throws {
+        ownPressBegins()
+        try await press()
+        let kind = WayOrder.Kind(ownResult.kind)
+        lastUsed.withLock { $0.note(kind, for: target) }
     }
 
     private func pause(covered: Bool) async throws {
@@ -141,13 +155,13 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     }
 
     package func play() async throws {
-        guard usesBackups else { return try await inner.play() }
+        guard usesBackups else { return try await own(.playing) { try await inner.play() } }
         await learningPage?.showPage()
         try await pressByBackups(to: .playing)
     }
 
     package func pauseQuietly() async throws {
-        guard usesBackups else { return try await inner.pauseQuietly() }
+        guard usesBackups else { return try await own(.paused) { try await inner.pauseQuietly() } }
         try await pauseWhileMuted()
     }
 
@@ -162,6 +176,18 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
             return false
         }
         return await learningPage.markPlaying() == .noted
+    }
+
+    // MARK: - What controls it
+
+    /// Its own way, its backups (the Play/Pause key untested), their
+    /// switches, and which paused and played it last.
+    package nonisolated var controls: PlayerControls {
+        PlayerControls(main: .init(kind: WayOrder.Kind(ownResult.kind), result: ownResult),
+                       backups: zip(backups, backupResults).map { .init(kind: $0.kind, result: $1) },
+                       switches: switches(),
+                       notLearned: (inner as? any LearningMusicPlayer)?.learningStatus.isLearned == false,
+                       last: lastUsed.withLock { $0 })
     }
 
     // MARK: - BackupRouting

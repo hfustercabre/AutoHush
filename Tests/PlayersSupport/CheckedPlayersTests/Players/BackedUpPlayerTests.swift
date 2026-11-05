@@ -76,6 +76,20 @@ struct BackedUpPlayerTests {
         #expect(web.learningStatus == .learned)
     }
 
+    @Test("its controls: its own way, its backups with how each was found, its switches, and the one that paused and played it last")
+    func controls() async throws {
+        let switches = Locked(BackupSwitches(usesBackups: false))
+        let player = backed(MockMusicPlayer(), [(taking(), .mediaKey), (taking(), .panel)], switches: switches)
+        try await player.pause()
+        #expect(player.controls.main.kind == .script && player.controls.backups.map(\.kind) == [.mediaKey, .panel])
+        #expect(player.controls.last == LastControls(paused: .script) && !player.controls.backupsInUse)
+        switches.value = BackupSwitches()
+        let refusing = await failing(), key = taking()
+        let backedUp = backed(refusing, [(key, .mediaKey)])
+        try await backedUp.pauseUncovered()
+        #expect(backedUp.controls.last == LastControls(paused: .mediaKey) && backedUp.controls.backupsInUse)
+    }
+
     @Test("a pause goes to its own way only; refused, it's left to AutoHush's mute, whose retries try the Play/Pause key once, then the panel once")
     func pauseThenMuted() async throws {
         let own = await failing(), key = await failing(), panel = taking()

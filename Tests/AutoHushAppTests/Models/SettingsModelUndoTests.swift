@@ -3,6 +3,7 @@ import Testing
 @testable import AutoHushApp
 @testable import AutoHushKit
 import AutoHushTestSupport
+import CheckedPlayers
 
 /// Settings' Undo and Redo of a card's Restore Defaults (U10a, the user's
 /// pick, 2026-11-02): one step per press, putting back every setting it
@@ -40,6 +41,7 @@ struct SettingsModelUndoTests {
         var all = store.contents
         for (key, value) in iconDefaults.contents { all["menuBarIcon." + key] = value }
         all["updates"] = [updates.checksAutomatically, updates.mode.rawValue, updates.getsReleaseCandidates] as [Any]
+        if let switches = model.chosenControls?.switches { all["backupSwitches"] = [switches.usesBackups, switches.panelWhileMuted] }
         return all as NSDictionary
     }
 
@@ -63,6 +65,14 @@ struct SettingsModelUndoTests {
         updates.checksAutomatically = false
         updates.mode = .notify
         updates.getsReleaseCandidates = true
+        // A chosen player with a panel among its backups, both switches off.
+        model.state.status.choosePlayer(named: "Jukebox")
+        let controls = PlayerControls(main: .init(kind: .menu, result: nil), backups: [.init(kind: .panel, result: nil)],
+                                      switches: BackupSwitches(usesBackups: false, panelWhileMuted: false))
+        model.state.status.chosenControls = controls
+        actions.setsBackupSwitches = { [model] switches in
+            model.state.status.chosenControls = PlayerControls(main: controls.main, backups: controls.backups, switches: switches)
+        }
     }
 
     @Test("Undo puts back every setting each card's Restore Defaults changed, on the card's page; Redo restores them again", arguments: SettingsCard.allCases)
@@ -107,6 +117,23 @@ struct SettingsModelUndoTests {
         #expect(log.calls.last == "fineTuning")
     }
 
+    @Test("the backup controls' Undo puts back only the switch the restore changed, and only for the player they were the switches of")
+    func backupSwitchesUndo() {
+        changeEverything(for: .playerControls)
+        model.actions?.setBackupSwitches(BackupSwitches(usesBackups: false, panelWhileMuted: true))
+        press(.playerControls) // Use backup controls back on; the panel's was on
+        model.actions?.setBackupSwitches(BackupSwitches(usesBackups: true, panelWhileMuted: false))
+        undo.undo()
+        #expect(model.chosenControls?.switches == BackupSwitches(usesBackups: false, panelWhileMuted: false))
+        // Redone, then another player chosen: its switches stay as they are.
+        undo.redo()
+        model.state.status.choosePlayer(named: "Radio")
+        model.actions?.setBackupSwitches(BackupSwitches(usesBackups: true, panelWhileMuted: true))
+        log.calls = []
+        undo.undo()
+        #expect(model.chosenControls?.switches == BackupSwitches() && !log.calls.contains { $0.hasPrefix("backups") })
+    }
+
     @Test("Undo and Redo put back only what the restore changed: a setting changed since, on the card or another, stays")
     func otherChangesStay() {
         changeEverything(for: .fades)
@@ -144,6 +171,6 @@ struct SettingsModelUndoTests {
     @Test("each card's page is the one that shows it")
     func cardPages() {
         #expect(SettingsCard.allCases.map(\.page) == [.behavior, .behavior, .behavior, .behavior, .behavior,
-                                                       .fineTuning, .fineTuning, .fineTuning, .fineTuning, .general, .about])
+                                                       .fineTuning, .fineTuning, .fineTuning, .fineTuning, .general, .mediaPlayer, .about])
     }
 }

@@ -573,7 +573,7 @@ flowchart TD
   KEEP["The result kept<br/>for a day, until Use"]
   ANY{"Did a way AutoHush<br/>can use work?"}
   CARDS["6 · Cards of the ways that<br/>worked, Recommended first;<br/>those that didn’t, with why"]
-  USE["Use: added under Other<br/>Apps, Checked by you, made<br/>the media player"]
+  USE["Use: added under Other<br/>Apps, Checked by you, made<br/>the media player, its backup<br/>controls’ two switches kept"]
   NPH["Now Playing couldn’t be<br/>shown: Open Menu Bar<br/>Settings…, then Check Again"]
   CLW["Checked with its windows<br/>closed, a way didn’t work<br/>or wasn’t checked for want<br/>of a window: a note to open<br/>one, Check Again beside Use"]
   AGN["After Check Again: 4 · Play<br/>something (a window open<br/>too, if its windows were<br/>closed); Back to Result until<br/>the new check starts"]

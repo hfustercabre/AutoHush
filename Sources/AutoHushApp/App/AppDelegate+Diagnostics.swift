@@ -17,7 +17,8 @@ extension AppDelegate {
         let snapshot = DiagnosticsReport.snapshot(
             activeAudio: session.activeAudioReport(), status: status, facts: diagnosticsFacts(),
             bundlePath: { id in known[id] ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)?.path },
-            ways: { id in checked?.bundleID == id ? checked?.setup.ways : nil }
+            ways: { id in checked?.bundleID == id ? checked?.setup.ways : nil },
+            controls: (player as? any ControlsReporting)?.controls
         )
         if settingsModel.diagnostics != snapshot { settingsModel.diagnostics = snapshot }
     }

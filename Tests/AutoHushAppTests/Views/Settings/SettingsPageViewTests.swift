@@ -4,6 +4,7 @@ import Testing
 @testable import AutoHushApp
 @testable import AutoHushKit
 import AutoHushTestSupport
+import CheckedPlayers
 
 /// Settings' pages no other test shows, drawn as their window draws them.
 @Suite("Settings' pages, drawn", .waitsTimeLimit)
@@ -110,8 +111,9 @@ struct SettingsPageViewTests {
         #expect(missing >= allowed + note, "\(missing) missing, \(allowed) allowed, the note \(note)")
     }
 
-    @Test("Behavior, Fine-Tuning, General and About draw with every card changed, each with its Restore Defaults; Behavior and Fine-Tuning in AntiDot mode too", arguments: [
-        (SettingsPage.behavior, false), (.behavior, true), (.fineTuning, false), (.fineTuning, true), (.general, false), (.about, false),
+    @Test("Behavior, Fine-Tuning, General, Media Player and About draw with every card changed, each with its Restore Defaults; Behavior and Fine-Tuning in AntiDot mode too", arguments: [
+        (SettingsPage.behavior, false), (.behavior, true), (.fineTuning, false), (.fineTuning, true), (.general, false),
+        (.mediaPlayer, false), (.about, false),
     ])
     func everyCardChanged(_ page: SettingsPage, _ antiDot: Bool) {
         let updates = FakeUpdateCommands()
@@ -131,9 +133,12 @@ struct SettingsPageViewTests {
         case .behavior: [.pausing, .resuming, .fades, antiDot ? .modes : .volume]
         case .fineTuning: [.timing, .fadeLengths, .detection] + (antiDot ? [] : [.volumeLimits])
         case .general: [.startup]
+        case .mediaPlayer: [.playerControls]
         default: [.updates]
         }
         if page == .general { model.setKeepsMenuBarIconNearSystemIcons(true) }
+        model.state.status.chosenControls = PlayerControls(main: .init(kind: .menu, result: nil), backups: [.init(kind: .panel, result: nil)],
+                                                           switches: BackupSwitches(usesBackups: false))
         updates.checksAutomatically = false
         updates.mode = .notify
         for card in cards { #expect(!model.isDefault(card), "\(card)") }

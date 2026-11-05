@@ -65,7 +65,7 @@ struct WelcomePermissionsView: View {
     }
 
     private static var doneTitle: String {
-        String(localized: "Done", comment: "Welcome window: button that closes it once the permissions are allowed")
+        ButtonText.done
     }
 
     /// What VoiceOver hears as the permissions go from `old` to `new`: each

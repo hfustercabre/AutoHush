@@ -9,8 +9,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Backups for an app added with Add an App:** the other ways that
-  worked in its check now back up the one you chose. With its window as
+- **Backup controls for an app added with Add an App:** the other ways
+  that worked in its check now back up the one you chose. With its window as
   it is now (minimized, hidden, on another desktop…), a way that didn't
   work there in the check is passed over for one that did, the Now
   Playing panel last; the keyboard's Play/Pause key backs it up too,
@@ -19,15 +19,22 @@ This project follows [Semantic Versioning](https://semver.org/).
   then tried while it's muted (the key and the panel once); when it can't be muted (AntiDot mode, no Audio Recording) and
   for a refused resume, at once. Apps added before keep their one way
   until they're checked again.
-- **Backups for the built-in players and web apps:** Spotify, Apple
-  Music, VLC, Apple Podcasts, TIDAL, QuickTime Player and Safari web apps
-  (once learned) get backups too, the ways that worked for each when checked: Spotify,
+- **Backup controls for the built-in players and web apps:** Spotify,
+  Apple Music, VLC, Apple Podcasts, TIDAL, QuickTime Player and Safari web
+  apps (once learned) get them too, the ways that worked for each when checked: Spotify,
   Apple Music and VLC their playback menu, Spotify its page (learned by
   AutoHush itself the first time it pauses Spotify), every player the
   keyboard's Play/Pause key and the Now Playing panel. They're used as an
   added app's are; a web app's refused pause is muted by AutoHush, which
   tries them meanwhile. Where no mute can follow a pause (the output went
   away, the Mac going to sleep), any player's backups are tried at once.
+- **Use backup controls** and **Use the Now Playing panel while muted**,
+  both on, in Settings → Media Player for your player and in Add an App's
+  last step; a change takes effect at the next pause or play, and
+  **Restore Defaults** turns both back on. **Details…** in Settings lists
+  its main control and its backup controls, with how each works; an app
+  added before them says to check it again. Diagnostics lists every control, the ones that paused
+  and played it last marked.
 - **Page Up, Page Down, Home and End** move the keyboard's highlight in
   the menu and Settings, a page at a time or to the first and last row.
 - **VoiceOver** follows the arrow keys' highlight, and Zoom shows where

@@ -71,6 +71,7 @@ extension CheckedPlayer {
             return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
         }
         if let reported = await reported(pid: pid, polled: polled) { return reported }
+        guard usesBackups else { return .unknown }
         return await signsSay(parts.backupSigns, pid: pid, polled: polled, backups: true) ?? .unknown
     }
 
@@ -101,7 +102,7 @@ extension CheckedPlayer {
         guard let pid = processIdentifier() else { return .notRunning }
         if let state = await signsSay(parts.signs, pid: pid, polled: false, besidesPage: true) { return state }
         if parts.hearing == nil, let reported = await reported(pid: pid, polled: false) { return reported }
-        if let state = await signsSay(parts.backupSigns, pid: pid, polled: false, backups: true, besidesPage: true) { return state }
+        if usesBackups, let state = await signsSay(parts.backupSigns, pid: pid, polled: false, backups: true, besidesPage: true) { return state }
         return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
     }
 

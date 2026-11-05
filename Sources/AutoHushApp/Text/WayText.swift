@@ -13,4 +13,9 @@ enum WayText {
         case .panel: String(localized: "The menu bar’s Now Playing panel", comment: "A way to pause and play an app added with Add an App: its row in macOS's Now Playing panel (the Add an App window, Settings → Diagnostics under “Controlled by”)")
         }
     }
+
+    /// A player's control, the Play/Pause key among them (`PlayerControls`).
+    static func control(_ control: WayOrder.Kind) -> String {
+        control.checked.map(title) ?? BackupText.key
+    }
 }

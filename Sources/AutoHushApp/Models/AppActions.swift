@@ -20,6 +20,13 @@ protocol AppActions: AnyObject {
     func removeAddedApp(_ bundleID: String)
     /// Learns the chosen player's controls afresh, in a new learning window.
     func learnControlsAgain()
+    /// Sets the chosen player's backup switches (Settings → Media Player).
+    func setBackupSwitches(_ switches: BackupSwitches)
+    /// Opens Add an App on the chosen player, an app added before backup
+    /// controls were kept, to check it again.
+    func checkPlayerAgain()
+    /// Reads again what controls the chosen player (`AppStatus.chosenControls`).
+    func refreshPlayerControls()
     /// A missing permission's button: macOS's prompt, System Settings,
     /// opening the player, or reopening AutoHush (`PermissionCenter`).
     func requestPermission(_ permission: Permission)

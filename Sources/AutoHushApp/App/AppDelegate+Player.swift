@@ -108,6 +108,8 @@ extension AppDelegate {
         // A web app chosen by Add a Web App: its window shows the steps.
         shown.learningStepsShown = showsLearningSteps
         status = shown
+        // A web app's backups follow its learning (`PlayerControls.notLearned`).
+        if changed { refreshPlayerControls() }
         guard changed, learningStatus == nil || learningStatus == .learned else { return }
         // Learned (both steps ticked), or nothing to learn: the windows go.
         let delay = learningStatus == .learned ? learnedWindowDelay : .zero
@@ -134,6 +136,7 @@ extension AppDelegate {
     /// (muted instead of paused, fades) come with its option.
     func showChosenPlayer() {
         status.chosenPlayerID = player?.bundleID
+        refreshPlayerControls()
     }
 
     /// Checks again which players are installed, for the menu, Settings and

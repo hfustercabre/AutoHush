@@ -1,3 +1,4 @@
+import AutoHushKit
 import CheckedPlayers
 
 /// What Add an App needs from the rest of AutoHush, which AppDelegate does:
@@ -27,6 +28,9 @@ protocol AddAppHost: AnyObject {
     /// learns of an Accessibility change only when macOS says so, which it
     /// doesn't always (`AddAppModel.accessibilityNeedsReopen`).
     func reopenKeepingAddApp()
+    /// The backup switches of the app added with `bundleID`, when it was
+    /// checked since backup controls were kept: checking it again keeps them.
+    func backupSwitches(for bundleID: String) -> BackupSwitches?
     /// Keeps what the check found and makes the app the player; `asksToReopen`
     /// false once the user skipped reopening it.
     func useCheckedApp(_ result: CheckResult, asksToReopen: Bool)

@@ -197,6 +197,7 @@ extension AddAppView {
             } else {
                 StepNote(AddAppText.chooseWay(app))
                 WayChoices(model: model, result: result, app: app).padding(.top, 4)
+                BackupControlRows(model: model).padding(.top, 6)
             }
             if model.nowPlayingHidden {
                 // Shown there, the panel can be tried with Check Again (2026-10-16).

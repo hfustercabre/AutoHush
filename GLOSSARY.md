@@ -175,12 +175,16 @@ window through these 7, in the order that takes the fewest moves. **Windows clos
 window on screen or within reach (a menu bar player's), where each way
 that needs none is tried once.
 
-**Backups** (`WayOrder`, `BackupRouting`): a player's other ways, pressed
-when its own fails, by its window's state: an added app's the other ways
-its check found; a built-in player's or a Safari web app's those measured
-for it (`BackedUpPlayer`, `MeasuredBackups`); every player's the keyboard's
-Play/Pause key and the Now Playing panel last. Used while their switch is
-on (`usesBackups`; the panel while muted, `panelWhileMuted`).
+**Main control, backup controls** (`PlayerControls`, `WayOrder`,
+`BackupRouting`): the way AutoHush pauses and plays a player first, and its
+other ways, pressed when the main one fails, by its window's state: an added
+app's the other ways its check found; a built-in player's or a Safari web
+app's those measured for it (`BackedUpPlayer`, `MeasuredBackups`); every
+player's the keyboard's Play/Pause key and the Now Playing panel last. Used
+while their switch is on (**Use backup controls**, `usesBackups`; **Use the
+Now Playing panel while muted**, `panelWhileMuted`). Diagnostics marks the
+one that paused and played it last (`LastControls`).
+_Avoid_: backup ways, fallbacks.
 
 **Checked app** (`AddedAppPlayer`, kind `.checkedApp`): an app added with
 Add an App, offered under "Other Apps" with its "Checked by you" badge, and

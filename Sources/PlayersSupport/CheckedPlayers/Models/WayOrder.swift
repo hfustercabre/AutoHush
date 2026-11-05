@@ -8,13 +8,13 @@ import AutoHushKit
 /// Playing panel last, where it worked or wasn't tested. A way that failed
 /// there is left out; when every way did, the chosen one is pressed, as
 /// before backups.
-struct WayOrder: Sendable, Equatable {
+package struct WayOrder: Sendable, Equatable {
     /// A way to press: one a check tests (`CheckResult.WayKind`), or the
     /// keyboard's Play/Pause key (`MediaKeyWay`), which it doesn't.
-    enum Kind: String, Sendable, Equatable {
+    package enum Kind: String, Sendable, Equatable {
         case script, menu, page, panel, mediaKey
 
-        init(_ kind: CheckResult.WayKind) {
+        package init(_ kind: CheckResult.WayKind) {
             switch kind {
             case .script: self = .script
             case .menu: self = .menu
@@ -27,7 +27,7 @@ struct WayOrder: Sendable, Equatable {
         var logName: String { self == .mediaKey ? "Play/Pause key" : rawValue }
 
         /// The check's kind of way; `nil` for the key.
-        var checked: CheckResult.WayKind? {
+        package var checked: CheckResult.WayKind? {
             switch self {
             case .script: .script
             case .menu: .menu
