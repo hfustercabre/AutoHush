@@ -30,6 +30,26 @@ struct WayOrderTests {
         #expect(ways.order(in: .minimized, for: .playing) == [2, 3, 1])
     }
 
+    @Test("another main control chosen takes the chosen way's place; only one that worked can be, never the Play/Pause key")
+    func chosenMain() {
+        let ways = WayOrder(ways: [
+            .init(kind: .script, result: everywhere(.script)),
+            .init(kind: .menu, result: everywhere(.menu)),
+            .init(kind: .page, result: result(.page, [.visible: .worked, .hidden: .failed])),
+            .init(kind: .mediaKey, result: nil),
+            .init(kind: .panel, result: everywhere(.panel)),
+        ])
+        #expect(ways.mainIndex(for: "menu") == 1 && ways.mainIndex(for: "panel") == 4)
+        #expect(ways.mainIndex(for: "mediaKey") == 0 && ways.mainIndex(for: nil) == 0 && ways.mainIndex(for: "script") == 0)
+        #expect(ways.order(in: .visible, for: .paused, main: 1) == [1, 0, 2, 3, 4])
+        // The page chosen, hidden where it failed: the others, its own first.
+        #expect(ways.order(in: .hidden, for: .paused, main: 2) == [0, 1, 3, 4])
+        // The panel chosen: first, then the others in their order.
+        #expect(ways.order(in: .visible, for: .paused, main: 4) == [4, 0, 1, 2, 3])
+        let untested = WayOrder(ways: [.init(kind: .script, result: nil), .init(kind: .menu, result: nil)])
+        #expect(untested.mainIndex(for: "menu") == 0) // not known to work
+    }
+
     @Test("the Play/Pause key, which no check tests, comes after the other untested ways, before the panel, in every state")
     func mediaKey() {
         let ways = WayOrder(ways: [

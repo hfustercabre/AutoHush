@@ -15,8 +15,18 @@ protocol BackupRouting: Actor {
     var processIdentifier: @Sendable () -> pid_t? { get }
     /// The state its window is in now.
     var windowState: @Sendable (pid_t) async -> CheckResult.WindowState { get }
-    /// Whether a backup way may be pressed without macOS asking anything.
+    /// Whether a way may be pressed without macOS asking anything: a
+    /// backup, or its own while its permission is missing (`ownWayDenied`).
     var backupAllowed: @Sendable (WayOrder.Kind, pid_t) async -> Bool { get }
+    /// Its own way's permission is missing (Automation, Accessibility) while
+    /// a backup can be pressed: why, and its own way passed over at each
+    /// press until macOS allows it again (the user, 2026-11-05); `nil`
+    /// otherwise.
+    var ownWayDenied: MusicPlayerError? { get set }
+    /// Its state can be told without its own way (an added app's Now
+    /// Playing report); else a backup that tells it (its menu, its page, a
+    /// script) must be allowed for its own way to be passed over.
+    var statesWithoutOwnWay: Bool { get }
     var now: @Sendable () -> Date { get }
     var logger: AutoHushLogger { get }
     /// The ways tried in this muted pause, by their place in `wayOrder`
@@ -31,6 +41,10 @@ protocol BackupRouting: Actor {
     var panelWhileMuted: Bool { get }
     /// Which control paused and played it last (`PlayerControls`).
     var lastUsed: OSAllocatedUnfairLock<LastControls> { get }
+    /// The place in `wayOrder` of its main control: its own (0) unless the
+    /// user chose another in Settings (`WayOrder.mainIndex(for:)`), read at
+    /// each press.
+    var mainIndex: Int { get }
     /// The player of its way at `index` in `wayOrder` (its own at 0).
     func way(at index: Int) -> any MusicPlayer
     /// Its state by its surest signs, which judge its presses.
@@ -52,6 +66,67 @@ extension BackupRouting {
         mutedTried = []
     }
 
+    /// Whether `error`, its own way's from `verifyControlAccess`, leaves it
+    /// to its backups: a missing permission (Automation, Accessibility)
+    /// while its backups are in use (`usesBackups`) and one of them can be
+    /// pressed without macOS asking (`backupAllowed`), and its state can
+    /// still be told: by a backup that tells it (its menu, its page, a
+    /// script), allowed too, or without them (`statesWithoutOwnWay`); else
+    /// it would never be paused, which says nothing. Its own way is then
+    /// passed over at each press until macOS allows it (`ownWayDenied`);
+    /// false otherwise, as before (the user, 2026-11-05).
+    func passesOverOwnWay(after error: any Error, usesBackups: Bool) async -> Bool {
+        guard let denied = error as? MusicPlayerError, denied == .automationPermissionDenied || denied == .accessibilityPermissionDenied,
+              usesBackups, let wayOrder, let pid = processIdentifier() else {
+            ownWayDenied = nil
+            return false
+        }
+        var pressable = false, tellsState = statesWithoutOwnWay
+        for way in wayOrder.ways.dropFirst() where await backupAllowed(way.kind, pid) {
+            pressable = true
+            if [.menu, .page, .script].contains(way.kind) { tellsState = true }
+        }
+        if pressable, tellsState {
+            if ownWayDenied == nil {
+                logger.notice("\(self.name, privacy: .public): its \(wayOrder.ways[0].kind.logName, privacy: .public) isn’t allowed (\(denied)): controlled by its backups")
+            }
+            ownWayDenied = denied
+            return true
+        }
+        ownWayDenied = nil
+        return false
+    }
+
+    /// Its access, as its presses need it: with another main control chosen
+    /// and its backups off (pressed alone), that one's, asked of macOS
+    /// without a prompt (`backupAllowed`), its own way not pressed; missing,
+    /// the permission it needs. Otherwise its own way's (`verifyOwn`), its
+    /// backups standing in for a missing permission (`passesOverOwnWay`).
+    func verifyAccess(usesBackups: Bool, verifyOwn: () async throws -> Void) async throws {
+        if let wayOrder, mainIndex != 0, !usesBackups {
+            guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
+            let kind = wayOrder.ways[mainIndex].kind
+            guard await backupAllowed(kind, pid) else {
+                throw kind == .script ? MusicPlayerError.automationPermissionDenied : MusicPlayerError.accessibilityPermissionDenied
+            }
+            ownWayDenied = nil
+            return
+        }
+        do {
+            try await verifyOwn()
+            ownWayAllowed()
+        } catch {
+            guard await passesOverOwnWay(after: error, usesBackups: usesBackups) else { throw error }
+        }
+    }
+
+    /// Its own way's access checked and allowed: pressed again.
+    func ownWayAllowed() {
+        guard ownWayDenied != nil else { return }
+        ownWayDenied = nil
+        logger.notice("\(self.name, privacy: .public): its own way is allowed again")
+    }
+
     /// How long a play by the panel that failed keeps it out of the next
     /// plays (the engine's retries, a second apart): it shows on screen.
     static var panelPlayRest: TimeInterval { 10 }
@@ -69,25 +144,29 @@ extension BackupRouting {
     /// that took late ends it, so a slow toggle isn't undone; each way then
     /// presses only from the opposite state. Another pause or play begun
     /// meanwhile ends it too. A backup macOS would ask something for
-    /// (Automation, Accessibility) is passed over, and a way that can't
+    /// (Automation, Accessibility) is passed over, as its own way is while
+    /// its permission is missing (`ownWayDenied`), and a way that can't
     /// press yet (its page's button not learned) hands on to the next. A
-    /// failure throws the first way's error.
+    /// failure throws the first way's error; nothing pressed at all, its
+    /// own way's missing permission.
     /// `covered`: false for a pause no mute will stand in for
-    /// (`pauseUncovered`), which goes down the order at once.
-    func pressByBackups(to target: PlayerState, covered: Bool = true) async throws {
+    /// (`pauseUncovered`), which goes down the order at once. `alone`: its
+    /// backups off while another main control was chosen: that one only.
+    func pressByBackups(to target: PlayerState, covered: Bool = true, alone: Bool = false) async throws {
         guard let wayOrder, let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         pressCalls += 1
         let call = pressCalls
         mutedTried = []
+        let main = mainIndex
         // Looked at only when it changes the order.
-        let state: CheckResult.WindowState? = wayOrder.dependsOnWindow(for: target) ? await windowState(pid) : nil
+        let state: CheckResult.WindowState? = !alone && wayOrder.dependsOnWindow(for: target, main: main) ? await windowState(pid) : nil
         let window = state.map { ", its window \($0.title)" } ?? ""
         var goesOn = target == .playing || !covered
         if !goesOn { goesOn = await !canBeMuted() }
         var firstError: (any Error)?
         var pressed = 0, learning = false
         var checkable: Bool?
-        for index in wayOrder.order(in: state ?? .visible, for: target) {
+        for index in alone ? [main] : wayOrder.order(in: state ?? .visible, for: target, main: main) {
             let kind = wayOrder.ways[index].kind
             if pressed > 0, !goesOn || pressCalls != call { break }
             if target == .playing, kind == .panel, let failed = panelPlayFailedAt, now().timeIntervalSince(failed) < Self.panelPlayRest { continue }
@@ -105,7 +184,7 @@ extension BackupRouting {
                 try await press(way, to: target, checkable: &checkable)
                 lastUsed.withLock { $0.note(kind, for: target) }
                 if index != 0 || state != nil {
-                    logger.notice("\(self.name, privacy: .public): \(target == .playing ? "played" : "paused", privacy: .public) by its \(kind.logName, privacy: .public)\(index == 0 ? "" : " (a backup)", privacy: .public)\(window, privacy: .public)")
+                    logger.notice("\(self.name, privacy: .public): \(target == .playing ? "played" : "paused", privacy: .public) by its \(kind.logName, privacy: .public)\(index == main ? "" : " (a backup)", privacy: .public)\(window, privacy: .public)")
                 }
                 return
             } catch let notPressed as MediaKeyWay.NotPressed {
@@ -130,7 +209,7 @@ extension BackupRouting {
                 if target == .paused, pressed == 1 { mutedTried.insert(index) }
             }
         }
-        throw firstError ?? (learning ? MusicPlayerError.stillLearning : MusicPlayerError.playerCommandFailed(.pressFailed))
+        throw firstError ?? (learning ? MusicPlayerError.stillLearning : ownWayDenied ?? MusicPlayerError.playerCommandFailed(.pressFailed))
     }
 
     /// Muted in place of its pause, and still heard: one way, the next in
@@ -143,11 +222,14 @@ extension BackupRouting {
     /// ways were all passed over (not allowed, the key not pressed, a page
     /// still learning) goes round the quiet ways once more, so it presses at
     /// least its own way.
-    func pauseWhileMuted() async throws {
+    /// `alone`: its backups off while another main control was chosen:
+    /// that one only, unless it's the panel, which shows on screen.
+    func pauseWhileMuted(alone: Bool = false) async throws {
         guard let wayOrder, let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         pressCalls += 1
-        let state: CheckResult.WindowState? = wayOrder.dependsOnWindow(for: .paused) ? await windowState(pid) : nil
-        let order = wayOrder.order(in: state ?? .visible, for: .paused)
+        let main = mainIndex
+        let state: CheckResult.WindowState? = !alone && wayOrder.dependsOnWindow(for: .paused, main: main) ? await windowState(pid) : nil
+        let order = alone ? (wayOrder.ways[main].kind == .panel ? [] : [main]) : wayOrder.order(in: state ?? .visible, for: .paused, main: main)
         let quiet = order.filter { ![.panel, .mediaKey].contains(wayOrder.ways[$0].kind) }
         let key = order.filter { wayOrder.ways[$0].kind == .mediaKey }
         let panel = panelWhileMuted ? order.filter { wayOrder.ways[$0].kind == .panel } : []
@@ -163,7 +245,7 @@ extension BackupRouting {
                 do {
                     try await press(way, to: .paused, checkable: &checkable)
                     lastUsed.withLock { $0.note(kind, for: .paused) }
-                    logger.notice("\(self.name, privacy: .public): paused by its \(kind.logName, privacy: .public)\(index == 0 ? "" : " (a backup)", privacy: .public) while muted")
+                    logger.notice("\(self.name, privacy: .public): paused by its \(kind.logName, privacy: .public)\(index == main ? "" : " (a backup)", privacy: .public) while muted")
                     return
                 } catch let notPressed as MediaKeyWay.NotPressed {
                     logger.notice("\(self.name, privacy: .public): muted, its Play/Pause key isn’t pressed, \(notPressed.description, privacy: .public): the next way")
@@ -180,13 +262,23 @@ extension BackupRouting {
             startedOver = true
             mutedTried.subtract(quiet)
         }
-        throw MusicPlayerError.playerCommandFailed(.pressFailed)
+        throw ownWayDenied ?? MusicPlayerError.playerCommandFailed(.pressFailed)
     }
 
     /// The player of its way at `index` (its own at 0), unless it's a
-    /// backup macOS would ask something for.
+    /// backup macOS would ask something for, or its own while its
+    /// permission is missing (`ownWayDenied`, checked again without asking:
+    /// allowed now, it's pressed again).
     private func allowedWay(_ index: Int, kind: WayOrder.Kind, pid: pid_t) async -> (any MusicPlayer)? {
-        guard index != 0 else { return way(at: 0) }
+        if index == 0 {
+            guard let denied = ownWayDenied else { return way(at: 0) }
+            guard await backupAllowed(kind, pid) else {
+                logger.notice("\(self.name, privacy: .public): its \(kind.logName, privacy: .public) isn’t allowed (\(denied)): passed over")
+                return nil
+            }
+            ownWayAllowed()
+            return way(at: 0)
+        }
         guard await backupAllowed(kind, pid) else {
             logger.notice("\(self.name, privacy: .public): its \(kind.logName, privacy: .public) isn’t allowed without macOS asking: passed over")
             return nil

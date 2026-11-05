@@ -30,13 +30,25 @@ This project follows [Semantic Versioning](https://semver.org/).
   added app's are; a web app's refused pause is muted by AutoHush, which
   tries them meanwhile. Where no mute can follow a pause (the output went
   away, the Mac going to sleep), any player's backups are tried at once.
+- **Backup controls stand in for a missing permission:** when your
+  player's main control needs a permission that isn't allowed (Automation
+  for its AppleScript, Accessibility for its menu, its page or the Now
+  Playing panel), and its backup controls can do without it (one that
+  tells whether it plays, its menu or its page, among them), AutoHush
+  controls it by its backups instead of saying it can't control it, and
+  goes back to its main control once you allow it. A main control chosen
+  in Fine-Tuning while backup controls are off needs its own permission.
 - **Use backup controls** and **Use the Now Playing panel while muted**,
-  both on, in Settings → Media Player for your player and in Add an App's
-  last step; a change takes effect at the next pause or play, and
-  **Restore Defaults** turns both back on. **Details…** in Settings lists
+  both on, in Settings → Fine-Tuning for your player (Media Player has a
+  row to them, with what they're set to) and in Add an App's last step; a
+  change takes effect at the next pause or play, and **Restore Defaults**
+  turns both back on. **Details…** in Settings lists
   its main control and its backup controls, with how each works; an app
   added before them says to check it again. Diagnostics lists its main control and, while they're used, its backup controls, the ones that paused
   and played it last marked, then the switches.
+- **Choose your player's main control** in Settings → Fine-Tuning,
+  among the ways that worked for it, the recommended one first; **Restore
+  Defaults** puts it back.
 - **Page Up, Page Down, Home and End** move the keyboard's highlight in
   the menu and Settings, a page at a time or to the first and last row.
 - **VoiceOver** follows the arrow keys' highlight, and Zoom shows where

@@ -2,17 +2,18 @@ import Foundation
 import AutoHushKit
 import CheckedPlayers
 
-/// The chosen player's backup controls in Settings → Media Player (the
-/// user, 2026-11-05).
+/// The chosen player's controls in Settings → Fine-Tuning (the user,
+/// 2026-11-05): its main control and backup switches.
 extension AppDelegate {
     func refreshPlayerControls() {
         let controls = (player as? any ControlsReporting)?.controls
         if status.chosenControls != controls { status.chosenControls = controls }
     }
 
-    /// An added app's setup keeps them and its player follows them; a
-    /// built-in player or a web app reads them at each press. Either way the
-    /// player stays, with any pause AutoHush holds in it.
+    /// An added app's setup keeps them (the main control chosen too) and
+    /// its player follows them; a built-in player or a web app reads them
+    /// at each press. Either way the player stays, with any pause AutoHush
+    /// holds in it.
     func setBackupSwitches(_ switches: BackupSwitches) {
         guard let player else { return }
         if let added = player as? any AddedAppPlayer {

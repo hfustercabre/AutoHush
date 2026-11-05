@@ -64,10 +64,10 @@ package final class CheckedPlayers: Sendable {
         return setup.switches
     }
 
-    /// Sets the backup switches of the app added with `bundleID` (Settings →
-    /// Media Player): its setup keeps them, and its player follows them from
-    /// its next press, the same player (a new one would drop a pause
-    /// AutoHush holds in it; the user, 2026-11-05). `player` is the one in
+    /// Sets the backup switches and main control of the app added with
+    /// `bundleID` (Settings → Fine-Tuning): its setup keeps them, and its
+    /// player follows them from its next press, the same player (a new one
+    /// would drop a pause AutoHush holds in it; the user, 2026-11-05). `player` is the one in
     /// use, which may no longer be the one kept (made again once its setup
     /// changed, its app moved or its panel row saved). The players first,
     /// so the kept one still matches its setup once that's saved.
@@ -76,6 +76,7 @@ package final class CheckedPlayers: Sendable {
         store.update(bundleID) {
             $0.usesBackups = switches.usesBackups
             $0.panelWhileMuted = switches.panelWhileMuted
+            $0.mainControl = switches.mainControl
         }
     }
 

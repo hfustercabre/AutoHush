@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// A Behavior card's last row (L4, the user's pick, 2026-10-25): its
-/// settings in Fine-Tuning by name, with what they're set to, and a
-/// chevron; a click, or Return and Space on its highlight, shows them there
-/// (the keys' highlight going on from there).
+/// A Behavior card's last row (L4, the user's pick, 2026-10-25), and Media
+/// Player's Controls row (F5, 2026-11-05): its settings in Fine-Tuning by
+/// name, with what they're set to, and a chevron; a click, or Return and
+/// Space on its highlight, shows them there (the keys' highlight going on
+/// from there).
 struct FineTuningRow: View {
     let model: SettingsModel
     /// The Fine-Tuning card it shows.
@@ -21,6 +22,6 @@ struct FineTuningRow: View {
         .highlightableRow(press: { model.showFineTuning(card, byKeyboard: true) })
         .accessibilityLabel(Text(verbatim: title))
         .accessibilityValue(Text(verbatim: value ?? ""))
-        .accessibilityHint(Text("Shows it in Fine-Tuning", comment: "VoiceOver hint of a row at the foot of a Settings → Behavior card, which opens the Fine-Tuning page at its settings"))
+        .accessibilityHint(Text("Shows it in Fine-Tuning", comment: "VoiceOver hint of a row at the foot of a Settings → Behavior card, or of Settings → Media Player's “Controls” row, which opens the Fine-Tuning page at its settings"))
     }
 }

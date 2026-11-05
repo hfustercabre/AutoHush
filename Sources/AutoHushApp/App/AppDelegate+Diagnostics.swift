@@ -26,10 +26,14 @@ extension AppDelegate {
     /// What Diagnostics shows besides the apps with sound.
     private func diagnosticsFacts() -> DiagnosticsFacts {
         let permission = player?.controlPermission
-        // Accessibility can be read; Automation only shows when AutoHush uses it.
+        // Accessibility can be read; Automation only shows when AutoHush uses
+        // it, or as PermissionCenter last read it: a player controlled by its
+        // backups is ready without it (the user, 2026-11-05).
+        let automationRead = permissionCenter.chosen.player == player?.bundleID ? permissionCenter.chosen.controlAccess : nil
         let granted: Bool? = switch permission {
         case .accessibility?: AccessibilityPermission.isTrusted()
-        case let permission?: status.health == .needsPermission(permission) ? false : (status.isReady ? true : nil)
+        case let permission?:
+            status.health == .needsPermission(permission) || automationRead?.isSatisfied == false ? false : (status.isReady ? true : nil)
         case nil: nil
         }
         return DiagnosticsFacts(

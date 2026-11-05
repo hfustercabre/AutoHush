@@ -31,13 +31,34 @@ extension CheckedPlayer: BackupRouting, ControlsReporting {
         !setup.wayResults.isEmpty
     }
 
+    /// A control that can be its main one: its own, or another that worked
+    /// in its check, never the Play/Pause key (`WayOrder.canBeMain`).
+    static func choosable(_ control: PlayerControls.Control, at index: Int) -> Bool {
+        WayOrder.canBeMain(WayOrder.Way(kind: control.kind, result: control.found), at: index)
+    }
+
     /// Its backups are pressed now: it has some, and their switch is on.
     nonisolated var usesBackups: Bool {
         wayOrder != nil && switches.withLock { $0.usesBackups }
     }
 
-    /// Sets its backup switches (Settings → Media Player): its next press
-    /// follows them; its setup is saved by `CheckedPlayers`.
+    /// Its main control's place in `wayOrder`: another than its own when the
+    /// user chose one in Settings (the user, 2026-11-05).
+    nonisolated var mainIndex: Int {
+        wayOrder?.mainIndex(for: switches.withLock { $0.mainControl }) ?? 0
+    }
+
+    /// Pressed by the routing: its backups on, or another main control chosen.
+    nonisolated var routes: Bool { usesBackups || mainIndex != 0 }
+
+    /// The main control the user chose in Settings, when not its own.
+    nonisolated var chosenMain: WayOrder.Kind? {
+        let index = mainIndex
+        return index == 0 ? nil : wayOrder?.ways[index].kind
+    }
+
+    /// Sets its backup switches and main control (Settings → Fine-Tuning):
+    /// its next press follows them; its setup is saved by `CheckedPlayers`.
     package nonisolated func setSwitches(_ new: BackupSwitches) {
         switches.withLock { $0 = new }
     }
@@ -49,6 +70,7 @@ extension CheckedPlayer: BackupRouting, ControlsReporting {
         let current = switches.withLock { $0 }
         now.usesBackups = current.usesBackups
         now.panelWhileMuted = current.panelWhileMuted
+        now.mainControl = current.mainControl
         return now
     }
 
@@ -70,10 +92,11 @@ extension CheckedPlayer: BackupRouting, ControlsReporting {
         let main = setup.ways.first?.kind.map(control) ?? .init(kind: .panel, result: nil)
         let keyed = setup.wayResults.isEmpty ? [] : [PlayerControls.Control(kind: .mediaKey, result: nil)]
         let kept = setup.backups.compactMap(\.kind).map(control)
-        // The key before the panel, as they're pressed.
-        let backups = kept.filter { $0.kind != .panel } + keyed + kept.filter { $0.kind == .panel }
-        return PlayerControls(main: main, backups: backups,
-                              switches: switches.withLock { $0 },
+        // The key before the panel, as they're pressed; the main control
+        // chosen in Settings first, its own back among them.
+        let all = [main] + kept.filter { $0.kind != .panel } + keyed + kept.filter { $0.kind == .panel }
+        let chosen = mainIndex == 0 ? nil : wayOrder?.ways[mainIndex].kind
+        return PlayerControls(all: all, chosen: chosen, choosable: Self.choosable, switches: switches.withLock { $0 },
                               needsCheckAgain: setup.wayResults.isEmpty, last: lastUsed.withLock { $0 })
     }
 

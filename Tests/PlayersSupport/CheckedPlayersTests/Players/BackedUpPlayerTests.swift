@@ -15,11 +15,12 @@ struct BackedUpPlayerTests {
     /// switches in `switches`.
     private func backed<Inner: MusicPlayer>(_ inner: Inner, _ backups: [(MockMusicPlayer, WayOrder.Kind)],
                                             switches: Locked<BackupSwitches> = Locked(BackupSwitches()),
-                                            audioRecording: Bool = true) -> BackedUpPlayer<Inner> {
+                                            audioRecording: Bool = true,
+                                            allowed: @escaping @Sendable (WayOrder.Kind) -> Bool = { _ in true }) -> BackedUpPlayer<Inner> {
         BackedUpPlayer(inner: inner, own: CheckResult.WayResult(kind: .script, mark: .works),
                        backups: backups.map { CheckedPlayer.Backup(player: $0.0, kind: $0.1) }, results: backups.map { _ in nil },
                        switches: { switches.value }, processIdentifier: { 4242 }, windowState: { _ in .visible },
-                       backupAllowed: { _, _ in true }, audioRecordingAllowed: { audioRecording }, pressSleep: { _ in })
+                       backupAllowed: { kind, _ in allowed(kind) }, audioRecordingAllowed: { audioRecording }, pressSleep: { _ in })
     }
 
     /// A backup that takes: it checks its own press, since its stand-in isn't the app `inner` reads.
@@ -145,6 +146,102 @@ struct BackedUpPlayerTests {
         try await backed(own, [(key, .mediaKey)]).play()
         #expect(await own.playCallCount == 1)
         #expect(await key.playCallCount == 1)
+    }
+
+    @Test("its own player's permission missing, its backups control it if one can be pressed without macOS asking; allowed again, its own player is pressed again")
+    func ownPermissionMissing() async throws {
+        let allowed = Locked<Set<WayOrder.Kind>>([.menu])
+        let own = MockMusicPlayer(state: .playing, failVerifyWith: MusicPlayerError.automationPermissionDenied)
+        let menu = taking()
+        let player = backed(own, [(menu, .menu)], allowed: { allowed.value.contains($0) })
+        try await player.verifyControlAccess()
+        try await player.pause()
+        await menu.setState(.paused)
+        try await player.play()
+        #expect(await pauses(own, menu) == [0, 1])
+        #expect(await own.playCallCount == 0)
+        #expect(await menu.playCallCount == 1)
+        // Its backup no longer allowed either: nothing pressed, its own permission missing.
+        allowed.value = []
+        await #expect(throws: MusicPlayerError.automationPermissionDenied) { try await player.pauseUncovered() }
+        // Allowed again: its own player, checked at the press without asking.
+        allowed.value = [.script, .menu]
+        await own.setFailVerify(nil)
+        try await player.pause()
+        #expect(await pauses(own, menu) == [1, 1])
+        try await player.verifyControlAccess()
+    }
+
+    @Test("another main control chosen in Settings is pressed first, alone while its backups are off; its controls list it as the main one, its own back among the backups")
+    func chosenMain() async throws {
+        let switches = Locked(BackupSwitches(mainControl: "menu"))
+        let own = MockMusicPlayer(state: .playing, checksItsPresses: true), menu = taking(), key = taking()
+        let works = CheckResult.WayResult(kind: .menu, mark: .works)
+        let player = BackedUpPlayer(inner: own, own: CheckResult.WayResult(kind: .script, mark: .works),
+                                    backups: [.init(player: menu, kind: .menu), .init(player: key, kind: .mediaKey)], results: [works, nil],
+                                    switches: { switches.value }, processIdentifier: { 4242 }, windowState: { _ in .visible },
+                                    backupAllowed: { _, _ in true }, audioRecordingAllowed: { true }, pressSleep: { _ in })
+        try await player.pause()
+        #expect(await pauses(own, menu) == [0, 1])
+        let controls = player.controls
+        #expect(controls.main.kind == .menu && controls.backups.map(\.kind) == [.script, .mediaKey])
+        #expect(controls.choices.map(\.kind) == [.script, .menu] && controls.recommended == .script && controls.mainChanged)
+        // Backups off: the chosen one alone, never its own after it.
+        switches.value.usesBackups = false
+        await menu.setFailPause(Self.refused)
+        await #expect(throws: Self.refused) { try await player.pause() }
+        #expect(await pauses(own, menu) == [0, 2])
+        // Pressed alone, the chosen one's permission is what it needs: its own player's isn't asked.
+        let allowed = Locked<Set<WayOrder.Kind>>([])
+        let alone = BackedUpPlayer(inner: MockMusicPlayer(state: .playing, failVerifyWith: MusicPlayerError.automationPermissionDenied),
+                                   own: CheckResult.WayResult(kind: .script, mark: .works),
+                                   backups: [.init(player: taking(), kind: .menu)], results: [works],
+                                   switches: { BackupSwitches(usesBackups: false, mainControl: "menu") }, processIdentifier: { 4242 },
+                                   windowState: { _ in .visible }, backupAllowed: { kind, _ in allowed.value.contains(kind) },
+                                   audioRecordingAllowed: { true }, pressSleep: { _ in })
+        await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) { try await alone.verifyControlAccess() }
+        allowed.value = [.menu]
+        try await alone.verifyControlAccess()
+        // Its own again (Restore Defaults): its own player, as before.
+        switches.value = BackupSwitches(usesBackups: false)
+        try await player.pause()
+        #expect(await own.pauseCallCount == 1 && !player.controls.mainChanged)
+    }
+
+    @Test("its own player's permission missing, its state is its backups' (its menu's), never the Play/Pause key's or the panel's, and it's read once a second")
+    func ownPermissionMissingState() async throws {
+        let own = MockMusicPlayer(state: .unknown, failVerifyWith: MusicPlayerError.automationPermissionDenied)
+        let key = MockMusicPlayer(state: .paused), panel = MockMusicPlayer(state: .paused), menu = MockMusicPlayer(state: .playing)
+        let player = backed(own, [(key, .mediaKey), (menu, .menu), (panel, .panel)])
+        #expect(await player.playerState() == .unknown) // allowed until told otherwise: its own player's
+        try await player.verifyControlAccess()
+        #expect(await player.playerState() == .playing)
+        await menu.setState(.paused)
+        #expect(await player.playerState() == .paused)
+        // Read once a second while it lasts: reported as late as a polled player's.
+        #expect(player.stateReportDelay >= PolledStateObserver.reportDelay)
+        await own.setFailVerify(nil)
+        try await player.verifyControlAccess()
+        #expect(await player.playerState() == .unknown) // its own player's again
+    }
+
+    @Test("its own player's permission missing, it can't be controlled as before when no backup can be pressed without macOS asking, or its backups are off")
+    func ownPermissionMissingNoBackup() async throws {
+        let own = MockMusicPlayer(state: .playing, failVerifyWith: MusicPlayerError.accessibilityPermissionDenied)
+        await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) {
+            try await backed(own, [(taking(), .panel)], allowed: { _ in false }).verifyControlAccess()
+        }
+        await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) {
+            try await backed(own, [(taking(), .mediaKey)], switches: Locked(BackupSwitches(usesBackups: false))).verifyControlAccess()
+        }
+        await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) { try await backed(own, []).verifyControlAccess() }
+        // Only the Play/Pause key and the panel: nothing would tell its state, so it would never be paused.
+        await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) {
+            try await backed(own, [(taking(), .mediaKey), (taking(), .panel)]).verifyControlAccess()
+        }
+        // Another error than a permission is its own player's, as before.
+        await own.setFailVerify(MusicPlayerError.playerNotRunning)
+        await #expect(throws: MusicPlayerError.playerNotRunning) { try await backed(own, [(taking(), .mediaKey)]).verifyControlAccess() }
     }
 
     @Test("with its backups off, only its own player is pressed, and its presses are checked as its own player's are")

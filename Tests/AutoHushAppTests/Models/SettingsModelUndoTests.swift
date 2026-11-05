@@ -41,7 +41,9 @@ struct SettingsModelUndoTests {
         var all = store.contents
         for (key, value) in iconDefaults.contents { all["menuBarIcon." + key] = value }
         all["updates"] = [updates.checksAutomatically, updates.mode.rawValue, updates.getsReleaseCandidates] as [Any]
-        if let switches = model.chosenControls?.switches { all["backupSwitches"] = [switches.usesBackups, switches.panelWhileMuted] }
+        if let switches = model.chosenControls?.switches {
+            all["backupSwitches"] = [switches.mainControl ?? "", switches.usesBackups, switches.panelWhileMuted] as [Any]
+        }
         return all as NSDictionary
     }
 
@@ -65,13 +67,13 @@ struct SettingsModelUndoTests {
         updates.checksAutomatically = false
         updates.mode = .notify
         updates.getsReleaseCandidates = true
-        // A chosen player with a panel among its backups, both switches off.
+        // A chosen player with a panel among its backups, another main
+        // control than its own chosen, both switches off.
         model.state.status.choosePlayer(named: "Jukebox")
-        let controls = PlayerControls(main: .init(kind: .menu, result: nil), backups: [.init(kind: .panel, result: nil)],
-                                      switches: BackupSwitches(usesBackups: false, panelWhileMuted: false))
-        model.state.status.chosenControls = controls
+        model.state.status.chosenControls = .choosing(.menu, switches: BackupSwitches(usesBackups: false, panelWhileMuted: false,
+                                                                                       mainControl: "menu"))
         actions.setsBackupSwitches = { [model] switches in
-            model.state.status.chosenControls = PlayerControls(main: controls.main, backups: controls.backups, switches: switches)
+            model.state.status.chosenControls = model.chosenControls?.with(switches)
         }
     }
 
@@ -117,11 +119,11 @@ struct SettingsModelUndoTests {
         #expect(log.calls.last == "fineTuning")
     }
 
-    @Test("the backup controls' Undo puts back only the switch the restore changed, and only for the player they were the switches of")
+    @Test("the player controls' Undo puts back only the switch the restore changed, and only for the player they were the switches of")
     func backupSwitchesUndo() {
         changeEverything(for: .playerControls)
         model.actions?.setBackupSwitches(BackupSwitches(usesBackups: false, panelWhileMuted: true))
-        press(.playerControls) // Use backup controls back on; the panel's was on
+        press(.playerControls) // Use backup controls back on; the panel's was on, the main control its own
         model.actions?.setBackupSwitches(BackupSwitches(usesBackups: true, panelWhileMuted: false))
         undo.undo()
         #expect(model.chosenControls?.switches == BackupSwitches(usesBackups: false, panelWhileMuted: false))
@@ -132,6 +134,24 @@ struct SettingsModelUndoTests {
         log.calls = []
         undo.undo()
         #expect(model.chosenControls?.switches == BackupSwitches() && !log.calls.contains { $0.hasPrefix("backups") })
+    }
+
+    @Test("the player controls' Restore Defaults puts its own main control back, and Undo the one chosen, field by field: a switch turned since stays")
+    func mainControlUndo() {
+        changeEverything(for: .playerControls)
+        model.actions?.setBackupSwitches(BackupSwitches(mainControl: "page")) // both switches on, its page the main control
+        #expect(model.chosenControls?.main.kind == .page && !model.isDefault(.playerControls))
+        press(.playerControls)
+        #expect(model.chosenControls?.main.kind == .script && model.chosenControls?.switches == BackupSwitches())
+        #expect(model.isDefault(.playerControls))
+        model.actions?.setBackupSwitches(BackupSwitches(panelWhileMuted: false)) // turned since
+
+        undo.undo()
+        #expect(model.chosenControls?.main.kind == .page)
+        #expect(model.chosenControls?.switches == BackupSwitches(panelWhileMuted: false, mainControl: "page"))
+        undo.redo()
+        #expect(model.chosenControls?.main.kind == .script)
+        #expect(model.chosenControls?.switches == BackupSwitches(panelWhileMuted: false))
     }
 
     @Test("Undo and Redo put back only what the restore changed: a setting changed since, on the card or another, stays")
@@ -171,6 +191,7 @@ struct SettingsModelUndoTests {
     @Test("each card's page is the one that shows it")
     func cardPages() {
         #expect(SettingsCard.allCases.map(\.page) == [.behavior, .behavior, .behavior, .behavior, .behavior,
-                                                       .fineTuning, .fineTuning, .fineTuning, .fineTuning, .general, .mediaPlayer, .about])
+                                                       .fineTuning, .fineTuning, .fineTuning, .fineTuning, .fineTuning, .general, .about])
+        #expect(SettingsCard.playerControls.page == .fineTuning) // Media Player has a row to it
     }
 }

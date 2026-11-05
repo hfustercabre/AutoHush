@@ -2,8 +2,9 @@ import SwiftUI
 import AutoHushKit
 import CheckedPlayers
 
-/// The player's controls, the Details… sheet of Settings → Media Player
-/// (the user, 2026-11-05): its main control, then its
+/// The player's controls, the Details… sheet of Settings → Fine-Tuning's
+/// player card (the user, 2026-11-05): its main control (the one chosen
+/// there), then its
 /// backup controls in the order they're tried, each with how its check
 /// found it (in every window state, not in some, not tried), the Play/Pause
 /// key with when it's pressed. Done (Return) or Escape closes it.

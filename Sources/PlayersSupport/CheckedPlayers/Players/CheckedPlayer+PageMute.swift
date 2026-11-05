@@ -22,7 +22,7 @@ extension CheckedPlayer {
     /// meanwhile); a backup page's only while its backups are on, as it's
     /// read and pressed only then. A mute it made stays its own to lift.
     package func muteIfPlayingAnyway() async -> Bool {
-        guard let page = parts.page, !parts.pageIsBackup || usesBackups else { return false }
+        guard let page = parts.page, !parts.pageIsBackup || usesBackups || chosenMain == .page else { return false }
         return await page.muteIfPlayingAnyway()
     }
 

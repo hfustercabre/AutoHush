@@ -4,10 +4,11 @@ import Foundation
 /// card, Settings → General): whether its controls are learned, and the way
 /// to learn them in a new learning window, which Diagnostics offers too.
 enum LearnText {
-    /// The row's title.
+    /// The row's title, and Media Player's row to the player's controls
+    /// in Fine-Tuning (`BackupText.controls`).
     static var controlsTitle: String {
         String(localized: "Controls",
-               comment: "The menu's card and Settings → General: title of the row about the chosen web app's controls (its Play/Pause button), under the media player")
+               comment: "The menu's card and Settings → General: title of the row about the chosen web app's controls (its Play/Pause button), under the media player; Settings → Media Player: title of the row that shows the chosen player's controls in Fine-Tuning, with what they're set to")
     }
 
     /// Under the row's title, until they're learned.

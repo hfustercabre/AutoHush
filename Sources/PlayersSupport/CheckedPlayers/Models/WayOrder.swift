@@ -50,23 +50,41 @@ package struct WayOrder: Sendable, Equatable {
     let ways: [Way]
 
     /// The indices of `ways` to press for `target` (`.paused` or
-    /// `.playing`) with the window in `state`.
-    func order(in state: CheckResult.WindowState, for target: PlayerState) -> [Int] {
+    /// `.playing`) with the window in `state`, the main control (`main`,
+    /// its own at 0 unless the user chose another) taking the chosen way's place.
+    func order(in state: CheckResult.WindowState, for target: PlayerState, main: Int = 0) -> [Int] {
         guard !ways.isEmpty else { return [] }
+        let main = ways.indices.contains(main) ? main : 0
         let found = ways.map { Self.found($0, in: state, for: target) }
         let quiet = ways.indices.filter { ways[$0].kind != .panel }
-        var order = found[0] == .worked ? [0] : []
-        order += quiet.filter { $0 != 0 && found[$0] == .worked }
+        var order = found[main] == .worked ? [main] : []
+        order += quiet.filter { $0 != main && found[$0] == .worked }
         order += quiet.filter { found[$0] == .untested }
         order += ways.indices.filter { ways[$0].kind == .panel && found[$0] != .failed && !order.contains($0) }
-        return order.isEmpty ? [0] : order
+        return order.isEmpty ? [main] : order
     }
 
     /// Whether the order changes with the window's state, so the window has
     /// to be looked at (about 70 ms, up to 1 s) before a press.
-    func dependsOnWindow(for target: PlayerState) -> Bool {
-        let visible = order(in: .visible, for: target)
-        return CheckResult.WindowState.allCases.contains { order(in: $0, for: target) != visible }
+    func dependsOnWindow(for target: PlayerState, main: Int = 0) -> Bool {
+        let visible = order(in: .visible, for: target, main: main)
+        return CheckResult.WindowState.allCases.contains { order(in: $0, for: target, main: main) != visible }
+    }
+
+    /// The place of the main control the user chose (`BackupSwitches.mainControl`,
+    /// a kind's raw value): a way that worked in its check, never the
+    /// Play/Pause key; 0, its own, for none, or one that can't be its main.
+    func mainIndex(for chosen: String?) -> Int {
+        guard let chosen, let index = ways.firstIndex(where: { $0.kind.rawValue == chosen }),
+              Self.canBeMain(ways[index], at: index) else { return 0 }
+        return index
+    }
+
+    /// Its own way (at 0), or another that worked in its check (or was
+    /// measured working), but never the key, which no check tests.
+    static func canBeMain(_ way: Way, at index: Int) -> Bool {
+        guard way.kind != .mediaKey else { return false }
+        return index == 0 || way.result?.worked == true
     }
 
     private enum Found { case worked, untested, failed }

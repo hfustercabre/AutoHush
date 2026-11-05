@@ -9,13 +9,17 @@ struct SwitchRow: View {
     let title: Text
     var subtitle: Text?
     @Binding var isOn: Bool
+    /// It stands for what another page's row opened: the highlight goes on
+    /// from it (`KeyHighlight.highlightCurrent`).
+    var isCurrent: (() -> Bool)?
     @FocusState private var isFocused: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
-    init(_ title: Text, subtitle: Text? = nil, isOn: Binding<Bool>) {
+    init(_ title: Text, subtitle: Text? = nil, isOn: Binding<Bool>, isCurrent: (() -> Bool)? = nil) {
         self.title = title
         self.subtitle = subtitle
         self._isOn = isOn
+        self.isCurrent = isCurrent
     }
 
     var body: some View {
@@ -37,6 +41,6 @@ struct SwitchRow: View {
         .onTapGesture { isOn.toggle() }
         .padding(.horizontal, -6)
         .padding(.vertical, -3)
-        .highlightableRow(isFocused: isFocused, press: { isOn.toggle() })
+        .highlightableRow(isFocused: isFocused, press: { isOn.toggle() }, isCurrent: isCurrent)
     }
 }

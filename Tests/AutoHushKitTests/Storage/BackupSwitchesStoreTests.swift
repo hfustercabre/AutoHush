@@ -11,5 +11,10 @@ struct BackupSwitchesStoreTests {
         store.set(BackupSwitches(usesBackups: true, panelWhileMuted: false), for: "com.example.jukebox")
         #expect(store.switches(for: "com.example.jukebox") == BackupSwitches(usesBackups: true, panelWhileMuted: false))
         #expect(store.switches(for: "com.example.other") == BackupSwitches())
+        // The main control chosen in Settings is kept with them; none, its own.
+        store.set(BackupSwitches(mainControl: "menu"), for: "com.example.jukebox")
+        #expect(store.switches(for: "com.example.jukebox").mainControl == "menu")
+        store.set(BackupSwitches(), for: "com.example.jukebox")
+        #expect(store.switches(for: "com.example.jukebox").mainControl == nil)
     }
 }

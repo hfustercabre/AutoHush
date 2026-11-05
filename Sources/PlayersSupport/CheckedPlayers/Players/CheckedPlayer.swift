@@ -88,6 +88,11 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// Each pause or play begun counts one: one going down its ways stops
     /// once another has begun.
     var pressCalls = 0
+    /// Its chosen way's permission is missing while a backup can be pressed
+    /// (`passesOverOwnWay`).
+    var ownWayDenied: MusicPlayerError?
+    /// What it reports to Now Playing tells its state where it can be read.
+    nonisolated var statesWithoutOwnWay: Bool { reports != nil }
     /// Which control paused and played it last (`PlayerControls`).
     nonisolated let lastUsed = OSAllocatedUnfairLock(initialState: LastControls())
     /// Its backup switches as they are now: its setup's, until Settings
@@ -143,7 +148,15 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// followed while a player asks.
     package static let sharedReports = NowPlayingReports()
 
+    /// Its ways' access; its chosen way's permission missing, its backups
+    /// control it if one can be pressed without macOS asking
+    /// (`passesOverOwnWay`, the user, 2026-11-05).
     package func verifyControlAccess() async throws {
+        try await verifyAccess(usesBackups: usesBackups) { try await verifyOwnWays() }
+    }
+
+    /// The first of its ways (the panel last) that may be pressed, else the first one's error.
+    private func verifyOwnWays() async throws {
         var firstError: any Error?
         for way in parts.ways where !(way is PanelWay) {
             do {
@@ -157,19 +170,22 @@ package actor CheckedPlayer: AddedAppPlayer {
         try await parts.ways.first { $0 is PanelWay }?.verifyControlAccess()
     }
 
+    /// With its backups on, or another main control chosen in Settings
+    /// (pressed alone while they're off), by the routing; else by its ways,
+    /// as before backups.
     package func pause() async throws {
-        if usesBackups { return try await pressByBackups(to: .paused) }
+        if routes { return try await pressByBackups(to: .paused, alone: !usesBackups) }
         try await press(to: .paused)
     }
 
     package func play() async throws {
-        if usesBackups { return try await pressByBackups(to: .playing) }
+        if routes { return try await pressByBackups(to: .playing, alone: !usesBackups) }
         try await press(to: .playing)
     }
 
     /// No mute stands in if it's refused: its backups at once.
     package func pauseUncovered() async throws {
-        if usesBackups { return try await pressByBackups(to: .paused, covered: false) }
+        if routes { return try await pressByBackups(to: .paused, covered: false, alone: !usesBackups) }
         try await press(to: .paused)
     }
 
@@ -178,7 +194,7 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// at a time, the panel once in each muted pause while "the panel while
     /// muted" is on (`pauseWhileMuted`).
     package func pauseQuietly() async throws {
-        if usesBackups { return try await pauseWhileMuted() }
+        if routes { return try await pauseWhileMuted(alone: !usesBackups) }
         try await press(to: .paused, quietly: true)
     }
 

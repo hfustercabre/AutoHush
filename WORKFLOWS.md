@@ -38,7 +38,7 @@ flowchart TD
   AA["Add an App…:<br/>the check"]
   AU["An added app in use"]
   AGAIN(["AutoHush opened again<br/>while it runs (Finder,<br/>Spotlight, Launchpad)"])
-  SET["Settings, Everyday:<br/>Media Player (the player’s<br/>backup controls, Details…),<br/>Sound Sources (ignore,<br/>remove, reset; ⌘Z undoes<br/>a removal or a Restore<br/>Defaults), Behavior (the<br/>switches); Advanced: Fine-<br/>Tuning (timings, lengths,<br/>limits, detection), Diagnostics"]
+  SET["Settings, Everyday:<br/>Media Player (the players,<br/>a row to the player’s<br/>controls), Sound Sources<br/>(ignore, remove, reset; ⌘Z<br/>undoes a removal or a<br/>Restore Defaults), Behavior<br/>(the switches); Advanced:<br/>Fine-Tuning (the player’s<br/>main control, backup controls<br/>and Details…; timings, lengths,<br/>limits, detection), Diagnostics"]
   UP["Updates"]
   Q["Quit: volume back, mutes<br/>lifted, pauses handed over"]
   RL(["The new version opens:<br/>back to the top"])
@@ -237,7 +237,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s, the fades, Pause for the microphone, Stay paused after calls and Level the volume (all off by default) and Resume playback (on by default) are Settings → Behavior’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. Each player is paused and played by its main control (its AppleScript, its menu, a web app’s button); with **Use backup controls** on (the default, Settings → Media Player), a refused pause is muted while its backup controls are tried, and a refused play, or a pause that can’t be muted, goes down them at once ([An added app in use](#an-added-app-in-use) shows the order). A player on another device (Spotify Connect) is never paused.
+What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s, the fades, Pause for the microphone, Stay paused after calls and Level the volume (all off by default) and Resume playback (on by default) are Settings → Behavior’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. Each player is paused and played by its main control (its AppleScript, its menu, a web app’s button); with **Use backup controls** on (the default, Settings → Fine-Tuning, where another main control can be chosen too), a refused pause is muted while its backup controls are tried, and a refused play, or a pause that can’t be muted, goes down them at once ([An added app in use](#an-added-app-in-use) shows the order). A player on another device (Spotify Connect) is never paused.
 
 ## Monitoring: what else changes it
 
@@ -500,7 +500,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-A web app can’t be scripted and has no playback menu, so AutoHush learns its Play/Pause button with you once (it keeps only the button’s two words and place), then presses it. It works with the window visible, minimized or on another desktop, and follows the window that plays. Muting during an ad uses macOS’s per-app audio taps: without Audio Recording, or in AntiDot mode, that pause fails instead. Once its button is learned, its backup controls (the keyboard’s Play/Pause key, the Now Playing panel) are on by default (**Use backup controls** in Settings → Media Player, the panel while muted under it): a refused pause is then muted by AutoHush, which tries them meanwhile, and only an ad whose button says Play keeps the web app’s own mute; without a mute, they’re tried at once. Until it’s learned, Settings shows them dimmed, with Controls not learned.
+A web app can’t be scripted and has no playback menu, so AutoHush learns its Play/Pause button with you once (it keeps only the button’s two words and place), then presses it. It works with the window visible, minimized or on another desktop, and follows the window that plays. Muting during an ad uses macOS’s per-app audio taps: without Audio Recording, or in AntiDot mode, that pause fails instead. Once its button is learned, its backup controls (the keyboard’s Play/Pause key, the Now Playing panel) are on by default (**Use backup controls** in Settings → Fine-Tuning, the panel while muted under it): a refused pause is then muted by AutoHush, which tries them meanwhile, and only an ad whose button says Play keeps the web app’s own mute; without a mute, they’re tried at once. Until it’s learned, Settings shows them dimmed, with Controls not learned.
 
 ## Add an App: before the check
 
@@ -617,7 +617,7 @@ flowchart TD
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-The check runs in AutoHush’s helper, playercheck, so a check that ends, stops or crashes takes its block on the mouse and keyboard with it; the pointer still moves, and the panel shows on every desktop. The ways come surest first (AppleScript, page, menu), the Now Playing panel last, since it opens on screen for a moment. **Use** keeps the way you chose as its main control and the others that worked as its backup controls, with how each did in each window state, and both switches as you set them (Check Again starts from them; Settings → Media Player changes them later).
+The check runs in AutoHush’s helper, playercheck, so a check that ends, stops or crashes takes its block on the mouse and keyboard with it; the pointer still moves, and the panel shows on every desktop. The ways come surest first (AppleScript, page, menu), the Now Playing panel last, since it opens on screen for a moment. **Use** keeps the way you chose as its main control and the others that worked as its backup controls, with how each did in each window state, and both switches as you set them (Check Again starts from them; Settings → Fine-Tuning changes them later, and its main control).
 
 ## An added app in use
 
@@ -690,7 +690,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-An app added with Add an App is paused and played by its main control, the way chosen at Use, each press checked by the app’s own signs (every kept way’s). With **Use backup controls** on (the default; set at Use, or later in Settings → Media Player), its backup controls are the other ways that worked in its check, and its window’s state picks the first way: the chosen one if it worked there, else another that did, those not tried there next, then the keyboard’s Play/Pause key (only while macOS says the app is Now Playing), the Now Playing panel last, a way that failed there left out. An app added before backup controls keeps its one way: Settings → Media Player offers **Check Again…**. When a pause doesn’t take, it’s muted instead, as any player (with Audio Recording, outside AntiDot mode), and while it’s muted and heard, its pause is tried again by the others in turn, the key and the panel once in each pause; when it can’t be muted, or no mute will follow (the output went away, the Mac goes to sleep), the others are tried at once; otherwise the pause fails and the menu says so. A refused resume goes to the others at once, the panel once. Only an AppleScript with a volume fades. An app that can only be muted, or whose Now Playing row needs its sound, isn’t available in AntiDot mode.
+An app added with Add an App is paused and played by its main control, the way chosen at Use (or another that worked, chosen later in Settings → Fine-Tuning), each press checked by the app’s own signs (every kept way’s). With **Use backup controls** on (the default; set at Use, or later in Settings → Fine-Tuning), its backup controls are the other ways that worked in its check, and its window’s state picks the first way: the chosen one if it worked there, else another that did, those not tried there next, then the keyboard’s Play/Pause key (only while macOS says the app is Now Playing), the Now Playing panel last (first when it's the main control chosen in Fine-Tuning), a way that failed there left out; with backup controls off, a main control chosen there is pressed alone. An app added before backup controls keeps its one way: Settings → Fine-Tuning offers **Check Again…**. When a pause doesn’t take, it’s muted instead, as any player (with Audio Recording, outside AntiDot mode), and while it’s muted and heard, its pause is tried again by the others in turn, the key and the panel once in each pause; when it can’t be muted, or no mute will follow (the output went away, the Mac goes to sleep), the others are tried at once; otherwise the pause fails and the menu says so. A refused resume goes to the others at once, the panel once. Only an AppleScript with a volume fades. An app that can only be muted, or whose Now Playing row needs its sound, isn’t available in AntiDot mode.
 
 ## Updates
 
@@ -756,7 +756,8 @@ flowchart TD
   RUN["Isn’t running: nothing to do<br/>(the card in grey); waits<br/>for it to open, then<br/>3 tries, 2 s apart; meanwhile,<br/>with Auto-Pause on, the menu<br/>lists the apps playing"]
   RESP["Isn’t responding:<br/>tried again after 5 s,<br/>doubling up to a minute;<br/>Try Again on the card"]
   CTRL["Can’t control it<br/>right now: ⓘ says why;<br/>tried again likewise"]
-  PERM["A permission missing:<br/>the card in orange,<br/>with Allow…"]
+  PERM["A permission missing,<br/>no backup control can<br/>stand in: the card in<br/>orange, with Allow…"]
+  BACK["A permission missing,<br/>a backup control allowed:<br/>controlled by its backups,<br/>its own again once allowed"]
   MACOS["macOS’s own prompt,<br/>or System Settings<br/>(Automation: the<br/>player opened first)"]
   TRY["Looked at again<br/>every 3 s"]
   AGAIN["Started again by itself:<br/>once it’s back, opens,<br/>answers or is allowed"]
@@ -765,6 +766,7 @@ flowchart TD
 
   S --> W
   W -->|"nothing"| READY
+  W --> BACK --> READY
   W --> INS --> AGAIN
   W --> RUN --> AGAIN
   W --> RESP --> AGAIN
@@ -779,7 +781,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What the menu’s card says when AutoHush can’t start controlling the player, and how it recovers. Most fixes need nothing more from you: AutoHush starts again by itself, at once when the player opens or is installed again. A permission taken away while it runs is caught the next time it matters.
+What the menu’s card says when AutoHush can’t start controlling the player, and how it recovers. A missing permission stops it only when none of the player's backup controls (while they're on) can be pressed without it. Most fixes need nothing more from you: AutoHush starts again by itself, at once when the player opens or is installed again. A permission taken away while it runs is caught the next time it matters.
 
 ## Problems: while it runs, and quitting
 

@@ -3,23 +3,28 @@ import AutoHushKit
 
 /// Settings → Fine-Tuning, under Advanced (S5d + S5a, the user's pick,
 /// 2026-10-25): what Behavior's switches use, a card each, each with its
-/// Restore Defaults. Timing: how long another app must play, and be quiet
+/// Restore Defaults. First, the chosen player's controls
+/// (`PlayerControlsCard`, F4, 2026-11-05: Media Player's before, which
+/// keeps a row to it). Timing: how long another app must play, and be quiet
 /// (greyed out while nothing resumes). Fade Lengths: greyed out while the
 /// fades are off or the player can't fade. Volume Limits: leveling's,
 /// greyed out while it's off or can't be. Detection: AntiDot mode's ways
 /// (greyed out while it's off) and the silence threshold (greyed out in
-/// it). What's greyed out says why, as in Behavior. A Behavior row opens it
-/// scrolled to its card (`SettingsModel.fineTuningFocus`).
+/// it). What's greyed out says why, as in Behavior. A Behavior row, or
+/// Media Player's Controls row, opens it scrolled to its card
+/// (`SettingsModel.fineTuningFocus`).
 struct FineTuningSettingsView: View {
     let model: SettingsModel
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     var body: some View {
         SettingsPageScroll {
+            PlayerControlsCard(model: model)
+
             Card(Self.timingTitle) {
                 TimingSliderRow(model: model, timing: .pauseAfter, isCurrent: isFocus(.timing))
                     .background(anchor(.timing))
-                    // Always made: where the page is scrolled from, once.
+                    // Always made (the card above isn't): where the page is scrolled from, once.
                     .background(ScrollDriver(target: model.fineTuningFocus.map(AnyHashable.init)) {
                         // Its row pressed with a key: the highlight goes on from this card.
                         if model.fineTuningFocusTakesHighlight { keyboard?.highlightCurrent() }
@@ -111,6 +116,7 @@ struct FineTuningSettingsView: View {
                 RestoreDefaultsButton(model: model, card: .detection)
             }
         }
+        .onAppear { model.actions?.refreshPlayerControls() }
     }
 
     /// Where the page scrolls to when a Behavior row asks for `card`: its

@@ -36,6 +36,16 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     var mutedTried: Set<Int> = []
     var pressCalls = 0
     var panelPlayFailedAt: Date?
+    /// Only its own player and its backups tell its state.
+    nonisolated var statesWithoutOwnWay: Bool { false }
+    var ownWayDenied: MusicPlayerError? {
+        didSet {
+            let denied = ownWayDenied != nil
+            ownWayDeniedNow.withLock { $0 = denied }
+        }
+    }
+    /// The same, read where its actor can't be waited for (`makeStateObserver`).
+    private nonisolated let ownWayDeniedNow = OSAllocatedUnfairLock(initialState: false)
     /// Whether it may be muted through a tap: not in AntiDot mode (`allowTaps`).
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     private let audioRecordingAllowed: @Sendable () -> Bool
@@ -93,28 +103,64 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     package nonisolated var canFade: Bool { inner.canFade }
     package nonisolated var pausesByMuting: Bool { inner.pausesByMuting }
     package nonisolated var needsAudioLevels: Bool { inner.needsAudioLevels }
-    package nonisolated var stateReportDelay: TimeInterval { inner.stateReportDelay }
+    /// Its own player's; while its own way's permission is missing, a
+    /// polled state's (`makeStateObserver`).
+    package nonisolated var stateReportDelay: TimeInterval {
+        ownWayDeniedNow.withLock { $0 } ? max(inner.stateReportDelay, PolledStateObserver.reportDelay) : inner.stateReportDelay
+    }
     /// With its backups in use it checks each way's press itself, as an
     /// added app does (`press(_:to:checkable:)`).
-    package nonisolated var checksItsPresses: Bool { usesBackups || inner.checksItsPresses }
+    package nonisolated var checksItsPresses: Bool { routes || inner.checksItsPresses }
     package nonisolated var releasesOnQuit: Bool { inner.releasesOnQuit || learningPage != nil }
 
     /// Its own player's; with its backups on, its page's switch turned on
-    /// too, so its page is built wherever its window goes.
+    /// too, so its page is built wherever its window goes. Its own player's
+    /// permission missing, its backups control it if one can be pressed
+    /// without macOS asking (`passesOverOwnWay`).
     package func verifyControlAccess() async throws {
-        try await inner.verifyControlAccess()
-        if usesBackups { await learningPage?.showPage() }
+        try await verifyAccess(usesBackups: usesBackups) { try await inner.verifyControlAccess() }
+        if routes { await learningPage?.showPage() }
     }
-    package func playerState() async -> PlayerState { await inner.playerState() }
+    package func playerState() async -> PlayerState { await stateNow() }
+
+    /// Its own player's state; while its own way's permission is missing
+    /// (`ownWayDenied`), which leaves it unknown (its script can't be asked),
+    /// the first backup that tells it: its menu's item, its page's word, a
+    /// backup script; never the Play/Pause key, which tells nothing, nor the
+    /// panel, which shows on screen to be read (the user, 2026-11-05).
+    func stateNow() async -> PlayerState {
+        // Its own way can't be asked (each ask would fail, logged).
+        guard ownWayDenied != nil else { return await inner.playerState() }
+        for backup in backups where [.menu, .page, .script].contains(backup.kind) {
+            let state = await backup.player.playerState()
+            if state != .unknown { return state }
+        }
+        return .unknown
+    }
     package func statesItself() async -> Bool { await inner.statesItself() }
     package func volume() async -> Int? { await inner.volume() }
     package func setVolume(_ volume: Int) async throws { try await inner.setVolume(volume) }
     package func needsReopen() async -> Bool { await inner.needsReopen() }
     package func reopen() async -> Bool { await inner.reopen() }
 
+    /// Its own player's; while its own way's permission is missing, read
+    /// about once a second from its backups (`stateNow`): its own player
+    /// announces nothing it can be asked about then.
+    /// Both run, so a permission taken away or given back while AutoHush
+    /// runs is followed without a new session: its own player's reports
+    /// (unknown, ignored, while it can't be asked) and, with backups, its
+    /// backups' state read once a second only while that lasts.
     @MainActor
     package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
-        inner.makeStateObserver(onChange: onChange)
+        let own = inner.makeStateObserver(onChange: onChange)
+        guard wayOrder != nil else { return own }
+        return BothStateObservers(own, PolledStateObserver(read: { [self] in await self.stateWhileDenied() }, onChange: onChange))
+    }
+
+    /// Its backups' state while its own way's permission is missing; else
+    /// unknown, which says nothing.
+    private func stateWhileDenied() async -> PlayerState {
+        ownWayDenied == nil ? .unknown : await stateNow()
     }
 
     /// Its own player's, and its page's switch turned back off.
@@ -130,15 +176,33 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
 
     // MARK: - Pressed with its backups
 
+    /// With its backups on, or another main control chosen in Settings
+    /// (pressed alone while they're off), by the routing; else by its own player.
     package func pause() async throws {
-        guard usesBackups else { return try await own(.paused) { try await inner.pause() } }
+        guard routes else { return try await own(.paused) { try await inner.pause() } }
         try await pause(covered: true)
     }
 
     package func pauseUncovered() async throws {
-        guard usesBackups else { return try await own(.paused) { try await inner.pauseUncovered() } }
+        guard routes else { return try await own(.paused) { try await inner.pauseUncovered() } }
         try await pause(covered: false)
     }
+
+    /// Its main control's place in `wayOrder`: another than its own when the
+    /// user chose one in Settings (the user, 2026-11-05); never its page
+    /// before its button is learned, which it learns only from a pause by
+    /// another way (Spotify's).
+    nonisolated var mainIndex: Int {
+        guard let wayOrder else { return 0 }
+        let index = wayOrder.mainIndex(for: switches().mainControl)
+        return wayOrder.ways[index].kind == .page && !pageLearned ? 0 : index
+    }
+
+    /// Its page way's button is learned (or it has no page to learn).
+    private nonisolated var pageLearned: Bool { learningPage?.learningStatus.isLearned != false }
+
+    /// Pressed by the routing: its backups on, or another main control chosen.
+    private nonisolated var routes: Bool { usesBackups || mainIndex != 0 }
 
     /// A press by its own player alone (its backups off), noted as its own.
     private func own(_ target: PlayerState, _ press: () async throws -> Void) async throws {
@@ -150,19 +214,19 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
 
     private func pause(covered: Bool) async throws {
         let noted = await notePlayingForPage()
-        try await pressByBackups(to: .paused, covered: covered)
+        try await pressByBackups(to: .paused, covered: covered, alone: !usesBackups)
         if noted { _ = await learningPage?.markPaused() }
     }
 
     package func play() async throws {
-        guard usesBackups else { return try await own(.playing) { try await inner.play() } }
+        guard routes else { return try await own(.playing) { try await inner.play() } }
         await learningPage?.showPage()
-        try await pressByBackups(to: .playing)
+        try await pressByBackups(to: .playing, alone: !usesBackups)
     }
 
     package func pauseQuietly() async throws {
-        guard usesBackups else { return try await own(.paused) { try await inner.pauseQuietly() } }
-        try await pauseWhileMuted()
+        guard routes else { return try await own(.paused) { try await inner.pauseQuietly() } }
+        try await pauseWhileMuted(alone: !usesBackups)
     }
 
     /// Its page, not learned yet, looked at while it plays, so the pause
@@ -183,11 +247,15 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     /// Its own way, its backups (the Play/Pause key untested), their
     /// switches, and which paused and played it last.
     package nonisolated var controls: PlayerControls {
-        PlayerControls(main: .init(kind: WayOrder.Kind(ownResult.kind), result: ownResult),
-                       backups: zip(backups, backupResults).map { .init(kind: $0.kind, result: $1) },
-                       switches: switches(),
-                       notLearned: (inner as? any LearningMusicPlayer)?.learningStatus.isLearned == false,
-                       last: lastUsed.withLock { $0 })
+        let all = [PlayerControls.Control(kind: WayOrder.Kind(ownResult.kind), result: ownResult)]
+            + zip(backups, backupResults).map { PlayerControls.Control(kind: $0.kind, result: $1) }
+        let main = mainIndex
+        let learned = pageLearned
+        return PlayerControls(all: all, chosen: main == 0 ? nil : wayOrder?.ways[main].kind,
+                              choosable: { CheckedPlayer.choosable($0, at: $1) && (learned || $0.kind != .page) },
+                              switches: switches(),
+                              notLearned: (inner as? any LearningMusicPlayer)?.learningStatus.isLearned == false,
+                              last: lastUsed.withLock { $0 })
     }
 
     // MARK: - BackupRouting
@@ -196,7 +264,7 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
 
     var panelWhileMuted: Bool { switches().panelWhileMuted }
 
-    func sureState() async -> PlayerState { await inner.playerState() }
+    func sureState() async -> PlayerState { await stateNow() }
 
     /// As its mute asks (`ProcessPlayerMute`): not in AntiDot mode, with Audio Recording.
     func canBeMuted() async -> Bool {
@@ -214,7 +282,7 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
         }
         try await PressCheck(name: "\(name) (\(type(of: way)))",
                              press: { target in if target == .playing { try await way.play() } else { try await way.pause() } },
-                             state: { [inner] in await inner.playerState() }, sleep: pressSleep).press(to: target)
+                             state: { [self] in await self.stateNow() }, sleep: pressSleep).press(to: target)
     }
 }
 
@@ -299,4 +367,26 @@ private struct NoSetups: PlayerSetupStore {
     func save(_ setup: PlayerSetup) {}
     func forget(_ bundleID: String) {}
     func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {}
+}
+
+/// Two state observers started and stopped together.
+@MainActor
+private final class BothStateObservers: PlayerStateObserving {
+    private let first: any PlayerStateObserving
+    private let second: any PlayerStateObserving
+
+    init(_ first: any PlayerStateObserving, _ second: any PlayerStateObserving) {
+        self.first = first
+        self.second = second
+    }
+
+    func start() {
+        first.start()
+        second.start()
+    }
+
+    func stop() {
+        first.stop()
+        second.stop()
+    }
 }

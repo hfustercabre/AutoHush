@@ -19,7 +19,8 @@ final class FakeAppActions: AppActions {
     /// What AutoHush does with the switches (`refreshPlayerControls`), where a test needs it.
     var setsBackupSwitches: ((BackupSwitches) -> Void)?
     func setBackupSwitches(_ switches: BackupSwitches) {
-        log.calls.append("backups \(switches.usesBackups ? "on" : "off") panel \(switches.panelWhileMuted ? "on" : "off")")
+        log.calls.append("backups \(switches.usesBackups ? "on" : "off") panel \(switches.panelWhileMuted ? "on" : "off")"
+                         + (switches.mainControl.map { " main \($0)" } ?? ""))
         setsBackupSwitches?(switches)
     }
     func checkPlayerAgain() { log.calls.append("checkPlayerAgain") }

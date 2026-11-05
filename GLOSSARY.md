@@ -176,7 +176,9 @@ window on screen or within reach (a menu bar player's), where each way
 that needs none is tried once.
 
 **Main control, backup controls** (`PlayerControls`, `WayOrder`,
-`BackupRouting`): the way AutoHush pauses and plays a player first, and its
+`BackupRouting`): the way AutoHush pauses and plays a player first (its own,
+the **recommended** one, unless another that worked is chosen in Settings →
+Fine-Tuning, `BackupSwitches.mainControl`; never the Play/Pause key), and its
 other ways, pressed when the main one fails, by its window's state: an added
 app's the other ways its check found; a built-in player's those measured for
 it (`BackedUpPlayer`, `MeasuredBackups`), a learned Safari web app none; then,

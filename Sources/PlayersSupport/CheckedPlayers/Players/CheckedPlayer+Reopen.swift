@@ -11,7 +11,7 @@ extension CheckedPlayer {
     /// without the option.
     package func needsReopen() async -> Bool {
         func isPage(_ way: PlayerSetup.Way) -> Bool { if case .page = way { true } else { false } }
-        let pagePressed = setup.ways.contains(where: isPage) || (usesBackups && setup.backups.contains(where: isPage))
+        let pagePressed = setup.ways.contains(where: isPage) || (usesBackups && setup.backups.contains(where: isPage)) || chosenMain == .page
         guard setup.needsLaunchOption, pagePressed, let pid = processIdentifier() else { return false }
         return !processArguments(pid).contains(PlayerSetup.launchOption)
     }

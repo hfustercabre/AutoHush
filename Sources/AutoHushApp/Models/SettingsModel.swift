@@ -51,7 +51,8 @@ final class SettingsModel {
     var chosenPlayer: PlayerOption? { state.chosenPlayer }
     /// The chosen player's name, e.g. "Jukebox".
     var chosenPlayerName: String? { chosenPlayer?.name }
-    /// What controls the chosen player (Settings → Media Player's card).
+    /// What controls the chosen player (Settings → Fine-Tuning's card, and
+    /// Media Player's row to it).
     /// Followed as a part of its own (its card's switches, notes and
     /// Restore Defaults redraw as it changes; the user, 2026-11-05: they
     /// didn't until the page was shown again).
@@ -189,6 +190,19 @@ final class SettingsModel {
         fineTuningFocus = card
         fineTuningFocusTakesHighlight = byKeyboard
         actions?.openSettings(page: .fineTuning)
+    }
+
+    /// Makes `kind`, one of `chosenControls.choices`, the chosen player's
+    /// main control (Fine-Tuning's pop-up, F4, the user's pick,
+    /// 2026-11-05): kept as the user's choice (`BackupSwitches.mainControl`),
+    /// none for the recommended one, so a new check's choice is followed
+    /// again; its switches as they are.
+    func chooseMainControl(_ kind: WayOrder.Kind) {
+        guard let controls = chosenControls, kind != controls.main.kind,
+              controls.choices.contains(where: { $0.kind == kind }) else { return }
+        var switches = controls.switches
+        switches.mainControl = kind == controls.recommended ? nil : kind.rawValue
+        actions?.setBackupSwitches(switches)
     }
 
     /// Shows Sound Sources: General's row under the Auto-Pause switch (A1,

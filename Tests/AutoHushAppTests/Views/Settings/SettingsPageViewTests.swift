@@ -111,9 +111,9 @@ struct SettingsPageViewTests {
         #expect(missing >= allowed + note, "\(missing) missing, \(allowed) allowed, the note \(note)")
     }
 
-    @Test("Behavior, Fine-Tuning, General, Media Player and About draw with every card changed, each with its Restore Defaults; Behavior and Fine-Tuning in AntiDot mode too", arguments: [
+    @Test("Behavior, Fine-Tuning, General and About draw with every card changed, each with its Restore Defaults; Behavior and Fine-Tuning in AntiDot mode too", arguments: [
         (SettingsPage.behavior, false), (.behavior, true), (.fineTuning, false), (.fineTuning, true), (.general, false),
-        (.mediaPlayer, false), (.about, false),
+        (.about, false),
     ])
     func everyCardChanged(_ page: SettingsPage, _ antiDot: Bool) {
         let updates = FakeUpdateCommands()
@@ -131,18 +131,52 @@ struct SettingsPageViewTests {
         }
         let cards: [SettingsCard] = switch page {
         case .behavior: [.pausing, .resuming, .fades, antiDot ? .modes : .volume]
-        case .fineTuning: [.timing, .fadeLengths, .detection] + (antiDot ? [] : [.volumeLimits])
+        case .fineTuning: [.playerControls, .timing, .fadeLengths, .detection] + (antiDot ? [] : [.volumeLimits])
         case .general: [.startup]
-        case .mediaPlayer: [.playerControls]
         default: [.updates]
         }
         if page == .general { model.setKeepsMenuBarIconNearSystemIcons(true) }
-        model.state.status.chosenControls = PlayerControls(main: .init(kind: .menu, result: nil), backups: [.init(kind: .panel, result: nil)],
-                                                           switches: BackupSwitches(usesBackups: false))
+        // Another main control chosen, the backups off.
+        model.state.status.chosenControls = .choosing(.page, switches: BackupSwitches(usesBackups: false, mainControl: "page"))
         updates.checksAutomatically = false
         updates.mode = .notify
         for card in cards { #expect(!model.isDefault(card), "\(card)") }
         #expect(draws(page, model))
+    }
+
+    @Test("Fine-Tuning draws the player's controls first: the main control's pop-up with its note, or its one control; an app to check again, a web app not learned", arguments: [
+        PlayerControls.choosing(), .choosing(.page, switches: BackupSwitches(mainControl: "page")),
+        .choosing(.panel, switches: BackupSwitches(usesBackups: false, mainControl: "panel")),
+        PlayerControls(main: .init(kind: .menu, result: .init(kind: .menu, mark: .works)), backups: [.init(kind: .mediaKey, result: nil)],
+                       switches: BackupSwitches()),
+        .choosing(needsCheckAgain: true),
+        PlayerControls(main: .init(kind: .page, result: nil), backups: [.init(kind: .panel, result: nil)], switches: BackupSwitches(),
+                       notLearned: true),
+    ])
+    func fineTuningControls(_ controls: PlayerControls) {
+        let model = SettingsModel.forTests(actions: actions)
+        model.state.status.choosePlayer(named: "Jukebox")
+        let without = drawn(pageView(.fineTuning, model), width: Self.pageWidth).height
+        model.state.status.chosenControls = controls
+        let with = drawn(pageView(.fineTuning, model), width: Self.pageWidth).height
+        let row = drawn(SwitchRow(Text(verbatim: BackupText.uses), isOn: .constant(true)), width: Self.pageWidth).height
+        // Taller by the card's rows at least: its main control and the switch.
+        #expect(with >= without + 2 * row, "\(with) with the card, \(without) without, a row \(row)")
+    }
+
+    @Test("Media Player draws a card of the player's name with its Controls row to Fine-Tuning, while Fine-Tuning has its card; none without")
+    func mediaPlayerControlsRow() {
+        let model = SettingsModel.forTests(actions: actions)
+        model.state.status.choosePlayer(named: "Jukebox")
+        let without = drawn(pageView(.mediaPlayer, model), width: Self.pageWidth).height
+        model.state.status.chosenControls = .choosing()
+        let with = drawn(pageView(.mediaPlayer, model), width: Self.pageWidth).height
+        let row = drawn(FineTuningRow(model: model, card: .playerControls, title: BackupText.controls,
+                                      value: BackupText.summary(.choosing())), width: Self.pageWidth).height
+        #expect(with >= without + row, "\(with) with the row, \(without) without, the row \(row)")
+        // The row opens Fine-Tuning at the card.
+        model.showFineTuning(.playerControls)
+        #expect(model.fineTuningFocus == .playerControls && actions.log.calls.last == "fineTuning")
     }
 
     @Test("Behavior draws Modes' notes: Audio Recording missing, with Allow and Use AntiDot Mode, or allowed and waiting for AutoHush to reopen, AntiDot mode unavailable for the player",

@@ -73,11 +73,15 @@ extension SettingsModel {
     }
 
     /// The chosen player's backup switches while its card shows them (not
-    /// for an app to check again, nor a web app not learned yet).
+    /// for an app to check again, nor a web app not learned yet), its main
+    /// control as the card shows it: one kept that can't be its main (its
+    /// check changed) counts as its own.
     private var chosenBackupSwitches: ChosenBackupSwitches? {
         guard let bundleID = chosenPlayerID, let controls = chosenControls, !controls.needsCheckAgain, !controls.notLearned
         else { return nil }
-        return ChosenBackupSwitches(bundleID: bundleID, switches: controls.switches)
+        var switches = controls.switches
+        switches.mainControl = controls.mainChanged ? controls.main.kind.rawValue : nil
+        return ChosenBackupSwitches(bundleID: bundleID, switches: switches)
     }
 
     /// The settings as the card's Restore Defaults leaves them: its own back
@@ -132,9 +136,11 @@ extension SettingsModel {
             restored.checksForUpdatesAutomatically = true
             if updateInstallNote == nil { restored.automaticUpdates = .install }
             restored.getsReleaseCandidates = false
-        // The chosen player's backup controls': both on, as when it's
-        // added; the panel's alone while it isn't among them (hidden).
+        // The chosen player's controls': its own main control (the
+        // recommended one), both switches on, as when it's added; the
+        // panel's alone while it isn't among them (hidden).
         case .playerControls:
+            restored.backupSwitches?.switches.mainControl = nil
             restored.backupSwitches?.switches.usesBackups = true
             if chosenControls?.hasPanel == true { restored.backupSwitches?.switches.panelWhileMuted = true }
         }
@@ -142,15 +148,15 @@ extension SettingsModel {
     }
 }
 
-/// The chosen player's backup switches, with whose they are.
+/// The chosen player's main control and backup switches, with whose they are.
 private struct ChosenBackupSwitches: Equatable {
     let bundleID: String
     var switches: BackupSwitches
 }
 
 /// The settings a card's Restore Defaults can change: the timings, the
-/// detection, the menu bar icon's place, the chosen player's backup
-/// switches and the updates' choices. It sets them through these alone, so
+/// detection, the menu bar icon's place, the chosen player's main control
+/// and backup switches, and the updates' choices. It sets them through these alone, so
 /// they're also all its Undo needs to keep.
 private struct CardSettings: Equatable {
     var timings: TimingSettings
@@ -188,9 +194,11 @@ private struct CardSettings: Equatable {
         take(\.checksForUpdatesAutomatically)
         take(\.automaticUpdates)
         take(\.getsReleaseCandidates)
-        // Switch by switch, and only for the player they were the switches of.
+        // Field by field (the main control, each switch), and only for the
+        // player they were the settings of.
         if var now = settings.backupSwitches, old.backupSwitches?.bundleID == now.bundleID, new.backupSwitches?.bundleID == now.bundleID,
            let before = old.backupSwitches?.switches, let after = new.backupSwitches?.switches {
+            if before.mainControl != after.mainControl { now.switches.mainControl = after.mainControl }
             if before.usesBackups != after.usesBackups { now.switches.usesBackups = after.usesBackups }
             if before.panelWhileMuted != after.panelWhileMuted { now.switches.panelWhileMuted = after.panelWhileMuted }
             settings.backupSwitches = now

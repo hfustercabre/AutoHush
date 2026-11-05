@@ -169,6 +169,40 @@ struct SettingsModelTests {
         #expect(model.chosenControls?.switches.usesBackups == false && !model.isDefault(.playerControls))
     }
 
+    @Test("choosing the main control keeps the user's choice, none for the recommended one, with the switches as they are; one that isn't a choice, or the main one already, changes nothing")
+    func chooseMainControl() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Radio")
+        model.state.status.chosenControls = .choosing(switches: BackupSwitches(panelWhileMuted: false))
+        actions.setsBackupSwitches = { [model] switches in
+            model.state.status.chosenControls = model.chosenControls?.with(switches)
+        }
+        #expect(model.chosenControls?.choices.map(\.kind) == [.script, .menu, .page, .panel]) // never the key
+        model.chooseMainControl(.page)
+        #expect(log.calls.last == "backups on panel off main page")
+        #expect(model.chosenControls?.main.kind == .page && model.chosenControls?.mainChanged == true)
+        #expect(!model.isDefault(.playerControls))
+
+        model.chooseMainControl(.script) // the recommended one: none kept
+        #expect(log.calls.last == "backups on panel off")
+        #expect(model.chosenControls?.switches.mainControl == nil && model.chosenControls?.main.kind == .script)
+
+        log.calls = []
+        model.chooseMainControl(.script) // already the main one
+        model.chooseMainControl(.mediaKey) // never a main control
+        #expect(log.calls.isEmpty)
+    }
+
+    @Test("a main control kept that can't be one any more counts as the player's own: Restore Defaults has nothing to do")
+    func staleMainControlIsDefault() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Radio")
+        // The key kept as its main control: the player presses its own
+        // (`WayOrder.mainIndex`), and reports it as its main one.
+        model.state.status.chosenControls = .choosing(switches: BackupSwitches(mainControl: "mediaKey"))
+        #expect(model.chosenControls?.main.kind == .script && model.isDefault(.playerControls))
+    }
+
     @Test("the chosen player's fades follow its option")
     func chosenPlayerFadesFollowed() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))

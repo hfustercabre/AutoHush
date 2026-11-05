@@ -258,6 +258,52 @@ struct CheckedPlayerBackupsTests {
         #expect(await pauses(script, menu) == [0, 1])
     }
 
+    @Test("its chosen way's permission missing, its backups control it if one can be pressed without macOS asking: each press passes over it until macOS allows it again")
+    func chosenPermissionMissing() async throws {
+        let allowed = Locked<Set<WayOrder.Kind>>([.menu])
+        let script = MockMusicPlayer(state: .playing, failVerifyWith: MusicPlayerError.automationPermissionDenied)
+        let menu = MockMusicPlayer(state: .playing)
+        let player = jukebox(script, chosenKind: .script, backups: [(menu, .menu)], allowed: { allowed.value.contains($0) })
+        try await player.verifyControlAccess()
+        try await player.pause()
+        try await player.pauseQuietly()
+        try await player.play()
+        #expect(await pauses(script, menu) == [0, 2])
+        #expect(await plays(script, menu) == [0, 1])
+        // Its menu refusing, muted: its retry by the menu again, never its script.
+        await menu.setFailPause(Self.refused)
+        await #expect(throws: Self.refused) { try await player.pause() }
+        await menu.setFailPause(nil)
+        try await player.pauseQuietly()
+        #expect(await pauses(script, menu) == [0, 4])
+        // No backup allowed either: nothing pressed, its own permission missing.
+        allowed.value = []
+        await #expect(throws: MusicPlayerError.automationPermissionDenied) { try await player.pauseUncovered() }
+        // Allowed again: its script, checked at the press without asking, and its access too.
+        allowed.value = [.script, .menu]
+        await script.setFailVerify(nil)
+        try await player.pause()
+        #expect(await pauses(script, menu) == [1, 4])
+        try await player.verifyControlAccess()
+    }
+
+    @Test("its chosen way's permission missing, it can't be controlled as before when no backup can be pressed without macOS asking, or its backups are off")
+    func chosenPermissionMissingNoBackup() async throws {
+        let page = MockMusicPlayer(state: .playing, failVerifyWith: MusicPlayerError.accessibilityPermissionDenied)
+        await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) {
+            try await jukebox(page, backups: [(MockMusicPlayer(), .menu)], allowed: { _ in false }).verifyControlAccess()
+        }
+        await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) {
+            try await jukebox(page, backups: [(MockMusicPlayer(), .script)], usesBackups: false).verifyControlAccess()
+        }
+        // A backup by its AppleScript, already allowed: controlled by it.
+        let script = MockMusicPlayer(state: .playing)
+        let backedUp = jukebox(page, backups: [(script, .script)], allowed: { $0 == .script })
+        try await backedUp.verifyControlAccess()
+        try await backedUp.pause()
+        #expect(await pauses(page, script) == [0, 1])
+    }
+
     @Test("its window is looked at only when its state changes the order")
     func looks() async throws {
         let looks = Locked(0)

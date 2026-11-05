@@ -64,9 +64,12 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     /// while the app is muted in place of a pause, which no other way
     /// shows on screen (on unless the user turns it off; the user, 2026-11-04).
     package var panelWhileMuted: Bool
-    /// Both switches together.
+    /// The control chosen as its main one in Settings, by its kind's raw
+    /// value; `nil` for the way chosen at Use (`ways`) (the user, 2026-11-05).
+    package var mainControl: String?
+    /// Both switches and the main control's choice together.
     package var switches: BackupSwitches {
-        BackupSwitches(usesBackups: usesBackups, panelWhileMuted: panelWhileMuted)
+        BackupSwitches(usesBackups: usesBackups, panelWhileMuted: panelWhileMuted, mainControl: mainControl)
     }
     /// The notification that announced its pauses and plays in the check.
     var stateNotification: String?
@@ -103,7 +106,7 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case bundleID, name, appURL, ways, backups, wayResults, usesBackups, panelWhileMuted, stateNotification,
+        case bundleID, name, appURL, ways, backups, wayResults, usesBackups, panelWhileMuted, mainControl, stateNotification,
              needsLaunchOption, panelRowIsStale, panelClues
     }
 
@@ -122,6 +125,7 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
         wayResults = (try? values.decodeIfPresent([CheckResult.WayResult].self, forKey: .wayResults)) ?? []
         usesBackups = try values.decodeIfPresent(Bool.self, forKey: .usesBackups) ?? true
         panelWhileMuted = try values.decodeIfPresent(Bool.self, forKey: .panelWhileMuted) ?? true
+        mainControl = try values.decodeIfPresent(String.self, forKey: .mainControl)
         stateNotification = try values.decodeIfPresent(String.self, forKey: .stateNotification)
         needsLaunchOption = try values.decode(Bool.self, forKey: .needsLaunchOption)
         panelRowIsStale = try values.decodeIfPresent(Bool.self, forKey: .panelRowIsStale)

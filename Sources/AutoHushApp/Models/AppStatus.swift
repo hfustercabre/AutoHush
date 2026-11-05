@@ -46,8 +46,8 @@ struct AppStatus: Equatable {
     /// The bundle ID of the chosen player; `nil` while none is chosen.
     var chosenPlayerID: String?
     /// What controls the chosen player (its main and backup controls, their
-    /// switches), for Settings → Media Player; `nil` for one with none to
-    /// show (muted only) or while none is chosen.
+    /// switches), for Settings → Fine-Tuning and Media Player; `nil` for one
+    /// with none to show (muted only) or while none is chosen.
     var chosenControls: PlayerControls?
     /// The chosen player as the menu offers it; `nil` while none is chosen.
     var chosenPlayer: PlayerOption? {
