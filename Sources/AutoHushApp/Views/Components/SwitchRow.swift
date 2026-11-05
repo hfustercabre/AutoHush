@@ -33,14 +33,7 @@ struct SwitchRow: View {
                 .focusEffectDisabled(keyboard != nil) // the row's tint shows it
                 .accessibilityHint(subtitle ?? Text(verbatim: ""))
         }
-        // A click anywhere in the tint (`highlightableRow`'s 6 and 3 pt
-        // around it), as one on the switch, which takes its own clicks.
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .contentShape(Rectangle())
-        .onTapGesture { isOn.toggle() }
-        .padding(.horizontal, -6)
-        .padding(.vertical, -3)
+        .clickAnywhere { isOn.toggle() }
         .highlightableRow(isFocused: isFocused, press: { isOn.toggle() }, isCurrent: isCurrent)
     }
 }

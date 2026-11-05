@@ -70,7 +70,7 @@ struct PlayerControlsCard: View {
 
     /// "Main control" and its pop-up, as About's update pop-up (borderless,
     /// Return or Space shows the choices, ← and → choose), the chosen
-    /// control's note under it.
+    /// control's note under it. A click anywhere in it shows the choices.
     private func mainControlPopUp(_ controls: PlayerControls, player: String) -> some View {
         // The panel last, apart: it opens on screen for a moment.
         // A control not learned yet among them, dimmed (the user, 2026-11-05).
@@ -101,6 +101,8 @@ struct PlayerControlsCard: View {
             }
             ChosenControlNote(control: controls.main, player: player)
         }
+        // A click anywhere in the row shows the choices, as one on a switch row turns it.
+        .clickAnywhere { popUp.open() }
         .highlightableRow(press: { popUp.open() }, adjust: { step in
             let now = model.chosenControls ?? controls
             // In the order the pop-up shows them: the panel last.

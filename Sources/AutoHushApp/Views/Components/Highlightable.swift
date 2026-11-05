@@ -175,6 +175,18 @@ struct Highlightable: ViewModifier {
 }
 
 extension View {
+    /// A click anywhere in a row's tint (`highlightableRow`'s 6 and 3 pt
+    /// around it) does what one on its control does; the control takes its
+    /// own clicks (the user, 2026-11-03 and 2026-11-05).
+    func clickAnywhere(_ action: @escaping () -> Void) -> some View {
+        padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: action)
+            .padding(.horizontal, -6)
+            .padding(.vertical, -3)
+    }
+
     /// A row of Settings (or the menu) as `Highlightable`, its tint out of
     /// its layout, `horizontal` pt to its sides and `vertical` pt above and
     /// below it: 6 and 3, as the menu's rows, unless it says otherwise.

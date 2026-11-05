@@ -759,7 +759,8 @@ on doesn't beep. The pointer moves the same highlight, as in a menu. In
 the player list, ↑ and ↓ move among the players, Return chooses the one
 lit (with none, the first the search left while something is typed, else
 nothing), and typing searches. Tab and Shift-Tab move as ↓ and ↑. A
-switch row takes a click anywhere on its tint. Both show as a tint of the accent color (`.focusTint`)
+switch row takes a click anywhere on its tint, and the Main control row's click shows its pop-up's
+choices (`clickAnywhere`). Both show as a tint of the accent color (`.focusTint`)
 rather than a focus ring, outlined where the keys put it; rows that light up as menu items
 (`MenuRowButtonStyle`) light up instead.
 
