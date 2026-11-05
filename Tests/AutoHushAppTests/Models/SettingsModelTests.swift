@@ -4,6 +4,7 @@ import Testing
 @testable import AutoHushApp
 @testable import AutoHushKit
 import AutoHushTestSupport
+import CheckedPlayers
 
 @Suite("SettingsModel", .waitsTimeLimit)
 @MainActor
@@ -151,6 +152,21 @@ struct SettingsModelTests {
         model.state.status.playerOptions[0].pausesByMuting = true
         #expect(model.antiDotUnavailableFor == "Radio")
         #expect(model.state.status.playerMutes && model.state.status.playerNeedsLevels)
+    }
+
+    @Test("the chosen player's controls are followed: a switch turned redraws its card at once")
+    func chosenControlsFollowed() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Radio")
+        let controls = PlayerControls(main: .init(kind: .menu, result: nil), backups: [.init(kind: .panel, result: nil)],
+                                      switches: BackupSwitches())
+        model.state.status.chosenControls = controls
+        let changes = Locked(0)
+        withObservationTracking { _ = model.chosenControls } onChange: { changes.increment() }
+        model.state.status.chosenControls = PlayerControls(main: controls.main, backups: controls.backups,
+                                                           switches: BackupSwitches(usesBackups: false))
+        #expect(changes.value == 1)
+        #expect(model.chosenControls?.switches.usesBackups == false && !model.isDefault(.playerControls))
     }
 
     @Test("the chosen player's fades follow its option")

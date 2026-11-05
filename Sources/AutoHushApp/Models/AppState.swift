@@ -1,5 +1,6 @@
 import Observation
 import AutoHushKit
+import CheckedPlayers
 
 /// The one place the app's status is kept (see GLOSSARY.md). AppDelegate
 /// writes it, and the menu gets a copy each time it changes. Settings and
@@ -19,6 +20,7 @@ final class AppState {
     private(set) var playerOptions: [PlayerOption] = []
     private(set) var chosenPlayerID: String?
     private(set) var chosenPlayer: PlayerOption?
+    private(set) var chosenControls: PlayerControls?
     private(set) var learning: LearningStatus?
     private(set) var canLearnControlsAgain = false
     private(set) var learningPause = LearningPause()
@@ -37,6 +39,7 @@ final class AppState {
         show(\.playerOptions, status.playerOptions)
         show(\.chosenPlayerID, status.chosenPlayerID)
         show(\.chosenPlayer, status.chosenPlayer)
+        show(\.chosenControls, status.chosenControls)
         show(\.learning, status.learning)
         show(\.canLearnControlsAgain, status.canLearnControlsAgain)
         show(\.learningPause, status.learningPause)

@@ -52,7 +52,10 @@ final class SettingsModel {
     /// The chosen player's name, e.g. "Jukebox".
     var chosenPlayerName: String? { chosenPlayer?.name }
     /// What controls the chosen player (Settings → Media Player's card).
-    var chosenControls: PlayerControls? { state.status.chosenControls }
+    /// Followed as a part of its own (its card's switches, notes and
+    /// Restore Defaults redraw as it changes; the user, 2026-11-05: they
+    /// didn't until the page was shown again).
+    var chosenControls: PlayerControls? { state.chosenControls }
     /// How far AutoHush has come learning to control the chosen player;
     /// `nil` for a player it controls without learning.
     var learning: LearningStatus? { state.learning }
