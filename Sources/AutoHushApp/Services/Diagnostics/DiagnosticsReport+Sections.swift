@@ -246,7 +246,7 @@ extension DiagnosticsReport {
                         value: lines.joined(separator: "\n"))]
         let available = !controls.needsCheckAgain && !controls.notLearned && !controls.backups.isEmpty
         rows.append(Row(label: BackupText.uses, value: !available ? no : controls.switches.usesBackups ? on : off))
-        if available, controls.hasPanel {
+        if available, controls.hasPanelBackup {
             rows.append(Row(label: BackupText.panelWhileMuted, value: controls.switches.panelWhileMuted && controls.switches.usesBackups ? on : off))
         }
         return rows

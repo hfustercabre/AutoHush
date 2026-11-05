@@ -216,23 +216,25 @@ extension BackupRouting {
     /// the order for the window's state not yet tried in this pause, the
     /// quiet ways first (round again once all were tried), then the
     /// Play/Pause key once in the pause, the panel last, once in the pause,
-    /// while "the panel while muted" is on (the user, 2026-11-04). AutoHush
+    /// while "the panel while muted" is on (the user, 2026-11-04), or
+    /// always when it's the main control, which has no such switch (the
+    /// user, 2026-11-05). AutoHush
     /// asks again only while it's still muted and heard, so each retry is
     /// one press: a resume meanwhile isn't followed by a pause. A retry whose
     /// ways were all passed over (not allowed, the key not pressed, a page
     /// still learning) goes round the quiet ways once more, so it presses at
     /// least its own way.
     /// `alone`: its backups off while another main control was chosen:
-    /// that one only, unless it's the panel, which shows on screen.
+    /// that one only.
     func pauseWhileMuted(alone: Bool = false) async throws {
         guard let wayOrder, let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         pressCalls += 1
         let main = mainIndex
         let state: CheckResult.WindowState? = !alone && wayOrder.dependsOnWindow(for: .paused, main: main) ? await windowState(pid) : nil
-        let order = alone ? (wayOrder.ways[main].kind == .panel ? [] : [main]) : wayOrder.order(in: state ?? .visible, for: .paused, main: main)
+        let order = alone ? [main] : wayOrder.order(in: state ?? .visible, for: .paused, main: main)
         let quiet = order.filter { ![.panel, .mediaKey].contains(wayOrder.ways[$0].kind) }
         let key = order.filter { wayOrder.ways[$0].kind == .mediaKey }
-        let panel = panelWhileMuted ? order.filter { wayOrder.ways[$0].kind == .panel } : []
+        let panel = order.filter { wayOrder.ways[$0].kind == .panel && (panelWhileMuted || $0 == main) }
         // The quiet ways again, once each was tried; the key and the panel once.
         var startedOver = (quiet + key + panel).allSatisfy(mutedTried.contains)
         if startedOver { mutedTried.subtract(quiet) }

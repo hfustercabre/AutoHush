@@ -26,7 +26,7 @@ struct PlayerControlsTests {
         #expect(controls.backups.map(\.kind) == [.page, .mediaKey, .panel])
         #expect(controls.backups[0].found?.failedStates == [.hidden] && controls.backups[1].found == nil)
         #expect(controls.switches == BackupSwitches(usesBackups: true, panelWhileMuted: false) && !controls.needsCheckAgain)
-        #expect(controls.hasPanel && controls.backupsInUse)
+        #expect(controls.hasPanelBackup && controls.backupsInUse)
     }
 
     @Test("a control that will be choosable once learned is listed among the choices, in its place, but isn't one")
@@ -43,13 +43,16 @@ struct PlayerControlsTests {
         #expect(listed == [.script, .menu, .page, .panel])
     }
 
-    @Test("the panel's switch shows when the panel is any of its controls, its main one too")
+    @Test("the panel's switch shows only while the panel is a backup, not its main control; Restore Defaults turns it on for either")
     func panelSwitch() {
         let panel = PlayerControls.Control(kind: .panel, result: nil), menu = PlayerControls.Control(kind: .menu, result: nil)
         let key = PlayerControls.Control(kind: .mediaKey, result: nil)
-        #expect(PlayerControls(main: panel, backups: [key], switches: BackupSwitches()).hasPanel)
-        #expect(PlayerControls(main: menu, backups: [key, panel], switches: BackupSwitches()).hasPanel)
-        #expect(!PlayerControls(main: menu, backups: [key], switches: BackupSwitches()).hasPanel)
+        let main = PlayerControls(main: panel, backups: [key, menu], switches: BackupSwitches())
+        #expect(!main.hasPanelBackup && main.hasPanel)
+        let backup = PlayerControls(main: menu, backups: [key, panel], switches: BackupSwitches())
+        #expect(backup.hasPanelBackup && backup.hasPanel)
+        let none = PlayerControls(main: menu, backups: [key], switches: BackupSwitches())
+        #expect(!none.hasPanelBackup && !none.hasPanel)
     }
 
     @Test("an app added before backups were kept has no Play/Pause key and needs a new check")

@@ -140,6 +140,29 @@ struct BackedUpPlayerTests {
         #expect(await pauses(own, panel) == [2, 0])
     }
 
+    @Test("the panel as its main control is pressed while muted whatever the panel's switch says, its backups on or off")
+    func panelAsMainWhileMuted() async throws {
+        func player(usesBackups: Bool) async -> (BackedUpPlayer<MockMusicPlayer>, own: MockMusicPlayer, panel: MockMusicPlayer) {
+            let own = await failing(), panel = taking()
+            let switches = BackupSwitches(usesBackups: usesBackups, panelWhileMuted: false, mainControl: "panel")
+            let player = BackedUpPlayer(inner: own, own: CheckResult.WayResult(kind: .script, mark: .works),
+                                        backups: [.init(player: panel, kind: .panel)],
+                                        results: [CheckResult.WayResult(kind: .panel, mark: .works)],
+                                        switches: { switches }, processIdentifier: { 4242 }, windowState: { _ in .visible },
+                                        backupAllowed: { _, _ in true }, audioRecordingAllowed: { true }, pressSleep: { _ in })
+            return (player, own, panel)
+        }
+        // Muted: its quiet way first (refused), then the panel, the switch off.
+        let backed = await player(usesBackups: true)
+        await #expect(throws: Self.refused) { try await backed.0.pauseQuietly() }
+        try await backed.0.pauseQuietly()
+        #expect(await pauses(backed.own, backed.panel) == [1, 1])
+        // Backups off: the panel alone.
+        let alone = await player(usesBackups: false)
+        try await alone.0.pauseQuietly()
+        #expect(await pauses(alone.own, alone.panel) == [0, 1])
+    }
+
     @Test("a refused play goes down its backups at once")
     func play() async throws {
         let own = await failing(.paused, pause: false), key = taking(.paused)

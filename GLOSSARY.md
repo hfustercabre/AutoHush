@@ -186,7 +186,8 @@ for each, the keyboard's Play/Pause key, and the Now Playing panel last (an
 added app's only when it worked in its check). A refused pause is
 muted first when it can be, and they're tried while it's muted. Used while
 their switch is on (**Use backup controls**, `usesBackups`; **Use the Now
-Playing panel while muted**, `panelWhileMuted`); an app added before them has
+Playing panel while muted**, `panelWhileMuted`, for the panel as a backup;
+as the main control it's pressed while muted too); an app added before them has
 none until it's checked again. Diagnostics marks the one that paused and
 played it last (`LastControls`).
 _Avoid_: backup ways, fallbacks.

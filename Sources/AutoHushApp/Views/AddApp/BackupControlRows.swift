@@ -4,7 +4,7 @@ import CheckedPlayers
 
 /// Add an App's last step, under the ways to choose (B1, the user's pick,
 /// 2026-11-05): "Use backup controls", and "Use the Now Playing panel while
-/// muted" under it while it's on and the panel is among them. No Details…
+/// muted" under it while it's on and the panel is one of the backups. No Details…
 /// here: the ways' cards above say how each did (the user, 2026-11-05: "it's
 /// redundant"). Use keeps both switches.
 struct BackupControlRows: View {
@@ -15,7 +15,7 @@ struct BackupControlRows: View {
             VStack(alignment: .leading, spacing: 6) {
                 SwitchRow(Text(verbatim: BackupText.uses), subtitle: Text(verbatim: BackupText.usesSubtitle),
                           isOn: Binding(get: { model.backupSwitches.usesBackups }, set: { model.backupSwitches.usesBackups = $0 }))
-                if model.backupSwitches.usesBackups, controls.hasPanel {
+                if model.backupSwitches.usesBackups, controls.hasPanelBackup {
                     DependentRow {
                         SwitchRow(Text(verbatim: BackupText.panelWhileMuted), subtitle: Text(verbatim: BackupText.panelSubtitle),
                                   isOn: Binding(get: { model.backupSwitches.panelWhileMuted }, set: { model.backupSwitches.panelWhileMuted = $0 }))

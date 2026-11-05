@@ -71,7 +71,7 @@ enum BackupText {
         let shown = !controls.needsCheckAgain && !controls.notLearned
         let usesBackups = shown && controls.switches.usesBackups
         var parts = [WayText.control(controls.main.kind), usesBackups ? backupsOn : backupsOff]
-        if usesBackups, controls.hasPanel { parts.append(controls.switches.panelWhileMuted ? panelOn : panelOff) }
+        if usesBackups, controls.hasPanelBackup { parts.append(controls.switches.panelWhileMuted ? panelOn : panelOff) }
         return parts.joined(separator: " · ")
     }
 

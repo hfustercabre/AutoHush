@@ -9,8 +9,8 @@ import CheckedPlayers
 /// (`PlayerControls.choices`, the recommended one so named, each with its
 /// check's mark), the chosen one's note under it as Add an App says it; its
 /// one control read only when there's nothing to choose. Then "Use backup
-/// controls" and, under it, "Use the Now Playing panel while muted"
-/// (dimmed, with a note, while the first is off), Details… (its controls
+/// controls" and, under it while the panel is a backup, "Use the Now
+/// Playing panel while muted" (dimmed, with a note, while the first is off), Details… (its controls
 /// in a sheet), and Restore Defaults once one differs. An app added before
 /// backup controls were kept: dimmed, with Check Again…; a web app not
 /// learned yet: dimmed, with "Controls not learned". No card while no
@@ -46,7 +46,7 @@ struct PlayerControlsCard: View {
                 } else {
                     SwitchRow(Text(verbatim: BackupText.uses), subtitle: Text(verbatim: BackupText.usesSubtitle),
                               isOn: switchBinding(controls, \.usesBackups), isCurrent: isFocus)
-                    if controls.hasPanel {
+                    if controls.hasPanelBackup {
                         DependentRow {
                             VStack(alignment: .leading, spacing: 4) {
                                 SwitchRow(Text(verbatim: BackupText.panelWhileMuted), subtitle: Text(verbatim: BackupText.panelSubtitle),

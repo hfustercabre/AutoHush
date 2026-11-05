@@ -78,9 +78,15 @@ package struct PlayerControls: Sendable, Equatable {
     /// Another than its own is its main control now.
     package var mainChanged: Bool { main.kind != recommended }
 
-    /// The Now Playing panel is one of its controls, its main one too (its
-    /// own switch shows and decides; the user, 2026-11-05).
-    package var hasPanel: Bool { main.kind == .panel || backups.contains { $0.kind == .panel } }
+    /// The Now Playing panel is one of its controls, its main one too:
+    /// Restore Defaults turns its switch back on, since its own main control
+    /// may make it a backup again.
+    package var hasPanel: Bool { main.kind == .panel || hasPanelBackup }
+
+    /// The Now Playing panel is one of its backups: its switch ("the panel
+    /// while muted") shows and decides. As the main control it has none,
+    /// and is pressed while muted as any main one (the user, 2026-11-05).
+    package var hasPanelBackup: Bool { backups.contains { $0.kind == .panel } }
 
     /// Its backups are pressed now.
     package var backupsInUse: Bool { switches.usesBackups && !needsCheckAgain && !notLearned && !backups.isEmpty }

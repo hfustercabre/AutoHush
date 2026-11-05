@@ -38,8 +38,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   controls it by its backups instead of saying it can't control it, and
   goes back to its main control once you allow it. A main control chosen
   in Fine-Tuning while backup controls are off needs its own permission.
-- **Use backup controls** and **Use the Now Playing panel while muted**,
-  both on, in Settings → Fine-Tuning for your player (Media Player has a
+- **Use backup controls** and **Use the Now Playing panel while muted**
+  (while the panel is a backup control), both on, in Settings → Fine-Tuning for your player (Media Player has a
   row to them, with what they're set to) and in Add an App's last step; a
   change takes effect at the next pause or play, and **Restore Defaults**
   turns both back on. **Details…** in Settings lists
