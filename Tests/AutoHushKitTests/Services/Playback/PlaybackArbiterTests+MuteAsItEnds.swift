@@ -206,6 +206,7 @@ extension PlaybackArbiterTests {
         await arbiter.setAsleep(true)
         await TestWait.until { mute.unmuteCount == 1 }
         #expect(pausesAtUnmute.value == [2]) // paused for real before
+        #expect(await player.uncoveredPauses == 1) // the mute goes: a player's backups at once
         #expect(await player.state == .paused)
     }
 
@@ -251,5 +252,7 @@ extension PlaybackArbiterTests {
             #expect(await player.state == .paused)
         }
         #expect(await player.playCallCount == 0)
+        // Kept muted when refused: its pause is covered, its backups tried while muted.
+        #expect(await player.uncoveredPauses == 0)
     }
 }

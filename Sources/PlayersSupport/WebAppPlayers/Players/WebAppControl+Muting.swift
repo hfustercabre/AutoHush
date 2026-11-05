@@ -8,7 +8,7 @@ extension WebAppControl {
     /// to the caller, `mutesRefusals`), or plays during an ad; `false` when
     /// it couldn't.
     func mute(pid: pid_t, reason: MuteReason) -> Bool {
-        guard reason == .playsAnyway || mutesRefusals, mayMute(), muter.mute(appPID: pid) else { return false }
+        guard reason == .playsAnyway || mutesRefusals(), mayMute(), muter.mute(appPID: pid) else { return false }
         muted = (pid, reason)
         if reason == .playsAnyway {
             logger.notice("\(self.name, privacy: .public) plays while its button says it’s paused: muted instead")

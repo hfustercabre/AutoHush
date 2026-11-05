@@ -30,11 +30,11 @@ struct SupportedPlayersTests {
         // The built-in players only: `player(bundleID:)` would also look for
         // the Safari web apps in this Mac's Applications folders.
         let player = { (id: String) in catalog.players.first { $0.bundleID == id } }
-        #expect(player("com.apple.Music") is ScriptablePlayer)
-        #expect(player("com.tidal.desktop") is MenuPlayer)
-        #expect(player("com.apple.podcasts") is MenuPlayer)
-        #expect(player("org.videolan.vlc") is VLCPlayer)
-        #expect(player("com.apple.QuickTimePlayerX") is ScriptedAppPlayer)
+        #expect(player("com.apple.Music") is BackedUpPlayer<ScriptablePlayer>)
+        #expect(player("com.tidal.desktop") is BackedUpPlayer<MenuPlayer>)
+        #expect(player("com.apple.podcasts") is BackedUpPlayer<MenuPlayer>)
+        #expect(player("org.videolan.vlc") is BackedUpPlayer<VLCPlayer>)
+        #expect(player("com.apple.QuickTimePlayerX") is BackedUpPlayer<ScriptedAppPlayer>)
         #expect(catalog.players.allSatisfy { !$0.isUntested && $0.installedURL == nil })
     }
 
@@ -47,7 +47,24 @@ struct SupportedPlayersTests {
         defer { store.forget(QuickTime.bundleID) }
         #expect(SupportedPlayers.checkedPlayers.current().map(\.bundleID).contains(QuickTime.bundleID))
         let quickTimes = catalog.all.filter { $0.bundleID == QuickTime.bundleID }
-        #expect(quickTimes.count == 1 && quickTimes.first is ScriptedAppPlayer)
+        #expect(quickTimes.count == 1 && quickTimes.first is BackedUpPlayer<ScriptedAppPlayer>)
+    }
+
+    @Test("each built-in player is backed up by the ways measured for it, then the Play/Pause key and the panel; Spotify's page learned by itself")
+    func builtInBackups() {
+        func kinds(_ id: String) -> [WayOrder.Kind]? {
+            let player = SupportedPlayers.catalog.players.first { $0.bundleID == id }
+            return (player as? BackedUpPlayer<ScriptablePlayer>)?.backups.map(\.kind)
+                ?? (player as? BackedUpPlayer<MenuPlayer>)?.backups.map(\.kind)
+                ?? (player as? BackedUpPlayer<VLCPlayer>)?.backups.map(\.kind)
+                ?? (player as? BackedUpPlayer<ScriptedAppPlayer>)?.backups.map(\.kind)
+        }
+        #expect(kinds("com.spotify.client") == [.menu, .page, .mediaKey, .panel])
+        #expect(kinds("com.apple.Music") == [.menu, .mediaKey, .panel])
+        #expect(kinds("org.videolan.vlc") == [.menu, .mediaKey, .panel])
+        for id in ["com.apple.podcasts", "com.tidal.desktop", "com.apple.QuickTimePlayerX"] { #expect(kinds(id) == [.mediaKey, .panel]) }
+        let spotify = SupportedPlayers.catalog.players.first { $0.bundleID == "com.spotify.client" } as? BackedUpPlayer<ScriptablePlayer>
+        #expect(spotify?.learningPage != nil && spotify?.inner.bundleID == "com.spotify.client")
     }
 
     @Test("Add an App never offers the 14 Apple apps that are no players, and none of them is a supported player, nor among this Mac's web apps and added apps")

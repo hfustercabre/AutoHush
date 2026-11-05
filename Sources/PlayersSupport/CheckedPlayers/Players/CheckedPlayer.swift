@@ -156,6 +156,12 @@ package actor CheckedPlayer: AddedAppPlayer {
         try await press(to: .playing)
     }
 
+    /// No mute stands in if it's refused: its backups at once.
+    package func pauseUncovered() async throws {
+        if wayOrder != nil { return try await pressByBackups(to: .paused, covered: false) }
+        try await press(to: .paused)
+    }
+
     /// By its ways that show nothing: never the Now Playing panel, which
     /// shows on screen and takes the keyboard; with its backups on, one way
     /// at a time, the panel once in each muted pause while "the panel while

@@ -161,6 +161,15 @@ package actor MockMusicPlayer: MusicPlayer {
     /// Changes by itself, unannounced (the user, or the app).
     package func setState(_ state: PlayerState) { self.state = state }
 
+    /// Pauses no mute stands in for (`pauseUncovered`), counted in
+    /// `pauseCallCount` too.
+    package var uncoveredPauses = 0
+
+    package func pauseUncovered() async throws {
+        uncoveredPauses += 1
+        try await pause()
+    }
+
     package func pause() async throws {
         pauseCallCount += 1
         commandLog.append("pause")

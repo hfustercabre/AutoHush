@@ -23,13 +23,14 @@ package enum SupportedPlayers {
     /// others, each group in this order. Spotify was the only
     /// player before the choice, so people updating keep it.
     package static let catalog = MusicPlayerCatalog(
+        // Each with its backups (`MeasuredBackups`, the user, 2026-11-05).
         players: [
-            ScriptablePlayer(profile: .spotify),
-            ScriptablePlayer(profile: .appleMusic),
-            VLCPlayer(),
-            MenuPlayer(profile: .applePodcasts),
-            MenuPlayer(profile: .tidal),
-            QuickTime.player(),
+            BackedUpPlayer.builtIn(ScriptablePlayer(profile: .spotify), backups: .spotify),
+            BackedUpPlayer.builtIn(ScriptablePlayer(profile: .appleMusic), backups: .appleMusic),
+            BackedUpPlayer.builtIn(VLCPlayer(), backups: .vlc),
+            BackedUpPlayer.builtIn(MenuPlayer(profile: .applePodcasts), backups: .applePodcasts),
+            BackedUpPlayer.builtIn(MenuPlayer(profile: .tidal), backups: .tidal),
+            BackedUpPlayer.builtIn(QuickTime.player(), backups: .quickTime),
         ],
         formerDefault: ScriptablePlayerProfile.spotify.bundleID,
         // Shown in Add a Web App's address field and its "not a web address" note.
@@ -37,7 +38,7 @@ package enum SupportedPlayers {
         countrySites: testedWebApps.compactMap(\.countrySites),
         // The Safari web apps, then the apps added through Player Check (never a
         // built-in player's), those not installed now too, as the built-in ones are.
-        found: { webApps.current() + checkedPlayers.current().filter { player in !builtIn.contains(player.bundleID) } },
+        found: { backedUpWebApps() + checkedPlayers.current().filter { player in !builtIn.contains(player.bundleID) } },
         suggested: { webApps.suggestions() }
     )
 
@@ -101,6 +102,16 @@ package enum SupportedPlayers {
     /// player…) can be chosen: AutoHush learns its Play/Pause button.
     private static let webApps = SafariWebAppPlayers(finder: webAppFinder, tested: testedWebApps)
 
+    /// Each web app with its backups, the Play/Pause key and the Now Playing
+    /// panel (the user, 2026-11-05), kept as long as its player is, so it
+    /// stays the same object.
+    private static let backedUp = KeptPlayers<Kept<SafariWebAppPlayer>, BackedUpPlayer<SafariWebAppPlayer>>(
+        key: { $0.player.bundleID }, source: { Kept($0.inner) })
+
+    private static func backedUpWebApps() -> [BackedUpPlayer<SafariWebAppPlayer>] {
+        backedUp.current(webApps.current().map(Kept.init)) { BackedUpPlayer.webApp($0.player) }
+    }
+
     /// Amazon Music's site for each country that has its own (Austria uses
     /// Germany's, Ireland the United Kingdom's); the others use
     /// music.amazon.com. A sign-in on another country's site doesn't carry
@@ -129,4 +140,13 @@ package enum SupportedPlayers {
     package static func hostedApp(pid: pid_t) -> AudioSource? {
         SafariWebApp.source(forProcess: pid)
     }
+}
+
+/// A player a wrapper was made around, the same while it's the same object.
+private struct Kept<Player: AnyObject & Sendable>: Equatable, Sendable {
+    let player: Player
+
+    init(_ player: Player) { self.player = player }
+
+    static func == (lhs: Kept, rhs: Kept) -> Bool { lhs.player === rhs.player }
 }

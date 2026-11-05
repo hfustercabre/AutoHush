@@ -33,6 +33,8 @@ package actor VolumeFader {
     private let sleep: Sleep
     /// Each pause and play, checked to have taken.
     private let presses: PressCheck
+    /// A pause no mute will stand in for (`pauseNow`).
+    private let uncoveredPresses: PressCheck
     private let logger = AutoHushLogger(category: "VolumeFader")
     private var fadeOut: TimeInterval
     private var fadeIn: TimeInterval
@@ -66,6 +68,7 @@ package actor VolumeFader {
         self.fadeIn = fadeIn
         self.sleep = sleep
         presses = PressCheck(player: player, sleep: sleep)
+        uncoveredPresses = PressCheck(player: player, uncovered: true, sleep: sleep)
     }
 
     func setDurations(fadeOut: TimeInterval, fadeIn: TimeInterval) {
@@ -134,11 +137,12 @@ package actor VolumeFader {
     }
 
     /// Pauses at once, without a fade, stopping one under way: the output
-    /// went away, and a fade would play on the next one. The user's volume
-    /// is set back after the pause, as after a fade-out.
+    /// went away, and a fade would play on the next one; no mute stands in
+    /// if it's refused (`pauseUncovered`). The user's volume is set back
+    /// after the pause, as after a fade-out.
     func pauseNow() async throws {
         let fade = startFade()
-        try await presses.press(to: .paused)
+        try await uncoveredPresses.press(to: .paused)
         await sleep(Self.restoreDelay)
         if latestFade == fade { await restoreUserVolume() }
     }

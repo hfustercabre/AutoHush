@@ -230,10 +230,12 @@ extension PlaybackArbiter {
 
     /// Muted in place of the pause, paused for real before its mute is
     /// lifted (the Mac asleep, AntiDot mode on, the pause kept): `nil` once
-    /// paused, the error when it refused.
-    func pauseForReal() async -> MusicPlayerError? {
+    /// paused, the error when it refused. `uncovered`: the mute goes even
+    /// when it's refused (asleep, AntiDot mode), so nothing stands in for it
+    /// (`pauseUncovered`); a kept pause stays muted.
+    func pauseForReal(uncovered: Bool) async -> MusicPlayerError? {
         do {
-            try await player.pause()
+            if uncovered { try await player.pauseUncovered() } else { try await player.pause() }
             return nil
         } catch {
             logger.info("[arbiter] \(self.player.name, privacy: .public) refused its pause before its mute is lifted: \(error)")
@@ -257,7 +259,7 @@ extension PlaybackArbiter {
     /// for real first, still AutoHush's pause (the user, 2026-10-25).
     func setTapsAllowed(_ allowed: Bool) async {
         guard !allowed, !isShutDown, mute.kind != .off else { return }
-        let refused = mutedInstead ? await pauseForReal() : nil
+        let refused = mutedInstead ? await pauseForReal(uncovered: true) : nil
         guard !isShutDown else { return }
         if let refused {
             // Refused: it plays on, heard once unmuted, its pause failed (the

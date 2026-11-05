@@ -175,6 +175,13 @@ window through these 7, in the order that takes the fewest moves. **Windows clos
 window on screen or within reach (a menu bar player's), where each way
 that needs none is tried once.
 
+**Backups** (`WayOrder`, `BackupRouting`): a player's other ways, pressed
+when its own fails, by its window's state: an added app's the other ways
+its check found; a built-in player's or a Safari web app's those measured
+for it (`BackedUpPlayer`, `MeasuredBackups`); every player's the keyboard's
+Play/Pause key and the Now Playing panel last. Used while their switch is
+on (`usesBackups`; the panel while muted, `panelWhileMuted`).
+
 **Checked app** (`AddedAppPlayer`, kind `.checkedApp`): an app added with
 Add an App, offered under "Other Apps" with its "Checked by you" badge, and
 controlled the way the user chose among those its check found, the others

@@ -84,7 +84,7 @@ extension PlaybackArbiter {
         // stay paused. Refused, it stays muted, still AutoHush's pause, as
         // any mute in place of a pause: lifting it would play the music out
         // loud (the user, 2026-11-02).
-        if mutedInstead, await pauseForReal() != nil {
+        if mutedInstead, await pauseForReal(uncovered: false) != nil {
             logger.info("[arbiter] \(self.player.name, privacy: .public) refused its pause: it stays muted")
             return
         }

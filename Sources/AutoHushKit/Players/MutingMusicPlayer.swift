@@ -1,12 +1,16 @@
 import Foundation
 
+/// A player told whether it may tap its sound (or have it muted through a
+/// tap): not in AntiDot mode, which promises no audio taps.
+package protocol TapsAllowingPlayer: MusicPlayer {
+    /// Whether it may tap its sound. Without taps it doesn't mute.
+    func allowTaps(_ allowed: Bool)
+}
+
 /// A player that mutes itself when it refuses to pause (see `AudioMuting`),
 /// through Core Audio's process taps on its own sound, which may also tell
 /// whether it can be heard.
-package protocol MutingMusicPlayer: MusicPlayer {
-    /// Whether it may tap its sound: not in AntiDot mode, which promises no
-    /// audio taps. Without taps it doesn't mute.
-    func allowTaps(_ allowed: Bool)
+package protocol MutingMusicPlayer: TapsAllowingPlayer {
     /// For a player that says it isn't playing while it can be heard (a web
     /// app during an ad its site won't pause): mutes it until it's played
     /// again, as for a refused pause. `false` when it's silent, or muting

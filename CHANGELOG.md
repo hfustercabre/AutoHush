@@ -19,6 +19,15 @@ This project follows [Semantic Versioning](https://semver.org/).
   then tried while it's muted (the key and the panel once); when it can't be muted (AntiDot mode, no Audio Recording) and
   for a refused resume, at once. Apps added before keep their one way
   until they're checked again.
+- **Backups for the built-in players and web apps:** Spotify, Apple
+  Music, VLC, Apple Podcasts, TIDAL, QuickTime Player and Safari web apps
+  (once learned) get backups too, the ways that worked for each when checked: Spotify,
+  Apple Music and VLC their playback menu, Spotify its page (learned by
+  AutoHush itself the first time it pauses Spotify), every player the
+  keyboard's Play/Pause key and the Now Playing panel. They're used as an
+  added app's are; a web app's refused pause is muted by AutoHush, which
+  tries them meanwhile. Where no mute can follow a pause (the output went
+  away, the Mac going to sleep), any player's backups are tried at once.
 - **Page Up, Page Down, Home and End** move the keyboard's highlight in
   the menu and Settings, a page at a time or to the first and last row.
 - **VoiceOver** follows the arrow keys' highlight, and Zoom shows where

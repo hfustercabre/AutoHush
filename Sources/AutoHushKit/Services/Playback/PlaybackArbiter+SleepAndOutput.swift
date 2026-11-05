@@ -68,7 +68,7 @@ extension PlaybackArbiter {
                 // Muted in place of the pause: paused for real first, so it
                 // wakes paused, as any pause held then (the user, 2026-10-25);
                 // refused, it plays on, its pause failed.
-                let refused = mutedInstead ? await pauseForReal() : nil
+                let refused = mutedInstead ? await pauseForReal(uncovered: true) : nil
                 pausedByUs = false
                 if let refused {
                     if !activeSources.isEmpty { pauseFailure = refused }

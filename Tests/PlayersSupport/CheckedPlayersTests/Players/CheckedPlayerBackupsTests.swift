@@ -145,6 +145,28 @@ struct CheckedPlayerBackupsTests {
         #expect(await plays(page, menu, key, panel) == [1, 1, 1, 0])
     }
 
+    @Test("a muted retry whose ways are all passed over goes round once more, so it presses its own way; a page still learning hands on")
+    func mutedNothingPressed() async throws {
+        let page = await failing(), menu = MockMusicPlayer(state: .playing)
+        let muted = jukebox(page, backups: [(menu, .menu)], allowed: { _ in false })
+        await #expect(throws: Self.refused) { try await muted.pause() }
+        await #expect(throws: Self.refused) { try await muted.pauseQuietly() }
+        #expect(await pauses(page, menu) == [2, 0])
+        let refusing = await failing(), learning = MockMusicPlayer(state: .playing), panel = MockMusicPlayer(state: .playing)
+        await learning.setFailPause(MusicPlayerError.stillLearning)
+        let handsOn = jukebox(refusing, backups: [(learning, .page), (panel, .panel)])
+        await #expect(throws: Self.refused) { try await handsOn.pause() }
+        try await handsOn.pauseQuietly()
+        #expect(await pauses(learning, panel) == [1, 1])
+    }
+
+    @Test("a pause no mute will stand in for goes down its backups at once")
+    func uncovered() async throws {
+        let page = await failing(), menu = MockMusicPlayer(state: .playing)
+        try await jukebox(page, backups: [(menu, .menu)]).pauseUncovered()
+        #expect(await menu.pauseCallCount == 1)
+    }
+
     @Test("while it's muted, its retries follow the window's state too: a way that failed there isn't pressed")
     func mutedByWindow() async throws {
         let page = MockMusicPlayer(state: .playing), menu = await failing(), panel = await failing()

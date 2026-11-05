@@ -51,10 +51,15 @@ package protocol MusicPlayer: Sendable {
 
     /// Its pause by a way that shows nothing on screen: pressed again while
     /// it's muted in place of a pause, every couple of seconds (the user,
-    /// 2026-10-25: never the Now Playing panel; an added app's backups may
-    /// try it once in each pause, while their switch says so, 2026-11-04).
+    /// 2026-10-25: never the Now Playing panel; a player's backups may try
+    /// it once in each pause, while their switch says so, 2026-11-04).
     /// Its plain pause by default.
     func pauseQuietly() async throws
+    /// Its pause where no mute will stand in if it's refused (the output
+    /// went away; muted in place of a pause, paused for real before the mute
+    /// is lifted): a player with backups goes down them at once, as when it
+    /// can't be muted (the user, 2026-11-04). Its plain pause by default.
+    func pauseUncovered() async throws
 
     /// The player's own volume, 0–100, or `nil` when it can't be read.
     /// Fades need it; players without one pause and play without fading.
@@ -112,6 +117,7 @@ extension MusicPlayer {
     package var checksItsPresses: Bool { false }
     package func statesItself() async -> Bool { true }
     package func pauseQuietly() async throws { try await pause() }
+    package func pauseUncovered() async throws { try await pause() }
     package func release() async {}
     package var releasesOnQuit: Bool { false }
     package var pausesByMuting: Bool { false }

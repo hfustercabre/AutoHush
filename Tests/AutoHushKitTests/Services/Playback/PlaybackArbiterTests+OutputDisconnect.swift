@@ -26,6 +26,7 @@ extension PlaybackArbiterTests {
         let arbiter = await disconnectArbiter(player, steps: steps, states: states)
         await arbiter.handleOutputDisconnected()
         #expect(await player.pauseCallCount == 1)
+        #expect(await player.uncoveredPauses == 1) // no mute will stand in: a player's backups at once
         #expect(await steps.count == 1) // only the wait before the volume is set back
         #expect(states.value.last == .musicIdle)
         await arbiter.sourceChanged("org.example.viewer", playing: true)

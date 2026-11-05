@@ -150,6 +150,7 @@ extension PlaybackArbiterTests {
                                         mutedInstead: mutedInstead, scheduler: scheduler)
         await arbiter.setTapsAllowed(false)
         #expect(await player.pauseCallCount == 2)
+        #expect(await player.uncoveredPauses == 1) // the mute goes: a player's backups at once
         #expect(mute.unmuteCount == 1)
         #expect(mutedInstead.value == [true, false])
         #expect(published.state == .pausedByMonitor)

@@ -27,6 +27,9 @@ package protocol WebPage: Sendable {
     /// Whether its page's words are current now: a WebKit page's always; a
     /// Chromium or Flutter page's only while one of its windows can be seen.
     func wordsAreCurrent(pid: pid_t) -> Bool
+    /// Turns on the switch that shows the app's page (another app's page),
+    /// as a look does, without reading it.
+    func showPage(pid: pid_t)
     /// Turns back off the switch it turned on to show the app's page, now
     /// that the app is no longer the player.
     func release()
@@ -39,4 +42,5 @@ package protocol WebPage: Sendable {
 extension WebPage {
     package func wordsAreCurrent(pid: pid_t) -> Bool { true }
     package func noteState(playing: Bool, pid: pid_t) {}
+    package func showPage(pid: pid_t) {}
 }

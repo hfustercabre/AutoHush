@@ -77,7 +77,7 @@ extension CheckedPlayer {
                 let page = SafariWebAppPlayer(app: SafariWebApp(bundleID: setup.bundleID, name: setup.name, url: setup.appURL),
                                               kind: .app, page: AccessibilityWebPage(access: access),
                                               canMute: access.browserID == nil,
-                                              mutesRefusals: pageMutesItself(access, backups: backups, mediaKey: hasMediaKey(setup)))
+                                              mutesRefusals: { [mutes = pageMutesItself(access, backups: backups, mediaKey: hasMediaKey(setup))] in mutes })
                 parts.page = page
                 player = page
             case .panel(let remembered):

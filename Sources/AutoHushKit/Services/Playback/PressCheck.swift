@@ -28,10 +28,19 @@ package struct PressCheck: Sendable {
     private let now: @Sendable () -> Date
     private let logger = AutoHushLogger(category: "PressCheck")
 
-    package init(player: any MusicPlayer, sleep: @escaping VolumeFader.Sleep, now: @escaping @Sendable () -> Date = { Date() }) {
+    /// `uncovered`: its pauses are ones no mute will stand in for
+    /// (`MusicPlayer.pauseUncovered`).
+    package init(player: any MusicPlayer, uncovered: Bool = false, sleep: @escaping VolumeFader.Sleep,
+                 now: @escaping @Sendable () -> Date = { Date() }) {
         self.init(name: player.name, checksItself: player.checksItsPresses,
                   press: { target in
-                      if target == .playing { try await player.play() } else { try await player.pause() }
+                      if target == .playing {
+                          try await player.play()
+                      } else if uncovered {
+                          try await player.pauseUncovered()
+                      } else {
+                          try await player.pause()
+                      }
                   },
                   state: { await player.playerState() }, sleep: sleep, now: now)
     }

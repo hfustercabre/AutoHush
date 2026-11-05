@@ -35,7 +35,7 @@ package final class MonitoringPipeline {
     /// Internal for tests, which look at what it was told.
     let monitor: AudioMonitor
     /// Told whether it may tap its sound, when it can (see `allowTaps`).
-    private let mutingPlayer: any MutingMusicPlayer?
+    private let tapsPlayer: any TapsAllowingPlayer?
     /// Whether the player may be muted through a tap (`PlayerMuting`): not
     /// in AntiDot mode.
     private let tapsAllowed: OSAllocatedUnfairLock<Bool>
@@ -154,8 +154,8 @@ package final class MonitoringPipeline {
             onDetectionModeChange: { statusUpdates.yield(.detection($0)) }
         )
         monitorLink.monitor = monitor
-        mutingPlayer = player as? any MutingMusicPlayer
-        Self.allowTaps(for: mutingPlayer, in: detectionMethod)
+        tapsPlayer = player as? any TapsAllowingPlayer
+        Self.allowTaps(for: tapsPlayer, in: detectionMethod)
         let playerReports = OSAllocatedUnfairLock(initialState: 0)
         self.playerReports = playerReports
         self.playerObserver = player.makeStateObserver { [weak monitor] state in
@@ -293,7 +293,7 @@ package final class MonitoringPipeline {
 
     package func setDetectionMethod(_ method: DetectionMethod) {
         monitor.setDetectionMethod(method)
-        Self.allowTaps(for: mutingPlayer, in: method)
+        Self.allowTaps(for: tapsPlayer, in: method)
         let allowed = Self.allowsTaps(method)
         tapsAllowed.withLock { $0 = allowed }
         arbiterCommands.yield(.tapsAllowed(allowed)) // a mute standing for a pause is lifted
@@ -301,8 +301,9 @@ package final class MonitoringPipeline {
 
     /// AntiDot mode promises no audio taps, with either of its ways of
     /// detecting: a player that mutes itself through one (a web app that
-    /// refuses to pause) doesn't then, nor listens to itself first.
-    private static func allowTaps(for player: any MutingMusicPlayer?, in method: DetectionMethod) {
+    /// refuses to pause) doesn't then, nor listens to itself first, and one
+    /// with backups knows it can't be muted in place of a pause.
+    private static func allowTaps(for player: any TapsAllowingPlayer?, in method: DetectionMethod) {
         player?.allowTaps(Self.allowsTaps(method))
     }
 

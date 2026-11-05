@@ -14,8 +14,11 @@ package final class SafariWebAppPlayers: Sendable {
     package init(
         finder: SafariWebAppFinder = SafariWebAppFinder(),
         tested: [TestedWebApp] = [],
-        makePlayer: @escaping @Sendable (SafariWebApp, _ isUntested: Bool) -> SafariWebAppPlayer = {
-            SafariWebAppPlayer(app: $0, isUntested: $1)
+        makePlayer: @escaping @Sendable (SafariWebApp, _ isUntested: Bool) -> SafariWebAppPlayer = { app, isUntested in
+            // With its backups on (the Play/Pause key, the Now Playing panel), a refused pause is
+            // left to AutoHush's mute, which tries them meanwhile (the user, 2026-11-05).
+            SafariWebAppPlayer(app: app, isUntested: isUntested,
+                               mutesRefusals: { !BackupSwitchesStore().switches(for: app.bundleID).usesBackups })
         }
     ) {
         self.finder = finder

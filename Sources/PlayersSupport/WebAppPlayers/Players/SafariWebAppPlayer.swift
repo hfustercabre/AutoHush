@@ -67,7 +67,7 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         isUntested: Bool = false,
         page: any WebPage = AccessibilityWebPage(),
         canMute: Bool = true,
-        mutesRefusals: Bool = true,
+        mutesRefusals: @escaping @Sendable () -> Bool = { true },
         store: any PlayPauseRecipeStore = DefaultsRecipeStore(),
         muter: any AudioMuting = ProcessTapMuter(),
         levelProbe: any AudioLevelProbing = ProcessTapLevelProbe(),
@@ -92,8 +92,8 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
                                 // A Chromium web app plays through its browser: muting it would mute every tab.
                                 // Without Audio Recording a tap mutes nothing (the user, 2026-10-20).
                                 mayMute: { [tapsAllowed] in canMute && tapsAllowed.withLock { $0 } && audioRecordingAllowed() },
-                                // An added app with backups leaves a refused pause to AutoHush's mute,
-                                // which tries them meanwhile (the user, 2026-11-04).
+                                // With backups in use, a refused pause is left to AutoHush's mute,
+                                // which tries them meanwhile (the user, 2026-11-04/05).
                                 mutesRefusals: mutesRefusals,
                                 pressKey: pressKey, clock: clock, sleep: sleep)
         queue = DispatchQueue(label: "AutoHush.WebApp.\(app.bundleID)", qos: .userInitiated)
@@ -146,6 +146,15 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
 
     package nonisolated func allowTaps(_ allowed: Bool) {
         tapsAllowed.withLock { $0 = allowed }
+    }
+
+    /// Turns on the switch its page needs (another app's page), on the
+    /// running process, so the page is built wherever its window goes: a
+    /// switch first turned on while it's minimized or hidden finds no page.
+    package func showPage() async {
+        guard let pid = processIdentifier() else { return }
+        let page = page
+        await queue.run { page.showPage(pid: pid) }
     }
 
     /// Turns back off the switch its page needed (another app's page), now

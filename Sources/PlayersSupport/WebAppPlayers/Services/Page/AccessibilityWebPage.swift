@@ -250,7 +250,7 @@ package struct AccessibilityWebPage: WebPage {
     /// 2026-10-12). VoiceOver's, which reads back as it is, is read at each
     /// look, and turned on again when another tool turned it off (a check of
     /// another web app of the same browser, at its end).
-    private func showPage(pid: pid_t) {
+    package func showPage(pid: pid_t) {
         guard let attribute = access.switchAttribute else { return }
         let process = switchTarget(pid)
         let app = AXUIElement.application(process, timeout: Self.timeout)
