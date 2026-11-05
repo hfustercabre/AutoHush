@@ -3,12 +3,16 @@ import AutoHushKit
 
 /// An Electron app whose page is one of its ways must be opened with
 /// `PlayerSetup.launchOption` for its page to take presses while its window
-/// is covered or on another desktop (Chromium treats it as hidden then).
+/// is covered or on another desktop (Chromium treats it as hidden then): its
+/// main control, or a backup control while they're used (the user,
+/// 2026-11-05: "Yes, offer Reopen").
 extension CheckedPlayer {
-    /// Its page is a way, and it runs without the option.
+    /// Its page is its main control, or a backup in use, and it runs
+    /// without the option.
     package func needsReopen() async -> Bool {
-        guard setup.needsLaunchOption, setup.ways.contains(where: { if case .page = $0 { true } else { false } }),
-              let pid = processIdentifier() else { return false }
+        func isPage(_ way: PlayerSetup.Way) -> Bool { if case .page = way { true } else { false } }
+        let pagePressed = setup.ways.contains(where: isPage) || (usesBackups && setup.backups.contains(where: isPage))
+        guard setup.needsLaunchOption, pagePressed, let pid = processIdentifier() else { return false }
         return !processArguments(pid).contains(PlayerSetup.launchOption)
     }
 

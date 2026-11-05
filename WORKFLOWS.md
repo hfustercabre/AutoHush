@@ -624,7 +624,7 @@ The check runs in AutoHush’s helper, playercheck, so a check that ends, stops 
 ```mermaid
 flowchart TD
   P(["An added app is<br/>the media player"])
-  RE{"Opened without<br/>its option?"}
+  RE{"Its page a control (main,<br/>or a backup in use), and<br/>opened without its option?"}
   ALERT["When it’s chosen, an alert:<br/>Reopen or Cancel; with Always<br/>reopen ticked, no more asking"]
   CARD["The icon shows !, the<br/>card says it needs<br/>reopening, with Reopen"]
   WAY{"The way pressed first: the<br/>one chosen at Use; with backups,<br/>the first that worked with<br/>the window as it is now"}

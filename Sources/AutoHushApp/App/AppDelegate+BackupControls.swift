@@ -21,6 +21,8 @@ extension AppDelegate {
             BackupSwitchesStore().set(switches, for: player.bundleID)
         }
         refreshPlayerControls()
+        // A page among its backups needs the app's launch option only while they're used.
+        followPlayerReopen()
     }
 
     func checkPlayerAgain() {

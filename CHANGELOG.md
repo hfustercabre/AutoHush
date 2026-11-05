@@ -17,8 +17,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   before the panel, only while macOS says the app is Now Playing. A pause
   that doesn't take is muted instead, as before, and the other ways are
   then tried while it's muted (the key and the panel once); when it can't be muted (AntiDot mode, no Audio Recording) and
-  for a refused resume, at once. Apps added before keep their one way
-  until they're checked again.
+  for a refused resume, at once. An Electron app whose page is a backup
+  control is reopened with its option too, as one whose page is its main
+  control. Apps added before keep their one way until they're checked
+  again.
 - **Backup controls for the built-in players and web apps:** Spotify,
   Apple Music, VLC, Apple Podcasts, TIDAL, QuickTime Player and Safari web
   apps (once learned) get them too, the ways that worked for each when checked: Spotify,

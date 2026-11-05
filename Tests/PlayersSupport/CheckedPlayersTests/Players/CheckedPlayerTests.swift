@@ -95,7 +95,7 @@ struct CheckedPlayerTests {
         #expect(await paged.muteIfPlayingAnyway())
     }
 
-    @Test("only an app whose page is a way and that needs the launch option can need reopening, while it runs without it; one that's gone can't be reopened")
+    @Test("only an app whose page is a way (its main control, or a backup in use) and that needs the launch option can need reopening, while it runs without it; one that's gone can't be reopened")
     func reopenNeed() async {
         func jukebox(_ setup: PlayerSetup, running: Bool = true, arguments: [String] = []) -> CheckedPlayer {
             CheckedPlayer(setup: setup, parts: CheckedPlayer.parts(for: setup, store: MemorySetupStore()), reports: nil,
@@ -111,6 +111,13 @@ struct CheckedPlayerTests {
         var menu = setup([.menu(menuName: "Controls")])
         menu.needsLaunchOption = true
         #expect(await jukebox(menu).needsReopen() == false)
+        // Its page a backup control: while they're used (the user, 2026-11-05).
+        menu.backups = [.page(.webKit)]
+        menu.wayResults = [CheckResult.WayResult(kind: .menu, mark: .works), CheckResult.WayResult(kind: .page, mark: .works)]
+        let backedUp = jukebox(menu)
+        #expect(await backedUp.needsReopen())
+        backedUp.setSwitches(BackupSwitches(usesBackups: false))
+        #expect(await backedUp.needsReopen() == false)
         // Gone, it can't be opened again: asked of a stand-in, as macOS shows an
         // alert for an app that isn't there.
         page.appURL = URL(fileURLWithPath: "/nonexistent/Jukebox.app")
