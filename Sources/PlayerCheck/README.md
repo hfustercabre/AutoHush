@@ -14,8 +14,7 @@ It's a target of AutoHush's package and runs AutoHush's own code wherever
 the two do the same thing (Apple events, scripted states, playback menus and
 their words, learning a page's Play/Pause, sound, windows on other
 desktops, Now Playing), so what it finds holds for AutoHush. AutoHush
-controls an added app the way the user chose among those the check found
-(`CheckedPlayer`): players of documents (as QuickTime Player, now built in), Electron, CEF,
+controls an added app the way the user chose among those the check found, backed up by the others that worked, each tried by how it did in the window's current state (`CheckedPlayer`, `WayOrder`): players of documents (as QuickTime Player, now built in), Electron, CEF,
 Flutter and Tauri pages and Chromium browsers' web apps, what apps report
 to Now Playing, and the Now Playing panel. The check keeps its own code for those, since it reports
 more than AutoHush needs: each try, in each window state, and why it
@@ -192,8 +191,10 @@ Each step is a section of the report, in this order:
 
 A way that leaves the app paused is followed by playing it again by a way
 that worked, before anyone is asked; a track that ends during a trial is
-tested again. The keyboard's Play/Pause key isn't a way: macOS sends it
-only to the Now Playing app, which AutoHush can't choose.
+tested again. The keyboard's Play/Pause key isn't tested: macOS sends it
+only to the Now Playing app, which AutoHush can't choose. AutoHush keeps
+it as a backup control, pressed only while macOS says the app is Now
+Playing.
 
 ## Whether it plays
 

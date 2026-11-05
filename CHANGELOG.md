@@ -33,8 +33,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   last step; a change takes effect at the next pause or play, and
   **Restore Defaults** turns both back on. **Details…** in Settings lists
   its main control and its backup controls, with how each works; an app
-  added before them says to check it again. Diagnostics lists every control, the ones that paused
-  and played it last marked.
+  added before them says to check it again. Diagnostics lists its main control and, while they're used, its backup controls, the ones that paused
+  and played it last marked, then the switches.
 - **Page Up, Page Down, Home and End** move the keyboard's highlight in
   the menu and Settings, a page at a time or to the first and last row.
 - **VoiceOver** follows the arrow keys' highlight, and Zoom shows where

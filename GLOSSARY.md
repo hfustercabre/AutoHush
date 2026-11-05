@@ -178,18 +178,21 @@ that needs none is tried once.
 **Main control, backup controls** (`PlayerControls`, `WayOrder`,
 `BackupRouting`): the way AutoHush pauses and plays a player first, and its
 other ways, pressed when the main one fails, by its window's state: an added
-app's the other ways its check found; a built-in player's or a Safari web
-app's those measured for it (`BackedUpPlayer`, `MeasuredBackups`); every
-player's the keyboard's Play/Pause key and the Now Playing panel last. Used
-while their switch is on (**Use backup controls**, `usesBackups`; **Use the
-Now Playing panel while muted**, `panelWhileMuted`). Diagnostics marks the
-one that paused and played it last (`LastControls`).
+app's the other ways its check found; a built-in player's those measured for
+it (`BackedUpPlayer`, `MeasuredBackups`), a learned Safari web app none; then,
+for each, the keyboard's Play/Pause key, and the Now Playing panel last (an
+added app's only when it worked in its check). A refused pause is
+muted first when it can be, and they're tried while it's muted. Used while
+their switch is on (**Use backup controls**, `usesBackups`; **Use the Now
+Playing panel while muted**, `panelWhileMuted`); an app added before them has
+none until it's checked again. Diagnostics marks the one that paused and
+played it last (`LastControls`).
 _Avoid_: backup ways, fallbacks.
 
 **Checked app** (`AddedAppPlayer`, kind `.checkedApp`): an app added with
 Add an App, offered under "Other Apps" with its "Checked by you" badge, and
 controlled the way the user chose among those its check found, the others
-that worked kept as its **backups** (the keyboard's Play/Pause key too),
+that worked kept as its **backup controls** (the keyboard's Play/Pause key too),
 pressed by its window's state
 (`WayOrder`; a setup kept before that choice may hold several, a press
 handed to the next when one fails): pressed by them (`CheckedPlayer`), or
