@@ -172,8 +172,8 @@ struct TextChoiceTests {
                 ]
             case .audioNote:
                 return [
-                    Row("what it's for", PermissionText.audioNote(.allowed), PermissionText.audioNote(.notAsked),
-                        PermissionText.audioNote(.playerNotRunning)),
+                    Row("what it's for", PermissionText.audioNote(.allowed), PermissionText.audioNote(.playerNotRunning)),
+                    Row("not asked", PermissionText.audioNote(.notAsked), PermissionText.askNote),
                     Row("denied", PermissionText.audioNote(.denied)),
                     Row("needs reopening", PermissionText.audioNote(.needsReopen)),
                     Row("AntiDot", PermissionText.audioNote(.notNeeded)),
@@ -322,9 +322,13 @@ struct TextChoiceTests {
 
     @Test("Audio Recording's notes say nothing is recorded, and Use AntiDot Mode Instead what it trades (T2a, F2a)")
     func audioRecordingNotes() {
-        for access: PermissionAccess in [.allowed, .notAsked, .playerNotRunning] {
+        for access: PermissionAccess in [.allowed, .playerNotRunning] {
             #expect(PermissionText.audioNote(access) == "Tells playing apps from silent ones. Never recorded.")
         }
+        // Not asked yet, its Allow… asks (P1); after Allow… opened System
+        // Settings, not "Allowed" before it reopens (R1; the user, 2026-11-06).
+        #expect(PermissionText.audioNote(.notAsked) == "Click Allow, then Allow again when macOS asks.")
+        #expect(PermissionText.audioNote(.needsReopen) == "Turn it on in System Settings, then reopen AutoHush.")
         #expect(AddAppText.audioUse(Self.app) == "Hears whether Jukebox plays, and mutes it. Never recorded.")
         #expect(PermissionText.antiDotTradeOff == "No purple dot; a little less precise.")
     }

@@ -6,6 +6,10 @@ import Foundation
 extension AudioMonitor {
     /// Re-reads the System Audio Recording permission (at most every few
     /// seconds) and derives the detection mode from it when it is known.
+    /// It never asks macOS itself: an undecided permission counts as
+    /// missing until the user's Allow… asks (P1, the user's pick,
+    /// 2026-11-06: macOS's prompt at launch came over the welcome window's
+    /// Allow…); a grant is read here within `permissionRecheckInterval`.
     func checkPermission(at now: Date) {
         guard detectionMethod == .audioLevels else {
             setDetectionMode(detectionMethod == .playbackSignals ? .playbackSignals : .disabled)
@@ -22,11 +26,8 @@ extension AudioMonitor {
         switch status {
         case .granted:
             setDetectionMode(.audioLevel)
-        case .denied:
+        case .denied, .notDetermined:
             setDetectionMode(.unavailable)
-        case .notDetermined:
-            setDetectionMode(.pending)
-            requestPermissionOnce(permission)
         case nil:
             break
         }
@@ -39,18 +40,6 @@ extension AudioMonitor {
             }
             logger.info("[monitor] System Audio Recording permission: \(said, privacy: .public)")
             updateMeteredProcesses(at: now)
-        }
-    }
-
-    private func requestPermissionOnce(_ permission: any AudioCapturePermissionChecking) {
-        guard !hasRequestedPermission else { return }
-        hasRequestedPermission = true
-        permission.request { [weak self] _ in
-            guard let monitor = self else { return }
-            monitor.queue.async {
-                monitor.lastPermissionCheck = nil // re-read right away
-                monitor.tick()
-            }
         }
     }
 

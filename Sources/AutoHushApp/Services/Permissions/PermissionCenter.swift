@@ -127,8 +127,10 @@ final class PermissionCenter {
     /// Carries out `request`, for the app with bundle ID `app`. Asking for
     /// Accessibility shows macOS's prompt and opens System Settings, where
     /// it's switched on; asking for Automation waits for the user's answer
-    /// to macOS's prompt.
-    func perform(_ request: PermissionRequest, app: String?) async {
+    /// to macOS's prompt; asking for Audio Recording calls `answered` once
+    /// the user answers macOS's prompt (AutoHush never asks for it by
+    /// itself: only this does).
+    func perform(_ request: PermissionRequest, app: String?, answered: @escaping @Sendable () -> Void = {}) async {
         switch request {
         case .askMacOS(.accessibility):
             system.promptAccessibility()
@@ -137,7 +139,7 @@ final class PermissionCenter {
             guard let app, let pid = system.runningPID(app) else { return }
             _ = await system.automation(pid, true)
         case .askMacOS(.systemAudioRecording):
-            system.requestAudio { _ in }
+            system.requestAudio { _ in answered() }
         case .openSettings(let pane):
             system.openPane(pane)
         case .openPlayer, .reopen:

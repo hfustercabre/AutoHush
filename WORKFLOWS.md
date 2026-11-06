@@ -93,7 +93,7 @@ flowchart TD
   AUT["Automation: Spotify, Apple<br/>Music, VLC, QuickTime Player,<br/>an added app’s AppleScript.<br/>Open Spotify first, then<br/>macOS asks"]
   ACC["Accessibility: TIDAL,<br/>Apple Podcasts, web apps,<br/>added apps that are pressed.<br/>Allow… opens System Settings"]
   AUD{"Audio<br/>Recording"}
-  ALW["Allow…: macOS asks,<br/>or System Settings,<br/>then Reopen AutoHush"]
+  ALW["Allow…: macOS asks (only<br/>then, never at launch),<br/>or System Settings,<br/>then Reopen AutoHush"]
   ANT["Use AntiDot Mode Instead:<br/>no audio permission,<br/>never the purple dot"]
   DONE["Done unlocks once<br/>every line ticks"]
   LRN{"A web app whose<br/>button isn’t learned?"}

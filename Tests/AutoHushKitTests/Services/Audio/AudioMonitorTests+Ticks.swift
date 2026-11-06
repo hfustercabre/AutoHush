@@ -57,7 +57,7 @@ extension AudioMonitorTests {
         #expect(await h.recorder.events == [.init(bundleID: "org.example.viewer", isPlaying: true)])
     }
 
-    @Test("a permission undecided again (reset in System Settings) puts level detection back to waiting for it")
+    @Test("a permission undecided again (reset in System Settings) makes level detection unavailable, until the user's Allow… asks")
     func permissionUndecidedAgain() {
         let permission = MockAudioCapturePermission(.granted)
         let h = Harness(permission: permission)
@@ -67,7 +67,8 @@ extension AudioMonitorTests {
 
         permission.current = .notDetermined
         h.step(after: 5.0) // the next re-check
-        #expect(h.modes.value == [.audioLevel, .pending])
+        #expect(h.modes.value == [.audioLevel, .unavailable])
+        #expect(permission.requestCount == 0)
     }
 
     @Test("switching the detection method forgets when apps last announced playing: a video-only app's assertion withdrawn meanwhile isn't taken for a pause")

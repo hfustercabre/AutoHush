@@ -88,6 +88,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Audio Recording is asked for only when you click its Allow…**
+  (in the welcome window, the menu, Settings or Add an App): macOS's
+  prompt no longer opens by itself at the first launch, over the
+  welcome window. Until then, the menu offers it as when it's turned off.
+- **After Allow… opens System Settings** for Audio Recording, AutoHush
+  says to turn it on there, then reopen, instead of "Allowed" before
+  it's on.
 - **Tab and Shift-Tab** move the highlight as ↓ and ↑ do, in the menu,
   Settings and AutoHush's windows, with the same highlight.
 - **A click anywhere on a row with a list** shows its choices, as a click

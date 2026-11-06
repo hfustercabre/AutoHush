@@ -40,24 +40,24 @@ extension AudioMonitorTests {
         #expect(await h.recorder.events == [.init(bundleID: "org.example.viewer", isPlaying: true)])
     }
 
-    @Test("an undecided permission is requested once and taps start when granted")
-    func undecidedPermissionIsRequested() async {
+    @Test("an undecided permission is never asked for by the monitor (the user's Allow… asks): detection is unavailable, and taps start once it's granted")
+    func undecidedPermissionIsNotRequested() async {
         let permission = MockAudioCapturePermission(.notDetermined)
         let h = Harness(permission: permission)
         h.start()
         h.step([Self.process(1, "org.example.viewer")])
-        h.step(after: 6.0) // re-check must not request again
-        #expect(permission.requestCount == 1)
+        h.step(after: 6.0)
+        #expect(permission.requestCount == 0)
         #expect(h.meter.lastMetered.isEmpty)
-        #expect(h.modes.value.isEmpty)
+        #expect(h.modes.value == [.unavailable])
 
-        permission.complete(granted: true)
-        h.provider.flush()
-        #expect(h.modes.value == [.audioLevel])
+        permission.current = .granted // allowed through the user’s Allow…
+        h.step(after: 6.0) // read at the next re-check
+        #expect(h.modes.value == [.unavailable, .audioLevel])
         #expect(h.meter.lastMetered == [1])
     }
 
-    @Test("a permission granted a while after the last HAL change starts the taps at once")
+    @Test("a permission granted a while after the last HAL change starts the taps at the next re-check")
     func grantedPermissionTapsAtOnce() {
         let permission = MockAudioCapturePermission(.notDetermined)
         let h = Harness(permission: permission)
@@ -65,9 +65,15 @@ extension AudioMonitorTests {
         h.step([Self.process(1, "org.example.viewer")])
         #expect(h.meter.lastMetered.isEmpty)
 
-        h.clock.advance(by: 2) // the process list is no longer re-read at once
-        permission.complete(granted: true)
-        h.provider.flush()
+        // A tick refreshes the process list just before the re-check is due…
+        let tick = { h.monitor.queue.sync { h.monitor.tick() } }
+        h.clock.advance(by: AudioMonitor.permissionRecheckInterval - 0.2)
+        tick()
+        permission.current = .granted // through the user's Allow…
+        // …so the re-check's own update starts the tap, not a later refresh.
+        h.clock.advance(by: 0.4)
+        tick()
+        #expect(h.modes.value.last == .audioLevel)
         #expect(h.meter.lastMetered == [1])
     }
 

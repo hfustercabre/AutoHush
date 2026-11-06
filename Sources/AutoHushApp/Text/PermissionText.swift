@@ -28,26 +28,36 @@ enum PermissionText {
             String(localized: "Open \(player) so macOS can ask.",
                    comment: "Welcome window and Settings: Automation can only be asked for while the player runs; %@ is the player")
         case .notAsked:
-            String(localized: "Click Allow, then Allow again when macOS asks.",
-                   comment: "Welcome window, under a permission macOS hasn't asked for yet")
+            askNote
         case .denied:
             String(localized: "Turn it on for AutoHush in System Settings.",
                    comment: "Welcome window, under a permission that isn't allowed")
         }
     }
 
-    /// Under Audio Recording, as it stands.
+    /// Under a permission macOS hasn't asked for yet: its Allow… asks.
+    static var askNote: String {
+        String(localized: "Click Allow, then Allow again when macOS asks.",
+               comment: "Welcome window, under a permission macOS hasn't asked for yet")
+    }
+
+    /// Under Audio Recording, as it stands. Not asked yet, it's asked only
+    /// by its Allow… (P1, the user's pick, 2026-11-06).
     static func audioNote(_ access: PermissionAccess) -> String {
         switch access {
-        case .allowed, .notAsked, .playerNotRunning:
+        case .notAsked:
+            askNote
+        case .allowed, .playerNotRunning:
             String(localized: "Tells playing apps from silent ones. Never recorded.",
                    comment: "Welcome window, under “Audio Recording”: what AutoHush uses it for; it only measures how loud apps play, and never records their audio")
         case .denied:
             String(localized: "Turn it on for AutoHush in System Settings, then reopen AutoHush.",
                    comment: "Welcome window and Settings, while Audio Recording isn't allowed")
         case .needsReopen:
-            String(localized: "Allowed. Reopen AutoHush to start using it.",
-                   comment: "Welcome window and Settings: Audio Recording was allowed in System Settings, which macOS applies at AutoHush's next launch")
+            // Not "Allowed": AutoHush can't tell it was switched on until it
+            // reopens (R1, the user's pick, 2026-11-06).
+            String(localized: "Turn it on in System Settings, then reopen AutoHush.",
+                   comment: "Welcome window and Settings: after the user's Allow… opened System Settings for Audio Recording; macOS applies it only at AutoHush's next launch, and AutoHush can't tell before whether it was switched on")
         case .notNeeded:
             AntiDotText.notNeeded
         }

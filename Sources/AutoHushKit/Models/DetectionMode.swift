@@ -8,8 +8,10 @@ package enum DetectionMode: Equatable, Sendable {
     case pending
     /// Process taps deliver real samples; sources are judged by loudness.
     case audioLevel
-    /// The media player played but its tap stayed silent: System Audio Recording
-    /// permission is most likely missing. Open output streams count as playing.
+    /// System Audio Recording isn't allowed, or not asked yet (macOS is asked
+    /// only by the user's Allow…), or, when it can't be read, the media
+    /// player played but its tap stayed silent. Open output streams count as
+    /// playing.
     case unavailable
     /// AntiDot mode with "What apps tell macOS": apps are judged by their
     /// power assertions, or by their open output when they never hold one.

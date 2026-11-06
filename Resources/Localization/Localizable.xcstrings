@@ -27136,233 +27136,6 @@
         }
       }
     },
-    "Allowed. Reopen AutoHush to start using it." : {
-      "comment" : "Welcome window and Settings: Audio Recording was allowed in System Settings, which macOS applies at AutoHush's next launch",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مسموح به. أعد فتح AutoHush لبدء استخدامه."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permès. Torna a obrir l’AutoHush per començar a fer-lo servir."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Povoleno. Znovu otevřete AutoHush, aby to začal používat."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tilladt. Åbn AutoHush igen for at begynde at bruge det."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erlaubt. Öffne AutoHush erneut, um es zu nutzen."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Επιτρέπεται. Ανοίξτε ξανά το AutoHush για να αρχίσει να το χρησιμοποιεί."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permitido. Vuelve a abrir AutoHush para empezar a usarlo."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permitido. Vuelve a abrir AutoHush para empezar a usarlo."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sallittu. Avaa AutoHush uudelleen, niin se otetaan käyttöön."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisé. Rouvrez AutoHush pour commencer à l’utiliser."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autorisé. Rouvrez AutoHush pour commencer à l’utiliser."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "אושר. יש לפתוח מחדש את AutoHush כדי להתחיל להשתמש בזה."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "अनुमति है। इसका इस्तेमाल शुरू करने के लिए AutoHush को फिर से खोलें।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dozvoljeno. Ponovno otvorite AutoHush kako biste ga počeli koristiti."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Engedélyezve. Nyissa meg újra az AutoHusht a használatához."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Diizinkan. Buka ulang AutoHush untuk mulai menggunakannya."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Consentito. Riapri AutoHush per iniziare a usarlo."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "許可済みです。使い始めるにはAutoHushを再度開いてください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "허용됨. 사용을 시작하려면 AutoHush를 다시 여십시오."
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dibenarkan. Buka semula AutoHush untuk mula menggunakannya."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillatt. Åpne AutoHush på nytt for å begynne å bruke det."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toegestaan. Open AutoHush opnieuw om het te gebruiken."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dozwolone. Otwórz ponownie AutoHush, aby zacząć z tego korzystać."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permitido. Reabra o AutoHush para começar a usar."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permitido. Reabra o AutoHush para começar a usá-lo."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Permis. Redeschideți AutoHush pentru a începe să-l folosească."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Разрешено. Повторно откройте AutoHush, чтобы начать использовать."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Povolené. Znova otvorte AutoHush, aby to začal používať."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dovoljeno. Znova odprite AutoHush, da ga začne uporabljati."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tillåtet. Öppna AutoHush igen för att börja använda det."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "อนุญาตแล้ว เปิด AutoHush ใหม่เพื่อเริ่มใช้งาน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "İzin verildi. Kullanmaya başlamak için AutoHush’ı yeniden açın."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Дозволено. Повторно відкрийте AutoHush, щоб почати користуватися."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Đã cho phép. Mở lại AutoHush để bắt đầu dùng."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已允許。重新打開 AutoHush 即可開始使用。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已允许。重新打开 AutoHush 即可开始使用。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已允許。重新打開 AutoHush 即可開始使用。"
-          }
-        }
-      }
-    },
     "Allow…" : {
       "comment" : "Welcome window, Add an App window, the menu's card (under “Needs Automation access” and the like) and Settings → Diagnostics (beside a permission not allowed): button that asks for a permission (macOS's prompt, or System Settings)",
       "localizations" : {
@@ -150425,6 +150198,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在「系統設定」中為 AutoHush 開啟它。"
+          }
+        }
+      }
+    },
+    "Turn it on in System Settings, then reopen AutoHush." : {
+      "comment" : "Welcome window and Settings: after the user's Allow… opened System Settings for Audio Recording; macOS applies it only at AutoHush's next launch, and AutoHush can't tell before whether it was switched on",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شغّله في إعدادات النظام، ثم أعد فتح AutoHush."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa-ho a Configuració del Sistema i torna a obrir l’AutoHush."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapněte to v Nastavení systému a pak AutoHush znovu otevřete."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå det til i Systemindstillinger, og åbn derefter AutoHush igen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiviere AutoHush in den Systemeinstellungen und öffne es dann erneut."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργοποιήστε το στις Ρυθμίσεις συστήματος και ανοίξτε ξανά το AutoHush."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actívalo en Ajustes del Sistema y vuelve a abrir AutoHush."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actívalo en Configuración del Sistema y vuelve a abrir AutoHush."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laita se päälle Järjestelmäasetuksissa ja avaa AutoHush sitten uudelleen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez-le dans Réglages Système, puis rouvrez AutoHush."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez-le dans Réglages Système, puis rouvrez AutoHush."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "יש להפעיל אותה בהגדרות המערכת, ואז לפתוח מחדש את AutoHush."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिस्टम सेटिंग्ज़ में इसे चालू करें, फिर AutoHush को फिर से खोलें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uključite to u Postavkama sustava, a zatim ponovno otvorite AutoHush."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapcsolja be a Rendszerbeállításokban, majd nyissa meg újra az AutoHusht."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyalakan di Pengaturan Sistem, lalu buka ulang AutoHush."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivalo in Impostazioni di Sistema, poi riapri AutoHush."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“システム設定”でオンにしてから、AutoHushを再度開いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템 설정에서 켠 다음 AutoHush를 다시 여십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktifkannya dalam Seting Sistem, kemudian buka semula AutoHush."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå det på i Systeminnstillinger, og åpne deretter AutoHush på nytt."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel het in bij Systeeminstellingen en open AutoHush opnieuw."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz to w Ustawieniach systemowych, a potem otwórz ponownie AutoHush."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ative nos Ajustes do Sistema e reabra o AutoHush."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ative-o nas Definições do Sistema e reabra o AutoHush."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activați-l în Configurări sistem, apoi redeschideți AutoHush."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включите это в Системных настройках, а затем повторно откройте AutoHush."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnite to v Systémových nastaveniach a potom AutoHush znova otvorte."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vklopite to v Sistemskih nastavitvah in nato znova odprite AutoHush."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå på det i Systeminställningar och öppna sedan AutoHush igen."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดสิทธิ์นี้ในการตั้งค่าระบบ แล้วเปิด AutoHush ใหม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistem Ayarları’nda açın, ardından AutoHush’ı yeniden açın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увімкніть це в Параметрах системи, а потім повторно відкрийте AutoHush."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật quyền này trong Cài đặt hệ thống, rồi mở lại AutoHush."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在「系統設定」中開啟它，然後重新打開 AutoHush。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在“系统设置”中打开它，然后重新打开 AutoHush。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在「系統設定」中開啟它，然後重新打開 AutoHush。"
           }
         }
       }

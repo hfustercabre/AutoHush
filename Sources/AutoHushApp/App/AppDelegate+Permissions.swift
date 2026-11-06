@@ -47,7 +47,10 @@ extension AppDelegate {
         case .reopen:
             reopenAutoHush()
         case .openSettings, .askMacOS:
-            await permissionCenter.perform(request, app: app)
+            // The answer to macOS's Audio Recording prompt shows at once.
+            await permissionCenter.perform(request, app: app, answered: { [weak self] in
+                Task { @MainActor in await self?.refreshPermissions() }
+            })
             // macOS applies Audio Recording switched on there only from the next launch.
             if request == .openSettings(.audioCapture) { noteAudioRecordingAllowedInSettings() }
         }

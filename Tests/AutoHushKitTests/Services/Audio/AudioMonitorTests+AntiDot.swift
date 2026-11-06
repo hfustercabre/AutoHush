@@ -309,8 +309,8 @@ extension AudioMonitorTests {
 
         h.monitor.setDetectionMethod(.audioLevels)
         h.provider.flush()
-        #expect(permission.requestCount == 1)
-        #expect(h.modes.value == [.disabled, .pending])
+        #expect(permission.requestCount == 0) // only the user's Allow… asks
+        #expect(h.modes.value == [.disabled, .pending, .unavailable]) // pending as it switches, then read
     }
 
     @Test("with the permission unreadable, back to measuring from AntiDot mode, detection is pending, then unavailable once the player's tap stays silent",

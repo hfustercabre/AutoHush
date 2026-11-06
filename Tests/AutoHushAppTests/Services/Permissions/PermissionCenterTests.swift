@@ -172,4 +172,21 @@ struct PermissionCenterTests {
         await recording(running: true).perform(.askMacOS(automation), app: nil) // no app
         #expect(asked.calls == ["4242 asking"])
     }
+
+    @Test("Audio Recording's Allow… asks macOS (the only thing that does, P1), and says when the user answered, so the rows follow at once")
+    func audioAllowAsksAndAnswers() async {
+        let answer = Locked<(@Sendable (Bool) -> Void)?>(nil)
+        let answered = Locked(0)
+        let center = PermissionCenter(system: .init(
+            isTrusted: { true }, promptAccessibility: {},
+            automation: { _, _ in noErr }, runningPID: { _ in nil },
+            audio: { .notDetermined },
+            requestAudio: { completion in answer.withLock { $0 = completion } },
+            openPane: { _ in }
+        ))
+        await center.perform(.askMacOS(.systemAudioRecording), app: nil, answered: { answered.withLock { $0 += 1 } })
+        #expect(answer.value != nil && answered.value == 0) // macOS's prompt is up
+        answer.value?(true) // the user clicks Allow
+        #expect(answered.value == 1)
+    }
 }
