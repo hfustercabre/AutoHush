@@ -88,7 +88,7 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     var panelClues: PanelClues?
 
     package init(bundleID: String, name: String, appURL: URL, ways: [Way], backups: [Way] = [],
-                 wayResults: [CheckResult.WayResult] = [], usesBackups: Bool = true, panelWhileMuted: Bool = true,
+                 wayResults: [CheckResult.WayResult] = [], usesBackups: Bool = true, panelWhileMuted: Bool = false,
                  stateNotification: String? = nil, needsLaunchOption: Bool = false, panelRowIsStale: Bool? = nil,
                  panelClues: PanelClues? = nil) {
         self.bundleID = bundleID
@@ -124,7 +124,7 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
         backups = (try? values.decodeIfPresent([Way].self, forKey: .backups)) ?? []
         wayResults = (try? values.decodeIfPresent([CheckResult.WayResult].self, forKey: .wayResults)) ?? []
         usesBackups = try values.decodeIfPresent(Bool.self, forKey: .usesBackups) ?? true
-        panelWhileMuted = try values.decodeIfPresent(Bool.self, forKey: .panelWhileMuted) ?? true
+        panelWhileMuted = try values.decodeIfPresent(Bool.self, forKey: .panelWhileMuted) ?? false
         mainControl = try values.decodeIfPresent(String.self, forKey: .mainControl)
         stateNotification = try values.decodeIfPresent(String.self, forKey: .stateNotification)
         needsLaunchOption = try values.decode(Bool.self, forKey: .needsLaunchOption)

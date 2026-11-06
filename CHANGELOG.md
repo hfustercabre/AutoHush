@@ -44,10 +44,11 @@ This project follows [Semantic Versioning](https://semver.org/).
   used.", and Settings says AutoHush controls it by its backup controls. A main control chosen
   in Fine-Tuning while backup controls are off needs its own permission.
 - **Use backup controls** and **Use the Now Playing panel while muted**
-  (while the panel is a backup control), both on, in Settings → Fine-Tuning for your player (Media Player has a
+  (while the panel is a backup control), the first on and the second off
+  by default, in Settings → Fine-Tuning for your player (Media Player has a
   row to them, with what they're set to) and in Add an App's last step; a
   change takes effect at the next pause or play, and **Restore Defaults**
-  turns both back on. **Details…** in Settings lists
+  sets them back. **Details…** in Settings lists
   its main control and its backup controls, with how each works; an app
   added before them says to check it again. Diagnostics lists its main control and, while they're used, its backup controls, the ones that paused
   and played it last marked, then the switches.

@@ -122,18 +122,19 @@ struct SettingsModelUndoTests {
     @Test("the player controls' Undo puts back only the switch the restore changed, and only for the player they were the switches of")
     func backupSwitchesUndo() {
         changeEverything(for: .playerControls)
-        model.actions?.setBackupSwitches(BackupSwitches(usesBackups: false, panelWhileMuted: true))
-        press(.playerControls) // Use backup controls back on; the panel's was on, the main control its own
-        model.actions?.setBackupSwitches(BackupSwitches(usesBackups: true, panelWhileMuted: false))
+        model.actions?.setBackupSwitches(BackupSwitches(usesBackups: false, panelWhileMuted: false))
+        press(.playerControls) // Use backup controls back on; the panel's was off, the main control its own
+        model.actions?.setBackupSwitches(BackupSwitches(usesBackups: true, panelWhileMuted: true))
         undo.undo()
-        #expect(model.chosenControls?.switches == BackupSwitches(usesBackups: false, panelWhileMuted: false))
+        #expect(model.chosenControls?.switches == BackupSwitches(usesBackups: false, panelWhileMuted: true))
         // Redone, then another player chosen: its switches stay as they are.
         undo.redo()
         model.state.status.choosePlayer(named: "Radio")
         model.actions?.setBackupSwitches(BackupSwitches(usesBackups: true, panelWhileMuted: true))
         log.calls = []
         undo.undo()
-        #expect(model.chosenControls?.switches == BackupSwitches() && !log.calls.contains { $0.hasPrefix("backups") })
+        #expect(model.chosenControls?.switches == BackupSwitches(usesBackups: true, panelWhileMuted: true)
+                && !log.calls.contains { $0.hasPrefix("backups") })
     }
 
     @Test("the player controls' Restore Defaults puts its own main control back, and Undo the one chosen, field by field: a switch turned since stays")

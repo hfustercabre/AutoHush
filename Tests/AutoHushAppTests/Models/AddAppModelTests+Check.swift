@@ -67,7 +67,7 @@ extension AddAppModelTests {
         model.use()
         let kept = world.used.first?.setup
         #expect(kept?.ways == [.panel(rememberedRow: nil)] && kept?.backups == [.menu(menuName: "Playback")])
-        #expect(kept?.wayResults == [found.ways[1], found.ways[3]] && kept?.usesBackups == true && kept?.panelWhileMuted == true)
+        #expect(kept?.wayResults == [found.ways[1], found.ways[3]] && kept?.usesBackups == true && kept?.panelWhileMuted == false)
         #expect(world.used.first?.ways == found.ways)
     }
 

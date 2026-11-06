@@ -14,7 +14,7 @@ struct BackedUpPlayerTests {
     /// `inner` backed up by `backups`, untested by window state, its
     /// switches in `switches`.
     private func backed<Inner: MusicPlayer>(_ inner: Inner, _ backups: [(MockMusicPlayer, WayOrder.Kind)],
-                                            switches: Locked<BackupSwitches> = Locked(BackupSwitches()),
+                                            switches: Locked<BackupSwitches> = Locked(BackupSwitches(panelWhileMuted: true)),
                                             audioRecording: Bool = true,
                                             allowed: @escaping @Sendable (WayOrder.Kind) -> Bool = { _ in true }) -> BackedUpPlayer<Inner> {
         BackedUpPlayer(inner: inner, own: CheckResult.WayResult(kind: .script, mark: .works),

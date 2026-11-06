@@ -14,7 +14,9 @@ package struct BackupSwitches: Equatable, Sendable {
     /// 2026-11-05: F4).
     package var mainControl: String?
 
-    package init(usesBackups: Bool = true, panelWhileMuted: Bool = true, mainControl: String? = nil) {
+    /// The panel while muted is off by default (the user, 2026-11-06: it
+    /// shows on screen for a moment each time it's pressed).
+    package init(usesBackups: Bool = true, panelWhileMuted: Bool = false, mainControl: String? = nil) {
         self.usesBackups = usesBackups
         self.panelWhileMuted = panelWhileMuted
         self.mainControl = mainControl
@@ -35,11 +37,13 @@ package struct BackupSwitchesStore: Sendable {
         stored = KeyedDefaults(key: Self.key, defaults: defaults)
     }
 
-    /// The player's switches; both on, and its own main control, when none were set.
+    /// The player's switches; the defaults (`BackupSwitches()`), and its own
+    /// main control, when none were set.
     package func switches(for bundleID: String) -> BackupSwitches {
         let values = stored.values()[bundleID] as? [String: Any] ?? [:]
-        return BackupSwitches(usesBackups: values["usesBackups"] as? Bool ?? true,
-                              panelWhileMuted: values["panelWhileMuted"] as? Bool ?? true,
+        let defaults = BackupSwitches()
+        return BackupSwitches(usesBackups: values["usesBackups"] as? Bool ?? defaults.usesBackups,
+                              panelWhileMuted: values["panelWhileMuted"] as? Bool ?? defaults.panelWhileMuted,
                               mainControl: values["mainControl"] as? String)
     }
 

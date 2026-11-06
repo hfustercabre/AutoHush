@@ -9,12 +9,12 @@ import CheckedPlayers
 @Suite("The player's controls' texts")
 struct BackupTextTests {
     @Test("Media Player's row lists the main control, the backups' switch, and the panel's while it's a backup and counts", arguments: [
-        (PlayerControls.choosing(), "AppleScript · backups on · panel while muted on"),
-        (.choosing(switches: BackupSwitches(panelWhileMuted: false)), "AppleScript · backups on · panel while muted off"),
+        (PlayerControls.choosing(), "AppleScript · backups on · panel while muted off"), // the defaults
+        (.choosing(switches: BackupSwitches(panelWhileMuted: true)), "AppleScript · backups on · panel while muted on"),
         // The panel's switch is dimmed while the backups are off: not listed.
         (.choosing(switches: BackupSwitches(usesBackups: false)), "AppleScript · backups off"),
         // The chosen main control by its name.
-        (.choosing(.menu), "Its playback menu · backups on · panel while muted on"),
+        (.choosing(.menu), "Its playback menu · backups on · panel while muted off"),
         // The panel as the main control has no switch: not listed.
         (.choosing(.panel, switches: BackupSwitches(mainControl: "panel")),
          "The menu bar’s Now Playing panel · backups on"),

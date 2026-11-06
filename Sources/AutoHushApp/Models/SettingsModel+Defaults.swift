@@ -139,12 +139,12 @@ extension SettingsModel {
             if updateInstallNote == nil { restored.automaticUpdates = .install }
             restored.getsReleaseCandidates = false
         // The chosen player's controls': its own main control (the
-        // recommended one), both switches on, as when it's added; the
-        // panel's alone while it isn't among them (hidden).
+        // recommended one), backups on and the panel while muted off, as
+        // when it's added; the panel's alone while it isn't among them (hidden).
         case .playerControls:
             restored.backupSwitches?.switches.mainControl = nil
             restored.backupSwitches?.switches.usesBackups = true
-            if chosenControls?.hasPanel == true { restored.backupSwitches?.switches.panelWhileMuted = true }
+            if chosenControls?.hasPanel == true { restored.backupSwitches?.switches.panelWhileMuted = false }
         }
         return restored
     }

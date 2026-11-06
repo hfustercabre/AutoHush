@@ -310,7 +310,7 @@ struct DiagnosticsReportTests {
         }
         let script = PlayerControls.Control(kind: .script, result: nil), menu = PlayerControls.Control(kind: .menu, result: nil)
         let key = PlayerControls.Control(kind: .mediaKey, result: nil), panel = PlayerControls.Control(kind: .panel, result: nil)
-        let on = try rows(PlayerControls(main: script, backups: [menu, key, panel], switches: BackupSwitches(),
+        let on = try rows(PlayerControls(main: script, backups: [menu, key, panel], switches: BackupSwitches(panelWhileMuted: true),
                                          last: LastControls(paused: .menu, played: .script)))
         #expect(on.contains(.init(label: "Controlled by", value: "AppleScript (played last)\nIts playback menu (backup, paused last)\nThe Play/Pause key (backup)\nThe menu bar’s Now Playing panel (backup)")))
         #expect(on.contains(.init(label: "Use backup controls", value: "On")) && on.contains(.init(label: "Use the Now Playing panel while muted", value: "On")))
