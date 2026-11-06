@@ -10,9 +10,11 @@ final class AppChooserWindowController: HostedWindowController {
 
     init(model: AddAppModel) {
         self.model = model
-        let hosting = Self.sizedToFit(AppChooserView(model: model, otherApp: {}, close: {}))
-        super.init(content: hosting, title: AddAppText.chooserTitle)
-        hosting.rootView = AppChooserView(model: model, otherApp: { [weak self] in self?.pickOtherApp() }, close: { [weak self] in self?.close() })
+        let otherApp = LaterAction(), close = LaterAction()
+        super.init(content: Self.sizedToFit(AppChooserView(model: model, otherApp: otherApp.call, close: close.call)),
+                   title: AddAppText.chooserTitle)
+        otherApp.action = { [weak self] in self?.pickOtherApp() }
+        close.action = { [weak self] in self?.close() }
     }
 
     private func pickOtherApp() {

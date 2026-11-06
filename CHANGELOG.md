@@ -137,6 +137,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Escape** presses Cancel (or Later) again in Add an App, Choose an
+  App, Add a Web App, the check's warning and the learning window: it
+  did nothing there, while a click on Cancel worked.
 - **Add an App's check** no longer marks an app's page as not working
   minimized or hidden when AutoHush can press it there: it keeps the
   page readable through every window state, as AutoHush does. It also
