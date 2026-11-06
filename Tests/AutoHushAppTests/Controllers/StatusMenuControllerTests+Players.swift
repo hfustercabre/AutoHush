@@ -68,7 +68,7 @@ extension StatusMenuControllerTests {
         #expect(!sut.isMenuOpen)
     }
 
-    @Test("a window becoming key closes the menu unless it's the menu bar item's own (as VoiceOver's press on a row makes it) or at the menu bar's level")
+    @Test("a window becoming key closes the menu unless it's the menu bar item's own (as VoiceOver's press on a row makes it), at the menu bar's level, or at the menu's own (macOS's suggestions for a field)")
     func windowsThatLeaveTheMenu() {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 40, height: 40), styleMask: .titled, backing: .buffered, defer: false)
         defer { window.orderOut(nil) }
@@ -77,6 +77,14 @@ extension StatusMenuControllerTests {
         #expect(StatusMenuController.closesMenu(becomingKey: window, statusItemWindow: nil))
         window.level = .statusBar
         #expect(!StatusMenuController.closesMenu(becomingKey: window, statusItemWindow: nil))
+        // At the menu's level: macOS's suggestions for the players' search, with VoiceOver on.
+        window.level = .popUpMenu
+        #expect(!StatusMenuController.closesMenu(becomingKey: window, statusItemWindow: nil))
+        // AutoHush's own windows and alerts, below it, still close it.
+        for level: NSWindow.Level in [.normal, .floating, .modalPanel] {
+            window.level = level
+            #expect(StatusMenuController.closesMenu(becomingKey: window, statusItemWindow: nil))
+        }
     }
 
     @Test("the players fold again each time the menu opens")

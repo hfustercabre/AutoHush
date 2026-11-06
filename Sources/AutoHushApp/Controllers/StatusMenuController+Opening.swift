@@ -146,8 +146,12 @@ extension StatusMenuController {
 
     /// Whether `window` becoming key is another window coming forward: a
     /// visible one, not the menu bar item's own (VoiceOver's press on a row
-    /// makes that one key, 2026-10-18).
+    /// makes that one key, 2026-10-18), and below the menu's level, as
+    /// AutoHush's windows and alerts are: not macOS's suggestions for a
+    /// field, at the menu's level, which the players' search shows with
+    /// VoiceOver on (2026-11-06: the menu closed as the players opened).
     static func closesMenu(becomingKey window: NSWindow, statusItemWindow: NSWindow?) -> Bool {
         window.isVisible && window !== statusItemWindow && window.level != .statusBar
+            && window.level.rawValue < NSWindow.Level.popUpMenu.rawValue
     }
 }

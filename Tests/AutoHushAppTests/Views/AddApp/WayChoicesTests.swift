@@ -40,10 +40,13 @@ struct WayChoicesTests {
 
         #expect(keys.handle(.down)) // the menu's card, the recommended one
         #expect(keys.handle(.down)) // the panel's
+        // The button's press, as SwiftUI triggers it, may land after the key.
         #expect(keys.handle(.space))
+        await TestWait.until { model.chosenWay == .panel }
         #expect(model.chosenWay == .panel)
         #expect(keys.handle(.up))
         #expect(keys.handle(.space))
+        await TestWait.until { model.chosenWay == .menu }
         #expect(model.chosenWay == .menu)
     }
 }
