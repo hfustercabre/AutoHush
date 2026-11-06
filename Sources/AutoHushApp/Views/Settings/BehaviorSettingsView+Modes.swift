@@ -50,7 +50,7 @@ extension BehaviorSettingsView {
 
     private var audioNote: String {
         model.permissions.audio == .needsReopen
-            ? PermissionText.audioNote(.needsReopen)
+            ? PermissionText.settingsReopenNote
             : String(localized: "Without Audio Recording, a silent app with its sound open keeps your player paused. Audio is never recorded.",
                      comment: "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed; AutoHush only measures how loud apps play, and never records their audio")
     }

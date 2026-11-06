@@ -150883,6 +150883,233 @@
         }
       }
     },
+    "Turn on Audio Recording in System Settings, then reopen AutoHush." : {
+      "comment" : "Settings → Behavior, under AntiDot mode, after the user's Allow… opened System Settings for Audio Recording (macOS's System Audio Recording permission); macOS applies it only at AutoHush's next launch, and AutoHush can't tell before whether it was switched on",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شغّل تسجيل الصوت في إعدادات النظام، ثم أعد فتح AutoHush."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa la gravació d’àudio a Configuració del Sistema i torna a obrir l’AutoHush."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapněte nahrávání zvuku v Nastavení systému a pak AutoHush znovu otevřete."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå lydoptagelse til i Systemindstillinger, og åbn derefter AutoHush igen."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiviere die Audioaufnahme in den Systemeinstellungen und öffne AutoHush dann erneut."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ενεργοποιήστε την εγγραφή ήχου στις Ρυθμίσεις συστήματος και ανοίξτε ξανά το AutoHush."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa la grabación de audio en Ajustes del Sistema y vuelve a abrir AutoHush."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa la grabación de audio en Configuración del Sistema y vuelve a abrir AutoHush."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Laita äänen tallennus päälle Järjestelmäasetuksissa ja avaa AutoHush sitten uudelleen."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez l’enregistrement audio dans Réglages Système, puis rouvrez AutoHush."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez l’enregistrement audio dans Réglages Système, puis rouvrez AutoHush."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "יש להפעיל את הקלטת השמע בהגדרות המערכת, ואז לפתוח מחדש את AutoHush."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सिस्टम सेटिंग्ज़ में ऑडियो रिकॉर्डिंग चालू करें, फिर AutoHush को फिर से खोलें।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uključite snimanje zvuka u Postavkama sustava, a zatim ponovno otvorite AutoHush."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapcsolja be a hangfelvételt a Rendszerbeállításokban, majd nyissa meg újra az AutoHusht."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nyalakan rekaman audio di Pengaturan Sistem, lalu buka ulang AutoHush."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attiva la registrazione audio in Impostazioni di Sistema, poi riapri AutoHush."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "“システム設定”でオーディオ録音をオンにしてから、AutoHushを再度開いてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시스템 설정에서 오디오 녹음을 켠 다음 AutoHush를 다시 여십시오."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktifkan rakaman audio dalam Seting Sistem, kemudian buka semula AutoHush."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå på lydopptak i Systeminnstillinger, og åpne deretter AutoHush på nytt."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schakel audio-opname in bij Systeeminstellingen en open AutoHush opnieuw."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Włącz nagrywanie dźwięku w Ustawieniach systemowych, a potem otwórz ponownie AutoHush."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ative a gravação de áudio nos Ajustes do Sistema e reabra o AutoHush."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ative a gravação de áudio nas Definições do Sistema e reabra o AutoHush."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activați înregistrarea audio în Configurări sistem, apoi redeschideți AutoHush."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Включите запись звука в Системных настройках, а затем повторно откройте AutoHush."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zapnite nahrávanie zvuku v Systémových nastaveniach a potom AutoHush znova otvorte."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vklopite snemanje zvoka v Sistemskih nastavitvah in nato znova odprite AutoHush."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Slå på ljudinspelning i Systeminställningar och öppna sedan AutoHush igen."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปิดการบันทึกเสียงในการตั้งค่าระบบ แล้วเปิด AutoHush ใหม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sistem Ayarları’nda ses kaydını açın, ardından AutoHush’ı yeniden açın."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увімкніть записування звуку в Параметрах системи, а потім повторно відкрийте AutoHush."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bật ghi âm thanh trong Cài đặt hệ thống, rồi mở lại AutoHush."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在「系統設定」中開啟錄音，然後重新打開 AutoHush。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在“系统设置”中打开录音，然后重新打开 AutoHush。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在「系統設定」中開啟錄音，然後重新打開 AutoHush。"
+          }
+        }
+      }
+    },
     "Turned off %@." : {
       "comment" : "Settings → General, under the Auto-Pause switch; %@ says until when, e.g. “until 15:30”",
       "localizations" : {

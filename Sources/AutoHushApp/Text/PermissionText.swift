@@ -63,6 +63,14 @@ enum PermissionText {
         }
     }
 
+    /// Settings → Behavior's note after Allow… opened System Settings for
+    /// Audio Recording: it names it, since it sits under AntiDot mode's
+    /// switch, where "it" could read as AntiDot mode (the user, 2026-11-06).
+    static var settingsReopenNote: String {
+        String(localized: "Turn on Audio Recording in System Settings, then reopen AutoHush.",
+               comment: "Settings → Behavior, under AntiDot mode, after the user's Allow… opened System Settings for Audio Recording (macOS's System Audio Recording permission); macOS applies it only at AutoHush's next launch, and AutoHush can't tell before whether it was switched on")
+    }
+
     /// A permission that is granted (`AllowedLabel`; Diagnostics' rows).
     static var allowed: String {
         String(localized: "Allowed", comment: "Diagnostics, the welcome window and the Add an App window: a permission that is granted")

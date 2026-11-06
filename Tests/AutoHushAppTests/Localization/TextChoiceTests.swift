@@ -329,6 +329,8 @@ struct TextChoiceTests {
         // Settings, not "Allowed" before it reopens (R1; the user, 2026-11-06).
         #expect(PermissionText.audioNote(.notAsked) == "Click Allow, then Allow again when macOS asks.")
         #expect(PermissionText.audioNote(.needsReopen) == "Turn it on in System Settings, then reopen AutoHush.")
+        // In Settings, under AntiDot mode's switch, it names the permission (the user, 2026-11-06).
+        #expect(PermissionText.settingsReopenNote == "Turn on Audio Recording in System Settings, then reopen AutoHush.")
         #expect(AddAppText.audioUse(Self.app) == "Hears whether Jukebox plays, and mutes it. Never recorded.")
         #expect(PermissionText.antiDotTradeOff == "No purple dot; a little less precise.")
     }
