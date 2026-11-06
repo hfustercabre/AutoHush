@@ -17,6 +17,8 @@ struct MenuSideRow<Leading: View>: View {
     let onHover: (Bool) -> Void
     /// Its top in the menu's content (from the content's top, scrolled).
     let onTop: (CGFloat) -> Void
+    /// Each change gives it the keyboard's focus (`StatusMenuModel.sideRowFocusRequests`).
+    var focusRequests = 0
     @ViewBuilder let leading: () -> Leading
 
     var body: some View {
@@ -49,7 +51,7 @@ struct MenuSideRow<Leading: View>: View {
         }
         .buttonStyle(.plain)
         // Tinted under the pointer, with the focus, and while its side window is open.
-        .modifier(HighlightableControl(inset: 8, isLit: isOpen, press: action, opensSide: true))
+        .modifier(HighlightableControl(inset: 8, isLit: isOpen, press: action, opensSide: true, focusRequests: focusRequests))
         .onHover { onHover($0) }
         .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).minY } action: { onTop($0) }
         .accessibilityValue(isOpen ? AccessibilityText.expanded : AccessibilityText.collapsed)

@@ -668,8 +668,10 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   ("Sort by, Name"; `Highlightable.arrivalSpeech`); Return on a Sound
   Sources app, which flips its switch silently, says the app and what it
   does now ("VLC, Ignored — your player keeps playing"); a side window
-  closing says the menu row it goes back to ("Change Player"), which
-  VoiceOver would otherwise skip for the card's text. A row or button that shows other
+  closing gives the menu row that opened it the keyboard's focus, and the
+  menu is a plain window to VoiceOver as it becomes key again, so it reads
+  that row ("Collapsed Change Player button"), not the card's text, as it
+  does for a dialog. A row or button that shows other
   content (Behavior's rows to Fine-Tuning, General's Sound Sources row and
   Change…, Restore Defaults), pressed by a key or while VoiceOver is on,
   lights the first control of what it showed, so VoiceOver's cursor isn't

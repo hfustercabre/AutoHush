@@ -10,7 +10,7 @@ extension StatusMenuController {
         guard isMenuOpen, let panel, panel.isVisible, let part = model.openSide else {
             if sidePanel?.isVisible == true {
                 sidePanel?.orderOut(nil)
-                if isMenuOpen { panel?.makeKey() }
+                if isMenuOpen, let panel { makeKeyAgain(panel) }
             }
             return
         }
@@ -49,29 +49,29 @@ extension StatusMenuController {
         model.playerSearch = ""
         model.sideKeyboard.clear()
         sideCloseTask?.cancel()
+        if NSWorkspace.shared.isVoiceOverEnabled, let closing { model.sideRowFocusRequests[closing, default: 0] += 1 }
         showSide()
         // VoiceOver's cursor goes back to the row that opened it, as the
         // keys' highlight does, not to the card's text (VO1, the a11y audit,
         // 2026-11-06: Escape left it on the card's line).
         if model.keyboard.isLitByKeys || NSWorkspace.shared.isVoiceOverEnabled { model.keyboard.arriveAgain() }
-        // VoiceOver reads the card's text as the menu becomes key again,
-        // its cursor on the row: then it hears the row's name, where it is
-        // (the a11y round 2's leftovers, 2026-11-06; moving its cursor again
-        // closed the menu as the players opened).
-        guard NSWorkspace.shared.isVoiceOverEnabled, let closing else { return }
-        let pause = pause
-        Task { [weak self] in
-            await pause(0.4) // heard at 0.4 s, not at 1 s (2026-11-06)
-            guard let self, self.isMenuOpen, self.model.openSide == nil else { return }
-            postStepAnnouncement(self.sideRowTitle(closing))
-        }
     }
 
-    /// The name of the menu's row that opens `part`'s side window.
-    func sideRowTitle(_ part: MenuSidePart) -> String {
-        switch part {
-        case .players: status.chosenPlayer == nil ? CardPlayerRow.chooseTitle : CardPlayerRow.changeTitle
-        case .ignoredApps: MenuIgnoredAppsView.title
+    /// The menu becomes key again as its side window closes. With VoiceOver
+    /// on, it's a plain window meanwhile: VoiceOver reads a dialog's text as
+    /// it becomes key (the card's, over the row that opened the side window,
+    /// which has the focus: `sideRowFocusRequests`), and a window's focused
+    /// control; then a dialog again (2026-11-06: heard "Now in AutoHush
+    /// window, Collapsed Change Player button").
+    func makeKeyAgain(_ panel: MenuPanel) {
+        guard NSWorkspace.shared.isVoiceOverEnabled else { return panel.makeKey() }
+        let subrole = panel.accessibilitySubrole()
+        panel.setAccessibilitySubrole(.floatingWindow)
+        panel.makeKey()
+        let pause = pause
+        Task { [weak panel] in
+            await pause(1.5)
+            panel?.setAccessibilitySubrole(subrole)
         }
     }
 

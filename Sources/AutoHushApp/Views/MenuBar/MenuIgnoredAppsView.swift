@@ -25,7 +25,8 @@ struct MenuIgnoredAppsView: View {
                         leadingWidth: MenuSpacing.row.picture + (apps.count > 1 ? 10 : 0), isOpen: model.showsIgnoredApps,
                         action: { model.perform(.openSide(.ignoredApps)) },
                         onHover: { model.perform(.hoverSideRow(.ignoredApps, $0)) },
-                        onTop: { model.sideRowTops[.ignoredApps] = $0 }) {
+                        onTop: { model.sideRowTops[.ignoredApps] = $0 },
+                        focusRequests: model.sideRowFocusRequests[.ignoredApps, default: 0]) {
                 iconStack
             }
         }

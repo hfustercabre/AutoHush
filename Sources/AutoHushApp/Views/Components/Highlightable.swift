@@ -32,6 +32,8 @@ struct HighlightableControl: ViewModifier {
     var opensSide = false
     /// It stands for what's shown now (`KeyHighlight.Control.isCurrent`).
     var isCurrent: (() -> Bool)?
+    /// Each change gives it the keyboard's focus (`StatusMenuModel.sideRowFocusRequests`).
+    var focusRequests = 0
     @FocusState private var isFocused: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
     @Environment(\.isInHighlightedRow) private var isInHighlightedRow
@@ -52,6 +54,7 @@ struct HighlightableControl: ViewModifier {
             content
                 .focused($isFocused)
                 .focusEffectDisabled()
+                .onChange(of: focusRequests) { isFocused = true }
                 .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset, outset: outset, ring: ring,
                                         isLit: isLit, lightsItself: lightsItself, press: press, opensSide: opensSide,
                                         isCurrent: isCurrent))

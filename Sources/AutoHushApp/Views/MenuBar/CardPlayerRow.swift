@@ -20,7 +20,8 @@ struct CardPlayerRow: View {
                 .font(.appCallout)
         }
         .buttonStyle(.plain)
-        .modifier(HighlightableControl(cornerRadius: 6, outset: 4, isLit: model.isChoosingPlayer, press: open, opensSide: true))
+        .modifier(HighlightableControl(cornerRadius: 6, outset: 4, isLit: model.isChoosingPlayer, press: open, opensSide: true,
+                                       focusRequests: model.sideRowFocusRequests[.players, default: 0]))
         .onHover { inside in
             model.perform(.hoverSideRow(.players, inside))
             // Off the row, the pointer is on the rest of the card (or past it).

@@ -45,6 +45,10 @@ final class StatusMenuModel {
     /// Where the rows that open a side window have their tops, in the
     /// menu's content: each side window opens level with its row.
     @ObservationIgnored var sideRowTops: [MenuSidePart: CGFloat] = [:]
+    /// Each time a side window closes with VoiceOver on, the row that opened
+    /// it takes the keyboard's focus, so VoiceOver reads it as the menu
+    /// becomes key again, not the card's text (2026-11-06).
+    var sideRowFocusRequests: [MenuSidePart: Int] = [:]
 
     /// The side window that's open, if one is.
     var openSide: MenuSidePart? {
