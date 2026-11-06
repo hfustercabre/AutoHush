@@ -21,6 +21,13 @@ final class PopUpOpener {
 
     /// Shows the pop-up's choices, as a click does.
     func open() { popUpButton?.performClick(nil) }
+
+    /// A pop-up's name and its choice now, for VoiceOver as the keys arrive
+    /// on it (`Highlightable.arrivalSpeech`), which says nothing there
+    /// itself (heard in the VM, 2026-11-06).
+    static func arrivalSpeech(_ label: String, choice: @escaping () -> String) -> () -> String? {
+        { label + ", " + choice() }
+    }
 }
 
 /// An empty view behind the pop-up, where `PopUpOpener` looks for it.

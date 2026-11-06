@@ -88,6 +88,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **More reachable with the keyboard and VoiceOver:** the logs window
+  scrolls with Page Up, Page Down, Home and End; VoiceOver says a
+  pop-up's choice as the arrow keys reach it, what an app does now when
+  Return switches it in Sound Sources, and the menu's row it goes back to
+  as the players close; Add a Web App's address field is outlined with
+  Increase Contrast.
 - **The menu and Settings highlight in grey:** what's under the pointer
   takes macOS's faint grey, as the rows of the Sound, Wi-Fi and Bluetooth
   menus do, instead of the accent color; the arrow keys' highlight keeps

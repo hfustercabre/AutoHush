@@ -315,6 +315,58 @@ final class WindowTitleTests {
         #expect(log.handlers.isEmpty)
     }
 
+    @Test("in the logs window, Page Up and Page Down scroll the entries a page, Home and End to the oldest and newest; other keys and windows are left alone")
+    func logsWindowPagingKeys() async throws {
+        let log = LogsModelTests.FakeLog()
+        // A second apart, from a minute on: the window shows this launch's,
+        // which in a test process may start as it opens.
+        let start = Date().addingTimeInterval(60)
+        log.entries = (0..<200).map {
+            LogEntry(date: start.addingTimeInterval(Double($0)), level: .notice, category: "PlayerSession", message: "Line \($0)")
+        }
+        let logs = makeLogs(log)
+        defer { logs.close() }
+        logs.show()
+        await TestWait.until { logs.model.shown.count == 200 }
+        let window = try #require(logs.window)
+        func entries() -> NSScrollView? {
+            var found: [NSScrollView] = []
+            func walk(_ view: NSView) {
+                if let scroll = view as? NSScrollView { found.append(scroll) }
+                view.subviews.forEach(walk)
+            }
+            window.contentView.map(walk)
+            return found.max { $0.frame.height < $1.frame.height }
+        }
+        await TestWait.until {
+            guard let scroll = entries(), let document = scroll.documentView else { return false }
+            return document.frame.height > scroll.contentView.bounds.height * 3
+        }
+        let scroll = try #require(entries())
+        let document = try #require(scroll.documentView)
+        /// How far down the entries are scrolled, from the top.
+        func fromTop() -> CGFloat {
+            let visible = scroll.contentView.documentVisibleRect
+            return document.isFlipped ? visible.minY : document.frame.height - visible.maxY
+        }
+        let bottom = document.frame.height - scroll.contentView.bounds.height
+        let press = { (keyCode: UInt16) in
+            logs.scrollEntries(keyCode: keyCode, flags: [], windowNumber: window.windowNumber)
+        }
+        #expect(press(115)) // Home: the oldest
+        #expect(fromTop() == 0)
+        #expect(press(121)) // Page Down: a page on, but not to the end
+        let page = fromTop()
+        #expect(page > scroll.contentView.bounds.height / 2 && page < bottom)
+        #expect(press(116)) // Page Up: back to the top
+        #expect(fromTop() == 0)
+        #expect(press(119)) // End: the newest
+        #expect(abs(fromTop() - bottom) <= 1)
+        #expect(!press(0)) // a letter: the search's
+        #expect(!logs.scrollEntries(keyCode: 115, flags: [], windowNumber: window.windowNumber + 1)) // another window's
+        #expect(!logs.scrollEntries(keyCode: 115, flags: .command, windowNumber: window.windowNumber)) // ⌘Home: not its
+    }
+
     /// Each test reads its panel and shades from its own controller, not
     /// from the process's windows: other suites in the same test process
     /// (AddAppFeature's) show check panels and shades of their own meanwhile

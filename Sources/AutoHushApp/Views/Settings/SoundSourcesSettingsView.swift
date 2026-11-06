@@ -192,7 +192,7 @@ struct SoundSourcesSettingsView: View {
                 if let criterion = AppListOrder.Criterion.allCases.stepping(from: list.order.criterion, by: step) {
                     list.setOrder(AppListOrder(criterion: criterion))
                 }
-            }))
+            }, arrivalSpeech: PopUpOpener.arrivalSpeech(Self.sortByString) { list.order.criterion.title }))
             IconChipButton(
                 symbol: order.isReversed ? "arrow.up" : "arrow.down",
                 label: Text("Reverse order", comment: "Settings → Sound Sources: the arrow that reverses the apps' order"),
@@ -214,7 +214,11 @@ struct SoundSourcesSettingsView: View {
 
     /// Before the order's pop-up, and its name for VoiceOver.
     private static var sortByTitle: Text {
-        Text("Sort by", comment: "Settings → Sound Sources, before the pop-up that orders the apps")
+        Text(verbatim: sortByString)
+    }
+
+    private static var sortByString: String {
+        String(localized: "Sort by", comment: "Settings → Sound Sources, before the pop-up that orders the apps")
     }
 }
 
@@ -305,7 +309,7 @@ private struct SoundSourceRow: View {
         // the selection's; Return switches the app on or off, Space adds it
         // to the selection or takes it out.
         .highlightableRow(isFocused: rowFocused || switchFocused, cornerRadius: 6, vertical: 4,
-                          press: { isOn.wrappedValue.toggle() },
+                          press: switchFromKeys,
                           select: { list.toggleSelection(of: row.id) })
         .onKeyPress(.space) {
             list.toggleSelection(of: row.id)
@@ -326,6 +330,16 @@ private struct SoundSourceRow: View {
     /// The switch: on while the app pauses the player, off while it's ignored.
     private var isOn: Binding<Bool> {
         Binding(get: { !row.isIgnored }, set: { model.settings.setIgnored(row.source, !$0) })
+    }
+
+    /// Return on the row: the app switched on or off, and VoiceOver told
+    /// what it does now, which it doesn't say when the switch changes from
+    /// the row (the a11y round 2's leftovers, 2026-11-06).
+    private func switchFromKeys() {
+        let ignores = !row.isIgnored
+        model.settings.setIgnored(row.source, ignores)
+        guard NSWorkspace.shared.isVoiceOverEnabled else { return }
+        postStepAnnouncement(row.source.name + ", " + SourceText.subtitle(isIgnored: ignores, mutes: model.playerMutesNow))
     }
 
     private static var removeFromListTitle: Text {

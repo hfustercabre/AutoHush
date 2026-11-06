@@ -43,6 +43,7 @@ extension StatusMenuController {
 
     /// Closes the side window, the menu staying open.
     func closeSide() {
+        let closing = model.openSide
         model.isChoosingPlayer = false
         model.showsIgnoredApps = false
         model.playerSearch = ""
@@ -53,6 +54,25 @@ extension StatusMenuController {
         // keys' highlight does, not to the card's text (VO1, the a11y audit,
         // 2026-11-06: Escape left it on the card's line).
         if model.keyboard.isLitByKeys || NSWorkspace.shared.isVoiceOverEnabled { model.keyboard.arriveAgain() }
+        // VoiceOver reads the card's text as the menu becomes key again,
+        // its cursor on the row: then it hears the row's name, where it is
+        // (the a11y round 2's leftovers, 2026-11-06; moving its cursor again
+        // closed the menu as the players opened).
+        guard NSWorkspace.shared.isVoiceOverEnabled, let closing else { return }
+        let pause = pause
+        Task { [weak self] in
+            await pause(0.4) // heard at 0.4 s, not at 1 s (2026-11-06)
+            guard let self, self.isMenuOpen, self.model.openSide == nil else { return }
+            postStepAnnouncement(self.sideRowTitle(closing))
+        }
+    }
+
+    /// The name of the menu's row that opens `part`'s side window.
+    func sideRowTitle(_ part: MenuSidePart) -> String {
+        switch part {
+        case .players: status.chosenPlayer == nil ? CardPlayerRow.chooseTitle : CardPlayerRow.changeTitle
+        case .ignoredApps: MenuIgnoredAppsView.title
+        }
     }
 
     /// The players' search takes the keyboard itself (the full check,

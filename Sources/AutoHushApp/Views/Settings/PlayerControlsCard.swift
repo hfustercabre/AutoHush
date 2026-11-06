@@ -108,7 +108,11 @@ struct PlayerControlsCard: View {
             // In the order the pop-up shows them: the panel last.
             let shown = now.choices.filter { $0.kind != .panel } + now.choices.filter { $0.kind == .panel }
             if let kind = shown.map(\.kind).stepping(from: now.main.kind, by: step) { model.chooseMainControl(kind) }
-        }, isCurrent: isFocus)
+        }, isCurrent: isFocus, arrivalSpeech: PopUpOpener.arrivalSpeech(BackupText.mainControlRow) {
+            let now = model.chosenControls ?? controls
+            return Self.itemTitle(now.main, recommended: now.main.kind == controls.recommended,
+                                  notYet: controls.notYetChoices.contains(now.main))
+        })
     }
 
     /// A pop-up item: the control's name with how its check found it, in

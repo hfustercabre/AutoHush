@@ -13,6 +13,8 @@ final class LogsWindowController: PlacedWindowController, NSWindowDelegate {
     static let frameName = "Logs Window"
 
     let model: LogsModel
+    /// Page Up, Page Down, Home and End, while the window is open.
+    private var keyMonitor: Any?
 
     /// `frameName`: where the window's place and size are kept; tests give
     /// each window a name of its own, as Settings' do.
@@ -38,11 +40,63 @@ final class LogsWindowController: PlacedWindowController, NSWindowDelegate {
     func show() {
         // Shown again while open (or minimized): the search stays.
         if window?.isOpen != true { model.open() }
+        if keyMonitor == nil {
+            keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                let keyCode = event.keyCode, flags = event.modifierFlags, windowNumber = event.windowNumber
+                let handled = MainActor.assumeIsolated {
+                    self?.scrollEntries(keyCode: keyCode, flags: flags, windowNumber: windowNumber) == true
+                }
+                return handled ? nil : event
+            }
+        }
         placeOnce()
         window?.showInFront()
     }
 
     func windowWillClose(_ notification: Notification) {
         model.close()
+        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
+        keyMonitor = nil
+    }
+
+    /// Page Up and Page Down scroll the entries a page, Home and End to the
+    /// oldest and the newest, wherever the keyboard is, the search
+    /// included, where they do nothing (KB7, the a11y audit, 2026-11-06:
+    /// older entries could be read only with the mouse). `false` leaves the
+    /// key to the window.
+    func scrollEntries(keyCode: UInt16, flags: NSEvent.ModifierFlags, windowNumber: Int) -> Bool {
+        guard let window, windowNumber == window.windowNumber, window.attachedSheet == nil,
+              let key = HighlightKey(keyCode: keyCode, modifiers: flags),
+              let scrollView = window.contentView.flatMap(Self.entries(in:)),
+              let document = scrollView.documentView else { return false }
+        let clip = scrollView.contentView
+        let visible = clip.documentVisibleRect
+        let range = max(0, document.frame.height - visible.height)
+        // From the top, whichever way the document's coordinates go.
+        let fromTop = document.isFlipped ? visible.minY : range - visible.minY
+        let page = max(visible.height - scrollView.verticalPageScroll, visible.height / 2)
+        let target: CGFloat
+        switch key {
+        case .pageUp: target = fromTop - page
+        case .pageDown: target = fromTop + page
+        case .home: target = 0
+        case .end: target = range
+        default: return false
+        }
+        let clamped = min(max(target, 0), range)
+        clip.scroll(to: NSPoint(x: visible.minX, y: document.isFlipped ? clamped : range - clamped))
+        scrollView.reflectScrolledClipView(clip)
+        return true
+    }
+
+    /// The entries' scroll view: the window's tallest.
+    private static func entries(in view: NSView) -> NSScrollView? {
+        var found: [NSScrollView] = []
+        func walk(_ view: NSView) {
+            if let scroll = view as? NSScrollView { found.append(scroll) }
+            view.subviews.forEach(walk)
+        }
+        walk(view)
+        return found.max { $0.frame.height < $1.frame.height }
     }
 }

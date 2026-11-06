@@ -24,7 +24,7 @@ struct UpdatesCard: View {
             // tag and VoiceOver hint, and a caption while the keys are on it.
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    let title = String(localized: "When an update is found", comment: "Settings → About: lead-in to what happens when an update is found")
+                    let title = Self.updateFoundTitle
                     // The pop-up, its help tag and its hint all say the choice shown.
                     let shown = model.shownAutomaticUpdates
                     Text(verbatim: title) // a row's title
@@ -68,7 +68,7 @@ struct UpdatesCard: View {
                 guard model.updateInstallNote == nil,
                       let mode = AutomaticUpdates.allCases.stepping(from: model.automaticUpdates, by: step) else { return }
                 model.updates.setMode(mode)
-            })
+            }, arrivalSpeech: PopUpOpener.arrivalSpeech(Self.updateFoundTitle) { model.shownAutomaticUpdates.title })
             .unavailable(!model.checksForUpdatesAutomatically)
             if !model.checksForUpdatesAutomatically {
                 NoteLabel(SettingsSwitch.updateChecksOffNote, kind: .info)
@@ -112,6 +112,11 @@ struct UpdatesCard: View {
 
 extension UpdatesCard {
     /// Under the update choices while notifications are off.
+    /// The update pop-up's row title, and its VoiceOver label.
+    private static var updateFoundTitle: String {
+        String(localized: "When an update is found", comment: "Settings → About: lead-in to what happens when an update is found")
+    }
+
     private static var notificationsOffNote: String {
         String(localized: "Notifications are off for AutoHush: its menu bar icon shows when an update is found.",
                comment: "Settings → About, under the update choices, while notifications are off for AutoHush")

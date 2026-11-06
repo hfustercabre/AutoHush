@@ -137,7 +137,8 @@ struct AddWebAppView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.chipFill))
+        // Outlined with Increase Contrast, as the search field (D5a).
+        .background(RoundedRectangle(cornerRadius: 8).tinted(.chipFill, outline: .appSecondary))
     }
 
     /// The countries of `sites`, each opening its site: the Mac's region
@@ -150,7 +151,7 @@ struct AddWebAppView: View {
             Picker(selection: Binding(get: { model.country(in: sites) }, set: { model.chooseCountry($0, in: sites) })) {
                 ForEach(model.countries(of: sites), id: \.code) { Text(verbatim: $0.name).tag($0.code) }
                 Divider()
-                Text("Other Countries", comment: "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries: every country without a site of its own")
+                Text(verbatim: Self.otherCountries)
                     .tag("")
             } label: {
                 Self.countryLabel
@@ -171,7 +172,11 @@ struct AddWebAppView: View {
         // Tab moves as ↓, so nothing else did): Space shows the countries,
         // ← and → choose one.
         .highlightableRow(isAvailable: model.phase == .entering, press: { countryPopUp.open() },
-                          adjust: { model.stepCountry($0, in: sites) })
+                          adjust: { model.stepCountry($0, in: sites) },
+                          arrivalSpeech: PopUpOpener.arrivalSpeech(Self.countryTitle) {
+                              let code = model.country(in: sites)
+                              return model.countries(of: sites).first { $0.code == code }?.name ?? Self.otherCountries
+                          })
     }
 
     /// Over the address's card, and its field's name for VoiceOver.
@@ -180,7 +185,15 @@ struct AddWebAppView: View {
     }
 
     private static var countryLabel: Text {
-        Text("Your account’s country", comment: "Add a Web App window: the row under the address of a service with its own site in some countries, before the pop-up of countries; the site changes with the country")
+        Text(verbatim: countryTitle)
+    }
+
+    private static var otherCountries: String {
+        String(localized: "Other Countries", comment: "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries: every country without a site of its own")
+    }
+
+    private static var countryTitle: String {
+        String(localized: "Your account’s country", comment: "Add a Web App window: the row under the address of a service with its own site in some countries, before the pop-up of countries; the site changes with the country")
     }
 
 

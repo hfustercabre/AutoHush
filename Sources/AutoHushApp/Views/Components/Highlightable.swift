@@ -95,6 +95,11 @@ struct Highlightable: ViewModifier {
     /// VoiceOver took the first, the player's name; N11, the a11y audit,
     /// 2026-11-06).
     var voiceOverTarget: AccessibilityFocusState<Bool>.Binding? = nil
+    /// What VoiceOver says as a key lights it, after its cursor moves
+    /// there: a pop-up's name and choice, which VoiceOver doesn't say on
+    /// its own once its cursor is moved onto one (the a11y round 2's
+    /// leftovers, 2026-11-06). `nil`: nothing besides.
+    var arrivalSpeech: (() -> String?)? = nil
     @State private var id = UUID()
     @State private var actions = Actions()
     @AccessibilityFocusState private var hasVoiceOverCursor: Bool
@@ -115,6 +120,7 @@ struct Highlightable: ViewModifier {
         var adjust: ((Int) -> Void)?
         var delete: (() -> Void)?
         var isCurrent: (() -> Bool)?
+        var arrivalSpeech: (() -> String?)?
     }
 
     /// A drawing of it, unlike any other: each hands its closures over once
@@ -154,6 +160,7 @@ struct Highlightable: ViewModifier {
                     // Only for VoiceOver: without it, nothing to move.
                     guard NSWorkspace.shared.isVoiceOverEnabled else { return }
                     if let voiceOverTarget { voiceOverTarget.wrappedValue = true } else { hasVoiceOverCursor = true }
+                    if let speech = actions.arrivalSpeech?() { postStepAnnouncement(speech) }
                 }
                 .onHover { keyboard.hover(id, $0) }
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { keyboard.update(id, frame: $0) }
@@ -177,6 +184,7 @@ struct Highlightable: ViewModifier {
                     actions.adjust = adjust
                     actions.delete = removal?.remove
                     actions.isCurrent = isCurrent
+                    actions.arrivalSpeech = arrivalSpeech
                 }
                 .onDisappear { keyboard.remove(id) }
         } else {
@@ -204,12 +212,12 @@ extension View {
     func highlightableRow(isFocused: Bool = false, isAvailable: Bool = true, ownsControls: Bool = false,
                           cornerRadius: CGFloat = 8, horizontal: CGFloat = 6, vertical: CGFloat = 3,
                           press: (() -> Void)? = nil, select: (() -> Void)? = nil, adjust: ((Int) -> Void)? = nil,
-                          isCurrent: (() -> Bool)? = nil) -> some View {
+                          isCurrent: (() -> Bool)? = nil, arrivalSpeech: (() -> String?)? = nil) -> some View {
         padding(.horizontal, horizontal)
             .padding(.vertical, vertical)
             .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, isAvailable: isAvailable,
                                     ownsControls: ownsControls, press: press, select: select, adjust: adjust,
-                                    isCurrent: isCurrent))
+                                    isCurrent: isCurrent, arrivalSpeech: arrivalSpeech))
             .padding(.horizontal, -horizontal)
             .padding(.vertical, -vertical)
     }
