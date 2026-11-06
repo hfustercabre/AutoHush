@@ -95,6 +95,14 @@ extension StatusMenuControllerTests {
         #expect(sut.snoozeClock == nil)
     }
 
+    @Test("Voice Control takes each duration by the words its button shows, and by VoiceOver's (VO10)")
+    func snoozeInputLabels() {
+        for snooze in AutoPauseSnooze.allCases {
+            #expect(snooze.inputLabels == [snooze.shortTitle, snooze.title])
+        }
+        #expect(AutoPauseSnooze.oneHour.inputLabels.last == "1 Hour")
+    }
+
     @Test("a click on another duration while one runs starts the one clicked")
     func snoozeAgain() async {
         let sut = makeController()

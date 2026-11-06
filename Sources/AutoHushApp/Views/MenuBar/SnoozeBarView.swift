@@ -32,6 +32,7 @@ struct SnoozeBarView: View {
                     }
                     .buttonStyle(ChipButtonStyle(filled: true, isSelected: isRunning))
                     .accessibilityLabel(snooze.title)
+                    .accessibilityInputLabels(snooze.inputLabels.map { Text(verbatim: $0) })
                     .accessibilityAddTraits(isRunning ? .isSelected : [])
                 }
             }

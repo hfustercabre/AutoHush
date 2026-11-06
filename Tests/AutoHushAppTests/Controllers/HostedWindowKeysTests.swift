@@ -82,4 +82,23 @@ struct HostedWindowKeysTests {
         #expect(try key(sut, 125)) // ↓ from it: the tiles again
         #expect(keys.highlight.highlighted != nil && !(window.firstResponder is NSText))
     }
+
+    @Test("in Add a Web App, a letter typed with a control lit goes back into the address, the highlight let go; Shift-Tab there stays in it (N5)")
+    func addWebAppAddress() async throws {
+        let settings = SettingsModel.forTests(actions: FakeAppActions(log: CallLog()), updates: FakeUpdateCommands())
+        let sut = AddWebAppWindowController(model: AddWebAppModel(), settings: settings)
+        defer { sut.close() }
+        sut.show()
+        let window = try #require(sut.window)
+        let keys = try #require(sut.keys)
+        await TestWait.until { !keys.highlight.rows.isEmpty }
+        window.makeFirstResponder(nil)
+        #expect(try key(sut, 125)) // ↓: a control lit
+        #expect(keys.highlight.highlighted != nil)
+        #expect(try !key(sut, 0, "a")) // the letter goes on, into the address
+        #expect(window.firstResponder is NSText)
+        #expect(keys.highlight.highlighted == nil)
+        #expect(sut.handleKey(48, flags: .shift, characters: nil, windowNumber: window.windowNumber)) // Shift-Tab: nothing
+        #expect(window.firstResponder is NSText && keys.highlight.highlighted == nil)
+    }
 }

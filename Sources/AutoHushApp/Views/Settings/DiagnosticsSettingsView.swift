@@ -9,6 +9,7 @@ import SwiftUI
 /// window's foot.
 struct DiagnosticsSettingsView: View {
     let model: SettingsModel
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -157,6 +158,9 @@ struct DiagnosticsSettingsView: View {
                         Button { perform(fix) } label: { Text(verbatim: Self.title(of: fix)) }
                             .buttonStyle(.chip)
                             .fixedSize()
+                            .accessibilityLabel(Text(verbatim: Self.spokenTitle(of: fix)))
+                            // Voice Control matches the word shown, too.
+                            .accessibilityInputLabels([Text(verbatim: Self.title(of: fix))])
                     }
                 }
             }
@@ -167,7 +171,9 @@ struct DiagnosticsSettingsView: View {
     /// Player's players, the card's Learn Controls…, a permission's Allow….
     private func perform(_ fix: DiagnosticsSnapshot.Row.Fix) {
         switch fix {
-        case .choosePlayer: model.actions?.openSettings(page: .mediaPlayer)
+        // As General's Change…: pressed with the keys or VoiceOver, the new
+        // page's first control takes the highlight, and VoiceOver with it (N8).
+        case .choosePlayer: model.showPage(.mediaPlayer, byKeyboard: keyboard?.isPressing == true || NSWorkspace.shared.isVoiceOverEnabled)
         case .learnControls: model.actions?.learnControlsAgain()
         case .allow(let permission): model.actions?.requestPermission(permission)
         }
@@ -178,6 +184,17 @@ struct DiagnosticsSettingsView: View {
         case .choosePlayer: ChooseText.choose
         case .learnControls: LearnText.learnButton
         case .allow: ButtonText.allow
+        }
+    }
+
+    /// What VoiceOver hears of the fix's button: what a short "Allow…" or
+    /// "Choose…" allows or chooses, as the menu's card says it, so two
+    /// "Allow…" can be told apart (VO9, the a11y audit, 2026-11-06).
+    static func spokenTitle(of fix: DiagnosticsSnapshot.Row.Fix) -> String {
+        switch fix {
+        case .choosePlayer: CardPlayerRow.chooseTitle
+        case .learnControls: LearnText.learnButton
+        case .allow(let permission): permission.grantTitle
         }
     }
 
@@ -207,5 +224,9 @@ struct DiagnosticsSettingsView: View {
             }
             .disabled(model.diagnostics == nil)
         }
+        // The arrow keys reach them after the parts, however the form is
+        // scrolled, as Sound Sources' (N3, 2026-11-06: by their place, they
+        // came between a part's heading and the next, made below the view).
+        .environment(\.highlightBand, .bottom)
     }
 }

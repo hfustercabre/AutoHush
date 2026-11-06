@@ -35,6 +35,6 @@ struct CardPlayerRow: View {
     }
 
     static var chooseTitle: String {
-        String(localized: "Choose Player", comment: "The menu: the last row of the card at the top while no media player is chosen; opens every player beside the menu")
+        String(localized: "Choose Player", comment: "The menu: the last row of the card at the top while no media player is chosen; opens every player beside the menu. Also VoiceOver’s name for Settings → Diagnostics’ Choose… button")
     }
 }

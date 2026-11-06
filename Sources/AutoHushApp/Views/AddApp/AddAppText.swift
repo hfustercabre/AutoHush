@@ -87,6 +87,18 @@ enum AddAppText {
         String(localized: "\(browser) web app", comment: "The window that lists the apps Add an App can check, under a web app made by Chrome or another Chromium browser (its icon carries the browser's): %@ is the browser, e.g. Google Chrome")
     }
 
+    /// What a row of the list of apps says under the app's name: whose web
+    /// app it is, and that it plays.
+    static func chooserLines(_ app: CheckableApp) -> [String] {
+        [app.browserName.map(browserWebApp), app.nowPlaying == true ? playingLabel : nil].compactMap { $0 }
+    }
+
+    /// What VoiceOver hears as ↑ or ↓ in the search selects `app`: its row's
+    /// words (N10, the a11y audit, 2026-11-06).
+    static func chooserSelection(_ app: CheckableApp) -> String {
+        ([app.name] + chooserLines(app)).joined(separator: ", ")
+    }
+
     static var nowPlayingSection: String {
         String(localized: "In Now Playing", comment: "Add an App window: over the apps in macOS's Now Playing list, in the list of apps to choose")
     }

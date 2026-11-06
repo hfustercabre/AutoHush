@@ -8,6 +8,7 @@ import AutoHushKit
 /// login and where the menu bar icon goes, saying when it's hidden. AutoHush opened again shows it.
 struct GeneralSettingsView: View {
     let model: SettingsModel
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     /// Under Keep icon next to system icons while the menu bar icon is hidden.
     private static var hiddenIconNote: String {
@@ -84,7 +85,11 @@ struct GeneralSettingsView: View {
                     PlayerChecks(model: model).padding(.top, 2)
                 }
                 Spacer(minLength: 8)
-                Button { model.actions?.openSettings(page: .mediaPlayer) } label: {
+                // Pressed by a key or VoiceOver, the new page's first control
+                // lights up, VoiceOver's cursor with it (N8, 2026-11-06).
+                Button {
+                    model.showPage(.mediaPlayer, byKeyboard: keyboard?.isPressing == true || NSWorkspace.shared.isVoiceOverEnabled)
+                } label: {
                     Text(verbatim: model.chosenPlayer == nil ? ChooseText.choose : ChooseText.change)
                 }
                 .buttonStyle(.chip)
@@ -112,11 +117,13 @@ struct GeneralSettingsView: View {
             // The apps that pause it, on their page (A1, the user's pick,
             // 2026-11-02), as Behavior's rows show Fine-Tuning.
             CardDivider()
-            Button { model.showSoundSources() } label: {
+            // Pressed by a key or VoiceOver, its first control lights up,
+            // VoiceOver's cursor with it (N8, the a11y audit, 2026-11-06).
+            Button { model.showSoundSources(byKeyboard: NSWorkspace.shared.isVoiceOverEnabled) } label: {
                 ChevronRowLabel(symbol: SettingsPage.soundSources.symbol, title: SettingsPage.soundSources.title)
             }
             .buttonStyle(.plain)
-            .highlightableRow(press: { model.showSoundSources() })
+            .highlightableRow(press: { model.showSoundSources(byKeyboard: true) })
             .accessibilityLabel(Text(verbatim: SettingsPage.soundSources.title))
             .accessibilityHint(Text("Opens the apps that pause your player",
                                     comment: "VoiceOver hint of the Sound Sources row under the Auto-Pause switch in Settings → General: it opens the Sound Sources page, which lists the apps that pause the player"))

@@ -89,6 +89,8 @@ struct MenuPlayerListView: View {
                 .highlightReason(removes ? nil : row.help)
                 .help(row.help.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
                 .accessibilityLabel(Text(verbatim: removes ? PlayerOption.removeTitle(row.option.name) : row.accessibilityLabel))
+                // The label adds the row's line (N9); Voice Control matches the name shown.
+                .accessibilityInputLabels([Text(verbatim: row.option.name)])
                 .accessibilityHint(row.help.map { Text(verbatim: $0) } ?? Text(verbatim: ""))
                 .accessibilityAddTraits(row.isChosen ? .isSelected : [])
             }

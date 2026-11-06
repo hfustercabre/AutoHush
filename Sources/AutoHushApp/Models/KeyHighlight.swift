@@ -85,6 +85,14 @@ final class KeyHighlight {
     /// Each control's own "highlighted", so a move redraws the two controls
     /// it concerns, not every one (the full check, 2026-10-18).
     @ObservationIgnored private var lights: [UUID: Light] = [:]
+    /// The order (`rows`) as it was when the keys came onto a control that
+    /// shows a reason (`Control.explains`): the next move from it goes by
+    /// that order, as the reason's caption, shown under it only while the
+    /// keys are on it, can move the controls beside it (N2, 2026-11-06:
+    /// Reopen's moved Change… below it in Settings → General, and ↓ went
+    /// back to Change…, round and round). Dropped once a control comes,
+    /// goes, dims or explains itself anew.
+    @ObservationIgnored private var orderOnArrival: (id: UUID, rows: [[UUID]])?
 
     /// Whether one control is highlighted, observed by that control alone.
     @MainActor @Observable final class Light {
@@ -126,6 +134,7 @@ final class KeyHighlight {
         // Its frame may have come first.
         if let frame = earlyFrames.removeValue(forKey: id), control.frame == .zero { control.frame = frame }
         controls[id] = control
+        orderOnArrival = nil
         firstWhenReady()
     }
 
@@ -142,6 +151,7 @@ final class KeyHighlight {
     /// `explains` itself keeps the keys' highlight.
     func update(_ id: UUID, isEnabled: Bool) {
         controls[id]?.isEnabled = isEnabled
+        orderOnArrival = nil
         guard !isEnabled, highlighted == id else { return }
         if controls[id]?.explains == true, lights[id]?.byKeys == true { return }
         point(at: innermostHovered(excluding: id))
@@ -153,6 +163,7 @@ final class KeyHighlight {
     /// `update(_:isEnabled:)` does.
     func update(_ id: UUID, explains: Bool) {
         controls[id]?.explains = explains
+        orderOnArrival = nil
         guard !explains, highlighted == id, controls[id]?.isEnabled == false else { return }
         point(at: innermostHovered(excluding: id))
     }
@@ -168,6 +179,7 @@ final class KeyHighlight {
     func remove(_ id: UUID) {
         controls[id] = nil
         earlyFrames[id] = nil
+        orderOnArrival = nil
         hovered.removeAll { $0 == id }
         if highlighted == id { point(at: innermostHovered()) }
         lights[id] = nil
@@ -187,6 +199,7 @@ final class KeyHighlight {
 
     /// The highlight where the pointer put it (`nil`: none).
     private func point(at id: UUID?) {
+        orderOnArrival = nil
         highlighted = id
         if let id { light(id).byKeys = false }
     }
@@ -219,6 +232,7 @@ final class KeyHighlight {
         revealed = nil
         wantsFirst = false
         earlyFrames = [:]
+        orderOnArrival = nil
     }
 
     /// The enabled controls (and the dimmed ones that explain themselves)
@@ -247,7 +261,7 @@ final class KeyHighlight {
     /// under, else the row's first (the user, 2026-10-18: ← and → move
     /// within a row); from nothing, the first row (down) or the last (up).
     func move(_ step: Int) {
-        let rows = rows
+        let rows = keyRows
         guard !rows.isEmpty else { return }
         let next: UUID
         if let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) {
@@ -255,7 +269,24 @@ final class KeyHighlight {
         } else {
             next = (step > 0 ? rows[0] : rows[rows.count - 1])[0]
         }
-        highlight(next)
+        highlight(next, in: rows)
+    }
+
+    /// The order the keys move by: `rows`, or, from a control that shows
+    /// a reason, the order as they came onto it (`orderOnArrival`).
+    private var keyRows: [[UUID]] {
+        if let orderOnArrival, orderOnArrival.id == highlighted { return orderOnArrival.rows }
+        return rows
+    }
+
+    /// The highlight on the first row whose top is at `y` or under it, in
+    /// reading order (or the first row, with none): out of a field that
+    /// takes no highlight itself (Settings → Sound Sources' search), into
+    /// the rows under it, not the ones beside it (N4, 2026-11-06).
+    func highlightFirst(below y: CGFloat) {
+        let rows = rows
+        guard let row = rows.first(where: { (controls[$0[0]]?.frame.minY ?? 0) >= y }) ?? rows.first else { return }
+        highlight(row[0], in: rows)
     }
 
     /// Where the highlight lands in `target` from `highlighted` in `row`:
@@ -273,16 +304,16 @@ final class KeyHighlight {
     /// nothing, Page Down and Home light the first row, Page Up and End the
     /// last (A12, 2026-11-01: Apple's standard keys, fn with the arrows on a laptop).
     func jump(_ jump: Jump) {
-        let rows = rows
+        let rows = keyRows
         guard !rows.isEmpty else { return }
         let step = jump == .pageDown || jump == .first ? 1 : -1
         guard jump == .pageUp || jump == .pageDown,
               let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) else {
-            return highlight((step > 0 ? rows[0] : rows[rows.count - 1])[0])
+            return highlight((step > 0 ? rows[0] : rows[rows.count - 1])[0], in: rows)
         }
         let target = pageTarget(from: row, step: step, in: rows)
         guard target != row else { return }
-        highlight(entry(to: rows[target], from: rows[row], highlighted))
+        highlight(entry(to: rows[target], from: rows[row], highlighted), in: rows)
     }
 
     /// The row a page on from `row` (`jump`).
@@ -306,9 +337,10 @@ final class KeyHighlight {
     /// The highlight `step` controls along its row (← -1, → 1); `false` at
     /// the row's end, or in a row of one.
     @discardableResult func moveInRow(_ step: Int) -> Bool {
+        let rows = keyRows
         guard let highlighted, let row = rows.first(where: { $0.contains(highlighted) }),
               let index = row.firstIndex(of: highlighted), row.indices.contains(index + step) else { return false }
-        highlight(row[index + step])
+        highlight(row[index + step], in: rows)
         return true
     }
 
@@ -319,7 +351,10 @@ final class KeyHighlight {
         firstWhenReady()
     }
 
-    private func highlight(_ id: UUID) {
+    /// `rows`: the order the keys moved by, kept if `id` shows a reason
+    /// (`orderOnArrival`); `nil`: the order now.
+    private func highlight(_ id: UUID, in rows: [[UUID]]? = nil) {
+        orderOnArrival = controls[id]?.explains == true ? (id, rows ?? self.rows) : nil
         highlighted = id
         light(id).byKeys = true
         revealed = id
@@ -412,6 +447,13 @@ final class KeyHighlight {
 
     /// The highlighted control opens a side window.
     var highlightedOpensSide: Bool { highlightedControl?.opensSide ?? false }
+
+    /// The highlighted control stands for something shown (`Control.isCurrent`:
+    /// Settings' sidebar, a page's row), unlike its foot's link (N7, 2026-11-06).
+    var highlightedStandsForShown: Bool { highlightedControl?.isCurrent != nil }
+
+    /// The keys, not the pointer, put the highlight where it is.
+    var isLitByKeys: Bool { highlighted.map { light($0).byKeys } ?? false }
 
     private var highlightedControl: Control? {
         highlighted.flatMap { controls[$0] }.flatMap { $0.isEnabled ? $0 : nil }

@@ -83,6 +83,30 @@ final class SettingsWindowControllerTests {
         #expect(model.fineTuningFocus == nil)
     }
 
+    @Test("a page shown by a key's press, or VoiceOver's, lights its first control, where VoiceOver's cursor goes; once, and not for a page shown otherwise (N8)")
+    func shownPageTakesHighlight() async throws {
+        let model = makeModel()
+        model.state.status.choosePlayer(named: "Jukebox")
+        let sut = makeController(model)
+        defer { sut.close() }
+        sut.show(page: .general)
+        await TestWait.until { !sut.keys.page.rows.isEmpty }
+        #expect(sut.keys.page.highlighted == nil)
+        model.shownPageTakesHighlight = true // General's Change…, pressed so (`SettingsModel.showPage`)
+        sut.show(page: .mediaPlayer)
+        await TestWait.until { sut.keys.page.highlighted != nil }
+        let first = try #require(sut.keys.page.rows.first?.first)
+        #expect(sut.keys.page.highlighted == first)
+        #expect(sut.keys.page.light(first).arrivals == 1 && sut.keys.page.light(first).byKeys)
+        #expect(!model.shownPageTakesHighlight)
+
+        // Shown from the sidebar or by a click: nothing lit.
+        sut.show(page: .behavior)
+        await TestWait.until { sut.keys.page.highlighted == nil && !sut.keys.page.rows.isEmpty }
+        for _ in 0..<5 { await Task.yield() }
+        #expect(sut.keys.page.highlighted == nil)
+    }
+
     @Test("closed and opened again, Settings is back on General; while open, it keeps its page")
     func reopensOnGeneral() {
         let sut = makeController()
@@ -219,6 +243,65 @@ final class SettingsWindowControllerTests {
         #expect(sut.handleKey(51, flags: [], windowNumber: window.windowNumber))
         #expect(model.appList.selectedApps.isEmpty && preferences.seenApps.isEmpty)
         #expect(!sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // none selected
+    }
+
+    @Test("in Sound Sources' search, Shift-Tab stays in it, ↓ and Tab leave it for the first app under it, and Escape closes the search, from a row or the field (N4)")
+    func searchKeys() async throws {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let apps = [AudioSource(id: "com.example.arc", name: "Arc"), AudioSource(id: "com.example.brave", name: "Brave")]
+        preferences.recordSeen(apps)
+        let model = SettingsModel.forTests(actions: actions, updates: updates, settings: UserSettings(preferences: preferences))
+        model.state.status.seenApps = apps
+        let sut = makeController(model)
+        defer { sut.close() }
+        sut.show(page: .soundSources)
+        let window = try #require(sut.window)
+        let typing = { () async throws -> Void in
+            model.appList.search = ""
+            await TestWait.until { window.contentView?.firstEditableTextField != nil }
+            window.makeFirstResponder(try #require(window.contentView?.firstEditableTextField))
+            try #require(window.firstResponder is NSText)
+        }
+        try await typing()
+        await TestWait.until { sut.keys.page.rows.count >= 4 } // the sort, two apps, the buttons
+        let first = try #require(model.appList.shownApps.first?.id)
+        #expect(sut.handleKey(48, flags: .shift, windowNumber: window.windowNumber)) // Shift-Tab: nothing
+        #expect(window.firstResponder is NSText && sut.keys.page.highlighted == nil)
+        #expect(!sut.handleKey(123, flags: [], windowNumber: window.windowNumber)) // ←: the field's
+        #expect(sut.handleKey(125, flags: [], windowNumber: window.windowNumber)) // ↓: the first app, not the sort beside it
+        #expect(!(window.firstResponder is NSText))
+        #expect(sut.keys.page.select())
+        #expect(model.appList.selectedAppIDs == [first])
+        #expect(sut.handleKey(53, flags: [], windowNumber: window.windowNumber)) // Escape, from the row
+        #expect(model.appList.search == nil)
+
+        try await typing()
+        #expect(sut.handleKey(48, flags: [], windowNumber: window.windowNumber)) // Tab: as ↓
+        #expect(!(window.firstResponder is NSText))
+        #expect(sut.keys.page.select())
+        #expect(model.appList.selectedAppIDs.isEmpty) // the same row, taken out again
+        try await typing()
+        #expect(sut.handleKey(53, flags: [], windowNumber: window.windowNumber)) // Escape, from the field
+        #expect(model.appList.search == nil)
+        #expect(!sut.handleKey(53, flags: [], windowNumber: window.windowNumber)) // no search open: not taken
+    }
+
+    @Test("on Diagnostics, End reaches Show Logs… after every part, however far the form is scrolled (N3)")
+    func diagnosticsButtonsLast() async throws {
+        let model = makeModel()
+        typealias Row = DiagnosticsSnapshot.Row
+        let rows = (1...8).map { Row(label: "Fact \($0)", value: "Value") }
+        let kinds: [DiagnosticsSnapshot.Section.Kind] = [.player, .behavior, .detection, .permissions, .autoHush, .mac]
+        model.diagnostics = DiagnosticsSnapshot(
+            overview: .init(kind: .working, title: "Working normally", detail: nil), apps: [], appsSummary: "None",
+            sections: kinds.map { .init(kind: $0, title: "\($0)", summary: "Summary", rows: rows) }, text: "The report")
+        let sut = makeController(model)
+        defer { sut.close() }
+        sut.show(page: .diagnostics)
+        await TestWait.until { sut.keys.page.rows.count >= 3 } // headings, then the buttons
+        #expect(sut.keys.handle(.end))
+        #expect(sut.keys.handle(.returnKey))
+        #expect(actions.log.calls.contains("showLogs"))
     }
 
     @Test("the window's Undo is Restore Defaults' and Sound Sources' removals' too, and forgets every step as the window closes")

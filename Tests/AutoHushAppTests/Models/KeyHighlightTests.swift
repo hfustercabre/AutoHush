@@ -357,4 +357,61 @@ struct KeyHighlightTests {
         #expect(keyboard.highlighted == firstUsable)
         #expect(keyboard.revealed == firstUsable)
     }
+
+    @Test("from a control that shows a reason, the next move goes by the order as the keys came onto it: its caption moving Change… under it never sends ↓ back (N2)")
+    func orderKeptWhileAReasonShows() {
+        let keyboard = KeyHighlight()
+        // Settings → General: Change… at the right, Reopen under the status line, Auto-Pause under the card.
+        let change = control(keyboard, 400, 30)
+        let reopen = UUID()
+        keyboard.register(reopen, .init(frame: CGRect(x: 70, y: 45, width: 80, height: 22), explains: true))
+        let autoPause = control(keyboard, 0, 120)
+        keyboard.move(1)
+        keyboard.move(1)
+        #expect(keyboard.highlighted == reopen)
+        // Its caption shows under it: the card grows, and Change…, centered in it, goes below Reopen's top.
+        keyboard.update(change, frame: CGRect(x: 400, y: 52, width: 44, height: 22))
+        #expect(keyboard.rows == [[reopen], [change], [autoPause]]) // the order now
+        keyboard.move(1)
+        #expect(keyboard.highlighted == autoPause) // not back to Change…
+        keyboard.update(change, frame: CGRect(x: 400, y: 30, width: 44, height: 22)) // the caption gone
+        keyboard.move(-1)
+        #expect(keyboard.highlighted == reopen)
+        keyboard.update(change, frame: CGRect(x: 400, y: 52, width: 44, height: 22))
+        keyboard.move(-1)
+        #expect(keyboard.highlighted == change) // up, as it came
+    }
+
+    @Test("the order kept from a control that shows a reason is dropped once a control comes or goes, and the pointer's highlight never keeps one (N2)")
+    func keptOrderDropped() {
+        let keyboard = KeyHighlight()
+        let first = control(keyboard, 0, 0)
+        let explaining = UUID()
+        keyboard.register(explaining, .init(frame: CGRect(x: 0, y: 40, width: 44, height: 22), explains: true))
+        keyboard.move(1)
+        keyboard.move(1)
+        #expect(keyboard.highlighted == explaining)
+        let added = control(keyboard, 0, 60) // a row that came under it
+        keyboard.move(1)
+        #expect(keyboard.highlighted == added)
+        keyboard.move(-1)
+        #expect(keyboard.highlighted == explaining)
+        keyboard.hover(explaining, true) // the pointer onto it: the order now
+        keyboard.update(added, frame: CGRect(x: 0, y: 20, width: 44, height: 22))
+        keyboard.move(1)
+        #expect(keyboard.highlighted == first) // round to the first; by the order kept, it was `added`
+    }
+
+    @Test("out of a field that takes no highlight, the first row under it lights up, not one beside it; with none under it, the first row (N4)")
+    func firstBelow() {
+        let keyboard = KeyHighlight()
+        let sortBy = control(keyboard, 300, 4) // beside the search field (0…22)
+        let firstApp = control(keyboard, 0, 40)
+        _ = control(keyboard, 0, 80)
+        keyboard.highlightFirst(below: 22)
+        #expect(keyboard.highlighted == firstApp && keyboard.light(firstApp).byKeys)
+        keyboard.clear()
+        keyboard.highlightFirst(below: 500)
+        #expect(keyboard.highlighted == sortBy)
+    }
 }

@@ -124,4 +124,29 @@ struct AddWebAppModelTests {
         #expect(countries.map(\.name) == countries.map(\.name).sorted { $0.localizedStandardCompare($1) == .orderedAscending })
         #expect(model.countries(of: sites) == countries) // worked out once
     }
+
+    @Test("← and → on the country row step through the pop-up's order, Other Countries last, stopping at its ends; not once it's being added (N7)")
+    func stepCountry() {
+        let sites = CountrySites(name: "Some Music",
+                                 byRegion: ["ES": "music.some.es", "GB": "music.some.co.uk", "US": "music.some.com"],
+                                 elsewhere: "music.some.net")
+        let model = AddWebAppModel()
+        model.countrySites = [sites]
+        model.region = "ES"
+        model.reset(address: "music.some.es")
+        let codes = model.countries(of: sites).map(\.code) + [""]
+        let start = codes.firstIndex(of: "ES") ?? 0
+        model.stepCountry(1, in: sites)
+        #expect(model.country(in: sites) == codes[min(start + 1, codes.count - 1)])
+        for _ in codes { model.stepCountry(1, in: sites) }
+        #expect(model.country(in: sites) == "" && model.address == "music.some.net") // Other Countries, the last
+        model.stepCountry(1, in: sites)
+        #expect(model.country(in: sites) == "")
+        for _ in codes { model.stepCountry(-1, in: sites) }
+        #expect(model.country(in: sites) == codes[0])
+        model.continueTapped()
+        let address = model.address
+        model.stepCountry(1, in: sites)
+        #expect(model.address == address)
+    }
 }

@@ -29,6 +29,8 @@ struct HighlightableControl: ViewModifier {
     /// What Return or Space does while it's highlighted.
     let press: (() -> Void)?
     var opensSide = false
+    /// It stands for what's shown now (`KeyHighlight.Control.isCurrent`).
+    var isCurrent: (() -> Bool)?
     @FocusState private var isFocused: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
     @Environment(\.isInHighlightedRow) private var isInHighlightedRow
@@ -50,7 +52,8 @@ struct HighlightableControl: ViewModifier {
                 .focused($isFocused)
                 .focusEffectDisabled()
                 .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset, outset: outset, ring: ring,
-                                        isLit: isLit, lightsItself: lightsItself, press: press, opensSide: opensSide))
+                                        isLit: isLit, lightsItself: lightsItself, press: press, opensSide: opensSide,
+                                        isCurrent: isCurrent))
         }
     }
 }
@@ -85,6 +88,12 @@ struct Highlightable: ViewModifier {
     var adjust: ((Int) -> Void)?
     var opensSide = false
     var isCurrent: (() -> Bool)?
+    /// Where VoiceOver's cursor goes as a key lights it, instead of onto
+    /// the whole of it: in a view of several elements, the control its
+    /// press changes (the menu's card: its Auto-Pause switch, where
+    /// VoiceOver took the first, the player's name; N11, the a11y audit,
+    /// 2026-11-06).
+    var voiceOverTarget: AccessibilityFocusState<Bool>.Binding? = nil
     @State private var id = UUID()
     @State private var actions = Actions()
     @AccessibilityFocusState private var hasVoiceOverCursor: Bool
@@ -142,7 +151,8 @@ struct Highlightable: ViewModifier {
                 .accessibilityFocused($hasVoiceOverCursor)
                 .onChange(of: keyboard.light(id).arrivals) {
                     // Only for VoiceOver: without it, nothing to move.
-                    if NSWorkspace.shared.isVoiceOverEnabled { hasVoiceOverCursor = true }
+                    guard NSWorkspace.shared.isVoiceOverEnabled else { return }
+                    if let voiceOverTarget { voiceOverTarget.wrappedValue = true } else { hasVoiceOverCursor = true }
                 }
                 .onHover { keyboard.hover(id, $0) }
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { keyboard.update(id, frame: $0) }

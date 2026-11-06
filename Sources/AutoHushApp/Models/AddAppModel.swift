@@ -214,6 +214,21 @@ final class AddAppModel {
     /// The apps shown, in the list's order.
     var shownAppsInOrder: [CheckableApp] { shownApps.inNowPlaying + shownApps.others }
 
+    /// ↑ or ↓ in Choose an App's search: the app before or after the
+    /// selected one among those shown, from none the first (or the last);
+    /// at an end it stays. The app it selected, `nil` when the selection
+    /// stayed: VoiceOver's cursor stays in the search, so the window says
+    /// which (N10, the a11y audit, 2026-11-06).
+    @discardableResult func moveSelection(_ step: Int) -> CheckableApp? {
+        let shown = shownAppsInOrder
+        guard !shown.isEmpty else { return nil }
+        let index = shown.firstIndex { $0.id == selectedID }.map { $0 + step } ?? (step > 0 ? 0 : shown.count - 1)
+        let app = shown[min(max(index, 0), shown.count - 1)]
+        guard app.id != selectedID else { return nil }
+        selectedID = app.id
+        return app
+    }
+
     var canContinueWithApp: Bool { stage == .choosing && apps.contains { $0.id == selectedID } }
 
     /// Another app can be chosen instead: one is, and nothing is under way.

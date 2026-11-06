@@ -5,6 +5,7 @@ import SwiftUI
 struct SettingsPageView: View {
     let model: SettingsModel
     let navigation: SettingsNavigation
+    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     var body: some View {
         Group {
@@ -20,6 +21,13 @@ struct SettingsPageView: View {
         }
         // No font of its own: macOS's form sets its rows' and titles'.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        // Shown by a key's press, or VoiceOver's, its first control lights
+        // up once it's drawn, VoiceOver's cursor with it (N8, the a11y
+        // audit, 2026-11-06); once, whatever page shows next.
+        .onChange(of: navigation.page) {
+            if model.shownPageTakesHighlight { keyboard?.highlightFirstWhenReady() }
+            model.shownPageTakesHighlight = false
+        }
     }
 }
 

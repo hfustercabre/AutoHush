@@ -84,6 +84,7 @@ struct FineTuningSettingsView: View {
                 // does only while it's on.
                 VStack(alignment: .leading, spacing: 10) {
                     Text(verbatim: DetectionText.detectByTitle) // a row's title
+                        .accessibilityHidden(true) // the chips say it, as their label (VO8, 2026-11-06)
                     ChoiceChips(
                         label: DetectionText.detectByTitle,
                         options: DetectionMethod.antiDotWays.map { .init(title: $0.title, value: $0) },

@@ -104,7 +104,8 @@ class HostedWindowController: NSWindowController {
 
     func show() {
         guard let window else { return }
-        if !window.isOpen {
+        let opening = !window.isOpen
+        if opening {
             // Sized to its content first: centered at its first, empty size,
             // it would grow from the middle of the screen, partly off it.
             if let fitting = window.contentView?.fittingSize, fitting.width > 0, fitting.height > 0 {
@@ -121,9 +122,14 @@ class HostedWindowController: NSWindowController {
                 window.center()
             }
         }
-        if !window.isOpen { keys?.highlight.clear() } // nothing lit as it opens
+        if opening { keys?.highlight.clear() } // nothing lit as it opens
         watchKeys()
         window.showInFront()
+        // With keys, nothing focused as it opens, but a field typed into,
+        // as Settings and the menu open: the first ↓ shows where the keys
+        // are (N6, 2026-11-06: with keyboard navigation on, the check
+        // warning opened with Cancel focused, and → did nothing on it).
+        if opening, keys != nil, !(window.firstResponder is NSText) { window.makeFirstResponder(nil) }
     }
 
     /// While it floats, a change of size keeps its top edge where it was, so
@@ -250,7 +256,13 @@ class HostedWindowController: NSWindowController {
         // With keyboard navigation on, a click may have given a control the focus.
         let focus: WindowKeys.Focus = window.firstResponder is NSText ? .textField // a field's editor
             : NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow) ? .control : .none
-        if let key = HighlightKey(keyCode: keyCode, modifiers: flags) { return keys.handle(key, focus: focus) }
+        if let key = HighlightKey(keyCode: keyCode, modifiers: flags) {
+            // Shift-Tab in a field: nothing, as ↑, the field keeping the
+            // keyboard (the search is the top), not AppKit's next control
+            // (N4, 2026-11-06).
+            if focus == .textField, keyCode == 48, key == .up { return true }
+            return keys.handle(key, focus: focus)
+        }
         if WindowKeys.isTyped(characters, modifiers: flags) { keys.typed(focus: focus) }
         return false
     }

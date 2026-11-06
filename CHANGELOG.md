@@ -147,6 +147,18 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Keyboard:** a clicked Settings sidebar row no longer takes the
+  keys' outline; ↓ reaches every row of General (with Reopen showing)
+  and Diagnostics; ↓ and Tab leave Sound Sources' search for the apps it
+  found, and Escape closes it; typing goes back into Add a Web App's
+  address; Return, Space, ← and → act on the highlighted control; the
+  country pop-up and Buy me a coffee can be reached by keys.
+- **VoiceOver:** it follows a row or button that shows another page in
+  Settings, hears a player row's line ("Not installed", "Click to
+  add"…), the app chosen with ↑ ↓ in a search, Auto-Pause on the menu's
+  card, which permission Diagnostics' Allow… asks for, and "Restored"
+  after Restore Defaults; titles aren't read twice; Voice Control matches
+  the names shown.
 - **Add a Web App** moves beside Safari's Add to Dock window while it
   shows, and back after: it could cover its Add button.
 - **Escape** presses Cancel (or Later) again in Add an App, Choose an

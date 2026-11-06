@@ -20,7 +20,8 @@ struct MenuPlayerList: Equatable {
         let subtitle: String?
         /// Its tooltip and VoiceOver help: why AntiDot mode rules it out.
         let help: String?
-        /// What VoiceOver says for it (`PlayerOption.spokenName`, its badge).
+        /// What VoiceOver says for it (`PlayerOption.spokenName`, its badge,
+        /// its subtitle).
         let accessibilityLabel: String
         /// Added with Add an App: with Option held, its row removes it.
         var isRemovable: Bool { option.kind == .checkedApp }
@@ -56,10 +57,13 @@ struct MenuPlayerList: Equatable {
             }
             // VoiceOver can't see an icon's badge: a Safari web app named as an
             // app is says so, as a Chromium browser's web app says whose it is.
-            let spoken = option.spokenName(among: options)
+            // Its subtitle too, which the label replaces ("Not installed",
+            // "Click to add"), as a tile's note is read (N9, the a11y audit,
+            // 2026-11-06); why AntiDot mode rules it out stays its hint.
+            let spoken = [option.spokenName(among: options), option.isUntested ? PlayerOption.untestedBadge : nil, subtitle]
             return Row(option: option, isChosen: option.bundleID == chosenID, isEnabled: option.isClickable,
                        subtitle: subtitle, help: help,
-                       accessibilityLabel: option.isUntested ? "\(spoken), \(PlayerOption.untestedBadge)" : spoken)
+                       accessibilityLabel: spoken.compactMap { $0 }.joined(separator: ", "))
         }
         showsSearch = offered.isSearchable
         noMatchNote = shown.isEmpty ? PlayerOption.noMatchNote(search) : nil

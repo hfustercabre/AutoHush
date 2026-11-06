@@ -66,15 +66,18 @@ struct WindowKeysTests {
         #expect(log.calls == ["drop focus", "tile 0"])
     }
 
-    @Test("a focused control keeps Return, Space, ← and →; the arrows, Tab too, move the highlight")
+    @Test("a focused control keeps Return, Space, ← and → while nothing is lit; a lit one, whose tint hides the focus's, takes them, the focus let go (N6); the arrows, Tab too, move the highlight")
     func focusedControl() {
         let log = CallLog()
-        let (keys, _, _) = makeKeys(log: log)
-        keys.handle(.down)
+        let (keys, tiles, _) = makeKeys(log: log)
         for key: HighlightKey in [.returnKey, .space, .left, .right] { #expect(!keys.handle(key, focus: .control)) }
-        #expect(keys.handle(.down, focus: .control)) // the arrows still move the highlight
-        #expect(keys.highlight.highlighted != nil)
-        #expect(log.calls == ["drop focus", "drop focus"])
+        #expect(log.calls.isEmpty)
+        #expect(keys.handle(.down, focus: .control)) // the arrows move the highlight
+        #expect(keys.highlight.highlighted == tiles[0])
+        #expect(keys.handle(.right, focus: .control)) // along the lit row
+        #expect(keys.highlight.highlighted == tiles[1])
+        #expect(keys.handle(.space, focus: .control)) // the lit tile, not the hidden focus
+        #expect(log.calls == ["drop focus", "drop focus", "drop focus", "tile 1"])
     }
 
     @Test("in a text field, typing and ↑ stay the field's; ↓ leaves it for the first row, whatever was lit")

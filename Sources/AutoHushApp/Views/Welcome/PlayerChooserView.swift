@@ -33,10 +33,20 @@ struct PlayerChooserView: View {
     }
 
     var body: some View {
-        if model.welcomeAsksPermissions {
-            WelcomePermissionsView(model: model)
-        } else {
-            playersPage
+        Group {
+            if model.welcomeAsksPermissions {
+                WelcomePermissionsView(model: model)
+            } else {
+                playersPage
+            }
+        }
+        // Continue replaces the whole page, and VoiceOver doesn't read the
+        // title bar it shows in: VoiceOver hears the new page's title (N8,
+        // the a11y audit, 2026-11-06; Back's, `WelcomePermissionsView`). Not
+        // on the way back to the players, which Done takes too as the
+        // window closes.
+        .onChange(of: model.welcomeAsksPermissions) { _, asks in
+            if asks { postStepAnnouncement(PlayerChooserWindowController.title(asksPermissions: true)) }
         }
     }
 

@@ -538,11 +538,17 @@ struct SettingsModelTests {
         #expect(model.fineTuningFocus == .detection && model.fineTuningFocusTakesHighlight)
     }
 
-    @Test("General's row under the Auto-Pause switch shows Sound Sources (A1)")
+    @Test("General's row under the Auto-Pause switch shows Sound Sources (A1), and Change… Media Player; pressed by a key or VoiceOver, the page's first control lights up (N8)")
     func showSoundSources() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.showSoundSources()
-        #expect(log.calls.last == "soundSources")
+        #expect(log.calls.last == "soundSources" && !model.shownPageTakesHighlight)
+        model.showSoundSources(byKeyboard: true)
+        #expect(log.calls.last == "soundSources" && model.shownPageTakesHighlight)
+        model.showPage(.mediaPlayer)
+        #expect(log.calls.last == "mediaPlayer" && !model.shownPageTakesHighlight)
+        model.showPage(.mediaPlayer, byKeyboard: true)
+        #expect(model.shownPageTakesHighlight)
     }
 
     @Test("greyed out, a Fine-Tuning setting is left as it is: the fade lengths while the fades are off, the fade-in and the wait to resume while nothing resumes, the threshold in AntiDot mode, where Detection restores the way")

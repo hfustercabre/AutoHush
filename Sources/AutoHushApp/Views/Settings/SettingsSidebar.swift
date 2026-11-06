@@ -62,9 +62,11 @@ struct SettingsSidebar: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        // The arrow keys and the pointer highlight it; ↑ and ↓ show its page at once.
-        .modifier(Highlightable(cornerRadius: 10, press: { navigation.page = page },
-                                isCurrent: { navigation.page == page }))
+        // The arrow keys and the pointer highlight it; ↑ and ↓ show its page
+        // at once. A focus from a click (with keyboard navigation on) shows
+        // as the tint too, not macOS's ring besides it (N1, 2026-11-06).
+        .modifier(HighlightableControl(cornerRadius: 10, press: { navigation.page = page },
+                                       isCurrent: { navigation.page == page }))
         .accessibilityAddTraits(isShown ? .isSelected : [])
     }
 }
@@ -85,6 +87,8 @@ struct SettingsSidebarFoot: View {
                 }
             }
             SupportLine()
+                // The keys reach its link after the pages (N7, 2026-11-06).
+                .environment(\.highlightBand, .bottom)
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)

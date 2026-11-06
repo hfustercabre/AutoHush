@@ -20,6 +20,10 @@ final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenti
                    floatsInCorner: true, keys: keys)
         window?.delegate = self
         close.action = { [weak self] in self?.close() }
+        // A letter typed while a control is lit goes back into the address,
+        // as into the welcome's search (N5, 2026-11-06: once ↓ or Tab had
+        // left the field, no key brought the keyboard back to it).
+        keys.focusSearch = { [weak self] in self?.focusSearch() ?? false }
     }
 
     /// Closing it (Cancel, Later or its close button) stops an add under way.

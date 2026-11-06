@@ -167,6 +167,11 @@ struct AddWebAppView: View {
             guard model.phase == .entering else { return }
             countryPopUp.open()
         }
+        // The arrow keys reach it, as Settings' pop-up rows (N7, 2026-11-06:
+        // Tab moves as ↓, so nothing else did): Space shows the countries,
+        // ← and → choose one.
+        .highlightableRow(isAvailable: model.phase == .entering, press: { countryPopUp.open() },
+                          adjust: { model.stepCountry($0, in: sites) })
     }
 
     /// Over the address's card, and its field's name for VoiceOver.

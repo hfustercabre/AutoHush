@@ -41,6 +41,23 @@ struct AddAppModelTests {
         #expect(await AddAppModel.opened(on: none).selectedID == nil)
     }
 
+    @Test("↑ and ↓ in the search move the selection among the apps shown, staying at the ends, and say which app for VoiceOver (N10)")
+    func movingTheSelection() async {
+        let world = World()
+        let model = await AddAppModel.opened(on: world)
+        #expect(model.selectedID == "com.example.player")
+        #expect(model.moveSelection(1)?.name == "Other" && model.selectedID == "com.example.other")
+        #expect(model.moveSelection(1) == nil && model.selectedID == "com.example.other") // the last: it stays, nothing said
+        #expect(model.moveSelection(-1)?.name == "Player")
+        model.search = "oth" // only Other shown: from an app not shown, ↑ selects the last
+        #expect(model.moveSelection(-1)?.name == "Other")
+        // What VoiceOver hears: the row's words, its name first.
+        let web = CheckableApp(bundleID: "com.example.web", name: "Sounds", url: URL(filePath: "/Applications/Sounds.app"),
+                               nowPlaying: true, browserName: "Google Chrome")
+        #expect(AddAppText.chooserSelection(web) == "Sounds, Google Chrome web app, Playing")
+        #expect(AddAppText.chooserSelection(world.apps[1]) == "Other")
+    }
+
     @Test("choosing in the list, or an app picked on the disk, goes on; Change… starts over with the list")
     func chooser() async {
         let world = World()

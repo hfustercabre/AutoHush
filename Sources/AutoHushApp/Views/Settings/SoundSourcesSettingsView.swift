@@ -251,7 +251,9 @@ extension AppListOrder {
 /// the keyboard, Return switches the highlighted app on or off and Space
 /// adds its row to the selection or takes it out, so several can be
 /// removed too (the user, 2026-11-03). The arrow keys (Tab too) and the
-/// pointer highlight it, as Settings' other rows.
+/// pointer highlight it, as Settings' other rows. VoiceOver hears it as one,
+/// as a `SwitchRow`: the switch, named by the app, its words its hint (VO8,
+/// the a11y audit, 2026-11-06).
 private struct SoundSourceRow: View {
     let model: SettingsModel
     let row: AppListModel.Row
@@ -268,9 +270,10 @@ private struct SoundSourceRow: View {
                     .accessibilityHidden(true)
                 RowTitle(
                     Text(verbatim: row.source.name),
-                    subtitle: Text(verbatim: SourceText.subtitle(isIgnored: row.isIgnored, mutes: model.playerMutesNow)),
+                    subtitle: Text(verbatim: subtitle),
                     isOnSelection: isSelected
                 )
+                .accessibilityHidden(true) // the switch says it
                 Spacer(minLength: 8)
             }
             .contentShape(Rectangle())
@@ -284,6 +287,7 @@ private struct SoundSourceRow: View {
             .toggleStyle(PillToggleStyle())
             .focused($switchFocused)
             .focusEffectDisabled(keyboard != nil)
+            .accessibilityHint(Text(verbatim: subtitle))
             // A white ground, so the switch (the accent color while on) shows on the selection.
             .background { if isSelected { Capsule().fill(.white).padding(-2) } }
         }
@@ -314,6 +318,8 @@ private struct SoundSourceRow: View {
 
     private var list: AppListModel { model.appList }
     private var isSelected: Bool { list.selectedAppIDs.contains(row.id) }
+    /// Under its name: whether it pauses the player, mutes it or is ignored.
+    private var subtitle: String { SourceText.subtitle(isIgnored: row.isIgnored, mutes: model.playerMutesNow) }
     /// The switch: on while the app pauses the player, off while it's ignored.
     private var isOn: Binding<Bool> {
         Binding(get: { !row.isIgnored }, set: { model.settings.setIgnored(row.source, !$0) })

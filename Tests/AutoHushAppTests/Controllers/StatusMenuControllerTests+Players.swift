@@ -31,7 +31,7 @@ extension StatusMenuControllerTests {
         #expect(sut.model.players.supportedApps.map(\.isChosen) == [true, false, false])
     }
 
-    @Test("a player that isn't installed can't be chosen in the menu, which says so")
+    @Test("a player that isn't installed can't be chosen in the menu, which says so, to VoiceOver too")
     func uninstalledPlayer() {
         let sut = menuWithPlayers()
         defer { sut.remove() }
@@ -39,6 +39,8 @@ extension StatusMenuControllerTests {
         let players = sut.model.players.supportedApps
         #expect(players.map(\.isEnabled) == [true, true, false])
         #expect(players.map(\.subtitle) == [nil, nil, "Not installed"])
+        // The label replaces the row's words: it says the subtitle too (N9).
+        #expect(players.map(\.accessibilityLabel) == ["First", "Third", "Second, Not installed"])
     }
 
     @Test("choosing a player in the menu closes the players and keeps the menu open")
@@ -173,6 +175,7 @@ extension StatusMenuControllerTests {
         let shown = try row("Muted", in: sut)
         #expect(shown.isEnabled && shown.isChosen)
         #expect(shown.subtitle == "Muted instead of paused")
+        #expect(shown.accessibilityLabel == "Muted, Muted instead of paused") // N9
         #expect(shown.help == nil)
 
         settings.setDetectionMethod(.playbackSignals)
@@ -181,6 +184,7 @@ extension StatusMenuControllerTests {
         let dimmed = try row("Muted", in: sut)
         #expect(!dimmed.isEnabled && dimmed.isChosen)
         #expect(dimmed.subtitle == "Not in AntiDot mode")
+        #expect(dimmed.accessibilityLabel == "Muted, Not in AntiDot mode") // why, its hint
         #expect(dimmed.help == muted.antiDotModeReason)
         #expect(try row("First", in: sut).isEnabled)
     }
@@ -204,6 +208,7 @@ extension StatusMenuControllerTests {
         let discs = try row("Discs", in: sut)
         #expect(discs.isEnabled)
         #expect(discs.subtitle == "Click to add") // as its tile says
+        #expect(discs.accessibilityLabel == "Discs, Click to add") // to VoiceOver too (N9)
     }
 
     @Test("a web app's controls are learned from the card's Controls row; nothing else in the menu is about learning")

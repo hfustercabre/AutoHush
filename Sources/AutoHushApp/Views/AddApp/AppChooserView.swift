@@ -6,7 +6,7 @@ import SwiftUI
 /// Now Playing list first, with a search; Other App… picks one on the disk.
 /// Choose (Return, or a double click) goes on with the one selected, or
 /// with the only one the search left; ↑ and ↓ in the search move the
-/// selection.
+/// selection, which VoiceOver hears (N10, 2026-11-06).
 struct AppChooserView: View {
     @Bindable var model: AddAppModel
     let otherApp: () -> Void
@@ -49,12 +49,12 @@ struct AppChooserView: View {
         return shown.first { $0.id == model.selectedID } ?? (shown.count == 1 ? shown.first : nil)
     }
 
-    /// ↑ or ↓: the one before or after the selected among those shown.
+    /// ↑ or ↓: the one before or after the selected among those shown. Its
+    /// cursor still in the search, VoiceOver hears which, after what it's
+    /// saying, as a search's results (N10, the a11y audit, 2026-11-06).
     private func moveSelection(_ step: Int) {
-        let shown = model.shownAppsInOrder
-        guard !shown.isEmpty else { return }
-        let index = shown.firstIndex { $0.id == model.selectedID }.map { $0 + step } ?? (step > 0 ? 0 : shown.count - 1)
-        model.selectedID = shown[min(max(index, 0), shown.count - 1)].id
+        guard let app = model.moveSelection(step) else { return }
+        postAnnouncement(AddAppText.chooserSelection(app), priority: .low)
     }
 
     private func chooseSelected() {
@@ -106,8 +106,7 @@ struct AppChooserView: View {
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 0) {
                         Text(verbatim: app.name)
-                        let lines = [app.browserName.map(AddAppText.browserWebApp), app.nowPlaying == true ? AddAppText.playingLabel : nil]
-                            .compactMap { $0 }
+                        let lines = AddAppText.chooserLines(app)
                         if !lines.isEmpty {
                             Text(verbatim: lines.joined(separator: " · ")).font(.appCaption)
                                 .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.appSecondary))

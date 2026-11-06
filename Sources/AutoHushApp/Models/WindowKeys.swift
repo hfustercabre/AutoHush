@@ -12,9 +12,11 @@ import AppKit
 /// In a text field, what's typed stays there: ↓ leaves it for the controls,
 /// from the first, and ↑ stays the field's (the search is the top). With a
 /// search (the welcome's), a letter typed while a control is lit goes into
-/// it (T1). Tab and Shift-Tab move as ↓ and ↑ (`HighlightKey`); a focused
-/// control keeps its keys as in Settings; Escape stays the window's. Keys with nothing to act on do nothing,
-/// without a beep.
+/// it (T1), as one into Add a Web App's address does (N5, 2026-11-06).
+/// Tab and Shift-Tab move as ↓ and ↑ (`HighlightKey`); a focused control
+/// keeps its keys while nothing is lit, as in Settings, and a lit one,
+/// whose tint hides the focus's, gets them (N6); Escape stays the
+/// window's. Keys with nothing to act on do nothing, without a beep.
 @MainActor
 final class WindowKeys {
     /// What has the keyboard in the window.
@@ -42,7 +44,7 @@ final class WindowKeys {
     /// Handles `key` with `focus` on what has the keyboard; `false` leaves
     /// it to the window: Return while a main button can be pressed, a
     /// text field's keys but ↓, and Return, Space, ← and → while a control
-    /// has the focus.
+    /// has the focus and nothing is lit.
     @discardableResult func handle(_ key: HighlightKey, focus: Focus = .none) -> Bool {
         switch focus {
         case .textField:
@@ -54,7 +56,13 @@ final class WindowKeys {
             highlight.move(1)
             return true
         case .control:
-            if [.returnKey, .space, .left, .right].contains(key) { return false }
+            if [.returnKey, .space, .left, .right].contains(key) {
+                // The lit control shows the tint, the focus's hidden (K9):
+                // it gets the keys, the focus let go (N6, 2026-11-06: Space
+                // pressed the hidden one).
+                guard highlight.highlighted != nil else { return false }
+                dropFocus()
+            }
         case .none:
             break
         }

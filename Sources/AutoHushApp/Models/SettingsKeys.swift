@@ -12,8 +12,12 @@ import Foundation
 /// move along first. Return or Space presses the page's control. The
 /// pointer moves the highlight to its side too. Tab and Shift-Tab move as
 /// ↓ and ↑ (`HighlightKey`), and a control that has the focus takes Return, Space,
-/// ← and → itself, as in the menu (the full check, 2026-10-18). Delete
+/// ← and → itself while nothing is highlighted (the full check, 2026-10-18);
+/// once something is, its tint hides the focus's (K9), and it takes them
+/// (N6, 2026-11-06: whatever shows the tint gets the keys). Delete
 /// removes the highlighted control if it can be (an added app's tile).
+/// The sidebar's foot has the support link: ↑ and ↓ stop on it without
+/// opening it, Return or Space opens it (N7, 2026-11-06).
 /// Keys with nothing to act on do nothing, without a beep.
 @MainActor
 final class SettingsKeys {
@@ -45,10 +49,23 @@ final class SettingsKeys {
         side = .page
     }
 
+    /// Something is highlighted, on either side: its tint hides the focus's (K9).
+    var isLit: Bool { sidebar.highlighted != nil || page.highlighted != nil }
+
+    /// The page shown changed (a click on its row, Back or Forward, ↑ or ↓
+    /// in the sidebar): the sidebar's highlight follows it while the keys
+    /// put it there; the pointer's stays under the pointer, the tint alone,
+    /// with neither VoiceOver's cursor nor Zoom moved (N1, 2026-11-06: a
+    /// clicked row took the keys' outline while the pointer rested on it).
+    func pageChanged() {
+        if sidebar.isLitByKeys { sidebar.highlightCurrent() }
+    }
+
     /// Handles `key`; `false` leaves it to the window: Return, Space, ←
-    /// and → while a control has the keyboard's focus (`controlHasFocus`).
+    /// and → while a control has the keyboard's focus (`controlHasFocus`)
+    /// and nothing is highlighted.
     @discardableResult func handle(_ key: HighlightKey, controlHasFocus: Bool = false) -> Bool {
-        if controlHasFocus, [.returnKey, .space, .left, .right].contains(key) { return false }
+        if controlHasFocus, !isLit, [.returnKey, .space, .left, .right].contains(key) { return false }
         switch key {
         case .delete:
             return page.delete()
@@ -56,7 +73,7 @@ final class SettingsKeys {
             let step = key == .down ? 1 : -1
             if side == .sidebar, sidebar.highlighted != nil {
                 sidebar.move(step)
-                sidebar.press() // its page shows at once
+                showSidebarPage()
             } else {
                 // The sidebar let go of it (the pointer left): the page's.
                 side = .page
@@ -67,7 +84,7 @@ final class SettingsKeys {
             guard let jump = key.jump else { return false }
             if side == .sidebar, sidebar.highlighted != nil {
                 sidebar.jump(jump)
-                sidebar.press()
+                showSidebarPage()
             } else {
                 side = .page
                 page.jump(jump)
@@ -75,7 +92,11 @@ final class SettingsKeys {
             return true
         case .returnKey, .space:
             if side == .sidebar, sidebar.highlighted != nil {
-                page.move(1) // into the page: its first control
+                if sidebar.highlightedStandsForShown {
+                    page.move(1) // into the page: its first control
+                } else {
+                    sidebar.press() // the foot's link
+                }
             } else if key == .space {
                 page.select()
             } else {
@@ -96,5 +117,11 @@ final class SettingsKeys {
             sidebar.highlightCurrent() // back to the sidebar, on the page shown
             return true
         }
+    }
+
+    /// The page of the sidebar's highlighted row shows at once; the foot's
+    /// link opens only from Return or Space.
+    private func showSidebarPage() {
+        if sidebar.highlightedStandsForShown { sidebar.press() }
     }
 }

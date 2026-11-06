@@ -11,12 +11,14 @@ import AutoHushKit
 /// user, 2026-10-18: "add that little accent color to the whole box. Also,
 /// a click on the box should toggle Auto-Pause"): the menu's highlight and
 /// the switch's focus tint all of it, and a click anywhere on it but on its
-/// own buttons turns Auto-Pause on or off.
+/// own buttons turns Auto-Pause on or off. Lit by a key, VoiceOver's cursor
+/// goes to the switch, which Return and Space turn (N11, 2026-11-06).
 struct StatusCardView: View {
     let model: StatusMenuModel
     /// For the player's checks; none in a menu without Settings' model.
     var settings: SettingsModel?
     @FocusState private var autoPauseFocused: Bool
+    @AccessibilityFocusState private var autoPauseHasVoiceOverCursor: Bool
 
     private var status: AppStatus { model.status }
 
@@ -64,6 +66,7 @@ struct StatusCardView: View {
                     .controlSize(MenuSpacing.switchSize)
                     .focused($autoPauseFocused)
                     .focusEffectDisabled() // the whole card shows it
+                    .accessibilityFocused($autoPauseHasVoiceOverCursor)
                     Text(verbatim: AutoPauseText.title)
                         .font(.appCaption)
                         .foregroundStyle(.appSecondary)
@@ -92,7 +95,8 @@ struct StatusCardView: View {
         .contentShape(RoundedRectangle(cornerRadius: ClearGlassCard.cornerRadius, style: .continuous))
         .onTapGesture { model.perform(.toggleAutoPause) }
         .modifier(Highlightable(isFocused: autoPauseFocused, lightsItself: true, // the tint over the glass (`Card`)
-                                press: { model.perform(.toggleAutoPause) }))
+                                press: { model.perform(.toggleAutoPause) },
+                                voiceOverTarget: $autoPauseHasVoiceOverCursor))
         .padding(.horizontal, 8)
         .padding(.top, 4)
         .padding(.bottom, 2)

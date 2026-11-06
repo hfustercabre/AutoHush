@@ -205,10 +205,24 @@ final class SettingsModel {
         actions?.setBackupSwitches(switches)
     }
 
+    /// The page a row or button shows next lights its first control, as the
+    /// arrow keys would (`SettingsPageView`): pressed by a key, or while
+    /// VoiceOver is on, so VoiceOver's cursor goes to the new page instead of
+    /// staying on what's gone (N8, the a11y audit, 2026-11-06).
+    var shownPageTakesHighlight = false
+
     /// Shows Sound Sources: General's row under the Auto-Pause switch (A1,
-    /// the user's pick, 2026-11-02).
-    func showSoundSources() {
-        actions?.openSettings(page: .soundSources)
+    /// the user's pick, 2026-11-02), its first control highlighted if
+    /// `byKeyboard`.
+    func showSoundSources(byKeyboard: Bool = false) {
+        showPage(.soundSources, byKeyboard: byKeyboard)
+    }
+
+    /// Shows `page` (General's Change…), its first control highlighted if
+    /// `byKeyboard` (`shownPageTakesHighlight`).
+    func showPage(_ page: SettingsPage, byKeyboard: Bool = false) {
+        shownPageTakesHighlight = byKeyboard
+        actions?.openSettings(page: page)
     }
 
     /// The row with Check Now: what the last check found ("AutoHush 0.3.11

@@ -2,7 +2,12 @@ import SwiftUI
 
 /// "Would you like to support me?" with the Buy me a coffee link under it, at
 /// the foot of Settings' sidebar: the question small, the cup on the link.
+/// The arrow keys and the pointer highlight the link, as the sidebar's
+/// rows; Return or Space opens it (N7, 2026-11-06: Tab moves as ↓, and
+/// nothing else reached it).
 struct SupportLine: View {
+    @Environment(\.openURL) private var openURL
+
     var body: some View {
         VStack(spacing: 2) {
             question.font(.appCaption).foregroundStyle(.appSecondary)
@@ -10,6 +15,7 @@ struct SupportLine: View {
                 Label { link } icon: { Image(systemName: "cup.and.saucer") }
             }
             .font(.appCallout)
+            .modifier(HighlightableControl(cornerRadius: 6, outset: 4, press: { openURL(ProjectInfo.supportPage) }))
         }
     }
 

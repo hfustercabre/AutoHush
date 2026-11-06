@@ -236,7 +236,7 @@ mode; only Settings' sidebar keeps one of its own.
 | `PlayerControlsCard` | Settings → Fine-Tuning's first card (F4, 2026-11-05; Media Player's before, B1, which keeps a `FineTuningRow` to it), titled with the chosen player's name: **Main control**, a borderless pop-up as About's (`PopUpOpener`; Return or Space shows it, ← and → choose) of the controls that can be its main one (its own (shown as "<control> (Recommended)") and the others that worked in its check, in their order, the Now Playing panel last after a separator (← and → step through them in that order); one that can be chosen once learned (a player's page before its button is) listed dimmed in its place as "<control> (not learned yet)", not selectable (the user, 2026-11-05); never the Play/Pause key), each item with its check's mark (`WayRow`'s symbols, drawn in their colors), the chosen one's note under it as Add an App says it (a caption, or the warning `NoteLabel` "Not with its window …"); with one control only, a plain row, its name in `appSecondary` (dimmed for an app to check again or a web app not learned). Then **Use backup controls** ("Tries another one when one fails"), then, in a `DependentRow`, **Use the Now Playing panel while muted** ("Opens on screen for a moment"), dimmed with the info note "Use backup controls is off" while the first is off (shown only while the panel is a backup control: as the main control it has no switch and is pressed while muted as any main one; the user, 2026-11-05), then a **Details…** chip, and Restore Defaults under the card once a switch is off or another main control is chosen (its own back, both switches on; the panel's only while it shows). A change keeps the player, so a pause AutoHush holds stays. An app added before backup controls were kept: the first switch dimmed and off, the info note "Check <app> again to use backup controls." and a **Check Again…** chip; a web app not learned yet: dimmed, "Controls not learned". No card while no player is chosen, nor for one that's only muted. Add an App's last step has the same two switches under the ways' cards (the second shown, not dimmed, only while the first is on and the panel is one of its controls), without Details…: its cards say how each way did. |
 | `ControlDetailsView` | Details…'s sheet over Settings (the first sheet there, 2026-11-05: the player's controls as a list, which no row could hold): the player's name in `appHeadline`, then **Main Control** (the one chosen in Fine-Tuning) and **Backup Controls** as `SectionLabel`s, each control a `WayRow` (its mark, its name, how its check found it), the Play/Pause key with "Only while <player> is Now Playing" and the not-tried mark (no check tests it); with backups off, "Use backup controls is off" under the heading and the list at 60 % opacity. **Done** is its `MainButton` (Return), Escape closes it too (a hidden button with `.cancelAction`: the sheet has no focused view for `onExitCommand`); a way checked with the app's windows closed says so, as in Add an App. |
 | `PopUpOpener` | Opens a pop-up (a `Picker` in `.menu` style) from the keys: Return or Space on the arrow keys' highlight shows its choices, as on a pop-up with the keyboard's focus; ← and → still step through them (N2, 2026-10-27: About's update pop-up, then Sound Sources' Sort by, and Fine-Tuning's Main control, 2026-11-05). `opened(by:)` puts it behind the pop-up, where it finds the AppKit pop-up button and clicks it. |
-| `RestoreDefaultsButton` | In the footer of every card with settings (`SettingsCard`; `SettingsModel.isDefault` and `restoreDefaults`), on the right, shown only once one of them differs from its default (RD1, 2026-10-26: a dimmed one under every card was clutter): sets that card's settings back; what's greyed out stays as it is (Modes' turns AntiDot mode off; Detection's sets AntiDot mode's way back in AntiDot mode, the silence threshold out of it; Startup and Menu Bar's no longer keeps the icon beside the system's, leaving it where it is, and leaves launch at login alone, which doesn't count: it's the user's Mac setup, I1, 2026-10-27; Updates' checks daily and installs automatically; the player's controls' (Fine-Tuning's first card) puts its own main control back and turns both its switches back on, the panel's while it shows, dimmed or not). VoiceOver reads it as “Restore Defaults, <the card's title>” (`Card` hands its title to its footer, `cardTitle`; I3, 2026-10-27). Gone once pressed, so VoiceOver says “Restored”, and a press from the arrow keys leaves their highlight on the card's first usable row (U2, 2026-10-27; each `Card` is a `highlightGroup`). **Edit → Undo** (⌘Z) brings back everything it changed, showing its card's page; one step per press, named with the button's own title (“Undo Restore Defaults”); Sound Sources' removals are undone the same way (“Undo Remove”), each app back in its place and still ignored if it was; Reset List… can't be undone; the window's undo steps are forgotten when it closes (U10a, 2026-11-02). |
+| `RestoreDefaultsButton` | In the footer of every card with settings (`SettingsCard`; `SettingsModel.isDefault` and `restoreDefaults`), on the right, shown only once one of them differs from its default (RD1, 2026-10-26: a dimmed one under every card was clutter): sets that card's settings back; what's greyed out stays as it is (Modes' turns AntiDot mode off; Detection's sets AntiDot mode's way back in AntiDot mode, the silence threshold out of it; Startup and Menu Bar's no longer keeps the icon beside the system's, leaving it where it is, and leaves launch at login alone, which doesn't count: it's the user's Mac setup, I1, 2026-10-27; Updates' checks daily and installs automatically; the player's controls' (Fine-Tuning's first card) puts its own main control back and turns both its switches back on, the panel's while it shows, dimmed or not). VoiceOver reads it as “Restore Defaults, <the card's title>” (`Card` hands its title to its footer, `cardTitle`; I3, 2026-10-27). Gone once pressed, so VoiceOver says “Restored”, and a press from the arrow keys (or any press while VoiceOver is on, N8) leaves their highlight on the card's first usable row (U2, 2026-10-27; each `Card` is a `highlightGroup`). **Edit → Undo** (⌘Z) brings back everything it changed, showing its card's page; one step per press, named with the button's own title (“Undo Restore Defaults”); Sound Sources' removals are undone the same way (“Undo Remove”), each app back in its place and still ignored if it was; Reset List… can't be undone; the window's undo steps are forgotten when it closes (U10a, 2026-11-02). |
 | `SupportLine` | "Would you like to support me?" with its link, at the foot of Settings' sidebar (the question in `appCaption`, the cup on the link). |
 | `LearningSteps` | What the user does so AutoHush can learn a player (play it; AutoHush then pauses it), each step ticked in `.appSuccess` once seen. The step to do now is semibold, with an arrow in the accent color (`StepSymbol`). A step AutoHush does itself shows a spinner meanwhile; one it couldn't do gets an orange `xmark.circle.fill`, its reason as a `NoteLabel`, and two buttons side by side, the way forward in blue ("Try Again") and the other way grey ("Pause It Yourself"), which adds the user's own step. A step's buttons stay on one line each: when two don't fit side by side (longer languages), they go one under the other (`FlowingButtons`). The permission learning needs first is a step of the checklist too (`ChecklistStepRow`, `LearningPermissionStep`), the step to do now, with its `PermissionButton` under its lines. They show only in windows: the learning window, and Add a Web App once it has made the web app. |
 | `NumberedStepRow` | A step of a window whose steps go in order and are few (Add an App): its number in a circle while it's to come (`N.circle`, `.appSecondary`), filled with the accent color while it's the one to do (`N.circle.fill`, title semibold), a check in `.appSuccess` once done (title in `.appSecondary`), a spinner while AutoHush does it, an orange `xmark.circle.fill` once it failed (`StepSymbol` with its number, as a checklist's). All marks are 18 pt wide, so the titles line up. Under the title: its lines (`.captionStyle()`), what it needs (a list, permission rows, the ways found), a warning (`NoteLabel`), then its button, blue for the way forward (Return presses it), grey for another way on ("Skip"). The keyboard's focus moves to the main control of the step to do now. A failed check's **Show Log…** is dimmed while there's no log. The whole window shows every step from the start, so what's coming is clear before it begins. |
@@ -588,7 +588,11 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
     "degraded". While an update waits, it adds ", update available".
   - A short "Allow…" (`PermissionButton`, the welcome window) says its
     long words to VoiceOver, which name the permission ("Allow Audio
-    Recording Access…"), as Add an App's and the menu card's do.
+    Recording Access…"), as Add an App's, the menu card's and Diagnostics'
+    do; Diagnostics' "Choose…" says "Choose Player".
+  - A label that differs from the words shown keeps them for Voice
+    Control: the menu's "1 hr" reads "1 Hour" and takes both
+    (`accessibilityInputLabels`).
   - A slider says what it sets (Fine-Tuning's: the row's
     title) and its value as the row shows it ("0.5 s"); the row's own text
     is hidden from VoiceOver, so it's read once.
@@ -597,12 +601,15 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
     (`PlayerOption.spokenName`), as its icon's Safari badge shows; an app
     added through a check that's a Chromium browser's web app always reads
     whose it is ("SoundCloud, Google Chrome web app"), as its browser badge
-    shows; and an untested web app's menu row reads "Untested" after its
-    name.
+    shows; an untested web app's menu row reads "Untested" after its
+    name, and a menu row its subtitle after that ("Not installed", "Click
+    to add"). The Main control pop-up's marks say how the check found
+    each control, in Details…' words.
 - **Switches are one stop:** a row's title and description are hidden
   from VoiceOver, the switch takes the title as its name and the
   description (or why it's dimmed) as its hint (`SwitchRow`; in the menu
-  `MenuSwitchRow`: Playing Now's apps).
+  `MenuSwitchRow`: Playing Now's apps; Sound Sources' rows). A row's title
+  that a control says as its label is hidden too (Detection's "Detect by").
 - **Decorative images** (app icons beside their names, symbols beside text,
   the menu toolbar's symbols, the chevrons, the chevron that says more is
   below) are hidden from VoiceOver.
@@ -622,7 +629,9 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   at high priority, that the check blocks the mouse and keys (its note,
   which says Escape ends it). On the welcome window's permissions, each
   one that turns allowed ("Automation allowed"), then "Done is available"
-  once nothing's missing.
+  once nothing's missing. The welcome window's new page, by its title, as
+  Continue and Back change it. Choose an App's selected app, with its line,
+  as ↑ and ↓ in its search move it (at low priority).
 - **Searches say what they found:** once typing pauses half a second,
   VoiceOver hears how many items the list shows ("3 results", a plural
   string) or its own words for none ("No apps match “…”."), at low
@@ -652,7 +661,13 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   reads, and nothing is announced besides, so it's said once; Zoom is told
   where it is (`ZoomFocus`, once it's scrolled into view). The pointer's
   highlight moves neither, as VoiceOver's cursor doesn't follow the mouse
-  (A3, 2026-11-01).
+  (A3, 2026-11-01). On a view of several elements, VoiceOver goes to the
+  control its press changes (the menu's card: the Auto-Pause switch,
+  `Highlightable.voiceOverTarget`). A row or button that shows other
+  content (Behavior's rows to Fine-Tuning, General's Sound Sources row and
+  Change…, Restore Defaults), pressed by a key or while VoiceOver is on,
+  lights the first control of what it showed, so VoiceOver's cursor isn't
+  left on what's gone (N8, 2026-11-06).
 - **Reduce Motion:** nothing slides or scrolls with an animation: the
   menu's panel grows at once, the highlight's reveal (`RevealsKeyHighlight`)
   and `ScrollDriver` jump, and Sound Sources' rows don't slide as the list
@@ -670,7 +685,9 @@ Space presses the lit control, and Return is always the window's main
 button (Continue, Done, Start the Check), doing nothing while it's
 dimmed, as in macOS's dialogs; Escape is as before. In the welcome
 window, a letter typed while something is lit goes to the search, ↓
-from the search goes into the tiles, and ↑ there stays the field's. A
+from the search goes into the tiles, and ↑ there stays the field's; in
+Add a Web App, it goes into the address. Shift-Tab in a field does
+nothing. They open with nothing focused but a field, as Settings does. A
 window's bottom bar is a band of its own, after its page. On a
 prominent (blue, filled) button the keys' highlight is a 2 pt accent ring
 2 pt outside it, as macOS's focus ring (P1), wherever one can be lit,
@@ -716,7 +733,10 @@ standard ones**:
   along a row of tiles; Return or Space presses the one it's on, ← and →
   change a slider or a choice; on any other control, ← goes to the
   sidebar, on the page shown, where ↑ and ↓ show each page at once, and →
-  or Return goes back into the page (`SettingsKeys`, `HighlightKey`).
+  or Return goes back into the page (`SettingsKeys`, `HighlightKey`); past
+  the last page, ↓ stops on the Buy me a coffee link at its foot, which
+  Return or Space opens. A click on a page's row keeps the pointer's
+  tint; the keys' highlight follows Back and Forward.
   **Page Up and Page Down** move the highlight about a page (as tall as
   what shows of the page or list), in its part (a list that scrolls, the
   buttons under it) and then into the next, and **Home and End** to the
@@ -724,11 +744,16 @@ standard ones**:
   2026-11-01: fn with the arrows on a laptop; Apple's standard keys). The
   pointer moves the same highlight, one at a time on either side; it never
   jumps to the sidebar's first page by itself. A key with nothing to act
-  on doesn't beep. A field being typed in keeps its keys.
+  on doesn't beep. A field being typed in keeps its keys, but ↓ and Tab,
+  which leave Sound Sources' search for the first app under it, and
+  Shift-Tab, which does nothing there; Escape closes that search, from
+  the field or a row.
 - **Tab and Shift-Tab** move the highlight as ↓ and ↑ do, everywhere
   but in a field being typed in (Tab leaves a search for the rows under
   it, as ↓). A control that took the focus from a click (with keyboard
-  navigation on) takes Return, Space, ← and → itself.
+  navigation on) takes Return, Space, ← and → itself while nothing is
+  highlighted; once something is, its tint hides the focus's, and it
+  takes them.
   In Settings → Sound Sources, Return switches the highlighted app and
   Space adds its row to the selection or takes it out, so **Remove** can
   take several. A switch row (Settings' `SwitchRow`, the menu's app rows)

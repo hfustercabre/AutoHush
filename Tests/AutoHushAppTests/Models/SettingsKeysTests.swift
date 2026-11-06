@@ -154,17 +154,68 @@ struct SettingsKeysTests {
         #expect(keys.page.highlighted == controls[0])
     }
 
-    @Test("a control with the focus keeps Return, Space, ← and → even while the pointer highlights another, as in the menu")
-    func focusKeepsKeys() {
+    @Test("a control with the focus keeps Return, Space, ← and → while nothing is highlighted; once something is, its tint hides the focus's and it takes them (N6)")
+    func focusKeepsKeysUntilSomethingIsLit() {
         let log = CallLog()
         let (keys, _, controls) = makeKeys(log: log)
-        keys.page.hover(controls[0], true) // the pointer rests on the switch row
         for key: HighlightKey in [.left, .right, .returnKey, .space] {
             #expect(!keys.handle(key, controlHasFocus: true), "\(key)")
         }
-        #expect(log.calls.isEmpty)
-        #expect(keys.handle(.space)) // no focus: the row the pointer is on
-        #expect(log.calls == ["switch"])
+        #expect(log.calls.isEmpty && !keys.isLit)
+        keys.page.hover(controls[0], true) // the pointer rests on the switch row
+        #expect(keys.isLit)
+        #expect(keys.handle(.space, controlHasFocus: true)) // the row the pointer is on, not the hidden focus
+        keys.page.hover(controls[0], false)
+        keys.page.hover(controls[1], true) // the slider
+        #expect(keys.handle(.right, controlHasFocus: true))
+        #expect(log.calls == ["switch", "slider 1"])
+    }
+
+    @Test("a click on a sidebar row the pointer rests on keeps the pointer's look, the keys' outline and VoiceOver's cursor left alone; Back or Forward moves the keys' highlight with the page (N1)")
+    func clickedRowKeepsThePointersLook() {
+        let keys = SettingsKeys()
+        var shown = "General"
+        let general = UUID(), detection = UUID()
+        keys.sidebar.register(general, .init(frame: CGRect(x: 0, y: 0, width: 200, height: 28),
+                                             press: { shown = "General" }, isCurrent: { shown == "General" }))
+        keys.sidebar.register(detection, .init(frame: CGRect(x: 0, y: 30, width: 200, height: 28),
+                                               press: { shown = "Detection" }, isCurrent: { shown == "Detection" }))
+        keys.sidebar.hover(detection, true)
+        #expect(keys.sidebar.press()) // the click: its page shows
+        keys.pageChanged()
+        #expect(shown == "Detection" && keys.sidebar.highlighted == detection)
+        #expect(!keys.sidebar.light(detection).byKeys && keys.sidebar.light(detection).arrivals == 0)
+        keys.sidebar.hover(detection, false)
+        // The keys on the sidebar (from the page, ←), then Back: the highlight follows the page.
+        keys.page.register(UUID(), .init(frame: CGRect(x: 0, y: 0, width: 400, height: 40), press: {}))
+        #expect(keys.handle(.down) && keys.handle(.left))
+        #expect(keys.sidebar.highlighted == detection && keys.sidebar.isLitByKeys)
+        shown = "General"
+        keys.pageChanged()
+        #expect(keys.sidebar.highlighted == general && keys.sidebar.isLitByKeys)
+    }
+
+    @Test("the sidebar's link at its foot: ↓ stops on it without opening it, Return or Space opens it, ↓ goes on round to the first page (N7)")
+    func sidebarLink() {
+        let log = CallLog()
+        let (keys, rows, controls) = makeKeys(log: log)
+        let link = UUID()
+        keys.sidebar.register(link, .init(frame: CGRect(x: 60, y: 600, width: 120, height: 18), band: .bottom,
+                                          press: { log.calls.append("open link") }))
+        keys.handle(.left) // the sidebar, on General
+        keys.handle(.down)
+        #expect(keys.handle(.down))
+        #expect(keys.sidebar.highlighted == link)
+        #expect(log.calls == ["show Detection"]) // the link not opened
+        #expect(keys.handle(.returnKey))
+        #expect(keys.handle(.space))
+        #expect(keys.sidebar.highlighted == link && keys.page.highlighted == nil)
+        #expect(keys.handle(.end)) // already the last
+        #expect(keys.handle(.down))
+        #expect(keys.sidebar.highlighted == rows[0])
+        #expect(log.calls == ["show Detection", "open link", "open link", "show General"])
+        #expect(keys.handle(.right)) // a page's row: into the page
+        #expect(keys.page.highlighted == controls[0])
     }
 
     @Test("← with nothing highlighted and no focus goes to the sidebar, on the page shown; clear() brings the keys back to the page")

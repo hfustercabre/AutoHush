@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// A card's Restore Defaults, under it on the right: it sets the card's own
@@ -5,8 +6,10 @@ import SwiftUI
 /// the user's pick, 2026-10-26: a dimmed one under every card was clutter).
 /// Gone once pressed, so VoiceOver says the card was restored, and a press
 /// from the arrow keys' highlight leaves it on the card's first row (U2,
-/// the user, 2026-10-27). VoiceOver reads it with the card's title, since a
-/// page can show five (I3, the user, 2026-10-27). Each press is a step for
+/// the user, 2026-10-27), and so does one while VoiceOver is on, whose cursor
+/// would stay on the button that's gone (N8, the a11y audit, 2026-11-06).
+/// VoiceOver reads it with the card's title, since a page can show five
+/// (I3, the user, 2026-10-27). Each press is a step for
 /// the Edit menu's Undo (U10a, 2026-11-02: `SettingsModel.restoreDefaults`).
 struct RestoreDefaultsButton: View {
     let model: SettingsModel
@@ -30,10 +33,12 @@ struct RestoreDefaultsButton: View {
     }
 
     private func restore() {
-        let byKeys = keyboard?.isPressing == true
+        let movesHighlight = keyboard?.isPressing == true || NSWorkspace.shared.isVoiceOverEnabled
         model.restoreDefaults(card)
-        AccessibilityNotification.Announcement(Self.restoredAnnouncement).post()
-        if byKeys, let group { keyboard?.highlightFirst(in: group) }
+        if movesHighlight, let group { keyboard?.highlightFirst(in: group) }
+        // At high priority: the highlight's move, which VoiceOver follows,
+        // would cut a plain announcement off (the review of N8, 2026-11-06).
+        postStepAnnouncement(Self.restoredAnnouncement)
     }
 
     private static var title: Text {

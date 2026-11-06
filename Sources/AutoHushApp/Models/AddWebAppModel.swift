@@ -110,6 +110,17 @@ final class AddWebAppModel {
         address = sites.site(region: country)
     }
 
+    /// The country `step` places on from the one chosen (← -1, → 1), in the
+    /// pop-up's order, "Other Countries" ("") last, stopping at its ends:
+    /// the arrow keys' highlight on the pop-up's row (N7, 2026-11-06).
+    func stepCountry(_ step: Int, in sites: CountrySites) {
+        let codes = countries(of: sites).map(\.code) + [""]
+        // At an end, nothing changes: choosing the same country again would
+        // put its bare site over an address typed after it.
+        guard let next = codes.stepping(from: country(in: sites), by: step), next != country(in: sites) else { return }
+        chooseCountry(next, in: sites)
+    }
+
     /// Ready for an address: `address`, or none.
     func reset(address: String = "") {
         self.address = address

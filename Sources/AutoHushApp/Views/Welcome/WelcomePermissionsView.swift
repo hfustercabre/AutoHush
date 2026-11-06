@@ -48,7 +48,11 @@ struct WelcomePermissionsView: View {
                 }
             }
         } bar: {
-            Button { model.showWelcomePlayers() } label: {
+            Button {
+                model.showWelcomePlayers()
+                // The page it shows, in the title bar VoiceOver doesn't read (N8, 2026-11-06).
+                postStepAnnouncement(PlayerChooserWindowController.title(asksPermissions: false))
+            } label: {
                 Text(verbatim: ButtonText.back)
             }
             .buttonStyle(.chip)

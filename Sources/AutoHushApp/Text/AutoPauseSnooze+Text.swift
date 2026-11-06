@@ -37,6 +37,13 @@ extension AutoPauseSnooze {
         }
     }
 
+    /// What Voice Control takes for its button: the words it shows ("1 hr"),
+    /// then VoiceOver's, in full, which needn't contain them, so "Click 1 hr"
+    /// finds it (VO10, the a11y audit, 2026-11-06: label in name).
+    var inputLabels: [String] {
+        [shortTitle, title]
+    }
+
     /// When the snooze ends, with its preposition so that each language can
     /// place it in a sentence: "until 15:30" today, otherwise "until tomorrow
     /// 8:00" (a snooze lasts 24 hours at most).
