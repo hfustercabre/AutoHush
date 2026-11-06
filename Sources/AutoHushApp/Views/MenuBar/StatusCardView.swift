@@ -9,8 +9,8 @@ import AutoHushKit
 /// and Change Player, which opens the players beside the menu
 /// (`CardPlayerRow`, H4, the user's pick, 2026-10-25). The whole card is Auto-Pause's (the
 /// user, 2026-10-18: "add that little accent color to the whole box. Also,
-/// a click on the box should toggle Auto-Pause"): the menu's highlight and
-/// the switch's focus tint all of it, and a click anywhere on it but on its
+/// a click on the box should toggle Auto-Pause"; grey since 2026-11-06): the
+/// menu's highlight and the switch's focus tint all of it, and a click anywhere on it but on its
 /// own buttons turns Auto-Pause on or off. Lit by a key, VoiceOver's cursor
 /// goes to the switch, which Return and Space turn (N11, 2026-11-06).
 struct StatusCardView: View {

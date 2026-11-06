@@ -88,6 +88,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **The menu and Settings highlight in grey:** what's under the pointer
+  takes macOS's faint grey, as the rows of the Sound, Wi-Fi and Bluetooth
+  menus do, instead of the accent color; the arrow keys' highlight keeps
+  its accent outline.
 - **Audio Recording is asked for only when you click its Allow…**
   (in the welcome window, the menu, Settings or Add an App): macOS's
   prompt no longer opens by itself at the first launch, over the

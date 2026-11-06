@@ -32,13 +32,15 @@ extension ShapeStyle where Self == Color {
     /// "Recommended" `HeadingBadge`, a chosen card's included).
     static var appAccent: Color { .accentColor }
     /// Behind the control the arrow keys or the pointer highlight, or the
-    /// keyboard's focus is on, in the menu and Settings (F5, the user's
-    /// pick, 2026-10-18): the system's accent color, faint; it follows
-    /// System Settings → Appearance.
-    static var focusTint: Color { Color(nsColor: .controlAccentColor).opacity(0.14) }
+    /// keyboard's focus is on, in the menu and Settings (F5, 2026-10-18):
+    /// macOS's faint grey (`systemFill`), as its own menus' rows under the
+    /// pointer (the user, 2026-11-06: "the same faint gray like macos
+    /// uses"; the accent color, faint, before). The keys add the accent
+    /// outline (`HighlightTint`).
+    static var focusTint: Color { Color(nsColor: .systemFill) }
     /// The same over the menu card's glass, which blends it away: a step
     /// stronger, so it shows as the rows' do (the user, 2026-10-18).
-    static var cardFocusTint: Color { Color(nsColor: .controlAccentColor).opacity(0.24) }
+    static var cardFocusTint: Color { Color.primary.opacity(0.15) }
     /// Icons for what works: Diagnostics' checks.
     static var appSuccess: Color { .green }
     /// A filled chip's background, at rest: the search field.

@@ -136,17 +136,17 @@ struct MenuPanelView: View {
 
     /// The player's own permission, missing while its backup controls stand
     /// in for it: allowing it, with why under it, as Use AntiDot Mode
-    /// Instead says what it trades (the user, 2026-11-05); lit, it takes the
-    /// tint, its words and triangle as they are (D2c).
+    /// Instead says what it trades (the user, 2026-11-05); lit, its words
+    /// and triangle stay as they are (D2c; every row since G2).
     private func backupsStandInRow(_ permission: Permission) -> some View {
-        MenuActionRow(twoLines: true, action: { model.perform(.resolveWarning(permission)) }) {
+        MenuActionRow(action: { model.perform(.resolveWarning(permission)) }) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.appWarning)
                 .accessibilityLabel(Text("Warning", comment: "VoiceOver label: this menu item needs attention"))
         } content: {
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: permission.grantTitle)
-                // Grey, lit too: the row takes the tint (D2c).
+                // Grey, lit too: the row takes the tint (D2c, G2).
                 Text(verbatim: BackupText.standingIn)
                     .font(.appCaption)
                     .foregroundStyle(.appSecondary)
@@ -159,15 +159,14 @@ struct MenuPanelView: View {
     }
 
     /// Use AntiDot Mode Instead, with what it trades under it (F2a,
-    /// 2026-11-02); VoiceOver hears that once, as its hint. Lit, it takes
-    /// the tint (D2c).
+    /// 2026-11-02); VoiceOver hears that once, as its hint.
     private var useAntiDotRow: some View {
-        MenuActionRow(twoLines: true, action: { model.perform(.useAntiDotMode) }) {
+        MenuActionRow(action: { model.perform(.useAntiDotMode) }) {
             Color.clear
         } content: {
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: PermissionText.useAntiDot)
-                // Grey, lit too: the row takes the tint (D2c).
+                // Grey, lit too: the row takes the tint (D2c, G2).
                 Text(verbatim: PermissionText.antiDotTradeOff)
                     .font(.appCaption)
                     .foregroundStyle(.appSecondary)

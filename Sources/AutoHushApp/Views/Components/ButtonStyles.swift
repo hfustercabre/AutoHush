@@ -68,7 +68,7 @@ struct ChipButtonStyle: PrimitiveButtonStyle {
         private var fill: AnyShapeStyle {
             guard isEnabled else { return AnyShapeStyle(.clear) }
             if isPressed { return AnyShapeStyle(.tertiary) }
-            // In the menu and Settings, `HighlightableControl` lights it in the accent color instead.
+            // In the menu and Settings, `HighlightableControl` lights it with its tint instead.
             return isHovered && keyboard == nil ? AnyShapeStyle(.chipHoverFill) : AnyShapeStyle(.clear)
         }
     }
