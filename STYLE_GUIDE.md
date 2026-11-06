@@ -782,7 +782,7 @@ above or under, else its first), in order through the rows that scroll
 and the buttons under them, and Return or Space presses the one it's on;
 ← and → move along a row of several (the durations, the buttons); →
 opens a side window from its row, its first row lit (or lights that row
-when the pointer opened it already), and ← closes it; on a slider or a
+when the pointer opened it already), and ← closes it (from the players' search too, while it's empty: with VoiceOver on, it has the keyboard); on a slider or a
 choice, ← and → change it; Page Up and Page Down move about a page of
 what scrolls, Home and End to the first and last row, as in Settings;
 Escape closes the side window, then the menu

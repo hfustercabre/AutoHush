@@ -145,6 +145,10 @@ package enum CheckReportLine {
     package static let blocked = "  your clicks, scrolling and keys are blocked"
     /// And free from this one (it may go on with why).
     package static let free = "  mouse and keyboard free again"
+    /// The check stops, asked by the user while input is blocked: Escape, or
+    /// the panel clicked during a drag (the check's own stop, not AutoHush's).
+    package static let escapeStop = "  Escape pressed: stopping"
+    package static let dragStop = "  the panel clicked during a drag: stopping"
 
     /// "  State 3 of 7: on another desktop".
     package static func windowState(_ index: Int, of count: Int, _ state: CheckResult.WindowState) -> String {

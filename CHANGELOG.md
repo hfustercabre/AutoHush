@@ -93,7 +93,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   scrolls with Page Up, Page Down, Home and End; VoiceOver says a
   pop-up's choice as the arrow keys reach it, what an app does now when
   Return switches it in Sound Sources, and the menu's row it goes back to
-  as the players close, and the menu no longer closes as they open with
+  as the players close (← in their empty search closes them too), and the
+  menu no longer closes as they open with
   VoiceOver on; Add a Web App's address field is outlined with Increase
   Contrast.
 - **The menu and Settings highlight in grey:** what's under the pointer

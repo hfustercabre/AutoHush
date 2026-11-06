@@ -50,6 +50,9 @@ package struct CheckProgress: Equatable, Sendable {
     package private(set) var requestSince: Date?
     /// From playercheck's "blocked" line until it says they're free again.
     private(set) var inputBlocked = false
+    /// The user stopped the check from the keyboard or the panel while
+    /// input was blocked (Escape), which the check does itself.
+    package private(set) var stopAsked = false
 
     package init() {}
 
@@ -79,6 +82,7 @@ package struct CheckProgress: Equatable, Sendable {
         }
         if line.hasPrefix(CheckReportLine.blocked) { inputBlocked = true }
         if line.hasPrefix(CheckReportLine.free) { inputBlocked = false }
+        if line.hasPrefix(CheckReportLine.escapeStop) || line.hasPrefix(CheckReportLine.dragStop) { stopAsked = true }
         if let step = CheckReportLine.windowState(in: line) {
             windowStep = WindowStep(index: step.index, count: step.count, state: step.state)
             // With its windows closed, nothing is moved (2026-10-27).

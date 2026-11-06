@@ -73,9 +73,10 @@ struct CheckPanelView: View {
             // VoiceOver hears that the keys stop working, and that Escape
             // ends the check, at high priority as a window's step: what
             // the check does to the app next mustn't cut it off (A7, 2026-11-01).
-            // Not again while it stops (Escape), as it puts the app back:
-            // VoiceOver said "stopping" (the a11y round 2's leftovers, 2026-11-06).
-            if blocked, !stopping { postStepAnnouncement(AddAppText.blockedNote) }
+            // Not again while it stops (its Stop, or Escape, which the check
+            // takes itself), as it puts the app back (the a11y round 2's
+            // leftovers, 2026-11-06).
+            if blocked, !stopping, !progress.stopAsked { postStepAnnouncement(AddAppText.blockedNote) }
         }
         // VoiceOver hears what the check asks (it waits for the user, against
         // a time limit), and that it stops.

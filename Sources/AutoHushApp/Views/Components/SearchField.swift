@@ -26,6 +26,10 @@ struct SearchField: View {
     var onSubmit: (() -> Void)?
     /// ↑ and ↓ in it, for a list under it whose selection they move (-1, 1).
     var onMove: ((Int) -> Void)?
+    /// ← in it while it's empty (with text, it moves the caret): the menu's
+    /// side window closes, as ← closes it from its rows (with VoiceOver on,
+    /// the field has the keyboard from the start; 2026-11-06).
+    var onLeftWhileEmpty: (() -> Void)?
     @FocusState private var isFocused: Bool
 
     /// How long typing pauses before VoiceOver hears the results: not over
@@ -48,6 +52,11 @@ struct SearchField: View {
             .onSubmit { onSubmit?() }
             .onKeyPress(.upArrow) { move(-1) }
             .onKeyPress(.downArrow) { move(1) }
+            .onKeyPress(.leftArrow) {
+                guard text.isEmpty, let onLeftWhileEmpty else { return .ignored }
+                onLeftWhileEmpty()
+                return .handled
+            }
             if let onClose {
                 clearButton(Text("Close search", comment: "The button that closes a search"), action: onClose)
             } else if !text.isEmpty {

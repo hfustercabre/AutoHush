@@ -37,6 +37,9 @@ struct WayChoicesTests {
         window.contentView?.layoutSubtreeIfNeeded()
         await TestWait.until { keys.highlight.rows.joined().count == 2 } // the two cards, not the page's way
         #expect(keys.highlight.rows.count == 2) // one under the other: ↑ and ↓ step through them
+        // Nothing lit by the pointer, wherever it rests: the window opens at the
+        // screen's corner (a VoiceOver check left it there: the first card lit).
+        keys.highlight.clear()
 
         #expect(keys.handle(.down)) // the menu's card, the recommended one
         #expect(keys.handle(.down)) // the panel's

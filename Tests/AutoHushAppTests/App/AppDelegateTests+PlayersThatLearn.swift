@@ -372,7 +372,10 @@ extension AppDelegateTests {
     func addedWebAppFoundLater() async {
         let (_, sut, webApp, listNow) = await webAppNotListed()
         listNow()
-        await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID }
+        // Chosen, then the window moves on to learning: the two land a moment apart.
+        await TestWait.until {
+            sut.status.chosenPlayerID == webApp.bundleID && sut.addWebApp.model.phase == .learning(name: "Quartet", alreadyThere: true)
+        }
         #expect(sut.addWebApp.model.problem == nil)
         #expect(sut.addWebApp.model.phase == .learning(name: "Quartet", alreadyThere: true),
                 "learning: \(String(describing: sut.status.learning)), window open: \(sut.addWebApp.isOpen)")

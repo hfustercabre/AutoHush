@@ -75,4 +75,11 @@ struct CheckProgressTests {
         #expect(!progress([Line.blocked + " until …", Line.free]).blocksInput)
         #expect(!progress([Line.blocked + " until …", Line.free + ": the check wrote nothing for 60 s"]).blocksInput)
     }
+
+    @Test("Escape, or the panel clicked during a drag, while input is blocked: the user asked the check to stop")
+    func stopAsked() {
+        #expect(!progress([Line.blocked + " until …"]).stopAsked)
+        #expect(progress([Line.blocked + " until …", Line.escapeStop]).stopAsked)
+        #expect(progress([Line.blocked + " until …", Line.dragStop]).stopAsked)
+    }
 }

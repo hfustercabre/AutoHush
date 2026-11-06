@@ -26,6 +26,9 @@ enum StatusMenuCommand: Equatable, Sendable {
     case ignoreAnotherApp
     /// Opens a part's side window (its row clicked), closing the other.
     case openSide(MenuSidePart)
+    /// Closes the side window, the menu staying open (← in the players'
+    /// empty search).
+    case closeSide
     /// The pointer came onto (`true`) or left a row that opens a side
     /// window: resting on it a moment opens it, as a submenu.
     case hoverSideRow(MenuSidePart, Bool)
@@ -73,7 +76,7 @@ extension StatusMenuCommand {
              .reopenPlayer, .unmutePlayer, .quit:
             true
         case .toggleAutoPause, .setIgnored, .choosePlayer, .searchPlayers, .typeInSearch, .moveHighlight, .chooseHighlighted,
-             .openSide, .hoverSideRow, .pointerEntered, .retry, .retryResume:
+             .openSide, .closeSide, .hoverSideRow, .pointerEntered, .retry, .retryResume:
             false
         }
     }

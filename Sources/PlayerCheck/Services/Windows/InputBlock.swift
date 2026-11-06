@@ -144,7 +144,7 @@ final class InputBlock: @unchecked Sendable {
             case .keyDown where event.getIntegerValueField(.keyboardEventKeycode) == Self.escape:
                 if stopAsked { return .drop }
                 stopAsked = true
-                return .stop("  Escape pressed: stopping")
+                return .stop(CheckReportLine.escapeStop)
             case .mouseMoved:
                 return drag ? .drop : .pass
             case .leftMouseDown, .rightMouseDown, .otherMouseDown:
@@ -152,7 +152,7 @@ final class InputBlock: @unchecked Sendable {
                 if drag {
                     if stopAsked { return .drop }
                     stopAsked = true
-                    return .stop("  the panel clicked during a drag: stopping")
+                    return .stop(CheckReportLine.dragStop)
                 }
                 pressedOnPanel.insert(button)
                 return .pass

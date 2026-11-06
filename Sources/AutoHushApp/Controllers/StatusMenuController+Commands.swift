@@ -36,6 +36,8 @@ extension StatusMenuController {
         case .openSide(let part):
             guard model.openSide != part else { return }
             open(part)
+        case .closeSide:
+            closeSide()
         case .hoverSideRow(let part, let inside):
             hoverSideRow(part, inside)
         case .pointerEntered(let section):

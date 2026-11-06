@@ -210,6 +210,16 @@ extension StatusMenuControllerTests {
         #expect(sut.model.openSide == .players)
     }
 
+    @Test("closing the side window (← in the players' empty search) leaves the menu open")
+    func closeSideCommand() {
+        let (sut, _) = menuWithAnAppIgnored()
+        defer { sut.remove() }
+        sut.perform(.openSide(.players))
+        sut.perform(.closeSide)
+        #expect(sut.model.openSide == nil && sut.isMenuOpen)
+        #expect(!StatusMenuCommand.closeSide.closesMenuFirst)
+    }
+
     @Test("a side window is closed each time the menu opens")
     func sideWindowClosedAsTheMenuOpens() {
         let (sut, _) = menuWithAnAppIgnored()
