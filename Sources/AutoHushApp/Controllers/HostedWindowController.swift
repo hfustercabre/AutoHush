@@ -158,6 +158,47 @@ class HostedWindowController: NSWindowController {
         edgeObservers = []
     }
 
+    // MARK: - Off another app's dialog
+
+    /// Where it was before `moveAside(of:)` moved it, and where it put it
+    /// (top left corners).
+    private var aside: (from: NSPoint, to: NSPoint)?
+
+    /// Moved beside `obstacle` (another app's dialog, from the main
+    /// screen's top left corner, as Accessibility gives it) when it covers
+    /// part of it: to its left, else its right, its top edge kept, else
+    /// below it, on its screen (the 1.3.0 live round, 2026-11-05: Add a
+    /// Web App covered Safari's Add button; the user, 2026-11-06: "Okay,
+    /// move it"). Left where it is when it covers none of it, or nowhere
+    /// fits; `returnFromAside()` puts it back.
+    func moveAside(of obstacle: CGRect) {
+        guard aside == nil, let window, window.isVisible, let main = NSScreen.screens.first else { return }
+        let dialog = NSRect(x: obstacle.minX, y: main.frame.maxY - obstacle.maxY, width: obstacle.width, height: obstacle.height)
+        let frame = window.frame
+        guard frame.intersects(dialog), let area = (window.screen ?? cornerScreen())?.visibleFrame else { return }
+        let gap = Self.cornerMargin
+        let places = [
+            NSPoint(x: dialog.minX - gap - frame.width, y: frame.maxY),
+            NSPoint(x: dialog.maxX + gap, y: frame.maxY),
+            NSPoint(x: frame.minX, y: dialog.minY - gap),
+        ]
+        guard let place = places.first(where: { topLeft in
+            let moved = NSRect(x: topLeft.x, y: topLeft.y - frame.height, width: frame.width, height: frame.height)
+            return area.contains(moved) && !moved.intersects(dialog)
+        }) else { return }
+        aside = (from: NSPoint(x: frame.minX, y: frame.maxY), to: place)
+        window.setFrameTopLeftPoint(place)
+    }
+
+    /// Back where it was before `moveAside(of:)`, unless the user moved it
+    /// since.
+    func returnFromAside() {
+        guard let aside, let window else { return }
+        self.aside = nil
+        guard abs(window.frame.minX - aside.to.x) < 1, abs(window.frame.maxY - aside.to.y) < 1 else { return }
+        window.setFrameTopLeftPoint(aside.from)
+    }
+
     // MARK: - The keys
 
     /// The highlight the arrow keys and the pointer move (`WindowKeys`), if

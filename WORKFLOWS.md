@@ -437,7 +437,7 @@ flowchart TD
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-Safari’s own **Add to Dock** makes the web app; AutoHush walks you there, its window staying above other apps in the top-right corner. It asks the site once whether it answers, without cookies or a cache. Any website added to the Dock from Safari by hand is offered as a player too, marked Untested unless it’s one of the five tested sites.
+Safari’s own **Add to Dock** makes the web app; AutoHush walks you there, its window staying above other apps in the top-right corner, beside Safari's Add to Dock window while that shows. It asks the site once whether it answers, without cookies or a cache. Any website added to the Dock from Safari by hand is offered as a player too, marked Untested unless it’s one of the five tested sites.
 
 ## Safari web apps: learning and pausing
 

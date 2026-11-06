@@ -307,6 +307,25 @@ extension AppDelegateTests {
         await TestWait.until { !scratch.addWindow.isOpen }
     }
 
+    @MainActor
+    @Test("while Safari's dialog shows, the add window moves off it, and back once the web app is made")
+    func addWindowOffTheDialog() async {
+        let scratch = Scratch()
+        let (webApp, _) = scratch.makesWebApp(named: "Quartet")
+        let dialog = CGRect(x: 600, y: 120, width: 480, height: 300)
+        scratch.maker.dialog = dialog
+        let (sut, _) = makeSUT(scratch)
+
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.quartet.example"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.quartet.example") }
+        sut.addWebApp.model.addTapped()
+        await TestWait.until { sut.status.chosenPlayerID == webApp.bundleID && scratch.addWindow.moves.count == 2 }
+        #expect(scratch.addWindow.obstacles == [dialog])
+        #expect(scratch.addWindow.moves == ["aside", "back"])
+    }
+
     /// What the user does while the add window says the web app made isn't found.
     enum WhileNotFound: CaseIterable, Sendable {
         case addressChanged, windowClosed

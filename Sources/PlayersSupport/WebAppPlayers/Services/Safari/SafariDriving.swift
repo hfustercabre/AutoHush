@@ -17,8 +17,9 @@ package protocol SafariDriving: Sendable {
     /// Chooses File → Add to Dock, makes sure the dialog has `url` (the page
     /// may have moved), and waits while the user names the web app and
     /// clicks Add (or Cancel) there. If the task is cancelled meanwhile, it
-    /// clicks the dialog's Cancel.
-    func addToDock(_ url: URL) async -> AddToDockResult
+    /// clicks the dialog's Cancel. `dialogShown` gets the dialog's frame
+    /// once it shows (from the main screen's top left corner).
+    func addToDock(_ url: URL, dialogShown: @escaping @Sendable (CGRect) -> Void) async -> AddToDockResult
     /// Closes `tab` (its window, when it's the window's only tab), if it's
     /// still the one in front showing the same page: never a tab the user
     /// moved to since.

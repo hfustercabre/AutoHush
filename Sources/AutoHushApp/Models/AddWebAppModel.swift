@@ -191,6 +191,7 @@ final class AddWebAppModel {
             closedWithoutAdding = false
             phase = .adding
         case .notAdded:                 closedWithoutAdding = true
+        case .dialog:                   break // the window moves off it (`AddWebAppFeature`)
         case .made(let app):
             closedWithoutAdding = false
             madeBundleID = app.bundleID
