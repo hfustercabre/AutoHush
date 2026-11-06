@@ -44,6 +44,25 @@ extension StatusMenuControllerTests {
         #expect(!sut.model.isChoosingPlayer)
     }
 
+    @Test("closing the players with ← brings the keys' highlight back to the menu's row, so VoiceOver's cursor goes there, not to the card's text (VO1)")
+    func closingReturnsToTheRow() throws {
+        let sut = menuWithTwoPlayers()
+        defer { sut.remove() }
+        // The card's Change Player row, as its view registers it, lit by the keys.
+        let row = UUID()
+        sut.model.keyboard.register(row, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 30),
+                                               press: { sut.perform(.openSide(.players)) }))
+        sut.model.keyboard.move(1)
+        let lit = try #require(sut.model.keyboard.highlighted)
+        #expect(sut.model.keyboard.isLitByKeys)
+        let before = sut.model.keyboard.light(lit).arrivals
+        sut.perform(.openSide(.players))
+        #expect(sut.handleKey(MenuPanelTests.key(123))) // ←
+        #expect(!sut.model.isChoosingPlayer)
+        #expect(sut.model.keyboard.highlighted == lit)
+        #expect(sut.model.keyboard.light(lit).arrivals == before + 1) // arrived again: VoiceOver and Zoom follow
+    }
+
     @Test("among the players, Return with nothing highlighted and nothing typed chooses nothing")
     func returnWithNoPlayerHighlighted() {
         let sut = menuWithTwoPlayers()

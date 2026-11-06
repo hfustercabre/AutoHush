@@ -286,6 +286,27 @@ final class SettingsWindowControllerTests {
         #expect(!sut.handleKey(53, flags: [], windowNumber: window.windowNumber)) // no search open: not taken
     }
 
+    @Test("Sound Sources' search taking the keyboard lets go of the keys' highlight: one focus at a time (the a11y audit's live check)")
+    func searchTakesTheHighlight() async throws {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        let apps = [AudioSource(id: "com.example.arc", name: "Arc"), AudioSource(id: "com.example.brave", name: "Brave")]
+        preferences.recordSeen(apps)
+        let model = SettingsModel.forTests(actions: actions, updates: updates, settings: UserSettings(preferences: preferences))
+        model.state.status.seenApps = apps
+        let sut = makeController(model)
+        defer { sut.close() }
+        sut.show(page: .soundSources)
+        let window = try #require(sut.window)
+        await TestWait.until { sut.keys.page.rows.count >= 3 }
+        #expect(sut.handleKey(123, flags: [], windowNumber: window.windowNumber)) // ←: the sidebar, lit by the keys
+        #expect(sut.keys.isLit)
+        model.appList.search = ""
+        await TestWait.until { window.contentView?.firstEditableTextField != nil }
+        window.makeFirstResponder(try #require(window.contentView?.firstEditableTextField))
+        await TestWait.until { !sut.keys.isLit }
+        #expect(!sut.keys.isLit)
+    }
+
     @Test("on Diagnostics, End reaches Show Logs… after every part, however far the form is scrolled (N3)")
     func diagnosticsButtonsLast() async throws {
         let model = makeModel()

@@ -228,7 +228,7 @@ struct PlayerTiles: View {
             .padding(.horizontal, Self.inset)
             .frame(maxWidth: .infinity)
             .frame(height: Self.tileHeight)
-            .chosenOutline(isSelected, solid: true)
+            .chosenOutline(isSelected)
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 10)) // lights up under the pointer; dims while disabled
         // Beside the click, which picks it first (U4b, the user, 2026-11-02).

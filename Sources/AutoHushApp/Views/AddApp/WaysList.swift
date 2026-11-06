@@ -32,6 +32,10 @@ struct WayRow: View {
     /// Inside a choice card, whose button says it (`WayChoices.card`): not
     /// an element of its own, so "Works" is said once (2026-10-29).
     var inCard = false
+    /// On a chosen card's selection color: its words, marks and badge
+    /// white, as a chosen tile's (KB2a, the a11y audit's KB2, the user's
+    /// pick, 2026-11-06).
+    var onSelection = false
 
     var body: some View {
         if inCard {
@@ -49,30 +53,40 @@ struct WayRow: View {
 
     private var row: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Self.symbol(way.mark).accessibilityHidden(true)
+            Self.symbol(way.mark, onSelection: onSelection).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 // On their shared baseline: centered, the badge left the row's
                 // baseline (which the mark follows) undecided, and macOS 14
                 // crashed laying the window out again and again (2026-10-16).
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(verbatim: WayText.title(way.kind)).fixedSize(horizontal: false, vertical: true)
-                    if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true) }
+                        .foregroundStyle(onSelection ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+                    if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true, onSelection: onSelection) }
                 }
                 // A way's exception (it works, but not in every window state)
                 // as a warning: the orange triangle, the words in the primary
                 // color (O3, the user's pick, 2026-10-27: W4's orange words read
                 // at 1.7:1 on the chosen card in light mode), on every such way,
                 // chosen or not (N3b, the user's pick, 2026-10-27: the recommended
-                // one alone before).
+                // one alone before). On a selection, white, its triangle too.
                 if way.mark == .some {
-                    NoteLabel(AddAppText.wayNote(way, app: app, windowsClosed: windowsClosed), font: .appCaption)
+                    NoteLabel(AddAppText.wayNote(way, app: app, windowsClosed: windowsClosed), font: .appCaption, onSelection: onSelection)
                 } else {
-                    Text(verbatim: AddAppText.wayNote(way, app: app, windowsClosed: windowsClosed)).captionStyle()
+                    caption(AddAppText.wayNote(way, app: app, windowsClosed: windowsClosed))
                 }
                 if soundOnly {
-                    Text(verbatim: AddAppText.panelSoundOnly).captionStyle()
+                    caption(AddAppText.panelSoundOnly)
                 }
             }
+        }
+    }
+
+    /// A grey caption; white on a selection.
+    @ViewBuilder private func caption(_ text: String) -> some View {
+        if onSelection {
+            Text(verbatim: text).font(.appCaption).foregroundStyle(.white).fixedSize(horizontal: false, vertical: true)
+        } else {
+            Text(verbatim: text).captionStyle()
         }
     }
 
@@ -90,13 +104,15 @@ struct WayRow: View {
     /// The panel that worked, its row showing no state: only its sound tells.
     private var soundOnly: Bool { way.kind == .panel && way.worked && panelNeedsSound }
 
-    @ViewBuilder static func symbol(_ mark: CheckResult.Mark) -> some View {
-        switch mark {
-        case .works: Image(systemName: "checkmark.circle.fill").foregroundStyle(.appSuccess)
-        case .some: Image(systemName: "exclamationmark.circle.fill").foregroundStyle(.appWarning)
-        case .none, .notThere: Image(systemName: "xmark.circle.fill").foregroundStyle(.appSecondary)
+    /// A check's mark in its color; white on a selection (KB2a).
+    static func symbol(_ mark: CheckResult.Mark, onSelection: Bool = false) -> some View {
+        let (name, color): (String, AnyShapeStyle) = switch mark {
+        case .works: ("checkmark.circle.fill", AnyShapeStyle(.appSuccess))
+        case .some: ("exclamationmark.circle.fill", AnyShapeStyle(.appWarning))
+        case .none, .notThere: ("xmark.circle.fill", AnyShapeStyle(.appSecondary))
         case .notTried, .notChecked, .noWindow, .noAutomation, .noAccessibility, .menuBarHidden, .toggleOnly:
-            Image(systemName: "minus.circle").foregroundStyle(.appSecondary)
+            ("minus.circle", AnyShapeStyle(.appSecondary))
         }
+        return Image(systemName: name).foregroundStyle(onSelection ? AnyShapeStyle(.white) : color)
     }
 }

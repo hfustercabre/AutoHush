@@ -97,6 +97,10 @@ This project follows [Semantic Versioning](https://semver.org/).
   it's on.
 - **Tab and Shift-Tab** move the highlight as ↓ and ↑ do, in the menu,
   Settings and AutoHush's windows, with the same highlight.
+- **Easier to read and reach:** Add an App's ways can be chosen from the
+  keyboard, the chosen one shown as a selected player; the Main control
+  list says in words how each control did in its check; faint texts are
+  easier to read, and a search's ✕ easier to click.
 - **A click anywhere on a row with a list** shows its choices, as a click
   on a switch's row turns it: "When an update is found" in Settings →
   About, "Your account's country" in Add a Web App.
@@ -158,7 +162,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   add"…), the app chosen with ↑ ↓ in a search, Auto-Pause on the menu's
   card, which permission Diagnostics' Allow… asks for, and "Restored"
   after Restore Defaults; titles aren't read twice; Voice Control matches
-  the names shown.
+  the names shown; closing the players puts it back on Change Player, and
+  typing in Sound Sources' search drops the keys' outline.
 - **Add a Web App** moves beside Safari's Add to Dock window while it
   shows, and back after: it could cover its Add button.
 - **Escape** presses Cancel (or Later) again in Add an App, Choose an

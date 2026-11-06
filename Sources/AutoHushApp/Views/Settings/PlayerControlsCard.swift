@@ -7,7 +7,7 @@ import CheckedPlayers
 /// 2026-11-05; Media Player's before, B1), titled with the chosen player's
 /// name: "Main control", a pop-up of the controls that can be its main one
 /// (`PlayerControls.choices`, the recommended one so named, each with its
-/// check's mark), the chosen one's note under it as Add an App says it; its
+/// check's result in words and its mark), the chosen one's note under it as Add an App says it; its
 /// one control read only when there's nothing to choose. Then "Use backup
 /// controls" and, under it while the panel is a backup, "Use the Now
 /// Playing panel while muted" (dimmed, with a note, while the first is off), Details… (its controls
@@ -111,13 +111,12 @@ struct PlayerControlsCard: View {
         }, isCurrent: isFocus)
     }
 
-    /// A pop-up item: the control's name ("… (Recommended)" for its own),
-    /// with how its check found it.
+    /// A pop-up item: the control's name with how its check found it, in
+    /// words and its mark (`itemTitle`).
     /// One not learned yet ("… (not learned yet)") is dimmed and can't be chosen.
     private func item(_ control: PlayerControls.Control, controls: PlayerControls) -> some View {
-        let name = WayText.control(control.kind)
         let notYet = controls.notYetChoices.contains(control)
-        let title = notYet ? BackupText.notLearnedYet(name) : control.kind == controls.recommended ? BackupText.recommended(name) : name
+        let title = Self.itemTitle(control, recommended: control.kind == controls.recommended, notYet: notYet)
         return Label {
             Text(verbatim: title)
         } icon: {
@@ -125,6 +124,19 @@ struct PlayerControlsCard: View {
         }
         .tag(control.kind)
         .selectionDisabled(notYet)
+    }
+
+    /// A pop-up item's title: the control's name and, in brackets, how its
+    /// check found it ("AppleScript (Recommended, works)", "Its playback
+    /// menu (works)"), so VoiceOver reads what its mark shows (VO7b, the
+    /// a11y audit's VO7, the user's pick, 2026-11-06: a menu item's image
+    /// isn't read, its description neither); one not learned yet, "… (not
+    /// learned yet)".
+    static func itemTitle(_ control: PlayerControls.Control, recommended: Bool, notYet: Bool) -> String {
+        let name = WayText.control(control.kind)
+        if notYet { return BackupText.notLearnedYet(name) }
+        let result = BackupText.result(control.found?.mark ?? .notTried)
+        return recommended ? BackupText.recommended(name, result) : BackupText.found(name, result)
     }
 
     /// The card's rows stand for what Media Player's Controls row opened:

@@ -49,6 +49,10 @@ extension StatusMenuController {
         model.sideKeyboard.clear()
         sideCloseTask?.cancel()
         showSide()
+        // VoiceOver's cursor goes back to the row that opened it, as the
+        // keys' highlight does, not to the card's text (VO1, the a11y audit,
+        // 2026-11-06: Escape left it on the card's line).
+        if model.keyboard.isLitByKeys || NSWorkspace.shared.isVoiceOverEnabled { model.keyboard.arriveAgain() }
     }
 
     /// The players' search takes the keyboard itself (the full check,

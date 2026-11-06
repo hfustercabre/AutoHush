@@ -39,10 +39,31 @@ struct BackupTextTests {
         #expect(BackupText.summary(page) == "Its page’s Play/Pause · backups off")
     }
 
-    @Test("the pop-up names the recommended control so; the row is named as a web app's")
+    @Test("the row is named as a web app's")
     func names() {
-        #expect(BackupText.recommended("AppleScript") == "AppleScript (Recommended)")
         #expect(BackupText.mainControlRow == "Main control")
         #expect(BackupText.controls == "Controls")
+    }
+
+    @Test("each pop-up item says how its check found it in words, the recommended one so named (VO7b)", arguments: [
+        (WayOrder.Kind.script, "AppleScript (Recommended, works)"),
+        (.menu, "Its playback menu (works)"),
+        (.page, "Its page’s Play/Pause (works in some states)"),
+        (.panel, "The menu bar’s Now Playing panel (works)"),
+    ])
+    func itemTitles(_ kind: WayOrder.Kind, _ expected: String) throws {
+        let controls = PlayerControls.choosing()
+        let control = try #require(controls.listedChoices.first { $0.kind == kind })
+        #expect(PlayerControlsCard.itemTitle(control, recommended: kind == controls.recommended, notYet: false) == expected)
+    }
+
+    @Test("a control that didn't work, or that no check tried, says so; one not learned yet, only that (VO7b)")
+    func itemTitlesOtherResults() {
+        let failed = PlayerControls.Control(kind: .menu, result: .init(kind: .menu, mark: .none))
+        #expect(PlayerControlsCard.itemTitle(failed, recommended: false, notYet: false) == "Its playback menu (didn’t work)")
+        let untried = PlayerControls.Control(kind: .script, result: nil)
+        #expect(PlayerControlsCard.itemTitle(untried, recommended: true, notYet: false) == "AppleScript (Recommended, not tried)")
+        let page = PlayerControls.Control(kind: .page, result: .init(kind: .page, mark: .works))
+        #expect(PlayerControlsCard.itemTitle(page, recommended: false, notYet: true) == "Its page’s Play/Pause (not learned yet)")
     }
 }

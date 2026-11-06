@@ -399,6 +399,14 @@ final class KeyHighlight {
         highlight(current)
     }
 
+    /// The highlight arrives again where it is, by the keys: VoiceOver's
+    /// cursor and Zoom go back to it (the menu's row, as the side window it
+    /// opened closes: VO1, the a11y audit, 2026-11-06).
+    func arriveAgain() {
+        guard let highlighted else { return }
+        highlight(highlighted)
+    }
+
     /// Presses the highlighted control; `false` when there's none to press.
     @discardableResult func press() -> Bool {
         guard let control = highlightedControl, let press = control.press else { return false }

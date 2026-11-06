@@ -288,8 +288,11 @@ private struct SoundSourceRow: View {
             .focused($switchFocused)
             .focusEffectDisabled(keyboard != nil)
             .accessibilityHint(Text(verbatim: subtitle))
-            // A white ground, so the switch (the accent color while on) shows on the selection.
-            .background { if isSelected { Capsule().fill(.white).padding(-2) } }
+            // A white ground while it's on, so its accent color shows on the
+            // selection; off, macOS's own switch on the selection, whose
+            // track shows there (D1b, the a11y audit's D1, the user's pick,
+            // 2026-11-06: on white, an off switch vanished in dark mode).
+            .background { if isSelected, isOn.wrappedValue { Capsule().fill(.white).padding(-2) } }
         }
         .background {
             if isSelected { SelectionFill().padding(.horizontal, -6).padding(.vertical, -4) }

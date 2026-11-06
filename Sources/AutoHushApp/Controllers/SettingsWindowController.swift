@@ -42,6 +42,9 @@ final class SettingsWindowController: PlacedWindowController {
     /// `frameName`: where the window's place and size are kept; tests give
     /// each window a name of its own, since AppKit gives a name to one
     /// window at a time.
+    /// Watches the window's first responder (a field taking the keyboard).
+    private var responderWatch: NSKeyValueObservation?
+
     init(model: SettingsModel, frameName: String = SettingsWindowController.frameName) {
         self.model = model
         toolbarDelegate = SettingsToolbarDelegate(navigation: navigation)
@@ -97,6 +100,15 @@ final class SettingsWindowController: PlacedWindowController {
             toolbarDelegate.updateArrows()
             // Back and Forward while the keys have the sidebar's highlight: it follows the page.
             keys.pageChanged()
+        }
+        // A field taking the keyboard (Sound Sources' search, by ⌘F, a
+        // click or a key) lets go of the keys' highlight, on either side: the
+        // caret is where the keys are now, one focus at a time (the a11y
+        // audit's live check, 2026-11-06: the sidebar row stayed outlined).
+        responderWatch = window?.observe(\.firstResponder, options: [.new]) { [keys] window, _ in
+            MainActor.assumeIsolated {
+                if window.firstResponder is NSText, keys.isLit { keys.clear() }
+            }
         }
         // Before the focused control: the arrows move the highlight, as in
         // the menu. Kept for the controller's life, which is AutoHush's.

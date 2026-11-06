@@ -13,11 +13,16 @@ struct NoteLabel: View {
     /// `appCallout`, or the notes' `appCaption` under a row's title (Add an
     /// App's recommended way, U1, 2026-10-27).
     let font: Font
+    /// On a chosen card's selection color: white, its symbol too, as a
+    /// selected list row draws its symbols (KB2a, the a11y audit's KB2, the
+    /// user's pick, 2026-11-06).
+    let onSelection: Bool
 
-    init(_ text: String, kind: Kind = .warning, font: Font = .appCallout) {
+    init(_ text: String, kind: Kind = .warning, font: Font = .appCallout, onSelection: Bool = false) {
         self.text = text
         self.kind = kind
         self.font = font
+        self.onSelection = onSelection
     }
 
     var body: some View {
@@ -27,14 +32,14 @@ struct NoteLabel: View {
             switch kind {
             case .warning:
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.appWarning)
+                    .foregroundStyle(onSelection ? AnyShapeStyle(.white) : AnyShapeStyle(.appWarning))
             case .info:
                 Image(systemName: "info.circle")
-                    .foregroundStyle(.appSecondary)
+                    .foregroundStyle(onSelection ? AnyShapeStyle(.white) : AnyShapeStyle(.appSecondary))
             }
         }
         .font(font)
-        .foregroundStyle(kind == .info ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
+        .foregroundStyle(onSelection ? AnyShapeStyle(.white) : kind == .info ? AnyShapeStyle(.appSecondary) : AnyShapeStyle(.primary))
         .fixedSize(horizontal: false, vertical: true)
     }
 }

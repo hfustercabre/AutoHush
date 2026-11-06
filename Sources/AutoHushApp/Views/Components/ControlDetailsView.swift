@@ -7,7 +7,10 @@ import CheckedPlayers
 /// there), then its
 /// backup controls in the order they're tried, each with how its check
 /// found it (in every window state, not in some, not tried), the Play/Pause
-/// key with when it's pressed. Done (Return) or Escape closes it.
+/// key with when it's pressed. With backups off, the info note "Use backup
+/// controls is off" under their heading, the list at full contrast (D3a,
+/// the a11y audit's D3, the user's pick, 2026-11-06: dimmed to 60 %, the
+/// note too, they read at about 2:1). Done (Return) or Escape closes it.
 struct ControlDetailsView: View {
     let player: String
     let controls: PlayerControls
@@ -23,12 +26,11 @@ struct ControlDetailsView: View {
             if !controls.backups.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     SectionLabel(Text(verbatim: BackupText.backupControls)).accessibilityAddTraits(.isHeader)
-                    if !controls.switches.usesBackups { Text(verbatim: BackupText.off).captionStyle() }
+                    if !controls.switches.usesBackups { NoteLabel(BackupText.off, kind: .info, font: .appCaption) }
                     ForEach(Array(controls.backups.enumerated()), id: \.offset) { _, control in
                         ControlRow(control: control, player: player)
                     }
                 }
-                .opacity(controls.backupsInUse ? 1 : 0.6)
             }
             HStack {
                 Spacer()

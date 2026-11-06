@@ -3,7 +3,9 @@ import SwiftUI
 /// A search field in the style of the chips: a magnifier, the text, and a ✕
 /// that closes the search (`onClose`) or, without one, clears what was typed.
 /// Settings → Sound Sources and the places that offer the media players use it.
-/// With `results`, VoiceOver hears them once typing pauses.
+/// With `results`, VoiceOver hears them once typing pauses. With Increase
+/// Contrast, outlined 1 pt, as AutoHush's other faint fills (D5a, the a11y
+/// audit's D5, the user's pick, 2026-11-06: its fill alone barely showed).
 struct SearchField: View {
     @Binding var text: String
     /// Takes the keyboard focus as it appears, in a window (not in a menu:
@@ -29,6 +31,8 @@ struct SearchField: View {
     /// How long typing pauses before VoiceOver hears the results: not over
     /// each key's echo.
     static let resultsDelay = Duration.milliseconds(500)
+    /// The ✕'s hit area's side (D6a).
+    static let clearHitSize: CGFloat = 24
 
     var body: some View {
         HStack(spacing: 5) {
@@ -53,7 +57,7 @@ struct SearchField: View {
         .font(.appCallout)
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.chipFill))
+        .background(RoundedRectangle(cornerRadius: 8).tinted(.chipFill, outline: .appSecondary))
         // Once it's shown: a popover's field doesn't take it any sooner. In
         // the view's own task, which ends with the view: a focus set once
         // the view was gone crashed macOS's focus system (CI, 2026-11-01).
@@ -79,10 +83,20 @@ struct SearchField: View {
         return .handled
     }
 
+    /// The ✕, as it looks, in a 24 × 24 pt hit area (D6a, the a11y audit's
+    /// D6, the user's pick, 2026-11-06: the symbol alone, about 13 pt, was
+    /// under WCAG 2.5.8's 24 pt), 3 pt further from the text; out of the
+    /// field's layout above, below and into its trailing margin, so the
+    /// field keeps its size.
     private func clearButton(_ label: Text, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: "xmark.circle.fill")
                 .foregroundStyle(.appSecondary)
+                .frame(width: Self.clearHitSize, height: Self.clearHitSize)
+                .contentShape(Rectangle())
+                .padding(.vertical, -6)
+                .padding(.leading, 3)
+                .padding(.trailing, -6)
         }
         .buttonStyle(.plain)
         .help(label)

@@ -40,11 +40,35 @@ enum BackupText {
     /// one, or its one control, read only.
     static let mainControlRow = String(localized: "Main control",
                                        comment: "Settings → Fine-Tuning, the player's card: title of its first row, beside a pop-up of the controls AutoHush can pause and play the player by first (or beside its only one)")
-    /// An item of the pop-up: the control AutoHush recommends.
-    static func recommended(_ control: String) -> String {
-        String(localized: "\(control) (Recommended)",
-               comment: "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, the control AutoHush recommends (the player's own, or the one chosen in Add an App). %@ is the control (AppleScript, Its playback menu…)")
+    /// An item of the pop-up: a control, with how its check found it in
+    /// words (VO7b, the a11y audit's VO7, the user's pick, 2026-11-06: the
+    /// item's mark alone said it, which VoiceOver doesn't read).
+    static func found(_ control: String, _ result: String) -> String {
+        String(localized: "\(control) (\(result))",
+               comment: "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, a control and how the check found it. %1$@ is the control (AppleScript, Its playback menu…), %2$@ is “works”, “works in some states”, “didn’t work” or “not tried”")
     }
+    /// The same for the control AutoHush recommends.
+    static func recommended(_ control: String, _ result: String) -> String {
+        String(localized: "\(control) (Recommended, \(result))",
+               comment: "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, the control AutoHush recommends (the player's own, or the one chosen in Add an App) and how the check found it. %1$@ is the control (AppleScript, Its playback menu…), %2$@ is “works”, “works in some states”, “didn’t work” or “not tried”")
+    }
+    /// How a check found a control, in the pop-up's items (VO7b).
+    static func result(_ mark: CheckResult.Mark) -> String {
+        switch mark {
+        case .works: works
+        case .some: worksInSomeStates
+        case .none, .notThere: didNotWork
+        case .notTried, .notChecked, .noWindow, .noAutomation, .noAccessibility, .menuBarHidden, .toggleOnly: notTried
+        }
+    }
+    static let works = String(localized: "works",
+                              comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up (“AppleScript (Recommended, works)”): the check found it pauses and plays the player in every window state. Lowercase, as a part of a list")
+    static let worksInSomeStates = String(localized: "works in some states",
+                                          comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up (“Its page’s Play/Pause (works in some states)”): the check found it pauses and plays the player in some window states only (not with its window minimized or hidden, say). Lowercase, as a part of a list")
+    static let didNotWork = String(localized: "didn’t work",
+                                   comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up: the check tried it and it didn't pause and play the player. Lowercase, as a part of a list")
+    static let notTried = String(localized: "not tried",
+                                 comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up: no check tried it (a built-in player's own control, or one kept from before checks tried it). Lowercase, as a part of a list")
     /// An item of the pop-up, dimmed: a control that can be the main one
     /// once AutoHush has learned it (a built-in player's page, 2026-11-05).
     static func notLearnedYet(_ control: String) -> String {

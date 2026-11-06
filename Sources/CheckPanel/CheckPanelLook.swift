@@ -6,7 +6,8 @@ import SwiftUI
 /// `CheckWindowStepView` draw the same with either.
 package struct CheckPanelLook {
     package var caption: Font
-    /// What the check asks: its symbol and words.
+    /// What the check asks: its symbol (the words are in the primary color,
+    /// D5a), and its outline with Increase Contrast.
     package var requestTint: Color
     /// Behind what the check asks: `requestTint`, faint.
     package var requestFill: Color

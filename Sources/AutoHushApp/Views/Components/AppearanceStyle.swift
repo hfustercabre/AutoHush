@@ -56,8 +56,6 @@ extension ShapeStyle where Self == Color {
     static var listSelectionFill: Color { Color(nsColor: .selectedContentBackgroundColor) }
     /// Behind the accent `HeadingBadge` ("Recommended").
     static var selectedRowFill: Color { .accentColor.opacity(0.16) }
-    /// Behind the chosen player's tile (`PlayerTiles`).
-    static var selectedTileFill: Color { .accentColor.opacity(0.2) }
     /// The square behind a `SymbolTile`'s symbol (Settings' sidebar, the
     /// welcome window's permissions): the accent color the user picked, faint.
     static var symbolTileFill: Color { .accentColor.opacity(0.18) }

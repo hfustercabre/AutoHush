@@ -136,19 +136,20 @@ struct MenuPanelView: View {
 
     /// The player's own permission, missing while its backup controls stand
     /// in for it: allowing it, with why under it, as Use AntiDot Mode
-    /// Instead says what it trades (the user, 2026-11-05).
+    /// Instead says what it trades (the user, 2026-11-05); lit, it takes the
+    /// tint, its words and triangle as they are (D2c).
     private func backupsStandInRow(_ permission: Permission) -> some View {
-        MenuActionRow(action: { model.perform(.resolveWarning(permission)) }) {
+        MenuActionRow(twoLines: true, action: { model.perform(.resolveWarning(permission)) }) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.appWarning)
                 .accessibilityLabel(Text("Warning", comment: "VoiceOver label: this menu item needs attention"))
         } content: {
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: permission.grantTitle)
-                // Grey, white with the row's text while it's lit.
+                // Grey, lit too: the row takes the tint (D2c).
                 Text(verbatim: BackupText.standingIn)
                     .font(.appCaption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityHidden(true)
             }
@@ -158,17 +159,18 @@ struct MenuPanelView: View {
     }
 
     /// Use AntiDot Mode Instead, with what it trades under it (F2a,
-    /// 2026-11-02); VoiceOver hears that once, as its hint.
+    /// 2026-11-02); VoiceOver hears that once, as its hint. Lit, it takes
+    /// the tint (D2c).
     private var useAntiDotRow: some View {
-        MenuActionRow(action: { model.perform(.useAntiDotMode) }) {
+        MenuActionRow(twoLines: true, action: { model.perform(.useAntiDotMode) }) {
             Color.clear
         } content: {
             VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: PermissionText.useAntiDot)
-                // Grey, white with the row's text while it's lit.
+                // Grey, lit too: the row takes the tint (D2c).
                 Text(verbatim: PermissionText.antiDotTradeOff)
                     .font(.appCaption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.appSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityHidden(true)
             }

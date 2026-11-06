@@ -26,17 +26,19 @@ struct SettingsSidebar: View {
         }
     }
 
-    /// A group's name, and what it's for under it, in grey.
+    /// A group's name in the primary color, and what it's for under it, in
+    /// grey (D4c, the a11y audit's D4, the user's pick, 2026-11-06: the
+    /// name was grey, the note tertiary, about 2:1).
     private func heading(_ title: String, note: String?) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(verbatim: title)
                 .font(.appCaption.weight(.semibold))
-                .foregroundStyle(.appSecondary)
+                .foregroundStyle(.primary)
                 .accessibilityAddTraits(.isHeader)
             if let note {
                 Text(verbatim: note)
                     .font(.appCaption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.appSecondary)
             }
         }
         .accessibilityElement(children: .combine)
