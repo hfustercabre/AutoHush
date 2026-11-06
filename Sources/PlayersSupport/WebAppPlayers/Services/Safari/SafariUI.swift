@@ -76,7 +76,7 @@ package struct SafariUI: SafariDriving {
         }
     }
 
-    package func addToDock(_ url: URL) async -> AddToDockResult {
+    package func addToDock(_ url: URL, dialogShown: @escaping @Sendable (CGRect) -> Void) async -> AddToDockResult {
         guard NSRunningApplication.running(Self.bundleID) != nil else {
             logger.error("Add to Dock: Safari isn’t running")
             return .unavailable
@@ -117,6 +117,13 @@ package struct SafariUI: SafariDriving {
         guard shows else {
             logger.error("Add to Dock: Safari’s dialog didn’t come within \(Int(Self.dialogTimeout), privacy: .public) s")
             return .unavailable
+        }
+        // Where it shows, so AutoHush's window can move off it.
+        if let frame = await Self.queue.run({ () -> CGRect? in
+            guard let app = Self.safariElement(), let button = Self.find("AddToDockFormAddButton", in: app) else { return nil }
+            return Self.sheet(around: button)?.frame
+        }) {
+            dialogShown(frame)
         }
         // The user names the web app and clicks Add (or Cancel) there.
         while !Task.isCancelled {
@@ -222,6 +229,17 @@ package struct SafariUI: SafariDriving {
             for sheet in [root] + root.children(timeout: timeout) where sheet.string(kAXRoleAttribute) == "AXSheet" {
                 if let found = first(in: sheet, depth: 4, where: matches) { return found }
             }
+        }
+        return nil
+    }
+
+    /// The sheet `element` is in: the dialog.
+    private static func sheet(around element: AXUIElement) -> AXUIElement? {
+        var node = element
+        for _ in 0..<parentDepth {
+            guard let parent = node.element(kAXParentAttribute, timeout: timeout) else { return nil }
+            if parent.string(kAXRoleAttribute) == "AXSheet" { return parent }
+            node = parent
         }
         return nil
     }

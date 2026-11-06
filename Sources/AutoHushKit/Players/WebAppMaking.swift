@@ -40,6 +40,10 @@ package enum WebAppMakingStep: Equatable, Sendable {
     /// Adding it with the browser: its Add to Dock dialog is open, for the
     /// user to name the web app and click Add.
     case adding
+    /// The browser's dialog shows at `frame` (from the main screen's top
+    /// left corner, as Accessibility gives it), `nil` once it's closed: the
+    /// window moves off it meanwhile.
+    case dialog(frame: CGRect?)
     /// The user closed the browser's dialog without adding it: it waits for
     /// Add to Dock again.
     case notAdded

@@ -87,12 +87,18 @@ final class AddWebAppFeature {
         // Another player chosen while it's added (the user's, from the menu) stays.
         let before = host?.chosenPlayerID
         adding = Task { [weak self] in
-            defer { if model.attempt == attempt { self?.adding = nil } }
+            defer {
+                if model.attempt == attempt { self?.adding = nil }
+                self?.window?.returnFromAside()
+            }
             do {
-                let made = try await maker.makeWebApp(from: address, onStep: { step in
+                let made = try await maker.makeWebApp(from: address, onStep: { [weak self] step in
                     DispatchQueue.main.async {
                         MainActor.assumeIsolated {
                             guard model.attempt == attempt else { return } // cancelled since
+                            // Off the browser's dialog while it shows (the
+                            // 1.3.0 live round: it covered its Add button).
+                            if case .dialog(let frame?) = step { self?.window?.moveAside(of: frame) } else { self?.window?.returnFromAside() }
                             model.apply(step)
                         }
                     }

@@ -140,7 +140,9 @@ package final class SafariWebAppMaker: WebAppMaking {
             // The user may have gone elsewhere since.
             if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) { continue }
             onStep(.adding)
-            switch await safari.addToDock(url) {
+            let added = await safari.addToDock(url, dialogShown: { onStep(.dialog(frame: $0)) })
+            onStep(.dialog(frame: nil))
+            switch added {
             case .unavailable:
                 try Task.checkCancellation()
                 throw WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")

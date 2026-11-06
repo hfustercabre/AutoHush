@@ -12,6 +12,7 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
     private var _onMake: @Sendable () -> Void = {}
     private var _waitsForCancel = false
     private var _wasCancelled = false
+    private var _dialog: CGRect?
 
     var result: Result<MadeWebApp, WebAppMakingError> {
         get { lock.withLock { _result } }
@@ -27,6 +28,11 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
         set { lock.withLock { _waitsForCancel = newValue } }
     }
     var wasCancelled: Bool { lock.withLock { _wasCancelled } }
+    /// Where the browser's dialog shows while it adds, if it says.
+    var dialog: CGRect? {
+        get { lock.withLock { _dialog } }
+        set { lock.withLock { _dialog = newValue } }
+    }
 
     init(_ result: Result<MadeWebApp, WebAppMakingError>) {
         _result = result
@@ -46,6 +52,8 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
             onStep(.readyToAdd(site: address))
             guard await confirmAdd() else { throw CancellationError() }
             onStep(.adding)
+            if let dialog { onStep(.dialog(frame: dialog)) }
+            onStep(.dialog(frame: nil))
             onMake()
         }
         onStep(.made(made))

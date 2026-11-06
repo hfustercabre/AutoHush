@@ -173,7 +173,9 @@ struct SafariWebAppMakerTests {
         #expect(setup.checked.value == [URL(string: "https://play.qobuz.com")!])
         #expect(setup.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait", "page", "click Add to Dock", "page",
                                            "add https://play.qobuz.com", "close tab 1"])
-        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding, .made(made)])
+        // Where Safari's dialog shows, then that it's gone: the window moves off it meanwhile.
+        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding,
+                                      .dialog(frame: FakeSafari.dialogFrame), .dialog(frame: nil), .made(made)])
     }
 
     @Test("a site that asks something first on another of its hosts is waited for: added only once it shows, and the user clicks")
@@ -189,7 +191,7 @@ struct SafariWebAppMakerTests {
         let start = setup.clock.now
         let made = try await setup.make("play.qobuz.com")
         #expect(setup.steps.value == [.checked, .opened, .siteAsks(shown: "consent.qobuz.com", site: "play.qobuz.com"),
-                                      .readyToAdd(site: "play.qobuz.com"), .adding, .made(made)])
+                                      .readyToAdd(site: "play.qobuz.com"), .adding, .dialog(frame: FakeSafari.dialogFrame), .dialog(frame: nil), .made(made)])
         #expect(setup.clock.now.timeIntervalSince(start) >= 2 * SafariWebAppMaker.siteCheckInterval)
         #expect(setup.clicks.value == 1)
         #expect(setup.safari.log.value.last == "close tab 2") // the tab the site then showed in
@@ -319,7 +321,7 @@ struct SafariWebAppMakerTests {
         await #expect(throws: CancellationError.self) { try await task.value }
         #expect(setup.safari.log.value.suffix(2) == ["cancel dialog", "close tab 1"])
         #expect(setup.installed.value == [Self.existing] && setup.discarded.value.isEmpty)
-        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding])
+        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding, .dialog(frame: FakeSafari.dialogFrame), .dialog(frame: nil)])
     }
 
     @Test("cancelled once Add was clicked in Safari's dialog: the web app Safari makes all the same is quit and moved to the Trash, its tab closed")
@@ -416,7 +418,7 @@ struct SafariWebAppMakerTests {
         await #expect(throws: WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")) {
             try await noAddToDock.make("play.qobuz.com")
         }
-        #expect(noAddToDock.steps.value.last == .adding)
+        #expect(noAddToDock.steps.value.suffix(2) == [.adding, .dialog(frame: nil)])
     }
 
     @Test("Safari's dialog closed without adding: back to Add to Dock, whose next click opens it again")
@@ -428,8 +430,8 @@ struct SafariWebAppMakerTests {
         let made = try await setup.make("play.qobuz.com")
         #expect(setup.clicks.value == 2)
         #expect(setup.safari.log.value.filter { $0.hasPrefix("add ") }.count == 2)
-        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding, .notAdded,
-                                      .readyToAdd(site: "play.qobuz.com"), .adding, .made(made)])
+        #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding, .dialog(frame: FakeSafari.dialogFrame), .dialog(frame: nil), .notAdded,
+                                      .readyToAdd(site: "play.qobuz.com"), .adding, .dialog(frame: FakeSafari.dialogFrame), .dialog(frame: nil), .made(made)])
         #expect(setup.clock.now.timeIntervalSince(start) >= SafariWebAppMaker.appearTimeout)
     }
 

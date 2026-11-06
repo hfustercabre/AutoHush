@@ -218,6 +218,38 @@ final class WindowTitleTests {
         }
     }
 
+    @Test("Add a Web App's window moves off a dialog it covers, beside it, and back after; one it doesn't cover leaves it; moved by the user, it stays")
+    func movesOffADialog() async throws {
+        let floating = AddWebAppWindowController(model: AddWebAppModel(), settings: makeModel())
+        let window = try #require(floating.window)
+        let main = try #require(NSScreen.screens.first) // where Accessibility's frames start
+        floating.cornerScreen = { main }
+        floating.show()
+        defer { floating.close() }
+        let corner = NSPoint(x: window.frame.minX, y: window.frame.maxY)
+        /// `rect` (AppKit's) as Accessibility gives it.
+        func fromTopLeft(_ rect: NSRect) -> CGRect {
+            CGRect(x: rect.minX, y: main.frame.maxY - rect.maxY, width: rect.width, height: rect.height)
+        }
+        // Over its left part, as Safari's dialog was.
+        let dialog = NSRect(x: window.frame.minX - 100, y: window.frame.maxY - 200, width: 300, height: 150)
+        floating.moveAside(of: fromTopLeft(dialog))
+        #expect(!window.frame.intersects(dialog) && window.frame.maxX <= dialog.minX && abs(window.frame.maxY - corner.y) < 1)
+        floating.returnFromAside()
+        #expect(abs(window.frame.minX - corner.x) < 1 && abs(window.frame.maxY - corner.y) < 1)
+
+        let elsewhere = NSRect(x: main.visibleFrame.minX, y: main.visibleFrame.minY, width: 100, height: 100)
+        floating.moveAside(of: fromTopLeft(elsewhere))
+        #expect(abs(window.frame.minX - corner.x) < 1)
+        floating.returnFromAside()
+
+        floating.moveAside(of: fromTopLeft(dialog))
+        let moved = NSPoint(x: window.frame.minX - 30, y: window.frame.maxY - 30)
+        window.setFrameTopLeftPoint(moved) // the user drags it meanwhile
+        floating.returnFromAside()
+        #expect(abs(window.frame.minX - moved.x) < 1 && abs(window.frame.maxY - moved.y) < 1)
+    }
+
     @Test("a floating window keeps its top edge only while it's open: closed, its watch ends, and shown again, it starts again")
     func floatingWatchEndsAtClose() async throws {
         let floating = AddWebAppWindowController(model: AddWebAppModel(), settings: makeModel())

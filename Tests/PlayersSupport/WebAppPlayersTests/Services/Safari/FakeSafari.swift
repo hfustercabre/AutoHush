@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 @testable import WebAppPlayers
 import AutoHushTestSupport
@@ -48,9 +49,10 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     /// Cancel there; the last one stays.
     let adds = Locked<[Bool]>([true])
 
-    func addToDock(_ url: URL) async -> AddToDockResult {
+    func addToDock(_ url: URL, dialogShown: @escaping @Sendable (CGRect) -> Void) async -> AddToDockResult {
         log.append("add \(url.absoluteString)")
         guard addsToDock else { return .unavailable }
+        dialogShown(Self.dialogFrame)
         while holdsDialog, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
         guard !Task.isCancelled else {
             log.append("cancel dialog")
@@ -64,5 +66,7 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
         onClosed?()
         return .closed
     }
+    /// Where its dialog says it shows.
+    static let dialogFrame = CGRect(x: 600, y: 300, width: 480, height: 280)
     func closeTab(_ tab: SafariTab) async { log.append("close tab \(tab.page)") }
 }

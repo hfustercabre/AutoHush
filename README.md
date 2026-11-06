@@ -161,7 +161,7 @@ AutoHush can make one for you, too: choose **Add a Web App…** (last among the 
 2. Once the site shows there, click **Add to Dock** in AutoHush's window: AutoHush opens Safari's own **Add to Dock** window, where you can change the web app's name, and you click **Add** there. If you close Safari's window with **Cancel**, the step says so and **Add to Dock** opens it again.
 3. AutoHush then chooses the new web app and opens it, and the same window learns its controls.
 
-While it adds and learns, the window stays above other apps, in the top-right corner of the screen, so Safari and the web app don't hide it (the learning window does too).
+While it adds and learns, the window stays above other apps, in the top-right corner of the screen, so Safari and the web app don't hide it (the learning window does too). While Safari's Add to Dock window shows, it moves beside it.
 
 - Safari makes the web app from the page it shows, so if the site asks something first on another of its addresses (YouTube's cookie page on consent.youtube.com, in Europe, or a sign-in page), an **Answer the site in Safari** step waits until you've answered and the site itself shows. Answer anything else it asks (a cookie banner) before clicking Add to Dock.
 - If a Safari extension asks for access to the site while it opens, answer it first: Safari can't add the site while it waits.

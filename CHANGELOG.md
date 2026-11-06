@@ -137,6 +137,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Add a Web App** moves beside Safari's Add to Dock window while it
+  shows, and back after: it could cover its Add button.
 - **Escape** presses Cancel (or Later) again in Add an App, Choose an
   App, Add a Web App, the check's warning and the learning window: it
   did nothing there, while a click on Cancel worked.
