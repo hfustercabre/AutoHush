@@ -466,7 +466,7 @@ struct SettingsModelTests {
                                      fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: false,
                                      pausesOnOutputDisconnect: true,
                                      levelsMusic: true, levelingMaxCutDB: 14, levelingMinCutDB: 5,
-                                     pausesForMicrophone: true, staysPausedAfterCalls: true)
+                                     pausesForMicrophone: true, staysPausedAfterCalls: true, pausesForVoiceOver: false)
         model.setTimings(changed)
         #expect(!model.isDefault(.pausing) && !model.isDefault(.resuming) && !model.isDefault(.fades) && !model.isDefault(.volume))
         #expect(!model.isDefault(.timing) && !model.isDefault(.volumeLimits) && !model.isDefault(.detection))
@@ -525,6 +525,7 @@ struct SettingsModelTests {
         model.restoreDefaults(.detection)
         expected = changed
         expected.silenceThresholdDB = TimingSettings.defaults.silenceThresholdDB
+        expected.pausesForVoiceOver = true
         #expect(model.timings == expected && model.isDefault(.detection))
     }
 

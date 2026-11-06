@@ -100,6 +100,7 @@ extension DiagnosticsReport {
         }
         rows += [
             Row(label: SettingsSwitch.pausesForMicrophone.name, value: timings.pausesForMicrophone ? on : off),
+            Row(label: SettingsSwitch.pausesForVoiceOver.name, value: timings.pausesForVoiceOver ? on : off),
             Row(label: SettingsSwitch.pausesOnDisconnect.name, value: timings.pausesOnOutputDisconnect ? on : off),
             Row(label: SettingsSwitch.resumesPlayback.name, value: timings.resumesPlayback ? on : off),
         ]

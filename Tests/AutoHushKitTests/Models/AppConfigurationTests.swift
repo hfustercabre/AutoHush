@@ -48,6 +48,15 @@ struct AppConfigurationTests {
         #expect(AppConfiguration().isMediaSource(bundleID) == true)
     }
 
+    @Test("VoiceOver speaking counts as an app heard, unless Pause for VoiceOver is off")
+    func voiceOver() {
+        var configuration = AppConfiguration()
+        #expect(configuration.isMediaSource("com.apple.VoiceOver"))
+        configuration.pausesForVoiceOver = false
+        #expect(!configuration.isMediaSource("com.apple.VoiceOver"))
+        #expect(configuration.isMediaSource("com.apple.Safari")) // the others still count
+    }
+
     // MARK: - Defaults
 
     @Test("the chosen player's helpers count as the player, look-alikes don't")

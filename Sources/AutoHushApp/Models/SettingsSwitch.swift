@@ -4,7 +4,7 @@ import AutoHushKit
 /// The switches of Settings → Behavior, as Diagnostics names them too: the
 /// same words, and the rules for when one can't be changed.
 enum SettingsSwitch {
-    case antiDot, pausesOnDisconnect, resumesPlayback, fades, levelsMusic, pausesForMicrophone, staysPausedAfterCalls
+    case antiDot, pausesOnDisconnect, resumesPlayback, fades, levelsMusic, pausesForMicrophone, staysPausedAfterCalls, pausesForVoiceOver
 
     /// Its name: the switch's and Diagnostics' row's.
     var name: String {
@@ -23,6 +23,8 @@ enum SettingsSwitch {
             String(localized: "Pause for the microphone", comment: "Settings → Behavior, and Diagnostics: the switch that pauses your player as soon as an app turns on the microphone")
         case .staysPausedAfterCalls:
             String(localized: "Stay paused after calls", comment: "Settings → Behavior, and Diagnostics: the switch that keeps your player paused after a call")
+        case .pausesForVoiceOver:
+            String(localized: "Pause for VoiceOver", comment: "Settings → Fine-Tuning, and Diagnostics: the switch that lets VoiceOver (macOS’s screen reader) pause your player while it speaks, as any app heard does")
         }
     }
 
@@ -53,6 +55,9 @@ enum SettingsSwitch {
         case .staysPausedAfterCalls:
             Text("Your player doesn’t resume after a call that came while it was paused.",
                  comment: "Settings → Behavior, under “Stay paused after calls”; a call is an app using the microphone")
+        case .pausesForVoiceOver:
+            Text("VoiceOver speaking pauses your player.",
+                 comment: "Settings → Fine-Tuning, under “Pause for VoiceOver”; VoiceOver is macOS’s screen reader")
         }
     }
 
@@ -67,7 +72,7 @@ enum SettingsSwitch {
         case .fades: !model.playerCanFade
         case .levelsMusic: model.isAntiDotMode || !model.timings.resumesPlayback
         case .staysPausedAfterCalls: !model.timings.resumesPlayback
-        case .pausesOnDisconnect, .resumesPlayback, .pausesForMicrophone: false
+        case .pausesOnDisconnect, .resumesPlayback, .pausesForMicrophone, .pausesForVoiceOver: false
         }
     }
 
@@ -85,6 +90,7 @@ enum SettingsSwitch {
         case .levelsMusic: model.timings.levelsMusic
         case .pausesForMicrophone: model.timings.pausesForMicrophone
         case .staysPausedAfterCalls: model.timings.staysPausedAfterCalls
+        case .pausesForVoiceOver: model.timings.pausesForVoiceOver
         }
     }
 
@@ -98,6 +104,7 @@ enum SettingsSwitch {
         case .levelsMusic: timings.levelsMusic = isOn
         case .pausesForMicrophone: timings.pausesForMicrophone = isOn
         case .staysPausedAfterCalls: timings.staysPausedAfterCalls = isOn
+        case .pausesForVoiceOver: timings.pausesForVoiceOver = isOn
         }
         model.setTimings(timings)
     }

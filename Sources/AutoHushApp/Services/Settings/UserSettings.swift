@@ -292,6 +292,9 @@ final class UserSettings: AutoPauseControlling {
         if old.staysPausedAfterCalls != new.staysPausedAfterCalls {
             lines.append("Stay paused after calls: \(new.staysPausedAfterCalls ? "on" : "off")")
         }
+        if old.pausesForVoiceOver != new.pausesForVoiceOver {
+            lines.append("Pause for VoiceOver: \(new.pausesForVoiceOver ? "on" : "off")")
+        }
         return lines
     }
 

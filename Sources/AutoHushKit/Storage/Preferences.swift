@@ -133,6 +133,7 @@ package final class Preferences {
         ("levelsMusic", \.levelsMusic),
         ("pausesForMicrophone", \.pausesForMicrophone),
         ("staysPausedAfterCalls", \.staysPausedAfterCalls),
+        ("pausesForVoiceOver", \.pausesForVoiceOver),
     ]
 
     package var timings: TimingSettings {

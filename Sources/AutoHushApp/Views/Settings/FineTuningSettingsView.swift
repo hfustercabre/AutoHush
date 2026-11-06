@@ -10,7 +10,8 @@ import AutoHushKit
 /// fades are off or the player can't fade. Volume Limits: leveling's,
 /// greyed out while it's off or can't be. Detection: AntiDot mode's ways
 /// (greyed out while it's off) and the silence threshold (greyed out in
-/// it). What's greyed out says why, as in Behavior. A Behavior row, or
+/// it), then Pause for VoiceOver (V1, the user's pick, 2026-11-06). What's
+/// greyed out says why, as in Behavior. A Behavior row, or
 /// Media Player's Controls row, opens it scrolled to its card
 /// (`SettingsModel.fineTuningFocus`).
 struct FineTuningSettingsView: View {
@@ -112,6 +113,9 @@ struct FineTuningSettingsView: View {
                 if model.isAntiDotMode {
                     NoteLabel(AntiDotText.featureOff, kind: .info)
                 }
+                CardDivider()
+                // VoiceOver speaking counts as an app heard, unless turned off here.
+                SettingsSwitchRow(model: model, kind: .pausesForVoiceOver)
             } footer: {
                 RestoreDefaultsButton(model: model, card: .detection)
             }

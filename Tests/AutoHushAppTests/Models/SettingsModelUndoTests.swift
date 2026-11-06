@@ -61,7 +61,7 @@ struct SettingsModelUndoTests {
                                         fadeOutDuration: 3, fadeInDuration: 4, fadesEnabled: card != .fades,
                                         pausesOnOutputDisconnect: true, levelsMusic: true,
                                         levelingMaxCutDB: 14, levelingMinCutDB: 5,
-                                        pausesForMicrophone: true, staysPausedAfterCalls: true))
+                                        pausesForMicrophone: true, staysPausedAfterCalls: true, pausesForVoiceOver: false))
         if card == .modes { model.setDetectionMethod(.openStreams) }
         model.setKeepsMenuBarIconNearSystemIcons(true)
         updates.checksAutomatically = false

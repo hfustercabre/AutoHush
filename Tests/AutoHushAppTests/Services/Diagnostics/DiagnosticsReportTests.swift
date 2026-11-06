@@ -52,6 +52,7 @@ struct DiagnosticsReportTests {
             Behavior
             Pause playback after: \(half) s
             Pause for the microphone: Off
+            Pause for VoiceOver: On
             Pause on disconnect: Off
             Resume playback: On
             Resume playback after: 2 s

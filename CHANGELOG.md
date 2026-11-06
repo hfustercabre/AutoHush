@@ -9,6 +9,9 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- **Pause for VoiceOver** (Settings → Fine-Tuning → Detection): VoiceOver
+  speaking pauses your player, as any app heard does; turn it off to
+  keep listening while it speaks.
 - **Backup controls for an app added with Add an App:** the other ways
   that worked in its check now back up the one you chose. With its window as
   it is now (minimized, hidden, on another desktop…), a way that didn't

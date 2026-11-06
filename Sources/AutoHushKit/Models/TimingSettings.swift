@@ -37,6 +37,8 @@ package struct TimingSettings: Equatable, Sendable {
     /// Whether the music stays paused when the apps stop after a call came
     /// during AutoHush's pause.
     package var staysPausedAfterCalls: Bool
+    /// Whether VoiceOver speaking pauses the music, as an app heard does.
+    package var pausesForVoiceOver: Bool
 
     init(
         startConfirmation: TimeInterval = 0.5,
@@ -51,7 +53,8 @@ package struct TimingSettings: Equatable, Sendable {
         levelingMaxCutDB: Double = 10,
         levelingMinCutDB: Double = 2,
         pausesForMicrophone: Bool = false,
-        staysPausedAfterCalls: Bool = false
+        staysPausedAfterCalls: Bool = false,
+        pausesForVoiceOver: Bool = true
     ) {
         self.startConfirmation = startConfirmation
         self.stopGrace = stopGrace
@@ -66,6 +69,7 @@ package struct TimingSettings: Equatable, Sendable {
         self.levelingMinCutDB = levelingMinCutDB
         self.pausesForMicrophone = pausesForMicrophone
         self.staysPausedAfterCalls = staysPausedAfterCalls
+        self.pausesForVoiceOver = pausesForVoiceOver
     }
 
     package static let defaults = TimingSettings()
@@ -95,7 +99,8 @@ package struct TimingSettings: Equatable, Sendable {
             levelingMaxCutDB: levelingMaxCutDB.clamped(to: Self.levelingMaxCutRange),
             levelingMinCutDB: levelingMinCutDB.clamped(to: Self.levelingMinCutRange),
             pausesForMicrophone: pausesForMicrophone,
-            staysPausedAfterCalls: staysPausedAfterCalls
+            staysPausedAfterCalls: staysPausedAfterCalls,
+            pausesForVoiceOver: pausesForVoiceOver
         )
     }
 }

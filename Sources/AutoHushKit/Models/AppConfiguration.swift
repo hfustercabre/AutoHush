@@ -67,6 +67,10 @@ package struct AppConfiguration: Sendable {
     /// Whether the music stays paused after a call during AutoHush's pause
     /// (Settings → Behavior).
     var staysPausedAfterCalls: Bool
+    /// Whether VoiceOver speaking pauses the music, as any app heard does
+    /// (Settings → Fine-Tuning; the user, 2026-11-06: "If VoiceOver is
+    /// audible, it should pause the player", with a switch to turn it off).
+    var pausesForVoiceOver: Bool
 
     /// Inaudible gaps shorter than this do not restart the start confirmation.
     var audibleGapTolerance: TimeInterval = 0.5
@@ -106,6 +110,9 @@ package struct AppConfiguration: Sendable {
         "com.apple.mail",
     ]
 
+    /// VoiceOver's own process, which plays its speech.
+    static let voiceOverBundleID = "com.apple.VoiceOver"
+
     /// Bundle ID prefixes that indicate system/infrastructure processes to exclude.
     static let excludedBundleIDPrefixes: [String] = [
         "com.apple.audio.",
@@ -128,6 +135,7 @@ package struct AppConfiguration: Sendable {
         levelingMinCutDB = Float(timings.levelingMinCutDB)
         pausesForMicrophone = timings.pausesForMicrophone
         staysPausedAfterCalls = timings.staysPausedAfterCalls
+        pausesForVoiceOver = timings.pausesForVoiceOver
     }
 
     /// True for the chosen media player's own app, or one of its helpers
@@ -142,6 +150,7 @@ package struct AppConfiguration: Sendable {
     func isMediaSource(_ bundleID: String) -> Bool {
         guard !bundleID.isEmpty else { return false }
         guard !isMusicPlayer(bundleID), !Self.excludedBundleIDs.contains(bundleID) else { return false }
+        guard pausesForVoiceOver || bundleID != Self.voiceOverBundleID else { return false }
         return !Self.excludedBundleIDPrefixes.contains(where: { bundleID.hasPrefix($0) })
     }
 }

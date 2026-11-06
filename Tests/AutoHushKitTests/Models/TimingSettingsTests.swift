@@ -47,6 +47,13 @@ struct TimingSettingsTests {
         #expect(configuration.levelsMusic && configuration.pausesForMicrophone && configuration.staysPausedAfterCalls)
     }
 
+    @Test("Pause for VoiceOver is on by default, and reaches the configuration")
+    func voiceOverSwitch() {
+        #expect(TimingSettings.defaults.pausesForVoiceOver && AppConfiguration().pausesForVoiceOver)
+        let off = TimingSettings(pausesForVoiceOver: false)
+        #expect(off.clamped == off && !AppConfiguration(timings: off).pausesForVoiceOver)
+    }
+
     @Test("Resume playback is on by default, and reaches the configuration")
     func resumePlaybackSwitch() {
         #expect(TimingSettings.defaults.resumesPlayback)

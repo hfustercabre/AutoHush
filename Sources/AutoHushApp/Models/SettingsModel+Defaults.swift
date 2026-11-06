@@ -116,8 +116,10 @@ extension SettingsModel {
         case .volumeLimits:
             if !levelingLimitsUnavailable { restored.timings = timings.withDefaultVolumeLimits }
         // Detection's: in AntiDot mode its way, what apps tell macOS; out
-        // of it, the silence threshold at −60 dB (each greyed out in the other).
+        // of it, the silence threshold at −60 dB (each greyed out in the
+        // other); Pause for VoiceOver on in both.
         case .detection:
+            restored.timings.pausesForVoiceOver = TimingSettings.defaults.pausesForVoiceOver
             if isAntiDotMode {
                 restored.detectionMethod = .defaultAntiDot
             } else {
@@ -189,6 +191,7 @@ private struct CardSettings: Equatable {
         take(\.timings.resumesPlayback)
         take(\.timings.pausesForMicrophone)
         take(\.timings.staysPausedAfterCalls)
+        take(\.timings.pausesForVoiceOver)
         take(\.detectionMethod)
         take(\.keepsMenuBarIconNearSystemIcons)
         take(\.checksForUpdatesAutomatically)
