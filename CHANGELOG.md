@@ -7,6 +7,19 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Highlights
+
+- **Backup controls:** when your player's usual control fails, AutoHush
+  tries its other ways to pause and play it.
+- **Choose your player's main control** in Settings → Fine-Tuning.
+- **Pause for VoiceOver:** VoiceOver speaking pauses your player too; you
+  can turn it off.
+- **The keyboard and VoiceOver** reach everything in the menu, Settings and
+  AutoHush's windows.
+- **A Help menu, and Undo in Settings.**
+
+The details follow.
+
 ### Added
 
 - **Pause for VoiceOver** (Settings → Fine-Tuning → Detection): VoiceOver
@@ -95,8 +108,9 @@ This project follows [Semantic Versioning](https://semver.org/).
   Return switches it in Sound Sources, and the menu's row it goes back to
   as the players close (← in their empty search closes them too), and the
   menu no longer closes as they open with
-  VoiceOver on; Add a Web App's address field is outlined with Increase
-  Contrast.
+  VoiceOver on; About's Help, What's New and Report an Issue say they
+  open in your browser instead of reading out their address; Add a Web
+  App's address field is outlined with Increase Contrast.
 - **The menu and Settings highlight in grey:** what's under the pointer
   takes macOS's faint grey, as the rows of the Sound, Wi-Fi and Bluetooth
   menus do, instead of the accent color; the arrow keys' highlight keeps
@@ -166,6 +180,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **Settings → Sound Sources' search** closes with its ✕, which only
   cleared it, and a click in its field no longer closes it.
+- **A pause held while Add an App checks an app** follows the settings
+  you change meanwhile (Resume playback, fades and the rest).
 - **A "Turn off for" that ends while the Mac sleeps** ends as it wakes,
   not up to its whole length later.
 - **Keys with nothing to act on in the menu** (Delete, letters) no longer
@@ -235,7 +251,8 @@ This project follows [Semantic Versioning](https://semver.org/).
   goes away while the list is open.
 - **Unplugging headphones** (Pause on disconnect), or Resume playback
   off, no longer unmutes a player that refused its pause: it stays muted
-  rather than playing out loud.
+  rather than playing out loud, the card saying "Muted" with Unmute, until
+  you play or pause it yourself.
 - **Music you start with a media key, AirPods or Control Center** while
   another app only holds its sound open is no longer paused for a moment:
   AutoHush first listens whether that app really plays.

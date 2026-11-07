@@ -102,6 +102,9 @@ package struct CheckResult: Codable, Equatable, Sendable {
         package var state: WindowState
         package var outcome: Outcome
         /// Why it failed or wasn't tested, as the check's report says it.
+        /// Saved with the setup though nothing reads it yet: kept on purpose,
+        /// for Diagnostics to show one day (the user, 2026-11-07, R-6 of the
+        /// 2026-11-06 full check).
         package var reason: String?
 
         package init(state: WindowState, outcome: Outcome, reason: String? = nil) {
