@@ -46,9 +46,15 @@ struct SearchField: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.appSecondary)
                 .accessibilityHidden(true)
-            TextField(text: $text) {
+            // The prompt is the placeholder, which goes as one types. The
+            // label alone draws as a placeholder only outside a form: in a
+            // grouped Form (Sound Sources' heading) macOS drew it as a row
+            // label in front of the text, "Search  vl" (K3-2, the full
+            // check, 2026-11-06). The label stays, hidden, for VoiceOver.
+            TextField(text: $text, prompt: Text("Search", comment: "A search field's placeholder")) {
                 Text("Search", comment: "A search field's placeholder")
             }
+            .labelsHidden()
             .textFieldStyle(.plain)
             .focused($isFocused)
             .simultaneousGesture(TapGesture().onEnded { onClick?() })

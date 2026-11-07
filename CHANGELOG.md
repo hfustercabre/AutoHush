@@ -179,7 +179,9 @@ The details follow.
 ### Fixed
 
 - **Settings → Sound Sources' search** closes with its ✕, which only
-  cleared it, and a click in its field no longer closes it.
+  cleared it, and a click in its field no longer closes it. Its "Search"
+  is a placeholder that goes as you type, as in the other searches, no
+  longer a label in front of what you type.
 - **A pause held while Add an App checks an app** follows the settings
   you change meanwhile (Resume playback, fades and the rest).
 - **A "Turn off for" that ends while the Mac sleeps** ends as it wakes,
