@@ -220,6 +220,73 @@ extension StatusMenuControllerTests {
         #expect(!StatusMenuCommand.closeSide.closesMenuFirst)
     }
 
+    @Test("closing a side window that shows hides it and gives the menu the keyboard back, the keys' row lit again (T-7)")
+    func closeSideOnScreen() async throws {
+        let (sut, _) = menuWithAnAppIgnored()
+        defer { sut.remove() }
+        sut.close()
+        sut.open() // on screen
+        let panel = try #require(sut.panel)
+        await TestWait.until { !sut.model.keyboard.rows.isEmpty } // its controls, as they register
+        sut.model.keyboard.move(1) // lit by the keys, as before → or Return on its row
+        let lit = try #require(sut.model.keyboard.highlighted)
+        let arrivals = sut.model.keyboard.light(lit).arrivals
+        sut.perform(.openSide(.players))
+        let side = try #require(sut.sidePanel)
+        #expect(side.isVisible)
+        sut.perform(.closeSide)
+        #expect(!side.isVisible && sut.isMenuOpen)
+        #expect(panel.isKeyWindow) // the menu's keys work again
+        #expect(sut.model.keyboard.highlighted == lit && sut.model.keyboard.light(lit).arrivals == arrivals + 1)
+    }
+
+    /// The menu on screen with VoiceOver on, a side window opened and closed
+    /// twice while the menu's wait as a plain window holds at `gate`.
+    private func closedTwiceWithVoiceOver(gate: Gate) throws -> (sut: StatusMenuController, panel: MenuPanel, own: NSAccessibility.Subrole?) {
+        let (sut, _) = menuWithAnAppIgnored()
+        sut.voiceOverOn = { true }
+        sut.close()
+        sut.open() // on screen
+        // Only that wait holds; the pointer's open and close waits pass.
+        let plainWindowWait = StatusMenuController.plainWindowWait
+        sut.pause = { seconds in
+            if seconds == plainWindowWait { await gate.wait() } else { await Task.yield() }
+        }
+        let panel = try #require(sut.panel)
+        let own = panel.accessibilitySubrole()
+        #expect(own != .floatingWindow)
+        for close in 1...2 {
+            sut.perform(.openSide(.players))
+            sut.perform(.closeSide)
+            #expect(panel.accessibilitySubrole() == .floatingWindow) // a plain window meanwhile, for VoiceOver
+            #expect(sut.model.sideRowFocusRequests[.players] == close) // the row takes the focus again
+        }
+        return (sut, panel, own)
+    }
+
+    @Test("with VoiceOver on, a side window closed twice within the menu's wait leaves the menu its own subrole after it, not the plain window's (K3-3)")
+    func subroleKeptOverTwoCloses() async throws {
+        let gate = Gate()
+        let (sut, panel, own) = try closedTwiceWithVoiceOver(gate: gate)
+        defer { sut.remove() }
+        await gate.open()
+        await TestWait.until { sut.subroleSwap == nil }
+        for _ in 0..<5 { await Task.yield() } // the first close's wait, ended too
+        #expect(panel.accessibilitySubrole() == own)
+    }
+
+    @Test("closed during that wait, the menu has its own subrole back at once, and keeps it")
+    func subroleBackAsTheMenuCloses() async throws {
+        let gate = Gate()
+        let (sut, panel, own) = try closedTwiceWithVoiceOver(gate: gate)
+        defer { sut.remove() }
+        sut.close()
+        #expect(panel.accessibilitySubrole() == own && sut.subroleSwap == nil)
+        await gate.open()
+        for _ in 0..<5 { await Task.yield() }
+        #expect(panel.accessibilitySubrole() == own)
+    }
+
     @Test("a side window is closed each time the menu opens")
     func sideWindowClosedAsTheMenuOpens() {
         let (sut, _) = menuWithAnAppIgnored()

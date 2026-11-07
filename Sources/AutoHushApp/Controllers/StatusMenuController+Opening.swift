@@ -51,6 +51,7 @@ extension StatusMenuController {
         stopSnoozeClock()
         sideOpenTask?.cancel()
         sideCloseTask?.cancel()
+        endSubroleSwap()
         sidePanel?.orderOut(nil)
         panel?.orderOut(nil)
         statusItem.button?.highlight(false)
@@ -59,7 +60,7 @@ extension StatusMenuController {
 
     private func makePanel() -> MenuPanel {
         let view = MenuPanelView(model: model, settings: settingsModel) { [weak self] in self?.contentHeightChanged($0) }
-        let hosting = NSHostingView(rootView: view)
+        let hosting = NSHostingView(rootView: view.environment(\.voiceOver, viewsVoiceOver))
         hosting.sizingOptions = []
         hosting.safeAreaRegions = [] // under the hidden title bar too
         // A size to lay out in before the panel has its own: with none, its

@@ -26,7 +26,7 @@ extension StatusMenuController {
         // the players' search, ↑ ↓ Return to their list (`handleKey`). Only
         // VoiceOver moves into the side window, to read it, and the search
         // when it needs the keyboard itself (`searchTakesKeyboard`).
-        side.takesKey = NSWorkspace.shared.isVoiceOverEnabled
+        side.takesKey = voiceOverOn()
         if side.takesKey { side.makeKey() } else { panel.makeKey() }
     }
 
@@ -49,12 +49,12 @@ extension StatusMenuController {
         model.playerSearch = ""
         model.sideKeyboard.clear()
         sideCloseTask?.cancel()
-        if NSWorkspace.shared.isVoiceOverEnabled, let closing { model.sideRowFocusRequests[closing, default: 0] += 1 }
+        if voiceOverOn(), let closing { model.sideRowFocusRequests[closing, default: 0] += 1 }
         showSide()
         // VoiceOver's cursor goes back to the row that opened it, as the
         // keys' highlight does, not to the card's text (VO1, the a11y audit,
         // 2026-11-06: Escape left it on the card's line).
-        if model.keyboard.isLitByKeys || NSWorkspace.shared.isVoiceOverEnabled { model.keyboard.arriveAgain() }
+        if model.keyboard.isLitByKeys || voiceOverOn() { model.keyboard.arriveAgain() }
     }
 
     /// The menu becomes key again as its side window closes. With VoiceOver
@@ -62,17 +62,30 @@ extension StatusMenuController {
     /// it becomes key (the card's, over the row that opened the side window,
     /// which has the focus: `sideRowFocusRequests`), and a window's focused
     /// control; then a dialog again (2026-11-06: heard "Now in AutoHush
-    /// window, Collapsed Change Player button").
+    /// window, Collapsed Change Player button"). Closed again meanwhile, it
+    /// keeps the subrole it had first: read then, it would be the plain
+    /// window's, kept for good (the full check, 2026-11-06, K3-3).
     func makeKeyAgain(_ panel: MenuPanel) {
-        guard NSWorkspace.shared.isVoiceOverEnabled else { return panel.makeKey() }
-        let subrole = panel.accessibilitySubrole()
+        guard voiceOverOn() else { return panel.makeKey() }
+        let subrole = if let subroleSwap { subroleSwap.subrole } else { panel.accessibilitySubrole() }
+        subroleSwap?.restore.cancel()
         panel.setAccessibilitySubrole(.floatingWindow)
         panel.makeKey()
         let pause = pause
-        Task { [weak panel] in
-            await pause(1.5)
+        setSubroleSwap((subrole, Task { [weak self, weak panel] in
+            await pause(Self.plainWindowWait)
+            guard !Task.isCancelled else { return }
             panel?.setAccessibilitySubrole(subrole)
-        }
+            self?.setSubroleSwap(nil)
+        }))
+    }
+
+    /// The menu's own subrole back at once, as it closes (`makeKeyAgain`).
+    func endSubroleSwap() {
+        guard let subroleSwap else { return }
+        subroleSwap.restore.cancel()
+        panel?.setAccessibilitySubrole(subroleSwap.subrole)
+        setSubroleSwap(nil)
     }
 
     /// The players' search takes the keyboard itself (the full check,
@@ -177,7 +190,7 @@ extension StatusMenuController {
 
     private func makeSidePanel() -> MenuPanel {
         let view = MenuSidePanelView(model: model) { [weak self] in self?.sideHeightChanged($0) }
-        let hosting = NSHostingView(rootView: view)
+        let hosting = NSHostingView(rootView: view.environment(\.voiceOver, viewsVoiceOver))
         hosting.sizingOptions = []
         hosting.safeAreaRegions = []
         hosting.frame = NSRect(x: 0, y: 0, width: MenuSidePanelView.width, height: 600)

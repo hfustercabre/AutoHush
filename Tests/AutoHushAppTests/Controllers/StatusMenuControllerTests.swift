@@ -32,12 +32,17 @@ struct StatusMenuControllerTests {
     let workspaceCenter = NotificationCenter()
 
     /// A menu whose timing waits only a turn (the tests await its tasks),
-    /// with Reduce Motion off.
+    /// with Reduce Motion and VoiceOver off, whatever the test Mac's, and
+    /// its highlights moved by the keys alone: the pointer, resting
+    /// wherever the menu opens, moves neither (T-1, T-5).
     func makeController(settingsModel: SettingsModel? = nil) -> StatusMenuController {
         let sut = StatusMenuController(settings: settings, session: session, updates: updates, actions: actions, settingsModel: settingsModel)
         sut.notificationCenter = center
         sut.workspaceCenter = workspaceCenter
         sut.reducesMotion = { false }
+        sut.voiceOverOn = { false }
+        sut.model.keyboard.followsPointer = false
+        sut.model.sideKeyboard.followsPointer = false
         sut.pause = { _ in await Task.yield() }
         return sut
     }

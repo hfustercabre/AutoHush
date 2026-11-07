@@ -7,15 +7,17 @@ enum RelaunchWaiter {
     /// the loop outlives AutoHush. Calling the returned closure ends the loop
     /// instead.
     static func openAfterExit(_ app: URL) throws -> @Sendable () -> Void {
-        try openAfterExit(app, waitingFor: getpid(), opener: URL(filePath: "/usr/bin/open"))
+        try openAfterExit(app, waitingFor: getpid(), opener: URL(filePath: "/usr/bin/open")).cancel
     }
 
     /// The same loop waiting for `pid` to exit, looking every `interval`
     /// seconds, then running `opener` with `app`: tests give a process, a
     /// script of their own and a shorter look, so their waits for nothing
-    /// to happen are short too (B12, the full check, 2026-10-27).
+    /// to happen are short too (B12, the full check, 2026-10-27). With the
+    /// loop's own pid: once it's gone, nothing more can open (T-9, the full
+    /// check, 2026-11-06).
     static func openAfterExit(_ app: URL, waitingFor pid: pid_t, opener: URL,
-                              lookingEvery interval: Double = 0.2) throws -> @Sendable () -> Void {
+                              lookingEvery interval: Double = 0.2) throws -> (cancel: @Sendable () -> Void, waiter: pid_t) {
         let waiter = Process()
         waiter.executableURL = URL(filePath: "/bin/sh")
         waiter.arguments = [
@@ -24,6 +26,6 @@ enum RelaunchWaiter {
         ]
         try waiter.run()
         let waiting = waiter.processIdentifier
-        return { kill(waiting, SIGTERM) }
+        return ({ kill(waiting, SIGTERM) }, waiting)
     }
 }

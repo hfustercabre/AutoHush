@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 /// A card's Restore Defaults, under it on the right: it sets the card's own
@@ -17,6 +16,7 @@ struct RestoreDefaultsButton: View {
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
     @Environment(\.highlightGroup) private var group
     @Environment(\.cardTitle) private var cardTitle
+    @Environment(\.voiceOver) private var voiceOver
 
     var body: some View {
         if !model.isDefault(card) { button }
@@ -33,12 +33,18 @@ struct RestoreDefaultsButton: View {
     }
 
     private func restore() {
-        let movesHighlight = keyboard?.isPressing == true || NSWorkspace.shared.isVoiceOverEnabled
+        let movesHighlight = Self.movesHighlight(keyboard: keyboard, voiceOver: voiceOver)
         model.restoreDefaults(card)
         if movesHighlight, let group { keyboard?.highlightFirst(in: group) }
         // At high priority: the highlight's move, which VoiceOver follows,
         // would cut a plain announcement off (the review of N8, 2026-11-06).
         postStepAnnouncement(Self.restoredAnnouncement)
+    }
+
+    /// Whether a press leaves the highlight on the card's first row: one
+    /// by the keys, or with VoiceOver on (U2, N8); not a click's.
+    static func movesHighlight(keyboard: KeyHighlight?, voiceOver: VoiceOverSetting) -> Bool {
+        keyboard?.isPressing == true || voiceOver.isOn()
     }
 
     private static var title: Text {

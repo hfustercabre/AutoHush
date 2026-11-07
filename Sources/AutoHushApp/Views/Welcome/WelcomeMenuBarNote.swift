@@ -8,7 +8,7 @@ struct WelcomeMenuBarNote: View {
         HStack(spacing: 6) {
             Image(nsImage: MenuBarIcon.noMusic.image())
                 .renderingMode(.template)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.appSecondary)
                 .accessibilityHidden(true)
             Text(verbatim: Self.text)
                 .font(.appCallout)

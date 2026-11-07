@@ -29,7 +29,7 @@ extension AddAppModelTests {
     @Test("the last step's backup switches start on, or as the app checked again kept them, and Use keeps the user's; its controls are the chosen way, then the others that worked and the Play/Pause key, the panel last")
     func backupSwitches() async {
         let world = World()
-        world.keptSwitches["com.example.player"] = BackupSwitches(usesBackups: true, panelWhileMuted: false)
+        world.keptSwitches["com.example.player"] = .notDefault
         let model = await AddAppModel.ready(on: world)
         model.startCheck()
         await TestWait.until { world.panel == ["shown"] }
@@ -39,9 +39,9 @@ extension AddAppModelTests {
             setup: PlayerSetup(bundleID: "com.example.player", name: "Player", appURL: URL(filePath: "/Applications/Player.app"),
                                ways: [.menu(menuName: "Playback"), .panel(rememberedRow: nil)]))))
         await TestWait.until { model.result != nil }
-        #expect(model.backupSwitches == BackupSwitches(usesBackups: true, panelWhileMuted: false))
+        #expect(model.backupSwitches == .notDefault)
         #expect(model.backupControls?.main.kind == .menu && model.backupControls?.backups.map(\.kind) == [.mediaKey, .panel])
-        model.backupSwitches.usesBackups = false
+        model.backupSwitches.panelWhileMuted = false
         model.use()
         #expect(world.used.first?.setup?.usesBackups == false && world.used.first?.setup?.panelWhileMuted == false)
     }

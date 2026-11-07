@@ -7,6 +7,7 @@ import Testing
 @testable import AutoHushApp
 import AutoHushKit
 import AutoHushTestSupport
+import PlayersTestSupport
 
 extension AppDelegateTests {
     // MARK: - Music player
@@ -246,6 +247,34 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("Diagnostics doesn't call the player's Automation missing while the player is closed (it can't be read then), and says when macOS hasn't asked yet")
+    func diagnosticsAutomationUnread() async throws {
+        func permissions(_ sut: AppDelegate) async throws -> DiagnosticsSnapshot.Section {
+            await sut.refreshPermissions()
+            sut.refreshDiagnostics()
+            return try #require(sut.settingsModel.diagnostics?.sections.first { $0.kind == .permissions })
+        }
+        let closed = Scratch()
+        await closed.first.setFailVerify(MusicPlayerError.playerNotRunning)
+        let (sut, _) = makeSUT(closed)
+        sut.session.launch()
+        await TestWait.until { sut.status.health == .playerClosed("First isn’t running") }
+        let whileClosed = try await permissions(sut)
+        #expect(sut.permissionCenter.chosen.controlAccess == .playerNotRunning)
+        #expect(whileClosed.rows.first { $0.label == "Automation for First" } == .init(label: "Automation for First", value: "Not checked yet", mark: .neutral))
+        #expect(whileClosed.summary == "All allowed")
+
+        let notAsked = Scratch()
+        notAsked.running = [Players.first]
+        notAsked.automationStatus = OSStatus(errAEEventWouldRequireUserConsent)
+        let (asking, _) = makeSUT(notAsked)
+        await start(asking)
+        let beforeAsking = try await permissions(asking)
+        #expect(beforeAsking.rows.first { $0.label == "Automation for First" }
+            == .init(label: "Automation for First", value: "Not asked yet", mark: .problem, fix: .allow(.automation(player: "First"))))
+    }
+
+    @MainActor
     @Test("Diagnostics in Settings lists the apps with sound, found where Settings → Sound Sources lists them")
     func diagnosticsAppsWithSound() async {
         let scratch = Scratch()
@@ -272,6 +301,34 @@ extension AppDelegateTests {
         let (sut, _) = makeSUT(scratch, chosenPlayer: setup.bundleID)
         sut.refreshDiagnostics()
         #expect(sut.settingsModel.diagnostics?.text.contains("Controlled by: \(WayText.title(.menu))") == true)
+    }
+
+    @MainActor
+    @Test("Fine-Tuning's backup switches: an added app's setup and its player keep them, the same player, its card redrawn at once; a built-in player's are kept by its bundle ID")
+    func backupSwitchesKept() throws {
+        let scratch = Scratch()
+        let setup = PlayerSetup(bundleID: "com.example.added", name: "Added", appURL: URL(fileURLWithPath: "/Applications/Added.app"),
+                                ways: [.menu(menuName: "Controls")], backups: [.panel(rememberedRow: nil)],
+                                wayResults: [.init(kind: .menu, mark: .works), .init(kind: .panel, mark: .works)])
+        scratch.addedSetups.save(setup)
+        let checked = CheckedPlayer(setup: setup, reports: nil, store: scratch.addedSetups)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [checked] })
+        scratch.installed.insert(setup.bundleID)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: setup.bundleID)
+        #expect(sut.status.chosenControls?.switches == BackupSwitches())
+        let switches = BackupSwitches(usesBackups: false, panelWhileMuted: true)
+        sut.setBackupSwitches(switches)
+        let kept = try #require(scratch.addedSetups.setups().first)
+        #expect(kept.usesBackups == false && kept.panelWhileMuted == true)
+        #expect(checked.controls.switches == switches && (sut.player as? CheckedPlayer) === checked)
+        #expect(sut.status.chosenControls?.switches == switches)
+        let builtIns = BackupSwitchesStore(defaults: scratch.defaults)
+        #expect(builtIns.switches(for: setup.bundleID) == BackupSwitches()) // not where a built-in player's go
+
+        sut.choosePlayer(Players.first)
+        sut.setBackupSwitches(BackupSwitches(usesBackups: false))
+        #expect(builtIns.switches(for: Players.first) == BackupSwitches(usesBackups: false))
+        #expect(scratch.addedSetups.setups().first == kept)
     }
 
     @MainActor

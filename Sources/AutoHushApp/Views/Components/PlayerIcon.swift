@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 
 /// The chosen media player's icon, `size` pt square, faded while it isn't
-/// installed; AutoHush's own while none is chosen: the menu's card (36 pt),
-/// its Media Player row (22 pt) and Settings → General (56 pt).
+/// installed; AutoHush's own while none is chosen: the menu's card (36 pt)
+/// and Settings → General (56 pt).
 struct PlayerIcon: View {
     let player: PlayerOption?
     let size: CGFloat

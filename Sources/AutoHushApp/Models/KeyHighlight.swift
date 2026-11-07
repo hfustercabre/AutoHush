@@ -119,6 +119,10 @@ final class KeyHighlight {
     @ObservationIgnored var screenFrame: (@MainActor (CGRect) -> CGRect?)?
     /// Tells Zoom where the highlight is now, if Zoom is on (tests replace it).
     @ObservationIgnored var zoom: @MainActor (CGRect) -> Void = ZoomFocus.follow
+    /// The pointer moves it (`hover`). Off in tests that check the keys'
+    /// highlight on screen, so the real pointer, resting wherever their
+    /// window opens, never moves it (the full check, 2026-11-06, T-5).
+    @ObservationIgnored var followsPointer = true
 
     /// The control's own `Light`.
     func light(_ id: UUID) -> Light {
@@ -187,6 +191,7 @@ final class KeyHighlight {
 
     /// The pointer came onto a control (`true`) or left it.
     func hover(_ id: UUID, _ inside: Bool) {
+        guard followsPointer else { return }
         hovered.removeAll { $0 == id }
         if inside {
             hovered.append(id)

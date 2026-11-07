@@ -50,6 +50,17 @@ final class PermissionCenter {
         if chosen != state { chosen = state }
     }
 
+    /// Reads Accessibility again at once, and keeps it: the chosen player's
+    /// control permission too, when it's Accessibility. What reads in no
+    /// time is up to date before the menu draws (its "backups stand in"
+    /// row); Automation follows with `refresh`.
+    func refreshAccessibility() {
+        var state = chosen
+        state.accessibility = system.isTrusted()
+        if case .accessibility? = state.control { state.controlAccess = state.accessibility ? .allowed : .denied }
+        if chosen != state { chosen = state }
+    }
+
     /// The permissions for `player` as they stand. `detection` is what
     /// AutoHush's monitoring uses now, for when macOS can't tell about Audio
     /// Recording; `awaitsReopen`: the user went to allow it in System

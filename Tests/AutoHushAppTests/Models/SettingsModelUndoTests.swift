@@ -140,19 +140,19 @@ struct SettingsModelUndoTests {
     @Test("the player controls' Restore Defaults puts its own main control back, and Undo the one chosen, field by field: a switch turned since stays")
     func mainControlUndo() {
         changeEverything(for: .playerControls)
-        model.actions?.setBackupSwitches(BackupSwitches(mainControl: "page")) // both switches on, its page the main control
+        model.actions?.setBackupSwitches(BackupSwitches(mainControl: "page")) // backups on, the panel off, its page the main control
         #expect(model.chosenControls?.main.kind == .page && !model.isDefault(.playerControls))
         press(.playerControls)
         #expect(model.chosenControls?.main.kind == .script && model.chosenControls?.switches == BackupSwitches())
         #expect(model.isDefault(.playerControls))
-        model.actions?.setBackupSwitches(BackupSwitches(panelWhileMuted: false)) // turned since
+        model.actions?.setBackupSwitches(BackupSwitches(panelWhileMuted: true)) // turned on since
 
         undo.undo()
         #expect(model.chosenControls?.main.kind == .page)
-        #expect(model.chosenControls?.switches == BackupSwitches(panelWhileMuted: false, mainControl: "page"))
+        #expect(model.chosenControls?.switches == BackupSwitches(panelWhileMuted: true, mainControl: "page"))
         undo.redo()
         #expect(model.chosenControls?.main.kind == .script)
-        #expect(model.chosenControls?.switches == BackupSwitches(panelWhileMuted: false))
+        #expect(model.chosenControls?.switches == BackupSwitches(panelWhileMuted: true))
     }
 
     @Test("Undo and Redo put back only what the restore changed: a setting changed since, on the card or another, stays")

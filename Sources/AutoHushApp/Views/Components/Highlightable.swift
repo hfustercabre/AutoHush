@@ -113,6 +113,7 @@ struct Highlightable: ViewModifier {
     @Environment(\.highlightReason) private var reason
     @Environment(\.highlightRevealRoom) private var revealRoom
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+    @Environment(\.voiceOver) private var voiceOver
 
     /// What pressing it does as it was drawn last: registered once, its
     /// closures stay those of the latest drawing (they may hold what it
@@ -161,7 +162,7 @@ struct Highlightable: ViewModifier {
                 .accessibilityFocused($hasVoiceOverCursor)
                 .onChange(of: keyboard.light(id).arrivals) {
                     // Only for VoiceOver: without it, nothing to move.
-                    guard NSWorkspace.shared.isVoiceOverEnabled else { return }
+                    guard voiceOver.isOn() else { return }
                     if let voiceOverTarget { voiceOverTarget.wrappedValue = true } else { hasVoiceOverCursor = true }
                     if let speech = actions.arrivalSpeech?() { postStepAnnouncement(speech) }
                 }

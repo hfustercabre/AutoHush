@@ -210,6 +210,8 @@ class HostedWindowController: NSWindowController {
     /// The highlight the arrow keys and the pointer move (`WindowKeys`), if
     /// the window has one.
     let keys: WindowKeys?
+    /// macOS's keyboard navigation setting, read at each key (tests set it).
+    var fullKeyboardAccess: @MainActor () -> Bool = { NSApp.isFullKeyboardAccessEnabled }
     /// The keys' monitor, from when it shows until it closes: each Learn
     /// Again and each check makes a new window.
     private var keyMonitor: Any?
@@ -255,7 +257,7 @@ class HostedWindowController: NSWindowController {
         guard let keys, let window, windowNumber == window.windowNumber, window.attachedSheet == nil else { return false }
         // With keyboard navigation on, a click may have given a control the focus.
         let focus: WindowKeys.Focus = window.firstResponder is NSText ? .textField // a field's editor
-            : NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow) ? .control : .none
+            : fullKeyboardAccess() && !(window.firstResponder is NSWindow) ? .control : .none
         if let key = HighlightKey(keyCode: keyCode, modifiers: flags) {
             // Shift-Tab in a field: nothing, as ↑, the field keeping the
             // keyboard (the search is the top), not AppKit's next control

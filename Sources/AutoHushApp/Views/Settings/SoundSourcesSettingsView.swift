@@ -148,21 +148,24 @@ struct SoundSourcesSettingsView: View {
                comment: "Settings → Sound Sources, when the search finds nothing; %@ is what was typed")
     }
 
+    /// The search, in the heading's place while it's open: its ✕ closes it.
+    static func searchField(_ list: AppListModel) -> SearchField {
+        // A closing field hands back its text as it loses focus: only an
+        // open search takes it.
+        SearchField(text: Binding(
+            get: { list.search ?? "" },
+            set: { text in if list.search != nil { list.search = text } }
+        ), focusesOnAppear: true, results: SearchResults(count: list.shownApps.count, noMatch: noMatch(list.search ?? "")),
+                    onClose: { list.search = nil })
+    }
+
     /// The heading, or the search while it's open, then "Sort by" with the
     /// order's pop-up, an arrow that reverses it, and the magnifier.
     private var header: some View {
         let order = list.order
         return HStack(spacing: 6) {
             if list.search != nil {
-                // A closing field hands back its text as it loses focus:
-                // only an open search takes it.
-                SearchField(text: Binding(
-                    get: { list.search ?? "" },
-                    set: { text in if list.search != nil { list.search = text } }
-                ), focusesOnAppear: true, results: SearchResults(count: list.shownApps.count, noMatch: Self.noMatch(list.search ?? ""))) {
-                    list.search = nil
-                }
-                .padding(.trailing, 10)
+                Self.searchField(list).padding(.trailing, 10)
             } else {
                 SectionHeading(Text("Apps", comment: "Settings → Sound Sources: heading of the list of the apps heard playing, each switched to pause your player or be ignored"), isFirst: true)
                 Spacer()
@@ -264,6 +267,7 @@ private struct SoundSourceRow: View {
     @FocusState private var rowFocused: Bool
     @FocusState private var switchFocused: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+    @Environment(\.voiceOver) private var voiceOver
 
     var body: some View {
         HStack(spacing: 8) {
@@ -338,7 +342,7 @@ private struct SoundSourceRow: View {
     private func switchFromKeys() {
         let ignores = !row.isIgnored
         model.settings.setIgnored(row.source, ignores)
-        guard NSWorkspace.shared.isVoiceOverEnabled else { return }
+        guard voiceOver.isOn() else { return }
         postStepAnnouncement(row.source.name + ", " + SourceText.subtitle(isIgnored: ignores, mutes: model.playerMutesNow))
     }
 

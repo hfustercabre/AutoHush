@@ -173,18 +173,18 @@ struct SettingsModelTests {
     func chooseMainControl() {
         let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
         model.state.status.choosePlayer(named: "Radio")
-        model.state.status.chosenControls = .choosing(switches: BackupSwitches(panelWhileMuted: false))
+        model.state.status.chosenControls = .choosing(switches: .notDefault) // as they are: kept
         actions.setsBackupSwitches = { [model] switches in
             model.state.status.chosenControls = model.chosenControls?.with(switches)
         }
         #expect(model.chosenControls?.choices.map(\.kind) == [.script, .menu, .page, .panel]) // never the key
         model.chooseMainControl(.page)
-        #expect(log.calls.last == "backups on panel off main page")
+        #expect(log.calls.last == "backups off panel on main page")
         #expect(model.chosenControls?.main.kind == .page && model.chosenControls?.mainChanged == true)
         #expect(!model.isDefault(.playerControls))
 
         model.chooseMainControl(.script) // the recommended one: none kept
-        #expect(log.calls.last == "backups on panel off")
+        #expect(log.calls.last == "backups off panel on")
         #expect(model.chosenControls?.switches.mainControl == nil && model.chosenControls?.main.kind == .script)
 
         log.calls = []
@@ -201,6 +201,28 @@ struct SettingsModelTests {
         // (`WayOrder.mainIndex`), and reports it as its main one.
         model.state.status.chosenControls = .choosing(switches: BackupSwitches(mainControl: "mediaKey"))
         #expect(model.chosenControls?.main.kind == .script && model.isDefault(.playerControls))
+    }
+
+    @Test("Restore Defaults leaves the panel's switch alone while the panel is the player's own main control (its switch hidden), and turns it off where the panel is a backup once its own main control is back")
+    func restoreLeavesHiddenPanelSwitch() {
+        let model = makeModel(MockLaunchAtLoginController(isEnabled: false))
+        model.state.status.choosePlayer(named: "Radio")
+        // The panel is its own (recommended) main control: "the panel while
+        // muted", on from before, doesn't show.
+        model.state.status.chosenControls = PlayerControls(main: .init(kind: .panel, result: nil), backups: [.init(kind: .menu, result: nil)],
+                                                           switches: BackupSwitches(panelWhileMuted: true))
+        #expect(model.isDefault(.playerControls))
+        // Another chosen as the main control: back to its own, the panel is
+        // the main one again.
+        model.state.status.chosenControls = PlayerControls(main: .init(kind: .menu, result: nil), backups: [.init(kind: .panel, result: nil)],
+                                                           switches: BackupSwitches(panelWhileMuted: true, mainControl: "menu"),
+                                                           recommended: .panel)
+        model.restoreDefaults(.playerControls)
+        #expect(log.calls.last == "backups on panel on")
+        // The panel a backup of its own main control: its switch goes off.
+        model.state.status.chosenControls = PlayerControls(main: .init(kind: .page, result: nil), backups: [.init(kind: .panel, result: nil)],
+                                                           switches: BackupSwitches(panelWhileMuted: true))
+        #expect(!model.isDefault(.playerControls))
     }
 
     @Test("the chosen player's fades follow its option")

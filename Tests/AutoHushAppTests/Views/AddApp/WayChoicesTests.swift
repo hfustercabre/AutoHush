@@ -28,6 +28,10 @@ struct WayChoicesTests {
         #expect(model.choosableWays == [.menu, .panel] && model.chosenWay == .menu)
 
         let keys = WindowKeys()
+        // Moved by the keys alone: the pointer, resting wherever the window
+        // opens (a VoiceOver check left it at the screen's corner), would
+        // light the first card (T-5).
+        keys.highlight.followsPointer = false
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: AddAppView.width, height: 300), styleMask: [.titled],
                               backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
@@ -37,9 +41,7 @@ struct WayChoicesTests {
         window.contentView?.layoutSubtreeIfNeeded()
         await TestWait.until { keys.highlight.rows.joined().count == 2 } // the two cards, not the page's way
         #expect(keys.highlight.rows.count == 2) // one under the other: ↑ and ↓ step through them
-        // Nothing lit by the pointer, wherever it rests: the window opens at the
-        // screen's corner (a VoiceOver check left it there: the first card lit).
-        keys.highlight.clear()
+        #expect(keys.highlight.highlighted == nil)
 
         #expect(keys.handle(.down)) // the menu's card, the recommended one
         #expect(keys.handle(.down)) // the panel's

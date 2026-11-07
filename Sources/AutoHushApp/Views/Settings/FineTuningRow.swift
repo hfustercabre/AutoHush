@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 /// A Behavior card's last row (L4, the user's pick, 2026-10-25), and Media
@@ -16,9 +15,10 @@ struct FineTuningRow: View {
     /// What they're set to ("0.5 s", "1 s out, 2 s in"); none while the
     /// switch they follow is off.
     let value: String?
+    @Environment(\.voiceOver) private var voiceOver
 
     var body: some View {
-        Button { model.showFineTuning(card, byKeyboard: NSWorkspace.shared.isVoiceOverEnabled) } label: {
+        Button { model.showFineTuning(card, byKeyboard: voiceOver.isOn()) } label: {
             ChevronRowLabel(symbol: "slider.horizontal.3", title: title, value: value)
         }
         .buttonStyle(.plain)

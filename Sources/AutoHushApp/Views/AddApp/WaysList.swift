@@ -104,15 +104,9 @@ struct WayRow: View {
     /// The panel that worked, its row showing no state: only its sound tells.
     private var soundOnly: Bool { way.kind == .panel && way.worked && panelNeedsSound }
 
-    /// A check's mark in its color; white on a selection (KB2a).
+    /// A check's mark in its color (`CheckMarkSymbol`); white on a selection (KB2a).
     static func symbol(_ mark: CheckResult.Mark, onSelection: Bool = false) -> some View {
-        let (name, color): (String, AnyShapeStyle) = switch mark {
-        case .works: ("checkmark.circle.fill", AnyShapeStyle(.appSuccess))
-        case .some: ("exclamationmark.circle.fill", AnyShapeStyle(.appWarning))
-        case .none, .notThere: ("xmark.circle.fill", AnyShapeStyle(.appSecondary))
-        case .notTried, .notChecked, .noWindow, .noAutomation, .noAccessibility, .menuBarHidden, .toggleOnly:
-            ("minus.circle", AnyShapeStyle(.appSecondary))
-        }
-        return Image(systemName: name).foregroundStyle(onSelection ? AnyShapeStyle(.white) : color)
+        let symbol = CheckMarkSymbol(mark)
+        return Image(systemName: symbol.name).foregroundStyle(onSelection ? AnyShapeStyle(.white) : symbol.style)
     }
 }

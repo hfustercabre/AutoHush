@@ -14,19 +14,7 @@ struct BackupsStandInTests {
     private let actions = FakeAppActions()
 
     private func model(automation: OSStatus) async -> SettingsModel {
-        let center = PermissionCenter(system: .init(
-            isTrusted: { true }, promptAccessibility: {}, automation: { _, _ in automation }, runningPID: { _ in 4242 },
-            audio: { .granted }, requestAudio: { _ in }, openPane: { _ in }
-        ))
-        let player = MockMusicPlayer(bundleID: "com.example.jukebox", name: "Jukebox")
-        await center.refresh(chosenPlayer: { player }, detectionMethod: .audioLevels, detection: .audioLevel, awaitsReopen: false)
-        let model = SettingsModel(settings: .inMemory(), updates: FakeUpdateCommands(), permissionCenter: center, actions: actions,
-                                  launchAtLoginController: MockLaunchAtLoginController(isEnabled: false),
-                                  menuBarIcon: MenuBarIconPlace(defaults: MemoryDefaults()))
-        model.state.status.choosePlayer(named: "Jukebox")
-        model.state.status.setHealth(.ready)
-        model.state.status.chosenControls = .choosing()
-        return model
+        await SettingsModel.withAutomation(automation, actions: actions)
     }
 
     @Test("its own permission missing while it's controlled by its backups: the menu's warning, under the card, and Settings' note")

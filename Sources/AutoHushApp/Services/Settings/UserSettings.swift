@@ -106,6 +106,14 @@ final class UserSettings: AutoPauseControlling {
         logger.info("Auto-Pause: \(value, privacy: .public)\(why.map { ", as \($0)" } ?? "", privacy: .public)")
     }
 
+    /// Applies Auto-Pause again as it stands now: after the Mac wakes, or
+    /// its clock or time zone changes. The timer for its next change counts
+    /// only the time the Mac is awake, so a snooze that ended during sleep
+    /// would otherwise stay on until it fires, late by the time slept.
+    func refreshAutoPause(now: Date = Date()) {
+        applyAutoPause(now: now)
+    }
+
     /// Derives the effective Auto-Pause from the preferences, clearing an
     /// expired snooze, and schedules its next change.
     private func applyAutoPause(now: Date = Date()) {

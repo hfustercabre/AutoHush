@@ -173,6 +173,24 @@ extension UpdateControllerTests {
         #expect(h.quits == 1)
     }
 
+    @Test("a setting that drops the kept download while it's being installed leaves it until the install ends: given up, it's deleted then")
+    func keptDownloadWhileInstalling() async {
+        let gate = Gate(), quiet = Locked(true)
+        let h = Harness(checker: .latestRelease("v0.3.0"), installer: MockUpdateInstaller(onPrepare: { await gate.wait() }),
+                        quiet: quiet, mode: .download)
+        await h.controller.runAutomaticTasks()
+        h.controller.mode = .install
+        let install = Task { await h.controller.runAutomaticTasks() }
+        await TestWait.until { await gate.waiting == 1 } // its disk image attached and copied
+        h.controller.mode = .notify
+        #expect(h.keptFiles == ["AutoHush-0.3.0.dmg"])
+        quiet.value = false // AutoHush got busy meanwhile: the install gives up
+        await gate.open()
+        await install.value
+        #expect(h.installer.calls == ["download 0.3.0", "prepare 0.3.0 from kept image", "discard 0.3.0"])
+        #expect(h.keptFiles.isEmpty && h.preferences.downloadedUpdate == nil)
+    }
+
     @Test("where AutoHush can't update itself, downloading falls back to notifying")
     func cantInstallSoNotify() async {
         let h = Harness(checker: .latestRelease("v0.3.0"),

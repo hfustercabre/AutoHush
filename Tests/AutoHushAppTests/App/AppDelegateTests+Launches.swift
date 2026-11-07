@@ -82,6 +82,7 @@ extension AppDelegateTests {
             await TestWait.until { sut.status.health == health }
             sut.registerPlayerLaunchObserver()
             sut.registerSleepObservers()
+            sut.registerClockObservers()
             return (sut, monitorings)
         }
 
@@ -142,13 +143,34 @@ extension AppDelegateTests {
             #expect(monitorings.made.last?.asleep == [true, false, true, false])
         }
 
+        @Test("a \"Turn off for\" that ended while the Mac slept ends as it wakes, its screens wake, or the clock or the time zone changes",
+              arguments: [false, true])
+        func snoozeEndedAsleep(byClock: Bool) async {
+            let scratch = Scratch()
+            let (sut, _) = await observing(scratch, running: true)
+            defer { quit(sut) }
+            let notices = byClock
+                ? [(scratch.clockCenter, Notification.Name.NSSystemClockDidChange), (scratch.clockCenter, .NSSystemTimeZoneDidChange)]
+                : [(scratch.workspaceCenter, NSWorkspace.didWakeNotification), (scratch.workspaceCenter, NSWorkspace.screensDidWakeNotification)]
+            for (center, notice) in notices {
+                sut.userSettings.snooze(.oneHour)
+                #expect(!sut.userSettings.isAutoPauseActive)
+                // Its hour went by while the Mac slept, or by the clock: its
+                // timer, counting only the time awake, is still far off.
+                scratch.preferences.autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: Date().addingTimeInterval(-60))
+                center.post(name: notice, object: nil)
+                await TestWait.until { sut.userSettings.isAutoPauseActive }
+                #expect(sut.status.autoPause == .on && scratch.preferences.autoPause.snoozedUntil == nil)
+            }
+        }
+
         @Test("once AutoHush quits, it no longer follows macOS's notices: the chosen player opening does nothing")
         func quitStopsFollowing() async {
             let scratch = Scratch()
             let (sut, monitorings) = await observing(scratch, running: false)
             await scratch.first.setFailVerify(nil)
             quit(sut)
-            #expect(sut.playerLaunchObserver == nil && sut.sleepObservers.isEmpty)
+            #expect(sut.playerLaunchObserver == nil && sut.sleepObservers.isEmpty && sut.clockObservers.isEmpty)
             launch(FakeRunningApplication(bundleID: Players.first), in: scratch)
             await Task.yield() // what a notice still observed would start
             await sut.session.waitUntilIdle()

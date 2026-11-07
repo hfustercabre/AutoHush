@@ -23,7 +23,7 @@ struct DiagnosticsReportTests {
     private func facts(_ change: (inout DiagnosticsFacts) -> Void = { _ in }) -> DiagnosticsFacts {
         var facts = DiagnosticsFacts(
             playerVersion: "2.1", playerCanFade: true,
-            playerPermission: .automation(player: "Jukebox"), playerPermissionGranted: true,
+            playerPermission: .automation(player: "Jukebox"), playerPermissionAccess: .allowed,
             audioRecording: .granted, notificationsOff: false, detectionMethod: .audioLevels,
             appVersion: "0.6.1 (19)", launchAtLogin: true, checksForUpdates: true, automaticUpdates: .install,
             lastUpdateCheck: now.addingTimeInterval(-3600), macOS: "27.0.1 (26A434)", processor: "Apple silicon", now: now
@@ -163,7 +163,7 @@ struct DiagnosticsReportTests {
         #expect(try rows {
             $0.audioRecording = .denied
             $0.playerPermission = .accessibility(player: "Jukebox")
-            $0.playerPermissionGranted = false
+            $0.playerPermissionAccess = .denied
             $0.notificationsOff = true
         } == [
             .init(label: "Audio Recording", value: "Not allowed", mark: .problem, fix: .allow(.systemAudioRecording)),
@@ -173,8 +173,13 @@ struct DiagnosticsReportTests {
         #expect(try rows {
             $0.audioRecording = .notDetermined
             $0.detectionMethod = .playbackSignals
-            $0.playerPermissionGranted = nil
+            $0.playerPermissionAccess = nil
         }.map(\.value) == ["Not needed in AntiDot mode", "Not checked yet", "Allowed"])
+        // The player's: macOS hasn't asked yet; or its Automation can't be read while it's closed.
+        #expect(try rows { $0.playerPermissionAccess = .notAsked }[1]
+            == .init(label: "Automation for Jukebox", value: "Not asked yet", mark: .problem, fix: .allow(.automation(player: "Jukebox"))))
+        #expect(try rows { $0.playerPermissionAccess = .playerNotRunning }[1]
+            == .init(label: "Automation for Jukebox", value: "Not checked yet", mark: .neutral))
         // Measuring audio levels: macOS hasn't asked yet, or can't tell.
         #expect(try rows { $0.audioRecording = .notDetermined }.first == .init(label: "Audio Recording", value: "Not asked yet", mark: .problem, fix: .allow(.systemAudioRecording)))
         #expect(try rows { $0.audioRecording = nil }.first == .init(label: "Audio Recording", value: "Unknown", mark: .neutral))

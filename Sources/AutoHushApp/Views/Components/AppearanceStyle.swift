@@ -23,6 +23,8 @@ struct AppearanceStyle: ShapeStyle {
 extension ShapeStyle where Self == HierarchicalShapeStyle {
     /// Descriptions under rows, section labels and captions.
     static var appSecondary: HierarchicalShapeStyle { .secondary }
+    /// Behind an unfilled chip while it's pressed: a step above `chipHoverFill`.
+    static var chipPressedFill: HierarchicalShapeStyle { .tertiary }
 }
 
 extension ShapeStyle where Self == Color {

@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import AutoHushKit
 
@@ -9,6 +8,7 @@ import AutoHushKit
 struct GeneralSettingsView: View {
     let model: SettingsModel
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+    @Environment(\.voiceOver) private var voiceOver
 
     /// Under Keep icon next to system icons while the menu bar icon is hidden.
     private static var hiddenIconNote: String {
@@ -88,7 +88,7 @@ struct GeneralSettingsView: View {
                 // Pressed by a key or VoiceOver, the new page's first control
                 // lights up, VoiceOver's cursor with it (N8, 2026-11-06).
                 Button {
-                    model.showPage(.mediaPlayer, byKeyboard: keyboard?.isPressing == true || NSWorkspace.shared.isVoiceOverEnabled)
+                    model.showPage(.mediaPlayer, byKeyboard: keyboard?.isPressing == true || voiceOver.isOn())
                 } label: {
                     Text(verbatim: model.chosenPlayer == nil ? ChooseText.choose : ChooseText.change)
                 }
@@ -119,7 +119,7 @@ struct GeneralSettingsView: View {
             CardDivider()
             // Pressed by a key or VoiceOver, its first control lights up,
             // VoiceOver's cursor with it (N8, the a11y audit, 2026-11-06).
-            Button { model.showSoundSources(byKeyboard: NSWorkspace.shared.isVoiceOverEnabled) } label: {
+            Button { model.showSoundSources(byKeyboard: voiceOver.isOn()) } label: {
                 ChevronRowLabel(symbol: SettingsPage.soundSources.symbol, title: SettingsPage.soundSources.title)
             }
             .buttonStyle(.plain)

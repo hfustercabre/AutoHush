@@ -47,6 +47,7 @@ extension UpdateController {
                 installer.discard(update)
                 isInstalling = false
                 showStatus(availableStatus(release))
+                tidy() // a setting changed meanwhile
                 return
             }
             try installer.install(update)
@@ -57,6 +58,7 @@ extension UpdateController {
             // A kept download that didn't install isn't trusted again.
             if image != nil { downloads.remove() }
             isInstalling = false
+            tidy() // a setting changed meanwhile
             logger.error("Installing \(version, privacy: .public) failed: \(error)")
             showStatus(String(localized: "Couldn’t install version \(version).",
                               comment: "Update status in Settings; %@ is a version number"))

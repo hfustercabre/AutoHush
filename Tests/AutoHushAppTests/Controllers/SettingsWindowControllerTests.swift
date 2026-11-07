@@ -18,8 +18,14 @@ final class SettingsWindowControllerTests {
         UserDefaults.standard.removeObject(forKey: "NSWindow Frame \(frameName)")
     }
 
+    /// Its highlights moved by the keys alone: the pointer, resting wherever
+    /// the window opens, moves neither (T-5).
     private func makeController(_ model: SettingsModel? = nil) -> SettingsWindowController {
-        SettingsWindowController(model: model ?? .forTests(actions: actions, updates: updates), frameName: frameName)
+        let sut = SettingsWindowController(model: model ?? .forTests(actions: actions, updates: updates), frameName: frameName)
+        sut.keys.sidebar.followsPointer = false
+        sut.keys.page.followsPointer = false
+        sut.fullKeyboardAccess = { false }
+        return sut
     }
 
     private func makeModel() -> SettingsModel { .forTests(actions: actions, updates: updates) }
@@ -319,7 +325,11 @@ final class SettingsWindowControllerTests {
         let sut = makeController(model)
         defer { sut.close() }
         sut.show(page: .diagnostics)
-        await TestWait.until { sut.keys.page.rows.count >= 3 } // headings, then the buttons
+        // Show Logs… and Copy Report side by side, last: both registered
+        // and placed. Waiting for any three rows, the headings could come
+        // first, End then reaching a heading, or Copy Report alone (M-1:
+        // once, on macOS 15.7.7).
+        await TestWait.until { sut.keys.page.rows.last?.count == 2 }
         #expect(sut.keys.handle(.end))
         #expect(sut.keys.handle(.returnKey))
         #expect(actions.log.calls.contains("showLogs"))

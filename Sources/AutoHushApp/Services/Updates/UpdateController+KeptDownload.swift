@@ -5,9 +5,11 @@ import AutoHushKit
 extension UpdateController {
     /// Deletes a kept download that's no longer wanted (see
     /// `UpdateDownloads.tidy`). Downloads are kept only while automatic checks
-    /// are on and the choice isn't "Notify me".
+    /// are on and the choice isn't "Notify me". Not while one is downloaded
+    /// or installed: an install uses the kept disk image for seconds, and
+    /// tidies once it gives up or fails.
     func tidy() {
-        guard !isDownloading else { return }
+        guard !isDownloading, !isInstalling else { return }
         let keeping = checksAutomatically && mode != .notify && installUnavailability == nil
         let hadDownload = preferences.downloadedUpdate
         downloads.tidy(running: currentVersion, latest: latestVersion, keeping: keeping, now: now())

@@ -140,11 +140,15 @@ extension SettingsModel {
             restored.getsReleaseCandidates = false
         // The chosen player's controls': its own main control (the
         // recommended one), backups on and the panel while muted off, as
-        // when it's added; the panel's alone while it isn't among them (hidden).
+        // when it's added. The panel's switch only while the panel is a
+        // backup once its own main control is back: as the main control, or
+        // not among its controls, the panel has no switch (hidden).
         case .playerControls:
             restored.backupSwitches?.switches.mainControl = nil
             restored.backupSwitches?.switches.usesBackups = true
-            if chosenControls?.hasPanel == true { restored.backupSwitches?.switches.panelWhileMuted = false }
+            if let controls = chosenControls, controls.hasPanel, controls.recommended != .panel {
+                restored.backupSwitches?.switches.panelWhileMuted = false
+            }
         }
         return restored
     }

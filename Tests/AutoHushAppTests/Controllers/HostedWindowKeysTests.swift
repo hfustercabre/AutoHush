@@ -17,9 +17,18 @@ struct HostedWindowKeysTests {
     }
 
     private func makeWarning(log: CallLog) -> CheckWarningWindowController {
-        CheckWarningWindowController(app: World().apps[0], muting: .none, desktopShortcutsOff: { false }) {
+        keysAlone(CheckWarningWindowController(app: World().apps[0], muting: .none, desktopShortcutsOff: { false }) {
             log.calls.append("start")
-        }
+        })
+    }
+
+    /// `sut` with its highlight moved by the keys alone, keyboard navigation
+    /// off, whatever the test Mac's: the pointer, resting wherever its window
+    /// opens, never moves it (T-1, T-5).
+    private func keysAlone<Controller: HostedWindowController>(_ sut: Controller) -> Controller {
+        sut.keys?.highlight.followsPointer = false
+        sut.fullKeyboardAccess = { false }
+        return sut
     }
 
     @Test("with Cancel lit, Return is left to the window for Start the Check; another window's keys, or ⌘ with one, aren't taken")
@@ -60,7 +69,7 @@ struct HostedWindowKeysTests {
         model.state.status.playerOptions = (0..<PlayerOption.searchThreshold).map {
             PlayerOption(bundleID: "com.example.player\($0)", name: "Player \($0)", appURL: URL(fileURLWithPath: "/Applications/P\($0).app"))
         }
-        let sut = PlayerChooserWindowController(model: model, tallestPage: 600)
+        let sut = keysAlone(PlayerChooserWindowController(model: model, tallestPage: 600))
         defer { sut.close() }
         sut.show()
         let window = try #require(sut.window)
@@ -86,7 +95,7 @@ struct HostedWindowKeysTests {
     @Test("in Add a Web App, a letter typed with a control lit goes back into the address, the highlight let go; Shift-Tab there stays in it (N5)")
     func addWebAppAddress() async throws {
         let settings = SettingsModel.forTests(actions: FakeAppActions(log: CallLog()), updates: FakeUpdateCommands())
-        let sut = AddWebAppWindowController(model: AddWebAppModel(), settings: settings)
+        let sut = keysAlone(AddWebAppWindowController(model: AddWebAppModel(), settings: settings))
         defer { sut.close() }
         sut.show()
         let window = try #require(sut.window)

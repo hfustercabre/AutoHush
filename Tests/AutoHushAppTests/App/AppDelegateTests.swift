@@ -70,6 +70,9 @@ struct AppDelegateTests {
         /// Where macOS's notices (apps opening, the Mac sleeping and waking)
         /// come, as NSWorkspace's: the test posts them, and no real one comes.
         let workspaceCenter = NotificationCenter()
+        /// Where macOS's notices of the clock or the time zone changing come,
+        /// as the default center's: the test posts them.
+        let clockCenter = NotificationCenter()
         /// Whether one of AutoHush's windows is open, for an update's quiet
         /// moment: as if one were, so no test's update restarts the tests' own
         /// process, unless a test says none is.
@@ -184,6 +187,7 @@ struct AppDelegateTests {
             permissionCenter: scratch.permissionCenter,
             windowWatchSleep: windowWatchSleep,
             workspaceCenter: scratch.workspaceCenter,
+            clockCenter: scratch.clockCenter,
             clock: { scratch.clock.now },
             hasOpenWindow: { scratch.windowOpen }
         ))

@@ -8,9 +8,16 @@ import Testing
 @MainActor
 struct MenuPanelTests {
     /// A key press, as the panel gets it.
-    static func key(_ code: UInt16, flags: NSEvent.ModifierFlags = []) -> NSEvent {
+    static func key(_ code: UInt16, flags: NSEvent.ModifierFlags = [], characters: String = "") -> NSEvent {
         NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: flags, timestamp: 0, windowNumber: 0, context: nil,
-                         characters: "", charactersIgnoringModifiers: "", isARepeat: false, keyCode: code)!
+                         characters: characters, charactersIgnoringModifiers: characters, isARepeat: false, keyCode: code)!
+    }
+
+    /// Records the keys handed on to it.
+    final class KeyRecorder: NSResponder {
+        var keys: [UInt16] = []
+
+        override func keyDown(with event: NSEvent) { keys.append(event.keyCode) }
     }
 
     @Test("Escape closes it; a key nothing in it takes goes to its handler")
@@ -24,6 +31,23 @@ struct MenuPanelTests {
         #expect(cancelled == 1)
         panel.keyDown(with: Self.key(125))
         #expect(keys == [125])
+    }
+
+    @Test("a key nothing in it takes ends there, without macOS's beep (a letter, Delete); Escape, ⌘ and ⌃ keys stay AppKit's (K3-4)")
+    func untakenKeysEndThere() {
+        let panel = MenuPanel(content: NSView())
+        let after = KeyRecorder()
+        panel.nextResponder = after // what AppKit would hand the key on to, and beep at its end
+        panel.onKey = { _ in false }
+        panel.keyDown(with: Self.key(0, characters: "a"))
+        panel.keyDown(with: Self.key(51)) // Delete
+        panel.keyDown(with: Self.key(122)) // F1
+        #expect(after.keys.isEmpty)
+        // Escape reaches `cancelOperation` through AppKit's own handling: left to it.
+        panel.keyDown(with: Self.key(53, characters: "\u{1B}"))
+        panel.keyDown(with: Self.key(12, flags: .command, characters: "q"))
+        panel.keyDown(with: Self.key(0, flags: .control, characters: "a"))
+        #expect(after.keys == [53, 12, 0])
     }
 
     @Test("its key view loop is worked out again as its content changes, so Tab reaches every control it shows")

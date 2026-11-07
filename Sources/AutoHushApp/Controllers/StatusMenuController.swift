@@ -47,12 +47,18 @@ final class StatusMenuController: NSObject {
     /// window may cross the menu), as macOS's submenus wait.
     static let sideOpenDelay: TimeInterval = 0.15
     static let sideCloseDelay: TimeInterval = 0.3
+    /// How long the menu stays a plain window for VoiceOver as a side
+    /// window closes (`makeKeyAgain`).
+    static let plainWindowWait: TimeInterval = 1.5
     private(set) var isMenuOpen = false
 
     /// The side window opening once the pointer rests on its row, and
     /// closing once it stays on another part: each new move replaces it.
     private(set) var sideOpenTask: Task<Void, Never>?
     private(set) var sideCloseTask: Task<Void, Never>?
+    /// While the menu is a plain window for VoiceOver (`makeKeyAgain`): its
+    /// own subrole, and the task that puts it back after a moment.
+    private(set) var subroleSwap: (subrole: NSAccessibility.Subrole?, restore: Task<Void, Never>)?
 
     /// Where it hears that another window became key, and that the desktop
     /// changed (tests give it their own, so no other test's window counts).
@@ -60,6 +66,12 @@ final class StatusMenuController: NSObject {
     var workspaceCenter = NSWorkspace.shared.notificationCenter
     /// Reduce Motion, read at each change (tests set it).
     var reducesMotion: @MainActor () -> Bool = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+    /// VoiceOver on, read at each change, by the menu and its views too
+    /// (`viewsVoiceOver`; tests set it).
+    var voiceOverOn: @MainActor @Sendable () -> Bool = { NSWorkspace.shared.isVoiceOverEnabled }
+    /// `voiceOverOn` as the menu's views read it (`VoiceOverSetting`): the
+    /// one set now, a test's set after they were made too.
+    var viewsVoiceOver: VoiceOverSetting { VoiceOverSetting { [weak self] in self?.voiceOverOn() ?? false } }
     /// The waits of the fold's fade and the side windows' timing (tests
     /// shorten them).
     var pause: @Sendable (TimeInterval) async -> Void = { try? await Task.sleep(for: .seconds($0)) }
@@ -179,6 +191,9 @@ final class StatusMenuController: NSObject {
     /// The side window opening, or closing, after its wait.
     func setSideOpenTask(_ task: Task<Void, Never>) { sideOpenTask = task }
     func setSideCloseTask(_ task: Task<Void, Never>) { sideCloseTask = task }
+
+    /// The menu's own subrole and the task putting it back, or `nil` once it's back.
+    func setSubroleSwap(_ swap: (subrole: NSAccessibility.Subrole?, restore: Task<Void, Never>)?) { subroleSwap = swap }
 
     /// Closes the menu on a click outside it (in another app, or another of
     /// AutoHush's windows); follows Option.

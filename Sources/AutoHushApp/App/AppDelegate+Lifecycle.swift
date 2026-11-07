@@ -2,7 +2,7 @@ import AppKit
 import AutoHushKit
 import CheckedPlayers
 
-// AppDelegate: launching, quitting, sleep and wake.
+// AppDelegate: launching, quitting, sleep and wake, the clock changing.
 extension AppDelegate {
     /// AutoHush opened again while it runs (Finder, Spotlight, Launchpad):
     /// Settings → General, as other menu bar apps open their settings, and
@@ -47,6 +47,7 @@ extension AppDelegate {
         registerPlayerLaunchObserver()
         ignoreVolumeSoundApps(NSWorkspace.shared.runningApplications.compactMap(\.audioSource))
         registerSleepObservers()
+        registerClockObservers()
         followFocusAtLaunch()
         // Opened last, this copy is the one that runs: any opened before it
         // quits first, handing over a pause it held, so they never both pause
@@ -135,11 +136,15 @@ extension AppDelegate {
         unregisterPlayerLaunchObserver()
         sleepObservers.forEach { workspaceCenter.removeObserver($0) }
         sleepObservers = []
+        clockObservers.forEach { clockCenter.removeObserver($0) }
+        clockObservers = []
     }
 
     /// The Mac going to sleep and waking up, for the player session (see
     /// `PlayerSession.setAsleep`). The screens waking count as awake too, so
     /// a wake macOS didn't announce can't leave AutoHush deciding nothing.
+    /// On waking, Auto-Pause is applied again: a snooze may have ended
+    /// during sleep (`UserSettings.refreshAutoPause`).
     func registerSleepObservers() {
         let center = workspaceCenter
         sleepObservers = [
@@ -148,7 +153,21 @@ extension AppDelegate {
             (NSWorkspace.screensDidWakeNotification, false),
         ].map { name, asleep in
             center.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
-                Task { @MainActor [weak self] in self?.session.setAsleep(asleep) }
+                Task { @MainActor [weak self] in
+                    self?.session.setAsleep(asleep)
+                    if !asleep { self?.userSettings.refreshAutoPause() }
+                }
+            }
+        }
+    }
+
+    /// The clock or the time zone changing: a snooze's end, and the menu's
+    /// words for it ("until tomorrow 8:00"), follow at once.
+    func registerClockObservers() {
+        let center = clockCenter
+        clockObservers = [Notification.Name.NSSystemClockDidChange, .NSSystemTimeZoneDidChange].map { name in
+            center.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
+                Task { @MainActor [weak self] in self?.userSettings.refreshAutoPause() }
             }
         }
     }

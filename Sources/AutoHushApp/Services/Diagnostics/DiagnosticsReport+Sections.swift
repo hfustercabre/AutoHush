@@ -152,8 +152,7 @@ extension DiagnosticsReport {
         case .denied?:
             rows.append(Row(label: audio, value: notAllowed, mark: .problem, fix: .allow(.systemAudioRecording)))
         case .notDetermined?:
-            rows.append(Row(label: audio, value: String(localized: "Not asked yet", comment: "Diagnostics: a permission macOS hasn't asked about"),
-                            mark: .problem, fix: .allow(.systemAudioRecording)))
+            rows.append(Row(label: audio, value: notAsked, mark: .problem, fix: .allow(.systemAudioRecording)))
         case nil:
             rows.append(Row(label: audio, value: unknown, mark: .neutral))
         }
@@ -167,10 +166,13 @@ extension DiagnosticsReport {
             nil
         }
         if let label = control {
-            switch facts.playerPermissionGranted {
-            case true?:  rows.append(Row(label: label, value: allowed, mark: .ok))
-            case false?: rows.append(Row(label: label, value: notAllowed, mark: .problem, fix: facts.playerPermission.map { .allow($0) }))
-            case nil:
+            let fix = facts.playerPermission.map { Row.Fix.allow($0) }
+            switch facts.playerPermissionAccess {
+            case .allowed?, .notNeeded?: rows.append(Row(label: label, value: allowed, mark: .ok))
+            case .denied?: rows.append(Row(label: label, value: notAllowed, mark: .problem, fix: fix))
+            case .notAsked?: rows.append(Row(label: label, value: notAsked, mark: .problem, fix: fix))
+            // A closed player's Automation can't be read.
+            case .playerNotRunning?, .needsReopen?, nil:
                 rows.append(Row(label: label, value: String(localized: "Not checked yet",
                                                             comment: "Diagnostics: a permission AutoHush hasn't needed yet"),
                                 mark: .neutral))

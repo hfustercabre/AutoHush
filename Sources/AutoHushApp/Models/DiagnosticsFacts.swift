@@ -8,10 +8,10 @@ struct DiagnosticsFacts: Equatable {
     /// The chosen player's version, when it's installed.
     var playerVersion: String?
     var playerCanFade: Bool
-    /// What controlling the chosen player needs, and whether it's allowed
+    /// What controlling the chosen player needs, and where it stands
     /// (`nil`: not known until AutoHush has tried).
     var playerPermission: Permission?
-    var playerPermissionGranted: Bool?
+    var playerPermissionAccess: PermissionAccess?
     /// Whether AutoHush has learned the chosen player's Play/Pause button;
     /// `nil` for a player it doesn't have to learn.
     var playerLearned: Bool?

@@ -104,23 +104,28 @@ struct PlayerControlsCard: View {
         // A click anywhere in the row shows the choices, as one on a switch row turns it.
         .clickAnywhere { popUp.open() }
         .highlightableRow(press: { popUp.open() }, adjust: { step in
-            let now = model.chosenControls ?? controls
-            // In the order the pop-up shows them: the panel last.
-            let shown = now.choices.filter { $0.kind != .panel } + now.choices.filter { $0.kind == .panel }
-            if let kind = shown.map(\.kind).stepping(from: now.main.kind, by: step) { model.chooseMainControl(kind) }
+            if let kind = Self.steppedMainControl(model.chosenControls ?? controls, by: step) { model.chooseMainControl(kind) }
         }, isCurrent: isFocus, arrivalSpeech: PopUpOpener.arrivalSpeech(BackupText.mainControlRow) {
             let now = model.chosenControls ?? controls
-            return Self.itemTitle(now.main, recommended: now.main.kind == controls.recommended,
+            return BackupText.item(now.main, recommended: now.main.kind == controls.recommended,
                                   notYet: controls.notYetChoices.contains(now.main))
         })
     }
 
+    /// The main control ← (-1) or → (1) chooses, in the order the pop-up
+    /// shows the choices: the panel last; one not learned yet isn't among
+    /// them. At either end, the one there.
+    static func steppedMainControl(_ controls: PlayerControls, by step: Int) -> WayOrder.Kind? {
+        let shown = controls.choices.filter { $0.kind != .panel } + controls.choices.filter { $0.kind == .panel }
+        return shown.map(\.kind).stepping(from: controls.main.kind, by: step)
+    }
+
     /// A pop-up item: the control's name with how its check found it, in
-    /// words and its mark (`itemTitle`).
+    /// words and its mark (`BackupText.item`).
     /// One not learned yet ("… (not learned yet)") is dimmed and can't be chosen.
     private func item(_ control: PlayerControls.Control, controls: PlayerControls) -> some View {
         let notYet = controls.notYetChoices.contains(control)
-        let title = Self.itemTitle(control, recommended: control.kind == controls.recommended, notYet: notYet)
+        let title = BackupText.item(control, recommended: control.kind == controls.recommended, notYet: notYet)
         return Label {
             Text(verbatim: title)
         } icon: {
@@ -128,19 +133,6 @@ struct PlayerControlsCard: View {
         }
         .tag(control.kind)
         .selectionDisabled(notYet)
-    }
-
-    /// A pop-up item's title: the control's name and, in brackets, how its
-    /// check found it ("AppleScript (Recommended, works)", "Its playback
-    /// menu (works)"), so VoiceOver reads what its mark shows (VO7b, the
-    /// a11y audit's VO7, the user's pick, 2026-11-06: a menu item's image
-    /// isn't read, its description neither); one not learned yet, "… (not
-    /// learned yet)".
-    static func itemTitle(_ control: PlayerControls.Control, recommended: Bool, notYet: Bool) -> String {
-        let name = WayText.control(control.kind)
-        if notYet { return BackupText.notLearnedYet(name) }
-        let result = BackupText.result(control.found?.mark ?? .notTried)
-        return recommended ? BackupText.recommended(name, result) : BackupText.found(name, result)
     }
 
     /// The card's rows stand for what Media Player's Controls row opened:
@@ -159,17 +151,12 @@ struct PlayerControlsCard: View {
     }
 
     /// A check's mark as a pop-up item's image, in `WayRow`'s symbols and
-    /// colors: drawn as they are (a menu draws a template image in its
-    /// text's color).
+    /// colors (`CheckMarkSymbol`): drawn as they are (a menu draws a
+    /// template image in its text's color).
     static func markImage(_ mark: CheckResult.Mark) -> NSImage {
-        let (symbol, color): (String, NSColor) = switch mark {
-        case .works: ("checkmark.circle.fill", .systemGreen)
-        case .some: ("exclamationmark.circle.fill", .systemOrange)
-        case .none, .notThere: ("xmark.circle.fill", .secondaryLabelColor)
-        default: ("minus.circle", .secondaryLabelColor)
-        }
-        let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(paletteColors: [color])) ?? NSImage()
+        let symbol = CheckMarkSymbol(mark)
+        let image = NSImage(systemSymbolName: symbol.name, accessibilityDescription: nil)?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(paletteColors: [symbol.nsColor])) ?? NSImage()
         image.isTemplate = false
         return image
     }

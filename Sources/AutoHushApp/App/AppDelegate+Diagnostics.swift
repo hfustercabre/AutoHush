@@ -28,12 +28,19 @@ extension AppDelegate {
         let permission = player?.controlPermission
         // Accessibility can be read; Automation only shows when AutoHush uses
         // it, or as PermissionCenter last read it: a player controlled by its
-        // backups is ready without it (the user, 2026-11-05).
+        // backups is ready without it (the user, 2026-11-05). A closed
+        // player's can't be read: not checked yet, whatever macOS allows.
         let automationRead = permissionCenter.chosen.player == player?.bundleID ? permissionCenter.chosen.controlAccess : nil
-        let granted: Bool? = switch permission {
-        case .accessibility?: AccessibilityPermission.isTrusted()
+        let access: PermissionAccess? = switch permission {
+        case .accessibility?: AccessibilityPermission.isTrusted() ? .allowed : .denied
         case let permission?:
-            status.health == .needsPermission(permission) || automationRead?.isSatisfied == false ? false : (status.isReady ? true : nil)
+            if automationRead == .denied || automationRead == .notAsked {
+                automationRead
+            } else if status.health == .needsPermission(permission) {
+                .denied
+            } else {
+                status.isReady ? .allowed : nil
+            }
         case nil: nil
         }
         return DiagnosticsFacts(
@@ -42,7 +49,7 @@ extension AppDelegate {
             },
             playerCanFade: settingsModel.playerCanFade,
             playerPermission: permission,
-            playerPermissionGranted: granted,
+            playerPermissionAccess: access,
             playerLearned: (player as? any LearningMusicPlayer).map { $0.learningStatus.isLearned },
             reachesOtherSpaces: player?.kind == .safariWebApp ? AccessibilityWindows.isAvailable : nil,
             playerWordsRead: player?.ownWordsRead,

@@ -10,6 +10,7 @@ import SwiftUI
 struct DiagnosticsSettingsView: View {
     let model: SettingsModel
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+    @Environment(\.voiceOver) private var voiceOver
 
     var body: some View {
         VStack(spacing: 0) {
@@ -173,7 +174,7 @@ struct DiagnosticsSettingsView: View {
         switch fix {
         // As General's Change…: pressed with the keys or VoiceOver, the new
         // page's first control takes the highlight, and VoiceOver with it (N8).
-        case .choosePlayer: model.showPage(.mediaPlayer, byKeyboard: keyboard?.isPressing == true || NSWorkspace.shared.isVoiceOverEnabled)
+        case .choosePlayer: model.showPage(.mediaPlayer, byKeyboard: keyboard?.isPressing == true || voiceOver.isOn())
         case .learnControls: model.actions?.learnControlsAgain()
         case .allow(let permission): model.actions?.requestPermission(permission)
         }

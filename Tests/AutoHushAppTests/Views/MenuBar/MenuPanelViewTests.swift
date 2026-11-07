@@ -162,6 +162,20 @@ struct MenuPanelViewTests {
         }
     }
 
+    @Test("the menu draws its warning while the player's backup controls stand in for its own way, under the card (B-5)")
+    func backupsStandIn() async {
+        @MainActor func menuHeight(_ model: SettingsModel) -> (height: CGFloat, sections: [MenuSection]) {
+            let menu = StatusMenuModel(status: model.state.status)
+            menu.settings = model
+            return (drawn(MenuPanelView(model: menu, settings: model, onHeight: { _ in }), width: menuContentWidth).height, menu.sections)
+        }
+        let standingIn = menuHeight(await SettingsModel.withAutomation(OSStatus(errAEEventNotPermitted), actions: actions))
+        let allowed = menuHeight(await SettingsModel.withAutomation(noErr, actions: actions))
+        #expect(standingIn.sections.contains(.backupsStandIn(.automation(player: "Jukebox"))))
+        #expect(!allowed.sections.contains { if case .backupsStandIn = $0 { true } else { false } })
+        #expect(standingIn.height > allowed.height) // the row, drawn
+    }
+
     @Test("both side windows draw: the players, with their search, and the ignored apps", arguments: [MenuSidePart.players, .ignoredApps])
     func sideWindow(_ part: MenuSidePart) {
         withMenu(.paused) { sut, _ in

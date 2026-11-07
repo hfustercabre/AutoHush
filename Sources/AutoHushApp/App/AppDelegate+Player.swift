@@ -260,7 +260,10 @@ extension AppDelegate {
         refreshPlayerOptions()
         followPlayerReopen()
         session.checkAccess()
-        // The card's checks say which permission is allowed: as it is now.
+        // The card's checks and the warning that backups stand in say which
+        // permission is allowed: as it is now. Accessibility before the menu
+        // draws, so a row doesn't show and then go under the pointer.
+        permissionCenter.refreshAccessibility()
         Task { [weak self] in await self?.refreshPermissions() }
         if isShowingPlayerChooser { playerChooser?.bringForward() }
     }

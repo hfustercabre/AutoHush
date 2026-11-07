@@ -36,6 +36,8 @@ final class SettingsWindowController: PlacedWindowController {
     private let toolbarDelegate: SettingsToolbarDelegate
     /// The highlight the arrow keys and the pointer move, the sidebar's and the page's.
     let keys = SettingsKeys()
+    /// macOS's keyboard navigation setting, read at each key (tests set it).
+    var fullKeyboardAccess: @MainActor () -> Bool = { NSApp.isFullKeyboardAccessEnabled }
     /// The page's view, where its controls' frames are (`KeyHighlight.Control.frame`).
     private weak var pageView: NSView?
 
@@ -142,7 +144,7 @@ final class SettingsWindowController: PlacedWindowController {
         if window.firstResponder is NSText { return handleKeyInField(keyCode, flags: flags, in: window) }
         guard let key = HighlightKey(keyCode: keyCode, modifiers: flags) else { return false }
         // With keyboard navigation on, a click may have given a control the focus.
-        let controlHasFocus = NSApp.isFullKeyboardAccessEnabled && !(window.firstResponder is NSWindow)
+        let controlHasFocus = fullKeyboardAccess() && !(window.firstResponder is NSWindow)
         // One highlight at a time: the arrows (and Page Up…End) take it from
         // the focus, and a lit one, whose tint hides the focus's, gets the
         // other keys too (N6, 2026-11-06).

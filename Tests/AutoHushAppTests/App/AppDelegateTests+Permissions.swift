@@ -354,4 +354,18 @@ extension AppDelegateTests {
         #expect(calls.calls.isEmpty)
         await TestWait.until { shown.calls == ["Couldn’t Reopen AutoHush"] }
     }
+
+    @MainActor
+    @Test("the menu opens with Accessibility as it stands, read before it draws: its warning that backups stand in doesn't show, then go")
+    func menuReadsAccessibilityFirst() async {
+        let scratch = Scratch()
+        let webApp = scratch.offerWebApp(.learned)
+        scratch.trusted = false
+        let (sut, _) = makeSUT(scratch, chosenPlayer: webApp.bundleID)
+        await sut.refreshPermissions()
+        #expect(sut.permissionCenter.chosen.controlAccess == .denied)
+        scratch.trusted = true // allowed in System Settings, with no window of AutoHush's open
+        sut.menuWillOpen()
+        #expect(sut.permissionCenter.chosen.controlAccess == .allowed && sut.permissionCenter.chosen.accessibility)
+    }
 }

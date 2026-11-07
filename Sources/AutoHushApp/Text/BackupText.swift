@@ -75,6 +75,18 @@ enum BackupText {
         String(localized: "\(control) (not learned yet)",
                comment: "Settings → Fine-Tuning, the player's card: a dimmed item of the “Main control” pop-up, a control that can't be chosen until AutoHush has learned its Play/Pause button (it learns it the first time it pauses the player another way). %@ is the control (Its page’s Play/Pause)")
     }
+    /// A pop-up item's title: the control's name and, in brackets, how its
+    /// check found it ("AppleScript (Recommended, works)", "Its playback
+    /// menu (works)"), so VoiceOver reads what its mark shows (VO7b, the
+    /// a11y audit's VO7, the user's pick, 2026-11-06: a menu item's image
+    /// isn't read, its description neither); one not learned yet, "… (not
+    /// learned yet)".
+    static func item(_ control: PlayerControls.Control, recommended: Bool, notYet: Bool) -> String {
+        let name = WayText.control(control.kind)
+        if notYet { return notLearnedYet(name) }
+        let outcome = result(control.found?.mark ?? .notTried)
+        return recommended ? Self.recommended(name, outcome) : found(name, outcome)
+    }
     /// Media Player's row to the card: the word of a web app's Controls row.
     static var controls: String { LearnText.controlsTitle }
     static let backupsOn = String(localized: "backups on",

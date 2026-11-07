@@ -10,6 +10,7 @@ extension DiagnosticsReport {
     static var no: String { String(localized: "No", comment: "Diagnostics: no") }
     static var allowed: String { PermissionText.allowed }
     static var notAllowed: String { String(localized: "Not allowed", comment: "Diagnostics: a permission that isn't granted") }
+    static var notAsked: String { String(localized: "Not asked yet", comment: "Diagnostics: a permission macOS hasn't asked about") }
     static var unknown: String { String(localized: "Unknown", comment: "Diagnostics: something AutoHush can't tell") }
 
     /// "playing, ignored" as a row's subtitle: "Playing, ignored".

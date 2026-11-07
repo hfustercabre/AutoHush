@@ -6,6 +6,10 @@ import SwiftUI
 /// With `results`, VoiceOver hears them once typing pauses. With Increase
 /// Contrast, outlined 1 pt, as AutoHush's other faint fills (D5a, the a11y
 /// audit's D5, the user's pick, 2026-11-06: its fill alone barely showed).
+/// Its closures are passed by their labels, never as a trailing closure,
+/// which Swift gives the first of them (`onClick`): Sound Sources' close
+/// was a click's from 2026-10-18, so its ✕ only cleared and a click in
+/// the field closed the search (K3-1, the full check, 2026-11-06).
 struct SearchField: View {
     @Binding var text: String
     /// Takes the keyboard focus as it appears, in a window (not in a menu:
@@ -15,8 +19,7 @@ struct SearchField: View {
     /// it's key).
     var focusRequest = 0
     /// What the search found, for VoiceOver; `nil` while there's nothing
-    /// to tell (the list still loading). Before the closures, so Sound
-    /// Sources' trailing closure binds as it did.
+    /// to tell (the list still loading).
     var results: SearchResults?
     /// A click in it, before it takes the focus (the menu's side window
     /// becomes key then).

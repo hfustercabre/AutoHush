@@ -19,7 +19,7 @@ extension AppDelegate {
         if let added = player as? any AddedAppPlayer {
             checkedPlayers.setSwitches(switches, for: player.bundleID, player: added)
         } else {
-            BackupSwitchesStore().set(switches, for: player.bundleID)
+            BackupSwitchesStore(defaults: defaults).set(switches, for: player.bundleID)
         }
         refreshPlayerControls()
         // A page among its backups needs the app's launch option only while they're used.

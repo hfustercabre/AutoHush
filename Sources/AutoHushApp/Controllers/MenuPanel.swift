@@ -21,7 +21,7 @@ final class MenuPanel: NSPanel {
     /// Escape: the menu closes.
     var onCancel: (() -> Void)?
     /// A key nothing in it took (the arrows and Return, for the players);
-    /// `true` when handled.
+    /// `true` when handled. One it leaves ends here, without a beep.
     var onKey: ((NSEvent) -> Bool)?
 
     init(content: NSView) {
@@ -64,6 +64,11 @@ final class MenuPanel: NSPanel {
 
     override func keyDown(with event: NSEvent) {
         if onKey?(event) == true { return }
+        // A key with nothing to act on (a letter, Delete) does nothing,
+        // without AppKit's beep, as in macOS's menus and Settings (K3-4,
+        // the full check, 2026-11-06). Escape (`cancelOperation`) and the
+        // keys with ⌘ or ⌃ stay AppKit's.
+        guard event.keyCode == 53 || !event.modifierFlags.isDisjoint(with: [.command, .control]) else { return }
         super.keyDown(with: event)
     }
 

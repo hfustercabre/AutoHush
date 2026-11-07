@@ -41,16 +41,9 @@ struct MenuSwitchRow<Picture: View, Title: View>: View {
                 .focusEffectDisabled()
                 .accessibilityHint(hint)
         }
-        // A click anywhere in its tint (`highlightableRow`'s 6 and 3 pt
-        // around it) turns it on or off, as one on the switch, which takes
-        // its own clicks (the user, 2026-11-03: a click at the tint's edge
-        // did nothing).
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .contentShape(Rectangle())
-        .onTapGesture { isOn.wrappedValue.toggle() }
-        .padding(.horizontal, -6)
-        .padding(.vertical, -3)
+        // A click anywhere in its tint turns it on or off, as one on the
+        // switch (the user, 2026-11-03: a click at the tint's edge did nothing).
+        .clickAnywhere { isOn.wrappedValue.toggle() }
         .highlightableRow(isFocused: isFocused, press: { isOn.wrappedValue.toggle() })
     }
 }

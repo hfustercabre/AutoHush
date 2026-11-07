@@ -28,7 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let focusAutoPause: FocusAutoPause
     let preferences: Preferences
     /// The choices kept beside `preferences`: the players reopened always
-    /// (`ReopenChoices`) and Add an App's finished check (`KeptCheckStore`).
+    /// (`ReopenChoices`), Add an App's finished check (`KeptCheckStore`) and
+    /// the built-in players' backup switches (`BackupSwitchesStore`).
     let defaults: UserDefaults
     /// Runs AutoHush's alerts (removing an added app, reopening a player,
     /// the card's info button) and returns the button pressed. Tests replace it.
@@ -91,6 +92,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var playerLaunchObserver: any NSObjectProtocol?
     /// The Mac going to sleep and waking up.
     var sleepObservers: [any NSObjectProtocol] = []
+    /// Where macOS's notices of the clock or the time zone changing come:
+    /// the default center; tests post their own.
+    let clockCenter: NotificationCenter
+    /// The clock or the time zone changing.
+    var clockObservers: [any NSObjectProtocol] = []
     let logger = AutoHushLogger(category: "AppDelegate")
     /// Copies of AutoHush opened before this one, which quit when it opens.
     let otherInstances: OtherInstances
@@ -174,6 +180,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         var permissionCenter = PermissionCenter()
         var windowWatchSleep: @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
         var workspaceCenter: NotificationCenter = NSWorkspace.shared.notificationCenter
+        var clockCenter: NotificationCenter = .default
         var clock: @MainActor () -> Date = Date.init
         var hasOpenWindow: @MainActor () -> Bool = { NSApplication.shared.windows.contains { $0.isOpen && $0.canBecomeKey } }
     }
@@ -213,6 +220,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.installCheckDelay = system.installCheckDelay
         self.permissionCenter = system.permissionCenter
         self.workspaceCenter = system.workspaceCenter
+        self.clockCenter = system.clockCenter
         self.clock = system.clock
         self.hasOpenWindow = system.hasOpenWindow
         super.init()
