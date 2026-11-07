@@ -71,6 +71,8 @@ brew install --cask hfustercabre/tap/autohush
 
 This adds AutoHush's own tap, [hfustercabre/homebrew-tap](https://github.com/hfustercabre/homebrew-tap), and installs from it.
 
+Moved AutoHush to the Trash yourself after installing it this way? Homebrew then stops with "the App source … is not there". Add `--force`: `brew install --cask --force hfustercabre/tap/autohush`.
+
 ### By hand
 
 1. Download `AutoHush-<version>.dmg` from the [releases page](https://github.com/hfustercabre/AutoHush/releases).
