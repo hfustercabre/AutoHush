@@ -224,7 +224,7 @@ struct PlayerTiles: View {
                 }
                 Spacer(minLength: 0)
             }
-            .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+            .foregroundStyle(isSelected ? AnyShapeStyle(.onSelection) : AnyShapeStyle(.primary))
             .padding(.horizontal, Self.inset)
             .frame(maxWidth: .infinity)
             .frame(height: Self.tileHeight)
@@ -239,7 +239,7 @@ struct PlayerTiles: View {
 
     /// Under its name; white, as the name, on a chosen tile.
     @ViewBuilder private func note(_ option: PlayerOption, isSelected: Bool) -> some View {
-        let style = isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.appSecondary)
+        let style = isSelected ? AnyShapeStyle(.onSelection) : AnyShapeStyle(.appSecondary)
         if option.webAddress != nil {
             Text(verbatim: PlayerOption.clickToAddLabel)
                 .font(.appCaption).foregroundStyle(style).lineLimit(1)
@@ -311,7 +311,7 @@ private struct RemovableTile<Content: View>: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title3)
                             .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, .appSecondary)
+                            .foregroundStyle(.onSelection, .appSecondary)
                     }
                     .buttonStyle(.plain)
                     .focused($focus, equals: .remove)

@@ -68,11 +68,12 @@ struct MediaKeyWay: FadelessMusicPlayer, PolledMusicPlayer {
         // way before, late, may have shown meanwhile. Now Playing is asked
         // again beside it, so the key is posted as both answer: another app
         // that took Now Playing during the read (half a second of listening
-        // for one judged by its sound) would get it (2026-11-06).
-        async let again = state.state()
-        async let holder = nowPlaying()
-        guard try Self.needsPress(from: await again, to: target) else { return }
-        try Self.holdsNowPlaying(await holder, pid: pid)
+        // for one judged by its sound) would get it (2026-11-06). No press
+        // needed after all, it returns without waiting for that answer.
+        let holder = Task { [nowPlaying] in await nowPlaying() }
+        defer { holder.cancel() }
+        guard try Self.needsPress(from: await state.state(), to: target) else { return }
+        try Self.holdsNowPlaying(await holder.value, pid: pid)
         try await PressCheck(name: "\(name) (the Play/Pause key)", isToggle: true, press: { [pressKey] _ in await pressKey() },
                              state: { [state] in await state.state() }, sleep: sleep).press(to: target)
     }

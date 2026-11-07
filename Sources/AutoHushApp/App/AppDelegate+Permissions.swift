@@ -82,7 +82,7 @@ extension AppDelegate {
         case .retryStart: session.retry()
         case .checkForUpdates: Task { await updates.checkNow() }
         case .learnAgain: learnControlsAgain()
-        case .checkAgain: if let url = status.chosenPlayer?.appURL { addApp.open(on: url) }
+        case .checkAgain: if let url = status.chosenPlayer?.appURL { addApp.checkAgain(on: url) }
         case .turnOffAntiDot: turnOffAntiDot()
         case .allowAudioRecording: requestPermission(.systemAudioRecording)
         case .reopenAutoHush: reopenAutoHush()

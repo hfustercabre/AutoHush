@@ -17,4 +17,14 @@ struct CheckWarningViewTests {
         }
         #expect(height(keysOff: true) > height(keysOff: false) + 40) // a note's lines and a button
     }
+
+    @Test("with the app's windows all closed, it draws their one state and no moving or blocked input: shorter (W2 of 1.2.2)")
+    func windowsClosed() {
+        let app = World().apps[0]
+        func height(closed: Bool) -> CGFloat {
+            drawn(CheckWarningView(app: app, windowsClosed: closed, start: {}, cancel: {}),
+                  width: CheckWarningView.width, height: 1400).height
+        }
+        #expect(height(closed: true) < height(closed: false) - 150) // one state, no "While It Moves Them"
+    }
 }

@@ -63,6 +63,14 @@ final class AddAppFeature {
         if model?.stage == .choosing { model?.chooseOther(at: url) }
     }
 
+    /// The window on the app at `url`, for Check Again… (Fine-Tuning's and
+    /// the failed-pause alert's, the user, 2026-11-07): on another app, it
+    /// starts over on this one (`AddAppModel.startOver`).
+    func checkAgain(on url: URL) {
+        open()
+        model?.startOver(onAppAt: url)
+    }
+
     /// AutoHush quits: the Mac's output, muted for a check, is put back.
     func quit() {
         system.outputMute.restore()
@@ -102,8 +110,10 @@ extension AddAppFeature: AddAppPresenting {
         guard let model, let app = model.chosen else { return }
         warningWindow?.close()
         let shortcutsOn = system.desktopShortcutsOn
-        let window = CheckWarningWindowController(app: app, muting: model.checkMuting,
-                                                  desktopShortcutsOff: { !shortcutsOn() }) { [weak model] in model?.startCheck() }
+        let window = CheckWarningWindowController(app: app, muting: model.checkMuting, desktopShortcutsOff: { !shortcutsOn() },
+                                                  windowsClosed: { [weak model] in model?.appWindowsClosed ?? false }) { [weak model] in
+            model?.startCheck()
+        }
         warningWindow = window
         window.show()
     }

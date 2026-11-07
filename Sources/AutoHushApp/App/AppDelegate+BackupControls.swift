@@ -27,6 +27,6 @@ extension AppDelegate {
     }
 
     func checkPlayerAgain() {
-        if let url = status.chosenPlayer?.appURL { addApp.open(on: url) }
+        if let url = status.chosenPlayer?.appURL { addApp.checkAgain(on: url) }
     }
 }

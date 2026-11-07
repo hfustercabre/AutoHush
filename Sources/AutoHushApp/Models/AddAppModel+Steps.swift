@@ -78,6 +78,26 @@ extension AddAppModel {
         }
     }
 
+    /// Fine-Tuning's Check Again… for the app at `url` (W-3, the user,
+    /// 2026-11-07): on another app (its list, its steps, or its result not
+    /// yet used), it starts over on this one, as from its first step; as it
+    /// is while it shows this one, or while a check is under way, which
+    /// can't be stopped from there. Another app's result stays kept, as a
+    /// closed window keeps it: only Change… forgets it, after asking.
+    func startOver(onAppAt url: URL) {
+        switch stage {
+        case .choosing:
+            chooseOther(at: url)
+        case .checking:
+            return
+        default:
+            guard case .success(let app) = reader.app(at: url), app.bundleID != chosen?.bundleID else { return }
+            presenter?.closeWarning() // its Start was for the app before
+            resetSteps()
+            choose(app)
+        }
+    }
+
     /// Change… forgets a check that has run (about 3 minutes), so it asks
     /// first: also the one Back to Result can bring back after Check Again.
     var changeAppForgetsCheck: Bool { result != nil || resultBeforeCheckAgain != nil }
@@ -180,6 +200,10 @@ extension AddAppModel {
                 guard self.stage == .waitingToPlay(since: since) else { return }
                 self.checkAgainState?.windowMissing = !windowOpen
                 if windowOpen, await self.reader.isPlaying(app, traits: traits), self.stage == .waitingToPlay(since: since) {
+                    // Whether the check will find its windows closed, for the warning.
+                    let closed = self.waitsForWindow ? false : !(await self.reader.hasWindowWithinReach(app))
+                    guard self.stage == .waitingToPlay(since: since) else { return }
+                    self.appWindowsClosed = closed
                     self.stage = .ready
                     await self.watchUntilStart(app)
                     return
@@ -224,10 +248,12 @@ extension AddAppModel {
     /// 2026-10-31), the warning closed: it quit, its quit step as while it
     /// was waited for, also after Check Again (WA1, the user, 2026-10-31);
     /// after Check Again with its windows closed, its window closed again,
-    /// the wait for one (WA7, the user, 2026-10-31). Its window only every
-    /// 2 s: a look at one off screen reads the app by Accessibility and
-    /// searches the other desktops (up to 1 s), for as long as the user
-    /// stays on this step (the code check of 2026-11-02).
+    /// the wait for one (WA7, the user, 2026-10-31); otherwise, whether
+    /// its windows are closed, for the warning (`appWindowsClosed`, W2 of
+    /// 1.2.2, 2026-11-07). Its windows only every 2 s: a look at one off
+    /// screen reads the app by Accessibility and searches the other
+    /// desktops (up to 1 s), for as long as the user stays on this step
+    /// (the code check of 2026-11-02).
     private func watchUntilStart(_ app: CheckableApp) async {
         var round = 0
         while !Task.isCancelled, stage == .ready {
@@ -239,11 +265,16 @@ extension AddAppModel {
                 return
             }
             round += 1
-            if waitsForWindow, round.isMultiple(of: 4), !(await reader.hasWindowWithinReach(app)), !Task.isCancelled, stage == .ready {
+            // Its windows looked at every 2 s: a look reads the other desktops too.
+            guard round.isMultiple(of: 4) else { continue }
+            let windowOpen = await reader.hasWindowWithinReach(app)
+            guard !Task.isCancelled, stage == .ready else { return }
+            if waitsForWindow, !windowOpen {
                 presenter?.closeWarning()
                 waitForPlaying()
                 return
             }
+            appWindowsClosed = !windowOpen
         }
     }
 

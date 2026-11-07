@@ -101,7 +101,8 @@ AutoHush (executable: the entry point only)
        │    ├─ ScriptablePlayers   shared by the players scripted with Apple events
        │    ├─ MenuPlayers         shared by the players controlled through their playback menu
        │    ├─ WebAppPlayers       Safari web apps, controlled through the site's own Play/Pause button
-       │    └─ CheckedPlayers      the apps added with Add an App…, controlled the way the user chose
+       │    └─ CheckedPlayers      the apps added with Add an App…, controlled the way the user chose,
+       │                         and the backup controls of every player (BackedUpPlayer, BackupRouting)
        ├─ CheckedPlayers    also used directly: a check's result
        ├─ PlayerCheckKit    the helper's command line, exit statuses and answers, to run it, and the
        │                    report's lines and the progress they show

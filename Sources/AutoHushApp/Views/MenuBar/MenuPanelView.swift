@@ -136,7 +136,8 @@ struct MenuPanelView: View {
 
     /// The player's own permission, missing while its backup controls stand
     /// in for it: allowing it, with why under it, as Use AntiDot Mode
-    /// Instead says what it trades (the user, 2026-11-05); lit, its words
+    /// Instead says what it trades (the user, 2026-11-05), and the other way
+    /// to end it, another main control (W-4, 2026-11-07); lit, its words
     /// and triangle stay as they are (D2c; every row since G2).
     private func backupsStandInRow(_ permission: Permission) -> some View {
         MenuActionRow(action: { model.perform(.resolveWarning(permission)) }) {

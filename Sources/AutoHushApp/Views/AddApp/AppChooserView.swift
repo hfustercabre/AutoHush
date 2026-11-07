@@ -109,11 +109,11 @@ struct AppChooserView: View {
                         let lines = AddAppText.chooserLines(app)
                         if !lines.isEmpty {
                             Text(verbatim: lines.joined(separator: " · ")).font(.appCaption)
-                                .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.appSecondary))
+                                .foregroundStyle(isSelected ? AnyShapeStyle(.onSelection) : AnyShapeStyle(.appSecondary))
                         }
                     }
                     // Selected, white on the accent color, as macOS's lists (A1a).
-                    .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.foreground))
+                    .foregroundStyle(isSelected ? AnyShapeStyle(.onSelection) : AnyShapeStyle(.foreground))
                     Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 6)

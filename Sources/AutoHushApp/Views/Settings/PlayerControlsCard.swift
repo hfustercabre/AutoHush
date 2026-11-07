@@ -13,9 +13,13 @@ import CheckedPlayers
 /// Playing panel while muted" (dimmed, with a note, while the first is off), Details… (its controls
 /// in a sheet), and Restore Defaults once one differs. An app added before
 /// backup controls were kept: dimmed, with Check Again…; a web app not
-/// learned yet: dimmed, with "Controls not learned". No card while no
-/// player is chosen, nor for one that's only muted. Media Player's Controls
-/// row opens the page scrolled to it (`SettingsModel.showFineTuning`).
+/// learned yet: dimmed, with "Controls not learned" and Learn Controls…
+/// (`Unusable`). While its backups stand in for its own permission, the
+/// note General and Media Player show is under "Use backup controls" too,
+/// as turning it off leaves the player uncontrolled (D5, 2026-11-07). No
+/// card while no player is chosen, nor for one that's only muted. Media
+/// Player's Controls row opens the page scrolled to it
+/// (`SettingsModel.showFineTuning`).
 struct PlayerControlsCard: View {
     let model: SettingsModel
     @State private var showsDetails = false
@@ -24,7 +28,8 @@ struct PlayerControlsCard: View {
 
     var body: some View {
         if let controls = model.chosenControls, let name = model.chosenPlayerName {
-            let unavailable = controls.needsCheckAgain || controls.notLearned
+            let unusable = Unusable(controls)
+            let unavailable = unusable != nil
             Card(Text(verbatim: name)) {
                 Group {
                     if controls.listedChoices.count > 1, !unavailable {
@@ -35,14 +40,11 @@ struct PlayerControlsCard: View {
                 }
                 // Where Media Player's Controls row scrolls the page to.
                 .background { ScrollAnchor(id: AnyHashable(SettingsCard.playerControls)) }
-                if controls.needsCheckAgain {
+                if let unusable {
                     SwitchRow(Text(verbatim: BackupText.uses), isOn: .constant(false)).unavailable(true)
-                    NoteLabel(BackupText.checkAgain(name), kind: .info)
-                    Button { model.actions?.checkPlayerAgain() } label: { Text(verbatim: ControlErrorFix.checkAgain.title) }
+                    NoteLabel(unusable.note(name), kind: .info)
+                    Button { unusable.fix(model.actions) } label: { Text(verbatim: unusable.button) }
                         .buttonStyle(.chip)
-                } else if controls.notLearned {
-                    SwitchRow(Text(verbatim: BackupText.uses), isOn: .constant(false)).unavailable(true)
-                    NoteLabel(AppStatus.controlsNotLearnedLine, kind: .info)
                 } else {
                     SwitchRow(Text(verbatim: BackupText.uses), subtitle: Text(verbatim: BackupText.usesSubtitle),
                               isOn: switchBinding(controls, \.usesBackups), isCurrent: isFocus)
@@ -55,6 +57,11 @@ struct PlayerControlsCard: View {
                                 if !controls.switches.usesBackups { NoteLabel(BackupText.off, kind: .info) }
                             }
                         }
+                    }
+                    // Turning them off would leave it uncontrolled: said here too (D5), under
+                    // the rows that depend on the switch.
+                    if let permission = model.backupsStandIn {
+                        NoteLabel(ControlPermissionNote.standInNote(permission, player: name))
                     }
                 }
                 Button { showsDetails = true } label: { Text(verbatim: BackupText.details) }
@@ -159,6 +166,48 @@ struct PlayerControlsCard: View {
             .withSymbolConfiguration(NSImage.SymbolConfiguration(paletteColors: [symbol.nsColor])) ?? NSImage()
         image.isTemplate = false
         return image
+    }
+}
+
+extension PlayerControlsCard {
+    /// Why the chosen player's controls can't be used yet, with the note
+    /// and the chip under it that fixes that, as Check Again… for an app
+    /// added before backup controls were kept, so Learn Controls… for a web
+    /// app not learned yet (D4, the release review, 2026-11-07).
+    enum Unusable: Equatable {
+        case needsCheckAgain, notLearned
+
+        init?(_ controls: PlayerControls) {
+            if controls.needsCheckAgain {
+                self = .needsCheckAgain
+            } else if controls.notLearned {
+                self = .notLearned
+            } else {
+                return nil
+            }
+        }
+
+        func note(_ player: String) -> String {
+            switch self {
+            case .needsCheckAgain: BackupText.checkAgain(player)
+            case .notLearned: AppStatus.controlsNotLearnedLine
+            }
+        }
+
+        var button: String {
+            switch self {
+            case .needsCheckAgain: ControlErrorFix.checkAgain.title
+            case .notLearned: LearnText.learnButton
+            }
+        }
+
+        /// Its chip: Add an App on the player, or the window that learns its controls.
+        @MainActor func fix(_ actions: (any AppActions)?) {
+            switch self {
+            case .needsCheckAgain: actions?.checkPlayerAgain()
+            case .notLearned: actions?.learnControlsAgain()
+            }
+        }
     }
 }
 

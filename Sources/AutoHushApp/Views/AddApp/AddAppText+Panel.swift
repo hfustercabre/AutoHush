@@ -16,7 +16,7 @@ extension AddAppText {
         case .fullScreen: String(localized: "Full screen", comment: "The window states a check moves the app's window through")
         case .minimized: String(localized: "Minimized", comment: "The window states a check moves the app's window through")
         case .hidden: String(localized: "Hidden", comment: "The window states a check moves the app's window through: the app hidden")
-        case .windowsClosed: String(localized: "Windows closed", comment: "The check's panel, as its window state: the app has no window open (a menu bar player playing on), so nothing is moved")
+        case .windowsClosed: String(localized: "Windows closed", comment: "The check's panel, and the window shown before the check, as its one window state: the app has no window open (a menu bar player playing on), so nothing is moved")
         }
     }
 
@@ -47,6 +47,30 @@ extension AddAppText {
     static func statesNote(_ app: String) -> String {
         String(localized: "In each, AutoHush pauses and plays \(app) every way it can, the Now Playing panel too (it opens for a moment).",
                comment: "The window shown before a check starts, under the window states; %@ is the app")
+    }
+
+    // With the app's windows all closed (a menu bar player playing on), the
+    // check moves nothing, blocks no input and tries each way once (W2 of
+    // 1.2.2, the release review, 2026-11-07).
+
+    static func closedDescription(_ app: String) -> String {
+        String(localized: "AutoHush pauses and plays \(app) every way it can.",
+               comment: "The window shown before a check starts, at its top beside the app's icon, when the app has no window open (a menu bar player playing on): the check moves nothing and doesn't block the mouse and keyboard; %@ is the app")
+    }
+
+    static func closedHeading(_ app: String) -> String {
+        String(localized: "\(app)’s Windows Are Closed",
+               comment: "The window shown before a check starts, when the app has no window open (a menu bar player playing on): heading over its one window state, “Windows closed”, instead of the 7 states a window goes through; %@ is the app")
+    }
+
+    static var closedNote: String {
+        String(localized: "Nothing is moved, and the mouse and keyboard stay free. Each way that needs no window is tried once; the Now Playing panel opens for a moment.",
+               comment: "The window shown before a check starts, when the app has no window open, beside its one window state (“Windows closed”): the check moves no window and doesn't block the mouse and keyboard; it pauses and plays the app once by each way that works without a window (AppleScript, its menu, the menu bar's Now Playing panel)")
+    }
+
+    static var underAMinute: String {
+        String(localized: "Under a minute",
+               comment: "The window shown before a check starts, when the app has no window open: how long the check takes (one window state instead of 7, so much less than “About 3 minutes”)")
     }
 
     static var movingHeading: String {

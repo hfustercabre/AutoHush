@@ -12,17 +12,21 @@ final class MockUpdateInstaller: UpdateInstalling, @unchecked Sendable {
     private var _lowDataModeAllowed: [Bool] = []
     /// Runs while an update is prepared, e.g. to make AutoHush busy meanwhile.
     private let onPrepare: @Sendable () async -> Void
+    /// Runs while an update is downloaded to keep, e.g. to change a setting meanwhile.
+    private let onDownload: @Sendable () async -> Void
 
     init(
         unavailability: UpdateInstallUnavailability? = nil,
         prepareError: any Error? = nil,
         downloadError: any Error? = nil,
-        onPrepare: @escaping @Sendable () async -> Void = {}
+        onPrepare: @escaping @Sendable () async -> Void = {},
+        onDownload: @escaping @Sendable () async -> Void = {}
     ) {
         _unavailability = unavailability
         _prepareError = prepareError
         _downloadError = downloadError
         self.onPrepare = onPrepare
+        self.onDownload = onDownload
     }
 
     /// "download 0.3.0", "prepare 0.3.0" (or "prepare 0.3.0 from kept image"),
@@ -43,6 +47,7 @@ final class MockUpdateInstaller: UpdateInstalling, @unchecked Sendable {
     func download(_ release: AppRelease, to file: URL, allowsConstrainedNetwork: Bool) async throws -> String {
         record("download \(release.version)")
         lock.withLock { _lowDataModeAllowed.append(allowsConstrainedNetwork) }
+        await onDownload()
         if let error = downloadError { throw error }
         try Data("AutoHush \(release.version)".utf8).write(to: file)
         return try require(UpdateInstaller.sha256(of: file))

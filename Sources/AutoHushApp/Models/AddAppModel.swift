@@ -113,6 +113,12 @@ final class AddAppModel {
     var resultBeforeCheckAgain: KeptCheck? { checkAgainState?.resultBefore }
     var waitsForWindow: Bool { checkAgainState?.waitsForWindow ?? false }
     var windowMissing: Bool { checkAgainState?.windowMissing ?? false }
+    /// While it's ready to be checked, the chosen app has no window the
+    /// check can reach, as last looked at (every 2 s; a menu bar player
+    /// playing on): the check moves nothing then and leaves the mouse and
+    /// keyboard free, as the warning before it says (W2 of 1.2.2, the
+    /// release review, 2026-11-07).
+    var appWindowsClosed = false
     /// How many times AntiDot mode was turned off from here.
     var antiDotChanges = 0
     /// Whether the Mac's output could be muted, as last read: as the

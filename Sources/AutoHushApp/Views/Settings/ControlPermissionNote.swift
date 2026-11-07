@@ -32,14 +32,15 @@ struct ControlPermissionNote: View {
     }
 
     /// What it says of `player` while its control `permission` is missing
-    /// and its backup controls stand in for it (`SettingsModel.backupsStandIn`).
+    /// and its backup controls stand in for it (`SettingsModel.backupsStandIn`);
+    /// Fine-Tuning's player card says it too (`PlayerControlsCard`).
     static func standInNote(_ permission: Permission, player: String) -> String {
         if case .automation = permission {
             return String(localized: "Without Automation access, AutoHush controls \(player) by its backup controls.",
-                          comment: "Settings → General under the media player, and Settings → Media Player above the players: Automation isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player")
+                          comment: "Settings → General under the media player, Settings → Media Player above the players, and Settings → Fine-Tuning's player card under “Use backup controls”: Automation isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player")
         }
         return String(localized: "Without Accessibility access, AutoHush controls \(player) by its backup controls.",
-                      comment: "Settings → General under the media player, and Settings → Media Player above the players: Accessibility isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player")
+                      comment: "Settings → General under the media player, Settings → Media Player above the players, and Settings → Fine-Tuning's player card under “Use backup controls”: Accessibility isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player")
     }
 
     /// What it says of `player` while its control `permission` stands at

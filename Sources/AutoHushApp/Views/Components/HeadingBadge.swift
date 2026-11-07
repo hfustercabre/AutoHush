@@ -14,9 +14,9 @@ struct HeadingBadge: View {
     var onSelection = false
 
     var body: some View {
-        let color = onSelection ? AnyShapeStyle(.white) : accent ? AnyShapeStyle(.appAccent) : AnyShapeStyle(.appWarning)
+        let color = onSelection ? AnyShapeStyle(.onSelection) : accent ? AnyShapeStyle(.appAccent) : AnyShapeStyle(.appWarning)
         let words = !onSelection && accent ? AnyShapeStyle(.primary) : color
-        let fill = onSelection ? AnyShapeStyle(.white.opacity(0.2))
+        let fill = onSelection ? AnyShapeStyle(.onSelection.opacity(0.2))
             : accent ? AnyShapeStyle(.selectedRowFill) : AnyShapeStyle(.warningBadgeFill)
         Text(verbatim: text)
             .font(.appCaption.weight(.semibold))

@@ -30,7 +30,7 @@ private struct ChosenOutline: ViewModifier {
             }
             .overlay {
                 if isChosen {
-                    if byKeys { shape.strokeBorder(.white, lineWidth: 2) }
+                    if byKeys { shape.strokeBorder(.onSelection, lineWidth: 2) }
                 } else if outlinedOtherwise, !byKeys {
                     shape.strokeBorder(.separator, lineWidth: 1)
                 }

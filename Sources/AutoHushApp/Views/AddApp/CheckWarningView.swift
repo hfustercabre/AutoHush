@@ -7,6 +7,9 @@ import PlayerCheckKit
 /// (W6, the user, 2026-10-15): the 7 states the app's window goes
 /// through, that the mouse and keyboard are blocked meanwhile and the
 /// screen dims (but for the panel), how long it takes; Start the Check.
+/// With the app's windows all closed, the check moves nothing, blocks
+/// nothing and tries each way once: its one state, and its shorter time
+/// (W2 of 1.2.2, 2026-11-07).
 struct CheckWarningView: View {
     let app: CheckableApp
     /// What's muted during the check: the app (its sound tapped), else the
@@ -17,6 +20,8 @@ struct CheckWarningView: View {
     /// the check can't show another desktop, and says how to turn them on,
     /// with a button to Keyboard settings (K2, the user's pick, 2026-10-30).
     var desktopShortcutsOff = false
+    /// The app has no window the check can reach (`AddAppModel.appWindowsClosed`).
+    var windowsClosed = false
     var openKeyboardSettings: () -> Void = {}
     let start: () -> Void
     let cancel: () -> Void
@@ -29,8 +34,53 @@ struct CheckWarningView: View {
     static let width = AddAppView.width
 
     var body: some View {
+        let description = windowsClosed ? AddAppText.closedDescription(app.name) : AddAppText.warningDescription(app.name)
         WindowPage(icon: AppIcon.appImage(bundlePath: app.url.path, size: 56),
-                   description: Text(verbatim: AddAppText.warningDescription(app.name)), width: Self.width) {
+                   description: Text(verbatim: description), width: Self.width) {
+            if windowsClosed {
+                closedStates
+            } else {
+                movedStates
+            }
+            HStack(spacing: 14) {
+                Label(windowsClosed ? AddAppText.underAMinute : AddAppText.aboutThreeMinutes, systemImage: "clock")
+                switch muting {
+                case .app: Label(AddAppText.mutedMeanwhile(app.name), systemImage: "speaker.slash")
+                case .mac: Label(AddAppText.macMutedMeanwhile, systemImage: "speaker.slash")
+                case .none: Label(AddAppText.heardMeanwhile(app.name), systemImage: "speaker.wave.2")
+                }
+                Label(AddAppText.allPutBack, systemImage: "arrow.uturn.backward")
+            }
+            .font(.appCaption)
+            .foregroundStyle(.appSecondary)
+            .padding(.top, 2)
+        } bar: {
+            Button(action: cancel) { Text(verbatim: ButtonText.cancel) }
+                .buttonStyle(.chip)
+                .keyboardShortcut(.cancelAction)
+            Spacer()
+            MainButton(AddAppText.startCheck, action: start)
+        }
+        .windowKeys(keys)
+    }
+
+    /// Its windows all closed: their one state, beside what the check does then.
+    private var closedStates: some View {
+        Group {
+            SectionHeading(Text(verbatim: AddAppText.closedHeading(app.name))).padding(.top, 8)
+            Card {
+                HStack(alignment: .center, spacing: 12) {
+                    tile(.windowsClosed).frame(width: 96)
+                    Text(verbatim: AddAppText.closedNote).captionStyle()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+
+    /// The 7 states its window goes through, and what happens while it moves.
+    private var movedStates: some View {
+        Group {
             SectionHeading(Text(verbatim: AddAppText.statesHeading(app.name))).padding(.top, 8)
             Card {
                 VStack(spacing: 10) {
@@ -60,26 +110,7 @@ struct CheckWarningView: View {
                 }
                 .accessibilityElement(children: .combine)
             }
-            HStack(spacing: 14) {
-                Label(AddAppText.aboutThreeMinutes, systemImage: "clock")
-                switch muting {
-                case .app: Label(AddAppText.mutedMeanwhile(app.name), systemImage: "speaker.slash")
-                case .mac: Label(AddAppText.macMutedMeanwhile, systemImage: "speaker.slash")
-                case .none: Label(AddAppText.heardMeanwhile(app.name), systemImage: "speaker.wave.2")
-                }
-                Label(AddAppText.allPutBack, systemImage: "arrow.uturn.backward")
-            }
-            .font(.appCaption)
-            .foregroundStyle(.appSecondary)
-            .padding(.top, 2)
-        } bar: {
-            Button(action: cancel) { Text(verbatim: ButtonText.cancel) }
-                .buttonStyle(.chip)
-                .keyboardShortcut(.cancelAction)
-            Spacer()
-            MainButton(AddAppText.startCheck, action: start)
         }
-        .windowKeys(keys)
     }
 
     private func tile(_ state: CheckResult.WindowState) -> some View {
@@ -108,7 +139,7 @@ struct CheckWarningView: View {
         case .fullScreen: "arrow.up.left.and.arrow.down.right"
         case .minimized: "dock.arrow.down.rectangle"
         case .hidden: "eye.slash"
-        // Never a tile: an app with no window open, whose window isn't moved.
+        // An app with no window open: its one state, nothing moved (W2).
         case .windowsClosed: "xmark.rectangle"
         }
     }

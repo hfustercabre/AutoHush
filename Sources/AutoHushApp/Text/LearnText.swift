@@ -24,10 +24,11 @@ enum LearnText {
     }
 
     /// The row's button, until they're learned, and the chip under the
-    /// status line that says so (`AppStatus.controlsNotLearned`).
+    /// status line that says so (`AppStatus.controlsNotLearned`), and
+    /// under Fine-Tuning's "Controls not learned" (`PlayerControlsCard`).
     static var learnButton: String {
         String(localized: "Learn Controls…",
-               comment: "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet, or under the status line “Controls not learned”, and Settings → Diagnostics beside “Play/Pause button learned: No”: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine")
+               comment: "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet, or under the status line “Controls not learned” (also in Settings → Fine-Tuning's player card), and Settings → Diagnostics beside “Play/Pause button learned: No”: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine")
     }
 
     /// The row's button, once they're learned.

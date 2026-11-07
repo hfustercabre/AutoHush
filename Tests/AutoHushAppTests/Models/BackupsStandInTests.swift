@@ -27,6 +27,9 @@ struct BackupsStandInTests {
         #expect(menu.sections.prefix(2) == [.card, .backupsStandIn(permission)])
         #expect(ControlPermissionNote.standInNote(permission, player: "Jukebox")
                 == "Without Automation access, AutoHush controls Jukebox by its backup controls.")
+        // The menu's row also names the other way to end it: another main control (W-4).
+        #expect(BackupText.standingIn
+                == "Its backup controls are used until then, or until you choose another main control in Fine-Tuning.")
     }
 
     @Test("no warning while it's allowed, while it can't be controlled at all (the card asks), with its backups off, or with another main control chosen")

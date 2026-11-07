@@ -110,4 +110,37 @@ struct HostedWindowKeysTests {
         #expect(sut.handleKey(48, flags: .shift, characters: nil, windowNumber: window.windowNumber)) // Shift-Tab: nothing
         #expect(window.firstResponder is NSText && keys.highlight.highlighted == nil)
     }
+
+    @Test("while an input method composes in a field, its keys are left to it: in the welcome window and Add a Web App")
+    func inputMethodComposing() throws {
+        let settings = SettingsModel.forTests(actions: FakeAppActions(log: CallLog()), updates: FakeUpdateCommands())
+        let windows: [HostedWindowController] = [
+            keysAlone(PlayerChooserWindowController(model: settings, tallestPage: 600)),
+            keysAlone(AddWebAppWindowController(model: AddWebAppModel(), settings: settings)),
+        ]
+        // Not shown: a window of the test's made key meanwhile took the menu
+        // tests' key from their side window.
+        for sut in windows {
+            let window = try #require(sut.window)
+            let keys = try #require(sut.keys)
+            let editor = ComposingEditor(frame: NSRect(x: 0, y: 0, width: 100, height: 20))
+            window.contentView?.addSubview(editor)
+            defer { editor.removeFromSuperview() }
+            #expect(window.makeFirstResponder(editor))
+            for code: UInt16 in [125, 126, 48, 53, 36] { // ↓, ↑, Tab, Escape, Return
+                #expect(try !key(sut, code), "\(type(of: sut)), key \(code)")
+            }
+            #expect(!sut.handleKey(48, flags: .shift, characters: nil, windowNumber: window.windowNumber))
+            #expect(keys.highlight.highlighted == nil && window.firstResponder === editor)
+            editor.composing = false
+            #expect(try key(sut, 125), "\(type(of: sut)): ↓ from the field once it's done") // the keys' again
+        }
+    }
+}
+
+/// A field's editor while an input method composes in it (marked text), as
+/// `hasMarkedText` tells, with no input method or field needed.
+private final class ComposingEditor: NSTextView {
+    var composing = true
+    override func hasMarkedText() -> Bool { composing }
 }

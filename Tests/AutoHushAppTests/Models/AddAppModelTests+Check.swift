@@ -222,4 +222,16 @@ extension AddAppModelTests {
         model.useMuting()
         #expect(world.used.first?.setup?.ways == [.mute] && world.closed == 1)
     }
+
+    @Test("ready with its windows all closed, the warning is told so; a window opened is seen within 2 s (W2 of 1.2.2)")
+    func windowsClosedForTheWarning() async {
+        let world = World()
+        world.windowOpen = false
+        let model = await AddAppModel.ready(on: world)
+        #expect(model.appWindowsClosed)
+        world.windowOpen = true
+        await TestWait.until { !model.appWindowsClosed }
+        #expect(!model.appWindowsClosed && model.stage == .ready)
+        model.windowClosed() // the watch ends
+    }
 }

@@ -110,8 +110,9 @@ package struct AppConfiguration: Sendable {
         "com.apple.mail",
     ]
 
-    /// VoiceOver's own process, which plays its speech.
-    static let voiceOverBundleID = "com.apple.VoiceOver"
+    /// VoiceOver's own process, which plays its speech (Settings → Sound
+    /// Sources hides its row while it doesn't pause the player).
+    package static let voiceOverBundleID = "com.apple.VoiceOver"
 
     /// Bundle ID prefixes that indicate system/infrastructure processes to exclude.
     static let excludedBundleIDPrefixes: [String] = [

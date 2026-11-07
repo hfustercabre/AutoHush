@@ -160,6 +160,25 @@ extension UpdateControllerTests {
         }
     }
 
+    @Test("choosing \"Notify me\", or turning checks off, while it downloads deletes the download once it ends, unannounced")
+    func unwantedWhileDownloading() async {
+        for turnOff in [{ (c: UpdateController) in c.mode = .notify }, { (c: UpdateController) in c.checksAutomatically = false }] {
+            let gate = Gate()
+            let h = Harness(checker: .latestRelease("v0.3.0"), installer: MockUpdateInstaller(onDownload: { await gate.wait() }),
+                            mode: .download)
+            let run = Task { await h.controller.runAutomaticTasks() }
+            await TestWait.until { await gate.waiting == 1 }
+            turnOff(h.controller)
+            await gate.open()
+            await run.value
+            #expect(h.installer.calls == ["download 0.3.0"])
+            #expect(h.keptFiles.isEmpty && h.preferences.downloadedUpdate == nil)
+            #expect(h.notifier.announced.isEmpty)
+            #expect(h.offer?.state == .available)
+            #expect(h.controller.status == "Version 0.3.0 is available.")
+        }
+    }
+
     @Test("choosing \"Install it automatically\" installs a kept download at the next quiet run")
     func downloadThenInstall() async {
         let h = Harness(checker: .latestRelease("v0.3.0"), mode: .download)

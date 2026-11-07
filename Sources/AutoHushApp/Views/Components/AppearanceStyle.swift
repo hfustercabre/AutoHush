@@ -58,6 +58,12 @@ extension ShapeStyle where Self == Color {
     /// select (Settings → Sound Sources, Add an App's apps; A1a, the user's
     /// pick, 2026-11-01): `selectedContentBackgroundColor`.
     static var listSelectionFill: Color { Color(nsColor: .selectedContentBackgroundColor) }
+    /// Text, symbols and outlines on `listSelectionFill` (a selected list
+    /// row, the chosen player's tile, a chosen card), and the ✕ on a tile's
+    /// remove button: macOS's text on a selection, white in both modes
+    /// (`alternateSelectedControlTextColor`; the release review's standards,
+    /// 2026-11-07, for the views' raw `.white`).
+    static var onSelection: Color { Color(nsColor: .alternateSelectedControlTextColor) }
     /// Behind the accent `HeadingBadge` ("Recommended").
     static var selectedRowFill: Color { .accentColor.opacity(0.16) }
     /// The square behind a `SymbolTile`'s symbol (Settings' sidebar, the

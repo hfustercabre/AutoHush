@@ -75,6 +75,43 @@ struct AddAppModelTests {
         #expect(model.chosen?.bundleID == "com.example.other")
     }
 
+    @Test("Fine-Tuning's Check Again… starts over on its app from another app's steps or result, that result still kept; on its own app, or while a check is under way, it stays (W-3)")
+    func startOverOnApp() async {
+        let picked = URL(filePath: "/Applications/Picked.app")
+        // Its list open on another app: it's chosen there.
+        let choosing = await AddAppModel.opened(on: World())
+        choosing.openChooser()
+        choosing.startOver(onAppAt: picked)
+        #expect(choosing.chosen?.bundleID == "com.example.picked")
+
+        // Another app's result, not yet used: from the first step on this one.
+        let world = World()
+        world.kept.save(KeptCheck(app: world.apps[0], result: result, at: world.now))
+        let model = await AddAppModel.opened(on: world)
+        #expect(model.result == result)
+        model.startOver(onAppAt: picked)
+        #expect(model.chosen?.bundleID == "com.example.picked" && model.result == nil && world.warningsClosed == 1)
+        #expect(world.kept.load(now: world.now)?.app.bundleID == "com.example.player")
+        // On this one already: as it is.
+        await TestWait.until { model.canChangeApp }
+        model.startOver(onAppAt: picked)
+        #expect(model.chosen?.bundleID == "com.example.picked" && world.warningsClosed == 1)
+
+        // Another app's steps, its warning open: closed, and on this one.
+        let steps = World()
+        let ready = await AddAppModel.ready(on: steps)
+        ready.startOver(onAppAt: picked)
+        #expect(ready.chosen?.bundleID == "com.example.picked" && steps.warningsClosed == 1)
+
+        // A check under way: as it is.
+        let checking = World()
+        let running = await AddAppModel.ready(on: checking)
+        running.startCheck()
+        await TestWait.until { checking.panel == ["shown"] }
+        running.startOver(onAppAt: picked)
+        #expect(running.stage == .checking && running.chosen?.bundleID == "com.example.player" && checking.warningsClosed == 0)
+    }
+
     @Test("another app selected in the list drops Other App…'s warning, which was about the app picked on the disk")
     func selectionDropsOtherAppWarning() async {
         let world = World()

@@ -15307,6 +15307,233 @@
         }
       }
     },
+    "%@’s Windows Are Closed" : {
+      "comment" : "The window shown before a check starts, when the app has no window open (a menu bar player playing on): heading over its one window state, “Windows closed”, instead of the 7 states a window goes through; %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نوافذ %@ مغلقة"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les finestres de %@ estan tancades"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okna aplikace %@ jsou zavřená"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vinduerne i %@ er lukket"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Fenster von %@ sind geschlossen"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Τα παράθυρα της εφαρμογής %@ είναι κλειστά"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las ventanas de %@ están cerradas"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las ventanas de %@ están cerradas"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apin %@ ikkunat on suljettu"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les fenêtres de %@ sont fermées"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les fenêtres de %@ sont fermées"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "החלונות של %@ סגורים"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ की विंडो बंद हैं"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prozori aplikacije %@ su zatvoreni"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A(z) %@ ablakai be vannak zárva"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jendela %@ Ditutup"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le finestre di %@ sono chiuse"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@のウインドウが閉じています"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 윈도우가 닫혀 있음"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tetingkap %@ Ditutup"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vinduene til %@ er lukket"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De vensters van %@ zijn gesloten"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okna aplikacji %@ są zamknięte"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As Janelas de %@ Estão Fechadas"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As janelas de %@ estão fechadas"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ferestrele aplicației %@ sunt închise"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Окна приложения %@ закрыты"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okná apky %@ sú zatvorené"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Okna aplikacije %@ so zaprta"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fönstren i %@ är stängda"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าต่างของ %@ ปิดอยู่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Pencereleri Kapalı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вікна програми %@ закрито"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cửa sổ của %@ đã đóng"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的視窗已關閉"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的窗口已关闭"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ 的視窗已關閉"
+          }
+        }
+      }
+    },
     "%lld dB" : {
       "comment" : "A sound level in decibels",
       "localizations" : {
@@ -41445,6 +41672,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AutoHush 會將 %@ 暫停片刻，然後繼續播放。"
+          }
+        }
+      }
+    },
+    "AutoHush pauses and plays %@ every way it can." : {
+      "comment" : "The window shown before a check starts, at its top beside the app's icon, when the app has no window open (a menu bar player playing on): the check moves nothing and doesn't block the mouse and keyboard; %@ is the app",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يوقف AutoHush التطبيق %@ مؤقتًا ويشغّله بكل الطرق الممكنة."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’AutoHush posa en pausa i reprodueix %@ de totes les maneres que pot."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pozastaví a přehraje aplikaci %@ všemi možnými způsoby."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush sætter %@ på pause og afspiller den på alle mulige måder."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausiert %@ und spielt es auf jede mögliche Weise ab."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush παύει και αναπαράγει την εφαρμογή %@ με κάθε δυνατό τρόπο."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausa y reproduce %@ de todas las formas que puede."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausa y reproduce %@ de todas las formas que puede."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush keskeyttää ja toistaa apin %@ kaikilla mahdollisilla tavoilla."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush met en pause et relance %@ de toutes les façons possibles."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush met en pause et relance %@ de toutes les façons possibles."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush משהה ומנגן את %@ בכל דרך אפשרית."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush हर संभव तरीके से %@ को पॉज़ करता और चलाता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pauzira i reproducira aplikaciju %@ na sve moguće načine."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush minden lehetséges módon szünetelteti és lejátssza a(z) %@ appot."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush menjeda dan memutar %@ dengan segala cara yang bisa."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush mette in pausa e riproduce %@ in tutti i modi possibili."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushは、%@をあらゆる方法で一時停止・再生します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 가능한 모든 방법으로 %@을(를) 일시 정지하고 재생합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush menjeda dan memainkan %@ dengan setiap cara yang boleh."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush setter %@ på pause og spiller den av på alle måter som går."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pauzeert %@ en speelt het af op elke mogelijke manier."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush wstrzymuje i wznawia aplikację %@ na wszystkie możliwe sposoby."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush pausa e reproduz %@ de todas as formas possíveis."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush pausa e reproduz %@ de todas as formas possíveis."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pune pe pauză și redă aplicația %@ în toate felurile posibile."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ставит на паузу и воспроизводит приложение %@ всеми возможными способами."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pozastaví a prehrá apku %@ všetkými možnými spôsobmi."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush zaustavi in predvaja aplikacijo %@ na vse možne načine."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush pausar och spelar upp %@ på alla sätt som går."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush หยุดชั่วคราวและเล่น %@ ด้วยทุกวิธีที่ทำได้"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush, %@ uygulamasını her yoldan duraklatıp oynatır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush призупиняє й відтворює програму %@ усіма можливими способами."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tạm dừng và phát %@ bằng mọi cách có thể."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 會用一切可行的方式暫停並播放 %@。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 会用一切可行的方式暂停并播放 %@。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 會用一切可行的方式暫停並播放 %@。"
           }
         }
       }
@@ -83678,6 +84132,233 @@
         }
       }
     },
+    "Its backup controls are used until then, or until you choose another main control in %@." : {
+      "comment" : "The menu, under “Allow <player> Automation Access…” (or Accessibility): the player's own way to be controlled isn't allowed, so AutoHush pauses and plays it by its other ways (backup controls) until it's allowed, or until the user picks another “Main control” (the pop-up in Settings → Fine-Tuning's player card). %@ is that Settings page, “Fine-Tuning”",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حتى ذلك الحين، تُستخدم طرق التحكم الاحتياطية، أو إلى أن تختار طريقة تحكم رئيسية أخرى في «%@»."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Els seus controls de reserva s’utilitzen fins aleshores o fins que es triï un altre control principal a «%@»."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do té doby se používá záložní ovládání, nebo dokud v sekci „%@“ nezvolíte jiné hlavní ovládání."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reservebetjeningen bruges indtil da, eller indtil en anden hovedbetjening vælges i ”%@”."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bis dahin oder bis in „%@“ eine andere Hauptsteuerung gewählt wird, wird die Ersatzsteuerung verwendet."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Μέχρι τότε χρησιμοποιούνται οι εφεδρικοί τρόποι ελέγχου ή μέχρι να επιλέξετε άλλον κύριο τρόπο ελέγχου στο «%@»."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sus controles de reserva se usan hasta entonces o hasta que se elija otro control principal en «%@»."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sus controles de respaldo se usan hasta entonces o hasta que se elija otro control principal en «%@»."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Varasäätimiä käytetään siihen asti, tai kunnes kohdassa ”%@” valitaan toinen pääsäädin."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses commandes de secours sont utilisées d’ici là, ou jusqu’au choix d’une autre commande principale dans « %@ »."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ses commandes de secours sont utilisées d’ici là, ou jusqu’au choix d’une autre commande principale dans « %@ »."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "עד אז נעשה שימוש בדרכי השליטה החלופיות, או עד שתיבחר דרך שליטה ראשית אחרת ב־“%@”."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "तब तक, या “%@” में कोई दूसरा मुख्य नियंत्रण चुनने तक, इसके बैकअप नियंत्रण इस्तेमाल होते हैं।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do tada se koristi rezervno upravljanje ili dok se u odjeljku „%@” ne odabere drugo glavno upravljanje."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Addig a tartalék vezérlők működnek, vagy amíg a(z) „%@” részben nem választ másik fő vezérlőt."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sampai saat itu, atau sampai kontrol utama lain dipilih di “%@”, kontrol cadangannya digunakan."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I controlli di riserva si usano fino ad allora, o finché non si sceglie un altro controllo principale in «%@»."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "それまで、または「%@」で別のメインの操作を選ぶまでは、予備の操作を使います。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "그때까지 또는 ‘%@’에서 다른 기본 컨트롤을 선택할 때까지 예비 컨트롤을 사용합니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sehingga itu, atau sehingga kawalan utama lain dipilih dalam “%@”, kawalan sandarannya digunakan."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reservekontrollene brukes inntil da, eller til en annen hovedkontroll velges i «%@»."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tot die tijd wordt de reservebediening gebruikt, of tot er in ‘%@’ een andere hoofdbediening wordt gekozen."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do tego czasu używane jest zapasowe sterowanie albo do wybrania innego głównego sterowania w sekcji „%@”."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os controles de reserva são usados até lá, ou até escolher outro controle principal em “%@”."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Os controlos de reserva são usados até lá, ou até escolher outro controlo principal em “%@”."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Până atunci se folosesc comenzile de rezervă sau până alegeți altă comandă principală în „%@”."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До тех пор используются резервные способы — или пока в разделе «%@» не будет выбран другой основной способ."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dovtedy sa používa záložné ovládanie, alebo kým v sekcii „%@“ nezvolíte iné hlavné ovládanie."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Do takrat se uporablja rezervno upravljanje ali dokler v razdelku »%@« ne izberete drugega glavnega upravljanja."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reservreglagen används tills dess, eller tills ett annat huvudreglage väljs i ”%@”."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ระหว่างนี้จะใช้ตัวควบคุมสำรองแทน หรือจนกว่าจะเลือกตัวควบคุมหลักอื่นใน “%@”"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O zamana kadar ya da “%@” bölümünde başka bir ana denetim seçilene kadar yedek denetimler kullanılır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "До того часу використовуються резервні способи, або доки в розділі «%@» не буде вибрано інший основний спосіб."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trong lúc đó, các điều khiển dự phòng được dùng, hoặc cho đến khi chọn điều khiển chính khác trong “%@”."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此之前，或在「%@」中選擇其他主要控制方式之前，會使用備用控制方式。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此之前，或在“%@”中选择其他主要控制方式之前，将使用备用控制方式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在此之前，或在「%@」中選擇其他主要控制方式之前，會使用備用控制方式。"
+          }
+        }
+      }
+    },
     "Its page’s Play/Pause" : {
       "comment" : "A way to pause and play an app added with Add an App: the Play/Pause button of the page it shows (the Add an App window, Settings → Diagnostics under “Controlled by”)",
       "localizations" : {
@@ -87538,7 +88219,7 @@
       }
     },
     "Learn Controls…" : {
-      "comment" : "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet, or under the status line “Controls not learned”, and Settings → Diagnostics beside “Play/Pause button learned: No”: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine",
+      "comment" : "The menu's card and Settings → General, in the “Controls” row while the web app's controls aren't learned yet, or under the status line “Controls not learned” (also in Settings → Fine-Tuning's player card), and Settings → Diagnostics beside “Play/Pause button learned: No”: button that opens the window that learns them, from the first step. Keep it short: the row's title already says “Controls”, so “Learn” alone is fine",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -104785,6 +105466,233 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "視窗處於以下狀態時無效：%@"
+          }
+        }
+      }
+    },
+    "Nothing is moved, and the mouse and keyboard stay free. Each way that needs no window is tried once; the Now Playing panel opens for a moment." : {
+      "comment" : "The window shown before a check starts, when the app has no window open, beside its one window state (“Windows closed”): the check moves no window and doesn't block the mouse and keyboard; it pauses and plays the app once by each way that works without a window (AppleScript, its menu, the menu bar's Now Playing panel)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يُنقل شيء، ويبقى الماوس ولوحة المفاتيح متاحين. تُجرَّب كل طريقة لا تحتاج إلى نافذة مرة واحدة؛ وتُفتح لوحة «قيد التشغيل الآن» للحظة."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No es mou res, i el ratolí i el teclat queden lliures. Cada manera que no necessita finestra es prova un cop; el tauler «Està sonant» s’obre un moment."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nic se nepřesouvá a myš i klávesnice zůstávají volné. Každý způsob, který nepotřebuje okno, se zkusí jednou; panel „Právě hraje“ se na chvíli otevře."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intet flyttes, og musen og tastaturet forbliver frie. Hver måde, der ikke kræver et vindue, prøves én gang; panelet ”Afspilles nu” åbnes et øjeblik."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nichts wird bewegt, Maus und Tastatur bleiben frei. Jeder Weg, der kein Fenster braucht, wird einmal versucht; „Jetzt läuft“ öffnet sich kurz."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Δεν μετακινείται τίποτα, και το ποντίκι και το πληκτρολόγιο μένουν ελεύθερα. Κάθε τρόπος που δεν χρειάζεται παράθυρο δοκιμάζεται μία φορά· το πλαίσιο «Παίζει τώρα» ανοίγει για μια στιγμή."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se mueve nada, y el ratón y el teclado quedan libres. Cada forma que no necesita ventana se prueba una vez; el panel «Ahora suena» se abre un momento."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se mueve nada, y el mouse y el teclado quedan libres. Cada forma que no necesita ventana se prueba una vez; el panel «Ahora suena» se abre un momento."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitään ei siirretä, ja hiiri ja näppäimistö pysyvät vapaina. Jokaista tapaa, joka ei tarvitse ikkunaa, kokeillaan kerran; Toistossa-paneeli avautuu hetkeksi."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’est déplacé, et la souris et le clavier restent libres. Chaque moyen qui n’a pas besoin de fenêtre est essayé une fois ; le panneau « À l’écoute » s’ouvre un instant."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rien n’est déplacé, et la souris et le clavier restent libres. Chaque moyen qui n’a pas besoin de fenêtre est essayé une fois; le panneau « À l’écoute » s’ouvre un instant."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "שום דבר לא זז, והעכבר והמקלדת נשארים פנויים. כל דרך שלא צריכה חלון נבדקת פעם אחת; החלונית “מתנגן כעת” נפתחת לרגע."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कुछ भी नहीं खिसकाया जाता, और माउस व कीबोर्ड खाली रहते हैं। जिस तरीके को विंडो की ज़रूरत नहीं, उसे एक बार आज़माया जाता है; “अभी चल रहा है” पैनल पल भर के लिए खुलता है।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ništa se ne pomiče, a miš i tipkovnica ostaju slobodni. Svaki način kojem ne treba prozor isproba se jednom; ploča „Izvodi se” nakratko se otvara."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Semmi sem mozdul, az egér és a billentyűzet szabad marad. Minden ablakot nem igénylő módot egyszer kipróbál; a „Lejátszás alatt” panel egy pillanatra megnyílik."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tidak ada yang dipindahkan, dan mouse serta papan ketik tetap bebas. Setiap cara yang tidak memerlukan jendela dicoba sekali; panel Sedang Diputar terbuka sesaat."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Non viene spostato nulla, e mouse e tastiera restano liberi. Ogni modo che non richiede una finestra viene provato una volta; il pannello «In riproduzione» si apre per un momento."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "何も移動せず、マウスとキーボードもそのまま使えます。ウインドウが不要な方法をそれぞれ1回試します。“再生中”パネルが一瞬開きます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아무것도 이동하지 않으며 마우스와 키보드도 그대로 사용할 수 있습니다. 윈도우가 필요 없는 방법을 각각 한 번씩 시도하며, ‘지금 재생 중’ 패널이 잠시 열립니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tiada apa-apa yang dialihkan, dan tetikus serta papan kekunci kekal bebas. Setiap cara yang tidak memerlukan tetingkap dicuba sekali; panel Kini Dimainkan dibuka seketika."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingenting flyttes, og mus og tastatur forblir frie. Hver måte som ikke trenger et vindu, prøves én gang; Spilles nå-panelet åpnes et øyeblikk."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Er wordt niets verplaatst, en de muis en het toetsenbord blijven vrij. Elke manier die geen venster nodig heeft, wordt één keer geprobeerd; het paneel ‘Wordt nu afgespeeld’ opent even."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nic nie jest przesuwane, a mysz i klawiatura pozostają wolne. Każdy sposób, który nie wymaga okna, jest próbowany raz; panel „Teraz odtwarzane” otwiera się na chwilę."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada é movido, e o mouse e o teclado ficam livres. Cada forma que não precisa de janela é testada uma vez; o painel “Reproduzindo” abre por um instante."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nada é movido, e o rato e o teclado ficam livres. Cada forma que não precisa de janela é testada uma vez; o painel “A reproduzir” abre por um instante."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nu se mută nimic, iar mouse-ul și tastatura rămân libere. Fiecare metodă care nu are nevoie de fereastră e încercată o dată; panoul „În redare” se deschide pentru o clipă."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ничего не перемещается, мышь и клавиатура остаются свободными. Каждый способ, которому не нужно окно, пробуется один раз; панель «Исполняется» открывается на мгновение."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nič sa nepresúva a myš aj klávesnica zostávajú voľné. Každý spôsob, ktorý nepotrebuje okno, sa skúsi raz; panel „Práve hrá“ sa na chvíľu otvorí."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nič se ne premakne, miška in tipkovnica pa ostaneta prosti. Vsak način, ki ne potrebuje okna, se preizkusi enkrat; plošča »Predvaja se« se za trenutek odpre."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inget flyttas, och musen och tangentbordet förblir fria. Varje sätt som inte behöver något fönster provas en gång; panelen ”Spelas nu” öppnas en kort stund."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่มีการย้ายสิ่งใด และเมาส์กับแป้นพิมพ์ยังใช้ได้ตามปกติ ทุกวิธีที่ไม่ต้องใช้หน้าต่างจะถูกลองหนึ่งครั้ง แผง “กำลังเล่นอยู่” จะเปิดขึ้นครู่หนึ่ง"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiçbir şey taşınmaz, fare ve klavye serbest kalır. Pencere gerektirmeyen her yol bir kez denenir; Şu An Çalan paneli bir an açılır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нічого не переміщується, а миша й клавіатура лишаються вільними. Кожен спосіб, якому не потрібне вікно, пробується один раз; панель «Зараз відтворюється» відкривається на мить."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Không có gì bị di chuyển, chuột và bàn phím vẫn dùng được. Mỗi cách không cần cửa sổ được thử một lần; bảng Đang phát mở ra trong giây lát."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不會移動任何東西，滑鼠和鍵盤也可照常使用。每種不需視窗的方式各嘗試一次；「正在播放」面板會短暫打開。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不会移动任何东西，鼠标和键盘也可照常使用。每种无需窗口的方式各尝试一次；“正在播放”面板会短暂打开。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不會移動任何東西，滑鼠和鍵盤也可照常使用。每種不需視窗的方式各嘗試一次；「正在播放」面板會短暫打開。"
           }
         }
       }
@@ -152478,6 +153386,233 @@
         }
       }
     },
+    "Under a minute" : {
+      "comment" : "The window shown before a check starts, when the app has no window open: how long the check takes (one window state instead of 7, so much less than “About 3 minutes”)",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أقل من دقيقة"
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menys d’un minut"
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Méně než minuta"
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Under et minut"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unter einer Minute"
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Λιγότερο από ένα λεπτό"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos de un minuto"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos de un minuto"
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle minuutti"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moins d’une minute"
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moins d’une minute"
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "פחות מדקה"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एक मिनट से कम"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manje od minute"
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Egy percnél kevesebb"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurang dari semenit"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meno di un minuto"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1分未満"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1분 미만"
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurang daripada seminit"
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Under ett minutt"
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minder dan een minuut"
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Poniżej minuty"
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos de um minuto"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menos de um minuto"
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sub un minut"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Меньше минуты"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menej ako minúta"
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manj kot minuto"
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Under en minut"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่ถึงหนึ่งนาที"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir dakikadan kısa"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Менше хвилини"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dưới một phút"
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不到 1 分鐘"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不到 1 分钟"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不到 1 分鐘"
+          }
+        }
+      }
+    },
     "Undo" : {
       "comment" : "The menu bar's Edit menu (⌘Z); macOS's own word",
       "localizations" : {
@@ -153609,233 +154744,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在學會之前，AutoHush 不會按下頁面上的任何按鈕。"
-          }
-        }
-      }
-    },
-    "Until then, its backup controls are used." : {
-      "comment" : "The menu, under “Allow <player> Automation Access…” (or Accessibility): the player's own way to be controlled isn't allowed, so AutoHush pauses and plays it by its other ways (backup controls) meanwhile",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "حتى ذلك الحين، تُستخدم طرق التحكم الاحتياطية."
-          }
-        },
-        "ca" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mentrestant, s’utilitzen els seus controls de reserva."
-          }
-        },
-        "cs" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do té doby se používá záložní ovládání."
-          }
-        },
-        "da" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Indtil da bruges reservebetjeningen."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bis dahin wird die Ersatzsteuerung verwendet."
-          }
-        },
-        "el" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Μέχρι τότε, χρησιμοποιούνται οι εφεδρικοί τρόποι ελέγχου."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hasta entonces, se usan sus controles de reserva."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hasta entonces, se usan sus controles de respaldo."
-          }
-        },
-        "fi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Siihen asti käytetään varasäätimiä."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "D’ici là, ses commandes de secours sont utilisées."
-          }
-        },
-        "fr-CA" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "D’ici là, ses commandes de secours sont utilisées."
-          }
-        },
-        "he" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "עד אז נעשה שימוש בדרכי השליטה החלופיות."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "तब तक इसके बैकअप नियंत्रण इस्तेमाल होते हैं।"
-          }
-        },
-        "hr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do tada se koristi rezervno upravljanje."
-          }
-        },
-        "hu" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Addig a tartalék vezérlők működnek."
-          }
-        },
-        "id" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sampai saat itu, kontrol cadangannya digunakan."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fino ad allora, si usano i controlli di riserva."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "それまでは予備の操作を使います。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "그때까지는 예비 컨트롤을 사용합니다."
-          }
-        },
-        "ms" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sehingga itu, kawalan sandarannya digunakan."
-          }
-        },
-        "nb" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Inntil da brukes reservekontrollene."
-          }
-        },
-        "nl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tot die tijd wordt de reservebediening gebruikt."
-          }
-        },
-        "pl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do tego czasu używane jest zapasowe sterowanie."
-          }
-        },
-        "pt" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Até lá, são usados os controles de reserva."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Até lá, são usados os controlos de reserva."
-          }
-        },
-        "ro" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Până atunci, se folosesc comenzile de rezervă."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "До тех пор используются резервные способы."
-          }
-        },
-        "sk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dovtedy sa používa záložné ovládanie."
-          }
-        },
-        "sl" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Do takrat se uporablja rezervno upravljanje."
-          }
-        },
-        "sv" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tills dess används reservreglagen."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ระหว่างนี้จะใช้ตัวควบคุมสำรองแทน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O zamana kadar yedek denetimler kullanılır."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "До того часу використовуються резервні способи."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trong lúc đó, các điều khiển dự phòng được dùng."
-          }
-        },
-        "zh-HK" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在此之前，會使用備用控制方式。"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在此之前，将使用备用控制方式。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在此之前，會使用備用控制方式。"
           }
         }
       }
@@ -161332,7 +162240,7 @@
       }
     },
     "Windows closed" : {
-      "comment" : "The check's panel, as its window state: the app has no window open (a menu bar player playing on), so nothing is moved",
+      "comment" : "The check's panel, and the window shown before the check, as its one window state: the app has no window open (a menu bar player playing on), so nothing is moved",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -162240,7 +163148,7 @@
       }
     },
     "Without Accessibility access, AutoHush controls %@ by its backup controls." : {
-      "comment" : "Settings → General under the media player, and Settings → Media Player above the players: Accessibility isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player",
+      "comment" : "Settings → General under the media player, Settings → Media Player above the players, and Settings → Fine-Tuning's player card under “Use backup controls”: Accessibility isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -163602,7 +164510,7 @@
       }
     },
     "Without Automation access, AutoHush controls %@ by its backup controls." : {
-      "comment" : "Settings → General under the media player, and Settings → Media Player above the players: Automation isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player",
+      "comment" : "Settings → General under the media player, Settings → Media Player above the players, and Settings → Fine-Tuning's player card under “Use backup controls”: Automation isn't allowed, so AutoHush pauses and plays the player by its other ways (backup controls) meanwhile; %@ is the player",
       "localizations" : {
         "ar" : {
           "stringUnit" : {

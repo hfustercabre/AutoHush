@@ -300,7 +300,7 @@ private struct SoundSourceRow: View {
             // selection; off, macOS's own switch on the selection, whose
             // track shows there (D1b, the a11y audit's D1, the user's pick,
             // 2026-11-06: on white, an off switch vanished in dark mode).
-            .background { if isSelected, isOn.wrappedValue { Capsule().fill(.white).padding(-2) } }
+            .background { if isSelected, isOn.wrappedValue { Capsule().fill(.onSelection).padding(-2) } }
         }
         .background {
             if isSelected { SelectionFill().padding(.horizontal, -6).padding(.vertical, -4) }
@@ -361,6 +361,6 @@ private struct SelectionFill: View {
         let shape = RoundedRectangle(cornerRadius: 6, style: .continuous)
         shape
             .fill(.listSelectionFill)
-            .overlay { if byKeys { shape.strokeBorder(.white, lineWidth: 2) } }
+            .overlay { if byKeys { shape.strokeBorder(.onSelection, lineWidth: 2) } }
     }
 }

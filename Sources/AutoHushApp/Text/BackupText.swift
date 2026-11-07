@@ -93,8 +93,14 @@ enum BackupText {
                                   comment: "Settings → Media Player, the “Controls” row's value after the main control's name (“AppleScript · backups on”): the switch “Use backup controls” is on. Lowercase, as a part of a list")
     static let backupsOff = String(localized: "backups off",
                                    comment: "Settings → Media Player, the “Controls” row's value after the main control's name (“AppleScript · backups off”): the switch “Use backup controls” is off. Lowercase, as a part of a list")
-    static let standingIn = String(localized: "Until then, its backup controls are used.",
-                                   comment: "The menu, under “Allow <player> Automation Access…” (or Accessibility): the player's own way to be controlled isn't allowed, so AutoHush pauses and plays it by its other ways (backup controls) meanwhile")
+    /// The menu, under its "Allow … Access…" row while backups stand in:
+    /// also how else that ends, another main control (W-4, the release
+    /// review, 2026-11-07).
+    static var standingIn: String {
+        let page = SettingsPage.fineTuning.title
+        return String(localized: "Its backup controls are used until then, or until you choose another main control in \(page).",
+                      comment: "The menu, under “Allow <player> Automation Access…” (or Accessibility): the player's own way to be controlled isn't allowed, so AutoHush pauses and plays it by its other ways (backup controls) until it's allowed, or until the user picks another “Main control” (the pop-up in Settings → Fine-Tuning's player card). %@ is that Settings page, “Fine-Tuning”")
+    }
     static let panelOn = String(localized: "panel while muted on",
                                 comment: "Settings → Media Player, the “Controls” row's value, last (“AppleScript · backups on · panel while muted on”): the switch “Use the Now Playing panel while muted” is on. Lowercase, as a part of a list")
     static let panelOff = String(localized: "panel while muted off",

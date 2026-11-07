@@ -69,6 +69,33 @@ struct MediaKeyWayTests {
         #expect(asks.value == 2 && presses.value == 0)
     }
 
+    @Test("no press needed at the second read, it doesn't wait for Now Playing's second answer")
+    func noWaitWhenNotNeeded() async {
+        let presses = Locked(0), asks = Locked(0), done = Locked(false), state = Locked(PlayerState.paused)
+        let gate = Gate()
+        let late = LateState()
+        late.set { state.value }
+        // The first answer comes as a press before it takes; the second, not until the gate opens.
+        let way = MediaKeyWay(bundleID: "com.example.jukebox", name: "Jukebox", state: late, processIdentifier: { Self.pid },
+                              nowPlaying: {
+                                  if asks.withLock({ $0 += 1; return $0 }) == 1 {
+                                      state.withLock { $0 = .playing }
+                                  } else {
+                                      await gate.wait()
+                                  }
+                                  return .process(Self.pid)
+                              },
+                              pressKey: { presses.withLock { $0 += 1 } }, sleep: { _ in })
+        let play = Task {
+            try? await way.play()
+            done.withLock { $0 = true }
+        }
+        await TestWait.until { done.value }
+        await gate.open()
+        await play.value
+        #expect(presses.value == 0)
+    }
+
     @Test("a press the app doesn't follow fails, and isn't made again: a second would undo a first the app is only slow to show")
     func once() async throws {
         let presses = Locked(0)

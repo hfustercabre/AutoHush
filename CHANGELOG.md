@@ -102,6 +102,17 @@ The details follow.
 
 ### Changed
 
+- **Settings → Fine-Tuning's card for your player** offers Learn
+  Controls… for a web app whose controls aren't learned yet, and says when
+  its backup controls stand in for a missing permission, before you turn
+  them off.
+- **Settings → Sound Sources** lists VoiceOver only while Pause for
+  VoiceOver is on.
+- **The menu's warning while backups stand in** says the other way to end
+  it: choosing another main control in Fine-Tuning.
+- **Add an App's warning for an app with all its windows closed** says
+  what happens then: nothing is moved, the mouse and keyboard stay free,
+  each way is tried once, under a minute.
 - **More reachable with the keyboard and VoiceOver:** the logs window
   scrolls with Page Up, Page Down, Home and End; VoiceOver says a
   pop-up's choice as the arrow keys reach it, what an app does now when
@@ -171,8 +182,8 @@ The details follow.
 - **Diagnostics** says "other desktops", and what to do when a web
   app's window there can't be reached; the menu says "Starting…" while
   AutoHush starts, and Diagnostics says it once.
-- **The chosen player's tile** is solid blue with white text, and a
-  highlighted blue button shows a ring around it, so neither looks like
+- **The chosen player's tile** is filled with the accent color, its text
+  white, and a highlighted button in the accent color shows a ring around it, so neither looks like
   the keyboard's highlight. Settings says "purple dot" for macOS's
   recording indicator.
 
@@ -182,7 +193,7 @@ The details follow.
   cleared it, and a click in its field no longer closes it. Its "Search"
   is a placeholder that goes as you type, as in the other searches, no
   longer a label in front of what you type.
-- **A pause held while Add an App checks an app** follows the settings
+- **A player kept paused when you choose another** follows the settings
   you change meanwhile (Resume playback, fades and the rest).
 - **A "Turn off for" that ends while the Mac sleeps** ends as it wakes,
   not up to its whole length later.
@@ -251,10 +262,25 @@ The details follow.
   Now Playing is hidden in the menu bar.
 - **The arrow keys** reach an added app whose reason for being dimmed
   goes away while the list is open.
-- **Unplugging headphones** (Pause on disconnect), or Resume playback
-  off, no longer unmutes a player that refused its pause: it stays muted
-  rather than playing out loud, the card saying "Muted" with Unmute, until
-  you play or pause it yourself.
+- **A player that refused its pause stays muted** rather than playing out
+  loud after you unplug headphones (Pause on disconnect), with Resume
+  playback off, or once the apps stop: the card says "Muted" with Unmute
+  (also after you turn Auto-Pause off), AutoHush keeps trying to pause it
+  for real, and once it pauses, it's unmuted and stays paused. Pausing,
+  stopping or quitting it yourself ends it too. A player you switched away
+  from in that state is unmuted, as any pause cut short by switching.
+- **Check Again…** (in Settings → Fine-Tuning and in the alert after a
+  failed pause) opens Add an App on your player, even while it shows
+  another app; another app's unused result is kept.
+- **An update downloaded while you change Updates' settings** follows them
+  once the download ends, rather than being kept and announced anyway.
+- **Typing with an input method** (Japanese, Chinese…) in the searches of
+  the welcome window and Add an App: ↑, ↓ and Tab stay with what you
+  compose.
+- **Diagnostics** shows Automation as allowed once it's read so, and reads
+  Accessibility as the rest of AutoHush does.
+- **The Play/Pause key as a backup** is pressed without waiting for an
+  answer it doesn't need.
 - **Music you start with a media key, AirPods or Control Center** while
   another app only holds its sound open is no longer paused for a moment:
   AutoHush first listens whether that app really plays.

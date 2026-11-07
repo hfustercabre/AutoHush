@@ -208,14 +208,14 @@ flowchart TD
   PA -.->|"heard, not just after you<br/>played it from silence: the<br/>pause didn’t take, or it<br/>started again (not one whose<br/>pause is a mute already)"| MUTED
   PA -.->|"heard again from silence<br/>within 3 s of a key or click<br/>in it (already in front, or<br/>its menu bar icon; no media<br/>keys; AntiDot mode: a play<br/>it reports, after one)"| THEIRS
   PA -.->|"AntiDot mode: said to<br/>play, no key or click in it<br/>just before: paused again"| PA
-  MUTED -.->|"silent (it paused itself, or<br/>its pause took: tried every<br/>2 s, less often while it fails;<br/>the Now Playing panel only for<br/>a player with backups, once,<br/>while its switch is on): paused,<br/>kept muted until it plays again"| PA
+  MUTED -.->|"silent (it paused itself, or<br/>its pause took: tried every<br/>2 s, less often while it fails;<br/>the Now Playing panel once,<br/>for a backup panel only while<br/>its switch is on): paused,<br/>kept muted until it plays again"| PA
   MUTED -.->|"silent within 3 s of a<br/>key or click in it: your<br/>pause, unmuted"| USER
   MUTED -.->|"AntiDot mode turned on:<br/>paused, then unmuted"| PA
   MUTED -.->|"AntiDot mode or the Mac<br/>sleeping, and it refuses<br/>that pause: unmuted"| FAIL
   MUTED -.->|"Unmute (the card): heard,<br/>yours until the apps stop"| THEIRS
   MUTED -->|"the apps stop:<br/>unmuted"| LEFT
   MUTED -->|"the apps stop, Resume<br/>playback off, or a call with<br/>Stay paused after calls:<br/>paused, then unmuted"| STAY
-  MUTED -.->|"kept so, and it refuses that<br/>pause: still Muted (Unmute in<br/>the card) until you pause or<br/>quit it: unmuted, yours"| USER
+  MUTED -.->|"kept so, and it refuses that<br/>pause: still Muted (Unmute in<br/>the card), never resumed, its<br/>pause tried every 2 s (less<br/>often while it fails), until<br/>it pauses or you pause or<br/>quit it: unmuted, yours"| USER
   MUTED -->|"the apps stop, found<br/>paused: unmuted first"| FI
   PA --> Q
   Q -->|"no"| MORE --> Q
@@ -274,7 +274,7 @@ flowchart LR
   R8["Apps playing pause<br/>the player as usual"]
   R9["The hand-over: the next<br/>AutoHush, opened within<br/>a minute, takes it over"]
   R10["Paused while a check runs:<br/>nothing is resumed until<br/>it ends"]
-  R11["Paused at once, no fade, and<br/>left paused: a pause AutoHush<br/>held becomes yours (with<br/>Auto-Pause on); muted instead<br/>and refusing that pause,<br/>it stays muted until you<br/>pause or quit it"]
+  R11["Paused at once, no fade, and<br/>left paused: a pause AutoHush<br/>held becomes yours (with<br/>Auto-Pause on); muted instead<br/>and refusing that pause,<br/>it stays muted, even once<br/>the apps stop, until it<br/>pauses or you pause or<br/>quit it"]
 
   E1 --> R1
   E2 --> R2
@@ -328,7 +328,7 @@ stateDiagram-v2
   Muted --> Playing : the apps stop (unmuted)
   Muted --> FadingIn : the apps stop, found paused
   Muted --> Idle : you pause or quit it, or it stays paused (Resume playback off, a call, the Mac sleeps, the output goes away)
-  Muted --> Muted : it stays paused (Resume playback off, a call, the output goes away), and it refuses that pause (kept muted until you pause or quit it)
+  Muted --> Muted : it stays paused (Resume playback off, a call, the output goes away), and it refuses that pause (kept muted, even once the apps stop, its pause still tried, until it pauses or you pause or quit it)
   Playing --> Silent : not heard while an app plays
   Silent --> FadingOut : heard while an app plays
   Silent --> Playing : the apps stop (nothing measures it)
@@ -350,7 +350,7 @@ stateDiagram-v2
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-The chosen player as the menu’s card and the menu bar icon show it. **Not playing** is a player paused by you, stopped or quit: AutoHush never plays it, but takes over a pause the starting app made itself (VLC). **Playing silently** is a player that says it plays but isn’t heard (a muted trailer, a silent preview): AutoHush measures its sound with the other app’s and pauses it the moment it’s heard; once the apps stop, nothing measures it, and it shows as playing; one that only has its output open (it reports no state, as Apple TV’s trailers) shows as **Not playing** instead. A player heard during AutoHush’s pause (the pause didn’t take, or it started again by itself) is **muted instead** until the apps stop (the playing app’s row says **Mutes your player**), unless it was silent and is heard again within 3 s of a key press or click in it: then it’s yours. Only input while it’s already in front counts, or a click in its menu bar icon or its menu, not the click or keys that bring it forward, nor media keys (while another app plays, macOS sends them to that app). In AntiDot mode, which hears nothing, any play it reports during the pause is yours. A pause the player refuses is a mute too. Muted, it’s listened to every second: silent (it paused itself), it’s AutoHush’s pause, kept muted until it plays again (the resume, or you); silent within 3 s of a key press or click in it, it’s your pause, unmuted and never resumed; still heard, its pause is pressed again every 2 s (less often while that fails, up to once a minute) by a way that shows nothing (its AppleScript, the page’s button, its menu; with **Use backup controls** on, the default for every player but an app added before them or a web app not learned yet, its other controls in turn and the keyboard’s Play/Pause key once in each pause; never the Now Playing panel, but with backup controls, once in each pause, while **Use the Now Playing panel while muted** is on, and always once when it’s the main control). The Mac going to sleep, or AntiDot mode turned on, pauses it for real, then unmutes it (after AntiDot mode it’s still AutoHush’s pause). When the apps stop, it’s unmuted; with Resume playback off, or after a call with Stay paused after calls, it’s paused first and left paused (refusing that pause, it stays muted, as when the output goes away with Pause on disconnect, and shown as **Muted** with Unmute until you pause or quit it: then it’s yours, unmuted); found paused, it’s unmuted, then played and faded in; found stopped, it stays stopped. Your play changes nothing while it’s muted (it plays already), nor does any input once no other app plays, but for that kept mute. The player starting while an app plays is paused as at the app’s start, unless a key press or click in it came within 3 s before; when the app counts only by its open sound, not measured yet (nothing is while the player is idle), it’s paused only if that app is heard once measured, 2.5 s later. A “playing” report that isn’t heard changes nothing. **Muted instead** is also a web app during an ad whose button says Play, or one with its backups off during an ad it won’t pause, or an app added as Muted only (Unmute ends it too): those keep their own mute, which AutoHush doesn’t add to or retry. **The apps stop** means every other app quiet for 2 s, or Auto-Pause turned off.
+The chosen player as the menu’s card and the menu bar icon show it. **Not playing** is a player paused by you, stopped or quit: AutoHush never plays it, but takes over a pause the starting app made itself (VLC). **Playing silently** is a player that says it plays but isn’t heard (a muted trailer, a silent preview): AutoHush measures its sound with the other app’s and pauses it the moment it’s heard; once the apps stop, nothing measures it, and it shows as playing; one that only has its output open (it reports no state, as Apple TV’s trailers) shows as **Not playing** instead. A player heard during AutoHush’s pause (the pause didn’t take, or it started again by itself) is **muted instead** until the apps stop (the playing app’s row says **Mutes your player**), unless it was silent and is heard again within 3 s of a key press or click in it: then it’s yours. Only input while it’s already in front counts, or a click in its menu bar icon or its menu, not the click or keys that bring it forward, nor media keys (while another app plays, macOS sends them to that app). In AntiDot mode, which hears nothing, any play it reports during the pause is yours. A pause the player refuses is a mute too. Muted, it’s listened to every second: silent (it paused itself), it’s AutoHush’s pause, kept muted until it plays again (the resume, or you); silent within 3 s of a key press or click in it, it’s your pause, unmuted and never resumed; still heard, its pause is pressed again every 2 s (less often while that fails, up to once a minute) by a way that shows nothing (its AppleScript, the page’s button, its menu; with **Use backup controls** on, the default for every player but an app added before them or a web app not learned yet, its other controls in turn and the keyboard’s Play/Pause key once in each pause; never the Now Playing panel, but with backup controls, once in each pause, while **Use the Now Playing panel while muted** is on, and always once when it’s the main control). The Mac going to sleep, or AntiDot mode turned on, pauses it for real, then unmutes it (after AntiDot mode it’s still AutoHush’s pause). When the apps stop, it’s unmuted; with Resume playback off, or after a call with Stay paused after calls, it’s paused first and left paused (refusing that pause, it stays muted, as when the output goes away with Pause on disconnect, shown as **Muted** with Unmute and never resumed, even when other apps play and stop again; its pause is still pressed every 2 s, less often while that fails, and once it pauses, or you pause or quit it, it’s yours, unmuted); found paused, it’s unmuted, then played and faded in; found stopped, it stays stopped. Your play changes nothing while it’s muted (it plays already), nor does any input once no other app plays, but for that kept mute. The player starting while an app plays is paused as at the app’s start, unless a key press or click in it came within 3 s before; when the app counts only by its open sound, not measured yet (nothing is while the player is idle), it’s paused only if that app is heard once measured, 2.5 s later. A “playing” report that isn’t heard changes nothing. **Muted instead** is also a web app during an ad whose button says Play, or one with its backups off during an ad it won’t pause, or an app added as Muted only (Unmute ends it too): those keep their own mute, which AutoHush doesn’t add to or retry. **The apps stop** means every other app quiet for 2 s, or Auto-Pause turned off.
 
 ## Pauses AutoHush holds
 
@@ -376,6 +376,7 @@ stateDiagram-v2
   Handed --> Yours : later
   Ours --> Yours : you play or quit it, the Mac sleeps
   Held --> Yours : you play or quit it, the Mac sleeps
+  Held --> Yours : muted, it refuses its pause once no app plays (unmuted)
   Resumed --> [*]
   Yours --> [*]
 
@@ -385,7 +386,7 @@ stateDiagram-v2
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-AutoHush only ever resumes a pause it holds, and it keeps holding one across a check, a change of player and a quit. A pause still under way as you choose another player or quit isn’t made: the player plays on, played again if its pause just took. A **held pause** is a player you left while AutoHush had it paused: its own monitoring runs on to end the pause. A **hand-over** is written as AutoHush quits (an update, another copy, a quick reopen) and read once by the next one.
+AutoHush only ever resumes a pause it holds, and it keeps holding one across a check, a change of player and a quit. A pause still under way as you choose another player or quit isn’t made: the player plays on, played again if its pause just took. A **held pause** is a player you left while AutoHush had it paused: its own monitoring runs on to end the pause. Muted, and refusing its pause once no app plays, it’s unmuted and yours: only the chosen player’s card shows a kept mute. A **hand-over** is written as AutoHush quits (an update, another copy, a quick reopen) and read once by the next one.
 
 ## Safari web apps: adding one
 
@@ -555,11 +556,11 @@ Add an App checks an app AutoHush has no support of its own for. Its window numb
 
 ```mermaid
 flowchart TD
-  WARN(["The warning: what the<br/>check does, for about<br/>3 minutes; with the desktop<br/>shortcuts off, how to turn<br/>them on (Open Keyboard<br/>Settings…)"])
+  WARN(["The warning: what the<br/>check does, for about<br/>3 minutes; with the desktop<br/>shortcuts off, how to turn<br/>them on (Open Keyboard<br/>Settings…); with its windows<br/>closed, nothing moved or<br/>blocked, under a minute"])
   GO{"Start?"}
   BACK["Cancel: back<br/>to step 5"]
   RUN["The check runs in AutoHush’s<br/>helper; AutoHush’s own player<br/>stays as it is (Paused while<br/>a check runs)"]
-  BLOCK["The screen dimmed; clicks,<br/>scrolling and keys blocked<br/>(said on an orange tint); a panel at<br/>the bottom right: progress<br/>and Stop"]
+  BLOCK["While windows move (none with<br/>its windows closed): the screen dimmed; clicks,<br/>scrolling and keys blocked<br/>(said on an orange tint); a panel at<br/>the bottom right: progress<br/>and Stop"]
   MUTE["The app muted meanwhile:<br/>on its own (Audio Recording,<br/>not in AntiDot mode), else<br/>the Mac’s output (and any the<br/>sound moves to), put back after"]
   STATES["Its window in 7 states: in<br/>view, covered, on another<br/>desktop, covered there, full<br/>screen, minimized, hidden;<br/>with its windows closed,<br/>none moved, each way once"]
   WAYS["In each state, each way<br/>pauses and plays it: its<br/>AppleScript, playback menu,<br/>page’s Play/Pause, Now<br/>Playing row"]
@@ -782,7 +783,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What the menu’s card says when AutoHush can’t start controlling the player, and how it recovers. A missing permission stops it only when none of the player’s backup controls (while they’re on) can be pressed without it; while they stand in, the menu shows the permission to allow under the card, saying the backup controls are used until then. Most fixes need nothing more from you: AutoHush starts again by itself, at once when the player opens or is installed again. A permission taken away while it runs is caught the next time it matters.
+What the menu’s card says when AutoHush can’t start controlling the player, and how it recovers. A missing permission stops it only when none of the player’s backup controls (while they’re on) can be pressed without it; while they stand in, the menu shows the permission to allow under the card, saying the backup controls are used until then, or until you choose another main control in Settings → Fine-Tuning. Most fixes need nothing more from you: AutoHush starts again by itself, at once when the player opens or is installed again. A permission taken away while it runs is caught the next time it matters.
 
 ## Problems: while it runs, and quitting
 

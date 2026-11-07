@@ -49,6 +49,22 @@ struct AppListModelTests {
     /// The selected apps' IDs, in the list's order.
     private func selected(_ model: AppListModel) -> [String] { model.selectedApps.map(\.id) }
 
+    @Test("VoiceOver's row hides while Pause for VoiceOver is off, as it can't pause the player then, and shows again once it's on (D6)")
+    func voiceOverRow() {
+        let voiceOver = AudioSource(id: "com.apple.VoiceOver", name: "VoiceOver")
+        let settings = UserSettings.inMemory()
+        let model = makeList(settings: settings)
+        show(seen: [Self.listed[0], voiceOver], ignored: [])
+        #expect(model.apps.map(\.id) == [Self.ids[0], voiceOver.id])
+        var timings = settings.state.timings
+        timings.pausesForVoiceOver = false
+        settings.setTimings(timings)
+        #expect(model.apps.map(\.id) == [Self.ids[0]])
+        timings.pausesForVoiceOver = true
+        settings.setTimings(timings)
+        #expect(model.apps.map(\.id) == [Self.ids[0], voiceOver.id])
+    }
+
     @Test("the apps list merges seen and ignored apps, the most recent first, then those that never played")
     func appsList() {
         let model = makeList()

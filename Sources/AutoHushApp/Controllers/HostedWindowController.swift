@@ -255,6 +255,10 @@ class HostedWindowController: NSWindowController {
     /// `false` leaves the key to the window.
     func handleKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, characters: String?, windowNumber: Int) -> Bool {
         guard let keys, let window, windowNumber == window.windowNumber, window.attachedSheet == nil else { return false }
+        // While an input method composes in a field (Japanese, Chinese…),
+        // every key is its own: ↓ picks a candidate, Escape cancels it, as in
+        // Settings and the menu (the 1.3.0 review).
+        if let editor = window.firstResponder as? NSTextView, editor.hasMarkedText() { return false }
         // With keyboard navigation on, a click may have given a control the focus.
         let focus: WindowKeys.Focus = window.firstResponder is NSText ? .textField // a field's editor
             : fullKeyboardAccess() && !(window.firstResponder is NSWindow) ? .control : .none

@@ -275,6 +275,36 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("Diagnostics shows the player's Automation as read while AutoHush isn't ready for another reason")
+    func diagnosticsAutomationAllowedRead() async throws {
+        let scratch = Scratch()
+        scratch.running = [Players.first]
+        let (sut, _) = makeSUT(scratch) // not launched: still starting
+        await sut.refreshPermissions()
+        sut.refreshDiagnostics()
+        #expect(sut.permissionCenter.chosen.controlAccess == .allowed)
+        #expect(!sut.status.isReady)
+        let section = try #require(sut.settingsModel.diagnostics?.sections.first { $0.kind == .permissions })
+        #expect(section.rows.first { $0.label == "Automation for First" }?.mark == .ok)
+    }
+
+    @MainActor
+    @Test("Diagnostics reads an added app's Accessibility through PermissionCenter, as tests set it", arguments: [true, false])
+    func diagnosticsAccessibilityRead(trusted: Bool) throws {
+        let scratch = Scratch()
+        scratch.trusted = trusted
+        let setup = PlayerSetup(bundleID: "com.example.added", name: "Added", appURL: URL(fileURLWithPath: "/Applications/Added.app"),
+                                ways: [.menu(menuName: "Controls")])
+        let checked = CheckedPlayer(setup: setup, reports: nil)
+        scratch.players = MusicPlayerCatalog(players: [scratch.first], found: { [checked] })
+        scratch.installed.insert(setup.bundleID)
+        let (sut, _) = makeSUT(scratch, chosenPlayer: setup.bundleID)
+        sut.refreshDiagnostics()
+        let section = try #require(sut.settingsModel.diagnostics?.sections.first { $0.kind == .permissions })
+        #expect(section.rows.first { $0.label == "Accessibility for Added" }?.mark == (trusted ? .ok : .problem))
+    }
+
+    @MainActor
     @Test("Diagnostics in Settings lists the apps with sound, found where Settings → Sound Sources lists them")
     func diagnosticsAppsWithSound() async {
         let scratch = Scratch()

@@ -361,6 +361,19 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("the warning before Add an App's check says nothing is moved while the app's windows are all closed (W2 of 1.2.2)")
+    func checkWarningWindowsClosed() async throws {
+        let bench = try await readyToCheck(antiDot: false)
+        defer { bench.sut.addApp.window?.close() } // its warning too
+        let (open, openView) = try warningShown(bench)
+        #expect(!openView.windowsClosed && !open.showsWindowsClosed)
+        bench.world.windowOpen = false
+        await TestWait.until { bench.model.appWindowsClosed }
+        let (closed, closedView) = try warningShown(bench)
+        #expect(closedView.windowsClosed && closed.showsWindowsClosed)
+    }
+
+    @MainActor
     @Test("a new warning before Add an App's check replaces the last")
     func checkWarningReplaced() async throws {
         let bench = try await readyToCheck(antiDot: false)

@@ -25,17 +25,23 @@ final class AppListModel {
     /// chose otherwise.
     var order: AppListOrder { settings.state.listOrder }
     /// The apps that played sound, the most recent first, plus the ignored
-    /// ones, in `order`. Ordered again only when the apps or the order
+    /// ones, in `order`; VoiceOver only while Pause for VoiceOver is on, as
+    /// its switch here can't pause the player otherwise (D6, the release
+    /// review, 2026-11-07). Ordered again only when the apps or the order
     /// changed, not each time a view reads them.
     var apps: [Row] {
         let seen = state.seenApps, ignored = state.ignoredApps, order = self.order
-        if let last = orderedApps, last.seen == seen, last.ignored == ignored, last.order == order { return last.rows }
-        let rows = Self.ordered(Self.rows(seen: seen, ignored: ignored), by: order)
-        orderedApps = (seen, ignored, order, rows)
+        let withVoiceOver = settings.state.timings.pausesForVoiceOver
+        if let last = orderedApps, last.seen == seen, last.ignored == ignored, last.order == order,
+           last.withVoiceOver == withVoiceOver { return last.rows }
+        var rows = Self.ordered(Self.rows(seen: seen, ignored: ignored), by: order)
+        if !withVoiceOver { rows.removeAll { $0.id == AppConfiguration.voiceOverBundleID } }
+        orderedApps = (seen, ignored, order, withVoiceOver, rows)
         return rows
     }
     /// The rows `apps` ordered last, and what from.
-    @ObservationIgnored private var orderedApps: (seen: [AudioSource], ignored: [AudioSource], order: AppListOrder, rows: [Row])?
+    @ObservationIgnored private var orderedApps: (seen: [AudioSource], ignored: [AudioSource], order: AppListOrder,
+                                                  withVoiceOver: Bool, rows: [Row])?
     /// The search: `nil` while it's closed. It's closed again each time
     /// Settings opens.
     var search: String?

@@ -42,6 +42,10 @@ final class PermissionCenter {
     /// answer doesn't reach them (macOS 15's VM hadn't asked, 2026-11-07).
     func audioRecording() -> AudioCapturePermission? { system.audio() }
 
+    /// Whether macOS trusts AutoHush with Accessibility, for Diagnostics:
+    /// through the call tests replace, as `audioRecording()`.
+    func isTrusted() -> Bool { system.isTrusted() }
+
     /// Reads the chosen player's permissions again, and keeps them. Two
     /// reads may run at once (the menu opens, a player is chosen from it):
     /// one for a player that's no longer `chosenPlayer()` when it's done is

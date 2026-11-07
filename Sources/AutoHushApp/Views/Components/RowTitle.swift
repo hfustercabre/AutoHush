@@ -19,10 +19,10 @@ struct RowTitle: View {
             if let subtitle {
                 subtitle
                     .font(.appCaption)
-                    .foregroundStyle(isOnSelection ? AnyShapeStyle(.white) : AnyShapeStyle(.appSecondary))
+                    .foregroundStyle(isOnSelection ? AnyShapeStyle(.onSelection) : AnyShapeStyle(.appSecondary))
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .foregroundStyle(isOnSelection ? AnyShapeStyle(.white) : AnyShapeStyle(.foreground))
+        .foregroundStyle(isOnSelection ? AnyShapeStyle(.onSelection) : AnyShapeStyle(.foreground))
     }
 }

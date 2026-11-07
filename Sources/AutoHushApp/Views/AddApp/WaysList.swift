@@ -60,7 +60,7 @@ struct WayRow: View {
                 // crashed laying the window out again and again (2026-10-16).
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(verbatim: WayText.title(way.kind)).fixedSize(horizontal: false, vertical: true)
-                        .foregroundStyle(onSelection ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
+                        .foregroundStyle(onSelection ? AnyShapeStyle(.onSelection) : AnyShapeStyle(.primary))
                     if recommended { HeadingBadge(text: AddAppText.recommendedBadge, accent: true, onSelection: onSelection) }
                 }
                 // A way's exception (it works, but not in every window state)
@@ -84,7 +84,7 @@ struct WayRow: View {
     /// A grey caption; white on a selection.
     @ViewBuilder private func caption(_ text: String) -> some View {
         if onSelection {
-            Text(verbatim: text).font(.appCaption).foregroundStyle(.white).fixedSize(horizontal: false, vertical: true)
+            Text(verbatim: text).font(.appCaption).foregroundStyle(.onSelection).fixedSize(horizontal: false, vertical: true)
         } else {
             Text(verbatim: text).captionStyle()
         }
@@ -107,6 +107,6 @@ struct WayRow: View {
     /// A check's mark in its color (`CheckMarkSymbol`); white on a selection (KB2a).
     static func symbol(_ mark: CheckResult.Mark, onSelection: Bool = false) -> some View {
         let symbol = CheckMarkSymbol(mark)
-        return Image(systemName: symbol.name).foregroundStyle(onSelection ? AnyShapeStyle(.white) : symbol.style)
+        return Image(systemName: symbol.name).foregroundStyle(onSelection ? AnyShapeStyle(.onSelection) : symbol.style)
     }
 }

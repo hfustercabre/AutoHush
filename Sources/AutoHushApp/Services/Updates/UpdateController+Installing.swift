@@ -3,7 +3,9 @@ import AutoHushKit
 
 // UpdateController: downloading and installing.
 extension UpdateController {
-    /// Downloads `release` and keeps it, then lets the user know. A failed
+    /// Downloads `release` and keeps it, then lets the user know. A setting
+    /// changed meanwhile (Notify me, automatic checks off) applies once it
+    /// ends: the download is then deleted, and not announced. A failed
     /// download is tried again at the next automatic run.
     func download(_ release: AppRelease) async {
         guard !isDownloading else { return }
@@ -17,9 +19,11 @@ extension UpdateController {
             try await downloads.store(release, at: now(), allowsConstrainedNetwork: false)
             logger.info("Downloaded \(version, privacy: .public), kept for 7 days")
             preferences.expiredUpdateVersion = nil
+            isDownloading = false
+            tidy() // a setting changed meanwhile
             reportOffer()
             showStatus(availableStatus(release))
-            announce(.downloaded(release.version))
+            if downloads.isKept(release) { announce(.downloaded(release.version)) }
         } catch {
             logger.error("Downloading \(version, privacy: .public) failed: \(error)")
             showStatus(String(localized: "Couldn’t download version \(version).",
