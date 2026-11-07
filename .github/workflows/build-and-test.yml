@@ -33,8 +33,11 @@ jobs:
           persist-credentials: false
       - name: Tools
         run: xcodebuild -version && swift --version
-      - name: Build everything, warnings as errors (Package.swift)
-        run: swift build
+      - name: Build everything and the tests, warnings as errors (Package.swift, and any warning it lets through)
+        run: |
+          set -o pipefail
+          swift build --build-tests 2>&1 | tee build.log
+          if grep -q "warning:" build.log; then echo "Warnings:"; grep "warning:" build.log | sort -u; exit 1; fi
       - name: Test
         # Without the slow disk image tests; a release runs them all. The
         # runner is several times slower than a Mac: the tests' waits get

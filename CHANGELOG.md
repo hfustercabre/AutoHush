@@ -164,6 +164,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Settings → Sound Sources' search** closes with its ✕, which only
+  cleared it, and a click in its field no longer closes it.
+- **A "Turn off for" that ends while the Mac sleeps** ends as it wakes,
+  not up to its whole length later.
+- **Keys with nothing to act on in the menu** (Delete, letters) no longer
+  beep.
+- **An update being installed from its kept download** is no longer
+  deleted midway by a settings change.
 - **Keyboard:** a clicked Settings sidebar row no longer takes the
   keys' outline; ↓ reaches every row of General (with Reopen showing)
   and Diagnostics; ↓ and Tab leave Sound Sources' search for the apps it
@@ -203,7 +211,6 @@ This project follows [Semantic Versioning](https://semver.org/).
   went below the window's edge.
 - **Reduce Motion:** the highlight scrolls into view without an
   animation, and Sound Sources' rows don't slide.
-
 - **Release candidates, where AutoHush can't update itself** (outside
   Applications, or installed with Homebrew): the update window says when
   it offers a release candidate, and why it offers the latest release on

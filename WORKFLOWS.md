@@ -1,6 +1,6 @@
 # AutoHush Workflows
 
-What AutoHush does, and what you can do with it, from launching it to quitting it, drawn as flowcharts. They follow the code; [README.md](README.md) says the same in words, and [DEVELOPMENT.md](DEVELOPMENT.md) how it's built.
+What AutoHush does, and what you can do with it, from launching it to quitting it, drawn as flowcharts. They follow the code; [README.md](README.md) says the same in words, and [DEVELOPMENT.md](DEVELOPMENT.md) how it’s built.
 
 **Reading them:** a rounded box is where a path starts; a diamond, a question that picks the branch; a dashed purple box, a step that goes on in another chart below; orange, something that went wrong or needs you; green, where a path settles; a dotted line, something that happens sometimes, or at any time.
 
@@ -144,7 +144,7 @@ The welcome window opens whenever no media player is chosen. Its first page list
 flowchart TD
   S(["Monitoring runs: which<br/>apps have their sound on"])
   F{"Another app?"}
-  OWN["The player itself,<br/>system sounds:<br/>never count"]
+  OWN["The player itself,<br/>system sounds, VoiceOver with<br/>Pause for VoiceOver off:<br/>never count"]
   IGN["An ignored app (display<br/>apps’ volume sound: ignored<br/>from their first run, and<br/>after Reset List…): listed<br/>under Playing Now, never pauses"]
   DM{"Detection"}
   NORM["Normal mode: its sound<br/>level, measured only while<br/>it matters (the purple dot);<br/>silent 10 s, not measured until<br/>its sound opens again or it<br/>tells macOS it plays (one that<br/>keeps saying so stays measured;<br/>listened to 0.5 s every 30 s<br/>while your player plays, and<br/>once before it resumes; never<br/>an app you ignore)"]
@@ -237,7 +237,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s, the fades, Pause for the microphone, Stay paused after calls and Level the volume (all off by default) and Resume playback (on by default) are Settings → Behavior’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. Each player is paused and played by its main control (its AppleScript, its menu, a web app’s button); with **Use backup controls** on (the default, Settings → Fine-Tuning, where another main control can be chosen too), a refused pause is muted while its backup controls are tried, and a refused play, or a pause that can’t be muted, goes down them at once ([An added app in use](#an-added-app-in-use) shows the order). A player on another device (Spotify Connect) is never paused.
+What happens each time another app plays. With several apps, the first one to play pauses the player and the last one to stop brings it back. The 0.5 s and 2 s, the fades, Pause for the microphone, Stay paused after calls and Level the volume (all off by default) and Resume playback (on by default) are Settings → Behavior’s, Pause for VoiceOver (on by default) Settings → Fine-Tuning’s; a call is an app using the microphone; TIDAL, Apple Podcasts, web apps and most added apps pause and play without fading. Each player is paused and played by its main control (its AppleScript, its menu, a web app’s button); with **Use backup controls** on (the default, Settings → Fine-Tuning, where another main control can be chosen too), a refused pause is muted while its backup controls are tried, and a refused play, or a pause that can’t be muted, goes down them at once ([An added app in use](#an-added-app-in-use) shows the order). A player on another device (Spotify Connect) is never paused.
 
 ## Monitoring: what else changes it
 
@@ -437,7 +437,7 @@ flowchart TD
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
 
-Safari’s own **Add to Dock** makes the web app; AutoHush walks you there, its window staying above other apps in the top-right corner, beside Safari's Add to Dock window while that shows. It asks the site once whether it answers, without cookies or a cache. Any website added to the Dock from Safari by hand is offered as a player too, marked Untested unless it’s one of the five tested sites.
+Safari’s own **Add to Dock** makes the web app; AutoHush walks you there, its window staying above other apps in the top-right corner, beside Safari’s Add to Dock window while that shows. It asks the site once whether it answers, without cookies or a cache. Any website added to the Dock from Safari by hand is offered as a player too, marked Untested unless it’s one of the five tested sites.
 
 ## Safari web apps: learning and pausing
 
@@ -690,7 +690,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-An app added with Add an App is paused and played by its main control, the way chosen at Use (or another that worked, chosen later in Settings → Fine-Tuning), each press checked by the app’s own signs (every kept way’s). With **Use backup controls** on (the default; set at Use, or later in Settings → Fine-Tuning), its backup controls are the other ways that worked in its check, and its window’s state picks the first way: the chosen one if it worked there, else another that did, those not tried there next, then the keyboard’s Play/Pause key (only while macOS says the app is Now Playing), the Now Playing panel last (first when it's the main control chosen in Fine-Tuning), a way that failed there left out; with backup controls off, a main control chosen there is pressed alone. An app added before backup controls keeps its one way: Settings → Fine-Tuning offers **Check Again…**. When a pause doesn’t take, it’s muted instead, as any player (with Audio Recording, outside AntiDot mode), and while it’s muted and heard, its pause is tried again by the others in turn, the key and the panel once in each pause; when it can’t be muted, or no mute will follow (the output went away, the Mac goes to sleep), the others are tried at once; otherwise the pause fails and the menu says so. A refused resume goes to the others at once, the panel once. Only an AppleScript with a volume fades. An app that can only be muted, or whose Now Playing row needs its sound, isn’t available in AntiDot mode.
+An app added with Add an App is paused and played by its main control, the way chosen at Use (or another that worked, chosen later in Settings → Fine-Tuning), each press checked by the app’s own signs (every kept way’s). With **Use backup controls** on (the default; set at Use, or later in Settings → Fine-Tuning), its backup controls are the other ways that worked in its check, and its window’s state picks the first way: the chosen one if it worked there, else another that did, those not tried there next, then the keyboard’s Play/Pause key (only while macOS says the app is Now Playing), the Now Playing panel last (first when it’s the main control chosen in Fine-Tuning), a way that failed there left out; with backup controls off, a main control chosen there is pressed alone. An app added before backup controls keeps its one way: Settings → Fine-Tuning offers **Check Again…**. When a pause doesn’t take, it’s muted instead, as any player (with Audio Recording, outside AntiDot mode), and while it’s muted and heard, its pause is tried again by the others in turn, the key and the panel once in each pause; when it can’t be muted, or no mute will follow (the output went away, the Mac goes to sleep), the others are tried at once; otherwise the pause fails and the menu says so. A refused resume goes to the others at once, the panel once. Only an AppleScript with a volume fades. An app that can only be muted, or whose Now Playing row needs its sound, isn’t available in AntiDot mode.
 
 ## Updates
 
@@ -781,7 +781,7 @@ flowchart TD
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-What the menu’s card says when AutoHush can’t start controlling the player, and how it recovers. A missing permission stops it only when none of the player's backup controls (while they're on) can be pressed without it; while they stand in, the menu shows the permission to allow under the card, saying the backup controls are used until then. Most fixes need nothing more from you: AutoHush starts again by itself, at once when the player opens or is installed again. A permission taken away while it runs is caught the next time it matters.
+What the menu’s card says when AutoHush can’t start controlling the player, and how it recovers. A missing permission stops it only when none of the player’s backup controls (while they’re on) can be pressed without it; while they stand in, the menu shows the permission to allow under the card, saying the backup controls are used until then. Most fixes need nothing more from you: AutoHush starts again by itself, at once when the player opens or is installed again. A permission taken away while it runs is caught the next time it matters.
 
 ## Problems: while it runs, and quitting
 

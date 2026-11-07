@@ -132,7 +132,7 @@ If you said no by mistake, or haven't allowed audio recording yet, the menu, Set
 
 Every way through AutoHush, from its first launch to quitting it, is drawn as flowcharts in [WORKFLOWS.md](WORKFLOWS.md).
 
-Click the menu bar icon to see what's going on. Its menu is AutoHush's own panel: it grows and shrinks smoothly (at once with Reduce Motion), and Escape or a click elsewhere closes it. As in macOS's own menus, the card at the top and the buttons at the bottom stay put; when the menu is taller than your screen, only what's between them scrolls, a small arrow at the bottom saying more is below (in the players' window beside it too). The keys work as in macOS's menus: ↑ and ↓ move through it, ← and → along a row, Return or Space presses, → opens a side window and ← closes it.
+Click the menu bar icon to see what's going on. Its menu is AutoHush's own panel: it grows and shrinks smoothly (at once with Reduce Motion), and Escape or a click elsewhere closes it. As in macOS's own menus, the card at the top and the buttons at the bottom stay put; when the menu is taller than your screen, only what's between them scrolls, a small arrow at the bottom saying more is below (in the players' window beside it too). The keys work as in macOS's menus: ↑ and ↓ (or Tab and Shift-Tab) move through it, Page Up, Page Down, Home and End a page or to the ends, ← and → along a row, Return or Space presses, → opens a side window and ← closes it.
 
 <p align="center">
   <picture>
@@ -149,7 +149,7 @@ Click the menu bar icon to see what's going on. Its menu is AutoHush's own panel
 - **Recently Played**, under it, lists the apps that played in the last 30 minutes, the last four at most, with the same switches: handy for one that stopped before you could switch it off.
 - **Ignored Apps** names the apps you've switched off; its row opens them beside the menu, each with its switch: switch one back on to undo. **Ignore an App…** under them (**Ignore Another App…** once you've ignored one) picks apps to ignore, several at once (an alert names any it can't ignore). It's there even before you've ignored any, saying None. AutoHush adds BetterDisplay, MonitorControl and Lunar itself the first time they run (and again after **Reset List…**), since they play only the volume sound.
 - **The buttons at the bottom** open Settings (every setting is there), check for updates, open Settings → About, and quit. When an update is available, **Updates** shows in the accent color and a row above the buttons offers to install it.
-- **The menu bar icon** shows what's happening: sound bars while your player plays, a dot and a pause sign when AutoHush paused it, three dots when nothing plays or your player plays silently, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed while Auto-Pause is off.
+- **The menu bar icon** shows what's happening: sound bars while your player plays, a dot and a pause sign when AutoHush paused it, three dots when nothing plays or your player plays silently, an arrow when it plays on another device, hollow bars while starting, and "!" when something needs your attention. It's dimmed and slashed while Auto-Pause is off.
 
 ### Safari web apps
 
@@ -213,7 +213,7 @@ AutoHush can also control an app it doesn't support itself, once it has checked 
   </picture>
 </p>
 
-Settings has a page for each of these in its sidebar, and Back and Forward arrows before the page's name, as System Settings does (a row in Behavior opens Fine-Tuning; ‹ brings you back). The pages come in two groups: **Everyday**, what most people change, and **Advanced**, for fine-tuning and checks. The sidebar also shows AutoHush's version and a link to support it. **Edit → Undo** (⌘Z) brings back what a **Restore Defaults** changed, or the apps you removed from Sound Sources, until Settings closes. You can resize the window; it opens where you left it. It takes the arrow keys as the menu does, ← going to the sidebar and → back to the page; a control Tab reached takes Return, Space, ← and → itself.
+Settings has a page for each of these in its sidebar, and Back and Forward arrows before the page's name, as System Settings does (a row in Behavior opens Fine-Tuning; ‹ brings you back). The pages come in two groups: **Everyday**, what most people change, and **Advanced**, for fine-tuning and checks. The sidebar also shows AutoHush's version and a link to support it. **Edit → Undo** (⌘Z) brings back what a **Restore Defaults** changed, or the apps you removed from Sound Sources, until Settings closes. You can resize the window; it opens where you left it. It takes the arrow keys as the menu does, ← going to the sidebar and → back to the page; Tab moves as ↓ does, and Return, Space, ← and → act on the highlighted control.
 
 | Page | What you'll find |
 |---|---|
