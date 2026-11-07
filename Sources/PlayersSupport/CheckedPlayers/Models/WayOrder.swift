@@ -14,6 +14,8 @@ package struct WayOrder: Sendable, Equatable {
     package enum Kind: String, Sendable, Equatable {
         case script, menu, page, panel, mediaKey
 
+        /// The one mapping between the check's kinds and these, which
+        /// `checked` reads back.
         package init(_ kind: CheckResult.WayKind) {
             switch kind {
             case .script: self = .script
@@ -26,16 +28,14 @@ package struct WayOrder: Sendable, Equatable {
         /// As the log names it ("paused by its Play/Pause key").
         var logName: String { self == .mediaKey ? "Play/Pause key" : rawValue }
 
-        /// The check's kind of way; `nil` for the key.
+        /// The check's kind of way; `nil` for the key, which no check tests.
         package var checked: CheckResult.WayKind? {
-            switch self {
-            case .script: .script
-            case .menu: .menu
-            case .page: .page
-            case .panel: .panel
-            case .mediaKey: nil
-            }
+            CheckResult.WayKind.allCases.first { Self($0) == self }
         }
+
+        /// As the main control the user chose is kept (`BackupSwitches.mainControl`),
+        /// by its name.
+        package var mainControl: MainControl { MainControl(rawValue: rawValue) }
     }
 
     /// One way, as its check found it.
@@ -88,11 +88,11 @@ package struct WayOrder: Sendable, Equatable {
         return ways[main].kind == .script ? .automation(player: name) : .accessibility(player: name)
     }
 
-    /// The place of the main control the user chose (`BackupSwitches.mainControl`,
-    /// a kind's raw value): a way that worked in its check, never the
-    /// Play/Pause key; 0, its own, for none, or one that can't be its main.
-    func mainIndex(for chosen: String?) -> Int {
-        guard let chosen, let index = ways.firstIndex(where: { $0.kind.rawValue == chosen }),
+    /// The place of the main control the user chose (`BackupSwitches.mainControl`):
+    /// a way that worked in its check, never the Play/Pause key; 0, its own,
+    /// for none, or one that can't be its main.
+    func mainIndex(for chosen: MainControl?) -> Int {
+        guard let chosen, let index = ways.firstIndex(where: { $0.kind.mainControl == chosen }),
               Self.canBeMain(ways[index], at: index) else { return 0 }
         return index
     }

@@ -57,20 +57,28 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     /// them itself, and in a setup kept before 2026-11-04 (Check Again adds
     /// them).
     package var wayResults: [CheckResult.WayResult]
+    /// Both switches and the main control's choice together, kept as keys
+    /// of the setup's own, as before they were held together (`encode(to:)`).
+    package var switches: BackupSwitches
     /// Whether its backups are used when the chosen way can't pause or play
     /// it (on unless the user turns it off; the user, 2026-11-04).
-    package var usesBackups: Bool
+    package var usesBackups: Bool {
+        get { switches.usesBackups }
+        set { switches.usesBackups = newValue }
+    }
     /// Whether, with its backups on, the Now Playing panel may be pressed
     /// while the app is muted in place of a pause, which no other way
     /// shows on screen (the user, 2026-11-04; off unless the user turns it
     /// on, from 2026-11-06).
-    package var panelWhileMuted: Bool
-    /// The control chosen as its main one in Settings, by its kind's raw
-    /// value; `nil` for the way chosen at Use (`ways`) (the user, 2026-11-05).
-    package var mainControl: String?
-    /// Both switches and the main control's choice together.
-    package var switches: BackupSwitches {
-        BackupSwitches(usesBackups: usesBackups, panelWhileMuted: panelWhileMuted, mainControl: mainControl)
+    package var panelWhileMuted: Bool {
+        get { switches.panelWhileMuted }
+        set { switches.panelWhileMuted = newValue }
+    }
+    /// The control chosen as its main one in Settings; `nil` for the way
+    /// chosen at Use (`ways`) (the user, 2026-11-05).
+    package var mainControl: MainControl? {
+        get { switches.mainControl }
+        set { switches.mainControl = newValue }
     }
     /// The notification that announced its pauses and plays in the check.
     var stateNotification: String?
@@ -89,7 +97,8 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     var panelClues: PanelClues?
 
     package init(bundleID: String, name: String, appURL: URL, ways: [Way], backups: [Way] = [],
-                 wayResults: [CheckResult.WayResult] = [], usesBackups: Bool = true, panelWhileMuted: Bool = false,
+                 wayResults: [CheckResult.WayResult] = [], usesBackups: Bool = BackupSwitches().usesBackups,
+                 panelWhileMuted: Bool = BackupSwitches().panelWhileMuted,
                  stateNotification: String? = nil, needsLaunchOption: Bool = false, panelRowIsStale: Bool? = nil,
                  panelClues: PanelClues? = nil) {
         self.bundleID = bundleID
@@ -98,8 +107,7 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
         self.ways = ways.sorted { ($0.isPanel ? 1 : 0) < ($1.isPanel ? 1 : 0) }
         self.backups = backups.sorted { ($0.isPanel ? 1 : 0) < ($1.isPanel ? 1 : 0) }
         self.wayResults = wayResults
-        self.usesBackups = usesBackups
-        self.panelWhileMuted = panelWhileMuted
+        self.switches = BackupSwitches(usesBackups: usesBackups, panelWhileMuted: panelWhileMuted)
         self.stateNotification = stateNotification
         self.needsLaunchOption = needsLaunchOption
         self.panelRowIsStale = panelRowIsStale
@@ -112,7 +120,8 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     }
 
     /// A setup kept before 2026-11-04 reads with no backups, no window-state
-    /// results, its backups on and the panel while muted off; the rest reads as it always has. Its
+    /// results and the switches' defaults (`BackupSwitches()`: its backups on
+    /// and the panel while muted off); the rest reads as it always has. Its
     /// backups and results that can't be read (a way or a window state of a
     /// later AutoHush, after going back to this one) read as none, so the
     /// app isn't lost for them: it's still pressed by its ways.
@@ -124,13 +133,34 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
         ways = try values.decode([Way].self, forKey: .ways)
         backups = (try? values.decodeIfPresent([Way].self, forKey: .backups)) ?? []
         wayResults = (try? values.decodeIfPresent([CheckResult.WayResult].self, forKey: .wayResults)) ?? []
-        usesBackups = try values.decodeIfPresent(Bool.self, forKey: .usesBackups) ?? true
-        panelWhileMuted = try values.decodeIfPresent(Bool.self, forKey: .panelWhileMuted) ?? false
-        mainControl = try values.decodeIfPresent(String.self, forKey: .mainControl)
+        let defaults = BackupSwitches()
+        switches = BackupSwitches(
+            usesBackups: try values.decodeIfPresent(Bool.self, forKey: .usesBackups) ?? defaults.usesBackups,
+            panelWhileMuted: try values.decodeIfPresent(Bool.self, forKey: .panelWhileMuted) ?? defaults.panelWhileMuted,
+            mainControl: try values.decodeIfPresent(String.self, forKey: .mainControl).map(MainControl.init(rawValue:)))
         stateNotification = try values.decodeIfPresent(String.self, forKey: .stateNotification)
         needsLaunchOption = try values.decode(Bool.self, forKey: .needsLaunchOption)
         panelRowIsStale = try values.decodeIfPresent(Bool.self, forKey: .panelRowIsStale)
         panelClues = try values.decodeIfPresent(PanelClues.self, forKey: .panelClues)
+    }
+
+    /// Written as it always was, the switches as keys of their own (an
+    /// earlier AutoHush, gone back to, reads them so).
+    package func encode(to encoder: any Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(bundleID, forKey: .bundleID)
+        try values.encode(name, forKey: .name)
+        try values.encode(appURL, forKey: .appURL)
+        try values.encode(ways, forKey: .ways)
+        try values.encode(backups, forKey: .backups)
+        try values.encode(wayResults, forKey: .wayResults)
+        try values.encode(switches.usesBackups, forKey: .usesBackups)
+        try values.encode(switches.panelWhileMuted, forKey: .panelWhileMuted)
+        try values.encodeIfPresent(switches.mainControl?.rawValue, forKey: .mainControl)
+        try values.encodeIfPresent(stateNotification, forKey: .stateNotification)
+        try values.encode(needsLaunchOption, forKey: .needsLaunchOption)
+        try values.encodeIfPresent(panelRowIsStale, forKey: .panelRowIsStale)
+        try values.encodeIfPresent(panelClues, forKey: .panelClues)
     }
 }
 

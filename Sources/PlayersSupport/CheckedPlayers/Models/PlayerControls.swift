@@ -91,23 +91,3 @@ package struct PlayerControls: Sendable, Equatable {
     /// Its backups are pressed now.
     package var backupsInUse: Bool { switches.usesBackups && !needsCheckAgain && !notLearned && !backups.isEmpty }
 }
-
-/// Which control paused and played the player last, since AutoHush started.
-package struct LastControls: Sendable, Equatable {
-    package var paused: WayOrder.Kind?
-    package var played: WayOrder.Kind?
-
-    package init(paused: WayOrder.Kind? = nil, played: WayOrder.Kind? = nil) {
-        self.paused = paused
-        self.played = played
-    }
-
-    mutating func note(_ kind: WayOrder.Kind, for target: PlayerState) {
-        if target == .playing { played = kind } else { paused = kind }
-    }
-}
-
-/// A player that says what controls it (`PlayerControls`).
-package protocol ControlsReporting: Sendable {
-    var controls: PlayerControls { get }
-}

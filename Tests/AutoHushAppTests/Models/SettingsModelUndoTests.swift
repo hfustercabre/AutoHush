@@ -42,7 +42,7 @@ struct SettingsModelUndoTests {
         for (key, value) in iconDefaults.contents { all["menuBarIcon." + key] = value }
         all["updates"] = [updates.checksAutomatically, updates.mode.rawValue, updates.getsReleaseCandidates] as [Any]
         if let switches = model.chosenControls?.switches {
-            all["backupSwitches"] = [switches.mainControl ?? "", switches.usesBackups, switches.panelWhileMuted] as [Any]
+            all["backupSwitches"] = [switches.mainControl?.rawValue ?? "", switches.usesBackups, switches.panelWhileMuted] as [Any]
         }
         return all as NSDictionary
     }

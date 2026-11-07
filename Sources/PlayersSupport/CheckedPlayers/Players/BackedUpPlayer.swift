@@ -2,8 +2,6 @@ import AppKit
 import Foundation
 import os
 import AutoHushKit
-import MenuPlayers
-import ScriptablePlayers
 import WebAppPlayers
 
 /// A built-in player or a Safari web app with its backups (the user,
@@ -33,15 +31,15 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     let backupAllowed: @Sendable (WayOrder.Kind, pid_t) async -> Bool
     let now: @Sendable () -> Date
     let logger = AutoHushLogger(category: "BackedUpPlayer")
-    var mutedTried: Set<Int> = []
-    var pressCalls = 0
-    var panelPlayFailedAt: Date?
     /// Only its own player and its backups tell its state.
     nonisolated var statesWithoutOwnWay: Bool { false }
-    var ownWayDenied: MusicPlayerError? {
+    /// What its presses keep between them (`BackupRouting`); its own way's
+    /// permission going missing or coming back (`ownWayDenied`) is told to
+    /// its state observers.
+    var routing = RoutingState() {
         didSet {
-            let denied = ownWayDenied != nil
-            guard denied != (oldValue != nil) else { return }
+            let denied = routing.ownWayDenied != nil
+            guard denied != (oldValue.ownWayDenied != nil) else { return }
             ownWayDeniedNow.withLock { $0 = denied }
             // Its state observers poll its backups only while it lasts.
             let observers = stateObservers.withLock { observers in
@@ -148,7 +146,7 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     /// panel, which shows on screen to be read (the user, 2026-11-05).
     func stateNow() async -> PlayerState {
         // Its own way can't be asked (each ask would fail, logged).
-        guard ownWayDenied != nil else { return await inner.playerState() }
+        guard routing.ownWayDenied != nil else { return await inner.playerState() }
         for backup in backups where [.menu, .page, .script].contains(backup.kind) {
             let state = await backup.player.playerState()
             if state != .unknown { return state }
@@ -182,7 +180,7 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     /// Its backups' state while its own way's permission is missing; else
     /// unknown, which says nothing.
     private func stateWhileDenied() async -> PlayerState {
-        ownWayDenied == nil ? .unknown : await stateNow()
+        routing.ownWayDenied == nil ? .unknown : await stateNow()
     }
 
     /// Its own player's, and its page's switch turned back off.
@@ -330,67 +328,4 @@ extension BackedUpPlayer: MutingMusicPlayer where Inner: MutingMusicPlayer {
     package func forgetPause() async { await inner.forgetPause() }
     package func releaseMute() async { await inner.releaseMute() }
     package func isMutedForPause() async -> Bool { await inner.isMutedForPause() }
-}
-
-extension BackedUpPlayer {
-    /// A built-in player with the backups measured for it: each of its
-    /// ways, then the Play/Pause key and the panel last.
-    package static func builtIn(_ player: Inner, backups measured: BuiltInBackups,
-                                switches: BackupSwitchesStore = BackupSwitchesStore()) -> BackedUpPlayer<Inner> {
-        let setup = PlayerSetup(bundleID: player.bundleID, name: player.name, appURL: appURL(of: player), ways: [])
-        let keyState = LateState()
-        var page: SafariWebAppPlayer?
-        var ways: [(CheckedPlayer.Backup, CheckResult.WayResult?)] = []
-        for backup in measured.backups where backup.way.kind != .panel {
-            switch backup.way {
-            case .menu(let menuName):
-                let menu = MenuPlayer(profile: .found(bundleID: player.bundleID, name: player.name, menuName: menuName))
-                ways.append((CheckedPlayer.Backup(player: menu, kind: .menu), backup.result))
-            case .page(let access):
-                let learning = SafariWebAppPlayer(app: SafariWebApp(bundleID: player.bundleID, name: player.name, url: setup.appURL),
-                                                  kind: .app, page: AccessibilityWebPage(access: access), canMute: false,
-                                                  mutesRefusals: { false })
-                page = learning
-                ways.append((CheckedPlayer.Backup(player: learning, kind: .page), backup.result))
-            case .panel: break
-            }
-        }
-        ways.append((CheckedPlayer.Backup(player: MediaKeyWay(bundleID: player.bundleID, name: player.name, state: keyState), kind: .mediaKey), nil))
-        let panel = measured.backups.first { $0.way.kind == .panel }
-        let song: ScriptedSong? = if case .panel(let song)? = panel?.way { song } else { nil }
-        var panelSetup = setup
-        panelSetup.panelClues = PanelClues(page: nil, script: song)
-        ways.append((CheckedPlayer.Backup(player: PanelWay(setup: panelSetup, remembered: nil, store: NoSetups()), kind: .panel), panel?.result))
-        let id = player.bundleID
-        return BackedUpPlayer(inner: player, own: CheckResult.WayResult(kind: measured.own, mark: .works),
-                              backups: ways.map(\.0), results: ways.map(\.1), learningPage: page, keyState: keyState,
-                              switches: { switches.switches(for: id) })
-    }
-
-    /// A Safari web app: its page, then the Play/Pause key and the panel,
-    /// untested by state (the user, 2026-11-05).
-    package static func webApp(_ player: Inner, switches: BackupSwitchesStore = BackupSwitchesStore()) -> BackedUpPlayer<Inner> {
-        let setup = PlayerSetup(bundleID: player.bundleID, name: player.name, appURL: appURL(of: player), ways: [])
-        let keyState = LateState(), id = player.bundleID
-        return BackedUpPlayer(inner: player, own: CheckResult.WayResult(kind: .page, mark: .works),
-                              backups: [CheckedPlayer.Backup(player: MediaKeyWay(bundleID: id, name: player.name, state: keyState), kind: .mediaKey),
-                                        CheckedPlayer.Backup(player: PanelWay(setup: setup, remembered: nil, store: NoSetups()), kind: .panel)],
-                              results: [nil, nil], keyState: keyState, switches: { switches.switches(for: id) })
-    }
-}
-
-/// Where `player` is installed, as far as is known now (the panel and a
-/// page way only need its bundle ID and name).
-private func appURL(of player: some MusicPlayer) -> URL {
-    player.installedURL ?? NSWorkspace.shared.urlForApplication(withBundleIdentifier: player.bundleID)
-        ?? URL(fileURLWithPath: "/Applications", isDirectory: true)
-}
-
-/// A built-in player keeps no setup: its panel row is remembered while
-/// AutoHush runs, never saved (saving one would make it an added app).
-private struct NoSetups: PlayerSetupStore {
-    func setups() -> [PlayerSetup] { [] }
-    func save(_ setup: PlayerSetup) {}
-    func forget(_ bundleID: String) {}
-    func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {}
 }

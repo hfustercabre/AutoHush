@@ -124,32 +124,27 @@ final class SettingsWindowController: PlacedWindowController {
     }
 
     /// The window's keys, as `SettingsKeys` takes them (`HighlightKey`, the
-    /// menu's mapping), not in a sheet; in a field, what's typed stays
-    /// there (`handleKeyInField`).
+    /// menu's mapping), not in a sheet nor while an input method composes
+    /// (`WindowKeyPress`); in a field, what's typed stays there
+    /// (`handleKeyInField`).
     func handleKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, windowNumber: Int) -> Bool {
-        guard let window, windowNumber == window.windowNumber, window.attachedSheet == nil else { return false }
-        // While an input method composes in the search (Japanese, Chinese…),
-        // every key is its own: ↓ picks a candidate, Escape cancels it (the
-        // review of N4, 2026-11-06; the menu's search has the same rule).
-        if let editor = window.firstResponder as? NSTextView, editor.hasMarkedText() { return false }
+        guard let window, let press = WindowKeyPress(keyCode, flags: flags, windowNumber: windowNumber, in: window,
+                                                     fullKeyboardAccess: fullKeyboardAccess) else { return false }
         // Escape closes Sound Sources' search, as its ✕ does, from the field
         // or from the rows the keys went on to (N4, 2026-11-06: nothing took it).
-        if keyCode == 53, flags.isDisjoint(with: [.command, .option, .control, .shift]),
-           navigation.page == .soundSources, model.appList.search != nil {
+        if press.isEscape, navigation.page == .soundSources, model.appList.search != nil {
             model.appList.search = nil
             window.makeFirstResponder(nil)
             return true
         }
         // A search field's editor.
-        if window.firstResponder is NSText { return handleKeyInField(keyCode, flags: flags, in: window) }
-        guard let key = HighlightKey(keyCode: keyCode, modifiers: flags) else { return false }
-        // With keyboard navigation on, a click may have given a control the focus.
-        let controlHasFocus = fullKeyboardAccess() && !(window.firstResponder is NSWindow)
+        if press.focus == .textField { return handleKeyInField(press, in: window) }
+        guard let key = press.key else { return false }
         // One highlight at a time: the arrows (and Page Up…End) take it from
         // the focus, and a lit one, whose tint hides the focus's, gets the
         // other keys too (N6, 2026-11-06).
         if key == .up || key == .down || key.jump != nil || keys.isLit { window.makeFirstResponder(nil) }
-        if keys.handle(key, controlHasFocus: controlHasFocus) { return true }
+        if keys.handle(key, controlHasFocus: press.focus == .control) { return true }
         // Delete removes the apps selected in Sound Sources, as their Remove
         // does (macOS's lists' key; the workflow audit, 2026-10-22).
         guard key == .delete, navigation.page == .soundSources, !model.appList.selectedApps.isEmpty else { return false }
@@ -162,10 +157,9 @@ final class SettingsWindowController: PlacedWindowController {
     /// first one lit; Shift-Tab stays in it, as ↑ does (the search is the
     /// top); the rest is the field's (N4, 2026-11-06: with keyboard
     /// navigation off, the keys couldn't reach the rows it found).
-    private func handleKeyInField(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, in window: NSWindow) -> Bool {
-        guard let key = HighlightKey(keyCode: keyCode, modifiers: flags) else { return false }
-        if keyCode == 48, key == .up { return true } // Shift-Tab: nothing, the field keeps the keyboard
-        guard key == .down, let field = (window.firstResponder as? NSText)?.delegate as? NSView, let pageView,
+    private func handleKeyInField(_ press: WindowKeyPress, in window: NSWindow) -> Bool {
+        if press.isShiftTabInField { return true } // nothing, the field keeps the keyboard
+        guard press.key == .down, let field = (window.firstResponder as? NSText)?.delegate as? NSView, let pageView,
               field.isDescendant(of: pageView) else { return false }
         let frame = pageView.convert(field.bounds, from: field)
         let foot = pageView.isFlipped ? frame.maxY : pageView.bounds.height - frame.minY
@@ -244,22 +238,4 @@ extension SettingsWindowController: NSWindowDelegate {
     /// The window is kept when closed: an Undo days later would undo a step
     /// long forgotten.
     func windowWillClose(_ notification: Notification) { window?.undoManager?.removeAllActions() }
-}
-
-/// The split view without a line between the sidebar and the page: the
-/// sidebar's own background sets it apart.
-private final class SettingsSplitViewController: NSSplitViewController {
-    override func loadView() {
-        let view = ClearDividerSplitView()
-        view.isVertical = true
-        view.dividerStyle = .thin
-        splitView = view
-        super.loadView()
-    }
-
-    override func splitView(_ splitView: NSSplitView, shouldHideDividerAt dividerIndex: Int) -> Bool { true }
-}
-
-private final class ClearDividerSplitView: NSSplitView {
-    override var dividerColor: NSColor { .clear }
 }

@@ -28,7 +28,7 @@ package enum SupportedPlayers {
     /// (`checkedPlayers`), or a test's own, so no test writes the preferences.
     static func makeCatalog(added: CheckedPlayers) -> MusicPlayerCatalog {
         MusicPlayerCatalog(
-            // Each with its backups (`MeasuredBackups`, the user, 2026-11-05).
+            // Each with its backups (`BuiltInBackups+Measured`, the user, 2026-11-05).
             players: [
                 BackedUpPlayer.builtIn(ScriptablePlayer(profile: .spotify), backups: .spotify),
                 BackedUpPlayer.builtIn(ScriptablePlayer(profile: .appleMusic), backups: .appleMusic),

@@ -58,7 +58,8 @@ component and its small parts per file: `Font+AutoHush.swift` holds the
 text sizes, `AppearanceStyle.swift` the colors and `View+CaptionStyle.swift`
 the caption style, `View+ChosenOutline.swift` the chosen look;
 `ButtonStyles.swift`, `MainButton.swift`,
-`FlowingButtons.swift`, `Highlightable.swift`, `Card.swift`,
+`FlowingButtons.swift`, `Highlightable.swift`, `HighlightableControl.swift`,
+`HighlightTint.swift`, `HighlightCaptions.swift`, `RevealsKeyHighlight.swift`, `Card.swift`,
 `SectionHeading.swift`, `HeadingBadge.swift`, `SwitchRow.swift`, `RowTitle.swift`, `ChoiceChips.swift`,
 `BottomBar.swift`, `PlayerTiles.swift`, `MoreBelow.swift`, `PlayerIcon.swift`,
 `WindowHeader.swift`, `WindowPage.swift`, `ChecklistStepRow.swift`,

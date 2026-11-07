@@ -1,6 +1,7 @@
 import Testing
 @testable import CheckedPlayers
 import AutoHushKit
+import AutoHushTestSupport
 
 @Suite("WayOrder")
 struct WayOrderTests {

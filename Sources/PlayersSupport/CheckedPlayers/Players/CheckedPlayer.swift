@@ -82,18 +82,10 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// Whether a backup way may be pressed without macOS asking anything
     /// (Automation for its AppleScript, Accessibility for the others).
     let backupAllowed: @Sendable (WayOrder.Kind, pid_t) async -> Bool
-    /// The ways tried in this muted pause, by their place in `wayOrder`
-    /// (`pauseWhileMuted`): the Play/Pause key and the panel once only (the
-    /// user, 2026-11-04); a pause or a play starts again.
-    var mutedTried: Set<Int> = []
-    /// When a play by the panel last failed (`panelPlayRest`).
-    var panelPlayFailedAt: Date?
-    /// Each pause or play begun counts one: one going down its ways stops
-    /// once another has begun.
-    var pressCalls = 0
-    /// Its chosen way's permission is missing while a backup can be pressed
-    /// (`passesOverOwnWay`).
-    var ownWayDenied: MusicPlayerError?
+    /// What its presses keep between them (`BackupRouting`): its chosen
+    /// way's permission missing while a backup can be pressed, the ways tried
+    /// while muted, the presses begun, the panel's last failed play.
+    var routing = RoutingState()
     /// What it reports to Now Playing tells its state where it can be read.
     nonisolated var statesWithoutOwnWay: Bool { reports != nil }
     /// Which control paused and played it last (`PlayerControls`).

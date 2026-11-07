@@ -1,6 +1,5 @@
 import Testing
 @testable import AutoHushApp
-import AutoHushKit
 
 /// Settings → Sound Sources' search, as the page makes it.
 @Suite("SoundSourcesSettingsView")

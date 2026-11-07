@@ -1,4 +1,5 @@
 import Foundation
+import AutoHushKit
 import ScriptablePlayers
 import Testing
 import AutoHushTestSupport
@@ -99,5 +100,23 @@ struct PlayerSetupStoreTests {
         later["wayResults"] = [["kind": "page", "mark": "some", "failedStates": ["onTheMoon"], "states": [[String: Any]]()]]
         let unknown = try JSONDecoder().decode(PlayerSetup.self, from: JSONSerialization.data(withJSONObject: later))
         #expect(unknown.ways == kept.ways && unknown.backups.isEmpty && unknown.wayResults.isEmpty && !unknown.usesBackups)
+    }
+
+    @Test("a setup written before its switches were held together reads back exactly as before, and is written as before: each switch and its main control a key of its own")
+    func switchesAsBefore() throws {
+        let older: [String: Any] = [
+            "bundleID": "com.example.a", "name": "Alpha", "appURL": "file:///Applications/Alpha.app",
+            "ways": [["menu": ["menuName": "Play"]]], "backups": [["panel": [String: Any]()]], "wayResults": [[String: Any]](),
+            "usesBackups": false, "panelWhileMuted": true, "mainControl": "panel", "needsLaunchOption": false,
+        ]
+        let read = try JSONDecoder().decode(PlayerSetup.self, from: JSONSerialization.data(withJSONObject: older))
+        var expected = PlayerSetup(bundleID: "com.example.a", name: "Alpha", appURL: URL(fileURLWithPath: "/Applications/Alpha.app"),
+                                   ways: [.menu(menuName: "Play")], backups: [.panel(rememberedRow: nil)],
+                                   usesBackups: false, panelWhileMuted: true)
+        expected.mainControl = "panel"
+        #expect(read == expected)
+        #expect(read.switches == BackupSwitches(usesBackups: false, panelWhileMuted: true, mainControl: "panel"))
+        let written = try JSONSerialization.jsonObject(with: JSONEncoder().encode(read)) as? NSDictionary
+        #expect(written == older as NSDictionary)
     }
 }

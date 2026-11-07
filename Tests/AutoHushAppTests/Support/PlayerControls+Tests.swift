@@ -24,7 +24,7 @@ extension PlayerControls {
     /// These controls with `switches`, its main one the one they choose
     /// (`BackupSwitches.mainControl`), as AutoHush reports them once set.
     func with(_ switches: BackupSwitches) -> PlayerControls {
-        Self.choosing(switches.mainControl.flatMap(WayOrder.Kind.init(rawValue:)), switches: switches,
+        Self.choosing(switches.mainControl.flatMap { WayOrder.Kind(rawValue: $0.rawValue) }, switches: switches,
                       needsCheckAgain: needsCheckAgain, notLearned: notLearned)
     }
 }

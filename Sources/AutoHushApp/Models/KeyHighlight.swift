@@ -69,11 +69,11 @@ final class KeyHighlight {
     /// The control the arrow keys moved to last, to scroll into view; the
     /// pointer's never needs it.
     private(set) var revealed: UUID?
-    @ObservationIgnored private var controls: [UUID: Control] = [:]
+    @ObservationIgnored private(set) var controls: [UUID: Control] = [:]
     /// Something is highlighted now, by the keys or the pointer: Settings
     /// takes it from the other side's highlight, one at a time.
     @ObservationIgnored var onHighlight: (() -> Void)?
-    @ObservationIgnored private var wantsFirst = false
+    @ObservationIgnored var wantsFirst = false
     /// Frames that came before their control registered.
     @ObservationIgnored private var earlyFrames: [UUID: CGRect] = [:]
     /// The controls the pointer is over now. One can be inside another (the
@@ -92,7 +92,7 @@ final class KeyHighlight {
     /// Reopen's moved Change… below it in Settings → General, and ↓ went
     /// back to Change…, round and round). Dropped once a control comes,
     /// goes, dims or explains itself anew.
-    @ObservationIgnored private var orderOnArrival: (id: UUID, rows: [[UUID]])?
+    @ObservationIgnored private(set) var orderOnArrival: (id: UUID, rows: [[UUID]])?
 
     /// Whether one control is highlighted, observed by that control alone.
     @MainActor @Observable final class Light {
@@ -240,125 +240,9 @@ final class KeyHighlight {
         orderOnArrival = nil
     }
 
-    /// The enabled controls (and the dimmed ones that explain themselves)
-    /// in reading order, by row: part by part
-    /// (`Control.band`), in each row by row from the top (a control within
-    /// 6 pt of a row's top is on it), each row left to right.
-    var rows: [[UUID]] {
-        let enabled = controls.filter { $0.value.isEnabled || $0.value.explains }.sorted { a, b in
-            let (a, b) = (a.value, b.value)
-            if a.band != b.band { return a.band < b.band }
-            return a.frame.minY != b.frame.minY ? a.frame.minY < b.frame.minY : a.frame.minX < b.frame.minX
-        }
-        var rows: [[(id: UUID, control: Control)]] = []
-        for (id, control) in enabled {
-            if let first = rows.last?.first?.control, first.band == control.band, control.frame.minY - first.frame.minY <= 6 {
-                rows[rows.count - 1].append((id, control))
-            } else {
-                rows.append([(id, control)])
-            }
-        }
-        return rows.map { $0.sorted { $0.control.frame.minX < $1.control.frame.minX }.map(\.id) }
-    }
-
-    /// The highlight `step` rows on (1 down, -1 up), wrapping at the ends:
-    /// in a row of several (durations, tiles), the one nearest above or
-    /// under, else the row's first (the user, 2026-10-18: ← and → move
-    /// within a row); from nothing, the first row (down) or the last (up).
-    func move(_ step: Int) {
-        let rows = keyRows
-        guard !rows.isEmpty else { return }
-        let next: UUID
-        if let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) {
-            next = entry(to: rows[((row + step) % rows.count + rows.count) % rows.count], from: rows[row], highlighted)
-        } else {
-            next = (step > 0 ? rows[0] : rows[rows.count - 1])[0]
-        }
-        highlight(next, in: rows)
-    }
-
-    /// The order the keys move by: `rows`, or, from a control that shows
-    /// a reason, the order as they came onto it (`orderOnArrival`).
-    private var keyRows: [[UUID]] {
-        if let orderOnArrival, orderOnArrival.id == highlighted { return orderOnArrival.rows }
-        return rows
-    }
-
-    /// The highlight on the first row whose top is at `y` or under it, in
-    /// reading order (or the first row, with none): out of a field that
-    /// takes no highlight itself (Settings → Sound Sources' search), into
-    /// the rows under it, not the ones beside it (N4, 2026-11-06).
-    func highlightFirst(below y: CGFloat) {
-        let rows = rows
-        guard let row = rows.first(where: { (controls[$0[0]]?.frame.minY ?? 0) >= y }) ?? rows.first else { return }
-        highlight(row[0], in: rows)
-    }
-
-    /// Where the highlight lands in `target` from `highlighted` in `row`:
-    /// from a row of several, the nearest above or under; else the first.
-    private func entry(to target: [UUID], from row: [UUID], _ highlighted: UUID) -> UUID {
-        guard row.count > 1, let from = controls[highlighted]?.frame.midX else { return target[0] }
-        return target.min { abs((controls[$0]?.frame.midX ?? 0) - from) < abs((controls[$1]?.frame.midX ?? 0) - from) } ?? target[0]
-    }
-
-    /// Page Down (Up): the highlight about a page on (back) in its part
-    /// (`Control.band`), to the last row that ends within `pageHeight` of
-    /// where its own starts, at least one row; from its part's last row (first), into
-    /// the next part (previous); at the end, it stays: no wrapping, as in
-    /// macOS's lists. Home and End: the first row and the last. From
-    /// nothing, Page Down and Home light the first row, Page Up and End the
-    /// last (A12, 2026-11-01: Apple's standard keys, fn with the arrows on a laptop).
-    func jump(_ jump: Jump) {
-        let rows = keyRows
-        guard !rows.isEmpty else { return }
-        let step = jump == .pageDown || jump == .first ? 1 : -1
-        guard jump == .pageUp || jump == .pageDown,
-              let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) else {
-            return highlight((step > 0 ? rows[0] : rows[rows.count - 1])[0], in: rows)
-        }
-        let target = pageTarget(from: row, step: step, in: rows)
-        guard target != row else { return }
-        highlight(entry(to: rows[target], from: rows[row], highlighted), in: rows)
-    }
-
-    /// The row a page on from `row` (`jump`).
-    private func pageTarget(from row: Int, step: Int, in rows: [[UUID]]) -> Int {
-        guard let start = controls[rows[row][0]] else { return row }
-        let page = pageHeight ?? .infinity
-        var target = row
-        var next = row + step
-        while rows.indices.contains(next), let control = controls[rows[next][0]], control.band == start.band {
-            let distance = step > 0 ? control.frame.maxY - start.frame.minY : start.frame.maxY - control.frame.minY
-            if distance > page, target != row { break }
-            target = next
-            if distance > page { break }
-            next += step
-        }
-        // Its part's end: the next part's first row (or the previous one's last).
-        if target == row, rows.indices.contains(row + step) { target = row + step }
-        return target
-    }
-
-    /// The highlight `step` controls along its row (← -1, → 1); `false` at
-    /// the row's end, or in a row of one.
-    @discardableResult func moveInRow(_ step: Int) -> Bool {
-        let rows = keyRows
-        guard let highlighted, let row = rows.first(where: { $0.contains(highlighted) }),
-              let index = row.firstIndex(of: highlighted), row.indices.contains(index + step) else { return false }
-        highlight(row[index + step], in: rows)
-        return true
-    }
-
-    /// The highlight on the first control as soon as they've come (a side
-    /// window just opened by →, as a submenu's first item lights up).
-    func highlightFirstWhenReady() {
-        wantsFirst = true
-        firstWhenReady()
-    }
-
     /// `rows`: the order the keys moved by, kept if `id` shows a reason
     /// (`orderOnArrival`); `nil`: the order now.
-    private func highlight(_ id: UUID, in rows: [[UUID]]? = nil) {
+    func highlight(_ id: UUID, in rows: [[UUID]]? = nil) {
         orderOnArrival = controls[id]?.explains == true ? (id, rows ?? self.rows) : nil
         highlighted = id
         light(id).byKeys = true
@@ -366,50 +250,6 @@ final class KeyHighlight {
         light(id).arrivals += 1
         onHighlight?()
         followWithZoom(id)
-    }
-
-    /// Zoom shows the control the keys moved to, once it's scrolled into
-    /// view (the reveal takes 0.15 s), if the highlight is still there.
-    private func followWithZoom(_ id: UUID) {
-        guard screenFrame != nil else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, self.revealed == id, let frame = self.controls[id]?.frame,
-                      let rect = self.screenFrame?(frame) else { return }
-                self.zoom(rect)
-            }
-        }
-    }
-
-    /// Once the controls that came in the same update have registered (the
-    /// next turn of the run loop) and been placed: a frame that comes later
-    /// tries again (`update(_:frame:)`), so it never lights one at random.
-    private func firstWhenReady() {
-        guard wantsFirst, !controls.isEmpty else { return }
-        RunLoop.main.perform { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, self.wantsFirst, !self.controls.isEmpty,
-                      !self.controls.values.contains(where: { $0.frame == .zero }) else { return }
-                self.wantsFirst = false
-                if self.highlighted == nil { self.move(1) }
-            }
-        }
-    }
-
-    /// The highlight on the control that stands for what's shown now
-    /// (`Control.isCurrent`), if one does.
-    func highlightCurrent() {
-        // The first in reading order, when several do (a card's rows).
-        guard let current = rows.joined().first(where: { controls[$0]?.isCurrent?() == true }) else { return }
-        highlight(current)
-    }
-
-    /// The highlight arrives again where it is, by the keys: VoiceOver's
-    /// cursor and Zoom go back to it (the menu's row, as the side window it
-    /// opened closes: VO1, the a11y audit, 2026-11-06).
-    func arriveAgain() {
-        guard let highlighted else { return }
-        highlight(highlighted)
     }
 
     /// Presses the highlighted control; `false` when there's none to press.
@@ -431,18 +271,6 @@ final class KeyHighlight {
     /// Whether the keys are pressing the highlighted control now (`press`):
     /// what the press does may move the highlight on (Restore Defaults).
     @ObservationIgnored private(set) var isPressing = false
-
-    /// The highlight on the first control of `group` that takes it (a
-    /// card's first usable row), once what the press changed is drawn: a
-    /// row it turns on or off has registered so by then.
-    func highlightFirst(in group: UUID) {
-        RunLoop.main.perform { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, let first = self.rows.joined().first(where: { self.controls[$0]?.group == group }) else { return }
-                self.highlight(first)
-            }
-        }
-    }
 
     /// Delete on the highlighted control; `false` when it takes none.
     @discardableResult func delete() -> Bool {
@@ -471,14 +299,4 @@ final class KeyHighlight {
     private var highlightedControl: Control? {
         highlighted.flatMap { controls[$0] }.flatMap { $0.isEnabled ? $0 : nil }
     }
-}
-
-/// The part of a window a highlightable control is in, top to bottom: the
-/// keys go through one before the next. In the menu, the card is pinned
-/// over what scrolls and the buttons under it; in Settings → Sound Sources,
-/// the heading over the apps' list and the buttons under it.
-enum HighlightBand: Int, Comparable {
-    case top, middle, bottom
-
-    static func < (a: Self, b: Self) -> Bool { a.rawValue < b.rawValue }
 }

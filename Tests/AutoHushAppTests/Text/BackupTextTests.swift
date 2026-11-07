@@ -1,6 +1,7 @@
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
+import AutoHushTestSupport
 import CheckedPlayers
 
 /// The player's controls in words (F4 + F5, the user's pick, 2026-11-05):

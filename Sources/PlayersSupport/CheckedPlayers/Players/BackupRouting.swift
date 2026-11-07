@@ -18,25 +18,15 @@ protocol BackupRouting: Actor {
     /// Whether a way may be pressed without macOS asking anything: a
     /// backup, or its own while its permission is missing (`ownWayDenied`).
     var backupAllowed: @Sendable (WayOrder.Kind, pid_t) async -> Bool { get }
-    /// Its own way's permission is missing (Automation, Accessibility) while
-    /// a backup can be pressed: why, and its own way passed over at each
-    /// press until macOS allows it again (the user, 2026-11-05); `nil`
-    /// otherwise.
-    var ownWayDenied: MusicPlayerError? { get set }
     /// Its state can be told without its own way (an added app's Now
     /// Playing report); else a backup that tells it (its menu, its page, a
     /// script) must be allowed for its own way to be passed over.
     var statesWithoutOwnWay: Bool { get }
     var now: @Sendable () -> Date { get }
     var logger: AutoHushLogger { get }
-    /// The ways tried in this muted pause, by their place in `wayOrder`
-    /// (`pauseWhileMuted`); a pause or a play starts again.
-    var mutedTried: Set<Int> { get set }
-    /// Each pause or play begun counts one: one going down its ways stops
-    /// once another has begun.
-    var pressCalls: Int { get set }
-    /// When a play by the panel last failed (`panelPlayRest`).
-    var panelPlayFailedAt: Date? { get set }
+    /// What its presses keep between them: its own way passed over, the
+    /// ways tried while muted, the presses begun, the panel's last failed play.
+    var routing: RoutingState { get set }
     /// Whether the panel may be pressed while it's muted (its switch).
     var panelWhileMuted: Bool { get }
     /// Which control paused and played it last (`PlayerControls`).
@@ -62,8 +52,8 @@ extension BackupRouting {
     /// before they were turned off) stops, and a muted pause starts its
     /// tries again (`mutedTried`).
     func ownPressBegins() {
-        pressCalls += 1
-        mutedTried = []
+        routing.pressCalls += 1
+        routing.mutedTried = []
     }
 
     /// Whether `error`, its own way's from `verifyControlAccess`, leaves it
@@ -78,7 +68,7 @@ extension BackupRouting {
     func passesOverOwnWay(after error: any Error, usesBackups: Bool) async -> Bool {
         guard let denied = error as? MusicPlayerError, denied == .automationPermissionDenied || denied == .accessibilityPermissionDenied,
               usesBackups, let wayOrder, let pid = processIdentifier() else {
-            ownWayDenied = nil
+            routing.ownWayDenied = nil
             return false
         }
         var pressable = false, tellsState = statesWithoutOwnWay
@@ -87,13 +77,13 @@ extension BackupRouting {
             if [.menu, .page, .script].contains(way.kind) { tellsState = true }
         }
         if pressable, tellsState {
-            if ownWayDenied == nil {
+            if routing.ownWayDenied == nil {
                 logger.notice("\(self.name, privacy: .public): its \(wayOrder.ways[0].kind.logName, privacy: .public) isn’t allowed (\(denied)): controlled by its backups")
             }
-            ownWayDenied = denied
+            routing.ownWayDenied = denied
             return true
         }
-        ownWayDenied = nil
+        routing.ownWayDenied = nil
         return false
     }
 
@@ -109,7 +99,7 @@ extension BackupRouting {
             guard await backupAllowed(kind, pid) else {
                 throw kind == .script ? MusicPlayerError.automationPermissionDenied : MusicPlayerError.accessibilityPermissionDenied
             }
-            ownWayDenied = nil
+            routing.ownWayDenied = nil
             return
         }
         do {
@@ -122,8 +112,8 @@ extension BackupRouting {
 
     /// Its own way's access checked and allowed: pressed again.
     func ownWayAllowed() {
-        guard ownWayDenied != nil else { return }
-        ownWayDenied = nil
+        guard routing.ownWayDenied != nil else { return }
+        routing.ownWayDenied = nil
         logger.notice("\(self.name, privacy: .public): its own way is allowed again")
     }
 
@@ -154,9 +144,9 @@ extension BackupRouting {
     /// backups off while another main control was chosen: that one only.
     func pressByBackups(to target: PlayerState, covered: Bool = true, alone: Bool = false) async throws {
         guard let wayOrder, let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        pressCalls += 1
-        let call = pressCalls
-        mutedTried = []
+        routing.pressCalls += 1
+        let call = routing.pressCalls
+        routing.mutedTried = []
         let main = mainIndex
         // Looked at only when it changes the order; when its first way is
         // the same in every state, only once that one failed or was passed
@@ -173,7 +163,7 @@ extension BackupRouting {
         var next = 0
         while true {
             if next == order.count, firstAnyway != nil, state == nil {
-                if pressed > 0, !goesOn || pressCalls != call { break }
+                if pressed > 0, !goesOn || routing.pressCalls != call { break }
                 let looked = await windowState(pid)
                 state = looked
                 order += wayOrder.order(in: looked, for: target, main: main).filter { !order.contains($0) }
@@ -183,8 +173,8 @@ extension BackupRouting {
             next += 1
             let window = state.map { ", its window \($0.title)" } ?? ""
             let kind = wayOrder.ways[index].kind
-            if pressed > 0, !goesOn || pressCalls != call { break }
-            if target == .playing, kind == .panel, let failed = panelPlayFailedAt, now().timeIntervalSince(failed) < Self.panelPlayRest { continue }
+            if pressed > 0, !goesOn || routing.pressCalls != call { break }
+            if target == .playing, kind == .panel, let failed = routing.panelPlayFailedAt, now().timeIntervalSince(failed) < Self.panelPlayRest { continue }
             guard let way = await allowedWay(index, kind: kind, pid: pid) else { continue }
             if pressed > 0 {
                 // It took late: a press now could undo it.
@@ -206,7 +196,7 @@ extension BackupRouting {
                 // Not pressed: as one passed over; asked once in a pause.
                 logger.notice("\(self.name, privacy: .public): its Play/Pause key isn’t pressed, \(notPressed.description, privacy: .public): the next way")
                 pressed -= 1
-                if target == .paused { mutedTried.insert(index) }
+                if target == .paused { routing.mutedTried.insert(index) }
             } catch MusicPlayerError.stillLearning {
                 logger.notice("\(self.name, privacy: .public): its \(kind.logName, privacy: .public) can’t press yet: the next way")
                 learning = true
@@ -219,12 +209,12 @@ extension BackupRouting {
             } catch {
                 logger.notice("\(self.name, privacy: .public): its \(kind.logName, privacy: .public) failed\(window, privacy: .public): \(error)")
                 firstError = firstError ?? error
-                if kind == .panel, target == .playing { panelPlayFailedAt = now() }
+                if kind == .panel, target == .playing { routing.panelPlayFailedAt = now() }
                 // Its muted retries start with the next way.
-                if target == .paused, pressed == 1 { mutedTried.insert(index) }
+                if target == .paused, pressed == 1 { routing.mutedTried.insert(index) }
             }
         }
-        throw firstError ?? (learning ? MusicPlayerError.stillLearning : ownWayDenied ?? MusicPlayerError.playerCommandFailed(.pressFailed))
+        throw firstError ?? (learning ? MusicPlayerError.stillLearning : routing.ownWayDenied ?? MusicPlayerError.playerCommandFailed(.pressFailed))
     }
 
     /// Muted in place of its pause, and still heard: one way, the next in
@@ -243,7 +233,7 @@ extension BackupRouting {
     /// that one only.
     func pauseWhileMuted(alone: Bool = false) async throws {
         guard let wayOrder, let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
-        pressCalls += 1
+        routing.pressCalls += 1
         let main = mainIndex
         let state: CheckResult.WindowState? = !alone && wayOrder.dependsOnWindow(for: .paused, main: main) ? await windowState(pid) : nil
         let order = alone ? [main] : wayOrder.order(in: state ?? .visible, for: .paused, main: main)
@@ -251,11 +241,11 @@ extension BackupRouting {
         let key = order.filter { wayOrder.ways[$0].kind == .mediaKey }
         let panel = order.filter { wayOrder.ways[$0].kind == .panel && (panelWhileMuted || $0 == main) }
         // The quiet ways again, once each was tried; the key and the panel once.
-        var startedOver = (quiet + key + panel).allSatisfy(mutedTried.contains)
-        if startedOver { mutedTried.subtract(quiet) }
+        var startedOver = (quiet + key + panel).allSatisfy(routing.mutedTried.contains)
+        if startedOver { routing.mutedTried.subtract(quiet) }
         while true {
-            for index in quiet + key + panel where !mutedTried.contains(index) {
-                mutedTried.insert(index)
+            for index in quiet + key + panel where !routing.mutedTried.contains(index) {
+                routing.mutedTried.insert(index)
                 let kind = wayOrder.ways[index].kind
                 guard let way = await allowedWay(index, kind: kind, pid: pid) else { continue }
                 var checkable: Bool?
@@ -277,9 +267,9 @@ extension BackupRouting {
             // so a retry presses at least its own way.
             guard !startedOver else { break }
             startedOver = true
-            mutedTried.subtract(quiet)
+            routing.mutedTried.subtract(quiet)
         }
-        throw ownWayDenied ?? MusicPlayerError.playerCommandFailed(.pressFailed)
+        throw routing.ownWayDenied ?? MusicPlayerError.playerCommandFailed(.pressFailed)
     }
 
     /// The player of its way at `index` (its own at 0), unless it's a
@@ -288,7 +278,7 @@ extension BackupRouting {
     /// allowed now, it's pressed again).
     private func allowedWay(_ index: Int, kind: WayOrder.Kind, pid: pid_t) async -> (any MusicPlayer)? {
         if index == 0 {
-            guard let denied = ownWayDenied else { return way(at: 0) }
+            guard let denied = routing.ownWayDenied else { return way(at: 0) }
             guard await backupAllowed(kind, pid) else {
                 logger.notice("\(self.name, privacy: .public): its \(kind.logName, privacy: .public) isn’t allowed (\(denied)): passed over")
                 return nil

@@ -10,8 +10,11 @@ import AppKit
 enum HighlightKey: Equatable {
     case up, down, left, right, pageUp, pageDown, home, end, returnKey, space, delete
 
+    /// Tab's key code: ↓, or ↑ with Shift (`WindowKeyPress` reads it too).
+    static let tabKeyCode: UInt16 = 48
+
     init?(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) {
-        let others: NSEvent.ModifierFlags = keyCode == 48 ? [.command, .option, .control] : [.command, .option, .control, .shift]
+        let others: NSEvent.ModifierFlags = keyCode == Self.tabKeyCode ? [.command, .option, .control] : [.command, .option, .control, .shift]
         guard modifiers.isDisjoint(with: others) else { return nil }
         switch keyCode {
         case 126: self = .up
@@ -25,7 +28,7 @@ enum HighlightKey: Equatable {
         case 36, 76: self = .returnKey // Return, Enter
         case 49: self = .space
         case 51, 117: self = .delete // Delete, Forward Delete
-        case 48: self = modifiers.contains(.shift) ? .up : .down // Tab, Shift-Tab
+        case Self.tabKeyCode: self = modifiers.contains(.shift) ? .up : .down // Tab, Shift-Tab
         default: return nil
         }
     }

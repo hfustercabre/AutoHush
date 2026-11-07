@@ -251,25 +251,17 @@ class HostedWindowController: NSWindowController {
     }
 
     /// The window's keys, as `WindowKeys` takes them (`HighlightKey`, the
-    /// menu's and Settings' mapping, and letters typed), not in a sheet.
-    /// `false` leaves the key to the window.
+    /// menu's and Settings' mapping, and letters typed), not in a sheet nor
+    /// while an input method composes, as in Settings and the menu
+    /// (`WindowKeyPress`). `false` leaves the key to the window.
     func handleKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, characters: String?, windowNumber: Int) -> Bool {
-        guard let keys, let window, windowNumber == window.windowNumber, window.attachedSheet == nil else { return false }
-        // While an input method composes in a field (Japanese, Chinese…),
-        // every key is its own: ↓ picks a candidate, Escape cancels it, as in
-        // Settings and the menu (the 1.3.0 review).
-        if let editor = window.firstResponder as? NSTextView, editor.hasMarkedText() { return false }
-        // With keyboard navigation on, a click may have given a control the focus.
-        let focus: WindowKeys.Focus = window.firstResponder is NSText ? .textField // a field's editor
-            : fullKeyboardAccess() && !(window.firstResponder is NSWindow) ? .control : .none
-        if let key = HighlightKey(keyCode: keyCode, modifiers: flags) {
-            // Shift-Tab in a field: nothing, as ↑, the field keeping the
-            // keyboard (the search is the top), not AppKit's next control
-            // (N4, 2026-11-06).
-            if focus == .textField, keyCode == 48, key == .up { return true }
-            return keys.handle(key, focus: focus)
+        guard let keys, let window, let press = WindowKeyPress(keyCode, flags: flags, windowNumber: windowNumber, in: window,
+                                                               fullKeyboardAccess: fullKeyboardAccess) else { return false }
+        if let key = press.key {
+            if press.isShiftTabInField { return true }
+            return keys.handle(key, focus: press.focus)
         }
-        if WindowKeys.isTyped(characters, modifiers: flags) { keys.typed(focus: focus) }
+        if WindowKeys.isTyped(characters, modifiers: flags) { keys.typed(focus: press.focus) }
         return false
     }
 
@@ -287,24 +279,4 @@ class HostedWindowController: NSWindowController {
         guard window?.isVisible == true else { return }
         window?.bringForward()
     }
-}
-
-/// What a window's view does once its window controller exists (`action`, set
-/// after `super.init`): the view is made with `call` from the start and
-/// never made again for it. Made first with `{}` and replaced once the
-/// controller existed, a view's buttons ran the new actions on a click, but
-/// SwiftUI kept the first view's for their keyboard shortcuts: Escape ran
-/// `{}`, so Cancel never closed a guiding window by its key (the 1.3.0
-/// live round, 2026-11-05; 1.2.9 too).
-@MainActor
-final class LaterAction {
-    var action: () -> Void = {}
-    var call: () -> Void { { [self] in action() } }
-}
-
-/// `LaterAction` for an action given a value (Add an App's `floats`).
-@MainActor
-final class LaterHandler<Input> {
-    var action: (Input) -> Void = { _ in }
-    var call: (Input) -> Void { { [self] input in action(input) } }
 }

@@ -359,8 +359,8 @@ struct CheckedPlayerBackupsTests {
         await #expect(throws: Self.refused) { try await player.pause() }
         #expect(await menu.pauseCallCount == 0)
         // A press by its own way alone is a press begun all the same.
-        #expect(await player.pressCalls == 1)
-        #expect(await player.mutedTried.isEmpty)
+        #expect(await player.routing.pressCalls == 1)
+        #expect(await player.routing.mutedTried.isEmpty)
         player.setSwitches(BackupSwitches())
         try await player.pause()
         #expect(await menu.pauseCallCount == 1)

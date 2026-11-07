@@ -182,7 +182,7 @@ the **recommended** one, unless another that worked is chosen in Settings →
 Fine-Tuning, `BackupSwitches.mainControl`; never the Play/Pause key), and its
 other ways, pressed when the main one fails, by its window's state: an added
 app's the other ways its check found; a built-in player's those measured for
-it (`BackedUpPlayer`, `MeasuredBackups`), a learned Safari web app none; then,
+it (`BackedUpPlayer`, `BuiltInBackups+Measured`), a learned Safari web app none; then,
 for each, the keyboard's Play/Pause key, and the Now Playing panel last (an
 added app's only when it worked in its check). A refused pause is
 muted first when it can be, and they're tried while it's muted. Used while

@@ -24,7 +24,7 @@ extension PlaybackArbiter {
         noteStoppedPlaying(state)
         if state != .playing { pauseFailure = nil } // the user paused or stopped it
         if keptMuteStands {
-            await reportWhileKeptMuted(state)
+            await reportWhileKeptMuted()
             return
         }
         guard pausedByUs, state != .paused else {
@@ -65,7 +65,7 @@ extension PlaybackArbiter {
     /// it's the user's doing (or the player's own): unmuted, theirs, not
     /// resumed (K1-2, the user, 2026-11-07). Still playing (a stale report,
     /// or the next track), or no answer, it stays muted.
-    private func reportWhileKeptMuted(_ state: PlayerState) async {
+    private func reportWhileKeptMuted() async {
         let was = playerState
         let live = await livePlayerState()
         guard !isShutDown else { return }

@@ -1,67 +1,6 @@
 import AppKit
 import SwiftUI
 
-/// In the menu and Settings (wherever a `KeyHighlight` is given), a control
-/// that the arrow keys and the pointer highlight and the keyboard's focus
-/// reaches, all three shown by a faint tint behind it (F5, the user's
-/// pick, 2026-10-18; under the pointer too, the user: "the accent color
-/// should show not only on keyboard navigation, but also when the mouse is
-/// over the item"; macOS's faint grey since 2026-11-06, `.focusTint`),
-/// instead of macOS's focus ring; outlined in the accent color where the
-/// keys put it (`HighlightTint`).
-/// For a control that is itself focusable (a button, a switch); a row that
-/// holds one uses `Highlightable` with its control's focus. In a row that
-/// takes the highlight for its control (`Highlightable.ownsControls`), only
-/// its focus shows. Elsewhere, macOS's ring stays.
-struct HighlightableControl: ViewModifier {
-    var cornerRadius: CGFloat = 8
-    /// How far in from the control's sides the tint is drawn.
-    var inset: CGFloat = 0
-    /// How far out around a control that fills its own frame (a switch).
-    var outset: CGFloat = 0
-    /// A ring `outset` out, not the tint behind it: a filled control
-    /// (`HighlightTint.ring`).
-    var ring = false
-    /// Kept on: a row whose side window is open.
-    var isLit = false
-    /// A row that draws its tint itself (`MenuRowButtonStyle`), inside its
-    /// own padding, instead of the tint behind it (`showsKeyHighlight`).
-    var lightsItself = false
-    /// What Return or Space does while it's highlighted.
-    let press: (() -> Void)?
-    var opensSide = false
-    /// It stands for what's shown now (`KeyHighlight.Control.isCurrent`).
-    var isCurrent: (() -> Bool)?
-    /// Each change gives it the keyboard's focus (`StatusMenuModel.sideRowFocusRequests`).
-    var focusRequests = 0
-    @FocusState private var isFocused: Bool
-    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
-    @Environment(\.isInHighlightedRow) private var isInHighlightedRow
-
-    @ViewBuilder func body(content: Content) -> some View {
-        if let keyboard, isInHighlightedRow {
-            content
-                .focused($isFocused)
-                .focusEffectDisabled()
-                .background {
-                    HighlightTint(isFocused: isFocused && !keyboard.hidesFocus, byKeys: true, cornerRadius: cornerRadius, inset: inset,
-                                  ring: ring)
-                        .padding(-outset)
-                }
-        } else if keyboard == nil {
-            content
-        } else {
-            content
-                .focused($isFocused)
-                .focusEffectDisabled()
-                .onChange(of: focusRequests) { isFocused = true }
-                .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, inset: inset, outset: outset, ring: ring,
-                                        isLit: isLit, lightsItself: lightsItself, press: press, opensSide: opensSide,
-                                        isCurrent: isCurrent))
-        }
-    }
-}
-
 /// In the menu and Settings (wherever a `KeyHighlight` is given), a row or
 /// a control the highlight goes to: it registers where it is and what
 /// pressing it (or ← and →) does, the pointer moves the highlight onto it,
@@ -227,44 +166,6 @@ extension View {
     }
 }
 
-/// The tint itself (`focusTint`), behind a control or a row that is
-/// highlighted or has the keyboard's focus; outlined in the accent color
-/// (2 pt) where the keys put it, and always with Increase Contrast (A2a,
-/// 2026-11-01): the accent the user picked, as macOS's focus ring, so at
-/// 3:1 with some accents only in light mode (D5a, the a11y audit's D5,
-/// 2026-11-06). Under the pointer, the tint alone.
-/// `ring`: around a filled control (a prominent button), which hides what's
-/// behind it, the outline alone, drawn out of it as macOS's focus ring
-/// (P1, the user's pick, 2026-11-02); nothing under the pointer.
-struct HighlightTint: View {
-    let isFocused: Bool
-    var byKeys = false
-    var cornerRadius: CGFloat = 8
-    var inset: CGFloat = 0
-    var ring = false
-    var fill: Color = .focusTint
-    @Environment(\.colorSchemeContrast) private var contrast
-
-    var body: some View {
-        if isFocused, ring {
-            if byKeys || contrast == .increased {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .strokeBorder(Color.accentColor, lineWidth: 2)
-                    .allowsHitTesting(false)
-            }
-        } else if isFocused {
-            let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            shape
-                .fill(fill)
-                .overlay {
-                    if byKeys || contrast == .increased { shape.strokeBorder(Color.accentColor, lineWidth: 2) }
-                }
-                .padding(.horizontal, inset)
-                .allowsHitTesting(false)
-        }
-    }
-}
-
 extension EnvironmentValues {
     /// The part of its window a highlightable control is in (`HighlightBand`):
     /// set on the menu's card and buttons, and Sound Sources' heading and
@@ -294,107 +195,10 @@ extension EnvironmentValues {
     @Entry var highlightRevealRoom: CGFloat = 0
 }
 
-extension View {
-    /// `reason` shows while the keys' highlight is on this control (A13a,
-    /// the user's pick, 2026-11-01: what only a help tag said, for the
-    /// keyboard); dimmed, the keys still stop on it for that. `nil`: none.
-    /// Shown by a `HighlightReasonCaption` around it, or read inside it
-    /// (`keyHighlightByKeys`, a menu row).
-    func highlightReason(_ reason: String?) -> some View {
-        environment(\.highlightReason, reason)
-    }
-}
-
-/// The reason of the control the keys' highlight is on, from inside a view
-/// (`highlightReason(_:)`).
-struct ShownHighlightReason: PreferenceKey {
-    static let defaultValue: String? = nil
-
-    static func reduce(value: inout String?, nextValue: () -> String?) {
-        value = value ?? nextValue()
-    }
-}
-
-/// `text` as a caption while the keys' highlight is on the row it's in
-/// (A13a): what a row's control does, which its help tag says to the pointer.
-struct KeyHighlightCaption: View {
-    let text: String
-    @Environment(\.keyHighlightByKeys) private var byKeys
-
-    var body: some View {
-        if byKeys { Text(verbatim: text).captionStyle() }
-    }
-}
-
-/// `content`, then the reason of the control in it the keys' highlight is
-/// on, if any, as a caption under it (A13a).
-struct HighlightReasonCaption<Content: View>: View {
-    @ViewBuilder let content: Content
-    @State private var reason: String?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            content
-            if let reason { Text(verbatim: reason).captionStyle() }
-        }
-        .onPreferenceChange(ShownHighlightReason.self) { shown in
-            MainActor.assumeIsolated { reason = shown }
-        }
-    }
-}
-
 /// What Delete does on a highlighted control that can be removed (an added
 /// app's tile), and what it's told as the highlight comes and goes, for its
 /// × to show (the workflow audit, 2026-10-22).
 struct HighlightRemoval {
     let remove: () -> Void
     let lit: (Bool) -> Void
-}
-
-/// Scrolls the arrow keys' highlight into view as it moves
-/// (`KeyHighlight.revealed`): every Settings page, About's too (R7, the full
-/// check, 2026-10-27: written on each before), and what scrolls in the menu
-/// and its side window (`MenuScrollArea`), which scroll without animating;
-/// none does with Reduce Motion on (A11, 2026-11-01), as the menu's panel
-/// and `ScrollDriver` don't. Its height is the highlight's page
-/// (`MeasuresHighlightPage`).
-struct RevealsKeyHighlight: ViewModifier {
-    let scroller: ScrollViewProxy
-    var animated = true
-    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
-    @Environment(\.accessibilityReduceMotion) private var reducesMotion
-
-    func body(content: Content) -> some View {
-        content.measuresHighlightPage().onChange(of: keyboard?.revealed) { _, revealed in
-            guard let revealed else { return }
-            if animated, !reducesMotion {
-                withAnimation(.easeOut(duration: 0.15)) { scroller.scrollTo(revealed) }
-            } else {
-                scroller.scrollTo(revealed)
-            }
-        }
-    }
-}
-
-/// What scrolls in a window with a highlight (`KeyHighlight`), its height
-/// told as the highlight's page, for Page Up and Page Down
-/// (`KeyHighlight.pageHeight`, 2026-11-01).
-struct MeasuresHighlightPage: ViewModifier {
-    @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
-
-    func body(content: Content) -> some View {
-        content.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { keyboard?.pageHeight = $0 }
-    }
-}
-
-extension View {
-    /// Tells the highlight how tall a page is (`MeasuresHighlightPage`).
-    func measuresHighlightPage() -> some View {
-        modifier(MeasuresHighlightPage())
-    }
-
-    /// Scrolls the arrow keys' highlight into view with `scroller` (`RevealsKeyHighlight`).
-    func revealsKeyHighlight(with scroller: ScrollViewProxy, animated: Bool = true) -> some View {
-        modifier(RevealsKeyHighlight(scroller: scroller, animated: animated))
-    }
 }

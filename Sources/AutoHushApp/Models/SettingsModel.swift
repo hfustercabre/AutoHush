@@ -201,7 +201,7 @@ final class SettingsModel {
         guard let controls = chosenControls, kind != controls.main.kind,
               controls.choices.contains(where: { $0.kind == kind }) else { return }
         var switches = controls.switches
-        switches.mainControl = kind == controls.recommended ? nil : kind.rawValue
+        switches.mainControl = kind == controls.recommended ? nil : kind.mainControl
         actions?.setBackupSwitches(switches)
     }
 
