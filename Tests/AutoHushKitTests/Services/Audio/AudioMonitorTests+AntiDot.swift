@@ -23,7 +23,6 @@ extension AudioMonitorTests {
             .init(bundleID: "org.example.viewer", isPlaying: true),
         ])
         #expect(h.meter.lastMetered.isEmpty)
-        #expect(permission.requestCount == 0)
         #expect(h.modes.value == [.playbackSignals])
     }
 
@@ -295,7 +294,7 @@ extension AudioMonitorTests {
         #expect(await h.recorder.startConfirmations == [2])
     }
 
-    @Test("with measuring turned off, the permission is never requested and nothing is captured")
+    @Test("with measuring turned off, nothing is captured, and an undecided permission is read once it's back on")
     func measuringOff() async {
         let permission = MockAudioCapturePermission(.notDetermined)
         let h = Harness(permission: permission)
@@ -303,13 +302,11 @@ extension AudioMonitorTests {
         h.start()
         h.step([Self.process(1, "org.example.viewer")])
         h.step(after: 6)
-        #expect(permission.requestCount == 0)
         #expect(h.meter.lastMetered.isEmpty)
         #expect(h.modes.value == [.disabled])
 
         h.monitor.setDetectionMethod(.audioLevels)
         h.provider.flush()
-        #expect(permission.requestCount == 0) // only the user's Allow… asks
         #expect(h.modes.value == [.disabled, .pending, .unavailable]) // pending as it switches, then read
     }
 

@@ -40,14 +40,13 @@ extension AudioMonitorTests {
         #expect(await h.recorder.events == [.init(bundleID: "org.example.viewer", isPlaying: true)])
     }
 
-    @Test("an undecided permission is never asked for by the monitor (the user's Allow… asks): detection is unavailable, and taps start once it's granted")
+    @Test("an undecided permission leaves detection unavailable, with nothing tapped, until the user's Allow… grants it: taps start then")
     func undecidedPermissionIsNotRequested() async {
         let permission = MockAudioCapturePermission(.notDetermined)
         let h = Harness(permission: permission)
         h.start()
         h.step([Self.process(1, "org.example.viewer")])
         h.step(after: 6.0)
-        #expect(permission.requestCount == 0)
         #expect(h.meter.lastMetered.isEmpty)
         #expect(h.modes.value == [.unavailable])
 

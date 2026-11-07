@@ -18,12 +18,11 @@ package enum AudioCapturePermission: Equatable, Sendable {
     }
 }
 
-/// Reads and requests the System Audio Recording permission.
+/// Reads the System Audio Recording permission. Only reads: the monitor
+/// never asks for it, the user's Allow… does (P1).
 package protocol AudioCapturePermissionChecking: Sendable {
     /// The current state, or `nil` when it cannot be determined.
     func status() -> AudioCapturePermission?
-    /// Shows the system prompt if the user has not decided yet.
-    func request(completion: @escaping @Sendable (Bool) -> Void)
 }
 
 /// Reads and requests the permission through TCC (see `TCC` in PrivateAPI).
@@ -46,6 +45,7 @@ package struct TCCAudioCapturePermission: AudioCapturePermissionChecking {
         }
     }
 
+    /// Shows the system prompt if the user has not decided yet.
     package func request(completion: @escaping @Sendable (Bool) -> Void) {
         if !TCC.request(Self.service, completion: completion) { completion(false) }
     }

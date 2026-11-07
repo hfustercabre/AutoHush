@@ -193,6 +193,27 @@ extension AudioMonitorTests {
         #expect(await h.recorder.events.isEmpty)
     }
 
+    @Test("turning Pause for VoiceOver off drops VoiceOver at the next tick, without waiting for the process list to change: it stops once silent for the stop grace")
+    func voiceOverSwitchRereads() async {
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
+        h.start()
+        h.step([Self.process(1, AppConfiguration.voiceOverBundleID)])
+        h.step(after: 0.25)
+        await h.recorder.waitForEvents(count: 1)
+        h.clock.advance(by: 2) // past the change's window: the list isn't re-read at each tick
+        var off = Self.config(startConfirmation: 0)
+        off.pausesForVoiceOver = false
+        h.monitor.setConfiguration(off)
+        h.monitor.queue.sync { h.monitor.tick() }
+        h.clock.advance(by: 2.5) // past the stop grace
+        h.monitor.queue.sync { h.monitor.tick() }
+        await h.recorder.waitForEvents(count: 2)
+        #expect(await h.recorder.events == [
+            .init(bundleID: AppConfiguration.voiceOverBundleID, isPlaying: true),
+            .init(bundleID: AppConfiguration.voiceOverBundleID, isPlaying: false),
+        ])
+    }
+
     @Test("the monitor's own process is ignored")
     func ownProcessIsIgnored() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)

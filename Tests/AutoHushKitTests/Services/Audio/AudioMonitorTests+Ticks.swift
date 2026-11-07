@@ -68,7 +68,6 @@ extension AudioMonitorTests {
         permission.current = .notDetermined
         h.step(after: 5.0) // the next re-check
         #expect(h.modes.value == [.audioLevel, .unavailable])
-        #expect(permission.requestCount == 0)
     }
 
     @Test("switching the detection method forgets when apps last announced playing: a video-only app's assertion withdrawn meanwhile isn't taken for a pause")

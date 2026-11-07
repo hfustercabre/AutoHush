@@ -2,7 +2,9 @@ import Foundation
 
 // PlaybackArbiter: new settings, Auto-Pause, and resumes held.
 extension PlaybackArbiter {
-    /// Applies new settings.
+    /// Applies new settings. A source playing that no longer counts (Pause
+    /// for VoiceOver turned off while VoiceOver plays) stops at once, so the
+    /// music it paused needn't wait for the monitor's stop.
     func setConfiguration(_ configuration: AppConfiguration) async {
         self.configuration = configuration
         if !configuration.levelsMusic {
@@ -11,6 +13,9 @@ extension PlaybackArbiter {
             resumeLowered = false
         }
         await fader.setDurations(fadeOut: configuration.fadeOutDuration, fadeIn: configuration.fadeInDuration)
+        for sourceID in activeSources.sorted() where !configuration.isMediaSource(sourceID) {
+            await handleSourceChange(sourceID: sourceID, isPlaying: false)
+        }
     }
 
     /// Turns automatic pausing on or off (the menu's "Auto-Pause" switch).

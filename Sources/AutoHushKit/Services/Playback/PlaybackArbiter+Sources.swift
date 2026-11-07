@@ -3,9 +3,12 @@ import Foundation
 // PlaybackArbiter: the apps that start or stop playing, and their calls.
 extension PlaybackArbiter {
     /// Records that a source started or stopped. Returns without waiting for
-    /// the pause it may start (`waitForPause()` does).
+    /// the pause it may start (`waitForPause()` does). A stop counts for a
+    /// source playing, even one that would no longer start (Pause for
+    /// VoiceOver turned off while VoiceOver plays).
     func handleSourceChange(sourceID: String, isPlaying: Bool, heardSince: Date? = nil) async {
-        guard !isShutDown, configuration.isMediaSource(sourceID) else { return }
+        guard !isShutDown,
+              isPlaying ? configuration.isMediaSource(sourceID) : activeSources.contains(sourceID) else { return }
 
         if isPlaying {
             resumeFailure = nil // a new pause for this app, if any

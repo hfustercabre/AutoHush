@@ -8,8 +8,9 @@ struct BackupSwitchesStoreTests {
     func switches() {
         let store = BackupSwitchesStore(defaults: MemoryDefaults())
         #expect(store.switches(for: "com.example.jukebox") == BackupSwitches(usesBackups: true, panelWhileMuted: false))
-        store.set(BackupSwitches(usesBackups: true, panelWhileMuted: false), for: "com.example.jukebox")
-        #expect(store.switches(for: "com.example.jukebox") == BackupSwitches(usesBackups: true, panelWhileMuted: false))
+        // Both away from the defaults, so a switch not written fails.
+        store.set(.notDefault, for: "com.example.jukebox")
+        #expect(store.switches(for: "com.example.jukebox") == .notDefault)
         #expect(store.switches(for: "com.example.other") == BackupSwitches())
         // The main control chosen in Settings is kept with them; none, its own.
         store.set(BackupSwitches(mainControl: "menu"), for: "com.example.jukebox")

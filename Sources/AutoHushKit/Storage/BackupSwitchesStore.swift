@@ -1,10 +1,10 @@
 import Foundation
 
 /// A built-in player's backup switches (the user, 2026-11-04): whether its
-/// backups are pressed when its own way fails, and whether the Now Playing
-/// panel is among them while it's muted in place of a pause. Both on until
-/// the user turns one off. An app added with Add an App keeps its own in
-/// its setup (`PlayerSetup`).
+/// backups are pressed when its own way fails (on until the user turns it
+/// off), and whether the Now Playing panel is among them while it's muted in
+/// place of a pause (off until the user turns it on). An app added with Add
+/// an App keeps its own in its setup (`PlayerSetup`).
 package struct BackupSwitches: Equatable, Sendable {
     package var usesBackups: Bool
     package var panelWhileMuted: Bool

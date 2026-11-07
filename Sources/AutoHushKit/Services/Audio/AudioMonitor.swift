@@ -26,10 +26,11 @@ import os
 ///
 /// Level detection needs the System Audio Recording permission: without it taps
 /// deliver pure silence, which would make every source look stopped. The
-/// permission is read from TCC (re-checked every few seconds, and requested at
-/// start when undecided). When TCC cannot be queried, level detection is
-/// trusted once a tap delivers a non-zero sample (the media player's own output
-/// is then tapped too, so its playing proves the permission works).
+/// permission is read from TCC (re-checked every few seconds; never asked for
+/// here: the user's Allow… asks, and undecided counts as unavailable). When
+/// TCC cannot be queried, level detection is trusted once a tap delivers a
+/// non-zero sample (the media player's own output is then tapped too, so its
+/// playing proves the permission works).
 ///
 /// Capturing audio makes macOS show its recording indicator, so taps exist only
 /// while levels can change a decision (`setAudioLevelsNeeded`, driven by the
@@ -278,15 +279,17 @@ final class AudioMonitor: @unchecked Sendable {
     /// Applies new timings and thresholds without restarting monitoring.
     func setConfiguration(_ configuration: AppConfiguration) {
         queue.async {
-            // Apps with only their microphone on are read while it's on.
-            if configuration.pausesForMicrophone != self.configuration.pausesForMicrophone { self.needsRefresh = true }
+            // Apps with only their microphone on are read while it's on, and
+            // VoiceOver while it pauses the music.
+            if configuration.pausesForMicrophone != self.configuration.pausesForMicrophone
+                || configuration.pausesForVoiceOver != self.configuration.pausesForVoiceOver { self.needsRefresh = true }
             self.configuration = configuration
             self.tracker.updateTimings(from: configuration)
         }
     }
 
     /// Switches the detection method. Only `.audioLevels` captures audio and
-    /// checks or requests the System Audio Recording permission.
+    /// checks the System Audio Recording permission.
     func setDetectionMethod(_ method: DetectionMethod) {
         queue.async {
             guard method != self.detectionMethod else { return }
