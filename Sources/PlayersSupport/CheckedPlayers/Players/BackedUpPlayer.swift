@@ -10,11 +10,11 @@ import WebAppPlayers
 /// 2026-11-05): its own way first, then the ways measured to work for it
 /// (`BuiltInBackups`; a web app has none), the Play/Pause key, the Now
 /// Playing panel last, pressed by its window's state as an added app's are
-/// (`BackupRouting`) while its backups are on (`BackupSwitches`, both on
-/// until the user turns one off). Everything else is its own player's
-/// (`inner`), which a web app keeps learning and muting through
-/// (`LearningMusicPlayer`, `MutingMusicPlayer`). Made once per player, so it
-/// stays the same object while it's the player.
+/// (`BackupRouting`) while its backups are on (`BackupSwitches`: its
+/// backups on, the panel while muted off, until the user changes them).
+/// Everything else is its own player's (`inner`), which a web app keeps
+/// learning and muting through (`LearningMusicPlayer`, `MutingMusicPlayer`).
+/// Made once per player, so it stays the same object while it's the player.
 package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlayer, BackupRouting, ControlsReporting {
     package nonisolated let inner: Inner
     /// Its backups' players, in their order (the Play/Pause key, then the panel, last).
@@ -41,11 +41,23 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     var ownWayDenied: MusicPlayerError? {
         didSet {
             let denied = ownWayDenied != nil
+            guard denied != (oldValue != nil) else { return }
             ownWayDeniedNow.withLock { $0 = denied }
+            // Its state observers poll its backups only while it lasts.
+            let observers = stateObservers.withLock { observers in
+                observers.removeAll { $0.observer == nil }
+                return observers
+            }
+            Task { @MainActor in observers.forEach { $0.observer?.followDenial() } }
         }
     }
     /// The same, read where its actor can't be waited for (`makeStateObserver`).
     private nonisolated let ownWayDeniedNow = OSAllocatedUnfairLock(initialState: false)
+    /// Its state observers, told when its own way's permission goes missing
+    /// or comes back (`makeStateObserver`).
+    private nonisolated let stateObservers = OSAllocatedUnfairLock<[WeakStateObserver]>(initialState: [])
+    /// The wait between its backups' reads while its own way's permission is missing.
+    private nonisolated let pollSleep: @Sendable (Duration) async -> Void
     /// Whether it may be muted through a tap: not in AntiDot mode (`allowTaps`).
     private nonisolated let tapsAllowed = OSAllocatedUnfairLock(initialState: true)
     private let audioRecordingAllowed: @Sendable () -> Bool
@@ -61,6 +73,7 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
          backupAllowed: @escaping @Sendable (WayOrder.Kind, pid_t) async -> Bool = CheckedPlayer.mayPressBackup(_:pid:),
          audioRecordingAllowed: @escaping @Sendable () -> Bool = { AudioCapturePermission.allowsTaps },
          pressSleep: @escaping VolumeFader.Sleep = { try? await Task.sleep(for: .seconds($0)) },
+         pollSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
          now: @escaping @Sendable () -> Date = { Date() }) {
         self.inner = inner
         self.backups = backups
@@ -77,6 +90,7 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
         self.backupAllowed = backupAllowed
         self.audioRecordingAllowed = audioRecordingAllowed
         self.pressSleep = pressSleep
+        self.pollSleep = pollSleep
         self.now = now
         keyState?.set { [weak self] in await self?.sureState() ?? .unknown }
         // Out of sight, its page's words lag: its own player's state tells.
@@ -94,7 +108,11 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     package nonisolated var bundleID: String { inner.bundleID }
     package nonisolated var name: String { inner.name }
     package nonisolated var iconPlaceholder: PlayerIconPlaceholder? { inner.iconPlaceholder }
-    package nonisolated var controlPermission: Permission { inner.controlPermission }
+    /// Its own player's; with another main control pressed alone (its
+    /// backups off), that one's, which its access is checked for (`verifyAccess`).
+    package nonisolated var controlPermission: Permission {
+        (usesBackups ? nil : wayOrder?.permissionPressedAlone(main: mainIndex, player: name)) ?? inner.controlPermission
+    }
     package nonisolated var kind: MusicPlayerKind { inner.kind }
     package nonisolated var installedURL: URL? { inner.installedURL }
     package nonisolated var isUntested: Bool { inner.isUntested }
@@ -146,15 +164,19 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     /// Its own player's; while its own way's permission is missing, read
     /// about once a second from its backups (`stateNow`): its own player
     /// announces nothing it can be asked about then.
-    /// Both run, so a permission taken away or given back while AutoHush
-    /// runs is followed without a new session: its own player's reports
-    /// (unknown, ignored, while it can't be asked) and, with backups, its
-    /// backups' state read once a second only while that lasts.
+    /// Both observe, so a permission taken away or given back while
+    /// AutoHush runs is followed without a new session: its own player's
+    /// reports (unknown, ignored, while it can't be asked) and, with
+    /// backups, its backups' state, polled only while that lasts
+    /// (`BackedUpStateObserver`).
     @MainActor
     package func makeStateObserver(onChange: @escaping @MainActor (PlayerState) -> Void) -> any PlayerStateObserving {
         let own = inner.makeStateObserver(onChange: onChange)
         guard wayOrder != nil else { return own }
-        return BothStateObservers(own, PolledStateObserver(read: { [self] in await self.stateWhileDenied() }, onChange: onChange))
+        let backups = PolledStateObserver(read: { [self] in await self.stateWhileDenied() }, sleep: pollSleep, onChange: onChange)
+        let observer = BackedUpStateObserver(own: own, backups: backups, denied: { [ownWayDeniedNow] in ownWayDeniedNow.withLock { $0 } })
+        stateObservers.withLock { $0.append(WeakStateObserver(observer: observer)) }
+        return observer
     }
 
     /// Its backups' state while its own way's permission is missing; else
@@ -231,11 +253,13 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
 
     /// Its page, not learned yet, looked at while it plays, so the pause
     /// teaches it which button changed (`markPaused` after it): about half
-    /// a second the first time, its switch turned on for it. Learned, its
-    /// switch is kept on (a relaunched app is a new process).
+    /// a second the first time, its switch turned on for it; only while its
+    /// words are current (its window seen), since out of sight they don't
+    /// change at the pause, which would teach nothing. Learned, or out of
+    /// sight, its switch is kept on (a relaunched app is a new process).
     private func notePlayingForPage() async -> Bool {
         guard let learningPage else { return false }
-        guard !learningPage.learningStatus.isLearned else {
+        guard !learningPage.learningStatus.isLearned, await learningPage.wordsAreCurrent() else {
             await learningPage.showPage()
             return false
         }
@@ -369,26 +393,4 @@ private struct NoSetups: PlayerSetupStore {
     func save(_ setup: PlayerSetup) {}
     func forget(_ bundleID: String) {}
     func update(_ bundleID: String, _ change: (inout PlayerSetup) -> Void) {}
-}
-
-/// Two state observers started and stopped together.
-@MainActor
-private final class BothStateObservers: PlayerStateObserving {
-    private let first: any PlayerStateObserving
-    private let second: any PlayerStateObserving
-
-    init(_ first: any PlayerStateObserving, _ second: any PlayerStateObserving) {
-        self.first = first
-        self.second = second
-    }
-
-    func start() {
-        first.start()
-        second.start()
-    }
-
-    func stop() {
-        first.stop()
-        second.stop()
-    }
 }

@@ -56,6 +56,19 @@ struct MediaKeyWayTests {
         #expect(presses.value == 0 && state.value == .playing)
     }
 
+    @Test("Now Playing is asked again as its state is read again: another app that took it meanwhile doesn't get the key")
+    func askedAgain() async throws {
+        let presses = Locked(0), asks = Locked(0)
+        let late = LateState()
+        late.set { .playing }
+        // The app holds Now Playing at the first ask, another app at the second.
+        let way = MediaKeyWay(bundleID: "com.example.jukebox", name: "Jukebox", state: late, processIdentifier: { Self.pid },
+                              nowPlaying: { asks.withLock { $0 += 1; return $0 } == 1 ? .process(Self.pid) : .process(99) },
+                              pressKey: { presses.withLock { $0 += 1 } }, sleep: { _ in })
+        await #expect(throws: MediaKeyWay.NotPressed.self) { try await way.pause() }
+        #expect(asks.value == 2 && presses.value == 0)
+    }
+
     @Test("a press the app doesn't follow fails, and isn't made again: a second would undo a first the app is only slow to show")
     func once() async throws {
         let presses = Locked(0)

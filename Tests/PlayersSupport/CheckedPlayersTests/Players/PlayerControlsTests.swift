@@ -1,10 +1,8 @@
 import Foundation
 import Testing
 @testable import CheckedPlayers
-import ScriptablePlayers
 @testable import WebAppPlayers
 @testable import AutoHushKit
-import AutoHushTestSupport
 import PlayersTestSupport
 
 @Suite("PlayerControls")
@@ -43,7 +41,7 @@ struct PlayerControlsTests {
         #expect(listed == [.script, .menu, .page, .panel])
     }
 
-    @Test("the panel's switch shows only while the panel is a backup, not its main control; Restore Defaults turns it on for either")
+    @Test("the panel's switch shows only while the panel is a backup, not its main control")
     func panelSwitch() {
         let panel = PlayerControls.Control(kind: .panel, result: nil), menu = PlayerControls.Control(kind: .menu, result: nil)
         let key = PlayerControls.Control(kind: .mediaKey, result: nil)

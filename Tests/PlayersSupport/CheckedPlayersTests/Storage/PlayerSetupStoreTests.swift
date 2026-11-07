@@ -68,7 +68,7 @@ struct PlayerSetupStoreTests {
         #expect(read.panelClues == nil && read.ways == kept.ways)
     }
 
-    @Test("its backups (the panel last), how each way did in each window state and both switches are kept; one kept before them reads with none, backups on and the panel while muted off; ones it can't read are left out, the app kept")
+    @Test("its backups (the panel last), how each way did in each window state, both switches and its main control are kept; one kept before them reads with none, backups on and the panel while muted off; ones it can't read are left out, the app kept")
     func backups() throws {
         let electron = PageAccess(interface: .electron, switchAttribute: PageAccess.electronSwitch)
         var kept = PlayerSetup(bundleID: "com.example.a", name: "Alpha", appURL: URL(fileURLWithPath: "/Applications/Alpha.app"),
@@ -79,16 +79,19 @@ struct PlayerSetupStoreTests {
             CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.hidden],
                                   states: [.init(state: .visible, outcome: .worked), .init(state: .hidden, outcome: .failed, reason: "not found")]),
         ]
+        // Away from the defaults, so one not kept fails.
         kept.usesBackups = false
-        kept.panelWhileMuted = false
+        kept.panelWhileMuted = true
+        kept.mainControl = "page"
         withStore { store, _ in
             store.save(kept)
             #expect(store.setups() == [kept])
         }
         var older = try JSONSerialization.jsonObject(with: JSONEncoder().encode(kept)) as? [String: Any] ?? [:]
-        for key in ["backups", "wayResults", "usesBackups", "panelWhileMuted"] { older[key] = nil }
+        for key in ["backups", "wayResults", "usesBackups", "panelWhileMuted", "mainControl"] { older[key] = nil }
         let read = try JSONDecoder().decode(PlayerSetup.self, from: JSONSerialization.data(withJSONObject: older))
-        #expect(read.ways == kept.ways && read.backups.isEmpty && read.wayResults.isEmpty && read.usesBackups && !read.panelWhileMuted)
+        #expect(read.ways == kept.ways && read.backups.isEmpty && read.wayResults.isEmpty && read.usesBackups && !read.panelWhileMuted
+                && read.mainControl == nil)
 
         // A later AutoHush's way or window state in them, read here: none, the app kept.
         var later = try JSONSerialization.jsonObject(with: JSONEncoder().encode(kept)) as? [String: Any] ?? [:]

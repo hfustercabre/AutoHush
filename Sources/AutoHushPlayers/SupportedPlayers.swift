@@ -22,25 +22,31 @@ package enum SupportedPlayers {
     /// but played more for videos. Installed players are offered before the
     /// others, each group in this order. Spotify was the only
     /// player before the choice, so people updating keep it.
-    package static let catalog = MusicPlayerCatalog(
-        // Each with its backups (`MeasuredBackups`, the user, 2026-11-05).
-        players: [
-            BackedUpPlayer.builtIn(ScriptablePlayer(profile: .spotify), backups: .spotify),
-            BackedUpPlayer.builtIn(ScriptablePlayer(profile: .appleMusic), backups: .appleMusic),
-            BackedUpPlayer.builtIn(VLCPlayer(), backups: .vlc),
-            BackedUpPlayer.builtIn(MenuPlayer(profile: .applePodcasts), backups: .applePodcasts),
-            BackedUpPlayer.builtIn(MenuPlayer(profile: .tidal), backups: .tidal),
-            BackedUpPlayer.builtIn(QuickTime.player(), backups: .quickTime),
-        ],
-        formerDefault: ScriptablePlayerProfile.spotify.bundleID,
-        // Shown in Add a Web App's address field and its "not a web address" note.
-        exampleWebAddress: "music.youtube.com",
-        countrySites: testedWebApps.compactMap(\.countrySites),
-        // The Safari web apps, then the apps added through Player Check (never a
-        // built-in player's), those not installed now too, as the built-in ones are.
-        found: { backedUpWebApps() + checkedPlayers.current().filter { player in !builtIn.contains(player.bundleID) } },
-        suggested: { webApps.suggestions() }
-    )
+    package static let catalog = makeCatalog(added: checkedPlayers)
+
+    /// The catalog with the added apps `added` keeps: the preferences'
+    /// (`checkedPlayers`), or a test's own, so no test writes the preferences.
+    static func makeCatalog(added: CheckedPlayers) -> MusicPlayerCatalog {
+        MusicPlayerCatalog(
+            // Each with its backups (`MeasuredBackups`, the user, 2026-11-05).
+            players: [
+                BackedUpPlayer.builtIn(ScriptablePlayer(profile: .spotify), backups: .spotify),
+                BackedUpPlayer.builtIn(ScriptablePlayer(profile: .appleMusic), backups: .appleMusic),
+                BackedUpPlayer.builtIn(VLCPlayer(), backups: .vlc),
+                BackedUpPlayer.builtIn(MenuPlayer(profile: .applePodcasts), backups: .applePodcasts),
+                BackedUpPlayer.builtIn(MenuPlayer(profile: .tidal), backups: .tidal),
+                BackedUpPlayer.builtIn(QuickTime.player(), backups: .quickTime),
+            ],
+            formerDefault: ScriptablePlayerProfile.spotify.bundleID,
+            // Shown in Add a Web App's address field and its "not a web address" note.
+            exampleWebAddress: "music.youtube.com",
+            countrySites: testedWebApps.compactMap(\.countrySites),
+            // The Safari web apps, then the apps added through Player Check (never a
+            // built-in player's), those not installed now too, as the built-in ones are.
+            found: { backedUpWebApps() + added.current().filter { player in !builtIn.contains(player.bundleID) } },
+            suggested: { webApps.suggestions() }
+        )
+    }
 
     /// The music services' web players AutoHush has been tested with (live,
     /// on macOS 27, also taking Now Playing as it plays), the most subscribed

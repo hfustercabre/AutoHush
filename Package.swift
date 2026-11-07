@@ -213,7 +213,7 @@ let package = Package(
             dependencies: [
                 "AutoHushPlayers", "ScriptablePlayers", "MenuPlayers", "WebAppPlayers", "CheckedPlayers",
                 "SpotifySupport", "AppleMusicSupport", "VLCSupport", "QuickTimeSupport",
-                "AutoHushKit",
+                "AutoHushKit", "AutoHushTestSupport",
             ]
         ),
     ],

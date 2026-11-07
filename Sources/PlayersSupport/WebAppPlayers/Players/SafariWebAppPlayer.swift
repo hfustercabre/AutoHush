@@ -148,6 +148,15 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         tapsAllowed.withLock { $0 = allowed }
     }
 
+    /// Whether its page's words are current now (`WebPage.wordsAreCurrent`):
+    /// a Chromium or Flutter page's only while one of its windows can be
+    /// seen; `false` while it isn't running.
+    package func wordsAreCurrent() async -> Bool {
+        guard let pid = processIdentifier() else { return false }
+        let page = page
+        return await queue.run { page.wordsAreCurrent(pid: pid) }
+    }
+
     /// Turns on the switch its page needs (another app's page), on the
     /// running process, so the page is built wherever its window goes: a
     /// switch first turned on while it's minimized or hidden finds no page.

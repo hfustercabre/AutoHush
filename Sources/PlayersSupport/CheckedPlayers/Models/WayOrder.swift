@@ -71,6 +71,23 @@ package struct WayOrder: Sendable, Equatable {
         return CheckResult.WindowState.allCases.contains { order(in: $0, for: target, main: main) != visible }
     }
 
+    /// The way pressed first whatever the window's state, when that's the
+    /// same in every state: pressed before the window is looked at, which
+    /// is needed only if it fails or is passed over; `nil` otherwise.
+    func firstInEveryState(for target: PlayerState, main: Int = 0) -> Int? {
+        let firsts = Set(CheckResult.WindowState.allCases.compactMap { order(in: $0, for: target, main: main).first })
+        return firsts.count == 1 ? firsts.first : nil
+    }
+
+    /// The permission the main control at `main` needs while it's pressed
+    /// alone (its backups off): Automation for an AppleScript,
+    /// Accessibility for the others, as `BackupRouting.verifyAccess` checks
+    /// it; `nil` for its own way (at 0), whose permission is its player's.
+    func permissionPressedAlone(main: Int, player name: String) -> Permission? {
+        guard main != 0, ways.indices.contains(main) else { return nil }
+        return ways[main].kind == .script ? .automation(player: name) : .accessibility(player: name)
+    }
+
     /// The place of the main control the user chose (`BackupSwitches.mainControl`,
     /// a kind's raw value): a way that worked in its check, never the
     /// Play/Pause key; 0, its own, for none, or one that can't be its main.

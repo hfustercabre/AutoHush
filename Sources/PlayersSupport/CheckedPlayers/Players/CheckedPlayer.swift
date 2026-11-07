@@ -39,7 +39,10 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// Accessibility and Audio Recording: Accessibility is named, since
     /// nothing presses the row without it, and Audio Recording has its own
     /// row and warning, as AutoHush's (and AntiDot mode can't be used with it).
+    /// Another main control pressed alone (its backups off) needs its own
+    /// (`WayOrder.permissionPressedAlone`).
     package nonisolated var controlPermission: Permission {
+        if !usesBackups, let alone = wayOrder?.permissionPressedAlone(main: mainIndex, player: name) { return alone }
         if case .script? = setup.ways.first { return .automation(player: name) }
         return .accessibility(player: name)
     }

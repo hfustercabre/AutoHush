@@ -63,7 +63,23 @@ struct MediaKeyWay: FadelessMusicPlayer, PolledMusicPlayer {
     private func press(to target: PlayerState) async throws {
         guard let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         guard try Self.needsPress(from: await state.state(), to: target) else { return }
-        let answer = await nowPlaying()
+        try Self.holdsNowPlaying(await nowPlaying(), pid: pid)
+        // Read again: asking Now Playing takes up to 2 s, and a press of the
+        // way before, late, may have shown meanwhile. Now Playing is asked
+        // again beside it, so the key is posted as both answer: another app
+        // that took Now Playing during the read (half a second of listening
+        // for one judged by its sound) would get it (2026-11-06).
+        async let again = state.state()
+        async let holder = nowPlaying()
+        guard try Self.needsPress(from: await again, to: target) else { return }
+        try Self.holdsNowPlaying(await holder, pid: pid)
+        try await PressCheck(name: "\(name) (the Play/Pause key)", isToggle: true, press: { [pressKey] _ in await pressKey() },
+                             state: { [state] in await state.state() }, sleep: sleep).press(to: target)
+    }
+
+    /// `NotPressed` unless `answer` says the app `pid` (or one of its
+    /// helpers) holds Now Playing.
+    private static func holdsNowPlaying(_ answer: NowPlayingApp.Answer, pid: pid_t) throws {
         guard case .process(let holder) = answer, ProcessResponsibility.isOwned(holder, by: pid) else {
             let why = switch answer {
             case .process(let holder): "another app is Now Playing (pid \(holder))"
@@ -72,11 +88,6 @@ struct MediaKeyWay: FadelessMusicPlayer, PolledMusicPlayer {
             }
             throw NotPressed(description: why)
         }
-        // Read again: asking Now Playing takes up to 2 s, and a press of the
-        // way before, late, may have shown meanwhile.
-        guard try Self.needsPress(from: await state.state(), to: target) else { return }
-        try await PressCheck(name: "\(name) (the Play/Pause key)", isToggle: true, press: { [pressKey] _ in await pressKey() },
-                             state: { [state] in await state.state() }, sleep: sleep).press(to: target)
     }
 
     /// Whether the key would take it from `state` to `target`: `false` when

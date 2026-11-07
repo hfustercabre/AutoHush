@@ -62,7 +62,8 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     package var usesBackups: Bool
     /// Whether, with its backups on, the Now Playing panel may be pressed
     /// while the app is muted in place of a pause, which no other way
-    /// shows on screen (on unless the user turns it off; the user, 2026-11-04).
+    /// shows on screen (the user, 2026-11-04; off unless the user turns it
+    /// on, from 2026-11-06).
     package var panelWhileMuted: Bool
     /// The control chosen as its main one in Settings, by its kind's raw
     /// value; `nil` for the way chosen at Use (`ways`) (the user, 2026-11-05).
@@ -111,7 +112,7 @@ package struct PlayerSetup: Codable, Equatable, Sendable {
     }
 
     /// A setup kept before 2026-11-04 reads with no backups, no window-state
-    /// results and both switches on; the rest reads as it always has. Its
+    /// results, its backups on and the panel while muted off; the rest reads as it always has. Its
     /// backups and results that can't be read (a way or a window state of a
     /// later AutoHush, after going back to this one) read as none, so the
     /// app isn't lost for them: it's still pressed by its ways.

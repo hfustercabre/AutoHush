@@ -366,6 +366,16 @@ struct CheckedPlayerBackupsTests {
         #expect(await menu.pauseCallCount == 1)
     }
 
+    @Test("its permission is its chosen way's, or the main control's while that one is pressed alone (its backups off)")
+    func permission() {
+        let player = jukebox(MockMusicPlayer(state: .playing), backups: [(MockMusicPlayer(state: .playing), .script)])
+        #expect(player.controlPermission == .accessibility(player: "Jukebox")) // its page
+        player.setSwitches(BackupSwitches(usesBackups: false, mainControl: "script"))
+        #expect(player.controlPermission == .automation(player: "Jukebox"))
+        player.setSwitches(BackupSwitches(mainControl: "script")) // backups on: its page checked first, as before
+        #expect(player.controlPermission == .accessibility(player: "Jukebox"))
+    }
+
     @Test("a backup page mutes nothing new while its backups are off")
     func backupPageOff() async {
         let setup = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: app, ways: [.menu(menuName: "Controls")],

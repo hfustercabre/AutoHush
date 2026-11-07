@@ -11,6 +11,7 @@ import MenuPlayers
 import VLCSupport
 @testable import QuickTimeSupport
 @testable import WebAppPlayers
+import AutoHushTestSupport
 
 @Suite("SupportedPlayers")
 struct SupportedPlayersTests {
@@ -40,13 +41,13 @@ struct SupportedPlayersTests {
 
     @Test("QuickTime Player added with Add an App before it was built in is offered once, as the built-in player")
     func addedBuiltInPlayer() {
-        let catalog = SupportedPlayers.catalog
-        let store = DefaultsPlayerSetupStore() // where the catalog's added apps are kept
+        // Its own store, never the preferences other test runs share.
+        let store = DefaultsPlayerSetupStore(defaults: MemoryDefaults())
+        let added = CheckedPlayers(store: store)
         store.save(PlayerSetup(bundleID: QuickTime.bundleID, name: QuickTime.name,
                                appURL: URL(fileURLWithPath: "/System/Applications/QuickTime Player.app"), ways: [.script(QuickTime.setup)]))
-        defer { store.forget(QuickTime.bundleID) }
-        #expect(SupportedPlayers.checkedPlayers.current().map(\.bundleID).contains(QuickTime.bundleID))
-        let quickTimes = catalog.all.filter { $0.bundleID == QuickTime.bundleID }
+        #expect(added.current().map(\.bundleID).contains(QuickTime.bundleID))
+        let quickTimes = SupportedPlayers.makeCatalog(added: added).all.filter { $0.bundleID == QuickTime.bundleID }
         #expect(quickTimes.count == 1 && quickTimes.first is BackedUpPlayer<ScriptedAppPlayer>)
     }
 

@@ -158,15 +158,30 @@ extension BackupRouting {
         let call = pressCalls
         mutedTried = []
         let main = mainIndex
-        // Looked at only when it changes the order.
-        let state: CheckResult.WindowState? = !alone && wayOrder.dependsOnWindow(for: target, main: main) ? await windowState(pid) : nil
-        let window = state.map { ", its window \($0.title)" } ?? ""
+        // Looked at only when it changes the order; when its first way is
+        // the same in every state, only once that one failed or was passed
+        // over (the common pause and play wait for no look).
+        let dependsOnWindow = !alone && wayOrder.dependsOnWindow(for: target, main: main)
+        let firstAnyway = dependsOnWindow ? wayOrder.firstInEveryState(for: target, main: main) : nil
+        var state: CheckResult.WindowState? = dependsOnWindow && firstAnyway == nil ? await windowState(pid) : nil
         var goesOn = target == .playing || !covered
         if !goesOn { goesOn = await !canBeMuted() }
         var firstError: (any Error)?
         var pressed = 0, learning = false
         var checkable: Bool?
-        for index in alone ? [main] : wayOrder.order(in: state ?? .visible, for: target, main: main) {
+        var order = alone ? [main] : firstAnyway.map { [$0] } ?? wayOrder.order(in: state ?? .visible, for: target, main: main)
+        var next = 0
+        while true {
+            if next == order.count, firstAnyway != nil, state == nil {
+                if pressed > 0, !goesOn || pressCalls != call { break }
+                let looked = await windowState(pid)
+                state = looked
+                order += wayOrder.order(in: looked, for: target, main: main).filter { !order.contains($0) }
+            }
+            guard next < order.count else { break }
+            let index = order[next]
+            next += 1
+            let window = state.map { ", its window \($0.title)" } ?? ""
             let kind = wayOrder.ways[index].kind
             if pressed > 0, !goesOn || pressCalls != call { break }
             if target == .playing, kind == .panel, let failed = panelPlayFailedAt, now().timeIntervalSince(failed) < Self.panelPlayRest { continue }

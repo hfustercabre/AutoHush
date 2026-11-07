@@ -79,7 +79,7 @@ package struct PlayerControls: Sendable, Equatable {
     package var mainChanged: Bool { main.kind != recommended }
 
     /// The Now Playing panel is one of its controls, its main one too:
-    /// Restore Defaults turns its switch back on, since its own main control
+    /// Restore Defaults turns its switch back off, since its own main control
     /// may make it a backup again.
     package var hasPanel: Bool { main.kind == .panel || hasPanelBackup }
 
