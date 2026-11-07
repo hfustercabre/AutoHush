@@ -33,8 +33,9 @@ extension PlaybackArbiter {
     }
 
     private func mapPlaybackState() -> PlaybackState {
-        // Held, our pause lasts while no app plays too (see `holdResumes`).
-        if pausedByUs, !activeSources.isEmpty || resumesHeld { return .pausedByMonitor }
+        // Held, our pause lasts while no app plays too (see `holdResumes`),
+        // as does a mute kept in place of a pause kept (`keptMuteStands`).
+        if pausedByUs, !activeSources.isEmpty || resumesHeld || keptMuteStands { return .pausedByMonitor }
         if pauseFailure != nil, !activeSources.isEmpty { return .pauseFailed }
         if playerState == .playing, !playsLocally { return .playingElsewhere }
         if playerState == .playing, playsSilently { return silentWithoutState ? .musicIdle : .playingSilently }

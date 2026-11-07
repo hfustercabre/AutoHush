@@ -12,11 +12,12 @@ extension PlaybackArbiterTests {
                              hearing: Hearing = Hearing(.heard), mute: FakeMute? = FakeMute(), published: LastPublished,
                              configuration: AppConfiguration = .testing, mutedInstead: Locked<[Bool]>? = nil,
                              inputAsked: Locked<[Date]>? = nil, tapsAllowed: Locked<Bool> = Locked(true),
+                             quietAppPlaysAgain: @escaping @Sendable () async -> Bool = { false },
                              scheduler: ManualDebounceScheduler = ManualDebounceScheduler()) async -> PlaybackArbiter {
         let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: scheduler,
                                       clock: { clock.now },
                                       onStatusUpdate: statuses(playback: { published.set($0) }, mutedInstead: { mutedInstead?.append($0) }),
-                                      hearsPlayer: { await hearing.answer(since: $0) },
+                                      hearsPlayer: { await hearing.answer(since: $0) }, quietAppPlaysAgain: quietAppPlaysAgain,
                                       inputToPlayer: { inputAsked?.append($0); return userPlayed.value }, playerMute: mute,
                                       tapsAllowed: { tapsAllowed.value })
         await arbiter.sourceChanged("org.example.viewer", playing: true)

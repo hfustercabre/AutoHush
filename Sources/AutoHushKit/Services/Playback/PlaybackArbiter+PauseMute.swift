@@ -35,6 +35,12 @@ extension PlaybackArbiter {
         /// mute is only lifted, never followed by a play, since nothing of
         /// it was playing to resume. Kept until AutoHush's pause is over.
         private(set) var whileQuiet = false
+        /// Muted in place of the pause, which was kept rather than resumed
+        /// (or as the output went away) while its real pause was refused
+        /// (`keepPaused`): the mute stands with no app playing, until the
+        /// user's own pause or play in the player, or the menu's Unmute
+        /// (K1-2, the user, 2026-11-07).
+        private(set) var outlastsApps = false
 
         var isInsteadOfPause: Bool { kind == .insteadOfPause }
 
@@ -43,12 +49,20 @@ extension PlaybackArbiter {
             kind = .insteadOfPause
             pausePressed = nil
             pauseFailures = nil
+            outlastsApps = false
         }
 
         /// Paused once it went silent: still muted until it plays again.
         mutating func keepInPause() {
             kind = .keptInPause
             pausePressed = nil
+            outlastsApps = false
+        }
+
+        /// Its pause kept while its real pause was refused: muted on with no
+        /// app playing.
+        mutating func noteOutlastsApps() {
+            outlastsApps = true
         }
 
         /// Another press of its pause failed at `date`: how many in a row.
@@ -85,6 +99,7 @@ extension PlaybackArbiter {
             kind = .off
             pausePressed = nil
             pauseFailures = nil
+            outlastsApps = false
             return true
         }
     }
@@ -93,6 +108,13 @@ extension PlaybackArbiter {
     /// monitoring goes on, AutoHush holds its pause, and it's still that
     /// mute (`lookWhileMuted` checks it after each await).
     var muteStillStands: Bool { !isShutDown && pausedByUs && mutedInstead }
+
+    /// The mute kept in place of a pause kept (`MuteState.outlastsApps`)
+    /// stands, with no app playing and no resume pending: AutoHush's pause,
+    /// shown as muted, which the user's own pause or play in the player ends.
+    var keptMuteStands: Bool {
+        muteStillStands && mute.outlastsApps && activeSources.isEmpty && pendingResumeID == nil
+    }
 
     /// Mutes the player in place of a pause that doesn't take: AutoHush's
     /// pause from then on, ended as any. `true` once it's handled; one that

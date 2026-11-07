@@ -244,8 +244,9 @@ extension PlaybackArbiterTests {
         if refuses {
             #expect(mute.unmuteCount == 0) // not heard: it plays on behind the mute
             #expect(await arbiter.pausedByUs)
-            #expect(published.state == .pausedByMonitor)
-            #expect(mutedInstead.value.last == true) // the menu says Muted
+            await arbiter.publishPlaybackState() // what any later publish says, with no app playing
+            #expect(published.state == .pausedByMonitor) // the menu says Muted, with Unmute (K1-2)
+            #expect(mutedInstead.value.last == true)
         } else {
             await TestWait.until { mute.unmuteCount == 1 }
             #expect(await arbiter.pausedByUs == false)
@@ -254,5 +255,77 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
         // Kept muted when refused: its pause is covered, its backups tried while muted.
         #expect(await player.uncoveredPauses == 0)
+    }
+
+    @Test("muted, its pause kept (Resume playback off) and its real pause refused: a report that it still plays changes nothing; the user's pause, or it quitting, ends the mute, theirs, and their play is heard (K1-2)",
+          arguments: [PlayerState.paused, .notRunning])
+    func keptMuteEndsWithUsersPause(_ stopped: PlayerState) async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), mutedInstead = Locked<[Bool]>([])
+        var configuration = AppConfiguration.testing
+        configuration.resumesPlayback = false
+        let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published,
+                                               configuration: configuration, mutedInstead: mutedInstead, scheduler: scheduler)
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        await arbiter.sourceChanged("org.example.viewer", playing: false) // its resume keeps the pause instead
+        await arbiter.waitUntilIdle()
+        // Its next track, or a stale report while it plays: still muted.
+        await arbiter.handlePlayerStateChange(.playing)
+        await arbiter.handlePlayerStateChange(.paused)
+        #expect(published.state == .pausedByMonitor) // the menu says Muted, with Unmute
+        #expect(mute.unmuteCount == 0)
+        #expect(await arbiter.pausedByUs)
+
+        await player.setState(stopped) // the user pauses or quits it
+        await arbiter.handlePlayerStateChange(stopped)
+        await TestWait.until { mute.unmuteCount == 1 }
+        #expect(await arbiter.pausedByUs == false)
+        #expect(await arbiter.leftToUser)
+        #expect(published.state == .musicIdle)
+        #expect(mutedInstead.value.last == false)
+
+        await player.setState(.playing) // their play, heard
+        await arbiter.handlePlayerStateChange(.playing)
+        await arbiter.waitUntilIdle()
+        #expect(published.state == .musicPlaying)
+        #expect(mute.muteCount == 1)
+        #expect(await player.playCallCount == 0)
+    }
+
+    @Test("muted while an app still plays: the player's own pause report doesn't end the mute; only a mute kept once no app plays ends that way (K1-2)")
+    func pauseReportWhileAppsPlayKeepsMute() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published, scheduler: scheduler)
+        await player.setState(.paused)
+        await arbiter.handlePlayerStateChange(.paused)
+        await arbiter.waitUntilIdle()
+        #expect(await arbiter.pausedByUs) // still AutoHush's pause, resumed with the apps
+        #expect(await arbiter.leftToUser == false)
+        #expect(mute.unmuteCount == 0)
+        #expect(published.state == .pausedByMonitor)
+    }
+
+    @Test("muted, the output going away while the resume waits (an app that went quiet plays again) calls that resume off: a player refusing its real pause stays muted, not unmuted on the next output (K1-3)")
+    func disconnectCallsOffPendingResume() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), listens = Locked(0)
+        var configuration = AppConfiguration.testing
+        configuration.pausesOnOutputDisconnect = true
+        let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published,
+                                               configuration: configuration,
+                                               quietAppPlaysAgain: { listens.withLock { $0 += 1; return $0 == 1 } },
+                                               scheduler: scheduler)
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        let wait = await arbiter.startConfirmation + PlaybackArbiter.takeOverMargin
+        await TestWait.until { scheduler.scheduledDelays.contains(wait) } // the resume waits
+        await arbiter.handleOutputDisconnected()
+        for _ in 0..<4 { await scheduler.completeNext() } // the looks', and the resume's, waits over
+        await arbiter.waitUntilIdle()
+        #expect(mute.unmuteCount == 0)
+        #expect(await arbiter.pausedByUs)
+        #expect(await player.playCallCount == 0)
+        #expect(listens.value == 1) // the resume never looked again
     }
 }

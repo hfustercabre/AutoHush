@@ -8,10 +8,11 @@ extension PlaybackArbiterTests {
     func mutedForAnotherApp(_ player: MockMusicPlayer, clock: ManualClock, userPlayed: Locked<Bool> = Locked(false),
                             hearing: Hearing = Hearing(.heard), mute: FakeMute, published: LastPublished,
                             configuration: AppConfiguration = .testing, mutedInstead: Locked<[Bool]>? = nil,
+                            quietAppPlaysAgain: @escaping @Sendable () async -> Bool = { false },
                             scheduler: ManualDebounceScheduler) async -> PlaybackArbiter {
         let arbiter = await pausedForAnotherApp(player, clock: clock, userPlayed: userPlayed, hearing: hearing, mute: mute,
                                          published: published, configuration: configuration, mutedInstead: mutedInstead,
-                                         scheduler: scheduler)
+                                         quietAppPlaysAgain: quietAppPlaysAgain, scheduler: scheduler)
         await player.setState(.playing) // its pause didn't take
         await firstLook(scheduler, arbiter, clock: clock)
         #expect(mute.muteCount == 1)

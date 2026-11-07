@@ -9,8 +9,10 @@ extension PlaybackArbiter {
     /// user's from then on, as after a sleep (the user, 2026-10-21).
     func handleOutputDisconnected() async {
         guard !isShutDown, configuration.pausesOnOutputDisconnect, autoPauseEnabled, !isAsleep else { return }
-        // A resume still pending finds the pause no longer ours, and gives up.
+        // A resume still pending is called off: it would unmute a player
+        // whose real pause is refused, and play it on the next output (K1-3).
         if pausedByUs {
+            cancelPendingResume()
             callDuringPause = false
             logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) stays paused")
             await keepPaused()
