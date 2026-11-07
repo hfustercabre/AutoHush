@@ -155,7 +155,11 @@ struct AboutSettingsView: View {
             Label { title } icon: { Image(systemName: symbol) }
         }
         .buttonStyle(.chip)
+        // The address shows in the help tag; VoiceOver, which would read it
+        // letter by letter, says where it opens instead (D-10, 2026-11-07).
         .help(url.absoluteString)
+        .accessibilityHint(Text("Opens in your browser",
+                                comment: "VoiceOver hint of the Help, What’s New and Report an Issue buttons in Settings → About: each opens a page of AutoHush’s project on GitHub in the web browser"))
     }
 
     /// The copyright line from Info.plist, in the app's language.
