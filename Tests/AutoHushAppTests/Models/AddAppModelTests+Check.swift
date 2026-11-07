@@ -234,4 +234,19 @@ extension AddAppModelTests {
         #expect(!model.appWindowsClosed && model.stage == .ready)
         model.windowClosed() // the watch ends
     }
+
+    @Test("the warning's look at the app's windows reads them now, not at the watch's next look up to 2 s later (F-6)")
+    func windowsLookedAtNow() async {
+        let world = World()
+        let model = await AddAppModel.ready(on: world)
+        defer { model.windowClosed() } // the watch ends
+        #expect(!model.appWindowsClosed)
+        world.windowOpen = false
+        let looks = world.windowLooks
+        await model.lookAtWindows()
+        #expect(model.appWindowsClosed && world.windowLooks > looks)
+        world.windowOpen = true
+        await model.lookAtWindows()
+        #expect(!model.appWindowsClosed && model.stage == .ready)
+    }
 }

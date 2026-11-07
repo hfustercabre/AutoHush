@@ -111,7 +111,8 @@ extension AddAppFeature: AddAppPresenting {
         warningWindow?.close()
         let shortcutsOn = system.desktopShortcutsOn
         let window = CheckWarningWindowController(app: app, muting: model.checkMuting, desktopShortcutsOff: { !shortcutsOn() },
-                                                  windowsClosed: { [weak model] in model?.appWindowsClosed ?? false }) { [weak model] in
+                                                  windowsClosed: { [weak model] in model?.appWindowsClosed ?? false },
+                                                  lookAtWindows: { [weak model] in await model?.lookAtWindows() }) { [weak model] in
             model?.startCheck()
         }
         warningWindow = window

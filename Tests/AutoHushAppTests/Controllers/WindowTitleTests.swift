@@ -174,6 +174,7 @@ final class WindowTitleTests {
         let warningView = try #require(warning.window?.contentViewController as? NSHostingController<CheckWarningView>)
         warning.show()
         warningView.rootView.start()
+        await TestWait.until { !started.calls.isEmpty } // after a look at the app's windows (F-6)
         #expect(started.calls == ["started, closed"])
         await TestWait.until { !warning.isOpen }
         warning.show()
@@ -195,6 +196,31 @@ final class WindowTitleTests {
         NotificationCenter.default.post(name: NSApplication.didBecomeActiveNotification, object: NSApp)
         await TestWait.until { warning.showsDesktopShortcutsNote }
         #expect(warning.showsDesktopShortcutsNote)
+    }
+
+    @Test("the check's warning looks at the app's windows as it comes up, comes back in front and at Start: changed at Start, it says what the check will do instead of starting (F-6)")
+    func warningLooksAtWindows() async {
+        let closed = Locked(false), found = Locked(true) // as last looked at; as a look finds them
+        let started = CallLog()
+        let warning = CheckWarningWindowController(app: World().apps[0], muting: .none, desktopShortcutsOff: { false },
+                                                   windowsClosed: { closed.value },
+                                                   lookAtWindows: { closed.value = found.value }) {
+            started.calls.append("started")
+        }
+        let view = warning.window?.contentViewController as? NSHostingController<CheckWarningView>
+        await TestWait.until { warning.showsWindowsClosed } // as it came up
+        #expect(warning.showsWindowsClosed)
+        found.value = false
+        NotificationCenter.default.post(name: NSWindow.didBecomeKeyNotification, object: warning.window)
+        await TestWait.until { !warning.showsWindowsClosed }
+        #expect(!warning.showsWindowsClosed)
+        found.value = true
+        view?.rootView.start()
+        await TestWait.until { warning.showsWindowsClosed }
+        #expect(warning.showsWindowsClosed && started.calls.isEmpty)
+        view?.rootView.start() // as it now says
+        await TestWait.until { !started.calls.isEmpty }
+        #expect(started.calls == ["started"])
     }
 
     @Test("Add a Web App's window floats in the top-right corner, its top edge kept as it grows")

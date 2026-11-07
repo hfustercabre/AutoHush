@@ -83,7 +83,10 @@ extension AddAppModel {
     /// yet used), it starts over on this one, as from its first step; as it
     /// is while it shows this one, or while a check is under way, which
     /// can't be stopped from there. Another app's result stays kept, as a
-    /// closed window keeps it: only Change… forgets it, after asking.
+    /// closed window keeps it: only Change… forgets it, after asking. An
+    /// app it can't read (moved or deleted since) starts over too, at the
+    /// first step, its list open with why, as Other App… says it (F-7, the
+    /// code check of 2026-11-07).
     func startOver(onAppAt url: URL) {
         switch stage {
         case .choosing:
@@ -91,10 +94,17 @@ extension AddAppModel {
         case .checking:
             return
         default:
-            guard case .success(let app) = reader.app(at: url), app.bundleID != chosen?.bundleID else { return }
+            let read = reader.app(at: url)
+            if case .success(let app) = read, app.bundleID == chosen?.bundleID { return }
             presenter?.closeWarning() // its Start was for the app before
             resetSteps()
-            choose(app)
+            switch read {
+            case .success(let app): choose(app)
+            case .failure(let problem):
+                search = ""
+                presenter?.showChooser()
+                otherAppProblem = problem // once its list is open, so VoiceOver hears it too
+            }
         }
     }
 
@@ -269,13 +279,35 @@ extension AddAppModel {
             guard round.isMultiple(of: 4) else { continue }
             let windowOpen = await reader.hasWindowWithinReach(app)
             guard !Task.isCancelled, stage == .ready else { return }
-            if waitsForWindow, !windowOpen {
-                presenter?.closeWarning()
-                waitForPlaying()
-                return
-            }
-            appWindowsClosed = !windowOpen
+            guard windowsLookedAt(open: windowOpen) else { return }
         }
+    }
+
+    /// The chosen app's windows looked at now, not at the watch's next look
+    /// (every 2 s): as the warning before the check comes up, comes back in
+    /// front, and at its Start, so it says what the check will do (F-6, the
+    /// code check of 2026-11-07).
+    func lookAtWindows() async {
+        guard stage == .ready, let app = chosen else { return }
+        let windowOpen = await reader.hasWindowWithinReach(app)
+        guard stage == .ready, chosen?.bundleID == app.bundleID else { return }
+        windowsLookedAt(open: windowOpen)
+    }
+
+    /// What a look at the app's windows found, while it's ready: after
+    /// Check Again with its windows closed, its window closed again, the
+    /// wait for one (`false`: no longer ready); otherwise whether they're
+    /// all closed, for the warning.
+    @discardableResult
+    private func windowsLookedAt(open windowOpen: Bool) -> Bool {
+        if waitsForWindow, !windowOpen {
+            presenter?.closeWarning()
+            stopWork() // a watch still asleep would go on beside the wait
+            waitForPlaying()
+            return false
+        }
+        appWindowsClosed = !windowOpen
+        return true
     }
 
     /// The app quit while it was waited for (or didn't open again): the

@@ -112,6 +112,18 @@ struct AddAppModelTests {
         #expect(running.stage == .checking && running.chosen?.bundleID == "com.example.player" && checking.warningsClosed == 0)
     }
 
+    @Test("Fine-Tuning's Check Again… on an app it can't read (moved or deleted since) starts over at the first step, its list open with why (F-7)")
+    func startOverOnAppItCantRead() async {
+        let world = World()
+        world.kept.save(KeptCheck(app: world.apps[0], result: result, at: world.now))
+        let model = await AddAppModel.opened(on: world)
+        #expect(model.result == result)
+        model.startOver(onAppAt: URL(filePath: "/Applications/AutoHush.app"))
+        #expect(model.stage == .choosing && model.chosen == nil && model.otherAppProblem == .autoHush)
+        #expect(world.choosers == 1 && world.warningsClosed == 1)
+        #expect(world.kept.load(now: world.now)?.app.bundleID == "com.example.player") // still kept, as for another app
+    }
+
     @Test("another app selected in the list drops Other App…'s warning, which was about the app picked on the disk")
     func selectionDropsOtherAppWarning() async {
         let world = World()
