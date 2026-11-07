@@ -16,13 +16,17 @@ protocol HeldMonitoring: AnyObject {
     func setConfiguration(_ configuration: AppConfiguration)
     /// See `PlaybackArbiter.holdResumes`.
     func holdResumes(_ held: Bool)
+    /// See `PlaybackArbiter.setKeptMuteShown`.
+    func setKeptMuteShown(_ shown: Bool)
 }
 
 /// The monitoring of players AutoHush held paused when the user chose
 /// another. Each runs on only to end its own pause, as it would have (the
 /// other apps stop: its player plays again), and stops once its player is
 /// anything but paused by it: played again (once faded back in), or taken
-/// over by the user. A player chosen again is taken back at once (`choose`,
+/// over by the user, or muted with its real pause refused and no app
+/// playing: with no card to show that mute, it's unmuted (D2, the user's
+/// pick, 2026-11-07). A player chosen again is taken back at once (`choose`,
 /// `takesBack`); the Mac sleeping forgets them all (`stopAll`), as any
 /// pause then (decision S2); quitting hands them over (`bundleIDs`,
 /// `stopAndRestoreAll`).
@@ -77,11 +81,13 @@ final class HeldPauses {
 
     /// `monitoring` (its updates come with `token`) holds `bundleID`'s
     /// player paused, or, `awaitingTakeOver`, starts to take a handed-over
-    /// pause over: it runs on.
+    /// pause over: it runs on, a mute it would keep with no app playing
+    /// lifted instead, since the menu shows only the chosen player's.
     func keep(_ monitoring: any HeldMonitoring, token: UUID, bundleID: String, awaitingTakeOver: Bool = false) {
         for replaced in held where replaced.bundleID == bundleID { replaced.monitoring.stop() }
         held.removeAll { $0.bundleID == bundleID }
         held.append(Held(token: token, bundleID: bundleID, monitoring: monitoring, awaitingTakeOver: awaitingTakeOver))
+        monitoring.setKeptMuteShown(false)
     }
 
     /// The monitoring with `token` found no pause to take over, or its pause

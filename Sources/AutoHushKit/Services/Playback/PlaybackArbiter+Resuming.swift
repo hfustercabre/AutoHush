@@ -62,6 +62,14 @@ extension PlaybackArbiter {
             publishPlaybackState()
             return
         }
+        // A mute kept in place of a kept pause (its real pause refused) is
+        // never resumed, unmuted on whatever output plays now: kept again,
+        // its real pause tried once more (D1, the user's pick, 2026-11-07).
+        guard !mute.outlastsApps else {
+            logger.info("[arbiter] \(self.player.name, privacy: .public) stays paused: its pause was kept")
+            await keepPaused()
+            return
+        }
         guard configuration.resumesPlayback else {
             logger.info("[arbiter] \(self.player.name, privacy: .public) stays paused: Resume playback is off")
             await keepPaused()
@@ -86,8 +94,18 @@ extension PlaybackArbiter {
         // loud (the user, 2026-11-02). Shown as muted, with Unmute, until
         // the user pauses or plays it themselves (K1-2, the user, 2026-11-07).
         if mutedInstead, await pauseForReal(uncovered: false) != nil {
+            // Nothing to show it with (a player not chosen): unmuted (D2).
+            guard keptMuteShown else {
+                endUnshownKeptMute()
+                return
+            }
             logger.info("[arbiter] \(self.player.name, privacy: .public) refused its pause: it stays muted")
             mute.noteOutlastsApps()
+            publishPlaybackState() // shown as muted, with Unmute (C-1)
+            // Its real pause still tried, as while muted, also once no app
+            // plays (C-4, the user, 2026-10-24: "if at any point it can be
+            // paused instead of muted, it should pause it").
+            if restartWatch == nil, tapsAllowed() { watchRestart(after: Self.silentRecheckInterval) }
             return
         }
         pausedByUs = false

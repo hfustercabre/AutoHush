@@ -244,7 +244,6 @@ extension PlaybackArbiterTests {
         if refuses {
             #expect(mute.unmuteCount == 0) // not heard: it plays on behind the mute
             #expect(await arbiter.pausedByUs)
-            await arbiter.publishPlaybackState() // what any later publish says, with no app playing
             #expect(published.state == .pausedByMonitor) // the menu says Muted, with Unmute (K1-2)
             #expect(mutedInstead.value.last == true)
         } else {
@@ -309,17 +308,19 @@ extension PlaybackArbiterTests {
     @Test("muted, the output going away while the resume waits (an app that went quiet plays again) calls that resume off: a player refusing its real pause stays muted, not unmuted on the next output (K1-3)")
     func disconnectCallsOffPendingResume() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
-        let scheduler = ManualDebounceScheduler(), listens = Locked(0)
+        let scheduler = ManualDebounceScheduler(), listens = Locked(0), hearing = Hearing(.heard)
         var configuration = AppConfiguration.testing
         configuration.pausesOnOutputDisconnect = true
-        let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published,
+        let arbiter = await mutedForAnotherApp(player, clock: clock, hearing: hearing, mute: mute, published: published,
                                                configuration: configuration,
                                                quietAppPlaysAgain: { listens.withLock { $0 += 1; return $0 == 1 } },
                                                scheduler: scheduler)
         await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        hearing.now = .unknown // the looks press nothing: only the real pauses are counted
         await arbiter.sourceChanged("org.example.viewer", playing: false)
         let wait = await arbiter.startConfirmation + PlaybackArbiter.takeOverMargin
         await TestWait.until { scheduler.scheduledDelays.contains(wait) } // the resume waits
+        let pauses = await player.pauseCallCount
         await arbiter.handleOutputDisconnected()
         for _ in 0..<4 { await scheduler.completeNext() } // the looks', and the resume's, waits over
         await arbiter.waitUntilIdle()
@@ -327,5 +328,6 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.pausedByUs)
         #expect(await player.playCallCount == 0)
         #expect(listens.value == 1) // the resume never looked again
+        #expect(await player.pauseCallCount == pauses + 1) // its real pause tried once, as the output went: no resume came to try it again
     }
 }

@@ -20,6 +20,7 @@ package final class MonitoringPipeline {
         /// With its number (see `PlaybackArbiter.setAsleep`).
         case asleep(Bool, change: Int)
         case resumesHeld(Bool)
+        case keptMuteShown(Bool)
         case outputDisconnected
         case tapsAllowed(Bool)
         case retryResume
@@ -177,6 +178,7 @@ package final class MonitoringPipeline {
                     case .configuration(let configuration): await arbiter.setConfiguration(configuration)
                     case .asleep(let asleep, let change): await arbiter.setAsleep(asleep, change: change)
                     case .resumesHeld(let held): await arbiter.holdResumes(held)
+                    case .keptMuteShown(let shown): await arbiter.setKeptMuteShown(shown)
                     case .outputDisconnected: await arbiter.handleOutputDisconnected()
                     case .tapsAllowed(let allowed): await arbiter.setTapsAllowed(allowed)
                     case .retryResume: await arbiter.retryResume()
@@ -266,6 +268,12 @@ package final class MonitoringPipeline {
     /// `PlaybackArbiter.holdResumes`.
     package func holdResumes(_ held: Bool) {
         arbiterCommands.yield(.resumesHeld(held))
+    }
+
+    /// Whether a mute kept with no app playing is shown, with Unmute: see
+    /// `PlaybackArbiter.setKeptMuteShown`.
+    package func setKeptMuteShown(_ shown: Bool) {
+        arbiterCommands.yield(.keptMuteShown(shown))
     }
 
     /// Try Again on the menu's "Couldn't resume" (`PlaybackArbiter.retryResume`).

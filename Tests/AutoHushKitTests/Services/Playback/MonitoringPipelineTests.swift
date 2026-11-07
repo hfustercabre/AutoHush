@@ -134,6 +134,15 @@ struct MonitoringPipelineTests {
         setup.pipeline.stop()
     }
 
+    @Test("whether a kept mute is shown reaches the arbiter")
+    func keptMuteShownReachesArbiter() async {
+        let setup = Setup(player: MockMusicPlayer())
+        setup.pipeline.setKeptMuteShown(false)
+        await setup.pipeline.settled()
+        #expect(await setup.pipeline.arbiter.keptMuteShown == false)
+        setup.pipeline.stop()
+    }
+
     @Test("Auto-Pause reaches the arbiter: off, the music comes back though the app still plays; on again, it's paused again")
     func autoPauseReachesArbiter() async {
         let mock = MockMusicPlayer(state: .playing)

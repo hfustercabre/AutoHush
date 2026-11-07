@@ -1,6 +1,6 @@
 import Foundation
 
-// PlaybackArbiter: new settings, Auto-Pause, and resumes held.
+// PlaybackArbiter: new settings, Auto-Pause, resumes held, and kept mutes shown.
 extension PlaybackArbiter {
     /// Applies new settings. A source playing that no longer counts (Pause
     /// for VoiceOver turned off while VoiceOver plays) stops at once, so the
@@ -61,6 +61,27 @@ extension PlaybackArbiter {
         } else if pausedByUs, !isAsleep, activeSources.isEmpty || !autoPauseEnabled {
             scheduleResume(after: nil)
         }
+        publishPlaybackState()
+    }
+
+    /// Whether a mute kept in place of a kept pause (`keptMuteStands`) is
+    /// shown, with Unmute (`true`, the chosen player's), or not (`false`): a
+    /// player held paused after the user chose another has no card to show
+    /// it. Its kept mute ends then, unmuted and its pause over, as a pause
+    /// cut short by switching plays the player again (D2, the user's pick,
+    /// 2026-11-07).
+    func setKeptMuteShown(_ shown: Bool) {
+        guard !isShutDown, shown != keptMuteShown else { return }
+        keptMuteShown = shown
+        if !shown, pausedByUs, mutedInstead, mute.outlastsApps { endUnshownKeptMute() }
+    }
+
+    /// A mute kept with nothing to show it (`keptMuteShown` false) ends:
+    /// heard again, the user's, never resumed.
+    func endUnshownKeptMute() {
+        logger.info("[arbiter] \(self.player.name, privacy: .public) stays muted with nothing to show it: unmuted, the user’s")
+        pausedByUs = false // the mute is lifted as it's published
+        leftToUser = true
         publishPlaybackState()
     }
 }

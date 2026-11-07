@@ -26,6 +26,16 @@ struct HeldPausesTests {
         #expect(!held.takes(.playback(.musicPlaying), from: token)) // no longer kept
     }
 
+    @Test("a held pause's monitoring shows no kept mute: its player isn't chosen, so a mute it would keep with no app playing is lifted instead (D2)")
+    func heldShowsNoKeptMute() {
+        let held = HeldPauses()
+        let leaving = FakeMonitoring(), handedOver = FakeMonitoring()
+        _ = held.choose("com.example.streamer", leaving: "org.example.viewer", current: leaving, token: UUID(), holdsPause: true)
+        held.keep(handedOver, token: UUID(), bundleID: "com.example.radio", awaitingTakeOver: true)
+        #expect(leaving.keptMutesShown == [false])
+        #expect(handedOver.keptMutesShown == [false])
+    }
+
     @Test("a held pause's monitoring stops only once its player has faded back in, which stopping would cut short")
     func stopsAfterFadeIn() async {
         let held = HeldPauses()

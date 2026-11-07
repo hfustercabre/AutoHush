@@ -44,12 +44,13 @@ extension PlaybackArbiter {
 
         var isInsteadOfPause: Bool { kind == .insteadOfPause }
 
-        /// Muted in place of the pause, its looks starting afresh.
+        /// Muted in place of the pause, its looks starting afresh. Muted so
+        /// again (an app started while it was kept), its kept pause stays
+        /// kept: never resumed once the apps stop (D1).
         mutating func begin() {
             kind = .insteadOfPause
             pausePressed = nil
             pauseFailures = nil
-            outlastsApps = false
         }
 
         /// Paused once it went silent: still muted until it plays again.
@@ -110,11 +111,17 @@ extension PlaybackArbiter {
     var muteStillStands: Bool { !isShutDown && pausedByUs && mutedInstead }
 
     /// The mute kept in place of a pause kept (`MuteState.outlastsApps`)
-    /// stands, with no app playing and no resume pending: AutoHush's pause,
-    /// shown as muted, which the user's own pause or play in the player ends.
+    /// stands, with no app playing: AutoHush's pause, shown as muted, which
+    /// the user's own pause or play in the player ends. A resume pending
+    /// keeps it too (D1, `resumeIfStillPending`).
     var keptMuteStands: Bool {
-        muteStillStands && mute.outlastsApps && activeSources.isEmpty && pendingResumeID == nil
+        muteStillStands && mute.outlastsApps && activeSources.isEmpty
     }
+
+    /// AutoHush's pause is looked at (`lookAtPause`, `lookWhileMuted`):
+    /// while other apps play, and while a mute kept in place of a kept pause
+    /// stands without them, its real pause still tried (C-4).
+    var pauseLookedAt: Bool { !activeSources.isEmpty || mutedInstead && mute.outlastsApps }
 
     /// Mutes the player in place of a pause that doesn't take: AutoHush's
     /// pause from then on, ended as any. `true` once it's handled; one that
@@ -186,15 +193,17 @@ extension PlaybackArbiter {
     /// user, 2026-10-24: "if at any point it can be paused instead of
     /// muted, it should pause it"). Silent just after their key or click in
     /// it, it's their pause: unmuted, not resumed (the user, 2026-10-25).
+    /// A mute kept in place of a kept pause is looked at so with no app
+    /// playing too: silent, it's unmuted and left paused, the user's.
     func lookWhileMuted() async {
         guard let pausedAt else { return }
         let stillMuted = await playerMute?.followRelaunch() ?? false
-        guard muteStillStands, !activeSources.isEmpty else { return }
+        guard muteStillStands, pauseLookedAt else { return }
         guard stillMuted else {
             // Relaunched, and its new process couldn't be muted: it plays on, heard.
             logger.info("[arbiter] \(self.player.name, privacy: .public) relaunched and can’t be muted — it plays on")
             pausedByUs = false
-            pauseFailure = .playerCommandFailed(.pressIgnored)
+            if !activeSources.isEmpty { pauseFailure = .playerCommandFailed(.pressIgnored) }
             publishPlaybackState()
             return
         }
@@ -208,6 +217,17 @@ extension PlaybackArbiter {
             // unmuted, as it says (no pause of AutoHush's to resume).
             if mute.whileQuiet {
                 logger.info("[arbiter] \(self.player.name, privacy: .public) is silent now — unmuted, as it says it doesn’t play")
+                playerState = .paused
+                pausedByUs = false // the mute is lifted as it's published
+                publishPlaybackState()
+                return
+            }
+            // Its pause kept, with no app it was paused for (`outlastsApps`):
+            // paused now, it's unmuted and left paused, the user's, never
+            // resumed (C-4, the user, 2026-10-24: "if at any point it can be
+            // paused instead of muted, it should pause it").
+            if mute.outlastsApps {
+                logger.info("[arbiter] \(self.player.name, privacy: .public) is silent now — its pause kept: unmuted, left paused")
                 playerState = .paused
                 pausedByUs = false // the mute is lifted as it's published
                 publishPlaybackState()
@@ -232,7 +252,7 @@ extension PlaybackArbiter {
             publishPlaybackState()
         case .heard:
             // Things may have changed while it was measured.
-            guard muteStillStands, !activeSources.isEmpty else { return }
+            guard muteStillStands, pauseLookedAt else { return }
             let now = clock()
             if let pressed = mute.pausePressed, now.timeIntervalSince(pressed) < Self.mutedPauseRetry { return }
             if let failed = mute.pauseFailures, now.timeIntervalSince(failed.last) < Self.mutedPauseWait(afterFailures: failed.count) { return }

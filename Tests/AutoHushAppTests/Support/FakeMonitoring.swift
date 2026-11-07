@@ -69,6 +69,8 @@ final class FakeMonitoring: SessionMonitoring {
     func setIgnoredSources(_ ids: Set<String>) { ignored = ids }
     func setAsleep(_ asleep: Bool) { self.asleep.append(asleep) }
     func holdResumes(_ held: Bool) { resumesHeld.append(held) }
+    private(set) var keptMutesShown: [Bool] = []
+    func setKeptMuteShown(_ shown: Bool) { keptMutesShown.append(shown) }
     private(set) var resumeRetries = 0
     func retryResume() { resumeRetries += 1 }
     private(set) var pauseRetries = 0

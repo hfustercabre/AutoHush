@@ -83,6 +83,9 @@ actor PlaybackArbiter: PlaybackArbiting {
     private var sleepChange = 0
     /// While held, nothing paused by us is resumed (see `holdResumes`).
     var resumesHeld: Bool
+    /// Whether a mute kept with no app playing is shown, with Unmute
+    /// (see `setKeptMuteShown`): not for a player that isn't chosen.
+    var keptMuteShown = true
     var playerState: PlayerState = .unknown
     /// How many states the player's observer reported (`handlePlayerStateChange`).
     private(set) var playerReports = 0
