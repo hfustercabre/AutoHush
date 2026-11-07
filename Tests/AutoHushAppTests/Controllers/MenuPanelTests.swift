@@ -39,15 +39,21 @@ struct MenuPanelTests {
         let after = KeyRecorder()
         panel.nextResponder = after // what AppKit would hand the key on to, and beep at its end
         panel.onKey = { _ in false }
+        var cancelled = 0
+        panel.onCancel = { cancelled += 1 }
         panel.keyDown(with: Self.key(0, characters: "a"))
         panel.keyDown(with: Self.key(51)) // Delete
         panel.keyDown(with: Self.key(122)) // F1
         #expect(after.keys.isEmpty)
-        // Escape reaches `cancelOperation` through AppKit's own handling: left to it.
+        // Escape is left to AppKit, which calls `cancelOperation` itself on
+        // macOS 14 and 15 and hands it on on macOS 27: either way it isn't
+        // swallowed (the old-macOS round, 2026-11-07).
         panel.keyDown(with: Self.key(53, characters: "\u{1B}"))
+        #expect(cancelled + after.keys.count == 1)
+        after.keys.removeAll()
         panel.keyDown(with: Self.key(12, flags: .command, characters: "q"))
         panel.keyDown(with: Self.key(0, flags: .control, characters: "a"))
-        #expect(after.keys == [53, 12, 0])
+        #expect(after.keys == [12, 0])
     }
 
     @Test("its key view loop is worked out again as its content changes, so Tab reaches every control it shows")

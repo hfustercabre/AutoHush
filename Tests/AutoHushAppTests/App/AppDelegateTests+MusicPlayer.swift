@@ -262,7 +262,7 @@ extension AppDelegateTests {
         let whileClosed = try await permissions(sut)
         #expect(sut.permissionCenter.chosen.controlAccess == .playerNotRunning)
         #expect(whileClosed.rows.first { $0.label == "Automation for First" } == .init(label: "Automation for First", value: "Not checked yet", mark: .neutral))
-        #expect(whileClosed.summary == "All allowed")
+        #expect(whileClosed.summary == "All allowed", "\(whileClosed.rows.map { "\($0.label): \($0.value)" })")
 
         let notAsked = Scratch()
         notAsked.running = [Players.first]

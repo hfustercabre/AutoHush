@@ -53,7 +53,7 @@ extension AppDelegate {
             playerLearned: (player as? any LearningMusicPlayer).map { $0.learningStatus.isLearned },
             reachesOtherSpaces: player?.kind == .safariWebApp ? AccessibilityWindows.isAvailable : nil,
             playerWordsRead: player?.ownWordsRead,
-            audioRecording: TCCAudioCapturePermission().status(),
+            audioRecording: permissionCenter.audioRecording(),
             notificationsOff: settingsModel.notificationsOff,
             detectionMethod: userSettings.state.detection,
             timings: userSettings.state.timings,
