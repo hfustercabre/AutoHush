@@ -82,7 +82,8 @@ final class HeldPauses {
     /// `monitoring` (its updates come with `token`) holds `bundleID`'s
     /// player paused, or, `awaitingTakeOver`, starts to take a handed-over
     /// pause over: it runs on, a mute it would keep with no app playing
-    /// lifted instead, since the menu shows only the chosen player's.
+    /// lifted instead once none plays (not heard over them), since the menu
+    /// shows only the chosen player's.
     func keep(_ monitoring: any HeldMonitoring, token: UUID, bundleID: String, awaitingTakeOver: Bool = false) {
         for replaced in held where replaced.bundleID == bundleID { replaced.monitoring.stop() }
         held.removeAll { $0.bundleID == bundleID }

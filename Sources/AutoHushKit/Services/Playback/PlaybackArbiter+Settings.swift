@@ -69,11 +69,13 @@ extension PlaybackArbiter {
     /// player held paused after the user chose another has no card to show
     /// it. Its kept mute ends then, unmuted and its pause over, as a pause
     /// cut short by switching plays the player again (D2, the user's pick,
-    /// 2026-11-07).
+    /// 2026-11-07), once no app plays: while one does, it stays muted, not
+    /// heard over it, and ends as they stop (`keepPaused`; F-2, the user:
+    /// "Yes, once no app plays").
     func setKeptMuteShown(_ shown: Bool) {
         guard !isShutDown, shown != keptMuteShown else { return }
         keptMuteShown = shown
-        if !shown, pausedByUs, mutedInstead, mute.outlastsApps { endUnshownKeptMute() }
+        if !shown, keptMuteStands { endUnshownKeptMute() }
     }
 
     /// A mute kept with nothing to show it (`keptMuteShown` false) ends:

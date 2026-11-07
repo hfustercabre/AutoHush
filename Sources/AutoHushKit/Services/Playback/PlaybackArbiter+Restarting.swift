@@ -5,7 +5,8 @@ import Foundation
 extension PlaybackArbiter {
     /// Looks, after `delay` and then every `silentRecheckInterval` while
     /// AutoHush holds its pause and other apps play (or a mute kept with
-    /// none, `pauseLookedAt`), whether the pause took
+    /// none, `pauseLookedAt`, as often as its pause can be pressed:
+    /// `nextLookDelay`), whether the pause took
     /// and stays (or, muted, whether it can be paused now). The monitor also
     /// tells the moment the player is heard again (`handlePlayerHeard`); this
     /// is for what it can't tell: a sound that never stopped (a pause that
@@ -47,7 +48,7 @@ extension PlaybackArbiter {
             letUserHaveIt()
         }
         // Watched while its sound is measured: not once AntiDot mode is on.
-        if pausedByUs, pauseLookedAt, restartWatch == nil, tapsAllowed() { watchRestart(after: Self.silentRecheckInterval) }
+        if pausedByUs, pauseLookedAt, restartWatch == nil, tapsAllowed() { watchRestart(after: nextLookDelay) }
     }
 
     /// The monitor heard the player again while other apps play: looked at

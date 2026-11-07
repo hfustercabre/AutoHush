@@ -265,10 +265,10 @@ The details follow.
 - **A player that refused its pause stays muted** rather than playing out
   loud after you unplug headphones (Pause on disconnect), with Resume
   playback off, or once the apps stop: the card says "Muted" with Unmute
-  (also after you turn Auto-Pause off), AutoHush keeps trying to pause it
-  for real, and once it pauses, it's unmuted and stays paused. Pausing,
-  stopping or quitting it yourself ends it too. A player you switched away
-  from in that state is unmuted, as any pause cut short by switching.
+  (also after you turn Auto-Pause off), AutoHush keeps pressing its pause,
+  and once it pauses, it's unmuted and stays paused. Pausing, stopping or
+  quitting it yourself ends it too. A player you switched away from in that
+  state is unmuted once no app plays, as any pause cut short by switching.
 - **Check Again…** (in Settings → Fine-Tuning and in the alert after a
   failed pause) opens Add an App on your player, even while it shows
   another app; another app's unused result is kept.

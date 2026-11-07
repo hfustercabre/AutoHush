@@ -93,12 +93,16 @@ extension PlaybackArbiter {
         // any mute in place of a pause: lifting it would play the music out
         // loud (the user, 2026-11-02). Shown as muted, with Unmute, until
         // the user pauses or plays it themselves (K1-2, the user, 2026-11-07).
-        // Still muted once the real pause answers: the menu's Unmute during
-        // that wait ended the mute, and marking it then would keep every
-        // later pause from being resumed.
+        // Still the same mute once the real pause answers: the menu's Unmute
+        // during that wait ended the mute, and marking it then would keep
+        // every later pause from being resumed; a new app's refused pause
+        // may have muted it again since, a pause of its own (F-4).
+        let muted = mute.generation
         if mutedInstead, await pauseForReal(uncovered: false) != nil, mutedInstead {
-            // Nothing to show it with (a player not chosen): unmuted (D2).
-            guard keptMuteShown else {
+            guard mute.generation == muted else { return }
+            // Nothing to show it with (a player not chosen): unmuted once no
+            // app plays; until then, kept muted, not heard over them (D2, F-2).
+            guard keptMuteShown || !activeSources.isEmpty else {
                 endUnshownKeptMute()
                 return
             }

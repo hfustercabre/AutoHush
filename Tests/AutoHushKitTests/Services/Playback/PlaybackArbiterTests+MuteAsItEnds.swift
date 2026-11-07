@@ -316,11 +316,11 @@ extension PlaybackArbiterTests {
                                                quietAppPlaysAgain: { listens.withLock { $0 += 1; return $0 == 1 } },
                                                scheduler: scheduler)
         await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
-        hearing.now = .unknown // the looks press nothing: only the real pauses are counted
+        hearing.now = .unknown // measured no more once no app plays
         await arbiter.sourceChanged("org.example.viewer", playing: false)
         let wait = await arbiter.startConfirmation + PlaybackArbiter.takeOverMargin
         await TestWait.until { scheduler.scheduledDelays.contains(wait) } // the resume waits
-        let pauses = await player.pauseCallCount
+        let pauses = await player.pauseCallCount - player.quietPauses // the real ones: not the looks' quiet presses
         await arbiter.handleOutputDisconnected()
         for _ in 0..<4 { await scheduler.completeNext() } // the looks', and the resume's, waits over
         await arbiter.waitUntilIdle()
@@ -328,6 +328,6 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.pausedByUs)
         #expect(await player.playCallCount == 0)
         #expect(listens.value == 1) // the resume never looked again
-        #expect(await player.pauseCallCount == pauses + 1) // its real pause tried once, as the output went: no resume came to try it again
+        #expect(await player.pauseCallCount - player.quietPauses == pauses + 1) // its real pause tried once, as the output went: no resume came to try it again
     }
 }

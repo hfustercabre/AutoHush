@@ -174,6 +174,15 @@ package actor MockMusicPlayer: MusicPlayer {
         try await pause()
     }
 
+    /// Pauses pressed by a way that shows nothing (`pauseQuietly`), counted
+    /// in `pauseCallCount` too.
+    package var quietPauses = 0
+
+    package func pauseQuietly() async throws {
+        quietPauses += 1
+        try await pause()
+    }
+
     package func pause() async throws {
         pauseCallCount += 1
         commandLog.append("pause")
