@@ -107,6 +107,10 @@ package actor MockMusicPlayer: MusicPlayer {
     /// Runs inside every play, after it's counted and before it answers.
     package var beforePlay: (@Sendable () async -> Void)?
     package func setBeforePlay(_ hook: (@Sendable () async -> Void)?) { beforePlay = hook }
+    /// Runs as `pause()` is called, before it answers (something happening
+    /// meanwhile, as the user's Unmute).
+    package var beforePause: (@Sendable () async -> Void)?
+    package func setBeforePause(_ hook: (@Sendable () async -> Void)?) { beforePause = hook }
     package func setBeforeVerify(_ hook: (@Sendable () async -> Void)?) { beforeVerify = hook }
 
     /// The player's volume; `nil` (the default) means it has none, so no fades.
@@ -173,6 +177,7 @@ package actor MockMusicPlayer: MusicPlayer {
     package func pause() async throws {
         pauseCallCount += 1
         commandLog.append("pause")
+        if let beforePause { await beforePause() }
         if let error = failPauseWith { throw error }
         guard ignoredPresses == 0 else { ignoredPresses -= 1; return }
         state = .paused

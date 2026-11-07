@@ -187,4 +187,24 @@ extension PlaybackArbiterTests {
         #expect(published.state != .pausedByMonitor) // the hold ends
         #expect(await player.playCallCount == 0) // it plays already
     }
+
+    @Test("Unmute pressed while a kept pause's real pause is tried leaves no kept mute behind, which would keep later pauses from being resumed")
+    func unmuteDuringKeptPauseLeavesNoFlag() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler()
+        var configuration = AppConfiguration.testing
+        configuration.resumesPlayback = false
+        let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published,
+                                               configuration: configuration, scheduler: scheduler)
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        // The menu's Unmute lands while the kept pause tries the real one.
+        await player.setBeforePause { await arbiter.unmuteInstead() }
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await arbiter.waitUntilIdle()
+        await player.setBeforePause(nil)
+        #expect(await !arbiter.mute.outlastsApps)
+        // The flag would keep every later pause from being resumed
+        // (`resumeIfStillPending` keeps a pause it marks).
+        #expect(await !arbiter.pausedByUs)
+    }
 }

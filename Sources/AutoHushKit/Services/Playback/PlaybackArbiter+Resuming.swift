@@ -93,7 +93,10 @@ extension PlaybackArbiter {
         // any mute in place of a pause: lifting it would play the music out
         // loud (the user, 2026-11-02). Shown as muted, with Unmute, until
         // the user pauses or plays it themselves (K1-2, the user, 2026-11-07).
-        if mutedInstead, await pauseForReal(uncovered: false) != nil {
+        // Still muted once the real pause answers: the menu's Unmute during
+        // that wait ended the mute, and marking it then would keep every
+        // later pause from being resumed.
+        if mutedInstead, await pauseForReal(uncovered: false) != nil, mutedInstead {
             // Nothing to show it with (a player not chosen): unmuted (D2).
             guard keptMuteShown else {
                 endUnshownKeptMute()
