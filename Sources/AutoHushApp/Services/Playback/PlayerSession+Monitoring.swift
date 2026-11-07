@@ -76,7 +76,11 @@ extension PlayerSession {
             monitoring?.setIgnoredSources(settings.ignored)
             heldPauses.setIgnoredSources(settings.ignored)
         }
-        if settings.timings != old.timings { monitoring?.setConfiguration(configuration(for: player)) }
+        if settings.timings != old.timings {
+            monitoring?.setConfiguration(configuration(for: player))
+            // Not `configuration(for:)`: a held player is open, so never at the idle rate.
+            heldPauses.setConfiguration(AppConfiguration(timings: settings.timings))
+        }
         if settings.detection != old.detection {
             monitoring?.setDetectionMethod(settings.detection)
             heldPauses.setDetectionMethod(settings.detection)

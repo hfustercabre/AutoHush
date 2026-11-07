@@ -8,7 +8,7 @@ extension PlayerSessionTests {
     // MARK: - Settings and sleep
 
     @MainActor
-    @Test("settings reach the chosen player's monitoring and the held pauses, which follow all but the timings")
+    @Test("settings reach the chosen player's monitoring and the held pauses, the timings and switches too (K1-7)")
     func settingsReachMonitorings() async {
         let bench = Bench()
         let session = await bench.holdingFirst()
@@ -19,18 +19,21 @@ extension PlayerSessionTests {
         #expect(current.autoPause == false && held.autoPause == false)
         session.settings.ignored = [Self.viewer.id]
         #expect(current.ignored == [Self.viewer.id] && held.ignored == [Self.viewer.id])
-        session.settings.timings = TimingSettings(stopGrace: 4)
+        session.settings.timings = TimingSettings(stopGrace: 4, resumesPlayback: false)
         #expect(current.configurations.map(\.musicPlayerBundleID) == [Players.second])
         #expect(current.configurations.first?.sourceStopGrace == 4)
+        // A held pause follows them, Resume playback turned off included, for its own player.
+        #expect(held.configurations.map(\.musicPlayerBundleID) == [Players.first])
+        #expect(held.configurations.first?.resumesPlayback == false && held.configurations.first?.sourceStopGrace == 4)
         session.settings.detection = .playbackSignals
         #expect(current.detectionMethods == [.playbackSignals])
         // AntiDot mode leaves no audio taps behind in a held pause.
         #expect(held.detectionMethods == [.playbackSignals])
-        #expect(held.configurations.isEmpty)
 
         let unchanged = session.settings
         session.settings = unchanged // nothing changed: nothing sent
         #expect(current.configurations.count == 1 && current.detectionMethods.count == 1)
+        #expect(held.configurations.count == 1)
     }
 
     @MainActor

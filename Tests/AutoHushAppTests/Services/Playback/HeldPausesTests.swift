@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import AutoHushKit
+@testable import AutoHushKit
 import AutoHushTestSupport
 @testable import AutoHushApp
 
@@ -162,6 +162,24 @@ struct HeldPausesTests {
         let second = FakeMonitoring()
         held.keep(second, token: UUID(), bundleID: "org.example.viewer")
         #expect(first.stops == 1 && held.bundleIDs == ["org.example.viewer"])
+    }
+
+    @Test("later timings and switches reach held monitoring, each for its own player: Resume playback turned off meanwhile keeps its pause (K1-7)")
+    func configurationFollows() {
+        let held = HeldPauses()
+        let viewer = FakeMonitoring()
+        let library = FakeMonitoring()
+        held.keep(viewer, token: UUID(), bundleID: "org.example.viewer")
+        held.keep(library, token: UUID(), bundleID: "com.example.library")
+        var configuration = AppConfiguration(timings: TimingSettings(resumesPlayback: false))
+        configuration.musicPlayerBundleID = "com.example.chosen"
+        held.setConfiguration(configuration)
+
+        #expect(viewer.configurations.map(\.resumesPlayback) == [false])
+        #expect(library.configurations.map(\.resumesPlayback) == [false])
+        // Its own player's audio still never counts as another app playing.
+        #expect(viewer.configurations.map(\.musicPlayerBundleID) == ["org.example.viewer"])
+        #expect(library.configurations.map(\.musicPlayerBundleID) == ["com.example.library"])
     }
 
     @Test("sleep forgets them all; quitting stops each with its volume back")

@@ -13,6 +13,7 @@ protocol HeldMonitoring: AnyObject {
     func setAutoPauseEnabled(_ enabled: Bool)
     func setIgnoredSources(_ ids: Set<String>)
     func setDetectionMethod(_ method: DetectionMethod)
+    func setConfiguration(_ configuration: AppConfiguration)
     /// See `PlaybackArbiter.holdResumes`.
     func holdResumes(_ held: Bool)
 }
@@ -133,12 +134,24 @@ final class HeldPauses {
     /// The settings a held pause follows, as the chosen player's monitoring
     /// does: Auto-Pause off, or the playing app ignored, ends it at once. One
     /// whose pause is ending keeps Auto-Pause off (`end`). The detection
-    /// method too, so AntiDot mode leaves no audio taps behind.
+    /// method too, so AntiDot mode leaves no audio taps behind. And the
+    /// timings and switches (Resume playback, Stay paused after calls, Pause
+    /// for VoiceOver, the fades), so a held pause ends as the user set
+    /// meanwhile (K1-7, 2026-11-06).
     func setAutoPauseEnabled(_ enabled: Bool) {
         held.filter { !$0.isEnding }.forEach { $0.monitoring.setAutoPauseEnabled(enabled) }
     }
     func setIgnoredSources(_ ids: Set<String>) { held.forEach { $0.monitoring.setIgnoredSources(ids) } }
     func setDetectionMethod(_ method: DetectionMethod) { held.forEach { $0.monitoring.setDetectionMethod(method) } }
+    /// `configuration`, each for its own player, whose audio never counts as
+    /// another app playing.
+    func setConfiguration(_ configuration: AppConfiguration) {
+        for each in held {
+            var own = configuration
+            own.musicPlayerBundleID = each.bundleID
+            each.monitoring.setConfiguration(own)
+        }
+    }
     /// Held, each keeps its player paused, as the chosen player's
     /// monitoring does (`PlayerSession.holdResumes`).
     func holdResumes(_ held: Bool) { self.held.forEach { $0.monitoring.holdResumes(held) } }
