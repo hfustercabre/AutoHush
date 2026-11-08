@@ -36903,6 +36903,233 @@
         }
       }
     },
+    "AutoHush can’t find that app. It may have been moved or deleted." : {
+      "comment" : "The window that lists the apps Add an App can check, opened by Check Again… for an app added earlier that is no longer where it was",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن لـ AutoHush العثور على هذا التطبيق. ربما تم نقله أو حذفه."
+          }
+        },
+        "ca" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "L’AutoHush no troba aquesta app. Potser s’ha mogut o eliminat."
+          }
+        },
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tuto aplikaci nemůže najít. Možná byla přesunuta nebo smazána."
+          }
+        },
+        "da" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kan ikke finde den app. Den er måske flyttet eller slettet."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush findet diese App nicht. Sie wurde vielleicht bewegt oder gelöscht."
+          }
+        },
+        "el" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Το AutoHush δεν μπορεί να βρει αυτή την εφαρμογή. Ίσως μετακινήθηκε ή διαγράφηκε."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush no encuentra esa app. Puede que se haya movido o eliminado."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush no encuentra esa app. Puede que se haya movido o eliminado."
+          }
+        },
+        "fi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ei löydä tätä appia. Se on ehkä siirretty tai poistettu."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ne trouve pas cette app. Elle a peut-être été déplacée ou supprimée."
+          }
+        },
+        "fr-CA" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ne trouve pas cette app. Elle a peut-être été déplacée ou supprimée."
+          }
+        },
+        "he" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush לא מוצא את האפליקציה הזו. ייתכן שהיא הועברה או נמחקה."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush उस ऐप को ढूँढ नहीं पा रहा। हो सकता है वह ले जाया गया या डिलीट किया गया हो।"
+          }
+        },
+        "hr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ne može pronaći tu aplikaciju. Možda je premještena ili izbrisana."
+          }
+        },
+        "hu" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Az AutoHush nem találja ezt az appot. Lehet, hogy áthelyezték vagy törölték."
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tidak dapat menemukan app itu. Mungkin app telah dipindahkan atau dihapus."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush non trova quest’app. Potrebbe essere stata spostata o eliminata."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHushはそのAppを見つけられません。移動または削除された可能性があります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush가 해당 앱을 찾을 수 없습니다. 이동되었거나 삭제되었을 수 있습니다."
+          }
+        },
+        "ms" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush tidak dapat menemui app itu. Ia mungkin telah dialihkan atau dipadam."
+          }
+        },
+        "nb" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush finner ikke den appen. Den kan ha blitt flyttet eller slettet."
+          }
+        },
+        "nl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush kan die app niet vinden. Misschien is hij verplaatst of verwijderd."
+          }
+        },
+        "pl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nie może znaleźć tej aplikacji. Mogła zostać przeniesiona lub usunięta."
+          }
+        },
+        "pt" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush não encontra esse app. Ele pode ter sido movido ou apagado."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O AutoHush não encontra essa app. Pode ter sido movida ou apagada."
+          }
+        },
+        "ro" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nu găsește această aplicație. Poate a fost mutată sau ștearsă."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush не может найти это приложение. Возможно, оно перемещено или удалено."
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush nemôže nájsť túto apku. Možno bola presunutá alebo vymazaná."
+          }
+        },
+        "sl" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ne najde te aplikacije. Morda je bila premaknjena ali izbrisana."
+          }
+        },
+        "sv" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush hittar inte den appen. Den kan ha flyttats eller raderats."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush ไม่พบแอปนั้น อาจถูกย้ายหรือลบไปแล้ว"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush bu uygulamayı bulamıyor. Taşınmış veya silinmiş olabilir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush не може знайти цю програму. Можливо, її переміщено або видалено."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush không tìm thấy ứng dụng đó. Có thể ứng dụng đã bị di chuyển hoặc xóa."
+          }
+        },
+        "zh-HK" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 找不到該 App，可能已被移動或刪除。"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 找不到该 App，可能已被移动或删除。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AutoHush 找不到該 App，可能已被移動或刪除。"
+          }
+        }
+      }
+    },
     "AutoHush can’t hear %@ yet. Play something, then click It’s Playing again." : {
       "comment" : "Under the step “Play something in %@” after “It’s Playing” was clicked while the web app was silent; %@ is the web app",
       "localizations" : {

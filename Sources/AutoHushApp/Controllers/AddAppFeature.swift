@@ -60,7 +60,7 @@ final class AddAppFeature {
     /// or a result kept).
     func open(on url: URL) {
         open()
-        if model?.stage == .choosing { model?.chooseOther(at: url) }
+        model?.chooseOrListWhy(at: url) // only from the first step
     }
 
     /// The window on the app at `url`, for Check Again… (Fine-Tuning's and

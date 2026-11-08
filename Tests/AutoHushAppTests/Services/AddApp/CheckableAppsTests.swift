@@ -95,7 +95,7 @@ struct CheckableAppsTests {
     }
 
     @MainActor
-    @Test("Other App…: an app is named as the list names it; not an app, AutoHush or a supported player can't be checked")
+    @Test("Other App…: an app is named as the list names it; not an app, AutoHush, a supported player or nothing there can't be checked")
     func otherApp() throws {
         let scratch = TemporaryFolder("CheckableAppsTests")
         let folder = scratch.url
@@ -107,6 +107,7 @@ struct CheckableAppsTests {
         #expect(AppReader.checkableApp(at: streamer, supported: supported) == .failure(.supported("Streamer")))
         #expect(AppReader.checkableApp(at: autoHush, supported: supported) == .failure(.autoHush))
         #expect(AppReader.checkableApp(at: folder, supported: supported) == .failure(.notAnApp))
+        #expect(AppReader.checkableApp(at: folder.appending(path: "Moved.app"), supported: supported) == .failure(.notFound))
         withExtendedLifetime(scratch) {}
     }
 }

@@ -13,6 +13,12 @@ This project follows [Semantic Versioning](https://semver.org/).
   have, since its title names the new one, and no longer explains what a
   release candidate is.
 
+### Fixed
+
+- **Check Again… on an app moved or deleted since it was added** opens the
+  list of apps and says AutoHush can’t find it, instead of seeming to do
+  nothing.
+
 ---
 
 ## [1.3.0] — 2026-11-07

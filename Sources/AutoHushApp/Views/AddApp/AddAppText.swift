@@ -74,6 +74,9 @@ enum AddAppText {
         switch problem {
         case .notAnApp:
             String(localized: "That isn’t an app AutoHush can check.", comment: "The window that lists the apps Add an App can check, after Other App… picked something else than an app")
+        case .notFound:
+            String(localized: "AutoHush can’t find that app. It may have been moved or deleted.",
+                   comment: "The window that lists the apps Add an App can check, opened by Check Again… for an app added earlier that is no longer where it was")
         case .supported(let name):
             String(localized: "AutoHush supports \(name) already: choose it among the media players.",
                    comment: "The window that lists the apps Add an App can check, after Other App… picked a supported player; %@ is it")

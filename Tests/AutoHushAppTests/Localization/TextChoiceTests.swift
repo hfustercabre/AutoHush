@@ -67,6 +67,7 @@ struct TextChoiceTests {
             case .otherAppProblem:
                 return [
                     Row("not an app", AddAppText.otherAppProblem(.notAnApp)),
+                    Row("not found", AddAppText.otherAppProblem(.notFound)),
                     Row("supported", AddAppText.otherAppProblem(.supported(app)), namesApp: true),
                     Row("AutoHush", AddAppText.otherAppProblem(.autoHush)),
                 ]

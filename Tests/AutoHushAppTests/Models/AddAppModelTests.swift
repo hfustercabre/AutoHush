@@ -124,6 +124,19 @@ struct AddAppModelTests {
         #expect(world.kept.load(now: world.now)?.app.bundleID == "com.example.player") // still kept, as for another app
     }
 
+    @Test("Check Again… on an app moved or deleted since, from the first step with its list closed, opens the list with why (N1)")
+    func checkAgainOnMovedAppFromFirstStep() async {
+        let moved = URL(filePath: "/Applications/Moved.app")
+        for fromAlert in [false, true] { // Fine-Tuning's, or the alert's after the menu's card
+            let world = World()
+            let model = await AddAppModel.opened(on: world)
+            #expect(world.choosers == 0)
+            if fromAlert { model.chooseOrListWhy(at: moved) } else { model.startOver(onAppAt: moved) }
+            #expect(model.stage == .choosing && model.chosen == nil && model.otherAppProblem == .notFound)
+            #expect(world.choosers == 1)
+        }
+    }
+
     @Test("another app selected in the list drops Other App…'s warning, which was about the app picked on the disk")
     func selectionDropsOtherAppWarning() async {
         let world = World()

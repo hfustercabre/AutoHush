@@ -95,6 +95,7 @@ extension World: AppReading {
 
     func app(at url: URL) -> Result<CheckableApp, OtherAppProblem> {
         url.lastPathComponent == "AutoHush.app" ? .failure(.autoHush)
+            : url.lastPathComponent == "Moved.app" ? .failure(.notFound)
             : .success(CheckableApp(bundleID: "com.example.picked", name: "Picked", url: url))
     }
 

@@ -74,6 +74,7 @@ struct AppReader: AppReading {
     /// An app picked on the disk (Other App…), named as the list names it,
     /// unless AutoHush supports it already (`supported`) or it's AutoHush.
     static func checkableApp(at url: URL, supported: [PlayerOption]) -> Result<CheckableApp, OtherAppProblem> {
+        guard FileManager.default.fileExists(atPath: url.path) else { return .failure(.notFound) }
         guard let app = CheckableApp.at(url) else { return .failure(.notAnApp) }
         if CheckableApps.isAutoHush(app.bundleID) { return .failure(.autoHush) }
         if let player = supported.first(where: { $0.bundleID == app.bundleID }) { return .failure(.supported(player.name)) }

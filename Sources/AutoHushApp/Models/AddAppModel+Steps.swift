@@ -85,12 +85,13 @@ extension AddAppModel {
     /// can't be stopped from there. Another app's result stays kept, as a
     /// closed window keeps it: only Change… forgets it, after asking. An
     /// app it can't read (moved or deleted since) starts over too, at the
-    /// first step, its list open with why, as Other App… says it (F-7, the
-    /// code check of 2026-11-07).
+    /// first step, its list open with why (F-7, the code check of
+    /// 2026-11-07), also from the first step with the list closed (N1,
+    /// 2026-11-08).
     func startOver(onAppAt url: URL) {
         switch stage {
         case .choosing:
-            chooseOther(at: url)
+            chooseOrListWhy(at: url)
         case .checking:
             return
         default:
@@ -98,13 +99,22 @@ extension AddAppModel {
             if case .success(let app) = read, app.bundleID == chosen?.bundleID { return }
             presenter?.closeWarning() // its Start was for the app before
             resetSteps()
-            switch read {
-            case .success(let app): choose(app)
-            case .failure(let problem):
-                search = ""
-                presenter?.showChooser()
-                otherAppProblem = problem // once its list is open, so VoiceOver hears it too
-            }
+            chooseOrListWhy(at: url, read: read)
+        }
+    }
+
+    /// Check Again…'s app (Fine-Tuning's, or the alert's after the menu's
+    /// card), from the first step: chosen and on to its check, or the list
+    /// opened with why it can't be, so it's seen even when the list was
+    /// closed (F-7's note, N1, the user's pick of 2026-11-08).
+    func chooseOrListWhy(at url: URL, read: Result<CheckableApp, OtherAppProblem>? = nil) {
+        guard stage == .choosing else { return }
+        switch read ?? reader.app(at: url) {
+        case .success(let app): choose(app)
+        case .failure(let problem):
+            search = ""
+            presenter?.showChooser()
+            otherAppProblem = problem // once its list is open, so VoiceOver hears it too
         }
     }
 
