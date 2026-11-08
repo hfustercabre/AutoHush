@@ -62,12 +62,15 @@ extension AddAppModel {
     }
 
     /// Chooses `app` (from the list, or picked on the disk) and goes on.
-    func choose(_ app: CheckableApp) {
+    /// `onDisk`: picked on the disk (Other App…, Check Again…, AutoHush
+    /// reopened for it), so kept listed when the apps are read after it,
+    /// even if the list held it already: it may be the last opening's (the
+    /// 1.3.2 review's C-1). So is a pick from that list while the apps are
+    /// read again (its diff review's R-1).
+    func choose(_ app: CheckableApp, onDisk: Bool = false) {
         guard stage == .choosing else { return }
-        if !apps.contains(where: { $0.id == app.id }) {
-            apps.append(app)
-            pickedOnDisk = app
-        }
+        if !apps.contains(where: { $0.id == app.id }) { apps.append(app) }
+        if onDisk || isLoadingApps { pickedOnDisk = app }
         selectedID = app.id
         otherAppProblem = nil
         presenter?.closeChooser()
@@ -77,7 +80,7 @@ extension AddAppModel {
     /// Other App…'s pick: chosen, or why it can't be.
     func chooseOther(at url: URL) {
         switch reader.app(at: url) {
-        case .success(let app): choose(app)
+        case .success(let app): choose(app, onDisk: true)
         case .failure(let problem): showOtherAppProblem(problem)
         }
     }
@@ -123,7 +126,7 @@ extension AddAppModel {
     func chooseOrListWhy(at url: URL, read: Result<CheckableApp, OtherAppProblem>? = nil) {
         guard stage == .choosing else { return }
         switch read ?? reader.app(at: url) {
-        case .success(let app): choose(app)
+        case .success(let app): choose(app, onDisk: true)
         case .failure(let problem):
             search = ""
             presenter?.showChooser()
@@ -149,10 +152,11 @@ extension AddAppModel {
     func loadApps() async {
         isLoadingApps = true
         apps = await reader.listApps()
-        // An app picked on the disk stays listed, and so selected, while it's
-        // there: AutoHush reopened for it reads the apps after choosing it,
-        // and an open that fails comes back to this list (the 2026-11-08
-        // diff review's finding 1).
+        // An app picked on the disk (Other App…, Check Again…, AutoHush
+        // reopened for it) stays listed, and so selected, while it's there,
+        // also when the last opening's list held it: the apps are read after
+        // it's chosen, and an open that fails comes back to this list (the
+        // 2026-11-08 diff review's finding 1, the 1.3.2 review's C-1).
         if let picked = pickedOnDisk, !apps.contains(where: { $0.id == picked.id }), reader.appExists(at: picked.url) {
             apps.append(picked)
         }

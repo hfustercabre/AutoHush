@@ -72,9 +72,11 @@ final class AddAppModel {
     /// again when the same one comes twice (the 1.3.1 review's WA-2).
     var otherAppProblemShown = 0
     /// The app picked on the disk since the window opened or started over
-    /// (Other App…, or AutoHush reopened for it), which the apps read aren't
-    /// sure to list: kept in the list while it's there (the 2026-11-08 diff
-    /// review's finding 1); forgotten at the next opening (finding 2).
+    /// (Other App…, Check Again…, or AutoHush reopened for it), which the
+    /// apps read aren't sure to list, though the last opening's list may
+    /// hold it: kept in the list while it's there (the 2026-11-08 diff
+    /// review's finding 1, the 1.3.2 review's C-1); forgotten at the next
+    /// opening (finding 2).
     var pickedOnDisk: CheckableApp?
     /// The check found Accessibility missing after all (`CheckExitStatus.permissionMissing`).
     var permissionMissingInCheck = false

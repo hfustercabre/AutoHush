@@ -162,7 +162,7 @@ struct AddAppModelTests {
     }
 
     @Test("an app picked on the disk stays listed and selected when the apps are read after it, an open that failed coming back to the list (the diff review's finding 1)")
-    func pickOnDiskOutlastsAppsBeingRead() async {
+    func pickOnDiskOutlastsAppsBeingRead() async throws {
         let world = World()
         world.running = false
         world.opens = false
@@ -177,6 +177,29 @@ struct AddAppModelTests {
         world.exists = false
         await model.loadApps()
         #expect(!model.apps.contains { $0.id == "com.example.picked" })
+        // Picked again in a later opening, whose list still holds it from the
+        // last one (Check Again…): kept when the apps are read (the 1.3.2
+        // review's C-1).
+        world.exists = true
+        model.reset()
+        model.chooseOther(at: URL(filePath: "/Applications/Picked.app"))
+        await model.loadApps()
+        model.reset() // closed and opened again by Check Again…: its old list kept until read
+        #expect(model.apps.contains { $0.id == "com.example.picked" })
+        model.startOver(onAppAt: URL(filePath: "/Applications/Picked.app"))
+        await TestWait.until { model.openFailed }
+        await model.loadApps()
+        #expect(model.selectedID == "com.example.picked" && model.apps.contains { $0.id == "com.example.picked" })
+
+        // Picked from the last opening's list while the apps are read again
+        // (the 1.3.2 diff review's R-1).
+        model.reset()
+        model.isLoadingApps = true
+        model.choose(try #require(model.apps.first { $0.id == "com.example.picked" }))
+        await TestWait.until { model.openFailed }
+        await model.loadApps()
+        #expect(model.selectedID == "com.example.picked" && model.apps.contains { $0.id == "com.example.picked" })
+
         // There again, but the window opened again: only the apps read.
         world.exists = true
         model.reset()
