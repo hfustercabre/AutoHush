@@ -103,10 +103,12 @@ extension AddAppModel {
         }
     }
 
-    /// Check Again…'s app (Fine-Tuning's, or the alert's after the menu's
-    /// card), from the first step: chosen and on to its check, or the list
-    /// opened with why it can't be, so it's seen even when the list was
-    /// closed (F-7's note, N1, the user's pick of 2026-11-08).
+    /// Check Again…'s app (Fine-Tuning's or the failed-pause alert's, through
+    /// `startOver`), or the app AutoHush reopened for after Audio Recording
+    /// (`AddAppFeature.open(on:)`), from the first step: chosen and on to
+    /// its check, or the list opened with why it can't be, so it's seen
+    /// even when the list was closed (F-7's note, N1, the user's pick of
+    /// 2026-11-08).
     func chooseOrListWhy(at url: URL, read: Result<CheckableApp, OtherAppProblem>? = nil) {
         guard stage == .choosing else { return }
         switch read ?? reader.app(at: url) {
@@ -138,7 +140,12 @@ extension AddAppModel {
         apps = await reader.listApps()
         isLoadingApps = false
         if !apps.contains(where: { $0.id == selectedID }) {
+            // This pick isn't the user's, so a note set while the apps were
+            // read (Check Again…'s, the window just opened) stays (the 1.3.1
+            // review's N-1).
+            let problem = otherAppProblem
             selectedID = (apps.first { $0.nowPlaying == true } ?? (apps.count(where: { $0.nowPlaying != nil }) == 1 ? apps.first : nil))?.id
+            otherAppProblem = problem
         }
     }
 

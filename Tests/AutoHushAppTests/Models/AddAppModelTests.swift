@@ -127,14 +127,27 @@ struct AddAppModelTests {
     @Test("Check Again… on an app moved or deleted since, from the first step with its list closed, opens the list with why (N1)")
     func checkAgainOnMovedAppFromFirstStep() async {
         let moved = URL(filePath: "/Applications/Moved.app")
-        for fromAlert in [false, true] { // Fine-Tuning's, or the alert's after the menu's card
+        for fromRelaunch in [false, true] { // Check Again…, or AutoHush reopened for it after Audio Recording
             let world = World()
             let model = await AddAppModel.opened(on: world)
             #expect(world.choosers == 0)
-            if fromAlert { model.chooseOrListWhy(at: moved) } else { model.startOver(onAppAt: moved) }
+            if fromRelaunch { model.chooseOrListWhy(at: moved) } else { model.startOver(onAppAt: moved) }
             #expect(model.stage == .choosing && model.chosen == nil && model.otherAppProblem == .notFound)
             #expect(world.choosers == 1)
         }
+    }
+
+    @Test("the note stays when the apps, read as the window opens, are read after it and an app is picked for being in Now Playing (the 1.3.1 review's N-1)")
+    func noteOutlastsAppsBeingRead() async {
+        let world = World() // its first app is in Now Playing
+        let model = AddAppModel(world)
+        model.reset() // the window opened: its apps read later
+        #expect(model.selectedID == nil)
+        model.startOver(onAppAt: URL(filePath: "/Applications/Moved.app"))
+        await model.loadApps()
+        #expect(model.selectedID == world.apps[0].id && model.otherAppProblem == .notFound)
+        model.selectedID = world.apps[1].id // the user's pick still drops it
+        #expect(model.otherAppProblem == nil)
     }
 
     @Test("another app selected in the list drops Other App…'s warning, which was about the app picked on the disk")
