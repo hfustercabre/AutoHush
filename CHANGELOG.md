@@ -5,6 +5,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Shorter update texts:** the update window says only the version you
+  have, since its title names the new one, and no longer explains what a
+  release candidate is.
+
+---
+
 ## [1.3.0] — 2026-11-07
 
 ### Highlights

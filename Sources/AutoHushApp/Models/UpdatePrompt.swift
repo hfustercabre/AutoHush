@@ -30,7 +30,7 @@ struct UpdatePrompt: Equatable {
         // from one (Get release candidates turned off) says why (WA6, R1, the
         // user's pick, 2026-10-31), by hand too (S2, the user's pick,
         // 2026-11-01).
-        let offer = Offer(current: current, new: new, isBack: release.version < running,
+        let offer = Offer(current: current, isBack: release.version < running,
                           isCandidate: release.version.isReleaseCandidate)
         guard canInstall else {
             title = String(localized: "AutoHush \(new) Is Available", comment: "Alert title; %@ is the new version number")
@@ -54,51 +54,44 @@ struct UpdatePrompt: Equatable {
                 later, openPage,
             ]
         }
-        message = offer.installing(isDownloaded: isDownloaded)
+        message = offer.installing()
     }
 
-    /// What's offered, said for each way it's installed.
+    /// What's offered, said for each way it's installed. The title names
+    /// the new version, so the text names only the one running (U3, the
+    /// user's pick of 2026-11-08: shorter texts).
     private struct Offer {
         let current: String
-        let new: String
         /// The latest release offered back from a release candidate.
         let isBack: Bool
         let isCandidate: Bool
 
-        func installing(isDownloaded: Bool) -> String {
+        func installing() -> String {
             if isBack {
-                return String(localized: "Version \(current) is a release candidate, and Get release candidates is off. Installing the latest release restarts AutoHush.",
+                return String(localized: "You have release candidate \(current), and Get release candidates is off. Installing this release restarts AutoHush.",
                               comment: "Update popup, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version")
             }
-            switch (isCandidate, isDownloaded) {
-            case (true, true):
-                return String(localized: "You’re running version \(current), and version \(new) is downloaded. It’s a release candidate, a test version of the next release. Installing it restarts AutoHush.",
-                              comment: "Update popup for a release candidate, a test version of the next release; the first %@ is the installed version, the second the downloaded one")
-            case (true, false):
-                return String(localized: "You’re running version \(current), and version \(new) is available. It’s a release candidate, a test version of the next release. Installing it restarts AutoHush.",
-                              comment: "Update popup for a release candidate, a test version of the next release; the first %@ is the installed version, the second the new one")
-            case (false, true):
-                return String(localized: "You’re running version \(current), and version \(new) is downloaded. Installing it restarts AutoHush.",
-                              comment: "Update popup; the first %@ is the installed version, the second the downloaded one")
-            case (false, false):
-                return String(localized: "You’re running version \(current), and version \(new) is available. Installing it restarts AutoHush.",
-                              comment: "Update popup; the first %@ is the installed version, the second the new one")
+            if isCandidate {
+                return String(localized: "You have version \(current). Installing this release candidate restarts AutoHush.",
+                              comment: "Update popup for a release candidate, a test version of the next release, available or downloaded (the title names it); %@ is the installed version")
             }
+            return String(localized: "You have version \(current). Installing it restarts AutoHush.",
+                          comment: "Update popup, the new version available or downloaded (the title names it); %@ is the installed version")
         }
 
         /// Where this copy can't update itself (not in a folder it can
         /// write to, or not signed with AutoHush's certificate).
         var byHand: String {
             if isBack {
-                return String(localized: "Version \(current) is a release candidate, and Get release candidates is off. Download the latest release from GitHub and replace AutoHush in your Applications folder.",
-                              comment: "Update alert where AutoHush can't update itself, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version")
+                return String(localized: "You have release candidate \(current), and Get release candidates is off. Download this release from GitHub and replace AutoHush in Applications.",
+                              comment: "Update alert where AutoHush can't update itself, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. Applications is the Applications folder")
             }
             if isCandidate {
-                return String(localized: "You have version \(current). Version \(new) is a release candidate, a test version of the next release: download it from GitHub and replace AutoHush in your Applications folder.",
-                              comment: "Update alert where AutoHush can't update itself, offering a release candidate, a test version of the next release; the first %@ is the installed version, the second the new one")
+                return String(localized: "You have version \(current). Download this release candidate from GitHub and replace AutoHush in Applications.",
+                              comment: "Update alert where AutoHush can't update itself, offering a release candidate, a test version of the next release (the title names it); %@ is the installed version. Applications is the Applications folder")
             }
-            return String(localized: "You have version \(current). Download it from GitHub and replace AutoHush in your Applications folder.",
-                          comment: "Update alert; %@ is the installed version")
+            return String(localized: "You have version \(current). Download the new one from GitHub and replace AutoHush in Applications.",
+                          comment: "Update alert where AutoHush can't update itself (the title names the new version); %@ is the installed version. Applications is the Applications folder")
         }
 
         /// Installed with Homebrew, whose tap never has a release candidate:
@@ -106,13 +99,13 @@ struct UpdatePrompt: Equatable {
         /// reinstall, since an upgrade never goes to an older version.
         var withHomebrew: String {
             if isBack {
-                return String(localized: "Version \(current) is a release candidate, and Get release candidates is off. Go back to the latest release with Homebrew:",
+                return String(localized: "You have release candidate \(current), and Get release candidates is off. Go back with Homebrew:",
                               comment: "Update alert for a copy installed with Homebrew, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. The Homebrew command follows.")
                     + "\n\nbrew reinstall --cask autohush"
             }
             if isCandidate {
-                return String(localized: "You have version \(current). Version \(new) is a release candidate, which Homebrew doesn’t offer: download it from GitHub and replace AutoHush in your Applications folder.",
-                              comment: "Update alert for a copy installed with Homebrew, offering a release candidate, a test version of the next release, which Homebrew doesn't have; the first %@ is the installed version, the second the new one")
+                return String(localized: "You have version \(current). Homebrew has no release candidates: download this one from GitHub and replace AutoHush in Applications.",
+                              comment: "Update alert for a copy installed with Homebrew, offering a release candidate, a test version of the next release, which Homebrew doesn't have; %@ is the installed version. Applications is the Applications folder")
             }
             return String(localized: "You have version \(current). Update with Homebrew:",
                           comment: "Update alert; %@ is the installed version. The Homebrew command follows.")
