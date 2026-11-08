@@ -150,6 +150,40 @@ struct AddAppModelTests {
         #expect(model.otherAppProblem == nil)
     }
 
+    @Test("the same note twice counts twice, so VoiceOver hears it again (the 1.3.1 review's WA-2)")
+    func sameNoteTwice() async {
+        let model = await AddAppModel.opened(on: World())
+        let moved = URL(filePath: "/Applications/Moved.app")
+        model.startOver(onAppAt: moved)
+        model.startOver(onAppAt: moved) // its list cancelled, Check Again… again
+        #expect(model.otherAppProblem == .notFound && model.otherAppProblemShown == 2)
+        model.chooseOther(at: URL(filePath: "/Applications/AutoHush.app"))
+        #expect(model.otherAppProblem == .autoHush && model.otherAppProblemShown == 3)
+    }
+
+    @Test("an app picked on the disk stays listed and selected when the apps are read after it, an open that failed coming back to the list (the diff review's finding 1)")
+    func pickOnDiskOutlastsAppsBeingRead() async {
+        let world = World()
+        world.running = false
+        world.opens = false
+        let model = AddAppModel(world)
+        model.reset() // AutoHush reopened for the app: the window opens, its apps read later
+        model.chooseOrListWhy(at: URL(filePath: "/Applications/Picked.app"))
+        await model.loadApps()
+        await TestWait.until { model.openFailed }
+        #expect(model.stage == .choosing && model.selectedID == "com.example.picked")
+        #expect(model.apps.contains { $0.id == "com.example.picked" })
+        // Gone from the disk since: no longer listed.
+        world.exists = false
+        await model.loadApps()
+        #expect(!model.apps.contains { $0.id == "com.example.picked" })
+        // There again, but the window opened again: only the apps read.
+        world.exists = true
+        model.reset()
+        await model.loadApps()
+        #expect(!model.apps.contains { $0.id == "com.example.picked" })
+    }
+
     @Test("another app selected in the list drops Other App…'s warning, which was about the app picked on the disk")
     func selectionDropsOtherAppWarning() async {
         let world = World()

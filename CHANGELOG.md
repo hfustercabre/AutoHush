@@ -5,6 +5,16 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Add an App, an app picked with Other App…:** after AutoHush reopens for
+  it, if the app doesn't open, the list still shows it selected, not
+  another app.
+- **VoiceOver** says why an app can't be checked each time, also when the
+  list opens with the note.
+
 ## [1.3.1] — 2026-11-08
 
 ### Changed

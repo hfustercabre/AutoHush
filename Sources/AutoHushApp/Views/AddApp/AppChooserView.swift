@@ -11,6 +11,8 @@ struct AppChooserView: View {
     @Bindable var model: AddAppModel
     let otherApp: () -> Void
     let close: () -> Void
+    /// The last note VoiceOver was told (`AddAppModel.otherAppProblemShown`).
+    @State private var problemAnnounced = 0
 
     /// The window's width, Add an App's, which its bottom bar's buttons fit
     /// in every language.
@@ -32,10 +34,19 @@ struct AppChooserView: View {
             MainButton(AddAppText.choose, action: chooseSelected)
                 .disabled(selected == nil)
         }
-        // VoiceOver hears why a pick on the disk can't be checked.
-        .onChange(of: model.otherAppProblem) { _, problem in
-            if let problem { AccessibilityNotification.Announcement(AddAppText.otherAppProblem(problem)).post() }
-        }
+        // VoiceOver hears why a pick can't be checked: each time it's shown,
+        // also when the window opens with it (the 1.3.1 review's WA-2, N-3).
+        .onAppear(perform: announceProblem)
+        .onChange(of: model.otherAppProblemShown) { _, _ in announceProblem() }
+    }
+
+    private func announceProblem() {
+        guard let problem = model.otherAppProblem, model.otherAppProblemShown != problemAnnounced else { return }
+        problemAnnounced = model.otherAppProblemShown
+        // High priority, through AppKit: the window opening and its search
+        // taking focus would cut SwiftUI's announcement off (the diff
+        // review's finding 1, as step announcements, 2026-10-18).
+        postStepAnnouncement(AddAppText.otherAppProblem(problem))
     }
 
     /// What the search found, for VoiceOver; nothing while the apps load.

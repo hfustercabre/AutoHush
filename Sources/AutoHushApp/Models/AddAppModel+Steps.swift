@@ -32,6 +32,7 @@ extension AddAppModel {
         permissionMissingInCheck = false
         accessibilityNeedsReopen = false
         otherAppProblem = nil
+        pickedOnDisk = nil // listed again only while this opening needs it (the diff review's finding 2)
         appQuit = false
         appNotFound = false
         failureReason = nil
@@ -63,7 +64,10 @@ extension AddAppModel {
     /// Chooses `app` (from the list, or picked on the disk) and goes on.
     func choose(_ app: CheckableApp) {
         guard stage == .choosing else { return }
-        if !apps.contains(where: { $0.id == app.id }) { apps.append(app) }
+        if !apps.contains(where: { $0.id == app.id }) {
+            apps.append(app)
+            pickedOnDisk = app
+        }
         selectedID = app.id
         otherAppProblem = nil
         presenter?.closeChooser()
@@ -74,8 +78,15 @@ extension AddAppModel {
     func chooseOther(at url: URL) {
         switch reader.app(at: url) {
         case .success(let app): choose(app)
-        case .failure(let problem): otherAppProblem = problem
+        case .failure(let problem): showOtherAppProblem(problem)
         }
+    }
+
+    /// Why the app picked can't be checked, under the list, VoiceOver
+    /// hearing it each time (the 1.3.1 review's WA-2).
+    func showOtherAppProblem(_ problem: OtherAppProblem) {
+        otherAppProblem = problem
+        otherAppProblemShown += 1
     }
 
     /// Fine-Tuning's Check Again… for the app at `url` (W-3, the user,
@@ -116,7 +127,7 @@ extension AddAppModel {
         case .failure(let problem):
             search = ""
             presenter?.showChooser()
-            otherAppProblem = problem // once its list is open, so VoiceOver hears it too
+            showOtherAppProblem(problem) // once its list is open, so VoiceOver hears it too
         }
     }
 
@@ -138,6 +149,13 @@ extension AddAppModel {
     func loadApps() async {
         isLoadingApps = true
         apps = await reader.listApps()
+        // An app picked on the disk stays listed, and so selected, while it's
+        // there: AutoHush reopened for it reads the apps after choosing it,
+        // and an open that fails comes back to this list (the 2026-11-08
+        // diff review's finding 1).
+        if let picked = pickedOnDisk, !apps.contains(where: { $0.id == picked.id }), reader.appExists(at: picked.url) {
+            apps.append(picked)
+        }
         isLoadingApps = false
         if !apps.contains(where: { $0.id == selectedID }) {
             // This pick isn't the user's, so a note set while the apps were
