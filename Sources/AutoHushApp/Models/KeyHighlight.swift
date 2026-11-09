@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import Foundation
 import Observation
@@ -9,7 +10,8 @@ import Observation
 /// in reading order, wrapping at the ends, and ← and → along a row of
 /// several (the durations, the buttons, tiles); Return or Space presses the
 /// one it's on; ← and → change a slider or a choice, and → opens a side
-/// window. Page Up and Page Down move it about a page, Home and End to the
+/// window. Tab and Shift-Tab move it control by control, a row's as the
+/// language reads (`step`, `tabOrder`). Page Up and Page Down move it about a page, Home and End to the
 /// first and last row (`jump`). The pointer moves it too, as in a menu: the
 /// control under it is the highlighted one. Moved by a key, VoiceOver's
 /// cursor and Zoom go with it (`Light.arrivals`, `screenFrame`). Each control registers itself (`Highlightable`)
@@ -58,9 +60,9 @@ final class KeyHighlight {
             partner?.hidesFocusIfLit()
         }
     }
-    /// Whether the keyboard's focus (Tab's) hides its tint: something is
-    /// highlighted here or in `partner`, moved there after the focus, as
-    /// Tab clears the highlight (K9, 2026-11-01: one tint at a time,
+    /// Whether the keyboard's focus (a click's, with keyboard navigation
+    /// on) hides its tint: something is highlighted here or in `partner`,
+    /// moved there after the focus (K9, 2026-11-01: one tint at a time,
     /// whichever moved last). Observed only by the control with the focus.
     private(set) var hidesFocus = false
     /// The other highlight of the same keys (Settings' sidebar and page, the
@@ -119,6 +121,9 @@ final class KeyHighlight {
     @ObservationIgnored var screenFrame: (@MainActor (CGRect) -> CGRect?)?
     /// Tells Zoom where the highlight is now, if Zoom is on (tests replace it).
     @ObservationIgnored var zoom: @MainActor (CGRect) -> Void = ZoomFocus.follow
+    /// Whether the app is laid out right to left (Arabic, Hebrew): Tab goes
+    /// along a row that way (`tabOrder`); tests replace it.
+    @ObservationIgnored var readsRightToLeft: @MainActor () -> Bool = { NSApp?.userInterfaceLayoutDirection == .rightToLeft }
     /// The pointer moves it (`hover`). Off in tests that check the keys'
     /// highlight on screen, so the real pointer, resting wherever their
     /// window opens, never moves it (the full check, 2026-11-06, T-5).

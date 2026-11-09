@@ -161,7 +161,7 @@ mode; only Settings' sidebar keeps one of its own.
 | `.appSuccess` | green | Symbols for what works (Diagnostics, the welcome window's permissions); never text |
 | `.chipFill` / `.chipHoverFill` | quaternary / tertiary system fill | Search fields; an unfilled chip under the pointer where no keys' highlight lights it (`ChipButtonStyle`), outside the menu, Settings and the welcome window; the check panel's steps to come |
 | `.chipPressedFill` | tertiary | Behind an unfilled chip while it's pressed (`ChipButtonStyle`) |
-| `.focusTint` | macOS's faint grey (`systemFill`: black at 10 % in light mode, white at 10 % in dark), as its menu bar menus' rows under the pointer (the user, 2026-11-06; the accent color at 14 % before) | The menu's and Settings' highlighted control (the arrow keys' or the pointer's) or the one with the keyboard's focus: a rounded tint behind the row, chip, chevron, button, slider or switch's row (`HighlightableControl`, `Highlightable`, `HighlightTint`), instead of macOS's focus ring; in Settings, a switch's, slider's or choice's row takes it whole, and so does a row of a title and one button; kept on a row whose side window is open; not on a dimmed one (but one with a reason to show the keys, below), nor behind the menu's rows, which draw it themselves (`MenuRowButtonStyle`). Where the keys (or Tab) put it, it's outlined in the accent color too (**2 pt**, `HighlightTint`), the accent the user picked, as macOS's focus ring: at 3:1 or more in dark mode and with the default blue, under it in light mode with yellow, green, orange or graphite, as macOS's own ring (D5a, 2026-11-06: "at 3:1" held only for some accents); under the pointer, the tint alone; with Increase Contrast, always outlined (A2a, 2026-11-01). One tint at a time: a highlight moved after Tab's focus hides the focus's tint, which shows again once nothing is highlighted (`KeyHighlight.hidesFocus`, K9) |
+| `.focusTint` | macOS's faint grey (`systemFill`: black at 10 % in light mode, white at 10 % in dark), as its menu bar menus' rows under the pointer (the user, 2026-11-06; the accent color at 14 % before) | The menu's and Settings' highlighted control (the arrow keys' or the pointer's) or the one with the keyboard's focus: a rounded tint behind the row, chip, chevron, button, slider or switch's row (`HighlightableControl`, `Highlightable`, `HighlightTint`), instead of macOS's focus ring; in Settings, a switch's, slider's or choice's row takes it whole, and so does a row of a title and one button; kept on a row whose side window is open; not on a dimmed one (but one with a reason to show the keys, below), nor behind the menu's rows, which draw it themselves (`MenuRowButtonStyle`). Where the keys (or Tab) put it, it's outlined in the accent color too (**2 pt**, `HighlightTint`), the accent the user picked, as macOS's focus ring: at 3:1 or more in dark mode and with the default blue, under it in light mode with yellow, green, orange or graphite, as macOS's own ring (D5a, 2026-11-06: "at 3:1" held only for some accents); under the pointer, the tint alone; with Increase Contrast, always outlined (A2a, 2026-11-01). One tint at a time: a highlight moved after a control took the focus hides the focus's tint, which shows again once nothing is highlighted (`KeyHighlight.hidesFocus`, K9) |
 | `.cardFocusTint` | the primary color at 15 % | The same over the menu card's glass, which blends a fainter tint away |
 | `.warningBadgeFill` | orange 15% | Behind a `HeadingBadge`, a step's warning |
 | Increase Contrast | | AutoHush's faint fills (the sidebar's page, a `HeadingBadge`, a step's warning or request, a `SearchField` and Add a Web App's address field, in `appSecondary`: D5a, 2026-11-06) are outlined **1 pt** in their color too (`TintedShape`, `.tinted(_:outline:)`; A9a, 2026-11-01): a faint fill alone barely shows then |
@@ -693,11 +693,12 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
 window, Add an App and the check's warning; A4c, 2026-11-02) take the
 arrow keys as Settings does (`WindowKeys`, `HostedWindowController`'s
 `keys`): ↑ ↓ ← →, Page Up and Down, Home and End move the highlight,
+Tab and Shift-Tab go control by control (below),
 Space presses the lit control, and Return is always the window's main
 button (Continue, Done, Start the Check), doing nothing while it's
 dimmed, as in macOS's dialogs; Escape is as before. In the welcome
 window, a letter typed while something is lit goes to the search, ↓
-from the search goes into the tiles, and ↑ there stays the field's; in
+or Tab from the search goes into the tiles, and ↑ there stays the field's; in
 Add a Web App, it goes into the address. Shift-Tab in a field does
 nothing. They open with nothing focused but a field, as Settings does. A
 window's bottom bar is a band of its own, after its page. On a
@@ -760,9 +761,18 @@ standard ones**:
   which leave Sound Sources' search for the first app under it, and
   Shift-Tab, which does nothing there; Escape closes that search, from
   the field or a row.
-- **Tab and Shift-Tab** move the highlight as ↓ and ↑ do, everywhere
-  but in a field being typed in (Tab leaves a search for the rows under
-  it, as ↓). A control that took the focus from a click (with keyboard
+- **Tab and Shift-Tab** stop at every control in reading order,
+  whatever the keyboard navigation setting, with the same highlight (B,
+  the user's pick, 2026-11-09; as ↓ and ↑ before): a row of several
+  (tiles, the durations, a row's buttons) one after the other, left to
+  right (right to left in Arabic and Hebrew, as they read; ← and → stay
+  the control on that side), then the next row, wrapping at the ends,
+  while ↑ and ↓ go row by row and ← and → along a row
+  (`KeyHighlight.step`). They stay where
+  the arrows do: in the menu or its open side window, in Settings on the
+  side that has the highlight (the sidebar's pages showing at once, as
+  with ↓). In a field being typed in, Tab leaves a search for the rows
+  under it, as ↓, and Shift-Tab does nothing. A control that took the focus from a click (with keyboard
   navigation on) takes Return, Space, ← and → itself while nothing is
   highlighted; once something is, its tint hides the focus's, and it
   takes them.
@@ -795,7 +805,7 @@ mapping of the keys for the menu and Settings). A key with nothing to act
 on doesn't beep. The pointer moves the same highlight, as in a menu. In
 the player list, ↑ and ↓ move among the players, Return chooses the one
 lit (with none, the first the search left while something is typed, else
-nothing), and typing searches. Tab and Shift-Tab move as ↓ and ↑. A
+nothing), and typing searches. Tab and Shift-Tab go control by control (above). A
 switch row takes a click anywhere on its tint, and a row with a pop-up (Main control, When an update is
 found, Add a Web App's Your account's country) shows its choices from a click anywhere on it
 (`clickAnywhere`). Both show as the grey tint (`.focusTint`)

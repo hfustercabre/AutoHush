@@ -87,6 +87,60 @@ struct KeyHighlightTests {
         #expect(!keyboard.k.moveInRow(1)) // a row of one
     }
 
+    @Test("Tab's step stops at every enabled control in reading order, a row's one after the other, wrapping; from nothing, forward is the first and back the last")
+    func steps() {
+        let keyboard = KeyHighlight()
+        let title = control(keyboard, 0, 0)
+        let five = control(keyboard, 0, 50), fifteen = control(keyboard, 60, 50)
+        _ = control(keyboard, 120, 50, enabled: false)
+        let quit = control(keyboard, 0, 100)
+        keyboard.step(-1)
+        #expect(keyboard.highlighted == quit)
+        keyboard.clear()
+        var seen: [UUID?] = []
+        for _ in 0..<5 { keyboard.step(1); seen.append(keyboard.highlighted) }
+        #expect(seen == [title, five, fifteen, quit, title])
+        #expect(keyboard.revealed == title) // scrolled to, as the arrows' moves
+        keyboard.step(-1)
+        #expect(keyboard.highlighted == quit)
+        keyboard.step(-1)
+        #expect(keyboard.highlighted == fifteen) // ↑ would go to the row's nearest, the first
+        for id in [title, five, fifteen, quit] { keyboard.remove(id) }
+        keyboard.step(1) // nothing to stop at
+        #expect(keyboard.highlighted == nil)
+    }
+
+    @Test("Right to left (Arabic, Hebrew), Tab goes along a row from its right end, and out of a field onto the row's right end; the arrows keep their sides")
+    func stepsRightToLeft() {
+        let keyboard = KeyHighlight()
+        keyboard.readsRightToLeft = { true }
+        let title = control(keyboard, 0, 0)
+        let left = control(keyboard, 0, 50), right = control(keyboard, 60, 50)
+        let quit = control(keyboard, 0, 100)
+        var seen: [UUID?] = []
+        for _ in 0..<5 { keyboard.step(1); seen.append(keyboard.highlighted) }
+        #expect(seen == [title, right, left, quit, title])
+        keyboard.step(-1)
+        keyboard.step(-1)
+        #expect(keyboard.highlighted == left)
+        // ← and → are the sides they point at, ↓ a row's left end, as left to right.
+        #expect(keyboard.moveInRow(1))
+        #expect(keyboard.highlighted == right)
+        #expect(!keyboard.moveInRow(1))
+        keyboard.clear()
+        keyboard.move(1)
+        keyboard.move(1)
+        #expect(keyboard.highlighted == left)
+        // Out of a field above the row: Tab's first there, ↓'s as ever.
+        keyboard.highlightFirst(below: 40, byTab: true)
+        #expect(keyboard.highlighted == right)
+        keyboard.highlightFirst(below: 40)
+        #expect(keyboard.highlighted == left)
+        keyboard.readsRightToLeft = { false }
+        keyboard.highlightFirst(below: 40, byTab: true)
+        #expect(keyboard.highlighted == left)
+    }
+
     @Test("Home and End go to the first and last row, without wrapping further; from nothing, Page Down is the first row and Page Up the last")
     func homeAndEnd() {
         let keyboard = KeyHighlight()

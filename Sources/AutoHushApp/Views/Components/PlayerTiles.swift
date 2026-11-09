@@ -283,8 +283,8 @@ struct PlayerTiles: View {
 }
 
 /// An added app's tile with a × in its corner while the pointer is over it,
-/// or the keyboard is on it or its × (the arrow keys' highlight, or Tab
-/// with keyboard navigation on), which removes it once confirmed, as Delete
+/// or the keyboard is on it or its × (the arrow keys' highlight or Tab's,
+/// or the focus with keyboard navigation on), which removes it once confirmed, as Delete
 /// does there; its right-click menu and VoiceOver have it too.
 private struct RemovableTile<Content: View>: View {
     let name: String

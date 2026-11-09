@@ -134,7 +134,7 @@ If you said no by mistake, or haven't allowed audio recording yet, the menu, Set
 
 Every way through AutoHush, from its first launch to quitting it, is drawn as flowcharts in [WORKFLOWS.md](WORKFLOWS.md).
 
-Click the menu bar icon to see what's going on. Its menu is AutoHush's own panel: it grows and shrinks smoothly (at once with Reduce Motion), and Escape or a click elsewhere closes it. As in macOS's own menus, the card at the top and the buttons at the bottom stay put; when the menu is taller than your screen, only what's between them scrolls, a small arrow at the bottom saying more is below (in the players' window beside it too). The keys work as in macOS's menus: ↑ and ↓ (or Tab and Shift-Tab) move through it, Page Up, Page Down, Home and End a page or to the ends, ← and → along a row, Return or Space presses, → opens a side window and ← closes it.
+Click the menu bar icon to see what's going on. Its menu is AutoHush's own panel: it grows and shrinks smoothly (at once with Reduce Motion), and Escape or a click elsewhere closes it. As in macOS's own menus, the card at the top and the buttons at the bottom stay put; when the menu is taller than your screen, only what's between them scrolls, a small arrow at the bottom saying more is below (in the players' window beside it too). The keys work as in macOS's menus: ↑ and ↓ move through it row by row, Tab and Shift-Tab control by control, Page Up, Page Down, Home and End a page or to the ends, ← and → along a row, Return or Space presses, → opens a side window and ← closes it.
 
 <p align="center">
   <picture>
@@ -215,7 +215,7 @@ AutoHush can also control an app it doesn't support itself, once it has checked 
   </picture>
 </p>
 
-Settings has a page for each of these in its sidebar, and Back and Forward arrows before the page's name, as System Settings does (a row in Behavior opens Fine-Tuning; ‹ brings you back). The pages come in two groups: **Everyday**, what most people change, and **Advanced**, for fine-tuning and checks. The sidebar also shows AutoHush's version and a link to support it. **Edit → Undo** (⌘Z) brings back what a **Restore Defaults** changed, or the apps you removed from Sound Sources, until Settings closes. You can resize the window; it opens where you left it. It takes the arrow keys as the menu does, ← going to the sidebar and → back to the page; Tab moves as ↓ does, and Return, Space, ← and → act on the highlighted control.
+Settings has a page for each of these in its sidebar, and Back and Forward arrows before the page's name, as System Settings does (a row in Behavior opens Fine-Tuning; ‹ brings you back). The pages come in two groups: **Everyday**, what most people change, and **Advanced**, for fine-tuning and checks. The sidebar also shows AutoHush's version and a link to support it. **Edit → Undo** (⌘Z) brings back what a **Restore Defaults** changed, or the apps you removed from Sound Sources, until Settings closes. You can resize the window; it opens where you left it. It takes the arrow keys as the menu does, ← going to the sidebar and → back to the page; Tab and Shift-Tab go control by control, and Return, Space, ← and → act on the highlighted control.
 
 #### General
 

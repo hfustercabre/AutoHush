@@ -10,8 +10,9 @@ import Foundation
 /// into the page; ← goes back, unless the highlight is on a slider or a
 /// choice, which ← and → change, or in a row of several (tiles), which they
 /// move along first. Return or Space presses the page's control. The
-/// pointer moves the highlight to its side too. Tab and Shift-Tab move as
-/// ↓ and ↑ (`HighlightKey`), and a control that has the focus takes Return, Space,
+/// pointer moves the highlight to its side too. Tab and Shift-Tab go
+/// through the same side control by control, a row of several one after
+/// the other (B, 2026-11-09), and a control that has the focus takes Return, Space,
 /// ← and → itself while nothing is highlighted (the full check, 2026-10-18);
 /// once something is, its tint hides the focus's (K9), and it takes them
 /// (N6, 2026-11-06: whatever shows the tint gets the keys). Delete
@@ -78,6 +79,16 @@ final class SettingsKeys {
                 // The sidebar let go of it (the pointer left): the page's.
                 side = .page
                 page.move(step)
+            }
+            return true
+        case .tab, .backTab:
+            let step = key == .tab ? 1 : -1
+            if side == .sidebar, sidebar.highlighted != nil {
+                sidebar.step(step)
+                showSidebarPage()
+            } else {
+                side = .page
+                page.step(step)
             }
             return true
         case .pageUp, .pageDown, .home, .end:

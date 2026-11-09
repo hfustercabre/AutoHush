@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Tab and Shift-Tab** now stop at every control, one by one, in the
+  menu, Settings and the other windows: each tile, duration and button in
+  a row, not only the row, right to left in Arabic and Hebrew. The arrow
+  keys work as before.
+
 ## [1.3.4] — 2026-11-09
 
 ### Fixed

@@ -9,11 +9,12 @@ import AppKit
 /// window's main button's (Continue, Done, Start the Check: `MainButton`,
 /// which SwiftUI gives it), as in macOS's windows with a default button,
 /// and does nothing while it's dimmed (R2).
-/// In a text field, what's typed stays there: ↓ leaves it for the controls,
+/// In a text field, what's typed stays there: ↓ or Tab leaves it for the controls,
 /// from the first, and ↑ stays the field's (the search is the top). With a
 /// search (the welcome's), a letter typed while a control is lit goes into
 /// it (T1), as one into Add a Web App's address does (N5, 2026-11-06).
-/// Tab and Shift-Tab move as ↓ and ↑ (`HighlightKey`); a focused control
+/// Tab and Shift-Tab go control by control, a row of several one after
+/// the other (B, 2026-11-09); a focused control
 /// keeps its keys while nothing is lit, as in Settings, and a lit one,
 /// whose tint hides the focus's, gets them (N6); Escape stays the
 /// window's. Keys with nothing to act on do nothing, without a beep.
@@ -45,17 +46,18 @@ final class WindowKeys {
 
     /// Handles `key` with `focus` on what has the keyboard; `false` leaves
     /// it to the window: Return while a main button can be pressed, a
-    /// text field's keys but ↓, and Return, Space, ← and → while a control
+    /// text field's keys but ↓ and Tab, and Return, Space, ← and → while a control
     /// has the focus and nothing is lit.
     @discardableResult func handle(_ key: HighlightKey, focus: Focus = .none) -> Bool {
         switch focus {
         case .textField:
-            guard key == .down else { return false }
+            guard key == .down || key == .tab else { return false }
             // Into the controls under it, from the first: what was lit
             // before the typing may be gone.
             dropFocus()
             highlight.clear()
-            highlight.move(1)
+            // Tab's first, which right to left is the row's other end.
+            if key == .tab { highlight.step(1) } else { highlight.move(1) }
             return true
         case .control:
             if [.returnKey, .space, .left, .right].contains(key) {
@@ -72,6 +74,9 @@ final class WindowKeys {
         case .up, .down:
             dropFocus()
             highlight.move(key == .down ? 1 : -1)
+        case .tab, .backTab:
+            dropFocus()
+            highlight.step(key == .tab ? 1 : -1)
         case .pageUp, .pageDown, .home, .end:
             dropFocus()
             if let jump = key.jump { highlight.jump(jump) }

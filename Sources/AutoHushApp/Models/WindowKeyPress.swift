@@ -36,6 +36,6 @@ struct WindowKeyPress {
         focus = window.firstResponder is NSText ? .textField // a field's editor
             : fullKeyboardAccess() && !(window.firstResponder is NSWindow) ? .control : .none
         isEscape = keyCode == Self.escapeKeyCode && flags.isDisjoint(with: [.command, .option, .control, .shift])
-        isShiftTabInField = focus == .textField && keyCode == HighlightKey.tabKeyCode && key == .up
+        isShiftTabInField = focus == .textField && key == .backTab
     }
 }

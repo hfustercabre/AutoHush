@@ -3,8 +3,8 @@ import SwiftUI
 /// "Would you like to support me?" with the Buy me a coffee link under it, at
 /// the foot of Settings' sidebar: the question small, the cup on the link.
 /// The arrow keys and the pointer highlight the link, as the sidebar's
-/// rows; Return or Space opens it (N7, 2026-11-06: Tab moves as ↓, and
-/// nothing else reached it).
+/// rows; Return or Space opens it (N7, 2026-11-06: Tab is the
+/// highlight's too, and nothing else reached it).
 struct SupportLine: View {
     @Environment(\.openURL) private var openURL
 

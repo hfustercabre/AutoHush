@@ -66,7 +66,7 @@ struct WindowKeysTests {
         #expect(log.calls == ["drop focus", "tile 0"])
     }
 
-    @Test("a focused control keeps Return, Space, ← and → while nothing is lit; a lit one, whose tint hides the focus's, takes them, the focus let go (N6); the arrows, Tab too, move the highlight")
+    @Test("a focused control keeps Return, Space, ← and → while nothing is lit; a lit one, whose tint hides the focus's, takes them, the focus let go (N6); the arrows move the highlight")
     func focusedControl() {
         let log = CallLog()
         let (keys, tiles, _) = makeKeys(log: log)
@@ -80,18 +80,47 @@ struct WindowKeysTests {
         #expect(log.calls == ["drop focus", "drop focus", "drop focus", "tile 1"])
     }
 
-    @Test("in a text field, typing and ↑ stay the field's; ↓ leaves it for the first row, whatever was lit")
+    @Test("Tab and Shift-Tab stop at every control, a row's tiles one after the other, wrapping, the focus let go (B, the user, 2026-11-09)")
+    func tab() {
+        let log = CallLog()
+        let (keys, tiles, button) = makeKeys(log: log)
+        #expect(keys.handle(.tab, focus: .control))
+        #expect(keys.highlight.highlighted == tiles[0])
+        #expect(keys.handle(.tab))
+        #expect(keys.highlight.highlighted == tiles[1]) // ↓ would go to the button
+        #expect(keys.handle(.tab))
+        #expect(keys.highlight.highlighted == button)
+        #expect(keys.handle(.tab)) // wraps
+        #expect(keys.highlight.highlighted == tiles[0])
+        #expect(keys.handle(.backTab))
+        #expect(keys.highlight.highlighted == button)
+        keys.highlight.clear()
+        #expect(keys.handle(.backTab)) // from nothing: the last
+        #expect(keys.highlight.highlighted == button)
+        #expect(log.calls == Array(repeating: "drop focus", count: 6))
+    }
+
+    @Test("in a text field, typing, ↑ and Shift-Tab stay the field's; ↓ or Tab leaves it for the first row, whatever was lit")
     func textField() {
         let log = CallLog()
         let (keys, tiles, button) = makeKeys(log: log)
         keys.highlight.hover(button, true)
-        for key: HighlightKey in [.up, .returnKey, .space, .left, .right, .home, .delete] {
+        for key: HighlightKey in [.up, .returnKey, .space, .left, .right, .home, .delete, .backTab] {
             #expect(!keys.handle(key, focus: .textField))
         }
         #expect(keys.highlight.highlighted == button)
         #expect(keys.handle(.down, focus: .textField))
         #expect(keys.highlight.highlighted == tiles[0])
-        #expect(log.calls == ["drop focus"]) // Return was the field's
+        keys.highlight.hover(button, true)
+        #expect(keys.handle(.tab, focus: .textField)) // Tab: the same
+        #expect(keys.highlight.highlighted == tiles[0])
+        #expect(log.calls == ["drop focus", "drop focus"]) // Return was the field's
+        // Right to left, Tab's first is the row's right end; ↓'s stays.
+        keys.highlight.readsRightToLeft = { true }
+        #expect(keys.handle(.tab, focus: .textField))
+        #expect(keys.highlight.highlighted == tiles[1])
+        #expect(keys.handle(.down, focus: .textField))
+        #expect(keys.highlight.highlighted == tiles[0])
     }
 
     @Test("a letter typed while something is lit goes to the search, the highlight let go (T1); not without one lit, a search or in a field")

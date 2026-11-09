@@ -46,7 +46,7 @@ struct KeyHighlightSourceTests {
         #expect(!page.hidesFocus && !sidebar.hidesFocus)
         sidebar.move(1)
         #expect(sidebar.highlighted == row && page.hidesFocus)
-        sidebar.clear() // Tab: the focus moved last
+        sidebar.clear() // nothing lit: the focus shows again
         #expect(!page.hidesFocus && !sidebar.hidesFocus)
     }
 

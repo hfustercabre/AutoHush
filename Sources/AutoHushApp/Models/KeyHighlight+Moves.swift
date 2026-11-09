@@ -40,6 +40,32 @@ extension KeyHighlight {
         highlight(next, in: rows)
     }
 
+    /// The highlight `step` controls on in reading order (Tab 1, Shift-Tab
+    /// -1), every control a stop, a row of several one after the other
+    /// (`tabOrder`), wrapping at the ends; from nothing, the first (Tab) or
+    /// the last (B, the user's pick, 2026-11-09: Tab reaches every control,
+    /// the arrows go by row).
+    func step(_ step: Int) {
+        let rows = keyRows
+        let order = Array(rows.map(tabOrder).joined())
+        guard !order.isEmpty else { return }
+        let next: UUID
+        if let highlighted, let index = order.firstIndex(of: highlighted) {
+            next = order[((index + step) % order.count + order.count) % order.count]
+        } else {
+            next = step > 0 ? order[0] : order[order.count - 1]
+        }
+        highlight(next, in: rows)
+    }
+
+    /// A row as Tab goes along it, in reading order: left to right, or
+    /// right to left where the language reads so (Arabic, Hebrew; the
+    /// user, 2026-11-09: "Yes, right to left"). The arrows keep `rows`'
+    /// own order: ← is always the control on the left.
+    private func tabOrder(_ row: [UUID]) -> [UUID] {
+        readsRightToLeft() ? row.reversed() : row
+    }
+
     /// The order the keys move by: `rows`, or, from a control that shows
     /// a reason, the order as they came onto it (`orderOnArrival`).
     private var keyRows: [[UUID]] {
@@ -51,10 +77,11 @@ extension KeyHighlight {
     /// reading order (or the first row, with none): out of a field that
     /// takes no highlight itself (Settings → Sound Sources' search), into
     /// the rows under it, not the ones beside it (N4, 2026-11-06).
-    func highlightFirst(below y: CGFloat) {
+    /// `byTab`: that row's first as Tab goes (`tabOrder`), not ↓'s.
+    func highlightFirst(below y: CGFloat, byTab: Bool = false) {
         let rows = rows
         guard let row = rows.first(where: { (controls[$0[0]]?.frame.minY ?? 0) >= y }) ?? rows.first else { return }
-        highlight(row[0], in: rows)
+        highlight((byTab ? tabOrder(row) : row)[0], in: rows)
     }
 
     /// Where the highlight lands in `target` from `highlighted` in `row`:

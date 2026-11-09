@@ -4,14 +4,15 @@ import AppKit
 /// mapping for both so they never differ (the full check, 2026-10-18): the
 /// plain arrows, Page Up and Page Down, Home and End (fn with the arrows on
 /// a laptop, 2026-11-01), Return (or Enter), Space, Delete (or Forward
-/// Delete), and Tab, which moves as ↓ does, Shift-Tab as ↑ (the user,
-/// 2026-11-03: Tab moves and shows as the arrows do). With ⌘, ⌥ or ⌃ (or
-/// ⇧, but for Tab), a key is left to the window.
+/// Delete), and Tab and Shift-Tab, which go to the next and the previous
+/// control, one by one (B, the user's pick, 2026-11-09; as ↓ and ↑ before,
+/// 2026-11-03). With ⌘, ⌥ or ⌃ (or ⇧, but for Tab), a key is left to the
+/// window.
 enum HighlightKey: Equatable {
-    case up, down, left, right, pageUp, pageDown, home, end, returnKey, space, delete
+    case up, down, left, right, pageUp, pageDown, home, end, returnKey, space, delete, tab, backTab
 
-    /// Tab's key code: ↓, or ↑ with Shift (`WindowKeyPress` reads it too).
-    static let tabKeyCode: UInt16 = 48
+    /// Tab's key code: `tab`, or `backTab` with Shift.
+    private static let tabKeyCode: UInt16 = 48
 
     init?(keyCode: UInt16, modifiers: NSEvent.ModifierFlags) {
         let others: NSEvent.ModifierFlags = keyCode == Self.tabKeyCode ? [.command, .option, .control] : [.command, .option, .control, .shift]
@@ -28,7 +29,7 @@ enum HighlightKey: Equatable {
         case 36, 76: self = .returnKey // Return, Enter
         case 49: self = .space
         case 51, 117: self = .delete // Delete, Forward Delete
-        case Self.tabKeyCode: self = modifiers.contains(.shift) ? .up : .down // Tab, Shift-Tab
+        case Self.tabKeyCode: self = modifiers.contains(.shift) ? .backTab : .tab
         default: return nil
         }
     }

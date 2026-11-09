@@ -169,7 +169,7 @@ struct AddWebAppView: View {
             countryPopUp.open()
         }
         // The arrow keys reach it, as Settings' pop-up rows (N7, 2026-11-06:
-        // Tab moves as ↓, so nothing else did): Space shows the countries,
+        // Tab is the highlight's too, so nothing else did): Space shows the countries,
         // ← and → choose one.
         .highlightableRow(isAvailable: model.phase == .entering, press: { countryPopUp.open() },
                           adjust: { model.stepCountry($0, in: sites) },

@@ -227,9 +227,9 @@ final class SettingsWindowControllerTests {
         #expect(!sut.handleKey(0, flags: [], windowNumber: window.windowNumber)) // A: not a key of the highlight's
         #expect(sut.handleKey(125, flags: [], windowNumber: window.windowNumber)) // ↓
         let first = try #require(sut.keys.page.highlighted)
-        #expect(sut.handleKey(48, flags: [], windowNumber: window.windowNumber)) // Tab: on, as ↓
+        #expect(sut.handleKey(48, flags: [], windowNumber: window.windowNumber)) // Tab: the next control
         #expect(sut.keys.page.highlighted != first)
-        #expect(sut.handleKey(48, flags: .shift, windowNumber: window.windowNumber)) // Shift-Tab: back, as ↑
+        #expect(sut.handleKey(48, flags: .shift, windowNumber: window.windowNumber)) // Shift-Tab: back
         #expect(sut.keys.page.highlighted == first)
     }
     @Test("on Sound Sources, Delete removes the selected apps, as Remove does; with none selected, or on another page, it isn't taken")

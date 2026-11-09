@@ -81,7 +81,7 @@ struct Highlightable: ViewModifier {
             let isOn = keyboard.shows(id, isEnabled: enabled)
             let focusShows = isFocused && !keyboard.hidesFocus
             let lit = focusShows || isLit || isOn
-            // Tab's focus is the keys' too.
+            // The keyboard's focus (a click's, with keyboard navigation on) is the keys' too.
             let byKeys = focusShows || (isOn && light.byKeys)
             content
                 .environment(\.showsKeyHighlight, lightsItself && lit)

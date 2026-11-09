@@ -141,17 +141,44 @@ struct SettingsKeysTests {
         #expect(keys.sidebar.highlighted == nil)
     }
 
-    @Test("Tab and Shift-Tab move the highlight as ↓ and ↑ (the user, 2026-11-03)")
-    func tab() throws {
+    @Test("Tab and Shift-Tab stop at every control of the page, a row's one after the other, wrapping (B, the user, 2026-11-09); ↓ goes by row")
+    func tab() {
         let log = CallLog()
         let (keys, _, controls) = makeKeys(log: log)
-        let tab = try #require(HighlightKey(keyCode: 48, modifiers: [])), backTab = try #require(HighlightKey(keyCode: 48, modifiers: .shift))
-        #expect(keys.handle(tab))
+        let beside = UUID() // in the switch's row, to its right
+        keys.page.register(beside, .init(frame: CGRect(x: 410, y: 0, width: 80, height: 40)))
+        #expect(keys.handle(.tab))
         #expect(keys.page.highlighted == controls[0])
-        #expect(keys.handle(tab))
+        #expect(keys.handle(.tab))
+        #expect(keys.page.highlighted == beside)
+        #expect(keys.handle(.tab))
         #expect(keys.page.highlighted == controls[1])
-        #expect(keys.handle(backTab))
+        #expect(keys.handle(.tab)) // wraps
         #expect(keys.page.highlighted == controls[0])
+        #expect(keys.handle(.backTab))
+        #expect(keys.page.highlighted == controls[1])
+        #expect(keys.handle(.backTab))
+        #expect(keys.page.highlighted == beside)
+        keys.page.clear()
+        keys.handle(.down)
+        keys.handle(.down) // by row: past the one beside
+        #expect(keys.page.highlighted == controls[1])
+    }
+
+    @Test("Tab stays in the side that has the highlight: in the sidebar it goes page by page, each shown at once, as ↓")
+    func tabInSidebar() {
+        let log = CallLog()
+        let (keys, rows, _) = makeKeys(log: log)
+        keys.handle(.down)
+        keys.handle(.left) // into the sidebar
+        #expect(keys.side == .sidebar)
+        let lit = keys.sidebar.highlighted
+        #expect(lit != nil)
+        log.calls.removeAll()
+        #expect(keys.handle(.tab))
+        #expect(keys.side == .sidebar && keys.page.highlighted == nil)
+        #expect(keys.sidebar.highlighted != lit && rows.contains { $0 == keys.sidebar.highlighted })
+        #expect(log.calls.count == 1 && log.calls[0].hasPrefix("show "))
     }
 
     @Test("a control with the focus keeps Return, Space, ← and → while nothing is highlighted; once something is, its tint hides the focus's and it takes them (N6)")

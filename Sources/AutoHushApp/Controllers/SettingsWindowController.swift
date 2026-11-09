@@ -140,10 +140,10 @@ final class SettingsWindowController: PlacedWindowController {
         // A search field's editor.
         if press.focus == .textField { return handleKeyInField(press, in: window) }
         guard let key = press.key else { return false }
-        // One highlight at a time: the arrows (and Page Up…End) take it from
+        // One highlight at a time: the arrows (Tab and Page Up…End too) take it from
         // the focus, and a lit one, whose tint hides the focus's, gets the
         // other keys too (N6, 2026-11-06).
-        if key == .up || key == .down || key.jump != nil || keys.isLit { window.makeFirstResponder(nil) }
+        if [.up, .down, .tab, .backTab].contains(key) || key.jump != nil || keys.isLit { window.makeFirstResponder(nil) }
         if keys.handle(key, controlHasFocus: press.focus == .control) { return true }
         // Delete removes the apps selected in Sound Sources, as their Remove
         // does (macOS's lists' key; the workflow audit, 2026-10-22).
@@ -154,17 +154,18 @@ final class SettingsWindowController: PlacedWindowController {
 
     /// A key while a field takes what's typed (Sound Sources' search), as in
     /// the welcome window: ↓ and Tab leave it for the rows under it, the
-    /// first one lit; Shift-Tab stays in it, as ↑ does (the search is the
+    /// first one lit (Tab's first, right to left, is that row's right
+    /// end: `byTab`); Shift-Tab stays in it, as ↑ does (the search is the
     /// top); the rest is the field's (N4, 2026-11-06: with keyboard
     /// navigation off, the keys couldn't reach the rows it found).
     private func handleKeyInField(_ press: WindowKeyPress, in window: NSWindow) -> Bool {
         if press.isShiftTabInField { return true } // nothing, the field keeps the keyboard
-        guard press.key == .down, let field = (window.firstResponder as? NSText)?.delegate as? NSView, let pageView,
+        guard press.key == .down || press.key == .tab, let field = (window.firstResponder as? NSText)?.delegate as? NSView, let pageView,
               field.isDescendant(of: pageView) else { return false }
         let frame = pageView.convert(field.bounds, from: field)
         let foot = pageView.isFlipped ? frame.maxY : pageView.bounds.height - frame.minY
         window.makeFirstResponder(nil)
-        keys.page.highlightFirst(below: foot)
+        keys.page.highlightFirst(below: foot, byTab: press.key == .tab)
         return true
     }
 
