@@ -82,7 +82,8 @@ Continue, Allow…, Open <app>), `PermissionText`, `ReopenText`, `WayText`,
 `TryAgainText`, `LaterText`, `ChooseText`, `ChangeAppText`, `LearnText`
 (the Controls row), `IgnoredText`, `AccessibilityText` (what
 VoiceOver says of a control that shows or hides what's under it:
-Expanded, Collapsed) and the update choices'.
+Expanded, Collapsed) and the update choices'; a window's own words are
+there too (`AddAppText`, `LearningText`).
 
 ## Layout
 
