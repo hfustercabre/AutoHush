@@ -5,6 +5,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Add an App:** Choose an App… opens the list without the note left by
+  a pick you cancelled.
+- **Going back from a release candidate,** the update text no longer says
+  "release candidate" twice.
+
 ## [1.3.2] — 2026-11-08
 
 ### Fixed

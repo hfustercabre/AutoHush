@@ -33,6 +33,8 @@ final class World {
     var asksToReopen: [Bool] = []
     var closed = 0
     var choosers = 0
+    /// The list's window is open (its Cancel: set it false).
+    var isChooserShown = false
     var warningsClosed = 0
     var panel: [String] = []
     var antiDot = false
@@ -168,8 +170,8 @@ extension World: AddAppHost {
 
 /// The feature's windows, the check's panel and its log.
 extension World: AddAppPresenting {
-    func showChooser() { choosers += 1 }
-    func closeChooser() {}
+    func showChooser() { choosers += 1; isChooserShown = true }
+    func closeChooser() { isChooserShown = false }
     func showWarning() { warnings += 1 }
     func closeWarning() { warningsClosed += 1 }
     func checkStarted(_ app: CheckableApp) { panel.append("shown") }

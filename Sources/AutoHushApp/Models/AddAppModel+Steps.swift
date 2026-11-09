@@ -31,7 +31,7 @@ extension AddAppModel {
         openFailed = false
         permissionMissingInCheck = false
         accessibilityNeedsReopen = false
-        otherAppProblem = nil
+        otherAppNote = nil
         pickedOnDisk = nil // listed again only while this opening needs it (the diff review's finding 2)
         appQuit = false
         appNotFound = false
@@ -54,10 +54,14 @@ extension AddAppModel {
         Task { [weak self] in await self?.refreshPermissions(for: kept.app, scriptable: traits.scriptable) }
     }
 
-    /// The first step's button: the window that lists the apps.
+    /// The first step's button: the window that lists the apps, without
+    /// the note a cancelled pick left (the 1.3.2 review's C-2, the user,
+    /// 2026-11-09: "Clear it"); a list still open keeps its note, only
+    /// brought forward ("Keep the note").
     func openChooser() {
         guard stage == .choosing else { return }
         search = ""
+        if presenter?.isChooserShown != true { otherAppNote = nil }
         presenter?.showChooser()
     }
 
@@ -72,7 +76,7 @@ extension AddAppModel {
         if !apps.contains(where: { $0.id == app.id }) { apps.append(app) }
         if onDisk || isLoadingApps { pickedOnDisk = app }
         selectedID = app.id
-        otherAppProblem = nil
+        otherAppNote = nil
         presenter?.closeChooser()
         continueWithApp()
     }
@@ -88,8 +92,7 @@ extension AddAppModel {
     /// Why the app picked can't be checked, under the list, VoiceOver
     /// hearing it each time (the 1.3.1 review's WA-2).
     func showOtherAppProblem(_ problem: OtherAppProblem) {
-        otherAppProblem = problem
-        otherAppProblemShown += 1
+        otherAppNote = OtherAppNote(problem: problem)
     }
 
     /// Fine-Tuning's Check Again… for the app at `url` (W-3, the user,
@@ -165,9 +168,9 @@ extension AddAppModel {
             // This pick isn't the user's, so a note set while the apps were
             // read (Check Again…'s, the window just opened) stays (the 1.3.1
             // review's N-1).
-            let problem = otherAppProblem
+            let note = otherAppNote // the same note: not heard again
             selectedID = (apps.first { $0.nowPlaying == true } ?? (apps.count(where: { $0.nowPlaying != nil }) == 1 ? apps.first : nil))?.id
-            otherAppProblem = problem
+            otherAppNote = note
         }
     }
 

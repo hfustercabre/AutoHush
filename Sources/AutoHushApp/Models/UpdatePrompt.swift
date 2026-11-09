@@ -68,7 +68,7 @@ struct UpdatePrompt: Equatable {
 
         func installing() -> String {
             if isBack {
-                return String(localized: "You have release candidate \(current), and Get release candidates is off. Installing this release restarts AutoHush.",
+                return String(localized: "You have version \(current), and Get release candidates is off. Installing this release restarts AutoHush.",
                               comment: "Update popup, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version")
             }
             if isCandidate {
@@ -83,7 +83,7 @@ struct UpdatePrompt: Equatable {
         /// write to, or not signed with AutoHush's certificate).
         var byHand: String {
             if isBack {
-                return String(localized: "You have release candidate \(current), and Get release candidates is off. Download this release from GitHub and replace AutoHush in Applications.",
+                return String(localized: "You have version \(current), and Get release candidates is off. Download this release from GitHub and replace AutoHush in Applications.",
                               comment: "Update alert where AutoHush can't update itself, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. Applications is the Applications folder")
             }
             if isCandidate {
@@ -99,7 +99,7 @@ struct UpdatePrompt: Equatable {
         /// reinstall, since an upgrade never goes to an older version.
         var withHomebrew: String {
             if isBack {
-                return String(localized: "You have release candidate \(current), and Get release candidates is off. Go back with Homebrew:",
+                return String(localized: "You have version \(current), and Get release candidates is off. Go back with Homebrew:",
                               comment: "Update alert for a copy installed with Homebrew, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. The Homebrew command follows.")
                     + "\n\nbrew reinstall --cask autohush"
             }

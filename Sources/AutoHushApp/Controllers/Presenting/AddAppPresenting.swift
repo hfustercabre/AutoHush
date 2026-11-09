@@ -8,6 +8,8 @@ protocol AddAppPresenting: AnyObject {
     /// The window that lists the apps to choose (the first step's).
     func showChooser()
     func closeChooser()
+    /// Whether that window is open (Choose an App… only brings it forward).
+    var isChooserShown: Bool { get }
     /// The warning before the check (W6), whose Start calls `startCheck()`.
     func showWarning()
     func closeWarning()

@@ -144,21 +144,38 @@ struct AddAppModelTests {
         model.reset() // the window opened: its apps read later
         #expect(model.selectedID == nil)
         model.startOver(onAppAt: URL(filePath: "/Applications/Moved.app"))
+        let shown = model.otherAppNote
         await model.loadApps()
         #expect(model.selectedID == world.apps[0].id && model.otherAppProblem == .notFound)
+        #expect(model.otherAppNote == shown) // the same note, not heard again
         model.selectedID = world.apps[1].id // the user's pick still drops it
         #expect(model.otherAppProblem == nil)
     }
 
-    @Test("the same note twice counts twice, so VoiceOver hears it again (the 1.3.1 review's WA-2)")
-    func sameNoteTwice() async {
+    @Test("the same note twice is a new note each time, so VoiceOver hears it again (the 1.3.1 review's WA-2)")
+    func sameNoteTwice() async throws {
         let model = await AddAppModel.opened(on: World())
         let moved = URL(filePath: "/Applications/Moved.app")
         model.startOver(onAppAt: moved)
+        let first = try #require(model.otherAppNote)
         model.startOver(onAppAt: moved) // its list cancelled, Check Again… again
-        #expect(model.otherAppProblem == .notFound && model.otherAppProblemShown == 2)
+        let second = try #require(model.otherAppNote)
+        #expect(second.problem == .notFound && second.id != first.id)
         model.chooseOther(at: URL(filePath: "/Applications/AutoHush.app"))
-        #expect(model.otherAppProblem == .autoHush && model.otherAppProblemShown == 3)
+        #expect(model.otherAppProblem == .autoHush && model.otherAppNote?.id != second.id)
+    }
+
+    @Test("Choose an App… opens the list without the note a cancelled pick left, and keeps the note of a list still open (the 1.3.2 review's C-2)")
+    func chooseClearsOldNote() async {
+        let world = World()
+        let model = await AddAppModel.opened(on: world)
+        model.openChooser()
+        model.chooseOther(at: URL(filePath: "/Applications/AutoHush.app"))
+        model.openChooser() // the list still open: only brought forward
+        #expect(model.otherAppProblem == .autoHush)
+        world.isChooserShown = false // Cancel
+        model.openChooser()
+        #expect(model.otherAppNote == nil && model.stage == .choosing)
     }
 
     @Test("an app picked on the disk stays listed and selected when the apps are read after it, an open that failed coming back to the list (the diff review's finding 1)")

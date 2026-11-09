@@ -41,7 +41,7 @@ struct UpdatePromptTests {
         let candidate = AppVersion("0.3.9-rc.1")!
         for isDownloaded in [false, true] {
             let back = UpdatePrompt(release: release, running: candidate, isDownloaded: isDownloaded, canInstall: true, isHomebrewInstall: false)
-            #expect(back.message == "You have release candidate 0.3.9 RC 1, and Get release candidates is off. Installing this release restarts AutoHush.")
+            #expect(back.message == "You have version 0.3.9 RC 1, and Get release candidates is off. Installing this release restarts AutoHush.")
         }
         let newer = UpdatePrompt(release: AppRelease.github("0.3.9", diskImage: false), running: candidate, isDownloaded: false,
                                  canInstall: true, isHomebrewInstall: false)
@@ -61,9 +61,9 @@ struct UpdatePromptTests {
         }
         let onCandidate = AppVersion("0.3.9-rc.1")!
         let back = UpdatePrompt(release: release, running: onCandidate, isDownloaded: false, canInstall: false, isHomebrewInstall: false)
-        #expect(back.message == "You have release candidate 0.3.9 RC 1, and Get release candidates is off. Download this release from GitHub and replace AutoHush in Applications.")
+        #expect(back.message == "You have version 0.3.9 RC 1, and Get release candidates is off. Download this release from GitHub and replace AutoHush in Applications.")
         let backWithHomebrew = UpdatePrompt(release: release, running: onCandidate, isDownloaded: false, canInstall: false, isHomebrewInstall: true)
-        #expect(backWithHomebrew.message == "You have release candidate 0.3.9 RC 1, and Get release candidates is off. Go back with Homebrew:\n\nbrew reinstall --cask autohush")
+        #expect(backWithHomebrew.message == "You have version 0.3.9 RC 1, and Get release candidates is off. Go back with Homebrew:\n\nbrew reinstall --cask autohush")
     }
 
     @Test("where AutoHush can't update itself, it says how to, with Homebrew or by hand")

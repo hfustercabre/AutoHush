@@ -53,7 +53,7 @@ final class AddAppModel {
     /// Another selection drops Other App…'s warning, which was about the
     /// app picked on the disk (A1, the user, 2026-10-19).
     var selectedID: String? {
-        didSet { if selectedID != oldValue { otherAppProblem = nil } }
+        didSet { if selectedID != oldValue { otherAppNote = nil } }
     }
     var chosen: CheckableApp?
     var traits: CheckedAppTraits?
@@ -66,11 +66,13 @@ final class AddAppModel {
     /// The last reopen or open didn't go.
     var reopenFailed = false
     var openFailed = false
-    /// Why the app last picked on the disk can't be checked.
-    var otherAppProblem: OtherAppProblem?
-    /// Counts each note shown (`showOtherAppProblem`), so VoiceOver hears it
-    /// again when the same one comes twice (the 1.3.1 review's WA-2).
-    var otherAppProblemShown = 0
+    /// Why the app last picked on the disk can't be checked, shown under
+    /// the list. Each note shown (`showOtherAppProblem`) is a new one, so
+    /// VoiceOver hears it again when the same problem comes twice (the 1.3.1
+    /// review's WA-2); the problem and that identity are one value (the
+    /// 1.3.2 review's S-2).
+    var otherAppNote: OtherAppNote?
+    var otherAppProblem: OtherAppProblem? { otherAppNote?.problem }
     /// The app picked on the disk since the window opened or started over
     /// (Other App…, Check Again…, or AutoHush reopened for it), which the
     /// apps read aren't sure to list, though the last opening's list may

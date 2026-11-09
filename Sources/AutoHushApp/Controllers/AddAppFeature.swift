@@ -104,6 +104,8 @@ extension AddAppFeature: AddAppPresenting {
         chooserWindow?.close()
     }
 
+    var isChooserShown: Bool { chooserWindow?.window?.isVisible == true }
+
     /// The warning before the check (W6), for the chosen app; a new one
     /// replaces the last.
     func showWarning() {
