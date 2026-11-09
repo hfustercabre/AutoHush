@@ -293,6 +293,26 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("Choose an App… keeps the note of a list minimized, and drops it once the list was closed (the 1.3.3 review's R-1)")
+    func chooserNoteKeptWhileOpen() async throws {
+        let (_, _, _, feature) = try await addAppOpened()
+        let model = try #require(feature.model)
+        defer { feature.window?.close() } // its list too
+        model.openChooser()
+        let window = try #require(feature.chooserWindow?.window)
+        model.chooseOther(at: URL(filePath: "/Applications/AutoHush.app"))
+        #expect(model.otherAppProblem == .autoHush)
+        window.miniaturize(nil)
+        await TestWait.until { window.isMiniaturized }
+        model.openChooser() // minimized: brought back with its note
+        #expect(model.otherAppProblem == .autoHush)
+        await TestWait.until { !window.isMiniaturized }
+        window.close() // Cancel
+        model.openChooser()
+        #expect(model.otherAppNote == nil)
+    }
+
+    @MainActor
     @Test("the warning's Start starts Add an App's check; closed while it runs, Add an App opens again at its first step, in the same window")
     func checkWarningStarts() async throws {
         let (_, world, sut, feature) = try await addAppOpened()

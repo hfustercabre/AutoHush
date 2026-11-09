@@ -104,7 +104,9 @@ extension AddAppFeature: AddAppPresenting {
         chooserWindow?.close()
     }
 
-    var isChooserShown: Bool { chooserWindow?.window?.isVisible == true }
+    /// Minimized counts as open, as everywhere (`NSWindow.isOpen`): its note
+    /// stays (the 1.3.3 review's R-1).
+    var isChooserShown: Bool { chooserWindow?.isOpen == true }
 
     /// The warning before the check (W6), for the chosen app; a new one
     /// replaces the last.

@@ -99,7 +99,7 @@ class HostedWindowController: NSWindowController {
         return hosting
     }
 
-    /// Shown and not closed since: on screen, or hidden with AutoHush (⌘H).
+    /// Shown and not closed since: on screen, minimized, or hidden with AutoHush (⌘H).
     var isOpen: Bool { window?.isOpen == true }
 
     func show() {
