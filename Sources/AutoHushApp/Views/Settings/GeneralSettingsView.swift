@@ -112,7 +112,7 @@ struct GeneralSettingsView: View {
                 isOn: Binding(get: { model.isAutoPauseOn }, set: { model.settings.setAutoPause($0) })
             )
             if let note = model.autoPauseNote {
-                Text(note).captionStyle()
+                Text(verbatim: note).captionStyle()
             }
             // The apps that pause it, on their page (A1, the user's pick,
             // 2026-11-02), as Behavior's rows show Fine-Tuning.

@@ -102,7 +102,7 @@ struct FineTuningSettingsView: View {
                 .unavailable(!model.isAntiDotMode)
 
                 if model.isAntiDotMode {
-                    Text(model.detectionMethod.summary).captionStyle()
+                    Text(verbatim: model.detectionMethod.summary).captionStyle()
                 } else {
                     NoteLabel(SettingsSwitch.antiDotOffNote, kind: .info)
                 }

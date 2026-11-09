@@ -227,6 +227,7 @@ extension StatusMenuControllerTests {
         sut.close()
         sut.open() // on screen
         let panel = try #require(sut.panel)
+        let own = panel.accessibilitySubrole()
         await TestWait.until { !sut.model.keyboard.rows.isEmpty } // its controls, as they register
         sut.model.keyboard.move(1) // lit by the keys, as before → or Return on its row
         let lit = try #require(sut.model.keyboard.highlighted)
@@ -238,6 +239,9 @@ extension StatusMenuControllerTests {
         #expect(!side.isVisible && sut.isMenuOpen)
         #expect(panel.isKeyWindow) // the menu's keys work again
         #expect(sut.model.keyboard.highlighted == lit && sut.model.keyboard.light(lit).arrivals == arrivals + 1)
+        // VoiceOver off: the menu keeps its own subrole, with no swap under
+        // way (the 2026-11-06 full check's B-10; on: the two tests below).
+        #expect(panel.accessibilitySubrole() == own && sut.subroleSwap == nil)
     }
 
     /// The menu on screen with VoiceOver on, a side window opened and closed

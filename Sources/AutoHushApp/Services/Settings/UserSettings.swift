@@ -46,6 +46,11 @@ final class UserSettings: AutoPauseControlling {
     /// When the menu's words for a snooze change next: its end, or midnight
     /// before it ("until tomorrow 8:00" becomes "until 8:00").
     @ObservationIgnored private var snoozeTimer: Timer?
+    /// Puts that timer on the main run loop; tests keep it and fire it
+    /// themselves (the 2026-11-06 full check's T-11).
+    @ObservationIgnored var addSnoozeTimer: @MainActor (Timer) -> Void = { RunLoop.main.add($0, forMode: .common) }
+    /// The time when that timer fires: now; a test's own clock.
+    @ObservationIgnored var clock: @MainActor () -> Date = Date.init
     /// The timings as last logged, and the log of a change waiting for the
     /// slider to rest (`logTimingsOnceSettled`).
     @ObservationIgnored private var loggedTimings: TimingSettings
@@ -138,9 +143,12 @@ final class UserSettings: AutoPauseControlling {
         snoozeTimer = nil
         guard let date else { return }
         let timer = Timer(fire: date, interval: 0, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated { self?.applyAutoPause() }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.applyAutoPause(now: self.clock())
+            }
         }
-        RunLoop.main.add(timer, forMode: .common)
+        addSnoozeTimer(timer)
         snoozeTimer = timer
     }
 

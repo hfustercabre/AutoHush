@@ -47,7 +47,6 @@ extension UpdateController {
         logger.info("Release candidates \(self.getsReleaseCandidates ? "on" : "off", privacy: .public): \(offered.version.description, privacy: .public) is no longer offered")
         availableUpdate = nil
         withdrawOffer()
-        if preferences.lastUpdateNotice?.hasSuffix(" \(offered.version)") == true { preferences.lastUpdateNotice = nil }
         showStatus(nil)
     }
 

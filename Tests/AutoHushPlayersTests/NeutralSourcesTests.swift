@@ -8,7 +8,8 @@ import Testing
 /// its comments and translator comments included (the user, 2026-10-30):
 /// the engine (the full check's N5, 2026-10-20), the app, its executable,
 /// the check's panel and the helper, whose report's names come from the app
-/// it checks; their tests and Tools/ too. Browsers and engines (Safari,
+/// it checks; their tests, Tools/ and Scripts/ too (the build's scripts and
+/// the DMG's background: the 2026-11-06 full check's R-9). Browsers and engines (Safari,
 /// Chrome, Chromium, WebKit, Electron) aren't players, so they may be named.
 @Suite("no code outside the players' modules names a player")
 struct NeutralSourcesTests {
@@ -30,8 +31,8 @@ struct NeutralSourcesTests {
     static let neutralFolders: [String] = folders(in: "Sources", except: playersFolders)
 
     /// Every other folder of Tests/ (AutoHushKitTests, AutoHushAppTests, the
-    /// tests' support…), as paths in the package, and Tools/.
-    static let neutralTestFolders: [String] = folders(in: "Tests", except: playersTestFolders).map { "Tests/" + $0 } + ["Tools"]
+    /// tests' support…), as paths in the package, Tools/ and Scripts/.
+    static let neutralTestFolders: [String] = folders(in: "Tests", except: playersTestFolders).map { "Tests/" + $0 } + ["Tools", "Scripts"]
 
     /// The folders in `parent` but `except`, sorted.
     private static func folders(in parent: String, except: Set<String>) -> [String] {
@@ -39,13 +40,13 @@ struct NeutralSourcesTests {
         return folders.filter { !$0.hasPrefix(".") && !except.contains($0) }.sorted()
     }
 
-    /// Every code file (Swift; Tools/ also has C and shell) in `folder`, a
-    /// path in the package, its subfolders' too (not hidden ones, as a
-    /// tool's `.build`).
+    /// Every code file (Swift; Tools/ also has C and shell, Scripts/ shell
+    /// and Python) in `folder`, a path in the package, its subfolders' too
+    /// (not hidden ones, as a tool's `.build`).
     private static func codeFiles(in folder: String) -> [URL] {
         let found = FileManager.default.enumerator(at: package.appending(path: folder), includingPropertiesForKeys: nil,
                                                    options: .skipsHiddenFiles)?.allObjects as? [URL] ?? []
-        return found.filter { ["swift", "c", "sh"].contains($0.pathExtension) }
+        return found.filter { ["swift", "c", "sh", "py"].contains($0.pathExtension) }
     }
 
     /// Players AutoHush has met that it doesn't list (added apps, examples
@@ -127,7 +128,7 @@ struct NeutralSourcesTests {
         }
     }
 
-    @Test("every folder of Sources/ and Tests/ outside the players' modules is checked, and Tools/")
+    @Test("every folder of Sources/ and Tests/ outside the players' modules is checked, and Tools/ and Scripts/")
     func everyFolderChecked() throws {
         try #require(Self.neutralFolders.count >= 5, "Sources/ not found in \(Self.package.path)")
         for folder in ["AutoHushKit", "AutoHushApp", "AutoHush", "CheckPanel", "PlayerCheck"] {
@@ -137,6 +138,7 @@ struct NeutralSourcesTests {
             #expect(Self.neutralTestFolders.contains("Tests/" + folder), "Tests/\(folder) isn't checked")
         }
         #expect(Self.neutralTestFolders.contains("Tools"), "Tools/ isn't checked")
+        #expect(Self.neutralTestFolders.contains("Scripts"), "Scripts/ isn't checked")
         #expect(Self.sites().contains("music.youtube.com"), "the tested web apps' sites aren't checked")
         #expect(Self.sites().contains("music.amazon.de"), "the country sites aren't checked")
         #expect(Self.names().anyCase.contains("QuickTime"), "a name's coined word isn't checked whatever its case")
@@ -152,7 +154,7 @@ struct NeutralSourcesTests {
 
     /// The tests' stand-ins use the names' English words ("Yodel Music", an
     /// app called TV), so only `anyCase`'s names are looked for.
-    @Test("no test outside the players' modules, nor any tool, names one, whatever its case",
+    @Test("no test outside the players' modules, nor any tool or script, names one, whatever its case",
           arguments: NeutralSourcesTests.neutralTestFolders)
     func testsNameNoPlayer(folder: String) throws {
         for found in try Self.names(in: folder, asWords: false) {

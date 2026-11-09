@@ -5,6 +5,12 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **An update pulled and published again** gets its notification again.
+
 ## [1.3.3] — 2026-11-09
 
 ### Fixed

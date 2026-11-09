@@ -27,7 +27,7 @@ struct NoteLabel: View {
 
     var body: some View {
         Label {
-            Text(text)
+            Text(verbatim: text)
         } icon: {
             switch kind {
             case .warning:

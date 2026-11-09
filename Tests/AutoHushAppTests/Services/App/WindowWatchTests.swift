@@ -56,30 +56,37 @@ struct WindowWatchTests {
         #expect(bench.ticks == 2)
     }
 
-    /// What a watch of a test's own refreshed.
+    /// What a watch of a test's own refreshed, and how many refreshes ran
+    /// at once at most.
     @MainActor
     private final class Refreshes {
         var done: [WindowWatch.Refresh] = []
+        var running = 0
+        var mostAtOnce = 0
     }
 
-    @Test("a window opening during a round starts over: the round under way gives up its other refreshes, so two never interleave")
+    @Test("a window opening during a round starts over once the refresh under way ends: the round gives up its other refreshes, so two never interleave")
     func wakeDuringRound() async {
         let gate = Gate()
         let refreshes = Refreshes()
         let clock = ManualSleep()
         let watch = WindowWatch(sleep: clock.sleep, refresh: { need in
+            refreshes.running += 1
+            refreshes.mostAtOnce = max(refreshes.mostAtOnce, refreshes.running)
             refreshes.done.append(need)
             if refreshes.done.count == 1 { await gate.wait() } // the first round holds at its first refresh
+            refreshes.running -= 1
         })
         watch.register(isOpen: { true }) { [.players, .permissions] }
         watch.wake()
         await TestWait.until { await gate.waiting == 1 }
-        let first = watch.loopTask
         watch.wake()
-        await TestWait.until { clock.sleeping == 1 } // the new round is done
+        for _ in 0..<20 { await Task.yield() }
+        #expect(refreshes.done == [.players]) // the new round waits
         await gate.open()
-        await first?.value
+        await TestWait.until { clock.sleeping == 1 } // the new round is done
         #expect(refreshes.done == [.players, .players, .permissions])
+        #expect(refreshes.mostAtOnce == 1)
     }
 
     @Test("the open windows' needs are merged, each refresh once a round; a closed window's don't count")

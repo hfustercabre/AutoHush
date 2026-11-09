@@ -29,8 +29,9 @@ extension AudioMonitor {
 
     /// The apps playing that count only by their open output, though their
     /// sound can be measured: started while levels weren't needed (the music
-    /// idle), and neither heard since nor telling macOS they play. A player
-    /// starting among them waits for their measure before it's paused
+    /// idle), and not heard since they started nor telling macOS they play
+    /// (one measured silent stays until it stops). A player starting among
+    /// them waits for their measure before it's paused
     /// (`PlaybackArbiter.playerStartedDuringApps`).
     func appsNotMeasuredYet() async -> Set<String> {
         await queue.run { self.unmeasuredSourceIDs }

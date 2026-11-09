@@ -79,7 +79,10 @@ struct HostedWindowKeysTests {
         #expect(try key(sut, 36, "\r")) // Continue dimmed: nothing, no beep
         #expect(try key(sut, 125)) // ↓: the first tile
         #expect(try key(sut, 49, " ")) // picked
-        await TestWait.until { (try? key(sut, 36, "\r")) == false } // Continue's, once it's on
+        // Continue on, then Return once (the 2026-11-06 full check's T-16:
+        // not a Return each poll).
+        await TestWait.until { keys.mainButtonEnabled }
+        #expect(try !key(sut, 36, "\r")) // Continue's
         #expect(log.calls.isEmpty) // the window's Return, not the keys', presses it
 
         // T1: lit, a letter goes on to the search, which takes the keyboard.

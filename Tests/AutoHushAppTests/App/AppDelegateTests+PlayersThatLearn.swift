@@ -142,7 +142,7 @@ extension AppDelegateTests {
 
         // Later, or the close button, before It's Playing: what it learned stays.
         scratch.learningWindow.close()
-        await TestWait.until { sut.status.learning == .learned }
+        await scratch.watchUntil { sut.status.learning == .learned }
         #expect(webApp.keepLearnedCount == 1)
 
         // Again, and It's Playing taken (the player forgets then); then again
@@ -183,13 +183,13 @@ extension AppDelegateTests {
         scratch.learningWindow.close()
         scratch.running.insert(webApp.bundleID)
         sut.learnControlsAgain()
-        await TestWait.until { scratch.learningWindow.isOpen }
+        await scratch.watchUntil { scratch.learningWindow.isOpen }
         // Closed again, and not running: opened, after any open the running
         // one could have asked for, which would make it three.
         scratch.learningWindow.close()
         scratch.running.remove(webApp.bundleID)
         sut.learnControlsAgain()
-        await TestWait.until { scratch.opened.count >= 2 }
+        await scratch.watchUntil { scratch.opened.count >= 2 }
         #expect(scratch.opened.count == 2) // running: not opened again
     }
 
@@ -223,7 +223,7 @@ extension AppDelegateTests {
         webApp.set(.learning(hasPlayed: false)) // its button went missing meanwhile
         await TestWait.until { sut.status.learning == .learning(hasPlayed: false) }
         scratch.learningWindow.close() // Later
-        await TestWait.until { webApp.keepLearnedCount == 1 } // the player decides: it was learning again
+        await scratch.watchUntil { webApp.keepLearnedCount == 1 } // the player decides: it was learning again
     }
 
     @MainActor
@@ -273,7 +273,7 @@ extension AppDelegateTests {
         #expect(!sut.status.controlsNotLearned && !sut.settingsModel.offersLearnControls && sut.settingsModel.showsControlsRow)
 
         scratch.learningWindow.close() // Later: the window watch's next round sees it closed
-        await TestWait.until { !sut.status.learningStepsShown }
+        await scratch.watchUntil { !sut.status.learningStepsShown }
         #expect(sut.status.controlsNotLearned && sut.status.statusLine == "Controls not learned")
         #expect(sut.settingsModel.offersLearnControls && !sut.settingsModel.showsControlsRow)
 

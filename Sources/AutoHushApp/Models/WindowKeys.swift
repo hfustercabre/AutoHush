@@ -36,6 +36,8 @@ final class WindowKeys {
     /// The window's main buttons shown (`MainButton`), each with whether
     /// it can be pressed now.
     private var mainButtons: [UUID: Bool] = [:]
+    /// Whether a main button can be pressed now: Return is its then.
+    var mainButtonEnabled: Bool { mainButtons.values.contains(true) }
     /// The window's search takes the keyboard, its text kept, for a letter
     /// typed; `false` when none shows. `nil`: typing isn't the keys' (set by
     /// the welcome window).
@@ -80,7 +82,7 @@ final class WindowKeys {
             highlight.press()
         case .returnKey:
             // The main button's, as SwiftUI gives it; while it's dimmed, nothing.
-            return !mainButtons.values.contains(true)
+            return !mainButtonEnabled
         case .delete:
             return highlight.delete()
         }

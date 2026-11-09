@@ -48,7 +48,7 @@ struct UpdatesCard: View {
                     .accessibilityHint(Text(verbatim: shown.explanation))
                 }
                 if let note = model.updateInstallNote {
-                    Text(note).captionStyle()
+                    Text(verbatim: note).captionStyle()
                 } else {
                     // What the choice does, while the keys are on it (A13a).
                     KeyHighlightCaption(text: model.shownAutomaticUpdates.explanation)
@@ -96,7 +96,7 @@ struct UpdatesCard: View {
             CardDivider()
             HStack {
                 let row = model.updateRow()
-                RowTitle(Text(row.title), subtitle: row.subtitle.map { Text($0) })
+                RowTitle(Text(verbatim: row.title), subtitle: row.subtitle.map { Text(verbatim: $0) })
                 Spacer(minLength: 8)
                 Button { model.updates.checkFromUser() } label: {
                     Text("Check Now", comment: "Settings → About: checks for an update now")

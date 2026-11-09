@@ -74,7 +74,9 @@ struct OtherInstancesTests {
         #expect(instances.list().isEmpty)
     }
 
-    @Test("a process ID taken by another process since isn't a copy still running, so it's never forced to quit")
+    // Skipped, not failed, where no Finder runs (the 2026-11-06 full check's T-16).
+    @Test("a process ID taken by another process since isn't a copy still running, so it's never forced to quit",
+          .enabled(if: !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.finder").isEmpty, "no Finder running here"))
     func reusedProcessID() throws {
         let instances = OtherInstances.live(bundleIdentifier: "com.autohush.AutoHush.not-running")
         #expect(!instances.isRunning(getpid())) // running, but not an app

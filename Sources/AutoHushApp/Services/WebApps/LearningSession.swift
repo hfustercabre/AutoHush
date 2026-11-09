@@ -1,19 +1,6 @@
 import Foundation
 import AutoHushKit
 
-/// Where the pause stands while the user teaches AutoHush a web app's
-/// controls, for the windows that show the steps.
-struct LearningPause: Equatable {
-    /// Once the user said it plays and is to pause it: when learning starts
-    /// over without the pause.
-    var deadline: Date?
-    /// Why the user's last click didn't move it on.
-    var note: LearningNote?
-    /// Once the user said it plays: AutoHush pauses it itself, to learn which
-    /// button changes, or, when it couldn't, the user does.
-    var mode = LearningPauseMode.automatic
-}
-
 /// Learning the chosen web app's controls with the user (see GLOSSARY.md).
 /// It follows the player's learning status, takes the user's steps (It's
 /// Playing, Try Again, Pause It Yourself, It's Paused), and counts down the

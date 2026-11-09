@@ -85,18 +85,26 @@ struct UserSettingsTests {
     }
 
     @Test("an expired snooze is cleared as the settings are read, and one running out meanwhile once its time is up")
-    func expiredSnoozeCleared() async {
+    func expiredSnoozeCleared() throws {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         preferences.autoPause = AutoPauseSetting(isEnabled: true, snoozedUntil: Date().addingTimeInterval(-60))
         let settings = UserSettings(preferences: preferences)
         #expect(settings.state.autoPause == .on)
         #expect(preferences.autoPause.snoozedUntil == nil)
 
-        // Turned off for five minutes, a second before the end of them (a
-        // moment that a loaded runner can't outlast between two lines).
-        settings.snooze(.fiveMinutes, now: Date().addingTimeInterval(-AutoPauseSnooze.fiveMinutes.duration + 1))
+        // Turned off for five minutes, its timer kept and fired here once
+        // they're over, on a clock the test moves (no real second waited).
+        let clock = ManualClock(start: Date())
+        var timers: [Timer] = []
+        settings.clock = { clock.now }
+        settings.addSnoozeTimer = { timers.append($0) }
+        settings.snooze(.fiveMinutes, now: clock.now)
         #expect(!settings.isAutoPauseActive)
-        await TestWait.until { settings.isAutoPauseActive }
+        clock.advance(by: AutoPauseSnooze.fiveMinutes.duration)
+        let timer = try #require(timers.last)
+        #expect(timer.isValid)
+        timer.fire()
+        #expect(settings.isAutoPauseActive)
         #expect(settings.state.autoPause == .on)
         #expect(preferences.autoPause.snoozedUntil == nil)
     }

@@ -67,6 +67,10 @@ struct AppDelegateTests {
         let automationGate = Gate(open: true)
         /// The clock a player's reopens are stamped by.
         let clock = ManualClock()
+        /// The window watch's wait between rounds: none ends until a test
+        /// steps it (`watchUntil`), so no test waits for its real second
+        /// (the 2026-11-06 full check's T-11).
+        let windowWatch = ManualSleep()
         /// Where macOS's notices (apps opening, the Mac sleeping and waking)
         /// come, as NSWorkspace's: the test posts them, and no real one comes.
         let workspaceCenter = NotificationCenter()
@@ -112,6 +116,14 @@ struct AppDelegateTests {
             onFolderChange?()
         }
 
+        /// Moves the window watch on round by round until `condition` holds.
+        func watchUntil(sourceLocation: SourceLocation = #_sourceLocation, _ condition: () -> Bool) async {
+            await TestWait.until(sourceLocation: sourceLocation) {
+                windowWatch.step()
+                return condition()
+            }
+        }
+
         /// A web app AutoHush must learn, installed and offered beside First.
         func offerWebApp(_ status: LearningStatus) -> MockLearningPlayer {
             let webApp = MockLearningPlayer(bundleID: "com.apple.Safari.WebApp.TEST", name: "Yodel Music", status: status)
@@ -148,7 +160,7 @@ struct AppDelegateTests {
         chosenPlayer: String? = Players.first,
         updateChecker: UpdateChecker = UpdateChecker { _ in throw URLError(.notConnectedToInternet) },
         updateInstaller: MockUpdateInstaller = MockUpdateInstaller(),
-        windowWatchSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
+        windowWatchSleep: (@Sendable (Duration) async -> Void)? = nil,
         madeWebAppWait: Duration = .zero,
         madeWebAppSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         addApp: World? = nil
@@ -185,7 +197,7 @@ struct AppDelegateTests {
             watchFolder: { scratch.watch($0, onChange: $1) },
             installCheckDelay: .zero,
             permissionCenter: scratch.permissionCenter,
-            windowWatchSleep: windowWatchSleep,
+            windowWatchSleep: windowWatchSleep ?? scratch.windowWatch.sleep,
             workspaceCenter: scratch.workspaceCenter,
             clockCenter: scratch.clockCenter,
             clock: { scratch.clock.now },

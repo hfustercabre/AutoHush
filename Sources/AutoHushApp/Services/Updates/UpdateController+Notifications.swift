@@ -11,12 +11,16 @@ extension UpdateController {
     }
 
     /// Removes a notification about an update that no longer applies: one
-    /// saying it's available, downloaded or failed, never "updated to".
+    /// saying it's available, downloaded or failed, never "updated to". Its
+    /// notice is forgotten too, so a release pulled and published again
+    /// under the same number is announced again (the 2026-11-06 full
+    /// check's K2-8).
     func withdrawOffer() {
         guard let notice = preferences.lastUpdateNotice,
               !notice.hasPrefix(UpdateNotice.Kind.installed.rawValue + " ")
         else { return }
         notifier.withdraw()
+        preferences.lastUpdateNotice = nil
     }
 
     /// Where a click on a notification leads: for "updated to", that

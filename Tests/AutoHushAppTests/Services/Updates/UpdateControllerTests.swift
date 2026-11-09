@@ -219,6 +219,23 @@ struct UpdateControllerTests {
         h.preferences.lastUpdateNotice = "installed 0.2.0"
         await h.controller.check(userInitiated: false)
         #expect(h.notifier.withdrawals == 0)
+        #expect(h.preferences.lastUpdateNotice == "installed 0.2.0")
+    }
+
+    @Test("a release pulled, then published again under the same number, is announced again")
+    func republishedAnnouncedAgain() async {
+        let latest = Locked("v0.3.0")
+        let h = Harness(checker: .latestRelease { latest.value }, mode: .notify)
+        await h.controller.runAutomaticTasks()
+        latest.value = "v0.2.0" // pulled
+        await h.controller.check(userInitiated: false)
+        #expect(h.preferences.lastUpdateNotice == nil)
+
+        latest.value = "v0.3.0" // published again
+        await h.controller.check(userInitiated: false)
+        await h.controller.runAutomaticTasks()
+        let available = UpdateNotice.available(v030, running: AppVersion("0.2.0")!)
+        #expect(h.notifier.announced == [available, available])
     }
 
     @Test("a failed automatic check is quiet and doesn't count as a check")

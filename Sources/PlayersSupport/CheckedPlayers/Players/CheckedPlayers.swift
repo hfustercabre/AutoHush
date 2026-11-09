@@ -12,8 +12,8 @@ package final class CheckedPlayers: Sendable {
     let store: any PlayerSetupStore
     /// Kept by their setup with their backup switches as they are now
     /// (`CheckedPlayer.setupNow`): Settings changing them keeps the player.
-    private let players = KeptPlayers<PlayerSetup, any AddedAppPlayer>(key: { $0.bundleID },
-                                                                       source: { ($0 as? CheckedPlayer)?.setupNow ?? $0.setup })
+    private let players = KeptPlayers<KeptSetup, any AddedAppPlayer>(key: { $0.setup.bundleID },
+                                                                     source: { KeptSetup(($0 as? CheckedPlayer)?.setupNow ?? $0.setup) })
     /// Where Launch Services finds an app now, by bundle ID; tests stand in for it.
     private let locate: @Sendable (String) -> URL?
 
@@ -24,7 +24,27 @@ package final class CheckedPlayers: Sendable {
     }
 
     package func current() -> [any AddedAppPlayer] {
-        players.current(store.setups().map(moved)) { Self.player(for: $0, store: store) }
+        players.current(store.setups().map { KeptSetup(moved($0)) }) { Self.player(for: $0.setup, store: store) }
+    }
+
+    /// A setup as a player is kept by: the same whatever panel row it
+    /// remembers, which its player saves itself at each new song, so the
+    /// player stays (the 2026-11-06 full check's K4-7).
+    private struct KeptSetup: Equatable, Sendable {
+        let setup: PlayerSetup
+
+        init(_ setup: PlayerSetup) { self.setup = setup }
+
+        static func == (lhs: KeptSetup, rhs: KeptSetup) -> Bool {
+            lhs.withoutPanelRow == rhs.withoutPanelRow
+        }
+
+        private var withoutPanelRow: PlayerSetup {
+            var setup = setup
+            setup.ways = setup.ways.map { $0.isPanel ? .panel(rememberedRow: nil) : $0 }
+            setup.backups = setup.backups.map { $0.isPanel ? .panel(rememberedRow: nil) : $0 }
+            return setup
+        }
     }
 
     /// The player for `setup`: muted instead of paused when that's its way
@@ -69,7 +89,7 @@ package final class CheckedPlayers: Sendable {
     /// player follows them from its next press, the same player (a new one
     /// would drop a pause AutoHush holds in it; the user, 2026-11-05). `player` is the one in
     /// use, which may no longer be the one kept (made again once its setup
-    /// changed, its app moved or its panel row saved). The players first,
+    /// changed or its app moved). The players first,
     /// so the kept one still matches its setup once that's saved.
     package func setSwitches(_ switches: BackupSwitches, for bundleID: String, player: (any AddedAppPlayer)? = nil) {
         for used in [player, players.kept(bundleID)] { (used as? CheckedPlayer)?.setSwitches(switches) }

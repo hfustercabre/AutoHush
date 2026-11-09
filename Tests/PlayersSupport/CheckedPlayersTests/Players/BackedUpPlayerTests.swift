@@ -9,35 +9,29 @@ import PlayersTestSupport
 
 @Suite("BackedUpPlayer", .waitsTimeLimit)
 struct BackedUpPlayerTests {
-    private static let refused = MusicPlayerError.playerCommandFailed(.pressIgnored)
-
-    /// `inner` backed up by `backups`, untested by window state, its
-    /// switches in `switches`.
-    private func backed<Inner: MusicPlayer>(_ inner: Inner, _ backups: [(MockMusicPlayer, WayOrder.Kind)],
+    /// `inner` backed up by `backups`, found by their checks as `results`
+    /// (none by default), its window in `windowState` (seen by default), its
+    /// switches in `switches`; `learningPage` learns its page by itself.
+    private func backed<Inner: MusicPlayer>(_ inner: Inner, _ backups: [(any MusicPlayer, WayOrder.Kind)],
+                                            results: [CheckResult.WayResult?]? = nil,
                                             switches: Locked<BackupSwitches> = Locked(BackupSwitches(panelWhileMuted: true)),
+                                            learningPage: SafariWebAppPlayer? = nil,
+                                            windowState: @escaping @Sendable (pid_t) async -> CheckResult.WindowState = { _ in .visible },
                                             audioRecording: Bool = true,
-                                            allowed: @escaping @Sendable (WayOrder.Kind) -> Bool = { _ in true }) -> BackedUpPlayer<Inner> {
+                                            allowed: @escaping @Sendable (WayOrder.Kind) -> Bool = { _ in true },
+                                            pollSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) })
+        -> BackedUpPlayer<Inner> {
         BackedUpPlayer(inner: inner, own: CheckResult.WayResult(kind: .script, mark: .works),
-                       backups: backups.map { CheckedPlayer.Backup(player: $0.0, kind: $0.1) }, results: backups.map { _ in nil },
-                       switches: { switches.value }, processIdentifier: { 4242 }, windowState: { _ in .visible },
-                       backupAllowed: { kind, _ in allowed(kind) }, audioRecordingAllowed: { audioRecording }, pressSleep: { _ in })
+                       backups: backups.map { CheckedPlayer.Backup(player: $0.0, kind: $0.1) },
+                       results: results ?? backups.map { _ in nil }, learningPage: learningPage,
+                       switches: { switches.value }, processIdentifier: { 4242 }, windowState: windowState,
+                       backupAllowed: { kind, _ in allowed(kind) }, audioRecordingAllowed: { audioRecording }, pressSleep: { _ in },
+                       pollSleep: pollSleep)
     }
 
     /// A backup that takes: it checks its own press, since its stand-in isn't the app `inner` reads.
     private func taking(_ state: PlayerState = .playing) -> MockMusicPlayer {
         MockMusicPlayer(state: state, checksItsPresses: true)
-    }
-
-    private func failing(_ state: PlayerState = .playing, pause: Bool = true) async -> MockMusicPlayer {
-        let player = MockMusicPlayer(state: state)
-        if pause { await player.setFailPause(Self.refused) } else { await player.setFailPlay(Self.refused) }
-        return player
-    }
-
-    private func pauses(_ players: MockMusicPlayer...) async -> [Int] {
-        var counts: [Int] = []
-        for player in players { counts.append(await player.pauseCallCount) }
-        return counts
     }
 
     @Test("everything but its presses is its own player's")
@@ -68,7 +62,7 @@ struct BackedUpPlayerTests {
         #expect(await own.commandLog.contains("forgetPause"))
         // A learned web app learns again, then keeps what it learned.
         let app = SafariWebApp(bundleID: "com.apple.Safari.WebApp.TEST", name: "Jukebox", url: URL(fileURLWithPath: "/tmp/Jukebox.app"))
-        let recipe = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [FollowingPage.place])
+        let recipe = PlayPauseRecipe(playLabel: "Play", pauseLabel: "Pause", places: [StubPage.place])
         let web = BackedUpPlayer.webApp(SafariWebAppPlayer(app: app, store: MemoryRecipeStore([app.bundleID: recipe])),
                                         switches: BackupSwitchesStore(defaults: MemoryDefaults()))
         await web.learnAgain()
@@ -85,7 +79,7 @@ struct BackedUpPlayerTests {
         #expect(player.controls.main.kind == .script && player.controls.backups.map(\.kind) == [.mediaKey, .panel])
         #expect(player.controls.last == LastControls(paused: .script) && !player.controls.backupsInUse)
         switches.value = BackupSwitches()
-        let refusing = await failing(), key = taking()
+        let refusing = await MockMusicPlayer.failing(), key = taking()
         let backedUp = backed(refusing, [(key, .mediaKey)])
         try await backedUp.pauseUncovered()
         #expect(backedUp.controls.last == LastControls(paused: .mediaKey) && backedUp.controls.backupsInUse)
@@ -93,13 +87,13 @@ struct BackedUpPlayerTests {
 
     @Test("a pause goes to its own way only; refused, it's left to AutoHush's mute, whose retries try the Play/Pause key once, then the panel once")
     func pauseThenMuted() async throws {
-        let own = await failing(), key = await failing(), panel = taking()
+        let own = await MockMusicPlayer.failing(), key = await MockMusicPlayer.failing(), panel = taking()
         let player = backed(own, [(key, .mediaKey), (panel, .panel)])
-        await #expect(throws: Self.refused) { try await player.pause() }
-        #expect(await pauses(own, key, panel) == [1, 0, 0])
-        await #expect(throws: Self.refused) { try await player.pauseQuietly() }
+        await #expect(throws: MockMusicPlayer.refused) { try await player.pause() }
+        #expect(await MockMusicPlayer.pauses(own, key, panel) == [1, 0, 0])
+        await #expect(throws: MockMusicPlayer.refused) { try await player.pauseQuietly() }
         try await player.pauseQuietly()
-        #expect(await pauses(own, key, panel) == [1, 1, 1])
+        #expect(await MockMusicPlayer.pauses(own, key, panel) == [1, 1, 1])
     }
 
     @Test("a play its own player refuses as having nothing to play (QuickTime Player plays only what it paused) isn't made by a backup")
@@ -112,7 +106,7 @@ struct BackedUpPlayerTests {
 
     @Test("a pause no mute will stand in for goes down its backups at once, its own player's own when they're off")
     func uncovered() async throws {
-        let own = await failing(), key = taking()
+        let own = await MockMusicPlayer.failing(), key = taking()
         try await backed(own, [(key, .mediaKey)]).pauseUncovered()
         #expect(await key.pauseCallCount == 1)
         let plain = MockMusicPlayer()
@@ -123,7 +117,7 @@ struct BackedUpPlayerTests {
     @Test("a web app not learned yet uses no backups, as before them: its pause says it's still learning")
     func unlearnedWebApp() async throws {
         let app = SafariWebApp(bundleID: "com.apple.Safari.WebApp.TEST", name: "Jukebox", url: URL(fileURLWithPath: "/tmp/Jukebox.app"))
-        let web = SafariWebAppPlayer(app: app, page: FollowingPage(playing: Locked(true)), store: MemoryRecipeStore(),
+        let web = SafariWebAppPlayer(app: app, page: StubPage(playing: Locked(true)), store: MemoryRecipeStore(),
                                      levelProbe: FakeLevelProbe(audible: true), processIdentifier: { 4242 }, audioRecordingAllowed: { true })
         let key = taking()
         let player = backed(web, [(key, .mediaKey)])
@@ -133,39 +127,35 @@ struct BackedUpPlayerTests {
 
     @Test("with the panel's switch off, it isn't pressed while muted: its own way is, again")
     func panelSwitchOff() async throws {
-        let own = await failing(), panel = taking()
+        let own = await MockMusicPlayer.failing(), panel = taking()
         let player = backed(own, [(panel, .panel)], switches: Locked(BackupSwitches(panelWhileMuted: false)))
-        await #expect(throws: Self.refused) { try await player.pause() }
-        await #expect(throws: Self.refused) { try await player.pauseQuietly() }
-        #expect(await pauses(own, panel) == [2, 0])
+        await #expect(throws: MockMusicPlayer.refused) { try await player.pause() }
+        await #expect(throws: MockMusicPlayer.refused) { try await player.pauseQuietly() }
+        #expect(await MockMusicPlayer.pauses(own, panel) == [2, 0])
     }
 
     @Test("the panel as its main control is pressed while muted whatever the panel's switch says, its backups on or off")
     func panelAsMainWhileMuted() async throws {
         func player(usesBackups: Bool) async -> (BackedUpPlayer<MockMusicPlayer>, own: MockMusicPlayer, panel: MockMusicPlayer) {
-            let own = await failing(), panel = taking()
+            let own = await MockMusicPlayer.failing(), panel = taking()
             let switches = BackupSwitches(usesBackups: usesBackups, panelWhileMuted: false, mainControl: "panel")
-            let player = BackedUpPlayer(inner: own, own: CheckResult.WayResult(kind: .script, mark: .works),
-                                        backups: [.init(player: panel, kind: .panel)],
-                                        results: [CheckResult.WayResult(kind: .panel, mark: .works)],
-                                        switches: { switches }, processIdentifier: { 4242 }, windowState: { _ in .visible },
-                                        backupAllowed: { _, _ in true }, audioRecordingAllowed: { true }, pressSleep: { _ in })
+            let player = backed(own, [(panel, .panel)], results: [CheckResult.WayResult(kind: .panel, mark: .works)], switches: Locked(switches))
             return (player, own, panel)
         }
         // Muted: its quiet way first (refused), then the panel, the switch off.
-        let backed = await player(usesBackups: true)
-        await #expect(throws: Self.refused) { try await backed.0.pauseQuietly() }
-        try await backed.0.pauseQuietly()
-        #expect(await pauses(backed.own, backed.panel) == [1, 1])
+        let muted = await player(usesBackups: true)
+        await #expect(throws: MockMusicPlayer.refused) { try await muted.0.pauseQuietly() }
+        try await muted.0.pauseQuietly()
+        #expect(await MockMusicPlayer.pauses(muted.own, muted.panel) == [1, 1])
         // Backups off: the panel alone.
         let alone = await player(usesBackups: false)
         try await alone.0.pauseQuietly()
-        #expect(await pauses(alone.own, alone.panel) == [0, 1])
+        #expect(await MockMusicPlayer.pauses(alone.own, alone.panel) == [0, 1])
     }
 
     @Test("a refused play goes down its backups at once")
     func play() async throws {
-        let own = await failing(.paused, pause: false), key = taking(.paused)
+        let own = await MockMusicPlayer.failing(.paused, pause: false), key = taking(.paused)
         try await backed(own, [(key, .mediaKey)]).play()
         #expect(await own.playCallCount == 1)
         #expect(await key.playCallCount == 1)
@@ -181,7 +171,7 @@ struct BackedUpPlayerTests {
         try await player.pause()
         await menu.setState(.paused)
         try await player.play()
-        #expect(await pauses(own, menu) == [0, 1])
+        #expect(await MockMusicPlayer.pauses(own, menu) == [0, 1])
         #expect(await own.playCallCount == 0)
         #expect(await menu.playCallCount == 1)
         // Its backup no longer allowed either: nothing pressed, its own permission missing.
@@ -191,7 +181,7 @@ struct BackedUpPlayerTests {
         allowed.value = [.script, .menu]
         await own.setFailVerify(nil)
         try await player.pause()
-        #expect(await pauses(own, menu) == [1, 1])
+        #expect(await MockMusicPlayer.pauses(own, menu) == [1, 1])
         try await player.verifyControlAccess()
     }
 
@@ -200,28 +190,22 @@ struct BackedUpPlayerTests {
         let switches = Locked(BackupSwitches(mainControl: "menu"))
         let own = MockMusicPlayer(state: .playing, checksItsPresses: true), menu = taking(), key = taking()
         let works = CheckResult.WayResult(kind: .menu, mark: .works)
-        let player = BackedUpPlayer(inner: own, own: CheckResult.WayResult(kind: .script, mark: .works),
-                                    backups: [.init(player: menu, kind: .menu), .init(player: key, kind: .mediaKey)], results: [works, nil],
-                                    switches: { switches.value }, processIdentifier: { 4242 }, windowState: { _ in .visible },
-                                    backupAllowed: { _, _ in true }, audioRecordingAllowed: { true }, pressSleep: { _ in })
+        let player = backed(own, [(menu, .menu), (key, .mediaKey)], results: [works, nil], switches: switches)
         try await player.pause()
-        #expect(await pauses(own, menu) == [0, 1])
+        #expect(await MockMusicPlayer.pauses(own, menu) == [0, 1])
         let controls = player.controls
         #expect(controls.main.kind == .menu && controls.backups.map(\.kind) == [.script, .mediaKey])
         #expect(controls.choices.map(\.kind) == [.script, .menu] && controls.recommended == .script && controls.mainChanged)
         // Backups off: the chosen one alone, never its own after it.
         switches.value.usesBackups = false
-        await menu.setFailPause(Self.refused)
-        await #expect(throws: Self.refused) { try await player.pause() }
-        #expect(await pauses(own, menu) == [0, 2])
+        await menu.setFailPause(MockMusicPlayer.refused)
+        await #expect(throws: MockMusicPlayer.refused) { try await player.pause() }
+        #expect(await MockMusicPlayer.pauses(own, menu) == [0, 2])
         // Pressed alone, the chosen one's permission is what it needs: its own player's isn't asked.
         let allowed = Locked<Set<WayOrder.Kind>>([])
-        let alone = BackedUpPlayer(inner: MockMusicPlayer(state: .playing, failVerifyWith: MusicPlayerError.automationPermissionDenied),
-                                   own: CheckResult.WayResult(kind: .script, mark: .works),
-                                   backups: [.init(player: taking(), kind: .menu)], results: [works],
-                                   switches: { BackupSwitches(usesBackups: false, mainControl: "menu") }, processIdentifier: { 4242 },
-                                   windowState: { _ in .visible }, backupAllowed: { kind, _ in allowed.value.contains(kind) },
-                                   audioRecordingAllowed: { true }, pressSleep: { _ in })
+        let alone = backed(MockMusicPlayer(state: .playing, failVerifyWith: MusicPlayerError.automationPermissionDenied),
+                           [(taking(), .menu)], results: [works], switches: Locked(BackupSwitches(usesBackups: false, mainControl: "menu")),
+                           allowed: { allowed.value.contains($0) })
         await #expect(throws: MusicPlayerError.accessibilityPermissionDenied) { try await alone.verifyControlAccess() }
         allowed.value = [.menu]
         try await alone.verifyControlAccess()
@@ -270,11 +254,11 @@ struct BackedUpPlayerTests {
     @Test("with its backups off, only its own player is pressed, and its presses are checked as its own player's are")
     func backupsOff() async throws {
         let switches = Locked(BackupSwitches(usesBackups: false))
-        let own = await failing(), key = MockMusicPlayer(state: .playing)
+        let own = await MockMusicPlayer.failing(), key = MockMusicPlayer(state: .playing)
         let player = backed(own, [(key, .mediaKey)], switches: switches)
         #expect(!player.checksItsPresses)
-        await #expect(throws: Self.refused) { try await player.pause() }
-        await #expect(throws: Self.refused) { try await player.pauseQuietly() }
+        await #expect(throws: MockMusicPlayer.refused) { try await player.pause() }
+        await #expect(throws: MockMusicPlayer.refused) { try await player.pauseQuietly() }
         #expect(await key.pauseCallCount == 0)
         // Turned on, it checks them itself, each way's.
         switches.value = BackupSwitches()
@@ -284,7 +268,7 @@ struct BackedUpPlayerTests {
 
     @Test("in AntiDot mode, which can't mute it, a refused pause goes to its backups at once, and its own player is told too")
     func antiDot() async throws {
-        let own = await failing(), key = taking()
+        let own = await MockMusicPlayer.failing(), key = taking()
         let muting = MockMutingMusicPlayer(own)
         let player = backed(muting, [(key, .mediaKey)])
         player.allowTaps(false)
@@ -292,21 +276,18 @@ struct BackedUpPlayerTests {
         try await player.pause()
         #expect(await key.pauseCallCount == 1)
         // Nor without Audio Recording.
-        let other = await failing(), otherKey = taking()
+        let other = await MockMusicPlayer.failing(), otherKey = taking()
         try await backed(other, [(otherKey, .mediaKey)], audioRecording: false).pause()
         #expect(await otherKey.pauseCallCount == 1)
     }
 
     @Test("its page, not learned yet, learns its Play/Pause as AutoHush pauses it its own way, and is released with it")
     func pageLearnedByItself() async throws {
-        let own = MockMusicPlayer(state: .playing), page = FollowingPage(playing: own.plays)
+        let own = MockMusicPlayer(state: .playing), page = StubPage(playing: own.plays)
         let app = SafariWebApp(bundleID: TestPlayer.bundleID, name: "Jukebox", url: URL(fileURLWithPath: "/Applications/Jukebox.app"))
         let learning = SafariWebAppPlayer(app: app, kind: .app, page: page, canMute: false, mutesRefusals: { false }, store: MemoryRecipeStore(),
                                           levelProbe: FakeLevelProbe(audible: true), processIdentifier: { 4242 }, audioRecordingAllowed: { true })
-        let player = BackedUpPlayer(inner: own, own: CheckResult.WayResult(kind: .script, mark: .works),
-                                    backups: [CheckedPlayer.Backup(player: learning, kind: .page)], results: [nil], learningPage: learning,
-                                    switches: { BackupSwitches() }, processIdentifier: { 4242 }, windowState: { _ in .visible },
-                                    backupAllowed: { _, _ in true }, pressSleep: { _ in })
+        let player = backed(own, [(learning, .page)], switches: Locked(BackupSwitches()), learningPage: learning)
         #expect(!learning.learningStatus.isLearned)
         // Out of sight, its page goes by its own player's state.
         #expect(await learning.otherSigns.state() == .playing)
@@ -325,14 +306,11 @@ struct BackedUpPlayerTests {
 
     @Test("its page, not learned yet and out of sight, where its words don't follow a pause, isn't read at a pause: its switch is only turned on")
     func pageOutOfSight() async throws {
-        let own = MockMusicPlayer(state: .playing), page = FollowingPage(playing: own.plays, wordsCurrent: false)
+        let own = MockMusicPlayer(state: .playing), page = StubPage(playing: own.plays, wordsCurrent: false)
         let app = SafariWebApp(bundleID: TestPlayer.bundleID, name: "Jukebox", url: URL(fileURLWithPath: "/Applications/Jukebox.app"))
         let learning = SafariWebAppPlayer(app: app, kind: .app, page: page, canMute: false, mutesRefusals: { false }, store: MemoryRecipeStore(),
                                           levelProbe: FakeLevelProbe(audible: true), processIdentifier: { 4242 }, audioRecordingAllowed: { true })
-        let player = BackedUpPlayer(inner: own, own: CheckResult.WayResult(kind: .script, mark: .works),
-                                    backups: [CheckedPlayer.Backup(player: learning, kind: .page)], results: [nil], learningPage: learning,
-                                    switches: { BackupSwitches() }, processIdentifier: { 4242 }, windowState: { _ in .visible },
-                                    backupAllowed: { _, _ in true }, pressSleep: { _ in })
+        let player = backed(own, [(learning, .page)], switches: Locked(BackupSwitches()), learningPage: learning)
         try await player.pause()
         #expect(await own.pauseCallCount == 1)
         #expect(!learning.learningStatus.isLearned && page.reads == 0 && page.shows == 1)
@@ -343,37 +321,31 @@ struct BackedUpPlayerTests {
         let looks = Locked(0), window = Locked(CheckResult.WindowState.hidden)
         // Its page worked but hidden (Spotify's): the order changes with the window, its own way first in every state.
         func player(_ own: MockMusicPlayer, page: MockMusicPlayer) -> BackedUpPlayer<MockMusicPlayer> {
-            BackedUpPlayer(inner: own, own: CheckResult.WayResult(kind: .script, mark: .works),
-                           backups: [.init(player: page, kind: .page)],
-                           results: [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.hidden])],
-                           switches: { BackupSwitches() }, processIdentifier: { 4242 },
-                           windowState: { _ in looks.withLock { $0 += 1 }; return window.value },
-                           backupAllowed: { _, _ in true }, audioRecordingAllowed: { true }, pressSleep: { _ in })
+            backed(own, [(page, .page)], results: [CheckResult.WayResult(kind: .page, mark: .some, failedStates: [.hidden])],
+                   switches: Locked(BackupSwitches()), windowState: { _ in looks.withLock { $0 += 1 }; return window.value })
         }
         try await player(MockMusicPlayer(state: .playing), page: taking()).pause()
         #expect(looks.value == 0)
         // Its own way refused, with no mute to stand in: looked at, then down the order for it.
         let hiddenPage = taking()
-        await #expect(throws: Self.refused) { try await player(failing(), page: hiddenPage).pauseUncovered() }
+        await #expect(throws: MockMusicPlayer.refused) { try await player(MockMusicPlayer.failing(), page: hiddenPage).pauseUncovered() }
         let hiddenPauses = await hiddenPage.pauseCallCount
         #expect(looks.value == 1 && hiddenPauses == 0)
         window.value = .visible
         let page = taking()
-        try await player(failing(), page: page).pauseUncovered()
+        try await player(MockMusicPlayer.failing(), page: page).pauseUncovered()
         let visiblePauses = await page.pauseCallCount
         #expect(looks.value == 2 && visiblePauses == 1)
         // Refused with a mute to stand in: no look either.
-        await #expect(throws: Self.refused) { try await player(failing(), page: taking()).pause() }
+        await #expect(throws: MockMusicPlayer.refused) { try await player(MockMusicPlayer.failing(), page: taking()).pause() }
         #expect(looks.value == 2)
     }
 
     @Test("its permission is its own player's, or the main control's while that one is pressed alone (its backups off)")
     func permission() {
         let switches = Locked(BackupSwitches(usesBackups: false, mainControl: "menu"))
-        let player = BackedUpPlayer(inner: MockMusicPlayer(name: "Jukebox"), own: CheckResult.WayResult(kind: .script, mark: .works),
-                                    backups: [.init(player: taking(), kind: .menu)], results: [CheckResult.WayResult(kind: .menu, mark: .works)],
-                                    switches: { switches.value }, processIdentifier: { 4242 }, windowState: { _ in .visible },
-                                    backupAllowed: { _, _ in true }, audioRecordingAllowed: { true }, pressSleep: { _ in })
+        let player = backed(MockMusicPlayer(name: "Jukebox"), [(taking(), .menu)], results: [CheckResult.WayResult(kind: .menu, mark: .works)],
+                            switches: switches)
         #expect(player.controlPermission == .accessibility(player: "Jukebox"))
         switches.value.usesBackups = true // its own way first again
         #expect(player.controlPermission == .automation(player: "Jukebox"))
@@ -386,11 +358,7 @@ struct BackedUpPlayerTests {
     func stateObserver() async throws {
         let own = MockMusicPlayer(state: .unknown, failVerifyWith: MusicPlayerError.automationPermissionDenied)
         let menu = MockMusicPlayer(state: .playing), sleep = ManualSleep()
-        let player = BackedUpPlayer(inner: own, own: CheckResult.WayResult(kind: .script, mark: .works),
-                                    backups: [.init(player: menu, kind: .menu)], results: [nil],
-                                    switches: { BackupSwitches() }, processIdentifier: { 4242 }, windowState: { _ in .visible },
-                                    backupAllowed: { _, _ in true }, audioRecordingAllowed: { true }, pressSleep: { _ in },
-                                    pollSleep: sleep.sleep)
+        let player = backed(own, [(menu, .menu)], switches: Locked(BackupSwitches()), pollSleep: sleep.sleep)
         let states = Locked<[PlayerState]>([])
         let observer = try #require(player.makeStateObserver { states.append($0) } as? BackedUpStateObserver)
         observer.start()
@@ -442,41 +410,3 @@ struct BackedUpPlayerTests {
     }
 }
 
-
-/// A page whose player bar's Play/Pause follows `playing`: "Pause" while it
-/// plays, "Play" once paused, with filler buttons, as a loaded page has.
-private final class FollowingPage: WebPage {
-    static let place = ButtonPlace(path: ["AXGroup", "AXToolbar"], distanceFromBottom: 40)
-    private let playing: Locked<Bool>
-    /// Its words follow it now (`wordsAreCurrent`): false for a page out of sight.
-    private let wordsCurrent: Bool
-    private let pressed = Locked(0), released = Locked(0), shown = Locked(0), read = Locked(0)
-    var presses: Int { pressed.value }
-    var releases: Int { released.value }
-    var shows: Int { shown.value }
-    /// How many times its buttons were read.
-    var reads: Int { read.value }
-
-    init(playing: Locked<Bool>, wordsCurrent: Bool = true) {
-        self.playing = playing
-        self.wordsCurrent = wordsCurrent
-    }
-
-    func isTrusted(prompt: Bool) -> Bool { true }
-    func buttons(pid: pid_t) -> [PageButton]? {
-        read.increment()
-        return [PageButton(handle: ButtonHandle(1), label: playing.value ? "Pause" : "Play")]
-            + (2..<14).map { PageButton(handle: ButtonHandle($0), label: "Item \($0)") }
-    }
-    func hasWindow(pid: pid_t) -> Bool { true }
-    func button(_ handle: ButtonHandle) -> PageButton? { buttons(pid: 0)?.first { $0.handle == handle } }
-    func wordsAreCurrent(pid: pid_t) -> Bool { wordsCurrent }
-    func place(of handle: ButtonHandle) -> ButtonPlace? {
-        handle == ButtonHandle(1) ? Self.place : ButtonPlace(path: ["AXGroup", "AXGroup:AXLandmarkMain"], distanceFromBottom: 600)
-    }
-    func standing(of handle: ButtonHandle) -> ButtonStanding? { ButtonStanding() }
-    func press(_ handle: ButtonHandle) -> Bool { pressed.increment(); return true }
-    func isPlayingSound(pid: pid_t) -> Bool { true }
-    func release() { released.increment() }
-    func showPage(pid: pid_t) { shown.increment() }
-}

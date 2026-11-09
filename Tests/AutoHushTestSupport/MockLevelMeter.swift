@@ -33,14 +33,7 @@ package final class MockLevelMeter: AudioLevelMetering, @unchecked Sendable {
 
     /// Waits until exactly these processes are metered, e.g. after a delayed release.
     package func waitUntilMetered(_ objectIDs: Set<AudioObjectID>, sourceLocation: SourceLocation = #_sourceLocation) async {
-        let deadline = TestWait.deadline
-        while lastMetered != objectIDs {
-            guard Date() < deadline else {
-                TestWait.timedOut(at: sourceLocation)
-                return
-            }
-            try? await Task.sleep(for: .milliseconds(5))
-        }
+        await TestWait.until(sourceLocation: sourceLocation) { lastMetered == objectIDs }
     }
 
     package func setMeteredProcesses(_ objectIDs: Set<AudioObjectID>) {

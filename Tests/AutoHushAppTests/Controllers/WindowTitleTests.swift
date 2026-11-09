@@ -223,7 +223,8 @@ final class WindowTitleTests {
         #expect(started.calls == ["started"])
     }
 
-    @Test("Add a Web App's window floats in the top-right corner, its top edge kept as it grows")
+    @Test("Add a Web App's window floats in the top-right corner, its top edge kept as it grows",
+          .enabled(if: !NSScreen.screens.isEmpty, "no display here"))
     func floatsInTheCorner() async throws {
         let floating = AddWebAppWindowController(model: AddWebAppModel(), settings: makeModel())
         let window = try #require(floating.window)
@@ -244,7 +245,8 @@ final class WindowTitleTests {
         }
     }
 
-    @Test("Add a Web App's window moves off a dialog it covers, beside it, and back after; one it doesn't cover leaves it; moved by the user, it stays")
+    @Test("Add a Web App's window moves off a dialog it covers, beside it, and back after; one it doesn't cover leaves it; moved by the user, it stays",
+          .enabled(if: !NSScreen.screens.isEmpty, "no display here"))
     func movesOffADialog() async throws {
         let floating = AddWebAppWindowController(model: AddWebAppModel(), settings: makeModel())
         let window = try #require(floating.window)
@@ -276,7 +278,8 @@ final class WindowTitleTests {
         #expect(abs(window.frame.minX - moved.x) < 1 && abs(window.frame.maxY - moved.y) < 1)
     }
 
-    @Test("a floating window keeps its top edge only while it's open: closed, its watch ends, and shown again, it starts again")
+    @Test("a floating window keeps its top edge only while it's open: closed, its watch ends, and shown again, it starts again",
+          .enabled(if: !NSScreen.screens.isEmpty, "no display here"))
     func floatingWatchEndsAtClose() async throws {
         let floating = AddWebAppWindowController(model: AddWebAppModel(), settings: makeModel())
         let screen = try #require(NSScreen.screens.last)

@@ -77,13 +77,26 @@ struct PlayerControlsTests {
         #expect(players.switches(for: "com.example.jukebox") == nil)
     }
 
+    @Test("a new panel row remembered (each song) keeps the same player; its row stays in the setup")
+    func rememberedRowKeepsPlayer() {
+        let store = MemorySetupStore()
+        store.save(setup(results: true))
+        let players = CheckedPlayers(store: store, locate: { _ in nil })
+        let first = players.current().first
+        store.update("com.example.jukebox") { setup in
+            setup.backups = setup.backups.map { $0.isPanel ? .panel(rememberedRow: "Song, Artist – Album") : $0 }
+        }
+        #expect(players.current().first === first)
+        #expect(store.setups().first?.backups.last == .panel(rememberedRow: "Song, Artist – Album"))
+    }
+
     @Test("the switches reach the player in use too, when it's no longer the one kept (its setup changed since it was made)")
     func switchesReachPlayerInUse() {
         let store = MemorySetupStore()
         store.save(setup(results: true))
         let players = CheckedPlayers(store: store, locate: { _ in nil })
         let inUse = players.current().first
-        store.update("com.example.jukebox") { $0.name = "Jukebox 2" } // as a saved panel row would
+        store.update("com.example.jukebox") { $0.name = "Jukebox 2" } // its setup changed
         let kept = players.current().first
         #expect(kept !== inUse)
         players.setSwitches(BackupSwitches(usesBackups: false), for: "com.example.jukebox", player: inUse)
