@@ -110,7 +110,57 @@ struct KeyHighlightTests {
         #expect(keyboard.highlighted == nil)
     }
 
-    @Test("Right to left (Arabic, Hebrew), Tab goes along a row from its right end, and out of a field onto the row's right end; the arrows keep their sides")
+    @Test("not wrapping, Tab's step says it's at the end and moves nothing, for the window to go on elsewhere; stepIn lights the first or last stop, wherever the highlight was")
+    func stepsWithoutWrapping() {
+        let keyboard = KeyHighlight()
+        let title = control(keyboard, 0, 0)
+        let five = control(keyboard, 0, 50), fifteen = control(keyboard, 60, 50)
+        #expect(keyboard.step(1, wraps: false)) // from nothing: the first
+        #expect(keyboard.highlighted == title)
+        #expect(!keyboard.step(-1, wraps: false)) // the start: nothing moved
+        #expect(keyboard.highlighted == title)
+        #expect(keyboard.step(1, wraps: false) && keyboard.step(1, wraps: false))
+        #expect(keyboard.highlighted == fifteen)
+        #expect(!keyboard.step(1, wraps: false))
+        #expect(keyboard.highlighted == fifteen)
+        #expect(keyboard.stepIn(1))
+        #expect(keyboard.highlighted == title)
+        #expect(keyboard.stepIn(-1))
+        #expect(keyboard.highlighted == fifteen)
+        keyboard.readsRightToLeft = { true } // the last row's right end comes first, so its left end is last
+        #expect(keyboard.stepIn(-1))
+        #expect(keyboard.highlighted == five)
+        for id in [title, five, fifteen] { keyboard.remove(id) }
+        #expect(!keyboard.step(1, wraps: false) && !keyboard.stepIn(1)) // nothing to stop at
+    }
+
+    @Test("while nothing is highlighted, ↓, ↑ and Tab go on from the control with the keyboard's focus, not from the top (W9); once it lets go, from the top again")
+    func movesOnFromTheFocus() {
+        let keyboard = KeyHighlight()
+        let first = control(keyboard, 0, 0)
+        let second = control(keyboard, 0, 50), beside = control(keyboard, 60, 50)
+        let last = control(keyboard, 0, 100)
+        keyboard.focus(second, true) // a click, or the window's own focus (Add an App's step)
+        keyboard.move(1)
+        #expect(keyboard.highlighted == last)
+        keyboard.clear() // the focus is still there
+        keyboard.step(1)
+        #expect(keyboard.highlighted == beside)
+        keyboard.clear()
+        keyboard.move(-1)
+        #expect(keyboard.highlighted == first)
+        keyboard.clear()
+        keyboard.focus(second, false)
+        keyboard.step(1)
+        #expect(keyboard.highlighted == first)
+        keyboard.clear()
+        keyboard.focus(last, true)
+        keyboard.remove(last) // gone: its focus with it
+        keyboard.move(1)
+        #expect(keyboard.highlighted == first)
+    }
+
+    @Test("Right to left (Arabic, Hebrew), Tab goes along a row from its right end; the arrows keep their sides, ↓ out of a field too")
     func stepsRightToLeft() {
         let keyboard = KeyHighlight()
         keyboard.readsRightToLeft = { true }
@@ -131,13 +181,9 @@ struct KeyHighlightTests {
         keyboard.move(1)
         keyboard.move(1)
         #expect(keyboard.highlighted == left)
-        // Out of a field above the row: Tab's first there, ↓'s as ever.
-        keyboard.highlightFirst(below: 40, byTab: true)
-        #expect(keyboard.highlighted == right)
+        // ↓ out of a field above the row: its left end, as ever.
+        keyboard.clear()
         keyboard.highlightFirst(below: 40)
-        #expect(keyboard.highlighted == left)
-        keyboard.readsRightToLeft = { false }
-        keyboard.highlightFirst(below: 40, byTab: true)
         #expect(keyboard.highlighted == left)
     }
 
@@ -467,5 +513,94 @@ struct KeyHighlightTests {
         keyboard.clear()
         keyboard.highlightFirst(below: 500)
         #expect(keyboard.highlighted == sortBy)
+    }
+
+    @Test("a control only Tab stops on (a search's ✕): Tab and Shift-Tab reach it in reading order, ↑ ↓, Home, End and ← → go past it as before; from it, ↓ and ↑ go on to the next control that way, and Page Down to the next (R3)")
+    func tabOnly() {
+        let keyboard = KeyHighlight()
+        let clear = UUID()
+        keyboard.register(clear, .init(frame: CGRect(x: 200, y: 0, width: 24, height: 24), press: {}, tabOnly: true))
+        let sortBy = control(keyboard, 300, 2) // beside it, in its row
+        let first = control(keyboard, 0, 40)
+        let last = control(keyboard, 0, 80)
+        keyboard.step(1)
+        #expect(keyboard.highlighted == clear) // Tab: the first in reading order
+        keyboard.step(1)
+        #expect(keyboard.highlighted == sortBy)
+        keyboard.step(-1)
+        #expect(keyboard.highlighted == clear)
+        keyboard.move(1) // ↓ from it: the next control the arrows stop on
+        #expect(keyboard.highlighted == sortBy)
+        keyboard.step(-1)
+        keyboard.move(-1) // ↑ from it: round to the last
+        #expect(keyboard.highlighted == last)
+        keyboard.clear()
+        keyboard.move(1) // ↓ from nothing: the first the arrows stop on, as before
+        #expect(keyboard.highlighted == sortBy)
+        #expect(!keyboard.moveInRow(-1)) // ← from Sort by: nothing to its left for the arrows
+        keyboard.move(-1)
+        #expect(keyboard.highlighted == last) // ↑ round, past it
+        keyboard.jump(.first)
+        #expect(keyboard.highlighted == sortBy) // Home
+        keyboard.step(-1)
+        keyboard.jump(.pageDown)
+        #expect(keyboard.highlighted == sortBy) // Page Down from it: the next
+        keyboard.step(-1)
+        keyboard.jump(.pageUp)
+        #expect(keyboard.highlighted == clear) // Page Up from it: none before, it stays
+        keyboard.clear()
+        keyboard.highlightFirst(below: 30)
+        #expect(keyboard.highlighted == first)
+    }
+
+    @Test("with nothing highlighted, ↓ and ↑ go on from a control only Tab stops on that has the keyboard's focus, to the next the arrows stop on that way, not from the top or the bottom (R5)")
+    func arrowsFromFocusedTabOnly() {
+        let keyboard = KeyHighlight()
+        let top = control(keyboard, 0, 0)
+        let clear = UUID()
+        keyboard.register(clear, .init(frame: CGRect(x: 0, y: 40, width: 24, height: 24), press: {}, tabOnly: true))
+        let below = control(keyboard, 0, 80)
+        _ = control(keyboard, 0, 120)
+        keyboard.focus(clear, true)
+        keyboard.move(1)
+        #expect(keyboard.highlighted == below)
+        keyboard.clear()
+        keyboard.move(-1)
+        #expect(keyboard.highlighted == top)
+    }
+
+    @Test("the pointer never takes a list that's one stop (the logs' entries): nothing lit, the focus's tint kept, Return and Space left to it; the keys still stop on it (R2)")
+    func pointerSkipsScrollStop() {
+        let keyboard = KeyHighlight()
+        let save = control(keyboard, 0, 300)
+        let list = UUID()
+        keyboard.register(list, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 200), scroll: { _ in true }))
+        keyboard.focus(save, true) // a click's focus on Save…
+        keyboard.hover(list, true)
+        #expect(keyboard.highlighted == nil && !keyboard.hidesFocus)
+        keyboard.hover(save, true)
+        #expect(keyboard.highlighted == save)
+        keyboard.hover(save, false) // back onto the list around it
+        #expect(keyboard.highlighted == nil)
+        keyboard.move(-1)
+        #expect(keyboard.highlighted == list) // the keys' stop, as before
+    }
+
+    @Test("a list that's one stop scrolls with ↑ and ↓ while it's highlighted, until its end (the logs' entries, R6)")
+    func scrolling() {
+        let keyboard = KeyHighlight()
+        let log = CallLog()
+        let list = UUID()
+        var atEnd = false
+        keyboard.register(list, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 200), scroll: { step in
+            log.calls.append("scroll \(step)")
+            return !atEnd
+        }))
+        #expect(!keyboard.scroll(1)) // nothing highlighted
+        keyboard.move(1)
+        #expect(keyboard.scroll(1) && keyboard.scroll(-1))
+        atEnd = true
+        #expect(!keyboard.scroll(1))
+        #expect(log.calls == ["scroll 1", "scroll -1", "scroll 1"])
     }
 }

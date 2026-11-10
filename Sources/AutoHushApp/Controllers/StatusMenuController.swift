@@ -104,6 +104,8 @@ final class StatusMenuController: NSObject {
     private var keyWindowObserver: any NSObjectProtocol?
     /// The menu bar item's window moving (`followItemMoves`).
     private var itemMoveObserver: any NSObjectProtocol?
+    /// ↓ on the menu bar item (`watchMenuBarKeys`), for the item's life.
+    private var menuBarKeyMonitor: Any?
     /// The content's height, as last measured.
     private(set) var contentHeight: CGFloat = 0
     /// The panel follows the content's height at the end of this pass.
@@ -133,6 +135,40 @@ final class StatusMenuController: NSObject {
         }
         renderIcon()
         prepareContent()
+        watchMenuBarKeys()
+    }
+
+    /// ↓ while macOS's keyboard is on the menu bar item (⌃F8, then the
+    /// arrows to it) opens the menu, as Apple's own items open on ↓ (K6,
+    /// the user, 2026-11-10); Space and Return, which macOS turns into a
+    /// click, already do. Checked live (macOS 27.2): the key then reaches
+    /// AutoHush with no window, AutoHush not the active app.
+    private func watchMenuBarKeys() {
+        menuBarKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let keyCode = event.keyCode, flags = event.modifierFlags, hasWindow = event.window != nil
+            let opened = MainActor.assumeIsolated {
+                self?.menuBarKey(keyCode, flags: flags, hasWindow: hasWindow, appIsActive: NSApp.isActive) == true
+            }
+            return opened ? nil : event
+        }
+    }
+
+    /// A key down reaching AutoHush: ↓ on the menu bar item opens the menu
+    /// (`opensFromMenuBar`); `true` when it did.
+    func menuBarKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, hasWindow: Bool, appIsActive: Bool) -> Bool {
+        guard !isMenuOpen, Self.opensFromMenuBar(keyCode, flags: flags, hasWindow: hasWindow, appIsActive: appIsActive) else {
+            return false
+        }
+        open()
+        return true
+    }
+
+    /// Whether a key down is ↓ on the menu bar item: plain ↓, reaching
+    /// AutoHush with no window while another app is the active one, as only
+    /// macOS's keyboard on the item sends it (with AutoHush active and no
+    /// window in front, a ↓ would come so too: not then).
+    nonisolated static func opensFromMenuBar(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, hasWindow: Bool, appIsActive: Bool) -> Bool {
+        !hasWindow && !appIsActive && HighlightKey(keyCode: keyCode, modifiers: flags) == .down
     }
 
     /// Removes the item from the menu bar (tests clean up with it).
@@ -140,6 +176,8 @@ final class StatusMenuController: NSObject {
         close()
         if let itemMoveObserver { notificationCenter.removeObserver(itemMoveObserver) }
         itemMoveObserver = nil
+        if let menuBarKeyMonitor { NSEvent.removeMonitor(menuBarKeyMonitor) }
+        menuBarKeyMonitor = nil
         NSStatusBar.system.removeStatusItem(statusItem)
     }
 
@@ -195,8 +233,16 @@ final class StatusMenuController: NSObject {
     /// The menu's own subrole and the task putting it back, or `nil` once it's back.
     func setSubroleSwap(_ swap: (subrole: NSAccessibility.Subrole?, restore: Task<Void, Never>)?) { subroleSwap = swap }
 
+    /// Option held alone, as macOS menus show their alternates: not with
+    /// Control or Command too, so VoiceOver's Control-Option keys don't turn
+    /// Settings into Diagnostics nor a row into Remove (F2, 2026-11-10).
+    nonisolated static func optionAlone(_ flags: NSEvent.ModifierFlags) -> Bool {
+        flags.intersection([.option, .control, .command]) == .option
+    }
+
     /// Closes the menu on a click outside it (in another app, or another of
-    /// AutoHush's windows); follows Option.
+    /// AutoHush's windows); follows Option, as it changes and as the menu is
+    /// clicked (what Option shows is what a click does: `StatusMenuModel.isOptionHeld`).
     func watchWhileOpen() {
         let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
         if let global = NSEvent.addGlobalMonitorForEvents(matching: clicks, handler: { [weak self] _ in
@@ -204,7 +250,7 @@ final class StatusMenuController: NSObject {
         }) { monitors.append(global) }
         if let local = NSEvent.addLocalMonitorForEvents(matching: clicks.union(.flagsChanged), handler: { [weak self] event in
             let isFlags = event.type == .flagsChanged
-            let optionHeld = event.modifierFlags.contains(.option)
+            let optionHeld = Self.optionAlone(event.modifierFlags)
             let windowNumber = event.windowNumber
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -213,6 +259,9 @@ final class StatusMenuController: NSObject {
                 } else if windowNumber != self.panel?.windowNumber, windowNumber != self.sidePanel?.windowNumber,
                           windowNumber != self.statusItem.button?.window?.windowNumber {
                     self.close()
+                } else {
+                    // A click in the menu does what it shows, Option as it's pressed (D1, X1).
+                    self.model.isOptionHeld = optionHeld
                 }
             }
             return event
@@ -291,7 +340,7 @@ final class StatusMenuController: NSObject {
         hoveredSideRow = nil
         pointerSection = nil
         model.isAntiDotMode = settings.state.detection.isAntiDot
-        model.isOptionHeld = NSEvent.modifierFlags.contains(.option)
+        model.isOptionHeld = Self.optionAlone(NSEvent.modifierFlags)
         model.announcesRetryOutcome = false
         model.announcesResumeOutcome = false
     }

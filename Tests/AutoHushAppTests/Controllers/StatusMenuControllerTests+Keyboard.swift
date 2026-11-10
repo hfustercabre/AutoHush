@@ -115,6 +115,23 @@ extension StatusMenuControllerTests {
         #expect(sut.model.sideKeyboard.highlighted == first)
     }
 
+    @Test("among the players, the search's ✕ (as its view registers it) is Tab's first stop, and Return on it empties the search; ↓ goes past it to the first player, as before (R3)")
+    func searchClearByTab() {
+        let sut = menuWithTwoPlayers()
+        defer { sut.remove() }
+        let (first, _) = twoPlayerRows(sut)
+        sut.perform(.searchPlayers("Fi"))
+        let clear = UUID()
+        sut.model.sideKeyboard.register(clear, .init(frame: CGRect(x: 250, y: -30, width: 24, height: 24),
+                                                     press: { sut.perform(.searchPlayers("")) }, tabOnly: true))
+        #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓: the first player, past the ✕
+        #expect(sut.model.sideKeyboard.highlighted == first)
+        #expect(sut.handleKey(MenuPanelTests.key(48, flags: .shift))) // Shift-Tab: the ✕
+        #expect(sut.model.sideKeyboard.highlighted == clear)
+        #expect(sut.handleKey(MenuPanelTests.key(36))) // Return: the search emptied, no player chosen
+        #expect(sut.model.playerSearch.isEmpty && sut.model.isChoosingPlayer)
+    }
+
     @Test("among the players, Return presses the one the highlight is on")
     func returnChoosesHighlightedPlayer() async {
         let sut = menuWithTwoPlayers()
@@ -387,5 +404,148 @@ extension StatusMenuControllerTests {
         sut.open(showsPanel: false)
         sut.statusItemClicked()
         #expect(!sut.isMenuOpen)
+    }
+
+    @Test("↓ while macOS's keyboard is on the menu bar item (it reaches AutoHush with no window, another app active) opens the menu; not with a window, with AutoHush active, another key or ⌘, nor while it's open (K6)")
+    func downOnMenuBarItemOpens() {
+        #expect(StatusMenuController.opensFromMenuBar(125, flags: [.function, .numericPad], hasWindow: false, appIsActive: false))
+        #expect(!StatusMenuController.opensFromMenuBar(125, flags: [], hasWindow: true, appIsActive: false))
+        #expect(!StatusMenuController.opensFromMenuBar(125, flags: [], hasWindow: false, appIsActive: true))
+        #expect(!StatusMenuController.opensFromMenuBar(126, flags: [], hasWindow: false, appIsActive: false))
+        #expect(!StatusMenuController.opensFromMenuBar(125, flags: .command, hasWindow: false, appIsActive: false))
+        let sut = makeController()
+        defer { sut.remove() }
+        #expect(!sut.isMenuOpen)
+        #expect(!sut.menuBarKey(125, flags: [], hasWindow: true, appIsActive: false))
+        #expect(!sut.isMenuOpen)
+        #expect(sut.menuBarKey(125, flags: [], hasWindow: false, appIsActive: false))
+        #expect(sut.isMenuOpen)
+        #expect(!sut.menuBarKey(125, flags: [], hasWindow: false, appIsActive: false)) // open already: the menu's own ↓
+    }
+
+    @Test("in a side window, Tab and Shift-Tab stay in it, wrapping round its rows, as macOS keeps Tab in one window (K2); the menu's highlight stays put")
+    func tabStaysInSideWindow() {
+        let (sut, _, _, sideRow) = menuWithRows()
+        defer { sut.remove() }
+        #expect(sut.handleKey(MenuPanelTests.key(125)) && sut.handleKey(MenuPanelTests.key(125)))
+        #expect(sut.model.keyboard.highlighted == sideRow)
+        sut.perform(.openSide(.ignoredApps))
+        let appRow = UUID(), addRow = UUID()
+        sut.model.sideKeyboard.register(appRow, .init(frame: CGRect(x: 0, y: 0, width: 280, height: 30), press: {}))
+        sut.model.sideKeyboard.register(addRow, .init(frame: CGRect(x: 0, y: 40, width: 280, height: 30), press: {}))
+        var seen: [UUID?] = []
+        for _ in 0..<3 {
+            #expect(sut.handleKey(MenuPanelTests.key(48)))
+            seen.append(sut.model.sideKeyboard.highlighted)
+        }
+        #expect(seen == [appRow, addRow, appRow])
+        #expect(sut.handleKey(MenuPanelTests.key(48, flags: .shift)))
+        #expect(sut.model.sideKeyboard.highlighted == addRow)
+        #expect(sut.model.keyboard.highlighted == sideRow && sut.model.openSide == .ignoredApps)
+    }
+
+    @Test("among the players, Shift-Tab before the first row (or Tab past the last) goes into their search, which takes the keyboard, the highlight let go; Tab out of it lights the first row, Shift-Tab the last, and ↓ stays the field's (K3, K4)")
+    func tabIntoPlayersSearch() async throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.playerOptions = (1...PlayerOption.searchThreshold).map {
+            PlayerOption(bundleID: "com.example.player\($0)", name: "Player \($0)", appURL: URL(fileURLWithPath: "/Applications/Player \($0).app"))
+        }
+        status.chosenPlayerID = status.playerOptions[0].bundleID
+        sut.status = status
+        sut.open() // on screen: its rows register themselves
+        sut.perform(.openSide(.players))
+        let side = try #require(sut.sidePanel)
+        #expect(side.isVisible && sut.model.players.showsSearch)
+        let keyboard = sut.model.sideKeyboard
+        await TestWait.until { keyboard.rows.count > 1 && !keyboard.controls.values.contains { $0.frame == .zero } }
+        let order = keyboard.rows.flatMap { $0 }
+        let first = try #require(order.first), last = try #require(order.last)
+        let focus = sut.model.searchFocus
+        #expect(sut.handleKey(MenuPanelTests.key(48))) // Tab: the first row
+        #expect(keyboard.highlighted == first)
+        #expect(sut.handleKey(MenuPanelTests.key(48, flags: .shift))) // before the first: the search
+        #expect(sut.model.searchFocus == focus + 1 && keyboard.highlighted == nil)
+        #expect(sut.handleKeyInSearch(MenuPanelTests.key(48))) // out of it: the first row
+        #expect(keyboard.highlighted == first)
+        #expect(sut.handleKeyInSearch(MenuPanelTests.key(48, flags: .shift))) // the last
+        #expect(keyboard.highlighted == last)
+        #expect(sut.handleKey(MenuPanelTests.key(48))) // past the last: the search again
+        #expect(sut.model.searchFocus == focus + 2 && keyboard.highlighted == nil)
+        #expect(!sut.handleKeyInSearch(MenuPanelTests.key(125))) // ↓: the field's own
+        #expect(sut.model.keyboard.highlighted == nil)
+    }
+
+    @Test("Option counts as held only alone (with Shift too), not with VoiceOver's Control-Option nor with Command (F2)")
+    func optionAlone() {
+        #expect(StatusMenuController.optionAlone(.option))
+        #expect(StatusMenuController.optionAlone([.option, .shift]))
+        #expect(!StatusMenuController.optionAlone([.option, .control]))
+        #expect(!StatusMenuController.optionAlone([.option, .command]))
+        #expect(!StatusMenuController.optionAlone([]))
+    }
+
+    @Test("while Option is held, the toolbar's Settings button shows as Diagnostics, by its name and its symbol in Settings' sidebar, and opens it (D1)")
+    func settingsButtonWithOption() {
+        let plain = MenuToolbarView.settingsButton(optionHeld: false), held = MenuToolbarView.settingsButton(optionHeld: true)
+        #expect(plain.title == MenuToolbarView.settingsTitle && plain.symbol == "gearshape" && plain.command == .openSettings)
+        #expect(held.title == SettingsPage.diagnostics.title && held.symbol == SettingsPage.diagnostics.symbol)
+        #expect(held.command == .showDiagnostics)
+    }
+
+    @Test("Option-Return or Option-Space on the toolbar's Settings button, lit by the keys, opens Diagnostics, as an Option-click; with Option, no other key is the menu's (D1)")
+    func optionReturnOpensDiagnostics() async throws {
+        for space in [false, true] {
+            let sut = makeController()
+            defer { sut.remove() }
+            sut.status = readyStatus()
+            sut.open() // on screen: its controls register themselves
+            let keyboard = sut.model.keyboard
+            await TestWait.until { keyboard.rows.count > 1 && !keyboard.controls.values.contains { $0.frame == .zero } }
+            #expect(!sut.handleKey(MenuPanelTests.key(125, flags: .option))) // Option-↓
+            #expect(!sut.handleKey(MenuPanelTests.key(48, flags: .option))) // Option-Tab
+            #expect(keyboard.highlighted == nil)
+            let settingsButton = try #require(keyboard.rows.last?.first) // the toolbar's first
+            keyboard.highlight(settingsButton)
+            sut.model.isOptionHeld = true // as the flags' monitor sets it
+            #expect(sut.handleKey(MenuPanelTests.key(space ? 49 : 36, flags: .option, characters: space ? "\u{A0}" : "\r")))
+            await TestWait.until { log.calls.contains("diagnostics") }
+            #expect(!log.calls.contains("settings"))
+            log.calls.removeAll()
+        }
+    }
+
+    @Test("among the players, Option-Return or Option-Space on an added app's row, lit by the keys, removes it after asking, as an Option-click; the highlight stays on the row as Option goes down and up (X1)")
+    func optionReturnRemovesAddedApp() async throws {
+        for space in [false, true] {
+            let sut = makeController()
+            defer { sut.remove() }
+            var status = readyStatus()
+            status.playerOptions = [
+                Self.first,
+                PlayerOption(bundleID: "com.example.checked", name: "Checked", appURL: URL(fileURLWithPath: "/Applications/Checked.app"),
+                             kind: .checkedApp),
+            ]
+            status.chosenPlayerID = TestPlayers.first
+            sut.status = status
+            sut.open() // on screen: its rows register themselves
+            sut.perform(.openSide(.players))
+            let keyboard = sut.model.sideKeyboard
+            // First, Checked, Add an App…, Add a Web App…
+            await TestWait.until { keyboard.rows.count == 4 && !keyboard.controls.values.contains { $0.frame == .zero } }
+            let checked = keyboard.rows[1][0]
+            keyboard.highlight(checked)
+            for held in [true, false, true] { // Option down, up and down again: the row redrawn, still lit
+                sut.model.isOptionHeld = held
+                await Task.yield()
+                await TestWait.until { keyboard.rows.count == 4 }
+                #expect(keyboard.highlighted == checked)
+            }
+            #expect(sut.handleKey(MenuPanelTests.key(space ? 49 : 36, flags: .option, characters: space ? "\u{A0}" : "\r")))
+            await TestWait.until { log.calls.contains("remove com.example.checked") }
+            #expect(!log.calls.contains("player com.example.checked"))
+            log.calls.removeAll()
+        }
     }
 }

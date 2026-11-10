@@ -31,6 +31,12 @@ package final class ManualDebounceScheduler: PlaybackArbiterDebounceScheduling, 
         _ = await task.value
     }
 
+    /// Ends the oldest pending debounce without waiting for its task: for a
+    /// test that mustn't let go of the actor it runs on meanwhile.
+    package func releaseNext() {
+        lock.withLock { pendingTasks.isEmpty ? nil : pendingTasks.removeFirst() }?.cancel()
+    }
+
     package var scheduledDelays: [TimeInterval] {
         lock.withLock { recordedDelays }
     }

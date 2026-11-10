@@ -8,12 +8,24 @@ extension PlaybackArbiter {
         guard pauseTask == nil else { return }
         pauseTask = Task {
             await pauseMusicIfNeeded()
+            // The Mac slept during it: a pause it came to is forgotten, and,
+            // awake again by now, the player is told at once.
+            let slept = sleptDuringPause
+            if slept, !isAsleep { await tellForgottenPause() }
+            // Cleared only now: a sleep while the player was told set it again,
+            // and the next pause must start without it (F1, 2026-11-10).
+            sleptDuringPause = false
             pauseTask = nil
             // No pause came of it (the fade-out called off, the pause failed,
             // the player still learning): a call during its fade-out is forgotten.
             if !pausedByUs { callDuringPause = false }
             outputGoneDuringPause = false
             publishPlaybackState()
+            // Awake again, apps still playing: paused again now, as the wake
+            // would have done had this one not been under way (R4 of the
+            // engine-4 fix's review, 2026-11-10: a mute lifted for the sleep
+            // let the music play over a call still going).
+            if slept, !isAsleep, !isShutDown, autoPauseEnabled, !activeSources.isEmpty { startPause() }
         }
     }
 
@@ -272,14 +284,14 @@ extension PlaybackArbiter {
     /// The music is paused, or muted, by us now. When the Mac went to sleep
     /// while that was under way (the fade-out or the listening took that
     /// long), the pause is forgotten at once, as any pause held then (see
-    /// `setAsleep`): `false`.
+    /// `setAsleep`), even when it's awake again by now: `false`.
     private func holdPause() -> Bool {
         if outputGoneDuringPause {
             outputGoneDuringPause = false
             logger.info("[arbiter] paused as the output went away: \(self.player.name, privacy: .public) stays paused")
             return false
         }
-        guard isAsleep else {
+        guard isAsleep || sleptDuringPause else {
             pausedByUs = true
             // A call already playing counts too: a pause taken over, or a
             // mute, has no fade-out that noted it.

@@ -27,6 +27,9 @@ extension PlayerSession {
             setHealth(nil)
             return
         }
+        // A start under way for the player before gives up: it would take
+        // the pause held for this one back (`takesBack`) for its own.
+        startGeneration += 1
         let leaving = player
         holdPause(for: newPlayer.bundleID)
         // Chosen again while its pause was held: it keeps what it turned on.

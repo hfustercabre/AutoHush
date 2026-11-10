@@ -40,7 +40,7 @@ import WebAppPlayers
         .menu: found(.menu, menu != nil, notChecked: unread, setup: menu.map { .menu(menuName: $0.title) }),
         .page: found(.page, page?.toggle != nil, notChecked: unread ?? pageUnread,
                      setup: .page(PageAccess(interface: pageAccess.interface, switchAttribute: PageState.shownBySwitch))),
-        .panel: found(.panel, canBeNowPlaying, notChecked: canBeNowPlaying ? unread : nil, setup: .panel(rememberedRow: panelRowText)),
+        .panel: found(.panel, canBeNowPlaying, notChecked: canBeNowPlaying ? unread : nil, setup: panelSetup),
     ])
     findings.nowPlayingHidden = !panelItemSeen && panelItemMissing
     findings.reportsReadable = canBeNowPlaying && isAdministrator
@@ -57,6 +57,10 @@ import WebAppPlayers
         log("couldn’t write the result to \(resultFile.path): \(error)")
     }
 }
+
+/// The panel's setup for AutoHush: the row it remembers is the one the app
+/// changed with (`panelRowChangedWith`), not the last one a trial pressed.
+@MainActor var panelSetup: PlayerSetup.Way { .panel(rememberedRow: panelRowChangedWith) }
 
 /// Where its song shows besides its windows' titles, as this check read it
 /// for the panel (`songTexts`): its page's player bar, around its Play/Pause

@@ -28,10 +28,14 @@ extension UpdateController {
         self.timer = timer
     }
 
+    /// Daily. A last check more than a day in the future (the clock went
+    /// back since) can't be trusted, as a kept download's date
+    /// (`UpdateDownloads.tidy`): due too, or none would run until then.
     func isCheckDue(now date: Date? = nil) -> Bool {
         guard checksAutomatically else { return false }
         guard let last = preferences.lastUpdateCheck else { return true }
-        return (date ?? now()).timeIntervalSince(last) >= Self.automaticCheckInterval
+        let age = (date ?? now()).timeIntervalSince(last)
+        return age >= Self.automaticCheckInterval || age < -Self.automaticCheckInterval
     }
 
     /// Tidies a kept download, checks when a check is due, then acts on what

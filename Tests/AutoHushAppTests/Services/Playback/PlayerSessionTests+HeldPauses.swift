@@ -37,6 +37,28 @@ extension PlayerSessionTests {
     }
 
     @MainActor
+    @Test("a player held paused, chosen again just as the start for the one chosen before ends its access check, takes its pause back: that start gives up")
+    func takenBackDuringOtherStart() async {
+        let bench = Bench()
+        let session = await bench.holdingFirst()
+        let checking = ManualSleep(), checked = Locked(false)
+        await bench.second.setBeforeVerify { await checking.sleep(.zero); checked.value = true }
+        session.retry() // the second starts again, held at its access check
+        await TestWait.until { checking.durations.count == 1 }
+        checking.timeIsUp()
+        // Its check ends, and its start waits for the main actor, held here
+        // until the first is chosen again.
+        while !checked.value { usleep(1_000) }
+        usleep(100_000)
+        session.choose(bench.first)
+        await session.waitUntilIdle()
+        await TestWait.until { session.state.health == .ready }
+        #expect(bench.monitorings.of(Players.second).count == 1) // none made for the second's start
+        #expect(bench.monitorings.of(Players.first).count == 2)
+        #expect(bench.monitorings.of(Players.first)[1].starts.map(\.takingOverPause) == [true])
+    }
+
+    @MainActor
     @Test("a held pause ends once its player plays again: its monitoring stops")
     func heldPauseEnds() async {
         let bench = Bench()

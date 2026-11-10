@@ -257,10 +257,7 @@ class HostedWindowController: NSWindowController {
     func handleKey(_ keyCode: UInt16, flags: NSEvent.ModifierFlags, characters: String?, windowNumber: Int) -> Bool {
         guard let keys, let window, let press = WindowKeyPress(keyCode, flags: flags, windowNumber: windowNumber, in: window,
                                                                fullKeyboardAccess: fullKeyboardAccess) else { return false }
-        if let key = press.key {
-            if press.isShiftTabInField { return true }
-            return keys.handle(key, focus: press.focus)
-        }
+        if let key = press.key { return keys.handle(key, focus: press.focus) }
         if WindowKeys.isTyped(characters, modifiers: flags) { keys.typed(focus: press.focus) }
         return false
     }

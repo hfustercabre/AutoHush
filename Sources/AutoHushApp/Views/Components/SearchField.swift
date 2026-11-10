@@ -105,13 +105,18 @@ struct SearchField: View {
     /// D6, the user's pick, 2026-11-06: the symbol alone, about 13 pt, was
     /// under WCAG 2.5.8's 24 pt), 3 pt further from the text; out of the
     /// field's layout above, below and into its trailing margin, so the
-    /// field keeps its size.
+    /// field keeps its size. Where the keys have a highlight (the menu's
+    /// players, Settings, the welcome window, the logs), Tab and Shift-Tab
+    /// stop on it, its tint the hit area, and Return or Space press it;
+    /// the arrows go past it, as before (R3, the user, 2026-11-10: reach
+    /// every control).
     private func clearButton(_ label: Text, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: "xmark.circle.fill")
                 .foregroundStyle(.appSecondary)
                 .frame(width: Self.clearHitSize, height: Self.clearHitSize)
                 .contentShape(Rectangle())
+                .modifier(Highlightable(cornerRadius: 6, press: action, tabOnly: true))
                 .padding(.vertical, -6)
                 .padding(.leading, 3)
                 .padding(.trailing, -6)

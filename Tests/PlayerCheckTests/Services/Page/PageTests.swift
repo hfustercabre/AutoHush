@@ -43,3 +43,33 @@ struct PageTests {
         #expect(judged(button, hit: window, barAround: bar) == (false, false)) // its fourth parent
     }
 }
+
+/// What a press by the page may learn from (`isPlayersButton`), with the
+/// page the tool found (`page`) set as a test needs it.
+@Suite("playercheck: what a page press learns from", .readOnlyRun)
+@MainActor
+struct PagePressLearningTests {
+    /// Stand-ins: the player bar's Play/Pause, the bar around it, and a song tile's Pause.
+    private let button = AXUIElementCreateApplication(90_201), bar = AXUIElementCreateApplication(90_202)
+    private let tile = AXUIElementCreateApplication(90_203)
+
+    @Test("a press learns its words from the player's own Play/Pause only: the button learned or the player bar's, or one with a player bar around it; never a song tile named Play or Pause")
+    func pressLearnsFromPlayersButton() {
+        let (found, foundBar, foundLearned) = (page, barToggle, learned)
+        defer { (page, barToggle, learned) = (found, foundBar, foundLearned) }
+        (barToggle, learned) = (nil, nil)
+        func shown(_ element: AXUIElement, withControls: Bool) -> PageCheck {
+            PageCheck(buttons: 2, toggle: FoundButton(element: element, label: "Pause", fromBottom: nil, inSight: true, onScreen: true),
+                      withControls: withControls)
+        }
+        let around = bar
+        // The page's only Pause is a song tile's: no player bar around it.
+        page = shown(tile, withControls: false)
+        let tileTaught = isPlayersButton(tile, bar: { _ in nil }), barred = isPlayersButton(button, bar: { _ in around })
+        #expect(!tileTaught && barred)
+        // The player bar's button, found where it was learned.
+        page = shown(button, withControls: true)
+        let barsOwn = isPlayersButton(button, bar: { _ in nil }), tileThen = isPlayersButton(tile, bar: { _ in nil })
+        #expect(barsOwn && !tileThen)
+    }
+}

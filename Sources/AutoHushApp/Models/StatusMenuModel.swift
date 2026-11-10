@@ -35,7 +35,8 @@ final class StatusMenuModel {
         set { antiDotModeAtOpening = newValue }
     }
     private var antiDotModeAtOpening = false
-    /// Option is held: an added app's row removes it instead.
+    /// Option is held: an added app's row removes it instead, and the
+    /// toolbar's Settings button opens Diagnostics (D1); each shows it.
     var isOptionHeld = false
     /// Whether the ignored apps' side window is open, beside their row.
     var showsIgnoredApps = false

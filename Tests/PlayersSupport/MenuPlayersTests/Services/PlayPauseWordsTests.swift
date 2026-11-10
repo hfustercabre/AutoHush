@@ -69,6 +69,25 @@ struct PlayPauseWordsTests {
         #expect(found.source == translations.rawValue)
     }
 
+    @Test("an app.asar key that's both Play's and Pause's (a generic label) is left out: it can't tell them apart")
+    func sharedAsarKeyLeftOut() throws {
+        let app = scratch.appending(path: "Labels.app")
+        let resources = app.appendingPathComponent("Contents/Resources")
+        try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
+        let files = #"""
+            {"files":{"locales":{"files":{"en.json":{},"ca.json":{}}}}}
+            {"t-play": "Play", "t-pause": "Pause", "menu": [{"label": "Play"}, {"label": "Pause"}, {"label": "Settings"}]}
+            {"t-play": "Reprodueix", "t-pause": "Posa en pausa"}
+            """#
+        try (Data([4, 0, 0, 0]) + Data(files.utf8)).write(to: resources.appendingPathComponent("app.asar"))
+        let found = try #require(PlayPauseWords.found(inAppAt: app))
+        #expect(found.words.play == ["Play", "Reprodueix"])
+        #expect(found.words.pause == ["Pause", "Posa en pausa"])
+        let merged = PlayPauseWords.common.merged(with: found.words)
+        #expect(MenuPlayer.state(ofTitle: "Pause", words: merged) == .playing)
+        #expect(MenuPlayer.state(ofTitle: "Play", words: merged) == .paused)
+    }
+
     @Test("an app's own words add to the common ones", arguments: Translations.allCases)
     func merged(_ translations: Translations) throws {
         let app = try makeApp(with: translations)

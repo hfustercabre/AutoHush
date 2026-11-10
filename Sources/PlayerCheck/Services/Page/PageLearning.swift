@@ -182,12 +182,24 @@ let outOfSightWhy = "its window is out of sight, where a Chromium or Flutter pag
 /// missing, merged with what was learned before. Only while its words are
 /// current (`wordsCurrent`): out of sight, a Chromium page's lag one state,
 /// and would be saved the wrong way round ('Pause' as the word for paused),
-/// replacing the right ones (`merging` keeps only the newer words).
+/// replacing the right ones (`merging` keeps only the newer words). And only
+/// from the player's own button (`isPlayersButton`): a song tile's words
+/// would replace them too.
 @MainActor func learnFromPress(_ button: FoundButton, before: String, pausing: Bool) {
     guard wordsCurrent(button) else { return }
     let element = button.element
     let after = label(of: element)
     guard !before.isEmpty, !after.isEmpty, before != after, let place = webPage.place(of: ButtonHandle(element)) else { return }
+    guard isPlayersButton(element) else { return }
     let recipe = PlayPauseRecipe(playLabel: pausing ? after : before, pauseLabel: pausing ? before : after, places: [place])
     saveButton { $0.recipe = SavedRecipe($0.recipe.map { $0.recipe.merging(recipe) } ?? recipe) }
+}
+
+/// Whether a page press's button is the player's own Play/Pause, which a
+/// press may learn from (`learnFromPress`): the button learned, the player
+/// bar's, or one with a player bar around it (`bar`); never a song tile
+/// named Play or Pause, the last a press falls back to (`pageButtonToPress`).
+@MainActor func isPlayersButton(_ element: AXUIElement, bar: (AXUIElement) -> AXUIElement? = { playerBar(of: $0) }) -> Bool {
+    let players = [learned?.element, page?.withControls == true ? page?.toggle?.element : nil, barToggle].compactMap { $0 }
+    return players.contains { CFEqual($0, element) } || bar(element) != nil
 }

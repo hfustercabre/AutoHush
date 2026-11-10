@@ -220,7 +220,7 @@ struct PlayerCheckTests {
         #expect(TestResults.overall(.menu) == nil) // not tried
     }
 
-    @Test("its menu's item is read as an added app's MenuPlayer reads it: by the common words and the app's own, exactly, so a title AutoHush can't tell says nothing here either; disabled, it's stopped")
+    @Test("its menu's item is read as an added app's MenuPlayer reads it: by the common words and the app's own, exactly, so a title AutoHush can't tell says nothing here either; disabled, it's stopped; unreadable, it says nothing")
     func menuStateAsAutoHush() {
         #expect(menuState(title: "Pause", isEnabled: true, ownWords: nil) == .playing)
         #expect(menuState(title: "reproducir", isEnabled: true, ownWords: nil) == .paused)
@@ -228,6 +228,7 @@ struct PlayerCheckTests {
         #expect(menuState(title: "PLAY", isEnabled: true, ownWords: nil) == nil)
         #expect(menuState(title: "Shuffle", isEnabled: true, ownWords: nil) == nil)
         #expect(menuState(title: "Pause", isEnabled: false, ownWords: nil) == .stopped)
+        #expect(menuState(title: "Pause", isEnabled: nil, ownWords: nil) == nil)
     }
 
     @Test("the verdict judges its script, its menu and the panel by every window state, as the page: one that failed in view but worked in another state works")
@@ -269,6 +270,39 @@ struct PlayerCheckTests {
         pressed = false
         undoPanelPress { pressed = true; return true }
         #expect(!pressed)
+    }
+
+    @Test("a play that brings it back before the next trial keeps that trial's reason: the page's button that wasn't found then isn't why the next way failed")
+    func playAgainKeepsReason() {
+        defer { trialProblem = nil }
+        let paused = Look(state: .paused, sounding: false), playing = Look(state: .playing, sounding: true)
+        trialProblem = nil
+        var played: [String] = []
+        let plays: [(title: String, play: () -> Bool)] = [
+            ("its page's button", {
+                played.append("page")
+                trialProblem = "its page didn't show" // as `pressPage` says it
+                return false
+            }),
+            ("its menu", { played.append("menu"); return true }),
+        ]
+        let again = playedAgain(by: plays, pid: 1, look: { _ in paused },
+                                reading: TrialReading(look: { _, _ in playing }, waitFor: { _, _, _, _ in playing }))
+        #expect(again && played == ["page", "menu"])
+        #expect(trialProblem == nil)
+    }
+
+    @Test("the panel's setup for AutoHush remembers the row the app changed with, not a row a later trial pressed that changed nothing (another app's, maybe)")
+    func panelSetupRow() {
+        defer {
+            panelRowText = nil
+            panelRowChangedWith = nil
+            saveButton { $0.panelRow = nil }
+        }
+        panelRowText = "Its song"
+        rememberPanelRow() // a trial that paused it with that row
+        panelRowText = "Another app's song" // a later trial's press, and its undo, that changed nothing
+        #expect(panelSetup == .panel(rememberedRow: "Its song"))
     }
 
     @Test("a way first tried in a later window state is tried: its line is marked by its trials there, never “not tried” (a page button learned during the first state's panel trial)")

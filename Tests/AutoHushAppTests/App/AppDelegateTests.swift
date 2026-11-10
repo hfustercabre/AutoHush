@@ -163,7 +163,8 @@ struct AppDelegateTests {
         windowWatchSleep: (@Sendable (Duration) async -> Void)? = nil,
         madeWebAppWait: Duration = .zero,
         madeWebAppSleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
-        addApp: World? = nil
+        addApp: World? = nil,
+        otherInstances: OtherInstances = OtherInstances(list: { [] }, send: { _, _ in }, isRunning: { _ in false })
     ) -> (AppDelegate, FakeMonitorings) {
         if let chosenPlayer { scratch.preferences.musicPlayer = chosenPlayer }
         let sut = AppDelegate(system: .init(
@@ -193,6 +194,7 @@ struct AppDelegateTests {
             learnedWindowDelay: .zero,
             madeWebAppWait: madeWebAppWait,
             madeWebAppSleep: madeWebAppSleep,
+            otherInstances: otherInstances,
             retries: PlayerSession.Retries(permissionInterval: 0.05, delays: 0.02...0.08),
             watchFolder: { scratch.watch($0, onChange: $1) },
             installCheckDelay: .zero,

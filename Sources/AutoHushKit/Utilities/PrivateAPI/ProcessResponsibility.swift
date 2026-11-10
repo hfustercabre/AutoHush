@@ -16,9 +16,11 @@ package enum ProcessResponsibility {
     }
 
     /// Whether `pid` is the app running as `appPID`, or one of its helpers
-    /// (a web app's sound comes from its WebKit process).
-    package static func isOwned(_ pid: pid_t, by appPID: pid_t) -> Bool {
-        pid == appPID || responsiblePID(for: pid) == appPID
+    /// (a web app's sound comes from its WebKit process). `responsible`:
+    /// who's responsible for a process (`responsiblePID(for:)`; tests give theirs).
+    package static func isOwned(_ pid: pid_t, by appPID: pid_t,
+                                responsible: (pid_t) -> pid_t? = { responsiblePID(for: $0) }) -> Bool {
+        pid == appPID || responsible(pid) == appPID
     }
 
     private typealias Function = @convention(c) (pid_t) -> pid_t

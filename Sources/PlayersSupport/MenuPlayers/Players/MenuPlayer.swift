@@ -85,7 +85,8 @@ package actor MenuPlayer: FadelessMusicPlayer, PolledMusicPlayer {
         guard await queue.run({ menu.isTrusted(prompt: false) }),
               let toggle = await queue.run({ menu.toggle(pid: pid) })
         else { return .unknown }
-        guard toggle.isEnabled else { return .stopped } // nothing to play
+        guard let enabled = toggle.isEnabled else { return .unknown } // unreadable: says nothing
+        guard enabled else { return .stopped } // nothing to play
         guard let words = await queue.run({ self.readWords() }) else { return .unknown }
         return Self.state(of: toggle, words: words)
     }

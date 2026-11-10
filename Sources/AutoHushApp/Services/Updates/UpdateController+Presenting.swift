@@ -68,8 +68,13 @@ extension UpdateController {
             // Return presses the first button, as AppKit sets it; Escape, Later.
             if button.choice == .later { added.keyEquivalent = "\u{1b}" }
         }
-        if let notes = release.notes { alert.accessoryView = Self.notesView(notes) }
-        let index = runAlert(alert).rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+        let notes = release.notes.map(Self.notesView)
+        alert.accessoryView = notes
+        // Long notes scroll by the keys too while it shows (R5).
+        let notesKeys = notes.map(ReleaseNotesKeys.init)
+        let response = runAlert(alert)
+        notesKeys?.stop()
+        let index = response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
         guard prompt.buttons.indices.contains(index) else { return }
         switch prompt.buttons[index].choice {
         case .install: Task { await install(release, userInitiated: true) }
@@ -79,8 +84,8 @@ extension UpdateController {
     }
 
     /// The release notes in a small scrolling box, as tall as they need up to
-    /// a limit, showing their start.
-    static func notesView(_ markdown: String) -> NSView {
+    /// a limit, showing their start; the keys scroll it (`ReleaseNotesKeys`).
+    static func notesView(_ markdown: String) -> NSScrollView {
         let scrollView = NSScrollView(frame: NSRect(x: 0, y: 0, width: 320, height: 100))
         scrollView.borderType = .bezelBorder
         scrollView.hasVerticalScroller = true

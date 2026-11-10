@@ -34,8 +34,9 @@ extension CheckedPlayer {
         /// Its page is a backup: it mutes nothing new while they're off.
         var pageIsBackup = false
         /// The page its panel way reads its player bar through
-        /// (`PanelClues.page`), whose switch is released with it too.
-        var cluePage: AccessibilityWebPage?
+        /// (`PanelClues.page`), whose switch is released with it too; any
+        /// `WebPage`, so tests can stand in for it.
+        var cluePage: (any WebPage)?
         /// Its panel row doesn't follow it (`PlayerSetup.panelRowIsStale`):
         /// the panel way asks its sound through this.
         var hearing: LateHearing?

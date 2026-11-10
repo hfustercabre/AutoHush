@@ -1,6 +1,7 @@
 import Foundation
 import os
 import AutoHushKit
+import AutoHushTestSupport
 @testable import AutoHushApp
 
 /// Makes a web app in memory: reports the steps, then `onMake` puts it in place.
@@ -34,6 +35,20 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
         set { lock.withLock { _dialog = newValue } }
     }
 
+    /// A make cancelled while it waited for Add to Dock waits here before it
+    /// ends (a slow browser step), when set.
+    var endAfterCancel: Gate? {
+        get { lock.withLock { _endAfterCancel } }
+        set { lock.withLock { _endAfterCancel = newValue } }
+    }
+    private var _endAfterCancel: Gate?
+    /// While the browser's dialog shows (`dialog`), the make waits here, when set.
+    var whileDialogShows: Gate? {
+        get { lock.withLock { _whileDialogShows } }
+        set { lock.withLock { _whileDialogShows = newValue } }
+    }
+    private var _whileDialogShows: Gate?
+
     init(_ result: Result<MadeWebApp, WebAppMakingError>) {
         _result = result
     }
@@ -50,9 +65,16 @@ final class FakeWebAppMaker: WebAppMaking, @unchecked Sendable {
         onStep(.opened)
         if !made.alreadyThere {
             onStep(.readyToAdd(site: address))
-            guard await confirmAdd() else { throw CancellationError() }
+            guard await confirmAdd() else {
+                await endAfterCancel?.wait()
+                lock.withLock { _wasCancelled = true }
+                throw CancellationError()
+            }
             onStep(.adding)
-            if let dialog { onStep(.dialog(frame: dialog)) }
+            if let dialog {
+                onStep(.dialog(frame: dialog))
+                await whileDialogShows?.wait()
+            }
             onStep(.dialog(frame: nil))
             onMake()
         }

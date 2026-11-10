@@ -326,6 +326,43 @@ extension AppDelegateTests {
         #expect(scratch.addWindow.moves == ["aside", "back"])
     }
 
+    @MainActor
+    @Test("an add cancelled that ends late leaves the window off the dialog of the add under way since; a cancel brings it back at once")
+    func cancelledAddEndsLate() async throws {
+        let scratch = Scratch()
+        _ = scratch.makesWebApp(named: "Quartet")
+        let dialog = CGRect(x: 600, y: 120, width: 480, height: 300)
+        scratch.maker.dialog = dialog
+        let endAfterCancel = Gate(), whileDialogShows = Gate()
+        scratch.maker.endAfterCancel = endAfterCancel
+        scratch.maker.whileDialogShows = whileDialogShows
+        let (sut, _) = makeSUT(scratch)
+        defer { Task { await endAfterCancel.open(); await whileDialogShows.open() } }
+
+        sut.addWebApp.show()
+        sut.addWebApp.model.address = "play.quartet.example"
+        sut.addWebApp.model.continueTapped()
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.quartet.example") }
+        // Stopped for a suggested web app's tile, as its alert asks; its browser step ends late.
+        sut.addWebApp.cancel()
+        sut.addWebApp.show(address: "play.quartet.example")
+        await TestWait.until { await endAfterCancel.waiting == 1 }
+
+        sut.addWebApp.model.continueTapped() // the next add
+        await TestWait.until { sut.addWebApp.model.phase == .readyToAdd(site: "play.quartet.example") }
+        sut.addWebApp.model.addTapped()
+        await TestWait.until { await whileDialogShows.waiting == 1 }
+        #expect(scratch.addWindow.moves == ["aside"])
+
+        await endAfterCancel.open() // the cancelled add ends now
+        await TestWait.until { scratch.maker.wasCancelled }
+        try await Task.sleep(for: .milliseconds(100)) // its end, on the main actor
+        #expect(scratch.addWindow.moves == ["aside"]) // still off the dialog
+
+        sut.addWebApp.cancel()
+        #expect(scratch.addWindow.moves == ["aside", "back"]) // at once
+    }
+
     /// What the user does while the add window says the web app made isn't found.
     enum WhileNotFound: CaseIterable, Sendable {
         case addressChanged, windowClosed

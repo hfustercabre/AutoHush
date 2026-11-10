@@ -41,10 +41,15 @@ struct CheckedPlayerTests {
         var clued = self.setup([.panel(rememberedRow: nil)])
         #expect(!CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore()).releasesOnQuit)
         clued.panelClues = PanelClues(page: PanelClues.Page(access: .webKit, labels: ["Pause"]), script: nil)
-        #expect(CheckedPlayer.parts(for: clued, store: MemorySetupStore()).cluePage?.access == .webKit)
-        let cluedPlayer = CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore())
+        #expect((CheckedPlayer.parts(for: clued, store: MemorySetupStore()).cluePage as? AccessibilityWebPage)?.access == .webKit)
+        #expect(CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore()).releasesOnQuit)
+        // Its switch released off the actor, on the queue its sound is read on, as its page way's (R-5, 2026-11-10).
+        let cluePage = StubPage()
+        let cluedPlayer = CheckedPlayer(setup: clued, parts: .init(ways: [], signs: [], cluePage: cluePage), reports: nil,
+                                        processIdentifier: { 4242 }, audioRecordingAllowed: { true })
         #expect(cluedPlayer.releasesOnQuit)
-        await cluedPlayer.release() // its page's switch released off the actor, as its page way's
+        await cluedPlayer.release()
+        #expect(cluePage.releases == 1 && cluePage.releasedOn == CheckedPlayer.probeQueue.label)
         clued.panelClues = PanelClues(page: nil, script: .currentTrack)
         #expect(!CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore()).releasesOnQuit)
     }

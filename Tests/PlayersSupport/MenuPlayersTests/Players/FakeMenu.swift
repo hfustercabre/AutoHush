@@ -6,14 +6,14 @@ final class FakeMenu: PlaybackMenu, @unchecked Sendable {
     // Read and written only under `lock`.
     private let lock = NSLock()
     private var _title: String
-    private var _enabled: Bool
+    private var _enabled: Bool?
     private var _trusted: Bool
     private var _found = true
     private var _pressFails = false
     private var _presses = 0
     private var _prompts: [Bool] = []
 
-    init(title: String = "Pause", enabled: Bool = true, trusted: Bool = true) {
+    init(title: String = "Pause", enabled: Bool? = true, trusted: Bool = true) {
         _title = title
         _enabled = enabled
         _trusted = trusted

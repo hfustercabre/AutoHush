@@ -13,11 +13,14 @@ final class StubPage: WebPage {
     static let place = ButtonPlace(path: ["AXGroup", "AXToolbar"], distanceFromBottom: 40)
     private let playing: Locked<Bool>?
     private let released = Locked(0)
+    private let releaseQueue = Locked<String?>(nil)
     private let pressed = Locked(0)
     private let shown = Locked(0)
     private let read = Locked(0)
     private let current: Locked<Bool>
     var releases: Int { released.value }
+    /// The label of the queue it was last released on.
+    var releasedOn: String? { releaseQueue.value }
     var presses: Int { pressed.value }
     /// How many times its switch was turned on to show it (`showPage`).
     var shows: Int { shown.value }
@@ -65,5 +68,8 @@ final class StubPage: WebPage {
     func isPlayingSound(pid: pid_t) -> Bool { true }
     func wordsAreCurrent(pid: pid_t) -> Bool { wordsCurrent }
     func showPage(pid: pid_t) { shown.increment() }
-    func release() { released.increment() }
+    func release() {
+        releaseQueue.value = String(cString: __dispatch_queue_get_label(nil))
+        released.increment()
+    }
 }

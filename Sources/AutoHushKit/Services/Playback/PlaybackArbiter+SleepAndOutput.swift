@@ -63,6 +63,9 @@ extension PlaybackArbiter {
         guard !isShutDown, asleep != isAsleep else { return }
         isAsleep = asleep
         if asleep {
+            // A pause under way may end only after the Mac wakes (frozen
+            // mid-fade): it's forgotten all the same.
+            if pauseTask != nil { sleptDuringPause = true }
             pauseFailure = nil
             cancelPendingPause()
             cancelPendingResume()
@@ -81,10 +84,16 @@ extension PlaybackArbiter {
             }
         } else {
             logger.info("[arbiter] the Mac is awake")
-            if forgotPauseInSleep, let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
-            forgotPauseInSleep = false
+            await tellForgottenPause()
             if autoPauseEnabled, !activeSources.isEmpty { startPause() }
         }
         publishPlaybackState()
+    }
+
+    /// A pause forgotten in a sleep is told to the player, once the Mac is
+    /// awake: it can act then.
+    func tellForgottenPause() async {
+        if forgotPauseInSleep, let muting = player as? any MutingMusicPlayer { await muting.forgetPause() }
+        forgotPauseInSleep = false
     }
 }

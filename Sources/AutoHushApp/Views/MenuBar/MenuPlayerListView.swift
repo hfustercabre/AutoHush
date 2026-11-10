@@ -9,7 +9,7 @@ import SwiftUI
 /// move the highlight (the side window's `KeyHighlight`) through the rows,
 /// the tint behind it, and Return or Space presses the row; typing goes to
 /// the search, Return then choosing the first player it left. With Option held, an added app's row removes it, after
-/// asking (R5).
+/// asking (R5), clicked or pressed by Option-Return or Option-Space (X1).
 struct MenuPlayerListView: View {
     let model: StatusMenuModel
 

@@ -114,6 +114,38 @@ extension UpdateControllerTests {
         #expect(heights[2] == 180)
     }
 
+    @Test("long notes scroll by the keys while the prompt shows: ↓ and ↑ a little, End and Home, Page Up; at an end, other keys and other windows', the key is the prompt's (R5)")
+    func notesScrollByKeys() throws {
+        _ = NSApplication.shared // a window needs it, when this suite runs alone
+        let notes = UpdateController.notesView(String(repeating: "- A fix\n", count: 40))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        window.contentView?.addSubview(notes)
+        let press = { (keyCode: UInt16) in
+            ReleaseNotesKeys.handle(keyCode, flags: [], windowNumber: window.windowNumber, in: notes)
+        }
+        let document = try #require(notes.documentView)
+        func fromTop() -> CGFloat {
+            let visible = notes.contentView.documentVisibleRect
+            return document.isFlipped ? visible.minY : document.frame.height - visible.maxY
+        }
+        let end = document.frame.height - notes.contentView.bounds.height
+        #expect(end > ScrollKeys.line)
+        #expect(!press(126)) // ↑ at the top: the prompt's
+        #expect(press(125)) // ↓
+        #expect(abs(fromTop() - ScrollKeys.line) <= 1)
+        #expect(press(119)) // End
+        #expect(abs(fromTop() - end) <= 1)
+        #expect(!press(125)) // ↓ at the end
+        #expect(press(116)) // Page Up
+        #expect(fromTop() < end)
+        #expect(press(115)) // Home
+        #expect(fromTop() == 0)
+        #expect(!press(36) && !press(53) && !press(48)) // Return, Escape, Tab: the prompt's
+        #expect(!ReleaseNotesKeys.handle(125, flags: [], windowNumber: window.windowNumber + 1, in: notes)) // another window's
+    }
+
     @Test("a check asked for by a click on a notification that no longer applies says what it found: up to date, no releases yet, or why it couldn't tell")
     func checkResults() async {
         let answering = { (status: Int, body: String) in
@@ -162,7 +194,7 @@ extension UpdateControllerTests {
 
     // MARK: - Scheduling
 
-    @Test("the automatic work runs 30 s after launch, then hourly, on one timer at a time; checks are due daily, and never when turned off")
+    @Test("the automatic work runs 30 s after launch, then hourly, on one timer at a time; checks are due daily (or with the last one dated over a day ahead), and never when turned off")
     func checkDue() async throws {
         let h = Harness(checker: .offline)
         h.controller.scheduleAutomaticChecks()
@@ -182,6 +214,11 @@ extension UpdateControllerTests {
         h.preferences.lastUpdateCheck = now.addingTimeInterval(-3600)
         #expect(!h.controller.isCheckDue(now: now))
         h.preferences.lastUpdateCheck = now.addingTimeInterval(-25 * 3600)
+        #expect(h.controller.isCheckDue(now: now))
+        // Dated ahead, as the clock was then: within a day, not due; further, due.
+        h.preferences.lastUpdateCheck = now.addingTimeInterval(3600)
+        #expect(!h.controller.isCheckDue(now: now))
+        h.preferences.lastUpdateCheck = now.addingTimeInterval(365 * 24 * 3600)
         #expect(h.controller.isCheckDue(now: now))
         h.controller.checksAutomatically = false
         #expect(!h.controller.isCheckDue(now: now))

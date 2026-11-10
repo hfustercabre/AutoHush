@@ -18,10 +18,18 @@ extension StatusMenuController {
     /// menus), and Return with nothing highlighted chooses the first one it
     /// left, only while something is typed. Keys with nothing to act on do nothing,
     /// without a beep, as in Settings. Tab and Shift-Tab go control by
-    /// control, a row of several one after the other (B, 2026-11-09).
+    /// control, a row of several one after the other (B, 2026-11-09),
+    /// staying in the open side window, as macOS keeps Tab in one window's
+    /// loop (the user, 2026-11-10: "Do whatever macOS does"), the players'
+    /// search one of the stops (`tab`). ↑ ↓ and Tab go on from a control
+    /// that has the keyboard's focus (W9). With Option, Return and Space
+    /// press as an Option-click does (`menuKey`).
     func handleKey(_ event: NSEvent) -> Bool {
+        let key = Self.menuKey(event)
+        // What the lit control does is what it shows, as the key is pressed.
+        if key == .returnKey || key == .space { model.isOptionHeld = Self.optionAlone(event.modifierFlags) }
         // Space presses the highlighted player until something is typed.
-        let spaceChooses = HighlightKey(event) == .space && model.playerSearch.isEmpty
+        let spaceChooses = key == .space && model.playerSearch.isEmpty
         if model.isChoosingPlayer, model.players.showsSearch, !spaceChooses {
             if Self.composes(event) {
                 // Only the field itself can compose it: it takes the keyboard.
@@ -34,8 +42,22 @@ extension StatusMenuController {
                 return true
             }
         }
-        guard let key = HighlightKey(event) else { return false }
+        guard let key else { return false }
         return handle(key)
+    }
+
+    /// `event` as the menu's keys (`HighlightKey`), and Option-Return and
+    /// Option-Space as Return and Space: they press the lit control as an
+    /// Option-click does, Option showing what it does instead (Settings'
+    /// button as Diagnostics, an added app's row as Remove; D1 and X1, the
+    /// user's picks, 2026-11-10), as in macOS's menus, whose Option items
+    /// Return chooses. Any other key with Option stays the panel's, and
+    /// windows keep Option's keys to themselves.
+    static func menuKey(_ event: NSEvent) -> HighlightKey? {
+        if let key = HighlightKey(event) { return key }
+        guard event.modifierFlags.intersection([.command, .option, .control, .shift]) == .option,
+              let key = HighlightKey(keyCode: event.keyCode, modifiers: []), key == .returnKey || key == .space else { return nil }
+        return key
     }
 
     /// `key`, as `handleKey` takes it; `false` for Delete, which removes
@@ -45,12 +67,12 @@ extension StatusMenuController {
         let keyboard = inSide ? model.sideKeyboard : model.keyboard
         switch key {
         case .up, .down:
-            // One highlight at a time: the keyboard's focus, if a click gave it, goes.
-            panel?.makeFirstResponder(nil)
             keyboard.move(key == .down ? 1 : -1)
-        case .tab, .backTab:
+            // One highlight at a time: the keyboard's focus, if a click gave it, goes, once moved on from.
             panel?.makeFirstResponder(nil)
-            keyboard.step(key == .tab ? 1 : -1)
+        case .tab, .backTab:
+            tab(key == .tab ? 1 : -1, in: keyboard)
+            panel?.makeFirstResponder(nil)
         case .pageUp, .pageDown, .home, .end:
             panel?.makeFirstResponder(nil)
             if let jump = key.jump { keyboard.jump(jump) }
@@ -78,6 +100,33 @@ extension StatusMenuController {
                 _ = keyboard.adjust(-1) || keyboard.moveInRow(-1)
             }
         }
+        return true
+    }
+
+    /// Tab (1) or Shift-Tab (-1) in `keyboard`'s window: the next control,
+    /// or, past the last (the first) among the players, their search, which
+    /// takes the keyboard, the highlight let go, as macOS's key loop goes
+    /// into a field (K3, the user, 2026-11-10: "Into the field too");
+    /// without one, round.
+    private func tab(_ step: Int, in keyboard: KeyHighlight) {
+        guard !keyboard.step(step, wraps: false) else { return }
+        if keyboard === model.sideKeyboard, model.isChoosingPlayer, model.players.showsSearch, searchTakesKeyboard() {
+            keyboard.clear()
+        } else {
+            keyboard.stepIn(step)
+        }
+    }
+
+    /// A key while the players' search has the keyboard itself (`MenuPanel.onFieldKey`),
+    /// before the field: Tab leaves it for the first player, Shift-Tab for
+    /// the last stop, as macOS's key loop goes on from a field (K3), so
+    /// macOS's focus never goes to its ✕ with the highlight shown besides
+    /// (K4, 2026-11-10: one indicator at a time). The rest is the field's.
+    func handleKeyInSearch(_ event: NSEvent) -> Bool {
+        guard let key = HighlightKey(event), key == .tab || key == .backTab, model.isChoosingPlayer else { return false }
+        searchGivesUpKeyboard()
+        model.sideKeyboard.clear()
+        model.sideKeyboard.stepIn(key == .tab ? 1 : -1)
         return true
     }
 

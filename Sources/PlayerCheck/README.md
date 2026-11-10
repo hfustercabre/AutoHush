@@ -332,10 +332,11 @@ blocked.
 
 Ctrl-C, the panel's Stop (AutoHush's or Player Check's), Escape while input
 is blocked, or whoever ran it ending (its window closed, a crash): while
-the window is away from where it was, or in a trial, the check finishes the
-step under way (a trial plays the app again first; a move; the page read; a
-wait ends at once), then puts the window back and stops; before anything
-moved, it stops at once. Either way the switches it turned on are set back,
+the window is away from where it was, in a trial, or, with no window to
+move, from the first trial on, the check finishes the step under way (a
+trial plays the app again first; a move; the page read; a wait ends at
+once), then puts the window back and stops; before anything moved, it
+stops at once. Either way the switches it turned on are set back,
 the app that was in front comes back, and a Now Playing shown for a press
 is hidden again.
 
@@ -353,8 +354,9 @@ In `~/Library/Caches/PlayerCheck/`, or `--caches`' folder (AutoHush's
 checks use `~/Library/Caches/com.autohush.AutoHush/PlayerCheck`):
 
 - `button-places.json`, per app: where the page's player bar button sits,
-  its learned recipe (words and places, as AutoHush's `PlayPauseRecipe`),
-  and its Now Playing panel row.
+  its learned recipe (words and places, as AutoHush's `PlayPauseRecipe`;
+  a press by the page adds to it only from the player's own button, never
+  a song tile), and its Now Playing panel row.
 - `words.json`: each app's own words for Play and Pause, per copy and
   version.
 

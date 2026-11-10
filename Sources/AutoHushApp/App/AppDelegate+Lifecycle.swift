@@ -36,7 +36,6 @@ extension AppDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        putBackWhatWasLeft()
         // Shown while a window is open: the Mac's standard menus and keys.
         NSApp.mainMenu = MainMenu.make(about: { [weak self] in self?.openSettings(page: .about) },
                                        settings: { [weak self] in self?.openSettings() },
@@ -49,19 +48,24 @@ extension AppDelegate {
         registerSleepObservers()
         registerClockObservers()
         followFocusAtLaunch()
-        // Opened last, this copy is the one that runs: any opened before it
-        // quits first, handing over a pause it held, so they never both pause
-        // and resume the music.
-        let otherInstances = otherInstances
-        Task {
-            let others = await otherInstances.quitAll()
-            if !others.isEmpty { logger.notice("Quit \(others.count) other running AutoHush") }
-            session.launch()
-            if player == nil { showPlayerChooser() }
-            reopenAddAppIfAsked()
-        }
+        Task { await launchAfterOtherCopies() }
         updates.noteLaunch()
         updates.scheduleAutomaticChecks()
+    }
+
+    /// Opened last, this copy is the one that runs: any opened before it
+    /// quits first, handing over a pause it held, so they never both pause
+    /// and resume the music, and putting back what it changed for a moment
+    /// (its check's mute of the Mac's output, the volume it lowered). Only
+    /// then is what's left put back (`putBackWhatWasLeft`): a crashed copy's,
+    /// not one a running copy still uses.
+    func launchAfterOtherCopies() async {
+        let others = await otherInstances.quitAll()
+        if !others.isEmpty { logger.notice("Quit \(others.count) other running AutoHush") }
+        putBackWhatWasLeft()
+        session.launch()
+        if player == nil { showPlayerChooser() }
+        reopenAddAppIfAsked()
     }
 
     /// At launch, what AutoHush changed for a moment and didn't put back,

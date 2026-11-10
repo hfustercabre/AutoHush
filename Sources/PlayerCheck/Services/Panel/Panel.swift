@@ -116,12 +116,19 @@ func otherAppNames() -> Set<String> { Set(NSWorkspace.shared.runningApplications
     panelRowSaid = PrivateText.row(index, of: count, why: why)
 }
 
+/// The row the app changed with last in this run (`rememberPanelRow`): the
+/// one its setup for AutoHush remembers (`writeResult`), never a row pressed
+/// by a trial that changed nothing (another app's, maybe) or by its undo.
+@MainActor var panelRowChangedWith: String?
+
 /// Keeps the row just pressed as the app's, between runs, once the app
 /// changed with it: a later press finds it by its text when nothing shows
 /// the app's song (a Play after a Pause, as a check's play does within one
 /// run; a window on another desktop may give no title).
 @MainActor func rememberPanelRow() {
-    guard let panelRowText, keptPanelRow() != panelRowText else { return }
+    guard let panelRowText else { return }
+    panelRowChangedWith = panelRowText
+    guard keptPanelRow() != panelRowText else { return }
     saveButton { $0.panelRow = panelRowText }
 }
 

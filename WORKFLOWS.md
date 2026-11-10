@@ -794,7 +794,7 @@ flowchart TD
   AUDF["Allow… in the menu or<br/>Behavior; switched on in<br/>System Settings: Reopen<br/>AutoHush. Or AntiDot mode"]
   PF["A pause fails and can’t<br/>be muted (AntiDot mode, no<br/>Audio Recording), nor taken<br/>by a backup control: Couldn’t<br/>pause — Safari is playing,<br/>with ⓘ"]
   NPH["Now Playing hidden and<br/>couldn’t be shown: ⓘ offers<br/>Open Menu Bar Settings…"]
-  DIAG["Settings → Diagnostics:<br/>what AutoHush sees (Controlled<br/>by: the main control, then its<br/>backup controls while on, each<br/>marked when it paused or played<br/>last; both switches), Last error,<br/>Copy Report (⌥ Option-click<br/>Settings in the menu); Choose…,<br/>Learn Controls… or Allow…<br/>beside a problem"]
+  DIAG["Settings → Diagnostics:<br/>what AutoHush sees (Controlled<br/>by: the main control, then its<br/>backup controls while on, each<br/>marked when it paused or played<br/>last; both switches), Last error,<br/>Copy Report (⌥ Option in the<br/>menu: Settings becomes<br/>Diagnostics); Choose…,<br/>Learn Controls… or Allow…<br/>beside a problem"]
   LOGS["Show Logs…: this launch<br/>or 24 hours, every entry or<br/>only problems; copy or save"]
   CHK["Add an App’s check couldn’t<br/>finish: Show Log… (the<br/>check’s own log), Check Again"]
   DEL["The chosen web app deleted:<br/>no player chosen; the window<br/>to choose another opens"]

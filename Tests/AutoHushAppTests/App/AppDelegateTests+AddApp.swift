@@ -511,6 +511,23 @@ extension AppDelegateTests {
         #expect(scratch.volume.decibels == [0: -10])
     }
 
+    @MainActor
+    @Test("a copy opened while another lowers the Mac's volume leaves it lowered until that copy quits: only then is what's left put back")
+    func leftVolumeWaitsForOlderCopy() async {
+        let scratch = Scratch()
+        let (older, _) = makeSUT(scratch)
+        older.volumeLeveler.lower(by: -6) // still leveling as the next copy opens
+        let running = Locked<Set<pid_t>>([101]), atQuit = Locked<[[UInt32: Float]?]>([]) // by channel
+        let volume = scratch.volume
+        let others = OtherInstances(list: { running.value.sorted() },
+                                    send: { pid, _ in atQuit.append(volume.decibels); running.withLock { _ = $0.remove(pid) } },
+                                    isRunning: { running.value.contains($0) })
+        let (next, _) = makeSUT(scratch, otherInstances: others)
+        await next.launchAfterOtherCopies()
+        #expect(atQuit.value == [[0: -16]]) // still the older copy's as it was asked to quit
+        #expect(scratch.volume.decibels == [0: -10]) // it quit without putting it back (crashed): put back then
+    }
+
     /// Now Playing shown in the menu bar for a press while the user hid it,
     /// through the setting AutoHush is given, as AutoHush leaves it then.
     @MainActor

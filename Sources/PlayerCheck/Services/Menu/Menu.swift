@@ -67,13 +67,16 @@ func modifierSymbols(_ modifiers: Int) -> String {
 /// MenuPlayer reads it (`MenuPlayerProfile.found`): disabled, it's stopped
 /// (nothing to play); else by the common words and the app's own together,
 /// exactly, case and all (`MenuPlayer.state(ofTitle:words:)`). Nil when the
-/// item says neither, as AutoHush can't tell then either.
+/// item says neither, or whether it's enabled couldn't be read, as AutoHush
+/// can't tell then either.
 @MainActor func menuState(_ toggle: MenuToggle) -> PlayerState? {
     menuState(title: toggle.title, isEnabled: toggle.isEnabled, ownWords: ownWords)
 }
 
-/// `menuState`'s rule, for an item titled `title` and the app's own words.
-func menuState(title: String, isEnabled: Bool, ownWords: PlayPauseWords?) -> PlayerState? {
+/// `menuState`'s rule, for an item titled `title` and the app's own words;
+/// `isEnabled` nil when it couldn't be read.
+func menuState(title: String, isEnabled: Bool?, ownWords: PlayPauseWords?) -> PlayerState? {
+    guard let isEnabled else { return nil }
     guard isEnabled else { return .stopped }
     let state = MenuPlayer.state(ofTitle: title, words: PlayPauseWords.common.merged(with: ownWords))
     return state == .unknown ? nil : state

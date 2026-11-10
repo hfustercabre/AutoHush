@@ -40,6 +40,8 @@ final class SettingsWindowController: PlacedWindowController {
     var fullKeyboardAccess: @MainActor () -> Bool = { NSApp.isFullKeyboardAccessEnabled }
     /// The page's view, where its controls' frames are (`KeyHighlight.Control.frame`).
     private weak var pageView: NSView?
+    /// Back and Forward as stops of the page's highlight (R2).
+    let toolbarKeys: SettingsToolbarKeys
 
     /// `frameName`: where the window's place and size are kept; tests give
     /// each window a name of its own, since AppKit gives a name to one
@@ -50,6 +52,9 @@ final class SettingsWindowController: PlacedWindowController {
     init(model: SettingsModel, frameName: String = SettingsWindowController.frameName) {
         self.model = model
         toolbarDelegate = SettingsToolbarDelegate(navigation: navigation)
+        toolbarKeys = SettingsToolbarKeys(highlight: keys.page, goBack: { [navigation] in navigation.goBack() },
+                                          goForward: { [navigation] in navigation.goForward() },
+                                          canGo: { [navigation] in (navigation.canGoBack, navigation.canGoForward) })
         let split = SettingsSplitViewController()
         let sidebar = NSHostingController(rootView: SettingsSidebar(model: model, navigation: navigation).environment(keys.sidebar))
         sidebar.sizingOptions = []
@@ -92,7 +97,8 @@ final class SettingsWindowController: PlacedWindowController {
         keys.sidebar.screenFrame = { [weak view = sidebar.view] rect in view.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
         keys.page.screenFrame = { [weak view = page.view] rect in view.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
         pageView = page.view
-        navigation.onChange = { [weak window = self.window, weak model, toolbarDelegate, keys] page in
+        toolbarKeys.attach(to: window, pageView: page.view)
+        navigation.onChange = { [weak window = self.window, weak model, toolbarDelegate, toolbarKeys, keys] page in
             window?.title = page.title
             // A Behavior row's card in Fine-Tuning: only for that visit.
             if page != .fineTuning {
@@ -100,6 +106,7 @@ final class SettingsWindowController: PlacedWindowController {
                 model?.fineTuningFocusTakesHighlight = false
             }
             toolbarDelegate.updateArrows()
+            toolbarKeys.updateEnabled()
             // Back and Forward while the keys have the sidebar's highlight: it follows the page.
             keys.pageChanged()
         }
@@ -112,6 +119,11 @@ final class SettingsWindowController: PlacedWindowController {
                 if window.firstResponder is NSText, keys.isLit { keys.clear() }
             }
         }
+        keys.dropFocus = { [weak window = self.window] in _ = window?.makeFirstResponder(nil) }
+        // Tab comes round to Sound Sources' search while it's open, after Back and Forward (K3).
+        keys.focusSearch = { [weak self] in self?.focusPageSearch() ?? false }
+        // → on a sidebar row Tab stopped on: into its page once it shows (R3).
+        keys.showsFirstOfNextPage = { [weak model] in model?.shownPageTakesHighlight = true }
         // Before the focused control: the arrows move the highlight, as in
         // the menu. Kept for the controller's life, which is AutoHush's.
         NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
@@ -141,9 +153,13 @@ final class SettingsWindowController: PlacedWindowController {
         if press.focus == .textField { return handleKeyInField(press, in: window) }
         guard let key = press.key else { return false }
         // One highlight at a time: the arrows (Tab and Page Up…End too) take it from
-        // the focus, and a lit one, whose tint hides the focus's, gets the
-        // other keys too (N6, 2026-11-06).
-        if [.up, .down, .tab, .backTab].contains(key) || key.jump != nil || keys.isLit { window.makeFirstResponder(nil) }
+        // the focus, once they've moved on from it (`SettingsKeys.dropFocus`), and a
+        // lit one, whose tint hides the focus's, gets the other keys too (N6, 2026-11-06).
+        let moves = [.up, .down, .tab, .backTab].contains(key) || key.jump != nil
+        if !moves, keys.isLit { window.makeFirstResponder(nil) }
+        // Back and Forward where the toolbar has them now, and their ring after.
+        toolbarKeys.updateFrames()
+        defer { toolbarKeys.refresh() }
         if keys.handle(key, controlHasFocus: press.focus == .control) { return true }
         // Delete removes the apps selected in Sound Sources, as their Remove
         // does (macOS's lists' key; the workflow audit, 2026-10-22).
@@ -152,20 +168,37 @@ final class SettingsWindowController: PlacedWindowController {
         return true
     }
 
-    /// A key while a field takes what's typed (Sound Sources' search), as in
-    /// the welcome window: ↓ and Tab leave it for the rows under it, the
-    /// first one lit (Tab's first, right to left, is that row's right
-    /// end: `byTab`); Shift-Tab stays in it, as ↑ does (the search is the
-    /// top); the rest is the field's (N4, 2026-11-06: with keyboard
-    /// navigation off, the keys couldn't reach the rows it found).
+    /// A key while a field takes what's typed (Sound Sources' search):
+    /// ↓ leaves it for the rows under it, the first one lit; Tab and
+    /// Shift-Tab for the stops after it and before it in Tab's loop, in
+    /// reading order: its ✕, beside it, and Forward or Back, over the page,
+    /// else the sidebar's last (K3, 2026-11-10; the user's order, 2026-11-10:
+    /// R1 had Tab go up to Back); ↑ stays in it (the search is the top);
+    /// the rest is the field's (N4, 2026-11-06: with keyboard navigation
+    /// off, the keys couldn't reach the rows it found).
     private func handleKeyInField(_ press: WindowKeyPress, in window: NSWindow) -> Bool {
-        if press.isShiftTabInField { return true } // nothing, the field keeps the keyboard
-        guard press.key == .down || press.key == .tab, let field = (window.firstResponder as? NSText)?.delegate as? NSView, let pageView,
+        if press.key == .backTab || press.key == .tab {
+            window.makeFirstResponder(nil)
+            // Back and Forward where the toolbar has them now, and their ring after.
+            toolbarKeys.updateFrames()
+            defer { toolbarKeys.refresh() }
+            if press.key == .tab { keys.tabFromSearch() } else { keys.backTabFromSearch() }
+            return true
+        }
+        guard press.key == .down, let field = (window.firstResponder as? NSText)?.delegate as? NSView, let pageView,
               field.isDescendant(of: pageView) else { return false }
         let frame = pageView.convert(field.bounds, from: field)
         let foot = pageView.isFlipped ? frame.maxY : pageView.bounds.height - frame.minY
         window.makeFirstResponder(nil)
-        keys.page.highlightFirst(below: foot, byTab: press.key == .tab)
+        keys.page.highlightFirst(below: foot)
+        return true
+    }
+
+    /// The page's search (Sound Sources', while open) takes the keyboard, the
+    /// caret after its text; `false` when none shows.
+    func focusPageSearch() -> Bool {
+        guard let window, let field = pageView?.firstEditableTextField, window.makeFirstResponder(field) else { return false }
+        field.currentEditor()?.selectedRange = NSRange(location: (field.stringValue as NSString).length, length: 0)
         return true
     }
 
@@ -193,11 +226,13 @@ final class SettingsWindowController: PlacedWindowController {
         if reopening {
             navigation.clearHistory()
             toolbarDelegate.updateArrows()
+            toolbarKeys.updateEnabled()
         }
         model.refreshLaunchAtLogin()
         model.refreshMenuBarIcon()
         placeOnce()
         window?.showInFront()
+        toolbarKeys.updateFrames() // laid out now
         // Nothing has the keyboard until the user asks: no focus ring on a page at first.
         if reopening { window?.makeFirstResponder(nil) }
     }
@@ -238,5 +273,8 @@ extension SettingsWindowController: NSMenuItemValidation {
 extension SettingsWindowController: NSWindowDelegate {
     /// The window is kept when closed: an Undo days later would undo a step
     /// long forgotten.
-    func windowWillClose(_ notification: Notification) { window?.undoManager?.removeAllActions() }
+    func windowWillClose(_ notification: Notification) {
+        window?.undoManager?.removeAllActions()
+        toolbarKeys.removeRing()
+    }
 }

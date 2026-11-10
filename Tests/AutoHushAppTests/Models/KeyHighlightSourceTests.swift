@@ -50,6 +50,45 @@ struct KeyHighlightSourceTests {
         #expect(!page.hidesFocus && !sidebar.hidesFocus)
     }
 
+    @Test("the pointer on a dimmed control that doesn't explain itself leaves the highlight off it, unseen: on the one around it, or nothing, so the focus's tint and keys stay (app-models-2)")
+    func pointerOnDimmed() {
+        let keyboard = KeyHighlight()
+        let card = UUID(), dimmed = UUID()
+        keyboard.register(card, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 100)))
+        keyboard.register(dimmed, .init(frame: CGRect(x: 10, y: 50, width: 80, height: 22), isEnabled: false))
+        keyboard.hover(dimmed, true) // alone under the pointer
+        #expect(keyboard.highlighted == nil && !keyboard.hidesFocus)
+        keyboard.hover(card, true)
+        #expect(keyboard.highlighted == card)
+        keyboard.hover(dimmed, true) // inside the card, came onto last
+        #expect(keyboard.highlighted == card)
+        keyboard.hover(dimmed, false)
+        #expect(keyboard.highlighted == card)
+    }
+
+    @Test("VoiceOver's cursor moved by its own keys brings the highlight, as the keys' but no arrival (its cursor is there already); not onto a dimmed control without a reason; Settings' other side lets go (K5)")
+    func followsVoiceOver() {
+        let sidebar = KeyHighlight(), page = KeyHighlight()
+        var sides: [String] = []
+        sidebar.onHighlight = { sides.append("sidebar"); page.clear() }
+        page.onHighlight = { sides.append("page"); sidebar.clear() }
+        let row = control(sidebar, 0)
+        let button = control(page, 0)
+        let dimmed = control(page, 50, enabled: false)
+        let explaining = control(page, 100, enabled: false, explains: true)
+        page.move(1)
+        #expect(page.highlighted == button)
+        sidebar.followVoiceOver(to: row)
+        #expect(sidebar.highlighted == row && page.highlighted == nil)
+        #expect(sidebar.light(row).byKeys && sidebar.light(row).arrivals == 0)
+        page.followVoiceOver(to: dimmed) // nothing to show there
+        #expect(page.highlighted == nil && sidebar.highlighted == row)
+        page.followVoiceOver(to: explaining)
+        #expect(page.highlighted == explaining && sidebar.highlighted == nil)
+        page.followVoiceOver(to: explaining) // already there
+        #expect(sides == ["page", "sidebar", "page"])
+    }
+
     @Test("a dimmed control that explains itself takes the keys' highlight, shows it only to the keys, keeps it as it dims, and isn't pressed")
     func explains() {
         let keyboard = KeyHighlight()

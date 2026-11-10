@@ -10,7 +10,10 @@ import SwiftUI
 /// to show (`HighlightReason`, A13a).
 /// A key moving the highlight onto it moves VoiceOver's cursor there too
 /// (`KeyHighlight.Light.arrivals`), so VoiceOver says what's lit, once:
-/// nothing is announced besides (A3, 2026-11-01).
+/// nothing is announced besides (A3, 2026-11-01); VoiceOver's cursor moved
+/// onto it by VoiceOver's own keys brings the highlight (K5, 2026-11-10).
+/// It tells the highlight when it has the keyboard's focus, which the keys
+/// then go on from (`KeyHighlight.focused`, W9).
 /// `lightsItself`: no tint behind it, the view draws it itself
 /// (`showsKeyHighlight`: a menu item's row, the card). `ownsControls`: a row whose one button
 /// takes no highlight of its own (Settings' rows, the user's pick: the
@@ -31,6 +34,10 @@ struct Highlightable: ViewModifier {
     var adjust: ((Int) -> Void)?
     var opensSide = false
     var isCurrent: (() -> Bool)?
+    /// Only Tab and Shift-Tab stop on it (`KeyHighlight.Control.tabOnly`).
+    var tabOnly = false
+    /// What ↑ and ↓ do on it, a list that's one stop (`KeyHighlight.Control.scroll`).
+    var scroll: ((Int) -> Bool)? = nil
     /// Where VoiceOver's cursor goes as a key lights it, instead of onto
     /// the whole of it: in a view of several elements, the control its
     /// press changes (the menu's card: its Auto-Pause switch, where
@@ -63,6 +70,7 @@ struct Highlightable: ViewModifier {
         var adjust: ((Int) -> Void)?
         var delete: (() -> Void)?
         var isCurrent: (() -> Bool)?
+        var scroll: ((Int) -> Bool)?
         var arrivalSpeech: (() -> String?)?
     }
 
@@ -99,6 +107,13 @@ struct Highlightable: ViewModifier {
                 .id(id)
                 .padding(.bottom, -revealRoom)
                 .accessibilityFocused($hasVoiceOverCursor)
+                // VoiceOver's own keys moved its cursor here: the highlight
+                // follows (K5); on the arrival above, it's here already.
+                .onChange(of: hasVoiceOverCursor || voiceOverTarget?.wrappedValue == true) { _, hasCursor in
+                    guard hasCursor, voiceOver.isOn() else { return }
+                    keyboard.followVoiceOver(to: id)
+                }
+                .onChange(of: isFocused, initial: true) { keyboard.focus(id, isFocused) }
                 .onChange(of: keyboard.light(id).arrivals) {
                     // Only for VoiceOver: without it, nothing to move.
                     guard voiceOver.isOn() else { return }
@@ -115,7 +130,9 @@ struct Highlightable: ViewModifier {
                                                 adjust: adjust == nil ? nil : { actions.adjust?($0) },
                                                 delete: removal == nil ? nil : { actions.delete?() },
                                                 opensSide: opensSide,
-                                                isCurrent: isCurrent == nil ? nil : { actions.isCurrent?() == true }))
+                                                isCurrent: isCurrent == nil ? nil : { actions.isCurrent?() == true },
+                                                tabOnly: tabOnly,
+                                                scroll: scroll == nil ? nil : { actions.scroll?($0) ?? false }))
                 }
                 .onChange(of: enabled) { keyboard.update(id, isEnabled: enabled) }
                 // A reason that comes or goes while it stays (Option held in the players).
@@ -127,6 +144,7 @@ struct Highlightable: ViewModifier {
                     actions.adjust = adjust
                     actions.delete = removal?.remove
                     actions.isCurrent = isCurrent
+                    actions.scroll = scroll
                     actions.arrivalSpeech = arrivalSpeech
                 }
                 .onDisappear { keyboard.remove(id) }

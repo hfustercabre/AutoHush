@@ -171,7 +171,7 @@ Sources/
                          Updates/ (UpdateController, observable for Settings; UpdateChecker,
                          UpdateInstaller: download, signature check, swap, with +DiskImage and +Signature,
                          through UpdateInstalling, failing with UpdateInstallError; DiskImageTool;
-                         UpdateDownloads, UpdateNotifier, ReleaseNotes), WebApps/ (LearningSession,
+                         UpdateDownloads, UpdateNotifier, ReleaseNotes, ReleaseNotesKeys), WebApps/ (LearningSession,
                          learning a web app's controls with the user; AddWebAppHost, what Add a Web App
                          needs from the rest of AutoHush), Diagnostics/ (DiagnosticsReport, Copy Report's
                          text, with +Sections and +Words), Shortcuts/
@@ -189,7 +189,8 @@ Sources/
                          +Keys, the keys as in macOS's menus, and +SideWindow, the side window), MenuPanel (the
                          menu's window, and its side window's), SettingsWindowController (its split view:
                          SettingsSplitViewController, ClearDividerSplitView),
-                         SettingsToolbarDelegate (its toolbar: Back and Forward, the page's name),
+                         SettingsToolbarDelegate (its toolbar: Back and Forward, the page's name), SettingsToolbarKeys
+                         (Back and Forward as Tab stops of the page's highlight),
                          PlayerChooserWindowController (the welcome window), AddWebAppFeature (Add a Web
                          App: its model, its window and the add under way), AddWebAppWindowController,
                          LearningWindowController, HostedWindowController (their shared base; LaterAction,
@@ -236,7 +237,8 @@ Sources/
                          ChooseText, ChangeAppText (Add an App's Change… question), LearnText (the Controls row),
                          IgnoredText, AccessibilityText, BackupText (backup controls), and the update choices' (AutomaticUpdates+Text)
     Utilities/           small helpers: AppVersion, ProjectInfo, AppIcon, InfoAlert, IgnoreAppsPicker
-                         (the panel that picks apps to ignore, for Settings and the menu), …
+                         (the panel that picks apps to ignore, for Settings and the menu), ScrollKeys
+                         (a scroll view moved by the keys: the logs' entries, an update's notes), …
   AutoHushKit/           the engine, by kind of code too
     Models/              values and settings: AutoPauseSetting (the setting and snoozes), PlaybackState,
                          DetectionMethod, DetectionMode, ActiveAudioReport (what Diagnostics shows),

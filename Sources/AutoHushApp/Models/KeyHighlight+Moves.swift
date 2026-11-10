@@ -24,39 +24,88 @@ extension KeyHighlight {
         return rows.map { $0.sorted { $0.control.frame.minX < $1.control.frame.minX }.map(\.id) }
     }
 
-    /// The highlight `step` rows on (1 down, -1 up), wrapping at the ends:
+    /// The highlight `step` rows on (1 down, -1 up), past the controls
+    /// only Tab stops on (`Control.tabOnly`), wrapping at the ends:
     /// in a row of several (durations, tiles), the one nearest above or
     /// under, else the row's first (the user, 2026-10-18: ← and → move
-    /// within a row); from nothing, the first row (down) or the last (up).
+    /// within a row); from nothing, the first row (down) or the last (up),
+    /// or on from the control with the keyboard's focus (`focused`, W9).
     func move(_ step: Int) {
-        let rows = keyRows
+        let all = keyRows
+        let rows = arrowRows(all)
         guard !rows.isEmpty else { return }
         let next: UUID
-        if let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) {
-            next = entry(to: rows[((row + step) % rows.count + rows.count) % rows.count], from: rows[row], highlighted)
+        if let current = highlighted ?? focused, let row = rows.firstIndex(where: { $0.contains(current) }) {
+            next = entry(to: rows[((row + step) % rows.count + rows.count) % rows.count], from: rows[row], current)
+        } else if let beside = arrowStop(beside: highlighted ?? focused, step, in: all, wraps: true) {
+            next = beside // from a control only Tab stops on: the next the arrows do, that way
         } else {
             next = (step > 0 ? rows[0] : rows[rows.count - 1])[0]
         }
-        highlight(next, in: rows)
+        highlight(next, in: all)
+    }
+
+    /// `rows` without the controls only Tab stops on (`Control.tabOnly`):
+    /// the order the arrows, Page Up, Page Down, Home and End go by.
+    private func arrowRows(_ rows: [[UUID]]) -> [[UUID]] {
+        rows.map { $0.filter { controls[$0]?.tabOnly != true } }.filter { !$0.isEmpty }
+    }
+
+    /// From `id`, a control only Tab stops on, the nearest one `step`'s
+    /// way in reading order the arrows stop on; `nil` from any other (or
+    /// none, or none that way without `wraps`).
+    private func arrowStop(beside id: UUID?, _ step: Int, in rows: [[UUID]], wraps: Bool) -> UUID? {
+        let order = Array(rows.joined())
+        guard let id, controls[id]?.tabOnly == true, let start = order.firstIndex(of: id) else { return nil }
+        var index = start
+        for _ in order.indices {
+            index += step
+            if !order.indices.contains(index) {
+                guard wraps else { return nil }
+                index = (index % order.count + order.count) % order.count
+            }
+            if controls[order[index]]?.tabOnly != true { return order[index] }
+        }
+        return nil
     }
 
     /// The highlight `step` controls on in reading order (Tab 1, Shift-Tab
     /// -1), every control a stop, a row of several one after the other
     /// (`tabOrder`), wrapping at the ends; from nothing, the first (Tab) or
     /// the last (B, the user's pick, 2026-11-09: Tab reaches every control,
-    /// the arrows go by row).
-    func step(_ step: Int) {
+    /// the arrows go by row), or on from the control with the keyboard's
+    /// focus (`focused`, W9). Not `wraps`: `false` at the end, nothing moved,
+    /// for the window to go on elsewhere (Settings' other side, a search
+    /// field); `false` too with no control to stop on.
+    @discardableResult func step(_ step: Int, wraps: Bool = true) -> Bool {
         let rows = keyRows
         let order = Array(rows.map(tabOrder).joined())
-        guard !order.isEmpty else { return }
+        guard !order.isEmpty else { return false }
         let next: UUID
-        if let highlighted, let index = order.firstIndex(of: highlighted) {
+        if let current = highlighted ?? focused, let index = order.firstIndex(of: current) {
+            guard wraps || order.indices.contains(index + step) else { return false }
             next = order[((index + step) % order.count + order.count) % order.count]
         } else {
             next = step > 0 ? order[0] : order[order.count - 1]
         }
         highlight(next, in: rows)
+        return true
     }
+
+    /// The highlight on the first control as Tab goes (`step` 1) or the
+    /// last (-1), wherever it or the focus was: Tab coming in from
+    /// elsewhere (Settings' other side, a search field); `false` with none.
+    @discardableResult func stepIn(_ step: Int) -> Bool {
+        let rows = rows
+        let order = Array(rows.map(tabOrder).joined())
+        guard let next = step > 0 ? order.first : order.last else { return false }
+        highlight(next, in: rows)
+        return true
+    }
+
+    /// Every control Tab stops on, in its order (`step`): where a window
+    /// puts a stop of its own among them (Settings' search, `SettingsKeys`).
+    var tabStops: [UUID] { Array(rows.map(tabOrder).joined()) }
 
     /// A row as Tab goes along it, in reading order: left to right, or
     /// right to left where the language reads so (Arabic, Hebrew; the
@@ -74,14 +123,14 @@ extension KeyHighlight {
     }
 
     /// The highlight on the first row whose top is at `y` or under it, in
-    /// reading order (or the first row, with none): out of a field that
+    /// reading order (or the first row, with none): ↓ out of a field that
     /// takes no highlight itself (Settings → Sound Sources' search), into
     /// the rows under it, not the ones beside it (N4, 2026-11-06).
-    /// `byTab`: that row's first as Tab goes (`tabOrder`), not ↓'s.
-    func highlightFirst(below y: CGFloat, byTab: Bool = false) {
-        let rows = rows
+    func highlightFirst(below y: CGFloat) {
+        let all = rows
+        let rows = arrowRows(all)
         guard let row = rows.first(where: { (controls[$0[0]]?.frame.minY ?? 0) >= y }) ?? rows.first else { return }
-        highlight((byTab ? tabOrder(row) : row)[0], in: rows)
+        highlight(row[0], in: all)
     }
 
     /// Where the highlight lands in `target` from `highlighted` in `row`:
@@ -99,16 +148,22 @@ extension KeyHighlight {
     /// nothing, Page Down and Home light the first row, Page Up and End the
     /// last (A12, 2026-11-01: Apple's standard keys, fn with the arrows on a laptop).
     func jump(_ jump: Jump) {
-        let rows = keyRows
+        let all = keyRows
+        let rows = arrowRows(all)
         guard !rows.isEmpty else { return }
         let step = jump == .pageDown || jump == .first ? 1 : -1
-        guard jump == .pageUp || jump == .pageDown,
-              let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) else {
-            return highlight((step > 0 ? rows[0] : rows[rows.count - 1])[0], in: rows)
+        let pages = jump == .pageUp || jump == .pageDown
+        // From a control only Tab stops on: the next the arrows do, that way, if any.
+        if pages, let highlighted, controls[highlighted]?.tabOnly == true {
+            if let beside = arrowStop(beside: highlighted, step, in: all, wraps: false) { highlight(beside, in: all) }
+            return
+        }
+        guard pages, let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) else {
+            return highlight((step > 0 ? rows[0] : rows[rows.count - 1])[0], in: all)
         }
         let target = pageTarget(from: row, step: step, in: rows)
         guard target != row else { return }
-        highlight(entry(to: rows[target], from: rows[row], highlighted), in: rows)
+        highlight(entry(to: rows[target], from: rows[row], highlighted), in: all)
     }
 
     /// The row a page on from `row` (`jump`).
@@ -132,10 +187,10 @@ extension KeyHighlight {
     /// The highlight `step` controls along its row (← -1, → 1); `false` at
     /// the row's end, or in a row of one.
     @discardableResult func moveInRow(_ step: Int) -> Bool {
-        let rows = keyRows
-        guard let highlighted, let row = rows.first(where: { $0.contains(highlighted) }),
+        let all = keyRows
+        guard let highlighted, let row = arrowRows(all).first(where: { $0.contains(highlighted) }),
               let index = row.firstIndex(of: highlighted), row.indices.contains(index + step) else { return false }
-        highlight(row[index + step], in: rows)
+        highlight(row[index + step], in: all)
         return true
     }
 

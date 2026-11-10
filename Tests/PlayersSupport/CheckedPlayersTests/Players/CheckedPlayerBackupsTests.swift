@@ -32,6 +32,7 @@ struct CheckedPlayerBackupsTests {
     /// `window` (each look counted in `looks`).
     private func jukebox(_ chosen: MockMusicPlayer, chosenKind: CheckResult.WayKind = .page, failing: [CheckResult.WindowState] = [],
                          backups: [(MockMusicPlayer, CheckResult.WayKind)], key: MockMusicPlayer? = nil, signs: [any MusicPlayer] = [],
+                         backupSigns: [any MusicPlayer] = [],
                          window: CheckResult.WindowState = .visible, looks: Locked<Int> = Locked(0),
                          allowed: @escaping @Sendable (WayOrder.Kind) -> Bool = { _ in true },
                          audioRecording: Bool = true, usesBackups: Bool = true, panelWhileMuted: Bool = true,
@@ -41,7 +42,7 @@ struct CheckedPlayerBackupsTests {
                                 wayResults: [Self.result(chosenKind, failing: failing)] + backups.map { Self.result($0.1) },
                                 usesBackups: usesBackups, panelWhileMuted: panelWhileMuted)
         let kept = backups.map { CheckedPlayer.Backup(player: $0.0, kind: WayOrder.Kind($0.1)) } + (key.map { [.init(player: $0, kind: .mediaKey)] } ?? [])
-        return CheckedPlayer(setup: setup, parts: .init(ways: [chosen], signs: signs, backups: kept),
+        return CheckedPlayer(setup: setup, parts: .init(ways: [chosen], signs: signs, backupSigns: backupSigns, backups: kept),
                              reports: nil, processIdentifier: { 4242 }, pressSleep: { _ in }, audioRecordingAllowed: { audioRecording },
                              windowState: { _ in looks.withLock { $0 += 1 }; return window }, backupAllowed: { kind, _ in allowed(kind) },
                              now: { clock.value })
@@ -188,6 +189,17 @@ struct CheckedPlayerBackupsTests {
         antiDot.allowTaps(false)
         try await antiDot.pause()
         #expect(await antiDotMenu.pauseCallCount == 1)
+    }
+
+    @Test("a chosen panel's press that doesn't take is checked by its backups' signs (no sign of its own, no Now Playing reports): the next way pauses it")
+    func pressCheckedByBackupSigns() async throws {
+        let panel = MockMusicPlayer(state: .playing), menu = MockMusicPlayer(state: .playing), app = MockMusicPlayer(state: .playing)
+        await panel.setIgnoredPresses(10) // its row's press doesn't take
+        await menu.setBeforePause { await app.setState(.paused) }
+        try await jukebox(panel, chosenKind: .panel, backups: [(menu, .menu)], backupSigns: [app], audioRecording: false).pause()
+        #expect(await panel.pauseCallCount >= 1)
+        #expect(await menu.pauseCallCount == 1)
+        #expect(await app.state == .paused)
     }
 
     @Test("a refused play goes down the order at once; a panel that just failed a play is left out of the next ones for a while")

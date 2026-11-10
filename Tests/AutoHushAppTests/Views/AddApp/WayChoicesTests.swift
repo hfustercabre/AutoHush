@@ -39,7 +39,12 @@ struct WayChoicesTests {
         window.contentView = NSHostingView(rootView: WayChoices(model: model, result: found, app: "Player").windowKeys(keys))
         window.orderFront(nil)
         window.contentView?.layoutSubtreeIfNeeded()
+        // Nothing focused, as AutoHush's windows open (`HostedWindowController.show`):
+        // with keyboard navigation on, SwiftUI focuses the first card, which the keys
+        // would go on from (W9).
+        window.makeFirstResponder(nil)
         await TestWait.until { keys.highlight.rows.joined().count == 2 } // the two cards, not the page's way
+        await TestWait.until { keys.highlight.focused == nil }
         #expect(keys.highlight.rows.count == 2) // one under the other: ↑ and ↓ step through them
         #expect(keys.highlight.highlighted == nil)
 

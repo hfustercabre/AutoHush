@@ -88,8 +88,12 @@ final class AddWebAppFeature {
         let before = host?.chosenPlayerID
         adding = Task { [weak self] in
             defer {
-                if model.attempt == attempt { self?.adding = nil }
-                self?.window?.returnFromAside()
+                // Cancelled, it went back at the cancel: a late end isn't to
+                // move it back over the dialog of the add under way since.
+                if model.attempt == attempt {
+                    self?.adding = nil
+                    self?.window?.returnFromAside()
+                }
             }
             do {
                 let made = try await maker.makeWebApp(from: address, onStep: { [weak self] step in
@@ -190,13 +194,15 @@ final class AddWebAppFeature {
         model.continueTapped()
     }
 
-    /// Stops the add under way; a step it reports later is ignored.
+    /// Stops the add under way; a step it reports later is ignored. The
+    /// window, moved off the browser's dialog, goes back at once.
     func cancel() {
         guard let task = adding else { return }
         logger.notice("Adding a web app was cancelled")
         task.cancel()
         adding = nil
         model.attempt += 1
+        window?.returnFromAside()
     }
 }
 

@@ -1,16 +1,15 @@
-import AppKit
 import SwiftUI
 
-/// The row of buttons at the bottom of the menu: Settings (⌥-click:
-/// Diagnostics), Updates, About and Quit.
+/// The row of buttons at the bottom of the menu: Settings (Diagnostics
+/// while Option is held), Updates, About and Quit.
 struct MenuToolbarView: View {
     let model: StatusMenuModel
 
     var body: some View {
         HStack(spacing: 4) {
-            button(Text(verbatim: Self.settingsTitle), symbol: "gearshape") {
-                // As the menu used to offer it: ⌥ turns Settings into Diagnostics.
-                NSEvent.modifierFlags.contains(.option) ? .showDiagnostics : .openSettings
+            let first = Self.settingsButton(optionHeld: model.isOptionHeld)
+            button(Text(verbatim: first.title), symbol: first.symbol) {
+                Self.settingsButton(optionHeld: model.isOptionHeld).command
             }
             let updates = UpdateOffer.updatesTitle
             button(Text(verbatim: model.isCheckingForUpdates ? UpdateOffer.checkingTitle : updates),
@@ -31,6 +30,16 @@ struct MenuToolbarView: View {
     /// The button that opens Settings.
     static var settingsTitle: String {
         String(localized: "Settings", comment: "The menu: the button at the bottom that opens Settings")
+    }
+
+    /// The first button: Settings, or, while Option is held, Diagnostics,
+    /// by its name and its symbol in Settings' sidebar, which it opens, as
+    /// the menu used to offer it (D1, the user's pick, 2026-11-10: shown,
+    /// so the keys reach it too, Option-Return or Option-Space on it; its
+    /// spoken name follows).
+    static func settingsButton(optionHeld: Bool) -> (title: String, symbol: String, command: StatusMenuCommand) {
+        optionHeld ? (SettingsPage.diagnostics.title, SettingsPage.diagnostics.symbol, .showDiagnostics)
+            : (settingsTitle, "gearshape", .openSettings)
     }
 
     private func button(_ title: Text, symbol: String, tint: Color? = nil, spoken: String? = nil,

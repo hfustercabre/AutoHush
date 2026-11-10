@@ -134,6 +134,48 @@ extension PlaybackArbiterTests {
         #expect(await player.state == .paused)
     }
 
+    @Test("a pause whose fade-out the sleep froze, ending only once the Mac is awake, is forgotten too: no resume")
+    func pauseEndingAfterWakeForgotten() async {
+        let player = MockMusicPlayer()
+        await player.setVolumeLevel(60)
+        let fading = Gate()
+        let started = Gate()
+        let arbiter = PlaybackArbiter(player: player, configuration: AppConfiguration(),
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in await started.open(); await fading.wait() })
+
+        await arbiter.handleSourceChange(sourceID: "com.example.movies", isPlaying: true)
+        await started.wait() // the fade-out is under way
+        await arbiter.setAsleep(true)
+        await arbiter.setAsleep(false) // awake before the fade-out's next step
+        await fading.open()
+        await arbiter.waitForPause()
+        #expect(await player.pauseCallCount == 1)
+        #expect(await arbiter.pausedByUs == false)
+        // Its sound stopped as the Mac fell asleep; the monitor reports it once awake.
+        await arbiter.handleSourceChange(sourceID: "com.example.movies", isPlaying: false)
+        await arbiter.waitUntilIdle()
+        #expect(await player.playCallCount == 0)
+        #expect(await player.state == .paused)
+    }
+
+    @Test("a sleep with no pause under way leaves the next pause AutoHush's: resumed once the apps stop")
+    func sleepWithoutPauseKeepsNextPause() async {
+        let player = MockMusicPlayer()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeArbiter(player: player, scheduler: scheduler)
+
+        await arbiter.setAsleep(true)
+        await arbiter.setAsleep(false)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.waitForPause()
+        #expect(await arbiter.pausedByUs)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await scheduler.completeNext() // the resume's wait
+        await arbiter.waitUntilIdle()
+        #expect(await player.playCallCount == 1)
+    }
+
     /// A muting player whose check before muting says so on `started`, then
     /// waits for `gate`: the Mac can go to sleep meanwhile.
     private static func slowMuting(_ player: MockMusicPlayer, started: Gate, gate: Gate) async -> MockMutingMusicPlayer {
@@ -165,6 +207,57 @@ extension PlaybackArbiterTests {
         await TestWait.until { await player.commandLog.count >= 2 }
         await arbiter.waitUntilIdle()
         #expect(await player.commandLog == ["mute", "forgetPause"])
+    }
+
+    @Test("a mute that comes only once the Mac slept and woke is forgotten at once: the player is told then")
+    func muteEndingAfterWakeForgotten() async {
+        let player = MockMusicPlayer(state: .paused)
+        await player.setPlaysAnyway(true)
+        let muting = Gate()
+        let started = Gate()
+        let arbiter = PlaybackArbiter(player: await Self.slowMuting(player, started: started, gate: muting),
+                                      configuration: .testing, debounceScheduler: ManualDebounceScheduler())
+
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
+        await started.wait() // it's being listened to
+        await arbiter.setAsleep(true)
+        await arbiter.setAsleep(false)
+        #expect(await player.commandLog.isEmpty)
+        // Its sound stopped as the Mac fell asleep, reported once awake:
+        // no app left to pause for again (R4).
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
+        await muting.open()
+        await arbiter.waitForPause()
+        #expect(await player.commandLog == ["mute", "forgetPause"])
+        #expect(await arbiter.pausedByUs == false)
+        await arbiter.setAsleep(true) // a later sleep has nothing left to tell
+        await arbiter.setAsleep(false)
+        await arbiter.waitUntilIdle()
+        #expect(await player.commandLog == ["mute", "forgetPause"])
+    }
+
+    @Test("a mute in place of a refused pause, lifted as the Mac slept and woke while it was made, is made again at once while the apps still play: the music never plays over a call going on after the wake (R4)")
+    func muteLiftedForSleepMadeAgainAfterWake() async {
+        let player = MockMusicPlayer(), mute = FakeMute(), published = LastPublished()
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        let hearing = Hearing(.heard)
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      onStatusUpdate: statuses(playback: { published.set($0) }),
+                                      hearsPlayer: { await hearing.answer(since: $0) }, playerMute: mute)
+        let slept = Locked(false)
+        mute.whileMuting = {
+            guard !slept.value else { return }
+            slept.value = true
+            await arbiter.setAsleep(true)
+            await arbiter.setAsleep(false) // awake again before the mute is made
+        }
+        await arbiter.sourceChanged("org.example.viewer", playing: true) // a call
+        await arbiter.waitForPause()
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 2 && mute.unmuteCount == 1) // lifted for the sleep, then made again
+        #expect(await arbiter.pausedByUs)
+        #expect(await arbiter.mutedInstead)
+        #expect(published.state == .pausedByMonitor)
     }
 
     @Test("a mute that comes after the Mac went to sleep isn't held: no mute is lifted at shutdown, none stands")

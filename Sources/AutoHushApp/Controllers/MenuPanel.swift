@@ -23,6 +23,10 @@ final class MenuPanel: NSPanel {
     /// A key nothing in it took (the arrows and Return, for the players);
     /// `true` when handled. One it leaves ends here, without a beep.
     var onKey: ((NSEvent) -> Bool)?
+    /// A key while a field in it is typed in (the players' search), before
+    /// the field: `true` when handled (Tab and Shift-Tab, which leave it).
+    /// Not while an input method composes there, where every key is its own.
+    var onFieldKey: ((NSEvent) -> Bool)?
 
     init(content: NSView) {
         super.init(contentRect: NSRect(x: 0, y: 0, width: menuContentWidth, height: 100),
@@ -61,6 +65,12 @@ final class MenuPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 
     override func cancelOperation(_ sender: Any?) { onCancel?() }
+
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .keyDown, let editor = firstResponder as? NSTextView, !editor.hasMarkedText(),
+           onFieldKey?(event) == true { return }
+        super.sendEvent(event)
+    }
 
     override func keyDown(with event: NSEvent) {
         if onKey?(event) == true { return }

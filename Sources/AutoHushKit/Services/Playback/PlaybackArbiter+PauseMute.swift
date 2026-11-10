@@ -146,8 +146,8 @@ extension PlaybackArbiter {
                 await playerMute.unmute()
                 return true
             }
-            if isAsleep || outputGoneDuringPause {
-                // Asleep, or the output gone: no pause held, so no mute either
+            if isAsleep || sleptDuringPause || outputGoneDuringPause {
+                // Asleep (or slept meanwhile), or the output gone: no pause held, so no mute either
                 // (what's shown changed with them).
                 outputGoneDuringPause = false
                 mute.end()

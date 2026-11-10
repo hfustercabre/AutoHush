@@ -27,10 +27,12 @@ package enum NowPlayingApp {
         case unknown
 
         /// Whether the app running as `pid`, or one of its helpers, is in
-        /// Now Playing; `false` for `.none` and `.unknown`.
-        package func isHeld(by pid: pid_t) -> Bool {
+        /// Now Playing; `false` for `.none` and `.unknown`. `responsible`:
+        /// who's responsible for a process (`ProcessResponsibility`'s).
+        package func isHeld(by pid: pid_t,
+                            responsible: (pid_t) -> pid_t? = { ProcessResponsibility.responsiblePID(for: $0) }) -> Bool {
             guard case .process(let holder) = self else { return false }
-            return ProcessResponsibility.isOwned(holder, by: pid)
+            return ProcessResponsibility.isOwned(holder, by: pid, responsible: responsible)
         }
     }
 

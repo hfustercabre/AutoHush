@@ -1,10 +1,11 @@
 import AppKit
 import Testing
 @testable import AutoHushApp
+import AutoHushTestSupport
 
 /// The menu's panel: Escape, the keys it hands on, its height following
 /// its content with its top edge kept, and where it opens.
-@Suite("MenuPanel")
+@Suite("MenuPanel", .application, .waitsTimeLimit)
 @MainActor
 struct MenuPanelTests {
     /// A key press, as the panel gets it.
@@ -34,7 +35,7 @@ struct MenuPanelTests {
     }
 
     @Test("a key nothing in it takes ends there, without macOS's beep (a letter, Delete); Escape, ⌘ and ⌃ keys stay AppKit's (K3-4)")
-    func untakenKeysEndThere() {
+    func untakenKeysEndThere() async {
         let panel = MenuPanel(content: NSView())
         let after = KeyRecorder()
         panel.nextResponder = after // what AppKit would hand the key on to, and beep at its end
@@ -47,7 +48,13 @@ struct MenuPanelTests {
         #expect(after.keys.isEmpty)
         // Escape is left to AppKit, which calls `cancelOperation` itself on
         // macOS 14 and 15 and hands it on on macOS 27: either way it isn't
-        // swallowed (the old-macOS round, 2026-11-07).
+        // swallowed (the old-macOS round, 2026-11-07). AppKit asks the key
+        // window's `cancelOperation` first, so it's sent once no window is
+        // key, in the same turn of the main actor: with another suite's menu
+        // key, Escape closed that menu instead (the players' window of
+        // StatusMenuController's search test), failing both tests whenever
+        // they overlapped (a busy VM, 2026-11-10).
+        await TestWait.until { NSApp.keyWindow == nil }
         panel.keyDown(with: Self.key(53, characters: "\u{1B}"))
         #expect(cancelled + after.keys.count == 1)
         after.keys.removeAll()

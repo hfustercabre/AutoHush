@@ -87,6 +87,13 @@ struct MenuPlayerTests {
         #expect(await player(FakeMenu(title: "Play")).playerState() == .paused)
     }
 
+    @Test("an item whose enabled state can't be read (rebuilt as it was read) says nothing: unknown, not stopped")
+    func unreadableEnabledIsUnknown() async {
+        let jukebox = player(FakeMenu(title: "Pause", enabled: nil))
+        #expect(await jukebox.playerState() == .unknown)
+        await #expect(throws: MusicPlayerError.playerCommandFailed(.stateUnknown)) { try await jukebox.pause() }
+    }
+
     @Test("pause and play press the item only from the opposite state; one that can't be pressed says so")
     func neverBlindToggle() async throws {
         let menu = FakeMenu(title: "Pause")

@@ -25,4 +25,14 @@ struct StopStateTests {
         moving.windowBack()
         #expect(!moving.isWindowAway && !moving.request())
     }
+
+    @Test("a press test with no window trip holds a stop between its trials, so the app a trial left paused is played again first; once it ends, a stop ends the check at once")
+    func holdsWithoutWindowTrip() {
+        let test = StopState()
+        test.setHolding(true)
+        #expect(test.request()) // the check stops itself, once the app plays again
+        #expect(!test.isWindowAway) // nothing to put back
+        test.setHolding(false)
+        #expect(!test.request())
+    }
 }

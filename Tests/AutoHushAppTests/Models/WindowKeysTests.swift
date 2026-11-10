@@ -66,6 +66,34 @@ struct WindowKeysTests {
         #expect(log.calls == ["drop focus", "tile 0"])
     }
 
+    @Test("in a window with no main button (the logs), Return presses the lit control, as in Settings; ↑ and ↓ scroll a list that's one stop until its end, then move on (R6)")
+    func returnPressesAndListScrolls() {
+        let log = CallLog()
+        let (keys, _, button) = makeKeys(log: log)
+        keys.returnPresses = true
+        var scrolled = 0
+        let list = UUID()
+        keys.highlight.register(list, .init(frame: CGRect(x: 0, y: 50, width: 300, height: 40), scroll: { step in
+            guard scrolled + step <= 2 else { return false } // two steps from its end
+            scrolled += step
+            return true
+        }))
+        #expect(keys.handle(.returnKey)) // nothing lit: nothing, no beep
+        keys.handle(.down)
+        #expect(keys.handle(.returnKey))
+        #expect(log.calls.last == "tile 0")
+        keys.handle(.down)
+        #expect(keys.highlight.highlighted == list)
+        keys.handle(.down)
+        keys.handle(.down)
+        #expect(keys.highlight.highlighted == list && scrolled == 2)
+        keys.handle(.down) // at its end: on to the next row
+        #expect(keys.highlight.highlighted == button)
+        keys.handle(.up)
+        keys.handle(.up) // back on the list, it scrolls up
+        #expect(keys.highlight.highlighted == list && scrolled == 1)
+    }
+
     @Test("a focused control keeps Return, Space, ← and → while nothing is lit; a lit one, whose tint hides the focus's, takes them, the focus let go (N6); the arrows move the highlight")
     func focusedControl() {
         let log = CallLog()
@@ -100,12 +128,44 @@ struct WindowKeysTests {
         #expect(log.calls == Array(repeating: "drop focus", count: 6))
     }
 
-    @Test("in a text field, typing, ↑ and Shift-Tab stay the field's; ↓ or Tab leaves it for the first row, whatever was lit")
+    @Test("Tab comes round to the window's search, as macOS's key loop goes into a field: Shift-Tab from the first control, Tab from the last, the highlight let go (K3); without one showing, round")
+    func tabIntoSearch() {
+        let log = CallLog()
+        let (keys, tiles, button) = makeKeys(log: log)
+        keys.focusSearch = { log.calls.append("search"); return true }
+        #expect(keys.handle(.tab))
+        #expect(keys.highlight.highlighted == tiles[0])
+        #expect(keys.handle(.backTab)) // before the first: the search
+        #expect(keys.highlight.highlighted == nil)
+        #expect(keys.handle(.backTab, focus: .textField)) // out of it, back: the last
+        #expect(keys.highlight.highlighted == button)
+        #expect(keys.handle(.tab)) // past the last: the search
+        #expect(keys.highlight.highlighted == nil)
+        #expect(log.calls == ["drop focus", "search", "drop focus", "search"])
+        keys.focusSearch = { false }
+        #expect(keys.handle(.backTab, focus: .textField) && keys.handle(.tab))
+        #expect(keys.highlight.highlighted == tiles[0])
+    }
+
+    @Test("with a control focused and nothing lit (Add an App's step, with keyboard navigation on), Tab and ↓ go on from it, not from the top (W9)")
+    func movesOnFromTheFocus() {
+        let log = CallLog()
+        let (keys, tiles, button) = makeKeys(log: log)
+        keys.highlight.focus(tiles[1], true)
+        #expect(keys.handle(.tab, focus: .control))
+        #expect(keys.highlight.highlighted == button)
+        keys.highlight.clear()
+        #expect(keys.handle(.down, focus: .control))
+        #expect(keys.highlight.highlighted == button)
+        #expect(log.calls == ["drop focus", "drop focus"])
+    }
+
+    @Test("in a text field, typing and ↑ stay the field's; ↓ or Tab leaves it for the first row, whatever was lit, Shift-Tab for the last control (K3)")
     func textField() {
         let log = CallLog()
         let (keys, tiles, button) = makeKeys(log: log)
         keys.highlight.hover(button, true)
-        for key: HighlightKey in [.up, .returnKey, .space, .left, .right, .home, .delete, .backTab] {
+        for key: HighlightKey in [.up, .returnKey, .space, .left, .right, .home, .delete] {
             #expect(!keys.handle(key, focus: .textField))
         }
         #expect(keys.highlight.highlighted == button)
@@ -115,6 +175,8 @@ struct WindowKeysTests {
         #expect(keys.handle(.tab, focus: .textField)) // Tab: the same
         #expect(keys.highlight.highlighted == tiles[0])
         #expect(log.calls == ["drop focus", "drop focus"]) // Return was the field's
+        #expect(keys.handle(.backTab, focus: .textField)) // Shift-Tab: the last control
+        #expect(keys.highlight.highlighted == button)
         // Right to left, Tab's first is the row's right end; ↓'s stays.
         keys.highlight.readsRightToLeft = { true }
         #expect(keys.handle(.tab, focus: .textField))

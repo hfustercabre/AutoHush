@@ -97,24 +97,14 @@ import WebAppPlayers
         let others = plays.filter { play in
             [.script, .menu, .panel].contains(play.way) && play.way != lastWay && !here.contains { $0.way == play.way }
         }
-        for play in here + others {
-            let before = lookForSign(pid)
-            let sign = Sign(before: before)
-            guard !sign.playing(before) else { return true }
-            guard play.play() else { continue }
-            let after = waitFor(4, pid: pid, level: sign.byLevel, until: sign.playing)
-            if sign.playing(after) {
-                say("    played again by \(play.title)")
-                return true
-            }
-        }
-        return false
+        return playedAgain(by: (here + others).map { ($0.title, $0.play) }, pid: pid)
     }
 
-    /// A stop held back by a trial or a window move, said as it is: before
-    /// any trial, its window put back; after one, the app played again
-    /// first when the trial left it paused (a play that failed twice), as
-    /// the check starts it from where it was and ends there.
+    /// A stop held back by a trial, a window move, or, with no window trip,
+    /// the test itself (from its first trial: `StopState.setHolding`), said
+    /// as it is: before any trial, its window put back; after one, the app
+    /// played again first when the trial left it paused (a play that failed
+    /// twice), as the check starts it from where it was and ends there.
     private func stopIfRequestedHere() {
         guard stopState.isRequested else { return }
         guard trialRan else { return stopIfRequested("stopped: its window is put back") }
@@ -158,6 +148,10 @@ import WebAppPlayers
     /// again once it plays (`ready`): it said nothing about the way. Ended
     /// twice, it fails saying so.
     private func trialAgainIfEnded(_ way: Way, _ run: () -> TrialResult) -> TrialResult {
+        // With no window trip, nothing else holds a stop between trials (the
+        // window being away does on a trip): from the first trial on, a stop
+        // waits for the app to be played again (`stopIfRequestedHere`).
+        if TestScope.windowTest == nil { stopState.setHolding(true) }
         let result = run()
         guard trialTrackEnded else { return result }
         trialRan = true
@@ -290,8 +284,14 @@ import WebAppPlayers
         // The last trial's play may have failed (`.pausedOnly`): played again
         // before its window goes back, so the check ends where the app was
         // (`playAgain` says by which way).
-        if trialRan, !playingAgain() { say("  it didn't play again") }
+        let playsAgain = !trialRan || playingAgain()
+        if !playsAgain { say("  it didn't play again") }
         WindowTest.currentState = nil
+        if TestScope.windowTest == nil {
+            // The stop held since the first trial, now that it plays again.
+            stopState.setHolding(false)
+            stopIfRequested(playsAgain ? nil : "stopped: \(appName) didn't play again")
+        }
         if let windowTest = TestScope.windowTest {
             stopState.setInTrial(true)
             let problem = windowTest.restore()
@@ -312,4 +312,26 @@ import WebAppPlayers
             say("  notifications: none under the usual names (\(bundleID).\(stateNotificationSuffixes[0]), …)")
         }
     }
+}
+
+/// Plays it again with the first of `plays` that takes, each only while it
+/// doesn't play (judged by the surest sign it shows); whether it plays. What
+/// went wrong with a play (its page's button not found…) isn't the next
+/// trial's reason: `trialProblem` stays as it was.
+@MainActor func playedAgain(by plays: [(title: String, play: () -> Bool)], pid: pid_t,
+                            look: @MainActor (pid_t) -> Look = { PlayerCheck.lookForSign($0) }, reading: TrialReading = .live) -> Bool {
+    let problem = trialProblem
+    defer { trialProblem = problem }
+    for play in plays {
+        let before = look(pid)
+        let sign = Sign(before: before)
+        guard !sign.playing(before) else { return true }
+        guard play.play() else { continue }
+        let after = reading.waitFor(4, pid, sign.byLevel, sign.playing)
+        if sign.playing(after) {
+            say("    played again by \(play.title)")
+            return true
+        }
+    }
+    return false
 }

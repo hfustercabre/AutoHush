@@ -160,6 +160,33 @@ extension PlaybackArbiterTests {
         #expect(mute.muteCount == 0)
     }
 
+    @Test("a look whose wait ended just as a newer watch replaced it gives way: one look, the newer watch the one pending")
+    func replacedLookGivesWay() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
+        let arbiter = await pausedForAnotherApp(player, clock: clock, hearing: hearing, mute: mute, published: published, scheduler: scheduler)
+        #expect(scheduler.scheduledDelays.last == PlaybackArbiter.restartWatchDelay)
+        let asked = hearing.timesAsked, scheduled = scheduler.scheduledDelays.count
+        hearing.now = .measuring(remaining: 0.3)
+        let released = Locked(false)
+        hearing.beforeAnswer = {
+            guard !released.value else { return }
+            released.value = true
+            // The first look's wait ends as the player is heard. Measured on
+            // the arbiter, held there (no await): that look's task gets past
+            // its wait meanwhile, and reaches the arbiter only after the
+            // newer watch replaced it.
+            scheduler.releaseNext()
+            usleep(300_000)
+        }
+        await arbiter.handlePlayerHeard() // measured too briefly: watched again
+        await arbiter.waitUntilIdle()
+        #expect(hearing.timesAsked == asked + 1) // the first look gave way
+        #expect(scheduler.scheduledDelays.count == scheduled + 1)
+        #expect(scheduler.scheduledDelays.last == 0.3)
+        #expect(mute.muteCount == 0)
+    }
+
     @Test("a pause the player refuses is a mute instead; one that can't be muted either fails, as the menu says")
     func refusedPauseMuted() async {
         let player = MockMusicPlayer(failPauseWith: MusicPlayerError.playerCommandFailed(.pressIgnored))

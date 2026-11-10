@@ -24,8 +24,9 @@ extension PlayPauseWords {
     /// same way in any app: the texts of a translation table whose English is
     /// "Play" or "Pause" (`.loctable`, as Podcasts'; `*.lproj/*.strings`),
     /// and, in an Electron app's `app.asar`, every text of the keys whose text
-    /// is "Play" or "Pause" (as TIDAL's "t-play"); with where they came from.
-    /// `nil` when none show.
+    /// is "Play" or "Pause" (as TIDAL's "t-play"), but for a key that's both's
+    /// (a generic "label"), which can't tell them apart; with where they came
+    /// from. `nil` when none show.
     package static func found(inAppAt url: URL) -> (words: PlayPauseWords, source: String)? {
         let resources = url.appendingPathComponent("Contents/Resources")
         let files = FileManager.default
@@ -79,9 +80,11 @@ extension PlayPauseWords {
                 return found
             }
             // Every text of those keys, with or without spaces around the
-            // colon, as `keys(of:)` reads them.
-            let playTexts = keys(of: "Play").reduce(into: Set<String>()) { $0.formUnion(asarTexts(ofKey: $1, in: asar)) }
-            let pauseTexts = keys(of: "Pause").reduce(into: Set<String>()) { $0.formUnion(asarTexts(ofKey: $1, in: asar)) }
+            // colon, as `keys(of:)` reads them. A key that's both Play's and
+            // Pause's would put every text it has in both: it's left out.
+            let playKeys = keys(of: "Play"), pauseKeys = keys(of: "Pause")
+            let playTexts = playKeys.subtracting(pauseKeys).reduce(into: Set<String>()) { $0.formUnion(asarTexts(ofKey: $1, in: asar)) }
+            let pauseTexts = pauseKeys.subtracting(playKeys).reduce(into: Set<String>()) { $0.formUnion(asarTexts(ofKey: $1, in: asar)) }
             if !playTexts.isEmpty || !pauseTexts.isEmpty {
                 play.formUnion(playTexts)
                 pause.formUnion(pauseTexts)

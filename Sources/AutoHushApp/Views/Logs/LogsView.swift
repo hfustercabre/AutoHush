@@ -6,10 +6,20 @@ import AutoHushKit
 /// The logs window's content: a search, how far back and which levels,
 /// AutoHush's lines in a card, oldest first, then following new lines, and
 /// Copy Logs and Save… at the foot. The lines are in English, as logged.
+/// The keys' highlight (`LogsWindowController.keys`) goes through its
+/// controls and its entries, one stop, as in Settings (R6, the user,
+/// 2026-11-10: reach every control).
 struct LogsView: View {
     @Bindable var model: LogsModel
+    /// ↑ (-1) or ↓ (1) on the entries while the keys' highlight is on them:
+    /// they scroll; `false` at that end (`LogsWindowController`).
+    var scrollEntries: @MainActor (Int) -> Bool = { _ in false }
     /// The end of the entries, scrolled to on macOS 14 (`FollowsNewest`).
     static let bottom = "bottom"
+    /// Open the pop-ups from the keys.
+    @State private var rangePopUp = PopUpOpener()
+    @State private var levelsPopUp = PopUpOpener()
+    @FocusState private var followFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -18,21 +28,30 @@ struct LogsView: View {
                 Picker(selection: $model.range) {
                     ForEach(LogsModel.Range.allCases, id: \.self) { Text($0.title).tag($0) }
                 } label: {
-                    Text("Time range", comment: "The logs window: VoiceOver's name of the pop-up that chooses how far back the logs go (This Launch, Last 24 Hours)")
+                    Text(verbatim: Self.rangeLabel)
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .buttonStyle(.borderless)
                 .fixedSize()
+                .opened(by: rangePopUp)
+                // ← and → choose, Return or Space shows the choices, as Settings' pop-ups.
+                .modifier(Highlightable(cornerRadius: 6, outset: 3, press: { rangePopUp.open() }, adjust: { step in
+                    if let range = LogsModel.Range.allCases.stepping(from: model.range, by: step) { model.range = range }
+                }, arrivalSpeech: PopUpOpener.arrivalSpeech(Self.rangeLabel) { model.range.title }))
                 Picker(selection: $model.levels) {
                     ForEach(LogsModel.Levels.allCases, id: \.self) { Text($0.title).tag($0) }
                 } label: {
-                    Text("Levels", comment: "The logs window: VoiceOver's name of the pop-up that chooses which entries show (All Levels, Problems Only)")
+                    Text(verbatim: Self.levelsLabel)
                 }
                 .labelsHidden()
                 .pickerStyle(.menu)
                 .buttonStyle(.borderless)
                 .fixedSize()
+                .opened(by: levelsPopUp)
+                .modifier(Highlightable(cornerRadius: 6, outset: 3, press: { levelsPopUp.open() }, adjust: { step in
+                    if let levels = LogsModel.Levels.allCases.stepping(from: model.levels, by: step) { model.levels = levels }
+                }, arrivalSpeech: PopUpOpener.arrivalSpeech(Self.levelsLabel) { model.levels.title }))
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
@@ -40,12 +59,18 @@ struct LogsView: View {
             if !model.shown.isEmpty { columnTitles }
             lines
             BottomBar {
-                Toggle(isOn: $model.followsNewEntries) { Text(verbatim: Self.followTitle) }
-                    .toggleStyle(PillToggleStyle())
-                Text(verbatim: Self.followTitle)
-                    .font(.appCallout)
-                    .foregroundStyle(.appSecondary)
-                    .accessibilityHidden(true) // the switch says it
+                // The switch and its title, one stop for the keys, as Settings' switch rows.
+                HStack {
+                    Toggle(isOn: $model.followsNewEntries) { Text(verbatim: Self.followTitle) }
+                        .toggleStyle(PillToggleStyle())
+                        .focused($followFocused)
+                        .focusEffectDisabled() // the row's tint shows it
+                    Text(verbatim: Self.followTitle)
+                        .font(.appCallout)
+                        .foregroundStyle(.appSecondary)
+                        .accessibilityHidden(true) // the switch says it
+                }
+                .highlightableRow(isFocused: followFocused, press: { model.followsNewEntries.toggle() })
                 Spacer()
                 Button(action: save) {
                     Text("Save…", comment: "The logs window: button that saves the entries shown to a text file")
@@ -106,24 +131,53 @@ struct LogsView: View {
                 Color.clear.frame(height: 0).id(Self.bottom)
             }
         }
-        .modifier(FollowsNewest(count: shown.count, follows: model.followsNewEntries))
+        .modifier(FollowsNewest(newest: FollowsNewest.Newest(shown), follows: model.followsNewEntries))
+        // One stop for the keys: ↑ and ↓ scroll them, then go on at their ends.
+        .overlay { EntriesRing() }
+        .modifier(Highlightable(lightsItself: true, scroll: scrollEntries))
+    }
+
+    /// The entries' outline while the keys are on them: over them, as a
+    /// tint behind would be hidden by the card (a filled control's ring, P1).
+    private struct EntriesRing: View {
+        @Environment(\.showsKeyHighlight) private var isLit
+        @Environment(\.keyHighlightByKeys) private var byKeys
+
+        var body: some View {
+            HighlightTint(isFocused: isLit, byKeys: byKeys, cornerRadius: 10, ring: true)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 2)
+        }
     }
 
     /// Opened at the newest entry, and following new ones while asked to:
     /// on macOS 15 by its scroll position (a few entries stay at the top),
     /// on macOS 14 by scrolling to the end's marker (`LogsView.bottom`).
-    private struct FollowsNewest: ViewModifier {
-        let count: Int
+    struct FollowsNewest: ViewModifier {
+        /// What a new entry changes: how many show and the last one, as one
+        /// coming while the oldest goes (24 hours on) leaves the count as it
+        /// was (app-views-1, the bug hunt, 2026-11-10).
+        struct Newest: Equatable {
+            let count: Int
+            let last: LogEntry?
+
+            init(_ shown: [LogEntry]) {
+                count = shown.count
+                last = shown.last
+            }
+        }
+
+        let newest: Newest
         let follows: Bool
 
         func body(content: Content) -> some View {
             if #available(macOS 15, *) {
-                content.modifier(FollowsNewestByPosition(count: count, follows: follows))
+                content.modifier(FollowsNewestByPosition(newest: newest, follows: follows))
             } else {
                 ScrollViewReader { proxy in
                     content
                         .defaultScrollAnchor(.bottom)
-                        .onChange(of: count) { if follows { proxy.scrollTo(LogsView.bottom, anchor: .bottom) } }
+                        .onChange(of: newest) { if follows { proxy.scrollTo(LogsView.bottom, anchor: .bottom) } }
                         .onChange(of: follows) { _, follows in if follows { proxy.scrollTo(LogsView.bottom, anchor: .bottom) } }
                 }
             }
@@ -132,7 +186,7 @@ struct LogsView: View {
 
     @available(macOS 15, *)
     private struct FollowsNewestByPosition: ViewModifier {
-        let count: Int
+        let newest: FollowsNewest.Newest
         let follows: Bool
         /// Where the entries are scrolled to: the newest, at first.
         @State private var position = ScrollPosition(edge: .bottom)
@@ -142,7 +196,7 @@ struct LogsView: View {
                 .scrollPosition($position)
                 .defaultScrollAnchor(.bottom, for: .initialOffset)
                 .defaultScrollAnchor(.top, for: .alignment)
-                .onChange(of: count) { if follows { position.scrollTo(edge: .bottom) } }
+                .onChange(of: newest) { if follows { position.scrollTo(edge: .bottom) } }
                 .onChange(of: follows) { _, follows in if follows { position.scrollTo(edge: .bottom) } }
         }
     }
@@ -157,6 +211,14 @@ struct LogsView: View {
             return String(localized: "No problems were logged.", comment: "The logs window, showing problems only, when there are none")
         }
         return String(localized: "Nothing was logged yet.", comment: "The logs window, while AutoHush has logged nothing in the time shown")
+    }
+
+    private static var rangeLabel: String {
+        String(localized: "Time range", comment: "The logs window: VoiceOver's name of the pop-up that chooses how far back the logs go (This Launch, Last 24 Hours)")
+    }
+
+    private static var levelsLabel: String {
+        String(localized: "Levels", comment: "The logs window: VoiceOver's name of the pop-up that chooses which entries show (All Levels, Problems Only)")
     }
 
     private static var followTitle: String {

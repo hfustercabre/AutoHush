@@ -79,6 +79,10 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// A pause held when the Mac went to sleep, forgotten: the player is
     /// told once the Mac is awake.
     var forgotPauseInSleep = false
+    /// The Mac went to sleep while a pause was under way (`pauseTask`): what
+    /// it comes to is forgotten, even once the Mac is awake again
+    /// (`holdPause`).
+    var sleptDuringPause = false
     /// The number of the latest sleep or wake applied (see `setAsleep`).
     private var sleepChange = 0
     /// While held, nothing paused by us is resumed (see `holdResumes`).

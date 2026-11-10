@@ -153,9 +153,9 @@ struct SettingsKeysTests {
         #expect(keys.page.highlighted == beside)
         #expect(keys.handle(.tab))
         #expect(keys.page.highlighted == controls[1])
-        #expect(keys.handle(.tab)) // wraps
-        #expect(keys.page.highlighted == controls[0])
-        #expect(keys.handle(.backTab))
+        #expect(keys.handle(.tab)) // past the page's end: the sidebar (K1)
+        #expect(keys.page.highlighted == nil && keys.sidebar.highlighted != nil)
+        #expect(keys.handle(.backTab)) // back into the page, on its last
         #expect(keys.page.highlighted == controls[1])
         #expect(keys.handle(.backTab))
         #expect(keys.page.highlighted == beside)
@@ -165,20 +165,105 @@ struct SettingsKeysTests {
         #expect(keys.page.highlighted == controls[1])
     }
 
-    @Test("Tab stays in the side that has the highlight: in the sidebar it goes page by page, each shown at once, as ↓")
-    func tabInSidebar() {
+    @Test("Tab and Shift-Tab cross the sides as one loop, sidebar → page → sidebar (K1, the user, 2026-11-10); a row Tab stops on is lit, its page left as it is, and Return shows it, then goes into it")
+    func tabCrossesSides() {
         let log = CallLog()
-        let (keys, rows, _) = makeKeys(log: log)
+        let (keys, rows, controls) = makeKeys(log: log)
         keys.handle(.down)
-        keys.handle(.left) // into the sidebar
-        #expect(keys.side == .sidebar)
-        let lit = keys.sidebar.highlighted
-        #expect(lit != nil)
+        keys.handle(.left) // into the sidebar, on General
+        #expect(keys.side == .sidebar && keys.sidebar.highlighted == rows[0])
         log.calls.removeAll()
         #expect(keys.handle(.tab))
-        #expect(keys.side == .sidebar && keys.page.highlighted == nil)
-        #expect(keys.sidebar.highlighted != lit && rows.contains { $0 == keys.sidebar.highlighted })
-        #expect(log.calls.count == 1 && log.calls[0].hasPrefix("show "))
+        #expect(keys.side == .sidebar && keys.sidebar.highlighted == rows[1] && keys.page.highlighted == nil)
+        #expect(log.calls.isEmpty) // Detection not shown: Tab on into the page shown
+        #expect(keys.handle(.tab)) // past the sidebar's end: the page's first control
+        #expect(keys.side == .page && keys.page.highlighted == controls[0] && keys.sidebar.highlighted == nil)
+        #expect(keys.handle(.backTab)) // back: the sidebar's last
+        #expect(keys.sidebar.highlighted == rows[1])
+        #expect(keys.handle(.returnKey)) // its page shows, the highlight kept
+        #expect(log.calls == ["show Detection"] && keys.sidebar.highlighted == rows[1])
+        #expect(keys.handle(.returnKey)) // the page shown: into it
+        #expect(keys.page.highlighted == controls[0])
+        #expect(keys.handle(.backTab) && keys.handle(.backTab))
+        #expect(keys.sidebar.highlighted == rows[0])
+        #expect(keys.handle(.backTab)) // the sidebar's start: round to the page's last
+        #expect(keys.page.highlighted == controls[1] && keys.side == .page)
+    }
+
+    @Test("→ on a sidebar row Tab stopped on shows its page, which lights its first control once drawn, not the page shown before it; on the shown page's row, → goes into it as before (R3)")
+    func rightOnTabbedRowShowsItsPage() {
+        let log = CallLog()
+        let (keys, rows, controls) = makeKeys(log: log)
+        keys.showsFirstOfNextPage = { log.calls.append("first of next page") }
+        keys.handle(.down)
+        keys.handle(.left) // into the sidebar, on General
+        #expect(keys.handle(.tab)) // Detection, its page not shown
+        log.calls.removeAll()
+        #expect(keys.handle(.right))
+        #expect(log.calls == ["first of next page", "show Detection"])
+        #expect(keys.page.highlighted == nil) // not General's control
+        #expect(keys.sidebar.highlighted == rows[1]) // until the page's first lights
+        log.calls.removeAll()
+        #expect(keys.handle(.right)) // its page shown now: into it
+        #expect(log.calls.isEmpty && keys.page.highlighted == controls[0])
+    }
+
+    @Test("Tab's loop goes through the page in reading order, its search (while it shows) after the stops over the page (Back and Forward, the toolbar's) and before the rest: the sidebar, Back, Forward, the search, the page's controls, Shift-Tab the other way; with Back and Forward dimmed, the search right after the sidebar; with none, on as before (K3, R1, the user's order, 2026-11-10)")
+    func tabIntoSearch() {
+        let log = CallLog()
+        let (keys, rows, controls) = makeKeys(log: log)
+        // Back and Forward, as the toolbar's arrows register (`SettingsToolbarKeys`).
+        let back = UUID(), forward = UUID()
+        keys.page.register(back, .init(frame: CGRect(x: 0, y: -40, width: 30, height: 24), band: .top, press: {}, tabOnly: true))
+        keys.page.register(forward, .init(frame: CGRect(x: 30, y: -40, width: 30, height: 24), band: .top, press: {}, tabOnly: true))
+        keys.focusSearch = { log.calls.append("search"); return true }
+        keys.backTabFromSearch() // the stop before the search: Forward, over the page
+        #expect(keys.page.highlighted == forward && keys.sidebar.highlighted == nil)
+        #expect(keys.handle(.backTab))
+        #expect(keys.page.highlighted == back)
+        #expect(keys.handle(.backTab)) // before Back: the sidebar's last
+        #expect(keys.sidebar.highlighted == rows[1] && log.calls.isEmpty)
+        #expect(keys.handle(.tab)) // past the sidebar's end: Back, not the search under it
+        #expect(keys.page.highlighted == back && log.calls.isEmpty)
+        #expect(keys.handle(.tab))
+        #expect(keys.page.highlighted == forward)
+        #expect(keys.handle(.tab)) // after Forward: the search
+        #expect(log.calls == ["search"] && !keys.isLit && keys.side == .page)
+        keys.tabFromSearch() // Tab from it: the page's first control, the stop after it
+        #expect(keys.page.highlighted == controls[0] && keys.sidebar.highlighted == nil)
+        #expect(keys.handle(.backTab)) // before it: the search again
+        #expect(log.calls == ["search", "search"] && !keys.isLit)
+        // Back and Forward dimmed (nowhere to go): the search right after the sidebar.
+        keys.page.update(back, isEnabled: false)
+        keys.page.update(forward, isEnabled: false)
+        keys.backTabFromSearch()
+        #expect(keys.sidebar.highlighted == rows[1])
+        #expect(keys.handle(.tab))
+        #expect(log.calls == ["search", "search", "search"] && !keys.isLit)
+        keys.tabFromSearch()
+        #expect(keys.handle(.backTab)) // from the page's first: the search
+        #expect(log.calls.count == 4 && !keys.isLit)
+        keys.focusSearch = { false } // closed
+        keys.backTabFromSearch()
+        #expect(keys.handle(.tab))
+        #expect(keys.page.highlighted == controls[0])
+    }
+
+    @Test("with nothing highlighted, the keys go on from the control with the keyboard's focus, on its side: a sidebar row's (⌃Tab put it there) moves the sidebar on from it, a page control's the page; the focus let go once moved (W9)")
+    func movesOnFromTheFocus() {
+        let log = CallLog()
+        let (keys, rows, controls) = makeKeys(log: log, pages: ["General", "Detection", "About"])
+        keys.dropFocus = { log.calls.append("drop focus") }
+        keys.sidebar.focus(rows[1], true)
+        #expect(keys.handle(.down))
+        #expect(keys.side == .sidebar && keys.sidebar.highlighted == rows[2])
+        #expect(log.calls == ["show About", "drop focus"])
+        keys.clear()
+        keys.sidebar.focus(rows[1], false)
+        keys.page.focus(controls[0], true)
+        log.calls.removeAll()
+        #expect(keys.handle(.tab))
+        #expect(keys.page.highlighted == controls[1] && log.calls == ["drop focus"])
     }
 
     @Test("a control with the focus keeps Return, Space, ← and → while nothing is highlighted; once something is, its tint hides the focus's and it takes them (N6)")

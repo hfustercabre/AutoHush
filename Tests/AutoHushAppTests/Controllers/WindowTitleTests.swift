@@ -390,10 +390,113 @@ final class WindowTitleTests {
         #expect(press(116)) // Page Up: back to the top
         #expect(fromTop() == 0)
         #expect(press(119)) // End: the newest
-        #expect(abs(fromTop() - bottom) <= 1)
+        // Its end read now: on macOS 14 the list grows as rows scrolled to
+        // are measured (the old-macOS round, 2026-11-10).
+        let end = document.frame.height - scroll.contentView.bounds.height
+        #expect(abs(fromTop() - end) <= 1, "at \(fromTop()), the end \(end), \(bottom) before")
         #expect(!press(0)) // a letter: the search's
         #expect(!logs.scrollEntries(keyCode: 115, flags: [], windowNumber: window.windowNumber + 1)) // another window's
         #expect(!logs.scrollEntries(keyCode: 115, flags: .command, windowNumber: window.windowNumber)) // ⌘Home: not its
+    }
+
+    /// The logs window's entries' scroll view: its tallest.
+    private func logsEntries(_ window: NSWindow) -> NSScrollView? {
+        var found: [NSScrollView] = []
+        func walk(_ view: NSView) {
+            if let scroll = view as? NSScrollView { found.append(scroll) }
+            view.subviews.forEach(walk)
+        }
+        window.contentView.map(walk)
+        return found.max { $0.frame.height < $1.frame.height }
+    }
+
+    /// How far down `scroll` is scrolled from its top, and how far it goes.
+    private func scrolled(_ scroll: NSScrollView) -> (fromTop: CGFloat, end: CGFloat) {
+        let height = scroll.documentView?.frame.height ?? 0
+        let visible = scroll.contentView.documentVisibleRect
+        let flipped = scroll.documentView?.isFlipped ?? true
+        return (flipped ? visible.minY : height - visible.maxY, max(0, height - scroll.contentView.bounds.height))
+    }
+
+    @Test("in the logs window, keyboard navigation off, Tab goes through the pop-ups, the entries, Follow new entries, Save… and Copy Logs, and the search's ✕ while it shows; Return presses the lit one; ↑ on the entries scrolls them; → changes a pop-up's choice (R3, R6)")
+    func logsWindowKeys() async throws {
+        let log = LogsModelTests.FakeLog()
+        let start = Date().addingTimeInterval(60)
+        log.entries = (0..<200).map {
+            LogEntry(date: start.addingTimeInterval(Double($0)), level: .notice, category: "PlayerSession", message: "Line \($0)")
+        }
+        let logs = makeLogs(log)
+        defer { logs.close() }
+        logs.fullKeyboardAccess = { false }
+        logs.keys.highlight.followsPointer = false
+        logs.show()
+        await TestWait.until { logs.model.shown.count == 200 }
+        let window = try #require(logs.window)
+        let highlight = logs.keys.highlight
+        await TestWait.until { highlight.rows.joined().count == 6 && !highlight.controls.values.contains { $0.frame == .zero } }
+        window.makeFirstResponder(nil)
+        let key = { (keyCode: UInt16, flags: NSEvent.ModifierFlags) in
+            logs.handleKey(keyCode, flags: flags, windowNumber: window.windowNumber)
+        }
+        let order = Array(highlight.rows.joined())
+        #expect(order.count == 6) // Time range, Levels; the entries; Follow new entries, Save…, Copy Logs
+        for index in 0..<4 {
+            #expect(key(48, []))
+            #expect(highlight.highlighted == order[index])
+        }
+        // Return on Follow new entries (never on Save…, whose panel would wait for a click).
+        try #require(highlight.highlighted == highlight.rows.last?.first)
+        #expect(key(36, [])) // Return on Follow new entries: off
+        #expect(!logs.model.followsNewEntries)
+        #expect(key(48, .shift)) // Shift-Tab: the entries
+        #expect(highlight.highlighted == order[2])
+        let scroll = try #require(logsEntries(window))
+        await TestWait.until { scrolled(scroll).end > 0 && scrolled(scroll).fromTop > 0 }
+        let before = scrolled(scroll).fromTop
+        #expect(key(126, [])) // ↑: they scroll, the highlight stays
+        #expect(scrolled(scroll).fromTop < before && highlight.highlighted == order[2])
+        // The search's ✕, while something is typed: Tab's first stop, Return clears it.
+        logs.model.search = "Line 1"
+        highlight.clear()
+        await TestWait.until { highlight.rows.joined().count == 7 && highlight.controls.values.contains { $0.tabOnly } }
+        #expect(key(48, []))
+        // Never Return on a pop-up: its menu would wait for a click.
+        try #require(highlight.highlighted.flatMap { highlight.controls[$0]?.tabOnly } == true)
+        #expect(key(36, []))
+        #expect(logs.model.search.isEmpty)
+        #expect(key(48, [])) // Time range
+        #expect(key(48, [])) // Levels
+        #expect(key(124, [])) // →: Problems Only
+        #expect(logs.model.levels == .problems)
+    }
+
+    @Test("following new entries, a line that comes as the oldest goes (24 hours on), the count unchanged, is scrolled to all the same (app-views-1)")
+    func logsWindowFollowsWhenOldestGoes() async throws {
+        let log = LogsModelTests.FakeLog()
+        final class Clock: @unchecked Sendable { var now = Date() }
+        let clock = Clock()
+        // The oldest a second from expiring: from 24 hours ago, one a second.
+        let start = clock.now.addingTimeInterval(-LogFile.keptFor + 1)
+        log.entries = (0..<100).map {
+            LogEntry(date: start.addingTimeInterval(Double($0)), level: .notice, category: "PlayerSession", message: "Line \($0)")
+        }
+        let logs = LogsWindowController(model: LogsModel(source: log, launch: .distantPast, now: { clock.now }), frameName: frameName)
+        defer { logs.close() }
+        logs.show()
+        await TestWait.until { logs.model.shown.count == 100 }
+        let window = try #require(logs.window)
+        let scroll = try #require(logsEntries(window))
+        await TestWait.until { scrolled(scroll).end > 0 && abs(scrolled(scroll).fromTop - scrolled(scroll).end) <= 1 }
+        let end = scrolled(scroll).end
+        // Two seconds on, a long line comes, several lines tall: the oldest goes.
+        clock.now = clock.now.addingTimeInterval(2)
+        let message = String(repeating: "A long line that wraps in the window. ", count: 40)
+        log.log(LogEntry(date: clock.now, level: .notice, category: "PlayerSession", message: message))
+        await TestWait.until { logs.model.shown.last?.message == message }
+        #expect(logs.model.shown.count == 100)
+        await TestWait.until { scrolled(scroll).end > end + 20 } // drawn, taller
+        await TestWait.until { abs(scrolled(scroll).fromTop - scrolled(scroll).end) <= 1 }
+        #expect(abs(scrolled(scroll).fromTop - scrolled(scroll).end) <= 1)
     }
 
     /// Each test reads its panel and shades from its own controller, not

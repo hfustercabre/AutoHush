@@ -25,7 +25,7 @@ package struct AccessibilityPlaybackMenu: PlaybackMenu {
         guard let item = toggleItem(pid: pid) else { return nil }
         return MenuToggle(
             title: item.string(kAXTitleAttribute) ?? "",
-            isEnabled: item.value(kAXEnabledAttribute) as? Bool ?? false
+            isEnabled: item.value(kAXEnabledAttribute) as? Bool
         )
     }
 

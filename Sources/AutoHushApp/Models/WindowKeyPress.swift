@@ -12,10 +12,6 @@ struct WindowKeyPress {
     let focus: WindowKeys.Focus
     /// Escape, without ⌘, ⌥, ⌃ or ⇧.
     let isEscape: Bool
-    /// Shift-Tab in a field: it does nothing, as ↑, the field keeping the
-    /// keyboard (the search is the top), not AppKit's next control (N4,
-    /// 2026-11-06).
-    let isShiftTabInField: Bool
 
     /// Escape's key code; the highlight doesn't take it (`HighlightKey`).
     private static let escapeKeyCode: UInt16 = 53
@@ -36,6 +32,5 @@ struct WindowKeyPress {
         focus = window.firstResponder is NSText ? .textField // a field's editor
             : fullKeyboardAccess() && !(window.firstResponder is NSWindow) ? .control : .none
         isEscape = keyCode == Self.escapeKeyCode && flags.isDisjoint(with: [.command, .option, .control, .shift])
-        isShiftTabInField = focus == .textField && key == .backTab
     }
 }

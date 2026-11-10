@@ -249,10 +249,13 @@ struct AddWebAppView: View {
             refocus = Task {
                 guard (try? await Task.sleep(for: .seconds(1))) != nil else { return } // replaced meanwhile
                 focusedStep = nil
-                try? await Task.sleep(for: .milliseconds(50))
+                guard (try? await Task.sleep(for: .milliseconds(50))) != nil else { return }
                 focusedStep = currentStep // the newest, should one have come meanwhile
             }
         }
+        // Gone (the window closed), it moves nothing: a focus set once a view
+        // was gone crashed macOS's focus system (CI, 2026-11-01).
+        .onDisappear { refocus?.cancel() }
     }
 
     /// Once the web app is chosen, learning it needs its control permission

@@ -24,16 +24,19 @@ extension PlaybackArbiter {
         let wait = debounceScheduler.scheduleDebounce(after: delay)
         let task = Task { [weak self] in
             _ = await wait.value
-            guard !Task.isCancelled else { return }
-            await self?.lookForRestart()
+            await self?.lookForRestart(after: wait)
         }
         restartWatch = (task, wait)
     }
 
     private func watchEnded(_ id: UUID) { calledOffWatches[id] = nil }
 
-    private func lookForRestart() async {
-        let look = restartWatch?.task
+    /// The look its watch (`wait`) was for, unless that watch was called off
+    /// or replaced meanwhile: told on the actor, as this task runs off it
+    /// until now, so a newer watch is never taken for its own (engine-7).
+    private func lookForRestart(after wait: Task<Void, Never>) async {
+        guard let watch = restartWatch, watch.wait == wait else { return }
+        let look = watch.task
         lookUnderWay = look
         restartWatch = nil
         await lookAtPause()

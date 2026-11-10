@@ -11,10 +11,14 @@ import Observation
 /// several (the durations, the buttons, tiles); Return or Space presses the
 /// one it's on; ← and → change a slider or a choice, and → opens a side
 /// window. Tab and Shift-Tab move it control by control, a row's as the
-/// language reads (`step`, `tabOrder`). Page Up and Page Down move it about a page, Home and End to the
+/// language reads (`step`, `tabOrder`), stopping on the controls the
+/// arrows go past too (`Control.tabOnly`: a search's ✕). Page Up and Page Down move it about a page, Home and End to the
 /// first and last row (`jump`). The pointer moves it too, as in a menu: the
 /// control under it is the highlighted one. Moved by a key, VoiceOver's
-/// cursor and Zoom go with it (`Light.arrivals`, `screenFrame`). Each control registers itself (`Highlightable`)
+/// cursor and Zoom go with it (`Light.arrivals`, `screenFrame`); moved by
+/// VoiceOver, it follows VoiceOver's cursor (`followVoiceOver`). While
+/// nothing is highlighted, the keys go on from the control the keyboard's
+/// focus is on (`focused`). Each control registers itself (`Highlightable`)
 /// with where it is and what pressing it does. The menu, its side window,
 /// Settings' sidebar and Settings' page have one each.
 @MainActor
@@ -48,6 +52,16 @@ final class KeyHighlight {
         var opensSide = false
         /// It stands for what's shown now (Settings' sidebar: the page's row).
         var isCurrent: (() -> Bool)?
+        /// Only Tab and Shift-Tab stop on it; ↑ and ↓, ← and →, Page Up,
+        /// Page Down, Home and End go past it, as before it took the
+        /// highlight (a search's ✕, which Tab reaches, B: the arrows go as
+        /// before, 2026-11-10).
+        var tabOnly = false
+        /// ↑ (-1) or ↓ (1) scrolls it, a list that's one stop (the logs'
+        /// entries); `false` at that end, where the arrows go on to the
+        /// next row. The keys' stop only: the pointer never takes it
+        /// (`innermostHovered`).
+        var scroll: ((Int) -> Bool)?
     }
 
     /// The control the arrow keys or the pointer moved to.
@@ -78,6 +92,13 @@ final class KeyHighlight {
     @ObservationIgnored var wantsFirst = false
     /// Frames that came before their control registered.
     @ObservationIgnored private var earlyFrames: [UUID: CGRect] = [:]
+    /// The control the keyboard's focus is on (a click's or the window's
+    /// own, with keyboard navigation on), as it tells (`focus(_:_:)`):
+    /// while nothing is highlighted, ↑ ↓ and Tab go on from it, not from
+    /// the top, so the focus and the highlight are one place (W9, the
+    /// user, 2026-11-10: "One indicator at a time"). Kept by `clear()`:
+    /// the focus is still there.
+    @ObservationIgnored private(set) var focused: UUID?
     /// The controls the pointer is over now. One can be inside another (the
     /// menu card's Change Player row in the card): the innermost is
     /// highlighted, and leaving it gives the highlight back to the one
@@ -188,10 +209,31 @@ final class KeyHighlight {
     func remove(_ id: UUID) {
         controls[id] = nil
         earlyFrames[id] = nil
+        if focused == id { focused = nil }
         orderOnArrival = nil
         hovered.removeAll { $0 == id }
         if highlighted == id { point(at: innermostHovered()) }
         lights[id] = nil
+    }
+
+    /// The keyboard's focus came onto a control (`true`) or left it.
+    func focus(_ id: UUID, _ isFocused: Bool) {
+        if isFocused { focused = id } else if focused == id { focused = nil }
+    }
+
+    /// VoiceOver's cursor came onto a control (VoiceOver's own keys moved
+    /// it): the highlight goes there too, so plain Return and Space act on
+    /// what VoiceOver is on (K5, the user, 2026-11-10; M10, S17, W13 of the
+    /// keyboard review). As the keys' (`Light.byKeys`), but VoiceOver's
+    /// cursor isn't moved again nor anything said, and Zoom and the scroll
+    /// are left to VoiceOver. Not onto a dimmed control that has no reason
+    /// to show.
+    func followVoiceOver(to id: UUID) {
+        guard highlighted != id, let control = controls[id], control.isEnabled || control.explains else { return }
+        orderOnArrival = control.explains ? (id, rows) : nil
+        highlighted = id
+        light(id).byKeys = true
+        onHighlight?()
     }
 
     /// The pointer came onto a control (`true`) or left it.
@@ -221,9 +263,17 @@ final class KeyHighlight {
 
     /// Of the controls under the pointer but `excluded`, the last it came
     /// onto, or one inside it, whichever was told first (SwiftUI tells a
-    /// control inside another and the one around it in no set order).
+    /// control inside another and the one around it in no set order). Not
+    /// a dimmed one, which would hold the highlight unseen, the focus's
+    /// tint hidden and its keys taken for nothing (app-models-2, the bug
+    /// hunt, 2026-11-10), unless it explains itself (the pointer then has
+    /// its help tag); nor a list that's one stop (`Control.scroll`, the
+    /// logs' entries), whose ring shows only the keys' and which has
+    /// nothing to press (R2 of the keyboard fixes' review, 2026-11-10).
     private func innermostHovered(excluding excluded: UUID? = nil) -> UUID? {
-        let hovered = hovered.filter { $0 != excluded }
+        let hovered = hovered.filter { id in
+            id != excluded && controls[id].map { ($0.isEnabled || $0.explains) && $0.scroll == nil } != false
+        }
         guard var best = hovered.last else { return nil }
         for id in hovered.reversed() where id != best && isInside(id, best) { best = id }
         return best
@@ -291,12 +341,22 @@ final class KeyHighlight {
         return true
     }
 
+    /// ↑ or ↓ on the highlighted control, if it scrolls (`Control.scroll`);
+    /// `false` when it doesn't, or is at that end.
+    func scroll(_ step: Int) -> Bool {
+        highlightedControl?.scroll?(step) ?? false
+    }
+
     /// The highlighted control opens a side window.
     var highlightedOpensSide: Bool { highlightedControl?.opensSide ?? false }
 
     /// The highlighted control stands for something shown (`Control.isCurrent`:
     /// Settings' sidebar, a page's row), unlike its foot's link (N7, 2026-11-06).
     var highlightedStandsForShown: Bool { highlightedControl?.isCurrent != nil }
+
+    /// The highlighted control stands for what's shown now, and it is (Settings'
+    /// sidebar: the shown page's row, not another Tab stopped on).
+    var highlightedIsShown: Bool { highlightedControl?.isCurrent?() == true }
 
     /// The keys, not the pointer, put the highlight where it is.
     var isLitByKeys: Bool { highlighted.map { light($0).byKeys } ?? false }

@@ -13,6 +13,17 @@ This project follows [Semantic Versioning](https://semver.org/).
   menu, Settings and the other windows: each tile, duration and button in
   a row, not only the row, right to left in Arabic and Hebrew. The arrow
   keys work as before.
+- **In Settings, Tab** goes through the sidebar and the page as one loop,
+  in reading order: Back and Forward, a search, then the page. Tab on a
+  sidebar row lights it; Return or Space shows its page.
+- **Shift-Tab and Tab** reach a window's search field too.
+- **The keys** go on from the control that has the focus, and follow
+  VoiceOver's cursor, so Return and Space act on what it's on.
+- **↓ on AutoHush's menu bar icon** (after Control-F8) opens the menu.
+- **Every control is reachable by keyboard:** a search's clear button,
+  Settings' Back and Forward, long release notes, and the Logs window.
+- **Holding Option in the menu** turns Settings into Diagnostics and an
+  added app's row into Remove; Option-Return or Option-Space presses them.
 
 ### Fixed
 
@@ -34,9 +45,20 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **The menu** shows one highlighted row at a time when you use the keys.
 - **Diagnostics** no longer says notifications are allowed when macOS
   never asked.
+- **A pause under way as the Mac sleeps** is forgotten after waking, as a
+  paused one is, and the music is paused again if apps still play.
+- **A TIDAL-like menu read mid-rebuild** no longer counts as nothing to
+  play.
+- **A Now Playing panel press that doesn't take** is caught when another
+  of the app's ways can tell.
+- **Automatic update checks** resume after the Mac's clock went back.
+- **Opening a second copy** no longer raises the volume or unmutes the
+  output while the first still uses them.
+- **The Logs window** keeps following new lines after a day of running.
 - **Player Check** gives the right reason when a panel press fails, marks
   a way tried in a later window state as tried, and reads app names with
-  “: ” in permission lines.
+  “: ” in permission lines; Stop with the app's windows closed plays it
+  again first, and a song tile no longer replaces its learned button.
 
 ## [1.3.4] — 2026-11-09
 

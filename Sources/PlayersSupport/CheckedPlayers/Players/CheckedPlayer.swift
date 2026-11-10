@@ -221,10 +221,12 @@ package actor CheckedPlayer: AddedAppPlayer {
     /// presses, or one whose press can't be checked (`checkable`, asked once
     /// per press at the first way that doesn't: a sign saying nothing now,
     /// as a report of Unknown, would only be waited on), as it is; any
-    /// other through `PressCheck`, by `sureState`.
+    /// other through `PressCheck`, by `sureState`, which its backups' signs
+    /// answer too while it routes.
     func press(_ way: any MusicPlayer, to target: PlayerState, checkable: inout Bool?) async throws {
         if !way.checksItsPresses, checkable == nil {
-            checkable = (!parts.signs.isEmpty || reports != nil) ? await sureState() != .unknown : false
+            let signs = !parts.signs.isEmpty || reports != nil || routes && !parts.backupSigns.isEmpty
+            checkable = signs ? await sureState() != .unknown : false
         }
         if way.checksItsPresses || checkable != true {
             if target == .playing { try await way.play() } else { try await way.pause() }

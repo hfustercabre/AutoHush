@@ -93,18 +93,31 @@ extension StatusMenuController {
     /// methods and dead keys compose there, and a click in it shows the
     /// caret. `event`, a key typed while the menu had the keyboard, is typed
     /// into it once it has the focus. The menu's switches are drawn inactive
-    /// meanwhile, as in any window that isn't key.
-    func searchTakesKeyboard(replaying event: NSEvent? = nil) {
-        guard model.isChoosingPlayer, let side = sidePanel, side.isVisible else { return }
+    /// meanwhile, as in any window that isn't key. `false` when the players'
+    /// side window doesn't show.
+    @discardableResult func searchTakesKeyboard(replaying event: NSEvent? = nil) -> Bool {
+        guard model.isChoosingPlayer, let side = sidePanel, side.isVisible else { return false }
         side.takesKey = true
         side.makeKey()
         model.searchFocus += 1
-        guard let event else { return }
+        guard let event else { return true }
         let pause = pause
         Task { [weak side] in
             await pause(0.05) // SwiftUI focuses the field in its next update
             side?.sendEvent(event)
         }
+        return true
+    }
+
+    /// The players' search lets go of the keyboard (Tab out of it): the menu
+    /// keeps it again, typing still reaching the search (`handleKey`), but
+    /// with VoiceOver on, which reads the side window, it stays there.
+    func searchGivesUpKeyboard() {
+        guard let side = sidePanel else { return }
+        side.makeFirstResponder(nil)
+        guard !voiceOverOn(), let panel, panel.isVisible else { return }
+        side.takesKey = false
+        panel.makeKey()
     }
 
     /// The pointer came onto a row that opens a side window (`inside`) or
@@ -197,6 +210,7 @@ extension StatusMenuController {
         let side = MenuPanel(content: hosting)
         side.onCancel = { [weak self] in self?.closeSide() }
         side.onKey = { [weak self] in self?.handleKey($0) ?? false }
+        side.onFieldKey = { [weak self] in self?.handleKeyInSearch($0) ?? false }
         // Zoom follows the keys' highlight (A3).
         model.sideKeyboard.screenFrame = { [weak hosting] rect in hosting.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
         return side
