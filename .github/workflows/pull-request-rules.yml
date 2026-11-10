@@ -17,6 +17,8 @@ jobs:
   branches:
     name: Branch name and target
     runs-on: ubuntu-latest
+    # A check of two names takes seconds; a stuck runner stops here, not after 6 hours.
+    timeout-minutes: 5
     steps:
       - name: Check the branches
         # Through the environment, never written into the script: a branch
