@@ -74,7 +74,7 @@ extension StatusMenuController {
         }
         panel.onKey = { [weak self] in self?.handleKey($0) ?? false }
         // Zoom follows the keys' highlight (A3).
-        model.keyboard.screenFrame = { [weak hosting] rect in hosting.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
+        model.keyboard.place { [weak hosting] in hosting }
         hosting.layoutSubtreeIfNeeded()
         noteContentHeight(max(contentHeight, hosting.fittingSize.height))
         return panel

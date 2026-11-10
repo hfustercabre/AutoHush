@@ -20,6 +20,8 @@ struct LogsView: View {
     @State private var rangePopUp = PopUpOpener()
     @State private var levelsPopUp = PopUpOpener()
     @FocusState private var followFocused: Bool
+    /// VoiceOver's cursor on the follow switch brings the highlight (K5-1).
+    @AccessibilityFocusState private var followHasVoiceOverCursor: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -65,12 +67,14 @@ struct LogsView: View {
                         .toggleStyle(PillToggleStyle())
                         .focused($followFocused)
                         .focusEffectDisabled() // the row's tint shows it
+                        .accessibilityFocused($followHasVoiceOverCursor)
                     Text(verbatim: Self.followTitle)
                         .font(.appCallout)
                         .foregroundStyle(.appSecondary)
                         .accessibilityHidden(true) // the switch says it
                 }
-                .highlightableRow(isFocused: followFocused, press: { model.followsNewEntries.toggle() })
+                .highlightableRow(isFocused: followFocused, press: { model.followsNewEntries.toggle() },
+                                  voiceOverTarget: $followHasVoiceOverCursor)
                 Spacer()
                 Button(action: save) {
                     Text("Save…", comment: "The logs window: button that saves the entries shown to a text file")

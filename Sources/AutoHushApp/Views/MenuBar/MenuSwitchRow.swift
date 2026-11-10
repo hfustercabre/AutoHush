@@ -16,6 +16,8 @@ struct MenuSwitchRow<Picture: View, Title: View>: View {
     let picture: Picture
     let title: Title
     @FocusState private var isFocused: Bool
+    /// VoiceOver's cursor on the row's control brings the highlight (K5-1).
+    @AccessibilityFocusState private var controlHasVoiceOverCursor: Bool
 
     init(isOn: Binding<Bool>, label: Text, hint: Text,
          @ViewBuilder picture: () -> Picture, @ViewBuilder title: () -> Title) {
@@ -40,10 +42,11 @@ struct MenuSwitchRow<Picture: View, Title: View>: View {
                 .focused($isFocused)
                 .focusEffectDisabled()
                 .accessibilityHint(hint)
+                .accessibilityFocused($controlHasVoiceOverCursor)
         }
         // A click anywhere in its tint turns it on or off, as one on the
         // switch (the user, 2026-11-03: a click at the tint's edge did nothing).
         .clickAnywhere { isOn.wrappedValue.toggle() }
-        .highlightableRow(isFocused: isFocused, press: { isOn.wrappedValue.toggle() })
+        .highlightableRow(isFocused: isFocused, press: { isOn.wrappedValue.toggle() }, voiceOverTarget: $controlHasVoiceOverCursor)
     }
 }

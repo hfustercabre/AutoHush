@@ -11,6 +11,21 @@ extension KeyHighlight {
         firstWhenReady()
     }
 
+    /// The innermost control that takes the highlight around `element`, on
+    /// screen in `screenFrame`'s coordinates: the element VoiceOver's cursor
+    /// is on (`VoiceOverCursor`), its middle in the control, and no more than
+    /// 24 pt wider or taller (a window or a page around it isn't the
+    /// control). `nil` off its controls, or not placed on screen.
+    func control(around element: CGRect) -> UUID? {
+        guard let screenFrame else { return nil }
+        let middle = CGPoint(x: element.midX, y: element.midY)
+        return controls.compactMap { id, control -> (UUID, CGRect)? in
+            guard control.isEnabled || control.explains, let rect = screenFrame(control.frame), rect.contains(middle),
+                  element.width <= rect.width + 24, element.height <= rect.height + 24 else { return nil }
+            return (id, rect)
+        }.min { $0.1.width * $0.1.height < $1.1.width * $1.1.height }?.0
+    }
+
     /// Zoom shows the control the keys moved to, once it's scrolled into
     /// view (the reveal takes 0.15 s), if the highlight is still there.
     func followWithZoom(_ id: UUID) {

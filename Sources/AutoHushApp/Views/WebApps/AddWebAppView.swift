@@ -32,6 +32,8 @@ struct AddWebAppView: View {
     @State private var refocus: Task<Void, Never>?
     /// Opens the country pop-up from a click anywhere on its row.
     @State private var countryPopUp = PopUpOpener()
+    /// VoiceOver's cursor on a row's control brings the highlight (K5-1).
+    @AccessibilityFocusState private var countryHasVoiceOverCursor: Bool
 
     /// The window's width, which its bottom bar's buttons fit in every language.
     static let width: CGFloat = 440
@@ -162,6 +164,7 @@ struct AddWebAppView: View {
             .fixedSize()
             .opened(by: countryPopUp)
             .disabled(model.phase != .entering)
+            .accessibilityFocused($countryHasVoiceOverCursor)
         }
         // A click anywhere on the row shows the countries, as on Settings' pop-up rows.
         .clickAnywhere {
@@ -176,7 +179,7 @@ struct AddWebAppView: View {
                           arrivalSpeech: PopUpOpener.arrivalSpeech(Self.countryTitle) {
                               let code = model.country(in: sites)
                               return model.countries(of: sites).first { $0.code == code }?.name ?? Self.otherCountries
-                          })
+                          }, voiceOverTarget: $countryHasVoiceOverCursor)
     }
 
     /// Over the address's card, and its field's name for VoiceOver.

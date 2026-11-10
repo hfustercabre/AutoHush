@@ -25,6 +25,8 @@ struct PlayerControlsCard: View {
     @State private var showsDetails = false
     /// Opens the main control's pop-up from the keys.
     @State private var popUp = PopUpOpener()
+    /// VoiceOver's cursor on a row's control brings the highlight (K5-1).
+    @AccessibilityFocusState private var popUpHasVoiceOverCursor: Bool
 
     var body: some View {
         if let controls = model.chosenControls, let name = model.chosenPlayerName {
@@ -105,6 +107,7 @@ struct PlayerControlsCard: View {
                 .buttonStyle(.borderless)
                 .fixedSize()
                 .opened(by: popUp)
+                .accessibilityFocused($popUpHasVoiceOverCursor)
             }
             ChosenControlNote(control: controls.main, player: player)
         }
@@ -116,7 +119,7 @@ struct PlayerControlsCard: View {
             let now = model.chosenControls ?? controls
             return BackupText.item(now.main, recommended: now.main.kind == controls.recommended,
                                   notYet: controls.notYetChoices.contains(now.main))
-        })
+        }, voiceOverTarget: $popUpHasVoiceOverCursor)
     }
 
     /// The main control ← (-1) or → (1) chooses, in the order the pop-up

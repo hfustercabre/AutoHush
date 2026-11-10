@@ -109,8 +109,10 @@ struct Highlightable: ViewModifier {
                 .accessibilityFocused($hasVoiceOverCursor)
                 // VoiceOver's own keys moved its cursor here: the highlight
                 // follows (K5); on the arrival above, it's here already.
+                // SwiftUI says so only at VoiceOver's next move: right after
+                // `VoiceOverCursor` told it at once, this is left out.
                 .onChange(of: hasVoiceOverCursor || voiceOverTarget?.wrappedValue == true) { _, hasCursor in
-                    guard hasCursor, voiceOver.isOn() else { return }
+                    guard hasCursor, voiceOver.isOn(), VoiceOverCursor.shared.takesLateReport() else { return }
                     keyboard.followVoiceOver(to: id)
                 }
                 .onChange(of: isFocused, initial: true) { keyboard.focus(id, isFocused) }
@@ -170,15 +172,20 @@ extension View {
     /// A row of Settings (or the menu) as `Highlightable`, its tint out of
     /// its layout, `horizontal` pt to its sides and `vertical` pt above and
     /// below it: 6 and 3, as the menu's rows, unless it says otherwise.
+    /// `voiceOverTarget`: the row's control VoiceOver stops on (its switch,
+    /// slider, pop-up or button), so VoiceOver's cursor there brings the
+    /// highlight (K5-1, 2026-11-10: on a switch row it stayed on the row
+    /// before), and a key's arrival moves VoiceOver's cursor onto it.
     func highlightableRow(isFocused: Bool = false, isAvailable: Bool = true, ownsControls: Bool = false,
                           cornerRadius: CGFloat = 8, horizontal: CGFloat = 6, vertical: CGFloat = 3,
                           press: (() -> Void)? = nil, select: (() -> Void)? = nil, adjust: ((Int) -> Void)? = nil,
-                          isCurrent: (() -> Bool)? = nil, arrivalSpeech: (() -> String?)? = nil) -> some View {
+                          isCurrent: (() -> Bool)? = nil, arrivalSpeech: (() -> String?)? = nil,
+                          voiceOverTarget: AccessibilityFocusState<Bool>.Binding? = nil) -> some View {
         padding(.horizontal, horizontal)
             .padding(.vertical, vertical)
             .modifier(Highlightable(isFocused: isFocused, cornerRadius: cornerRadius, isAvailable: isAvailable,
                                     ownsControls: ownsControls, press: press, select: select, adjust: adjust,
-                                    isCurrent: isCurrent, arrivalSpeech: arrivalSpeech))
+                                    isCurrent: isCurrent, voiceOverTarget: voiceOverTarget, arrivalSpeech: arrivalSpeech))
             .padding(.horizontal, -horizontal)
             .padding(.vertical, -vertical)
     }

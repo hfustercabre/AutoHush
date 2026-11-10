@@ -54,9 +54,7 @@ final class LogsWindowController: PlacedWindowController, NSWindowDelegate {
             return true
         }
         // Zoom follows the keys' highlight (A3).
-        keys.highlight.screenFrame = { [weak self] rect in
-            self?.window?.contentView.flatMap { ZoomFocus.screenRect(of: rect, in: $0) }
-        }
+        keys.highlight.place { [weak self] in self?.window?.contentView }
     }
 
     @available(*, unavailable)

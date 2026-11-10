@@ -9,6 +9,9 @@ struct UpdatesCard: View {
     let model: SettingsModel
     /// Opens the update pop-up from the keys.
     @State private var popUp = PopUpOpener()
+    /// VoiceOver's cursor on a row's control brings the highlight (K5-1).
+    @AccessibilityFocusState private var popUpHasVoiceOverCursor: Bool
+    @AccessibilityFocusState private var checkNowHasVoiceOverCursor: Bool
 
     var body: some View {
         Card(Text(verbatim: UpdateOffer.updatesTitle)) {
@@ -46,6 +49,7 @@ struct UpdatesCard: View {
                     .disabled(model.updateInstallNote != nil)
                     .help(shown.explanation)
                     .accessibilityHint(Text(verbatim: shown.explanation))
+                    .accessibilityFocused($popUpHasVoiceOverCursor)
                 }
                 if let note = model.updateInstallNote {
                     Text(verbatim: note).captionStyle()
@@ -68,7 +72,8 @@ struct UpdatesCard: View {
                 guard model.updateInstallNote == nil,
                       let mode = AutomaticUpdates.allCases.stepping(from: model.automaticUpdates, by: step) else { return }
                 model.updates.setMode(mode)
-            }, arrivalSpeech: PopUpOpener.arrivalSpeech(Self.updateFoundTitle) { model.shownAutomaticUpdates.title })
+            }, arrivalSpeech: PopUpOpener.arrivalSpeech(Self.updateFoundTitle) { model.shownAutomaticUpdates.title },
+               voiceOverTarget: $popUpHasVoiceOverCursor)
             .unavailable(!model.checksForUpdatesAutomatically)
             if !model.checksForUpdatesAutomatically {
                 NoteLabel(SettingsSwitch.updateChecksOffNote, kind: .info)
@@ -102,8 +107,10 @@ struct UpdatesCard: View {
                     Text("Check Now", comment: "Settings → About: checks for an update now")
                 }
                     .buttonStyle(.chip)
+                    .accessibilityFocused($checkNowHasVoiceOverCursor)
             }
-            .highlightableRow(ownsControls: true, press: { model.updates.checkFromUser() })
+            .highlightableRow(ownsControls: true, press: { model.updates.checkFromUser() },
+                              voiceOverTarget: $checkNowHasVoiceOverCursor)
         } footer: {
             RestoreDefaultsButton(model: model, card: .updates)
         }

@@ -139,7 +139,21 @@ final class KeyHighlight {
     /// Where a frame in the controls' window is on the screen, in Zoom's
     /// coordinates (`ZoomFocus.screenRect`); set by the window's owner, so
     /// Zoom follows the keys (A3, 2026-11-01). `nil`: Zoom isn't told.
-    @ObservationIgnored var screenFrame: (@MainActor (CGRect) -> CGRect?)?
+    @ObservationIgnored var screenFrame: (@MainActor (CGRect) -> CGRect?)? {
+        // Placed on screen, it can follow VoiceOver's cursor at once (`VoiceOverCursor`).
+        didSet { if screenFrame != nil { VoiceOverCursor.shared.follow(self) } }
+    }
+    /// The view its controls are drawn in (`place(in:)`): its window is the
+    /// one VoiceOver's cursor must be in for the highlight to follow it.
+    @ObservationIgnored private var screenView: (@MainActor () -> NSView?)?
+    var window: NSWindow? { screenView?()?.window }
+
+    /// Its controls are drawn in `view` (a hosting view, as SwiftUI's
+    /// `.global` frames are its own): Zoom and VoiceOver's cursor follow.
+    func place(in view: @escaping @MainActor () -> NSView?) {
+        screenView = view
+        screenFrame = { rect in view().flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
+    }
     /// Tells Zoom where the highlight is now, if Zoom is on (tests replace it).
     @ObservationIgnored var zoom: @MainActor (CGRect) -> Void = ZoomFocus.follow
     /// Whether the app is laid out right to left (Arabic, Hebrew): Tab goes

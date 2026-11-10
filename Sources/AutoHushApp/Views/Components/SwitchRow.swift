@@ -13,6 +13,8 @@ struct SwitchRow: View {
     /// from it (`KeyHighlight.highlightCurrent`).
     var isCurrent: (() -> Bool)?
     @FocusState private var isFocused: Bool
+    /// VoiceOver's cursor on the row's control brings the highlight (K5-1).
+    @AccessibilityFocusState private var controlHasVoiceOverCursor: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     init(_ title: Text, subtitle: Text? = nil, isOn: Binding<Bool>, isCurrent: (() -> Bool)? = nil) {
@@ -32,8 +34,10 @@ struct SwitchRow: View {
                 .focused($isFocused)
                 .focusEffectDisabled(keyboard != nil) // the row's tint shows it
                 .accessibilityHint(subtitle ?? Text(verbatim: ""))
+                .accessibilityFocused($controlHasVoiceOverCursor)
         }
         .clickAnywhere { isOn.toggle() }
-        .highlightableRow(isFocused: isFocused, press: { isOn.toggle() }, isCurrent: isCurrent)
+        .highlightableRow(isFocused: isFocused, press: { isOn.toggle() }, isCurrent: isCurrent,
+                          voiceOverTarget: $controlHasVoiceOverCursor)
     }
 }

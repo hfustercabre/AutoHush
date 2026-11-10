@@ -221,9 +221,7 @@ class HostedWindowController: NSWindowController {
     /// the highlight is (A3).
     private func connect(_ keys: WindowKeys) {
         keys.dropFocus = { [weak self] in _ = self?.window?.makeFirstResponder(nil) }
-        keys.highlight.screenFrame = { [weak self] rect in
-            self?.window?.contentView.flatMap { ZoomFocus.screenRect(of: rect, in: $0) }
-        }
+        keys.highlight.place { [weak self] in self?.window?.contentView }
     }
 
     /// Before the focused control, as Settings' keys are, until it closes.

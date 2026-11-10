@@ -18,6 +18,8 @@ struct SoundSourceRow: View {
     let row: AppListModel.Row
     @FocusState private var rowFocused: Bool
     @FocusState private var switchFocused: Bool
+    /// VoiceOver's cursor on the row's control brings the highlight (K5-1).
+    @AccessibilityFocusState private var controlHasVoiceOverCursor: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
     @Environment(\.voiceOver) private var voiceOver
 
@@ -48,6 +50,7 @@ struct SoundSourceRow: View {
             .focused($switchFocused)
             .focusEffectDisabled(keyboard != nil)
             .accessibilityHint(Text(verbatim: subtitle))
+            .accessibilityFocused($controlHasVoiceOverCursor)
             // A white ground while it's on, so its accent color shows on the
             // selection; off, macOS's own switch on the selection, whose
             // track shows there (D1b, the a11y audit's D1, the user's pick,
@@ -66,7 +69,7 @@ struct SoundSourceRow: View {
         // to the selection or takes it out.
         .highlightableRow(isFocused: rowFocused || switchFocused, cornerRadius: 6, vertical: 4,
                           press: switchFromKeys,
-                          select: { list.toggleSelection(of: row.id) })
+                          select: { list.toggleSelection(of: row.id) }, voiceOverTarget: $controlHasVoiceOverCursor)
         .onKeyPress(.space) {
             list.toggleSelection(of: row.id)
             return .handled

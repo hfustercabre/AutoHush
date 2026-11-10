@@ -89,6 +89,25 @@ struct KeyHighlightSourceTests {
         #expect(sides == ["page", "sidebar", "page"])
     }
 
+    @Test("VoiceOver's cursor on screen finds the innermost control around its element that takes the highlight, in screen coordinates, a dimmed one that explains itself too; none for an element far larger than the control (a window), off the controls, or before they're placed on screen (K5)")
+    func controlAroundElement() {
+        let keyboard = KeyHighlight()
+        let row = control(keyboard, 0)
+        _ = control(keyboard, 50, enabled: false)
+        let explaining = control(keyboard, 75, enabled: false, explains: true)
+        let card = UUID()
+        keyboard.register(card, .init(frame: CGRect(x: 0, y: 0, width: 200, height: 100)))
+        let onRow = CGRect(x: 104, y: 204, width: 30, height: 14)
+        #expect(keyboard.control(around: onRow) == nil) // not placed yet
+        keyboard.screenFrame = { $0.offsetBy(dx: 100, dy: 200) }
+        #expect(keyboard.control(around: onRow) == row) // inside the card too
+        #expect(keyboard.control(around: CGRect(x: 104, y: 254, width: 30, height: 14)) == card) // the dimmed one's place
+        #expect(keyboard.control(around: CGRect(x: 104, y: 279, width: 30, height: 14)) == explaining)
+        #expect(keyboard.control(around: CGRect(x: 280, y: 280, width: 10, height: 10)) == card)
+        #expect(keyboard.control(around: CGRect(x: 100, y: 200, width: 600, height: 400)) == nil) // a window
+        #expect(keyboard.control(around: CGRect(x: 400, y: 210, width: 10, height: 10)) == nil)
+    }
+
     @Test("a dimmed control that explains itself takes the keys' highlight, shows it only to the keys, keeps it as it dims, and isn't pressed")
     func explains() {
         let keyboard = KeyHighlight()

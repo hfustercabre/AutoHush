@@ -14,6 +14,8 @@ struct TimingSliderRow: View {
     private var keyPath: WritableKeyPath<TimingSettings, Double> { timing.keyPath }
 
     @FocusState private var sliderFocused: Bool
+    /// VoiceOver's cursor on the row's control brings the highlight (K5-1).
+    @AccessibilityFocusState private var controlHasVoiceOverCursor: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
     var body: some View {
@@ -44,12 +46,13 @@ struct TimingSliderRow: View {
             .focused($sliderFocused)
             .focusEffectDisabled(keyboard != nil) // the row's tint shows it
             .accessibilityValue(Text(verbatim: timing.format(model.timings[keyPath: keyPath])))
+            .accessibilityFocused($controlHasVoiceOverCursor)
             timing.help.captionStyle()
         }
         // Highlighted by the arrow keys (← and →
         // move it) and the pointer, and tinted while its slider has the
         // keyboard's focus (F5).
-        .highlightableRow(isFocused: sliderFocused, adjust: step, isCurrent: isCurrent)
+        .highlightableRow(isFocused: sliderFocused, adjust: step, isCurrent: isCurrent, voiceOverTarget: $controlHasVoiceOverCursor)
     }
 
     /// One step of the slider up (1) or down (-1), kept in its range.

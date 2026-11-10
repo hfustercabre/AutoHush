@@ -94,8 +94,8 @@ final class SettingsWindowController: PlacedWindowController {
         model.undoManager = window?.undoManager
         model.appList.undoManager = window?.undoManager
         // Zoom follows the keys' highlight on each side (A3).
-        keys.sidebar.screenFrame = { [weak view = sidebar.view] rect in view.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
-        keys.page.screenFrame = { [weak view = page.view] rect in view.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
+        keys.sidebar.place { [weak view = sidebar.view] in view }
+        keys.page.place { [weak view = page.view] in view }
         pageView = page.view
         toolbarKeys.attach(to: window, pageView: page.view)
         navigation.onChange = { [weak window = self.window, weak model, toolbarDelegate, toolbarKeys, keys] page in

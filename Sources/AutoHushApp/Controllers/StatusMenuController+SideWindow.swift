@@ -212,7 +212,7 @@ extension StatusMenuController {
         side.onKey = { [weak self] in self?.handleKey($0) ?? false }
         side.onFieldKey = { [weak self] in self?.handleKeyInSearch($0) ?? false }
         // Zoom follows the keys' highlight (A3).
-        model.sideKeyboard.screenFrame = { [weak hosting] rect in hosting.flatMap { ZoomFocus.screenRect(of: rect, in: $0) } }
+        model.sideKeyboard.place { [weak hosting] in hosting }
         return side
     }
 
