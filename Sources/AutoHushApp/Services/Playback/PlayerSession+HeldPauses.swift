@@ -35,9 +35,12 @@ extension PlayerSession {
 
     /// Players held paused get their monitoring again, whatever the chosen
     /// player's does: it takes their pause over and ends it as it would have.
+    /// What they turn on in their app goes back off once it's over, as for a
+    /// player left with its pause held (`releaseLeft`).
     func startHeldPauses(_ bundleIDs: [String]) {
         for bundleID in bundleIDs {
             guard let held = players.player(bundleID: bundleID) else { continue }
+            if held.releasesOnQuit { leftPlayers[bundleID] = held }
             let token = UUID()
             let monitoring = makeMonitoring(for: held, token: token)
             heldPauses.keep(monitoring, token: token, bundleID: bundleID, awaitingTakeOver: true)

@@ -17,6 +17,14 @@ struct MenuRowButtonStyle: ButtonStyle {
         Row(configuration: configuration, tinted: tinted)
     }
 
+    /// Whether a row lights up. With the arrow keys' highlight around
+    /// (`followsKeys`), only where it is, the pointer's row included (it
+    /// moves there): one row lit at a time, the keys taking it from under
+    /// the pointer. Without, under the pointer.
+    nonisolated static func isLit(enabled: Bool, tinted: Bool, hovered: Bool, highlighted: Bool, followsKeys: Bool) -> Bool {
+        enabled && !tinted && (followsKeys ? highlighted : hovered)
+    }
+
     private struct Row: View {
         let configuration: Configuration
         let tinted: Bool
@@ -24,9 +32,11 @@ struct MenuRowButtonStyle: ButtonStyle {
         @Environment(\.isEnabled) private var isEnabled
         @Environment(\.showsKeyHighlight) private var showsKeyHighlight
         @Environment(\.keyHighlightByKeys) private var byKeys
+        @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
 
         var body: some View {
-            let lit = isEnabled && !tinted && (isHovered || showsKeyHighlight)
+            let lit = MenuRowButtonStyle.isLit(enabled: isEnabled, tinted: tinted, hovered: isHovered,
+                                               highlighted: showsKeyHighlight, followsKeys: keyboard != nil)
             configuration.label
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 6)

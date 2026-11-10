@@ -11,6 +11,8 @@ extension AddAppModel {
         work = Task { [weak self] in
             while let self, !Task.isCancelled, self.stage == .allowing {
                 await self.refreshPermissions(for: app, scriptable: traits.scriptable)
+                // Stopped while it read (the window closed, say): nothing goes on.
+                guard !Task.isCancelled, self.stage == .allowing else { return }
                 // AutoHush read the change after all: as any missing permission.
                 if !self.permissions.neededAllowed { self.accessibilityNeedsReopen = false }
                 if self.permissions.allAllowed(antiDot: self.antiDot), !self.accessibilityNeedsReopen {

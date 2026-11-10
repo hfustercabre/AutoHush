@@ -42,7 +42,9 @@ struct CheckedPlayerTests {
         #expect(!CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore()).releasesOnQuit)
         clued.panelClues = PanelClues(page: PanelClues.Page(access: .webKit, labels: ["Pause"]), script: nil)
         #expect(CheckedPlayer.parts(for: clued, store: MemorySetupStore()).cluePage?.access == .webKit)
-        #expect(CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore()).releasesOnQuit)
+        let cluedPlayer = CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore())
+        #expect(cluedPlayer.releasesOnQuit)
+        await cluedPlayer.release() // its page's switch released off the actor, as its page way's
         clued.panelClues = PanelClues(page: nil, script: .currentTrack)
         #expect(!CheckedPlayer(setup: clued, reports: nil, store: MemorySetupStore()).releasesOnQuit)
     }

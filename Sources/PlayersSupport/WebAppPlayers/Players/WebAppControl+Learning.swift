@@ -34,11 +34,7 @@ extension WebAppControl {
                            sleep: (TimeInterval) -> Void) -> Bool {
         guard let pid else { return true } // nothing is pressed without it anyway
         func reaches(_ answer: NowPlayingApp.Answer) -> Bool {
-            switch answer {
-            case .process(let holder): ProcessResponsibility.isOwned(holder, by: pid)
-            case .none: false
-            case .unknown: true
-            }
+            answer == .unknown || answer.isHeld(by: pid)
         }
         if reaches(nowPlaying()) { return true }
         sleep(nowPlayingRecheck)

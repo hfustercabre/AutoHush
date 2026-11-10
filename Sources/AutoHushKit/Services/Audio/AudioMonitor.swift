@@ -276,13 +276,21 @@ final class AudioMonitor: @unchecked Sendable {
         }
     }
 
-    /// Applies new timings and thresholds without restarting monitoring.
+    /// Applies new timings and thresholds without restarting monitoring. A
+    /// source playing that no longer counts (Pause for VoiceOver turned off
+    /// while VoiceOver plays) stops at once and is forgotten, so it starts
+    /// again if it counts again, even within its stop grace.
     func setConfiguration(_ configuration: AppConfiguration) {
         queue.async {
             // Apps with only their microphone on are read while it's on, and
             // VoiceOver while it pauses the music.
             if configuration.pausesForMicrophone != self.configuration.pausesForMicrophone
                 || configuration.pausesForVoiceOver != self.configuration.pausesForVoiceOver { self.needsRefresh = true }
+            for id in self.tracker.activeSources.sorted()
+            where self.configuration.isMediaSource(id) && !configuration.isMediaSource(id) {
+                self.tracker.forget(id)
+                if !self.ignoredSourceIDs.contains(id) { self.events.yield(.source(id: id, isPlaying: false, heardSince: nil)) }
+            }
             self.configuration = configuration
             self.tracker.updateTimings(from: configuration)
         }

@@ -270,7 +270,8 @@ package actor CheckedPlayer: AddedAppPlayer {
     package func release() async {
         await parts.page?.releaseMute()
         await parts.page?.releasePage()
-        parts.cluePage?.release()
+        // Off Swift's shared threads, as its page's: Accessibility blocks.
+        if let cluePage = parts.cluePage { await Self.probeQueue.run { cluePage.release() } }
     }
 
     /// Controlled through a Now Playing row that doesn't follow it: only its

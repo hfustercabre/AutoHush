@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -29,7 +30,7 @@ struct UpdateDownloadsTests {
         #expect(scratch.files == ["AutoHush-0.3.1.dmg"])
         #expect(scratch.sut.isKept(AppRelease.github("0.3.1")))
         #expect(!scratch.sut.isKept(AppRelease.github("0.3.0")))
-        let image = try #require(scratch.sut.image(for: AppRelease.github("0.3.1")))
+        let image = try #require(await scratch.sut.image(for: AppRelease.github("0.3.1")))
         #expect(image.file.lastPathComponent == "AutoHush-0.3.1.dmg")
         #expect(image.sha256 == scratch.preferences.downloadedUpdate?.sha256)
     }
@@ -51,7 +52,20 @@ struct UpdateDownloadsTests {
         try await scratch.sut.store(AppRelease.github("0.3.0"), at: scratch.now, allowsConstrainedNetwork: false)
         try Data("changed".utf8).write(to: scratch.folder.appending(path: "AutoHush-0.3.0.dmg"))
         #expect(scratch.sut.isKept(AppRelease.github("0.3.0"))) // still there…
-        #expect(scratch.sut.image(for: AppRelease.github("0.3.0")) == nil) // …but not trusted
+        #expect(await scratch.sut.image(for: AppRelease.github("0.3.0")) == nil) // …but not trusted
+    }
+
+    @Test("a kept image is read for its checksum off the main actor, which it would hold up for its whole file")
+    func checksumOffMainActor() async throws {
+        let scratch = Scratch()
+        let onMainThread = OSAllocatedUnfairLock<[Bool]>(initialState: [])
+        let sut = UpdateDownloads(folder: scratch.folder, preferences: scratch.preferences, installer: scratch.installer) { file in
+            onMainThread.withLock { $0.append(Thread.isMainThread) }
+            return UpdateInstaller.sha256(of: file)
+        }
+        try await sut.store(AppRelease.github("0.3.0"), at: scratch.now, allowsConstrainedNetwork: false)
+        #expect(await sut.image(for: AppRelease.github("0.3.0")) != nil)
+        #expect(onMainThread.withLock { $0 } == [false])
     }
 
     @Test("tidying keeps a wanted, recent download of the latest newer release, and deletes anything else there")

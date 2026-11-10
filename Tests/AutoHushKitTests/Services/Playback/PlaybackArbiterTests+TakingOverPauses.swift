@@ -437,6 +437,67 @@ extension PlaybackArbiterTests {
         #expect(run.plays == 1)
     }
 
+    @Test("with Level the volume on, a pause another app makes as it starts, taken over, puts back the Mac's volume lowered for the music")
+    func takenOverPausePutsBackLevel() async {
+        let player = MockMusicPlayer()
+        let clock = ManualClock()
+        let leveler = RecordingVolumeLeveler()
+        var configuration = AppConfiguration.testing
+        configuration.levelsMusic = true
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in }, clock: { clock.now }, volumeLeveler: leveler, resumeOffset: { -6 })
+        await arbiter.refreshPlaybackState()
+        // Viewer pauses the music; once it stops, the music resumes with the Mac's volume lowered.
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await TestWait.until { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        #expect(leveler.log == ["lower -6.0"])
+
+        // Movies pauses the music as it starts: the pause is taken over.
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        await arbiter.sourceChanged("com.example.movies", playing: true, heardSince: heard)
+        #expect(await arbiter.pausedByUs)
+        #expect(await player.pauseCallCount == 1) // only Viewer's pause was AutoHush's
+        #expect(leveler.log == ["lower -6.0", "restore now"])
+    }
+
+    @Test("a pause taken over after an earlier pause the user ended isn't judged by that pause's sound: the user playing the music while the app plays makes it theirs, not muted")
+    func takenOverPauseForgetsEarlierPause() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let userPlayed = Locked(false), hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
+        let arbiter = await pausedForAnotherApp(player, clock: clock, userPlayed: userPlayed, hearing: hearing, mute: mute,
+                                                published: published, scheduler: scheduler)
+        // AutoHush's pause for Viewer, silent at its first look, then played
+        // by the user while Viewer plays: last heard.
+        hearing.now = .silent
+        await firstLook(scheduler, arbiter, clock: clock)
+        userPlayed.value = true
+        hearing.now = .heard
+        await arbiter.handlePlayerHeard()
+        #expect(published.state == .musicPlaying)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await arbiter.waitUntilIdle()
+
+        // Much later, Movies pauses the music as it starts: taken over.
+        clock.advance(by: 60)
+        let heard = clock.now
+        clock.advance(by: 0.3)
+        await pausedElsewhere(player, arbiter)
+        await arbiter.sourceChanged("com.example.movies", playing: true, heardSince: heard)
+        #expect(await arbiter.pausedByUs)
+
+        // The user plays it again, heard: theirs.
+        clock.advance(by: 1)
+        await player.overrideState(.playing)
+        await arbiter.handlePlayerHeard()
+        #expect(mute.muteCount == 0)
+        #expect(await !arbiter.pausedByUs)
+        #expect(published.state == .musicPlaying)
+    }
+
     @Test("a pause taken over once its app stopped during the check, that stop's resume having found nothing to resume, still ends: the music comes back")
     func takenOverAfterStopsResume() async {
         let player = MockMusicPlayer()

@@ -24,7 +24,7 @@ struct DiagnosticsReportTests {
         var facts = DiagnosticsFacts(
             playerVersion: "2.1", playerCanFade: true,
             playerPermission: .automation(player: "Jukebox"), playerPermissionAccess: .allowed,
-            audioRecording: .granted, notificationsOff: false, detectionMethod: .audioLevels,
+            audioRecording: .granted, notifications: .allowed, detectionMethod: .audioLevels,
             appVersion: "0.6.1 (19)", launchAtLogin: true, checksForUpdates: true, automaticUpdates: .install,
             lastUpdateCheck: now.addingTimeInterval(-3600), macOS: "27.0.1 (26A434)", processor: "Apple silicon", now: now
         )
@@ -164,7 +164,7 @@ struct DiagnosticsReportTests {
             $0.audioRecording = .denied
             $0.playerPermission = .accessibility(player: "Jukebox")
             $0.playerPermissionAccess = .denied
-            $0.notificationsOff = true
+            $0.notifications = .off
         } == [
             .init(label: "Audio Recording", value: "Not allowed", mark: .problem, fix: .allow(.systemAudioRecording)),
             .init(label: "Accessibility for Jukebox", value: "Not allowed", mark: .problem, fix: .allow(.accessibility(player: "Jukebox"))),
@@ -183,6 +183,9 @@ struct DiagnosticsReportTests {
         // Measuring audio levels: macOS hasn't asked yet, or can't tell.
         #expect(try rows { $0.audioRecording = .notDetermined }.first == .init(label: "Audio Recording", value: "Not asked yet", mark: .problem, fix: .allow(.systemAudioRecording)))
         #expect(try rows { $0.audioRecording = nil }.first == .init(label: "Audio Recording", value: "Unknown", mark: .neutral))
+        // Notifications: macOS hasn't asked yet, or not read yet; neither is missing.
+        #expect(try rows { $0.notifications = .notAsked }.last == .init(label: "Notifications", value: "Not asked yet", mark: .neutral))
+        #expect(try rows { $0.notifications = nil }.last == .init(label: "Notifications", value: "Unknown", mark: .neutral))
         // An app muted instead of paused needs Audio Recording to control it too: one row, which can't disagree with itself.
         #expect(try rows {
             $0.audioRecording = nil

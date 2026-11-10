@@ -65,6 +65,10 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
              failed: problem ?? (result == .pausedOnly ? "it paused, but didn't play again" : "pressing it changed nothing"))
 }
 
+/// "Ways to Control It": each way judged by every window state it was tried
+/// in (`TestResults.overall`), as the verdict and the result file judge it;
+/// a page button learned during the first state's panel trial is tried only
+/// in the later ones.
 @MainActor func reportWays() {
     say()
     say(CheckReportLine.Heading.ways.rawValue)
@@ -72,7 +76,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         let fits = scripting?.fitsScriptablePlayer == true
         let kind = fits ? ", as the supported scriptable players do"
             : " (\(scripting?.playsDocuments == true ? "on its documents, " : "")in a way of its own, unlike the supported scriptable players)"
-        if let result = TestResults.first[.script] {
+        if let result = TestResults.overall(.script) {
             triedWay(.script, wayTitle(.script), result, worked: "“\(script.pause.name)” and “\(script.play.name)” paused and played it\(kind)",
                      failed: result == .pausedOnly ? "“\(script.pause.name)” paused it, but “\(script.play.name)” didn't play it again"
                                                    : scriptProblem ?? "“\(script.pause.name)” didn't pause it")
@@ -94,7 +98,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         way(.notChecked, "\(wayTitle(.menu)): not checked (no Accessibility permission)")
     } else if let menu {
         let found = "\(wayTitle(.menu)) “\(menu.title)”" + (menu.arrows == FoundMenu.standardArrows ? "" : " (found by its first item on Space, its arrows \(menu.arrows))")
-        if let result = TestResults.first[.menu] {
+        if let result = TestResults.overall(.menu) {
             resultLine(.menu, found, result)
         } else {
             way(.notTried, "\(found): first item \(shown(menu.toggleTitle)) (\(TestResults.notTried))")
@@ -109,7 +113,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
         if let toggle = page.toggle {
             let found = "\(kind): " + (learned.map { "\(shown($0.recipe.pauseLabel)) / \(shown($0.recipe.playLabel)), learned as AutoHush learns it" }
                                        ?? shown(toggle.label) + (page.withControls ? "" : ", but no player bar around it"))
-            if let result = TestResults.first[.page] {
+            if let result = TestResults.overall(.page) {
                 resultLine(.page, found, result)
             } else {
                 way(.notTried, "\(found) (\(TestResults.notTried))")
@@ -118,7 +122,7 @@ func wayTitle(_ key: Way) -> String { CheckReportLine.wayTitle(key) }
             way(.none, "\(kind): " + (page.buttons == 0 ? "no page showed" : "none in sight named Play or Pause"))
         }
     }
-    if let result = TestResults.first[.panel] {
+    if let result = TestResults.overall(.panel) {
         triedWay(.panel, wayTitle(.panel), result, worked: "pressing its row (\(panelRowSaid ?? "the row")) paused and played it",
                  failed: panelProblem ?? (result == .pausedOnly ? "it paused, but didn't play again" : "pressing its row changed nothing"))
     } else if running == nil {

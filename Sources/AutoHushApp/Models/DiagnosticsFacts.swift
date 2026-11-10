@@ -23,7 +23,8 @@ struct DiagnosticsFacts: Equatable {
     var playerWordsRead: Bool?
     /// `nil` when macOS can't be asked.
     var audioRecording: AudioCapturePermission?
-    var notificationsOff: Bool
+    /// As last read (`nil`: not read yet).
+    var notifications: NotificationPermission?
     var detectionMethod: DetectionMethod
     var timings: TimingSettings = .defaults
     /// E.g. "0.6.1 (19)".

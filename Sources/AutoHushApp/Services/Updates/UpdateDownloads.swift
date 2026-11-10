@@ -18,11 +18,15 @@ final class UpdateDownloads {
     let folder: URL
     private let preferences: Preferences
     private let installer: any UpdateInstalling
+    /// A file's SHA-256 in hex; `nil` when it can't be read.
+    private let checksum: @Sendable (URL) -> String?
 
-    init(folder: URL, preferences: Preferences, installer: any UpdateInstalling) {
+    init(folder: URL, preferences: Preferences, installer: any UpdateInstalling,
+         checksum: @escaping @Sendable (URL) -> String? = UpdateInstaller.sha256(of:)) {
         self.folder = folder
         self.preferences = preferences
         self.installer = installer
+        self.checksum = checksum
     }
 
     /// Whether `release` is kept: recorded, and its file is there. Installing
@@ -33,12 +37,19 @@ final class UpdateDownloads {
     }
 
     /// The kept disk image of `release`, when it's there and unchanged since
-    /// it was downloaded.
-    func image(for release: AppRelease) -> KeptImage? {
+    /// it was downloaded. Its whole file is read for that, off the main actor.
+    func image(for release: AppRelease) async -> KeptImage? {
         guard let record = preferences.downloadedUpdate, AppVersion(record.version) == release.version else { return nil }
         let file = file(for: release.version)
-        guard UpdateInstaller.sha256(of: file) == record.sha256 else { return nil }
+        guard await Self.read(file, with: checksum) == record.sha256,
+              preferences.downloadedUpdate == record // not removed or replaced meanwhile
+        else { return nil }
         return KeptImage(file: file, sha256: record.sha256)
+    }
+
+    @concurrent
+    private nonisolated static func read(_ file: URL, with checksum: @Sendable (URL) -> String?) async -> String? {
+        checksum(file)
     }
 
     /// Downloads `release` and keeps it, in place of any earlier download.

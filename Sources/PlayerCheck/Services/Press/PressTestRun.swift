@@ -263,10 +263,7 @@ import WebAppPlayers
                     panelProblem = nil
                     return trial(CheckReportLine.trial(.panel), pid: pid, pause: { pressInPanel(pid: pid, pausing: true, heard: $0) },
                                  play: { pressInPanel(pid: pid, pausing: false, choice: .lastElseApp, heard: $0) },
-                                 undo: { [self] in
-                                     // The row pressed may have been another app's: pressed again, that app plays on.
-                                     if panelRowText != nil { _ = pressInPanel(pid: pid, pausing: false, choice: .lastOnly) }
-                                 },
+                                 undo: { [self] in undoPanelPress { pressInPanel(pid: pid, pausing: false, choice: .lastOnly) } },
                                  whilePaused: firstState ? { [self] in learnPageButton(pid: pid) } : nil)
                 }
                 if let panelProblem {

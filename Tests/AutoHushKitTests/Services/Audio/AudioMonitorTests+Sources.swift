@@ -193,7 +193,7 @@ extension AudioMonitorTests {
         #expect(await h.recorder.events.isEmpty)
     }
 
-    @Test("turning Pause for VoiceOver off drops VoiceOver at the next tick, without waiting for the process list to change: it stops once silent for the stop grace")
+    @Test("turning Pause for VoiceOver off stops VoiceOver at once, and drops it at the next tick without waiting for the process list to change: it doesn't start again")
     func voiceOverSwitchRereads() async {
         let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
         h.start()
@@ -204,13 +204,40 @@ extension AudioMonitorTests {
         var off = Self.config(startConfirmation: 0)
         off.pausesForVoiceOver = false
         h.monitor.setConfiguration(off)
+        await h.recorder.waitForEvents(count: 2) // before any tick
         h.monitor.queue.sync { h.monitor.tick() }
         h.clock.advance(by: 2.5) // past the stop grace
         h.monitor.queue.sync { h.monitor.tick() }
-        await h.recorder.waitForEvents(count: 2)
+        await h.monitor.eventsDelivered()
         #expect(await h.recorder.events == [
             .init(bundleID: AppConfiguration.voiceOverBundleID, isPlaying: true),
             .init(bundleID: AppConfiguration.voiceOverBundleID, isPlaying: false),
+        ])
+    }
+
+    @Test("Pause for VoiceOver turned back on within the stop grace, VoiceOver still speaking, starts VoiceOver again for the arbiter")
+    func voiceOverSwitchedBackOnStartsAgain() async {
+        let h = Harness(configuration: Self.config(startConfirmation: 0), meter: false)
+        h.start()
+        h.step([Self.process(1, AppConfiguration.voiceOverBundleID)])
+        h.step(after: 0.25)
+        await h.recorder.waitForEvents(count: 1)
+        for _ in 1...8 { // past the change's window, VoiceOver speaking: the list isn't re-read at each tick
+            h.clock.advance(by: 0.25)
+            h.monitor.queue.sync { h.monitor.tick() }
+        }
+        var off = Self.config(startConfirmation: 0)
+        off.pausesForVoiceOver = false
+        h.monitor.setConfiguration(off)
+        h.monitor.queue.sync { h.monitor.tick() }
+        h.clock.advance(by: 0.5) // within the stop grace (2 s)
+        h.monitor.setConfiguration(Self.config(startConfirmation: 0))
+        h.monitor.queue.sync { h.monitor.tick() }
+        await h.monitor.eventsDelivered()
+        #expect(await h.recorder.events == [
+            .init(bundleID: AppConfiguration.voiceOverBundleID, isPlaying: true),
+            .init(bundleID: AppConfiguration.voiceOverBundleID, isPlaying: false),
+            .init(bundleID: AppConfiguration.voiceOverBundleID, isPlaying: true),
         ])
     }
 

@@ -65,6 +65,43 @@ extension PlaybackArbiterTests {
         #expect(await player.commandLog == ["mute", "play"])
     }
 
+    @Test("a player muted as it says it's paused, after an earlier pause the user ended, is judged as with no pause before: not by that pause's time and sound")
+    func mutedWhilePlayingAnywayForgetsEarlierPause() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), published = LastPublished()
+        let userPlayed = Locked(false), hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: MockMutingMusicPlayer(player), configuration: .testing, debounceScheduler: scheduler,
+                                      clock: { clock.now }, onStatusUpdate: statuses(playback: { published.set($0) }),
+                                      hearsPlayer: { await hearing.answer(since: $0) },
+                                      inputToPlayer: { _ in userPlayed.value }, playerMute: FakeMute())
+        // AutoHush's pause for Viewer, silent at its first look, then played
+        // by the user while Viewer plays: last heard.
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await TestWait.until { await player.pauseCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        hearing.now = .silent
+        await firstLook(scheduler, arbiter, clock: clock)
+        userPlayed.value = true
+        hearing.now = .heard
+        await arbiter.handlePlayerHeard()
+        #expect(published.state == .musicPlaying)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await arbiter.waitUntilIdle()
+
+        // Much later, Movies starts while the player says it's paused yet is heard: muted.
+        clock.advance(by: 60)
+        await player.overrideState(.paused)
+        await player.setPlaysAnyway(true)
+        await arbiter.sourceChanged("com.example.movies", playing: true)
+        #expect(await player.commandLog.last == "mute")
+        #expect(await arbiter.pausedByUs)
+
+        // Heard again: as with no pause before, it's the user's.
+        clock.advance(by: 1)
+        await arbiter.handlePlayerHeard()
+        #expect(await !arbiter.pausedByUs)
+        #expect(published.state == .musicPlaying)
+    }
+
     @Test("a paused player that is silent is left alone, and not played afterwards")
     func leavesSilentPausedPlayer() async {
         let player = MockMusicPlayer(state: .paused)

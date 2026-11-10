@@ -132,6 +132,61 @@ struct VolumeFaderTests {
         #expect(await player.volumeLevel == 80)
     }
 
+    @Test("a cancel while a called-off fade-out comes back up (Auto-Pause turned off) leaves it coming back up to the user's volume")
+    func cancelDuringComeback() async throws {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setVolumeLevel(80)
+        let gate = FaderStepGate()
+        let fader = makeFader(player, gate: gate)
+        await gate.at(step: 8) { await fader.cancel() } // the apps stop: it comes back up from step 9
+        await gate.at(step: 10) { await fader.cancel() }
+
+        #expect(try await !fader.fadeOutAndPause())
+        #expect(await player.pauseCallCount == 0)
+        #expect(await player.volumeLevel == 80)
+        // Its volume forgotten: a later fade-out comes back to the user's new one.
+        await player.setVolumeLevel(40)
+        #expect(try await fader.fadeOutAndPause())
+        #expect(await player.volumeLevel == 40)
+    }
+
+    @Test("a cancel while a called-off fade-out reads the volume to come back up from still brings it back up")
+    func cancelWhileComebackReadsVolume() async throws {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setVolumeLevel(80)
+        let gate = FaderStepGate()
+        let fader = makeFader(player, gate: gate)
+        await gate.at(step: 8) {
+            await fader.cancel()
+            await player.setBeforeVolumeAnswer {
+                await player.setBeforeVolumeAnswer(nil)
+                await fader.cancel()
+            }
+        }
+
+        #expect(try await !fader.fadeOutAndPause())
+        #expect(await player.volumeLevel == 80)
+    }
+
+    @Test("a fade-out cut short while it reads the volume, before its ramp, pauses at once without fading, then sets the volume back")
+    func cutShortBeforeRamp() async throws {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setVolumeLevel(80)
+        let gate = FaderStepGate()
+        let fader = makeFader(player, gate: gate)
+        let cut = Locked<Bool?>(nil)
+        await player.setBeforeVolumeAnswer {
+            await player.setBeforeVolumeAnswer(nil)
+            cut.value = await fader.cutFadeOutShort() // the output goes away
+        }
+
+        #expect(try await fader.fadeOutAndPause())
+        #expect(cut.value == true)
+        #expect(await player.pauseCallCount == 1)
+        #expect(await gate.steps == 1) // only the wait before the volume is set back
+        #expect(await player.commandLog == ["pause", "volume 80"])
+    }
+
     @Test("an app starting while a called-off fade-out reads the volume stops its comeback: it never goes back up")
     func comebackStoppedWhileReadingVolume() async throws {
         let player = MockMusicPlayer(state: .playing)

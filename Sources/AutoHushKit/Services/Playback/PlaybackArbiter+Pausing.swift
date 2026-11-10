@@ -191,6 +191,7 @@ extension PlaybackArbiter {
         levelLowered = nil
         playerState = .paused
         logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted, because these apps play: \(self.playingApps, privacy: .public)")
+        forgetEarlierPause()
         // Held only when the pause is (not with the Mac asleep meanwhile).
         guard holdPause() else { return true }
         heldByMute = true
@@ -233,10 +234,24 @@ extension PlaybackArbiter {
             return false
         }
         pauseFailure = nil
+        // Paused: the Mac's volume lowered for the music is put back.
+        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
+        levelLowered = nil
         logger.info("[arbiter] \(self.player.name, privacy: .public) stopped as another app started — it comes back once the apps stop (playing now: \(self.playingApps, privacy: .public))")
+        forgetEarlierPause()
         // Things may have changed while the player answered.
         if holdPause(), !isShutDown, activeSources.isEmpty { scheduleResume(after: nil) }
         return true
+    }
+
+    /// A pause held that AutoHush didn't press (taken over, or the player's
+    /// own mute) is judged as with no pause before: by no time it took, nor
+    /// by what an earlier pause's sound said (`handleRestart`, the resume).
+    /// A pause of AutoHush's held already keeps its own.
+    private func forgetEarlierPause() {
+        guard !pausedByUs else { return }
+        pausedAt = nil
+        hearingDuringPause = nil
     }
 
     /// Whether, by timing alone, the player's stop could be the doing of the

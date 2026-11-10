@@ -15,8 +15,9 @@ import SwiftUI
 /// sections (the user, 2026-10-17: H3 with H2's notes).
 ///
 /// With `maxVisibleRows`, the card shows that many rows of tiles at most,
-/// counting both groups, and they scroll inside it past them (the card
-/// stays put: scrolled itself, its rounded corners would be clipped); while
+/// counting both groups (fewer when its window has less room), and they
+/// scroll inside it past them (the card stays put: scrolled itself, its
+/// rounded corners would be clipped); while
 /// `holdsHeight`, it keeps the height it has (a search narrowing the tiles
 /// doesn't shrink the window). The arrow keys' highlight scrolls into view
 /// there, above the fade at the bottom (A4c).
@@ -97,6 +98,7 @@ struct PlayerTiles: View {
             // is below, as in the menu (U4, the user, 2026-10-20).
             let moreBelow = reach?.moreBelow == true
             let visible = visibleHeight(rows: rows)
+            let height = holdsHeight ? shownHeight ?? visible : visible
             ScrollViewReader { scroller in
                 ScrollView {
                     groups.coordinateSpace(.named(Self.space))
@@ -108,7 +110,9 @@ struct PlayerTiles: View {
                 .showsMoreBelow($reach, moreBelow: moreBelow)
                 .revealsKeyHighlight(with: scroller)
             }
-            .frame(height: holdsHeight ? shownHeight ?? visible : visible)
+            // Less tall when the page has less room (a short screen:
+            // `PlayerChooserView`'s limit), down to a row.
+            .frame(minHeight: min(Self.tileHeight, height), idealHeight: height, maxHeight: height)
             .onGeometryChange(for: CGFloat.self, of: \.size.height) { if !holdsHeight { shownHeight = $0 } }
         }
     }

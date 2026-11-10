@@ -57,6 +57,17 @@ import CheckedPlayers
     }
 }
 
+/// A panel trial's undo, when its pause changed nothing: the row pressed may
+/// have been another app's, pressed again (`press`) so that app plays on.
+/// What went wrong with it isn't why the trial failed: `panelProblem` stays
+/// as the pause left it.
+@MainActor func undoPanelPress(_ press: () -> Bool) {
+    guard panelRowText != nil else { return }
+    let problem = panelProblem
+    _ = press()
+    panelProblem = problem
+}
+
 /// Opens the Now Playing panel for a press, and runs `body` with its menu
 /// bar item and its rows (`body` closes it); `failed` when the item isn't
 /// found or doesn't open, `panelProblem` saying which. Hidden by the user,

@@ -84,6 +84,11 @@ struct SourceActivityTracker {
         return (started, stopped)
     }
 
+    /// Drops a source, active or not, without a stop: heard again, it starts afresh.
+    mutating func forget(_ id: String) {
+        entries[id] = nil
+    }
+
     mutating func reset() {
         entries.removeAll()
     }

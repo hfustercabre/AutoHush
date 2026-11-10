@@ -245,4 +245,64 @@ struct PlayerCheckTests {
         TestResults.byState = [:] // with no window states, by its only run
         #expect(verdictFacts().menuResult == .didNotPause)
     }
+
+    @Test("a panel trial's undo leaves the reason its pause gave: a row that no longer shows Play, or no item found when pressed back, isn't why the trial failed; with no row pressed, nothing is")
+    func panelUndoKeepsReason() {
+        defer {
+            panelRowText = nil
+            panelProblem = nil
+        }
+        panelRowText = "a row"
+        var pressed = false
+        for (own, undone) in [(nil, "the row pressed before (row 1 of 2) no longer shows Play"),
+                              ("its row's Pause didn't take the press", noPanelItem)] as [(String?, String)] {
+            panelProblem = own
+            pressed = false
+            undoPanelPress {
+                pressed = true
+                panelProblem = undone
+                return false
+            }
+            #expect(pressed && panelProblem == own)
+        }
+        panelRowText = nil
+        pressed = false
+        undoPanelPress { pressed = true; return true }
+        #expect(!pressed)
+    }
+
+    @Test("a way first tried in a later window state is tried: its line is marked by its trials there, never “not tried” (a page button learned during the first state's panel trial)")
+    func wayTriedInLaterStatesOnly() throws {
+        let found = page
+        defer {
+            page = found
+            TestResults.first = [:]
+            TestResults.byState = [:]
+        }
+        page = PageCheck(buttons: 3, toggle: FoundButton(element: AXUIElementCreateApplication(90_101), label: "Pause", fromBottom: nil,
+                                                          inSight: true, onScreen: true), withControls: true)
+        TestResults.first = [:]
+        TestResults.byState[.page] = [(.covered, .worked, ""), (.hidden, .worked, "")]
+        let lines = try printed { reportWays() }
+        let line = try #require(lines.compactMap(CheckReportLine.way(in:)).first { $0.way == .page })
+        #expect(line.mark == .works && !line.detail.contains(TestResults.notTried))
+    }
+
+    /// The lines `body` printed (`say` prints each line of the report).
+    private func printed(_ body: () -> Void) throws -> [String] {
+        let url = URL(filePath: folder).appending(path: "printed-\(UUID().uuidString).txt")
+        try FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
+        #expect(FileManager.default.createFile(atPath: url.path, contents: nil))
+        defer { try? FileManager.default.removeItem(at: url) }
+        let file = try FileHandle(forWritingTo: url)
+        fflush(nil)
+        let standardOutput = dup(STDOUT_FILENO)
+        dup2(file.fileDescriptor, STDOUT_FILENO)
+        body()
+        fflush(nil)
+        dup2(standardOutput, STDOUT_FILENO)
+        close(standardOutput)
+        try file.close()
+        return try String(contentsOf: url, encoding: .utf8).components(separatedBy: "\n")
+    }
 }

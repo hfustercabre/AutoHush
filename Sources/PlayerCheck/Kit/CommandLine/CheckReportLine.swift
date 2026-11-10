@@ -94,10 +94,11 @@ package enum CheckReportLine {
         init?(name: String) {
             if name == Permission.accessibility.name {
                 self = .accessibility
+            } else if name.hasPrefix(Self.automationPrefix), name.count > Self.automationPrefix.count {
+                // Before Audio Recording: the app's name may end as it does.
+                self = .automation(app: String(name.dropFirst(Self.automationPrefix.count)))
             } else if name.hasSuffix(Permission.audioRecording.name) {
                 self = .audioRecording
-            } else if name.hasPrefix(Self.automationPrefix), name.count > Self.automationPrefix.count {
-                self = .automation(app: String(name.dropFirst(Self.automationPrefix.count)))
             } else {
                 return nil
             }
@@ -122,9 +123,10 @@ package enum CheckReportLine {
     }
 
     /// The permission a line says is missing (not allowed, or not answered);
-    /// `nil` for any other line.
+    /// `nil` for any other line. Split at its last ": ", since an app's name
+    /// may hold one and the answers don't.
     package static func missingPermission(in line: String) -> Permission? {
-        guard line.hasPrefix("  "), let colon = line.range(of: ": ") else { return nil }
+        guard line.hasPrefix("  "), let colon = line.range(of: ": ", options: .backwards) else { return nil }
         let answer = PermissionAnswer(rawValue: String(line[colon.upperBound...]))
         guard answer == .notAllowed || answer == .notAnswered else { return nil }
         return Permission(name: String(line[..<colon.lowerBound].dropFirst(2)))

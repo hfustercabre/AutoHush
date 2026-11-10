@@ -81,7 +81,7 @@ struct MediaKeyWay: FadelessMusicPlayer, PolledMusicPlayer {
     /// `NotPressed` unless `answer` says the app `pid` (or one of its
     /// helpers) holds Now Playing.
     private static func holdsNowPlaying(_ answer: NowPlayingApp.Answer, pid: pid_t) throws {
-        guard case .process(let holder) = answer, ProcessResponsibility.isOwned(holder, by: pid) else {
+        guard answer.isHeld(by: pid) else {
             let why = switch answer {
             case .process(let holder): "another app is Now Playing (pid \(holder))"
             case .none: "no app is Now Playing"

@@ -53,18 +53,18 @@ struct PlayerTilesTests {
             hosting.frame = NSRect(x: 0, y: 0, width: PlayerChooserView.width, height: 1200)
             return hosting
         }
-        let all = await settledHeight(hosting(tiles(apps, rows: 20)))
+        let all = await Self.settledHeight(hosting(tiles(apps, rows: 20)))
         let welcome = hosting(tiles(apps))
-        let shown = await settledHeight(welcome)
+        let shown = await Self.settledHeight(welcome)
         #expect(shown < all) // more rows than show: they scroll
         welcome.rootView = tiles(apps.filter { $0.name == "Player 7" }, search: "Player 7")
-        let searched = await settledHeight(welcome)
+        let searched = await Self.settledHeight(welcome)
         #expect(searched.isEqual(to: shown), "\(searched) after the search, \(shown) before")
     }
 
     /// `hosting`'s height once it stops changing: the tiles' measures come
     /// back a layout later.
-    private func settledHeight(_ hosting: NSView) async -> CGFloat {
+    static func settledHeight(_ hosting: NSView) async -> CGFloat {
         var last: CGFloat = -1
         var same = 0
         for _ in 0..<100 where same < 3 {

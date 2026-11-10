@@ -41,7 +41,9 @@ struct CheckReportLineTests {
 
     @Test("a permission's line reads back as missing when it isn't allowed or answered, with its name; Accessibility's answers its request")
     func permissions() {
-        let permissions: [CheckReportLine.Permission] = [.accessibility, .audioRecording, .automation(app: "Jukebox")]
+        // An app's name may hold ": ", or end as a permission's name does.
+        let permissions: [CheckReportLine.Permission] = [.accessibility, .audioRecording, .automation(app: "Jukebox"),
+                                                         .automation(app: "Radio: Live"), .automation(app: "Studio Audio Recording")]
         for permission in permissions {
             #expect(CheckReportLine.Permission(name: permission.name) == permission)
             #expect(CheckReportLine.missingPermission(in: CheckReportLine.permission(permission, .notAllowed)) == permission)

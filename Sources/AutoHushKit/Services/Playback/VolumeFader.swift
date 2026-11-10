@@ -51,8 +51,9 @@ package actor VolumeFader {
     private var comingBack: Int?
     /// Set by `abandon()`: fades stop where they are, without coming back.
     private var isAbandoned = false
-    /// The `generation` of the fade-out ramping down now, and of the one
-    /// `cutFadeOutShort()` ended, which pauses where it got to.
+    /// The `generation` of the fade-out under way now (from before its ramp,
+    /// while the volume is read), and of the one `cutFadeOutShort()` ended,
+    /// which pauses where it got to.
     private var fadingOut: Int?
     private var cutShort: Int?
 
@@ -81,7 +82,10 @@ package actor VolumeFader {
     /// or when `abandon()` came before its pause was pressed: it plays on.
     func fadeOutAndPause() async throws -> Bool {
         let fade = startFade()
+        fadingOut = fade
         guard case let (current, target)? = await fadeVolumes(lasting: fadeOut) else {
+            if fadingOut == fade { fadingOut = nil }
+            if cutShort == fade { cutShort = nil } // it pauses at once anyway
             guard !isAbandoned else { return false }
             try await presses.press(to: .paused)
             await restoreUserVolume() // e.g. paused at once in the middle of a fade-in
@@ -91,9 +95,12 @@ package actor VolumeFader {
         let bottom = top - Self.fadeRange
         logger.debug("[fade] out from \(current, privacy: .public) (user volume \(target, privacy: .public))")
 
-        fadingOut = fade
-        let faded = await ramp(from: level(of: current, floor: bottom), to: bottom, fullTime: fadeOut, fade: fade)
-        fadingOut = nil
+        // Cut short while the volume was read, it pauses at once, without a ramp.
+        var faded = false
+        if cutShort != fade {
+            faded = await ramp(from: level(of: current, floor: bottom), to: bottom, fullTime: fadeOut, fade: fade)
+        }
+        if fadingOut == fade { fadingOut = nil } // unless a newer fade-out is under way
         let isCutShort = cutShort == fade
         if isCutShort { cutShort = nil }
         guard faded || isCutShort else {
@@ -147,9 +154,10 @@ package actor VolumeFader {
         if latestFade == fade { await restoreUserVolume() }
     }
 
-    /// Ends the fade-out ramping down now at once: it pauses where it got
-    /// to, without fading further (the output went away, and the rest would
-    /// play on the next one). Nothing while none is. `false` when the
+    /// Ends the fade-out under way at once: it pauses where it got to,
+    /// without fading further (the output went away, and the rest would
+    /// play on the next one); one still reading the volume pauses without
+    /// fading at all. Nothing while none is. `false` when the
     /// fade-out was called off and the music is coming back up instead: no
     /// pause comes of it, so it's the caller's to pause.
     @discardableResult
@@ -196,7 +204,10 @@ package actor VolumeFader {
     }
 
     /// Stops the fade in progress; a fade-out then comes back up without pausing.
+    /// Nothing while a called-off fade-out comes back up already: stopped
+    /// there, it would stay partly faded.
     func cancel() {
+        if let comingBack, comingBack == generation { return }
         generation += 1
     }
 

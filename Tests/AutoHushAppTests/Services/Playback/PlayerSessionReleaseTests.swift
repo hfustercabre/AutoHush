@@ -66,6 +66,37 @@ struct PlayerSessionReleaseTests {
         await TestWait.until { await added.releases == 1 }
     }
 
+    @Test("held paused by the AutoHush before this one, handed over: once that pause is over, or as AutoHush quits")
+    func handedOverHeldReleased() async {
+        let preferences = Preferences(store: InMemoryPreferenceStore())
+        func handedOver() -> PlayerSession {
+            preferences.pauseHandover = PauseHandover(at: Date().addingTimeInterval(-5), player: nil,
+                                                      holdsChosen: false, held: [added.bundleID])
+            return PlayerSession(
+                player: other,
+                players: MusicPlayerCatalog(players: [added, other]),
+                preferences: preferences,
+                settings: MonitoringSettings(autoPause: true, ignored: [], timings: TimingSettings(), detection: .audioLevels),
+                makeMonitoring: monitorings.make,
+                locateApp: { URL(fileURLWithPath: "/Applications/\($0).app") }
+            )
+        }
+        monitorings.findPauses = true
+        let session = handedOver()
+        session.launch()
+        await TestWait.until { session.state.health == .ready && session.isHoldingPause }
+        let held = monitorings.of(added.bundleID)[0]
+        held.send(.playback(.pausedByMonitor)) // taken over
+        held.send(.playback(.musicPlaying)) // the other apps stopped: it plays again
+        await TestWait.until { await added.releases == 1 }
+
+        let quitting = handedOver()
+        quitting.launch()
+        await TestWait.until { quitting.state.health == .ready && quitting.isHoldingPause }
+        await quitting.quit()?.value
+        #expect(await added.releases == 2)
+    }
+
     @Test("chosen again while its pause is held, it keeps what it turned on, and quitting turns it off once")
     func chosenAgainWhilePauseHeld() async {
         let session = await session()

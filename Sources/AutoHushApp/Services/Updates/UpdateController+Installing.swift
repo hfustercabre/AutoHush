@@ -39,7 +39,7 @@ extension UpdateController {
         guard !isInstalling else { return }
         isInstalling = true
         let version = release.version.description
-        let image = downloads.image(for: release)
+        let image = await downloads.image(for: release)
         logger.info("Installing \(version, privacy: .public) (\(userInitiated ? "asked for" : "automatic", privacy: .public), \(image == nil ? "downloading it" : "from the kept download", privacy: .public))")
         showStatus(String(localized: "Installing version \(version)…",
                           comment: "Update status in Settings; %@ is a version number"))

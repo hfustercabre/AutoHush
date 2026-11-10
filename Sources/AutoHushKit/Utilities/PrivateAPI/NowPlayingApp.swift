@@ -25,6 +25,13 @@ package enum NowPlayingApp {
         case none
         /// MediaRemote didn't answer, or can't be asked.
         case unknown
+
+        /// Whether the app running as `pid`, or one of its helpers, is in
+        /// Now Playing; `false` for `.none` and `.unknown`.
+        package func isHeld(by pid: pid_t) -> Bool {
+            guard case .process(let holder) = self else { return false }
+            return ProcessResponsibility.isOwned(holder, by: pid)
+        }
     }
 
     /// The argument that makes the executable answer once and quit, before

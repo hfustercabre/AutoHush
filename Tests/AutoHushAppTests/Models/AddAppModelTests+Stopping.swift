@@ -17,6 +17,24 @@ extension AddAppModelTests {
         await TestWait.until { world.panel == ["shown", "hidden"] }
     }
 
+    @Test("closing the window while the permissions are read: what that read finds allowed starts nothing")
+    func closedDuringPermissionRead() async {
+        let world = World()
+        world.permissions.accessibility = false
+        let model = await AddAppModel.opened(on: world)
+        model.continueWithApp()
+        await TestWait.until { model.stage == .allowing && model.permissions.accessibility == false }
+        let reading = ManualSleep()
+        world.heldPermissionRead = reading
+        await TestWait.until { reading.sleeping == 1 }
+        world.permissions.accessibility = true // allowed meanwhile
+        model.windowClosed()
+        reading.timeIsUp()
+        await TestWait.until { model.permissions.accessibility == true } // the read came back
+        await Task.yield()
+        #expect(model.stage == .allowing) // not waiting for the app to play, with the window closed
+    }
+
     @Test("closing the window closes the warning, and its Start then runs nothing")
     func closingWithTheWarning() async {
         let world = World()

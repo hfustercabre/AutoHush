@@ -14,6 +14,30 @@ This project follows [Semantic Versioning](https://semver.org/).
   a row, not only the row, right to left in Arabic and Hebrew. The arrow
   keys work as before.
 
+### Fixed
+
+- **Turning Auto-Pause off** while the music comes back up no longer
+  leaves it quieter.
+- **With Level the volume on,** an app that pauses your player as it
+  starts now plays at your volume, not lowered.
+- **Unplugging headphones** right as a fade starts now pauses at once,
+  without a fade on the speakers.
+- **Turning Pause for VoiceOver off and back on** while VoiceOver speaks
+  pauses the music again.
+- **The Now Playing panel** now controls apps whose sound comes from a
+  helper, such as WebKit apps and Safari web apps.
+- **Check Again and then Use** on your paused player no longer leaves it
+  paused after the other app stops.
+- **A web app paused across an update** gets its browser's switch turned
+  off when its pause ends.
+- **The welcome window** fits short screens: its players scroll.
+- **The menu** shows one highlighted row at a time when you use the keys.
+- **Diagnostics** no longer says notifications are allowed when macOS
+  never asked.
+- **Player Check** gives the right reason when a panel press fails, marks
+  a way tried in a later window state as tried, and reads app names with
+  “: ” in permission lines.
+
 ## [1.3.4] — 2026-11-09
 
 ### Fixed

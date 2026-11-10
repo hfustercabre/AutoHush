@@ -158,6 +158,20 @@ struct HeldPausesTests {
         #expect(!held.takesBack("org.example.viewer"))
     }
 
+    @Test("the same app chosen again with a new player (checked again) while its pause is held: the new monitoring takes that pause over")
+    func sameAppChosenAgain() {
+        let held = HeldPauses()
+        let current = FakeMonitoring()
+        #expect(!held.choose("org.example.viewer", leaving: "org.example.viewer", current: current, token: UUID(),
+                             holdsPause: true)) // not kept: its next start stops it
+        #expect(held.isEmpty)
+        #expect(held.takesBack("org.example.viewer"))
+
+        // Not holding a pause: nothing to take over.
+        _ = held.choose("org.example.viewer", leaving: "org.example.viewer", current: current, token: UUID(), holdsPause: false)
+        #expect(!held.takesBack("org.example.viewer"))
+    }
+
     @Test("Auto-Pause, the ignored apps and the detection method reach held monitoring; keeping a player again stops its earlier monitoring")
     func settingsAndReplacing() {
         let held = HeldPauses()

@@ -95,13 +95,16 @@ actor PanelWay: MusicPlayer {
     static let timeout: Float = 0.5
 
     /// What the app shows now, through Accessibility and NSWorkspace, and
-    /// what it plays by AppleScript (`song`), where its check found it says.
-    static func shown(song: ScriptedSong?) -> @Sendable (pid_t) -> Shown {
+    /// what it plays by AppleScript (`song`), where its check found it says;
+    /// it holds Now Playing when it or one of its helpers does (`nowPlaying`),
+    /// as Player Check's press tells it.
+    static func shown(song: ScriptedSong?,
+                      nowPlaying: @escaping @Sendable () -> NowPlayingApp.Answer = { NowPlayingApp.current() }) -> @Sendable (pid_t) -> Shown {
         { pid in
             let titles = AXUIElement.application(pid, timeout: timeout).elements(kAXWindowsAttribute, timeout: timeout)
                 .compactMap { $0.string(kAXTitleAttribute) }
             let others = Set(NSWorkspace.shared.runningApplications.filter { $0.processIdentifier != pid }.compactMap(\.localizedName))
-            return Shown(titles: titles, track: song?.read(pid: pid), otherApps: others, holdsNowPlaying: NowPlayingApp.current() == .process(pid))
+            return Shown(titles: titles, track: song?.read(pid: pid), otherApps: others, holdsNowPlaying: nowPlaying().isHeld(by: pid))
         }
     }
 

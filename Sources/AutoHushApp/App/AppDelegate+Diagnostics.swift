@@ -55,7 +55,7 @@ extension AppDelegate {
             reachesOtherSpaces: player?.kind == .safariWebApp ? AccessibilityWindows.isAvailable : nil,
             playerWordsRead: player?.ownWordsRead,
             audioRecording: permissionCenter.audioRecording(),
-            notificationsOff: settingsModel.notificationsOff,
+            notifications: updates.lastPermission,
             detectionMethod: userSettings.state.detection,
             timings: userSettings.state.timings,
             appVersion: settingsModel.fullVersion ?? "",

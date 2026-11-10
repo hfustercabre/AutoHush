@@ -178,8 +178,14 @@ extension DiagnosticsReport {
                                 mark: .neutral))
             }
         }
-        rows.append(Row(label: String(localized: "Notifications", comment: "Diagnostics: the notifications permission"),
-                        value: facts.notificationsOff ? off : allowed, mark: facts.notificationsOff ? .neutral : .ok))
+        let notifications = String(localized: "Notifications", comment: "Diagnostics: the notifications permission")
+        switch facts.notifications {
+        case .allowed?: rows.append(Row(label: notifications, value: allowed, mark: .ok))
+        case .off?: rows.append(Row(label: notifications, value: off, mark: .neutral))
+        // AutoHush asks once it has something to tell.
+        case .notAsked?: rows.append(Row(label: notifications, value: notAsked, mark: .neutral))
+        case nil: rows.append(Row(label: notifications, value: unknown, mark: .neutral))
+        }
         let summary = rows.contains { $0.mark == .problem }
             ? String(localized: "Something’s missing", comment: "Diagnostics: a permission isn't granted")
             : String(localized: "All allowed", comment: "Diagnostics: every permission AutoHush needs is granted")

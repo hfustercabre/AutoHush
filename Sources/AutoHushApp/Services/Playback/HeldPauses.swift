@@ -59,7 +59,9 @@ final class HeldPauses {
     /// The user chooses `bundleID` while `current` (its updates come with
     /// `token`) monitors `leaving`, holding its player paused when
     /// `holdsPause`: it's kept, and `true` says it must be left running. A
-    /// player held paused that is chosen again is taken back.
+    /// player held paused that is chosen again is taken back, and so is the
+    /// one held now when its app is chosen again (checked again: a new
+    /// player), its monitoring stopped by the next start.
     func choose(_ bundleID: String, leaving: String?, current: any HeldMonitoring?, token: UUID,
                 holdsPause: Bool) -> Bool {
         var kept = false
@@ -67,7 +69,7 @@ final class HeldPauses {
             keep(current, token: token, bundleID: leaving)
             kept = true
         }
-        if takeBack(bundleID) { pendingTakeBack = bundleID }
+        if takeBack(bundleID) || holdsPause && leaving == bundleID { pendingTakeBack = bundleID }
         return kept
     }
 

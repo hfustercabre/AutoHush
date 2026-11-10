@@ -52,6 +52,9 @@ final class World {
     var holds: [Bool] = []
     /// Holds the model's polls until the test ends them.
     var heldSleep: ManualSleep?
+    /// Holds the permission reads until the test ends them (as macOS's
+    /// prompt for Automation holds them until it's answered).
+    var heldPermissionRead: ManualSleep?
     var exists = true
     var run = FakeCheckRun()
     var runs = 0
@@ -145,6 +148,7 @@ extension World: AddAppHost {
     func turnOffAntiDot() { antiDot = false }
 
     func checkPermissions(_ app: CheckableApp, scriptable: Bool) async -> CheckPermissions {
+        if let held = heldPermissionRead { await held.sleep(.zero) }
         var permissions = self.permissions
         if scriptable, permissions.automation == nil { permissions.automation = .notAsked }
         return permissions

@@ -24,6 +24,19 @@ extension PlayerSessionTests {
     }
 
     @MainActor
+    @Test("the chosen app chosen again with a new player (checked again) while AutoHush holds its pause: the new monitoring takes it over")
+    func pauseHeldOverSameAppChosenAgain() async {
+        let bench = Bench()
+        let session = await bench.started()
+        bench.monitorings.made[0].send(.playback(.pausedByMonitor))
+        session.choose(MockMusicPlayer(bundleID: Players.first, name: "First"))
+        await TestWait.until { bench.monitorings.of(Players.first).count == 2 }
+        await TestWait.until { session.state.health == .ready }
+        #expect(bench.monitorings.of(Players.first)[0].isStopped)
+        #expect(bench.monitorings.of(Players.first)[1].starts.map(\.takingOverPause) == [true])
+    }
+
+    @MainActor
     @Test("a held pause ends once its player plays again: its monitoring stops")
     func heldPauseEnds() async {
         let bench = Bench()

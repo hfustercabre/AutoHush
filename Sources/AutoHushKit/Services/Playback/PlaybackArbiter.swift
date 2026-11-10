@@ -112,7 +112,8 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// starting among them waits for their measure (K1-1, the user, 2026-11-02).
     let appsNotMeasuredYet: @Sendable () async -> Set<String>
     /// When AutoHush's pause, or its mute in place of one, took
-    /// (`handleRestart`).
+    /// (`handleRestart`); `nil` for a pause taken over, or held by the
+    /// player's own mute.
     var pausedAt: Date?
     /// What the player's sound said when last asked during AutoHush's pause
     /// (`watchRestart`): `nil` until then, or with nothing measured.

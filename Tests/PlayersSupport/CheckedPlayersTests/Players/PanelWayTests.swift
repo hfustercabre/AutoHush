@@ -208,6 +208,19 @@ struct PanelWayTests {
         #expect(once.pressed == ["Something, Else – Entirely"] && once.openings == 1)
     }
 
+    @Test("a helper the app is responsible for holding Now Playing (WebKit's media process) counts as the app holding it, as the Play/Pause key's way takes it")
+    func helperHoldsNowPlaying() throws {
+        // This test's process stands for the helper, the process responsible for it for the app.
+        let helper = getpid()
+        let app = try #require(ProcessResponsibility.responsiblePID(for: helper))
+        try #require(app != helper)
+        #expect(PanelWay.shown(song: nil, nowPlaying: { .process(helper) })(app).holdsNowPlaying)
+        #expect(PanelWay.shown(song: nil, nowPlaying: { .process(app) })(app).holdsNowPlaying)
+        #expect(!PanelWay.shown(song: nil, nowPlaying: { .process(app) })(helper).holdsNowPlaying) // the app isn't the helper's
+        #expect(!PanelWay.shown(song: nil, nowPlaying: { .none })(app).holdsNowPlaying)
+        #expect(!PanelWay.shown(song: nil, nowPlaying: { .unknown })(app).holdsNowPlaying)
+    }
+
     @Test("a quiet pause (pressed again while AutoHush mutes the app) never shows the Now Playing panel; a plain pause does")
     func quietPauseSkipsPanel() async throws {
         let panel = FakePanel(rows)

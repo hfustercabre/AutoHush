@@ -1,4 +1,6 @@
+import AppKit
 import Foundation
+import SwiftUI
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -40,5 +42,24 @@ struct PlayerChooserViewTests {
         var mutedOnly = streamer
         mutedOnly.isUnavailableInAntiDotMode = true
         #expect(PlayerChooserView.doubleClickChoice(mutedOnly) == nil)
+    }
+
+    @Test("on a screen too short for the players page, the page fits all the same: the tiles' card gives way, and they scroll")
+    func fitsShortScreen() async {
+        let model = SettingsModel.forTests(actions: FakeAppActions())
+        model.state.status.playerOptions = (1...12).map {
+            PlayerOption(bundleID: "com.example.player\($0)", name: "Player \($0)", appURL: URL(fileURLWithPath: "/Applications/Player \($0).app"))
+        }
+        func height(tallest: CGFloat?) async -> CGFloat {
+            let hosting = NSHostingView(rootView: PlayerChooserView(model: model, tallestPage: tallest).windowKeys(WindowKeys()))
+            hosting.frame = NSRect(x: 0, y: 0, width: PlayerChooserView.width, height: 1200)
+            return await PlayerTilesTests.settledHeight(hosting)
+        }
+        let full = await height(tallest: nil)
+        let roomy = await height(tallest: full + 100)
+        #expect(roomy.isEqual(to: full), "\(roomy) with room to spare, \(full) as tall as it wants")
+        let short = full - 120
+        let limited = await height(tallest: short)
+        #expect(limited <= short + 0.5, "\(limited) on a screen with room for \(short)")
     }
 }
