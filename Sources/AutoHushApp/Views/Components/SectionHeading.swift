@@ -13,8 +13,9 @@ struct SectionLabel: View {
     var body: some View {
         if isInMenu {
             // As macOS's own menus' section headers ("Output", "Energy Mode"):
-            // a step under the rows, semibold, grey (the user, 2026-10-18).
-            title.font(.appMenuHeading).foregroundStyle(.appSecondary)
+            // a step under the rows, semibold (the user, 2026-10-18), in
+            // `appSubdued`: macOS's grey read at 2.9:1 on the glass (W2b).
+            title.font(.appMenuHeading).foregroundStyle(.appSubdued)
         } else {
             title.font(.appHeadline).foregroundStyle(.primary)
         }

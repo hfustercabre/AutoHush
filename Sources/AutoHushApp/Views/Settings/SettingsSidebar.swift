@@ -27,8 +27,9 @@ struct SettingsSidebar: View {
     }
 
     /// A group's name in the primary color, and what it's for under it, in
-    /// grey (D4c, the a11y audit's D4, the user's pick, 2026-11-06: the
-    /// name was grey, the note tertiary, about 2:1).
+    /// `appSubdued` (D4c, the a11y audit's D4, the user's pick, 2026-11-06:
+    /// the name was grey, the note tertiary, about 2:1; W2b, 2026-11-11:
+    /// macOS's grey read at 3.2:1 on the sidebar).
     private func heading(_ title: String, note: String?) -> some View {
         VStack(alignment: .leading, spacing: 1) {
             Text(verbatim: title)
@@ -38,7 +39,7 @@ struct SettingsSidebar: View {
             if let note {
                 Text(verbatim: note)
                     .font(.appCaption)
-                    .foregroundStyle(.appSecondary)
+                    .foregroundStyle(.appSubdued)
             }
         }
         .accessibilityElement(children: .combine)

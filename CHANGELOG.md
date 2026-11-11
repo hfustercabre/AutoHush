@@ -27,6 +27,10 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **With Increase Contrast in light mode,** the menu's card is light,
+  so its words can be read.
+- **The menu's section titles and Settings' sidebar notes** are easier to
+  read.
 - **Turning Auto-Pause off** while the music comes back up no longer
   leaves it quieter.
 - **With Level the volume on,** an app that pauses your player as it

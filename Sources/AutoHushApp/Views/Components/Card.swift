@@ -15,6 +15,11 @@ extension EnvironmentValues {
 /// Settings' are; in the other windows, macOS's group box; the menu's card,
 /// clear Liquid Glass from macOS 26 (`clearGlass`).
 struct Card<Content: View, Footer: View>: View {
+    /// Increase Contrast in light mode draws the menu card's clear glass
+    /// dark under its black text, at 2.3:1: the glass is tinted white then
+    /// (W1d, the WCAG audit's W1, the user's pick, 2026-11-11: 5.9:1).
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.colorScheme) private var colorScheme
     var title: Text?
     /// A badge after the title, e.g. "Experimental".
     var badge: String?
@@ -91,7 +96,8 @@ struct Card<Content: View, Footer: View>: View {
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background { highlight }
-                .glassEffect(.clear, in: RoundedRectangle(cornerRadius: ClearGlassCard.cornerRadius, style: .continuous))
+                .glassEffect(contrast == .increased && colorScheme == .light ? .clear.tint(.white.opacity(0.7)) : .clear,
+                             in: RoundedRectangle(cornerRadius: ClearGlassCard.cornerRadius, style: .continuous))
         } else if clearGlass {
             VStack(alignment: .leading, spacing: 10) { content }
                 .padding(10)

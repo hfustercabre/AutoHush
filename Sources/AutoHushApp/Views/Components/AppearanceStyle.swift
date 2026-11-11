@@ -27,6 +27,15 @@ extension ShapeStyle where Self == HierarchicalShapeStyle {
     static var chipPressedFill: HierarchicalShapeStyle { .tertiary }
 }
 
+extension ShapeStyle where Self == AnyShapeStyle {
+    /// Headings and notes over a material, where macOS's secondary grey
+    /// reads at 2.9 to 3.2:1: the menu's section titles and Settings'
+    /// sidebar notes. The primary color at 80 %: still a step under the
+    /// rows, at 5.9:1 or more (W2b, the WCAG audit's W2, the user's pick,
+    /// 2026-11-11).
+    static var appSubdued: AnyShapeStyle { AnyShapeStyle(.primary.opacity(0.8)) }
+}
+
 extension ShapeStyle where Self == Color {
     /// Text and icons that need the user's attention.
     static var appWarning: Color { .orange }
