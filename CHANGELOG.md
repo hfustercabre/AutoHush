@@ -51,18 +51,24 @@ This project follows [Semantic Versioning](https://semver.org/).
   never asked.
 - **A pause under way as the Mac sleeps** is forgotten after waking, as a
   paused one is, and the music is paused again if apps still play.
-- **A TIDAL-like menu read mid-rebuild** no longer counts as nothing to
-  play.
-- **A Now Playing panel press that doesn't take** is caught when another
-  of the app's ways can tell.
+- **Pausing a player through its menu** no longer fails while the app
+  rebuilds that menu.
+- **A pause through the Now Playing panel** that didn't work is now
+  noticed when the app can tell another way.
 - **Automatic update checks** resume after the Mac's clock went back.
 - **Opening a second copy** no longer raises the volume or unmutes the
   output while the first still uses them.
 - **The Logs window** keeps following new lines after a day of running.
-- **Player Check** gives the right reason when a panel press fails, marks
-  a way tried in a later window state as tried, and reads app names with
-  “: ” in permission lines; Stop with the app's windows closed plays it
-  again first, and a song tile no longer replaces its learned button.
+- **A player chosen again** while another starts keeps the pause
+  AutoHush held for it.
+- **Add a Web App,** cancelled and tried again, no longer covers
+  Safari's dialog.
+- **The pointer resting on a dimmed control** no longer hides the
+  focused control's highlight or takes its keys.
+- **Add an App's check** says why a press through the Now Playing panel
+  failed, counts each way it tried, and reads app names with “: ” in
+  permission lines; Stop with the app's windows closed plays it again
+  first, and a song's tile no longer replaces the app's Play/Pause button.
 
 ## [1.3.4] — 2026-11-09
 

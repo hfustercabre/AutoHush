@@ -9,14 +9,15 @@ import ApplicationServices
 /// it lands on, and this app's own "focused element changed" notification
 /// (an `AXObserver` on AutoHush itself, which needs Accessibility) comes
 /// then: the highlight of the window it's in, whose control holds that
-/// element, follows it (`KeyHighlight.followVoiceOver`). Where VoiceOver
-/// lands on what can't take the focus, the highlights go by SwiftUI's
-/// report, a step late (`takesLateReport`). Without Accessibility, no
-/// notification comes: while VoiceOver is on, it looks at the focused
-/// element five times a second instead (in this process, which needs no
-/// permission), and the highlight follows the focus (`KeyHighlight.followFocus`;
-/// D-1, the user's A, 2026-11-11: SwiftUI's late report left the highlight
-/// on the control VoiceOver had left, and Return acted on it).
+/// element, follows it (`KeyHighlight.followFocus`, past the echo of a
+/// key's own arrival: W-2). Where VoiceOver lands on what can't take the
+/// focus, the highlights go by SwiftUI's report, a step late
+/// (`takesLateReport`). Without Accessibility, no notification comes:
+/// while VoiceOver is on and a window of AutoHush's is key, it looks at
+/// the focused element five times a second instead (in this process, which
+/// needs no permission), and the highlight follows the focus the same way
+/// (D-1, the user's A, 2026-11-11: SwiftUI's late report left the
+/// highlight on the control VoiceOver had left, and Return acted on it).
 @MainActor
 final class VoiceOverCursor {
     static let shared = VoiceOverCursor()
@@ -27,6 +28,9 @@ final class VoiceOverCursor {
     private var lastFocus: ContinuousClock.Instant?
     /// Whether VoiceOver is on, watched to look only while it is.
     private var voiceOverWatch: NSKeyValueObservation?
+    /// AutoHush's windows becoming key and giving it up: the look runs only
+    /// while one of them is key. Kept for the app's life, as the cursor is.
+    private var keyWatches: [any NSObjectProtocol] = []
     /// The look at the focused element without Accessibility.
     private var look: Timer?
     /// The focused element seen last by `lookAtFocus`, and where it was.
@@ -48,7 +52,14 @@ final class VoiceOverCursor {
         if voiceOverWatch == nil {
             // On whatever thread the change comes: to the main actor.
             voiceOverWatch = NSWorkspace.shared.observe(\.isVoiceOverEnabled, options: [.initial]) { _, _ in
-                Task { @MainActor in VoiceOverCursor.shared.looksWhileVoiceOverIsOn() }
+                Task { @MainActor in VoiceOverCursor.shared.looksWhileNeeded() }
+            }
+            // A window of AutoHush's becoming key or giving it up (the menu
+            // too, a panel that leaves the app in front as it was).
+            for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification] {
+                keyWatches.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { _ in
+                    MainActor.assumeIsolated { VoiceOverCursor.shared.looksWhileNeeded() }
+                })
             }
         }
     }
@@ -95,21 +106,33 @@ final class VoiceOverCursor {
         guard let element = NSApp.accessibilityFocusedUIElement as AnyObject?,
               let frame = element.accessibilityFrame?(), let found = place(of: frame) else { return }
         for highlight in found.highlights {
+            // As the look's: not the late echo of a key's own arrival (W-2).
             if let id = highlight.control(around: found.onScreen) {
-                highlight.followVoiceOver(to: id)
+                highlight.followFocus(to: id)
                 return
             }
         }
     }
 
-    /// Looks at the focused element five times a second while VoiceOver is
-    /// on; no timer otherwise, so no wakeups for anyone else.
-    private func looksWhileVoiceOverIsOn() {
-        guard NSWorkspace.shared.isVoiceOverEnabled else {
+    /// Looks at the focused element five times a second while it's needed:
+    /// VoiceOver on, no Accessibility (its notification tells otherwise),
+    /// and a window of AutoHush's key; no timer otherwise, so no wakeups
+    /// (the 1.4.0 review's W-3, 2026-11-11: it ran whenever VoiceOver was).
+    private func looksWhileNeeded() {
+        // A window giving the key up tells it while it's still key: look next turn.
+        Task { @MainActor in VoiceOverCursor.shared.startOrStopLook() }
+    }
+
+    private func startOrStopLook() {
+        guard NSWorkspace.shared.isVoiceOverEnabled, !watches(), NSApp.keyWindow != nil else {
             look?.invalidate()
             look = nil
-            lookedAt = nil
-            lookedControl = nil
+            // What it saw last stays while VoiceOver is on: coming back to
+            // the same focus is no move (the diff review's R3, 2026-11-11).
+            if !NSWorkspace.shared.isVoiceOverEnabled {
+                lookedAt = nil
+                lookedControl = nil
+            }
             return
         }
         guard look == nil else { return }

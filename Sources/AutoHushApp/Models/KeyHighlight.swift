@@ -16,7 +16,8 @@ import Observation
 /// first and last row (`jump`). The pointer moves it too, as in a menu: the
 /// control under it is the highlighted one. Moved by a key, VoiceOver's
 /// cursor and Zoom go with it (`Light.arrivals`, `screenFrame`); moved by
-/// VoiceOver, it follows VoiceOver's cursor (`followVoiceOver`). While
+/// VoiceOver, it follows VoiceOver's cursor (`followFocus`, or SwiftUI's
+/// late report through `followVoiceOver`). While
 /// nothing is highlighted, the keys go on from the control the keyboard's
 /// focus is on (`focused`). Each control registers itself (`Highlightable`)
 /// with where it is and what pressing it does. The menu, its side window,
@@ -263,11 +264,11 @@ final class KeyHighlight {
         onHighlight?()
     }
 
-    /// The keyboard's focus came onto a control while VoiceOver is on and
-    /// AutoHush can't watch VoiceOver's cursor (no Accessibility;
-    /// `VoiceOverCursor` looks): VoiceOver moved it there, so the highlight
-    /// follows (`followVoiceOver`; D-1, the
-    /// user's A, 2026-11-11). Not when it's the echo of a key's own arrival
+    /// The keyboard's focus came onto a control while VoiceOver is on
+    /// (`VoiceOverCursor`: Accessibility's notification, or, without it, its
+    /// look): VoiceOver moved it there, so the highlight follows
+    /// (`followVoiceOver`; D-1, the user's A, 2026-11-11; with Accessibility
+    /// too since W-2). Not when it's the echo of a key's own arrival
     /// in the last second: the arrival moves VoiceOver's cursor, which moves
     /// the focus, maybe after the next key, and would take the highlight back.
     /// Each arrival's echo is taken once, so VoiceOver going back there
@@ -384,6 +385,7 @@ final class KeyHighlight {
     /// Presses the highlighted control; `false` when there's none to press.
     @discardableResult func press() -> Bool {
         guard let control = highlightedControl, let press = control.press else { return false }
+        keysActed()
         isPressing = true
         defer { isPressing = false }
         press()
@@ -393,8 +395,17 @@ final class KeyHighlight {
     /// Space on the highlighted control: its `select`, else `press`.
     @discardableResult func select() -> Bool {
         guard let select = highlightedControl?.select else { return press() }
+        keysActed()
         select()
         return true
+    }
+
+    /// A key acted on the highlighted control: it's the keys' now, so the
+    /// focus a window then drops doesn't take it out (`focusGone`; the
+    /// 1.4.0 review's W-1, 2026-11-11: a second plain Space did nothing).
+    private func keysActed() {
+        litByFocus = nil
+        litAt = .now
     }
 
     /// Whether the keys are pressing the highlighted control now (`press`):
@@ -404,6 +415,7 @@ final class KeyHighlight {
     /// Delete on the highlighted control; `false` when it takes none.
     @discardableResult func delete() -> Bool {
         guard let delete = highlightedControl?.delete else { return false }
+        keysActed()
         delete()
         return true
     }
@@ -411,6 +423,7 @@ final class KeyHighlight {
     /// ← or → on the highlighted control; `false` when it takes neither.
     @discardableResult func adjust(_ step: Int) -> Bool {
         guard let adjust = highlightedControl?.adjust else { return false }
+        keysActed()
         adjust(step)
         return true
     }
@@ -418,7 +431,9 @@ final class KeyHighlight {
     /// ↑ or ↓ on the highlighted control, if it scrolls (`Control.scroll`);
     /// `false` when it doesn't, or is at that end.
     func scroll(_ step: Int) -> Bool {
-        highlightedControl?.scroll?(step) ?? false
+        guard highlightedControl?.scroll?(step) == true else { return false }
+        keysActed() // as a press: the window lets the focus go after it (R1)
+        return true
     }
 
     /// The highlighted control opens a side window.
