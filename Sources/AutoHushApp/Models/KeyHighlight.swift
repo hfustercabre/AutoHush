@@ -116,6 +116,15 @@ final class KeyHighlight {
     /// back to Change…, round and round). Dropped once a control comes,
     /// goes, dims or explains itself anew.
     @ObservationIgnored private(set) var orderOnArrival: (id: UUID, rows: [[UUID]])?
+    /// When a key last moved the highlight onto each control: the focus
+    /// that VoiceOver moves after it is no move of VoiceOver's (`followFocus`).
+    @ObservationIgnored private var arrivedAt: [UUID: ContinuousClock.Instant] = [:]
+    /// The control `followFocus` lit, while the highlight is still the one it
+    /// put there: it goes out with the focus (`focusGone`).
+    @ObservationIgnored private var litByFocus: UUID?
+    /// When the keys, VoiceOver or the focus last put the highlight where it
+    /// is (`voiceOverMoved`).
+    @ObservationIgnored private var litAt: ContinuousClock.Instant?
 
     /// Whether one control is highlighted, observed by that control alone.
     @MainActor @Observable final class Light {
@@ -224,6 +233,8 @@ final class KeyHighlight {
         controls[id] = nil
         earlyFrames[id] = nil
         if focused == id { focused = nil }
+        if litByFocus == id { litByFocus = nil }
+        arrivedAt[id] = nil
         orderOnArrival = nil
         hovered.removeAll { $0 == id }
         if highlighted == id { point(at: innermostHovered()) }
@@ -247,7 +258,51 @@ final class KeyHighlight {
         orderOnArrival = control.explains ? (id, rows) : nil
         highlighted = id
         light(id).byKeys = true
+        litAt = .now
+        litByFocus = nil
         onHighlight?()
+    }
+
+    /// The keyboard's focus came onto a control while VoiceOver is on and
+    /// AutoHush can't watch VoiceOver's cursor (no Accessibility;
+    /// `VoiceOverCursor` looks): VoiceOver moved it there, so the highlight
+    /// follows (`followVoiceOver`; D-1, the
+    /// user's A, 2026-11-11). Not when it's the echo of a key's own arrival
+    /// in the last second: the arrival moves VoiceOver's cursor, which moves
+    /// the focus, maybe after the next key, and would take the highlight back.
+    /// Each arrival's echo is taken once, so VoiceOver going back there
+    /// later is followed (the diff review's R3, 2026-11-11).
+    func followFocus(to id: UUID, now: ContinuousClock.Instant = .now) {
+        if let arrived = arrivedAt.removeValue(forKey: id), now - arrived < .seconds(1) {
+            return // the echo: on it already, or the keys went on since
+        }
+        guard highlighted != id else { return }
+        followVoiceOver(to: id)
+        guard highlighted == id else { return }
+        litAt = now
+        litByFocus = id
+    }
+
+    /// The focus left the control `followFocus` lit, for none of these
+    /// controls: the highlight goes out with it, as plain Return then acts
+    /// on nothing (a window that drops the focus it opened with:
+    /// `HostedWindowController.show`).
+    func focusGone() {
+        guard let lit = litByFocus, highlighted == lit else { return }
+        litByFocus = nil
+        highlighted = nil
+    }
+
+    /// Without Accessibility, SwiftUI said VoiceOver moved (a step late) and
+    /// nothing put the highlight where it is in the last half second: it
+    /// may be on a control VoiceOver left for one the focus can't reach (a
+    /// dimmed one, or any with keyboard navigation off), so it goes out, and
+    /// plain Return and Space act on the focus, as in any Mac window (the
+    /// diff review's R4, 2026-11-11).
+    func voiceOverMoved(now: ContinuousClock.Instant = .now) {
+        guard highlighted != nil, now - (litAt ?? now - .seconds(1)) > .milliseconds(500) else { return }
+        litByFocus = nil
+        highlighted = nil
     }
 
     /// The pointer came onto a control (`true`) or left it.
@@ -266,6 +321,7 @@ final class KeyHighlight {
     /// The highlight where the pointer put it (`nil`: none).
     private func point(at id: UUID?) {
         orderOnArrival = nil
+        litByFocus = nil
         highlighted = id
         if let id { light(id).byKeys = false }
     }
@@ -302,6 +358,7 @@ final class KeyHighlight {
     /// Nothing highlighted, as the menu opens or the keyboard's focus takes over.
     func clear() {
         hovered = []
+        litByFocus = nil
         highlighted = nil
         revealed = nil
         wantsFirst = false
@@ -317,6 +374,9 @@ final class KeyHighlight {
         light(id).byKeys = true
         revealed = id
         light(id).arrivals += 1
+        arrivedAt[id] = .now
+        litAt = .now
+        litByFocus = nil
         onHighlight?()
         followWithZoom(id)
     }

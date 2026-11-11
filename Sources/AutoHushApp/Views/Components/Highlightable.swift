@@ -110,10 +110,16 @@ struct Highlightable: ViewModifier {
                 // VoiceOver's own keys moved its cursor here: the highlight
                 // follows (K5); on the arrival above, it's here already.
                 // SwiftUI says so only at VoiceOver's next move: right after
-                // `VoiceOverCursor` told it at once, this is left out.
+                // `VoiceOverCursor` told it at once, this is left out, and
+                // without Accessibility always (`VoiceOverCursor` follows the
+                // focus then).
                 .onChange(of: hasVoiceOverCursor || voiceOverTarget?.wrappedValue == true) { _, hasCursor in
-                    guard hasCursor, voiceOver.isOn(), VoiceOverCursor.shared.takesLateReport() else { return }
-                    keyboard.followVoiceOver(to: id)
+                    guard hasCursor, voiceOver.isOn() else { return }
+                    if VoiceOverCursor.shared.takesLateReport() {
+                        keyboard.followVoiceOver(to: id)
+                    } else if !VoiceOverCursor.shared.watches() {
+                        keyboard.voiceOverMoved()
+                    }
                 }
                 .onChange(of: isFocused, initial: true) { keyboard.focus(id, isFocused) }
                 .onChange(of: keyboard.light(id).arrivals) {

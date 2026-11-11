@@ -673,7 +673,11 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
   it only at VoiceOver's next move, so with Accessibility allowed the
   highlight follows this app's own focused-element notification instead,
   at once, in the window VoiceOver is in (`VoiceOverCursor`); on what
-  can't take the focus, or without Accessibility, a step late. On a view of several elements, VoiceOver goes to the
+  can't take the focus, a step late. Without Accessibility, it follows the
+  keyboard's focus, which VoiceOver moves where it lands, looked at five
+  times a second while VoiceOver is on; SwiftUI's late report only puts
+  the highlight out, when VoiceOver moved where the focus can't follow, so
+  Return and Space act on the focus (it lit the control VoiceOver had left). On a view of several elements, VoiceOver goes to the
   control its press changes (the menu's card: the Auto-Pause switch;
   a row's switch, slider, pop-up or button: `Highlightable.voiceOverTarget`). VoiceOver says nothing itself on a
   pop-up its cursor is moved to, so it hears the pop-up's name and choice

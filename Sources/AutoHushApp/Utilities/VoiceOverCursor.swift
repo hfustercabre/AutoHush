@@ -10,8 +10,13 @@ import ApplicationServices
 /// (an `AXObserver` on AutoHush itself, which needs Accessibility) comes
 /// then: the highlight of the window it's in, whose control holds that
 /// element, follows it (`KeyHighlight.followVoiceOver`). Where VoiceOver
-/// lands on what can't take the focus (or without Accessibility), the
-/// highlights go by SwiftUI's report, a step late (`takesLateReport`).
+/// lands on what can't take the focus, the highlights go by SwiftUI's
+/// report, a step late (`takesLateReport`). Without Accessibility, no
+/// notification comes: while VoiceOver is on, it looks at the focused
+/// element five times a second instead (in this process, which needs no
+/// permission), and the highlight follows the focus (`KeyHighlight.followFocus`;
+/// D-1, the user's A, 2026-11-11: SwiftUI's late report left the highlight
+/// on the control VoiceOver had left, and Return acted on it).
 @MainActor
 final class VoiceOverCursor {
     static let shared = VoiceOverCursor()
@@ -20,6 +25,15 @@ final class VoiceOverCursor {
     private var highlights: [Weak] = []
     /// When the focus last moved with VoiceOver on.
     private var lastFocus: ContinuousClock.Instant?
+    /// Whether VoiceOver is on, watched to look only while it is.
+    private var voiceOverWatch: NSKeyValueObservation?
+    /// The look at the focused element without Accessibility.
+    private var look: Timer?
+    /// The focused element seen last by `lookAtFocus`, and where it was.
+    private var lookedAt: (element: ObjectIdentifier, frame: CGRect)?
+    /// The control `lookAtFocus` found the focus in last: a frame that moved
+    /// alone (a scroll, a caption) is no move of the focus (R2).
+    private var lookedControl: (highlight: ObjectIdentifier, id: UUID)?
 
     private struct Weak {
         weak var highlight: KeyHighlight?
@@ -31,16 +45,29 @@ final class VoiceOverCursor {
         highlights.removeAll { $0.highlight == nil || $0.highlight === highlight }
         highlights.append(Weak(highlight: highlight))
         startIfAllowed()
+        if voiceOverWatch == nil {
+            // On whatever thread the change comes: to the main actor.
+            voiceOverWatch = NSWorkspace.shared.observe(\.isVoiceOverEnabled, options: [.initial]) { _, _ in
+                Task { @MainActor in VoiceOverCursor.shared.looksWhileVoiceOverIsOn() }
+            }
+        }
+    }
+
+    /// Whether it tells the highlights where VoiceOver lands: Accessibility
+    /// is allowed and it listens (checked each time: it can be taken away).
+    func watches() -> Bool {
+        startIfAllowed()
+        return observer != nil && AXIsProcessTrusted()
     }
 
     /// Whether SwiftUI's report that VoiceOver landed on a control is taken
-    /// (`Highlightable`): always without Accessibility (nothing else tells);
-    /// with it, unless the focus moved within the last half second, as
-    /// SwiftUI's late report is then of where VoiceOver was before, and would
-    /// take the highlight back a step.
+    /// (`Highlightable`): only while it watches, and unless the focus moved
+    /// within the last half second, as SwiftUI's late report is then of
+    /// where VoiceOver was before, and would take the highlight back a step.
+    /// Without Accessibility, never: the focus is followed (`lookAtFocus`).
     func takesLateReport() -> Bool {
-        startIfAllowed()
-        guard observer != nil, AXIsProcessTrusted(), let lastFocus else { return true }
+        guard watches() else { return false }
+        guard let lastFocus else { return true }
         return ContinuousClock.now - lastFocus > .milliseconds(500)
     }
 
@@ -58,27 +85,77 @@ final class VoiceOverCursor {
         observer = created
     }
 
-    /// The focused element changed: with VoiceOver on, the highlight of the
-    /// control it's in follows it. Read in this process (no message to
-    /// itself), as the notification comes on the main run loop.
+    /// The focused element changed (Accessibility's notification): with
+    /// VoiceOver on, the highlight of the control it's in follows it. Read
+    /// in this process (no message to itself), as the notification comes on
+    /// the main run loop.
     private func focusChanged() {
         guard NSWorkspace.shared.isVoiceOverEnabled else { return }
         lastFocus = .now
         guard let element = NSApp.accessibilityFocusedUIElement as AnyObject?,
-              let frame = element.accessibilityFrame?(), frame != .zero,
-              let top = NSScreen.screens.first?.frame.maxY else { return }
-        // The window it's in: the frontmost there. Closed windows keep their
-        // controls, and a window may lie over another's.
-        let number = NSWindow.windowNumber(at: CGPoint(x: frame.midX, y: frame.midY), belowWindowWithWindowNumber: 0)
-        guard let window = NSApp.window(withWindowNumber: number), window.isVisible else { return }
-        // Cocoa's screen coordinates to the top-left ones `KeyHighlight.screenFrame` gives.
-        let onScreen = CGRect(x: frame.minX, y: top - frame.maxY, width: frame.width, height: frame.height)
-        highlights.removeAll { $0.highlight == nil }
-        for case let highlight? in highlights.map(\.highlight) where highlight.window === window {
-            if let id = highlight.control(around: onScreen) {
+              let frame = element.accessibilityFrame?(), let found = place(of: frame) else { return }
+        for highlight in found.highlights {
+            if let id = highlight.control(around: found.onScreen) {
                 highlight.followVoiceOver(to: id)
                 return
             }
         }
+    }
+
+    /// Looks at the focused element five times a second while VoiceOver is
+    /// on; no timer otherwise, so no wakeups for anyone else.
+    private func looksWhileVoiceOverIsOn() {
+        guard NSWorkspace.shared.isVoiceOverEnabled else {
+            look?.invalidate()
+            look = nil
+            lookedAt = nil
+            lookedControl = nil
+            return
+        }
+        guard look == nil else { return }
+        let timer = Timer(timeInterval: 0.2, repeats: true) { _ in
+            MainActor.assumeIsolated { VoiceOverCursor.shared.lookAtFocus() }
+        }
+        timer.tolerance = 0.05
+        RunLoop.main.add(timer, forMode: .common)
+        look = timer
+    }
+
+    /// Without Accessibility: the focus, which VoiceOver moves where it
+    /// lands, moved since the last look: the highlight of the control it's
+    /// in follows it, or, onto no control, the one the focus lit goes out.
+    private func lookAtFocus() {
+        // A key window, not an active app: the menu is a panel that leaves
+        // the app in front as it was (the diff review's R1).
+        guard NSApp.keyWindow != nil, !watches(), let element = NSApp.accessibilityFocusedUIElement as AnyObject?,
+              let frame = element.accessibilityFrame?() else { return }
+        let seen = (element: ObjectIdentifier(element), frame: frame)
+        guard seen.element != lookedAt?.element || seen.frame != lookedAt?.frame else { return }
+        lookedAt = seen
+        guard let found = place(of: frame) else { return }
+        for highlight in found.highlights {
+            if let id = highlight.control(around: found.onScreen) {
+                let control = (highlight: ObjectIdentifier(highlight), id: id)
+                guard control.highlight != lookedControl?.highlight || control.id != lookedControl?.id else { return }
+                lookedControl = control
+                highlight.followFocus(to: id)
+                return
+            }
+        }
+        lookedControl = nil
+        found.highlights.forEach { $0.focusGone() }
+    }
+
+    /// The highlights of the window an element is in (the frontmost there:
+    /// closed windows keep their controls, and a window may lie over
+    /// another's), and its frame in the top-left screen coordinates
+    /// `KeyHighlight.screenFrame` gives. `nil` off this app's visible windows.
+    private func place(of frame: CGRect) -> (highlights: [KeyHighlight], onScreen: CGRect)? {
+        guard frame != .zero, let top = NSScreen.screens.first?.frame.maxY else { return nil }
+        let number = NSWindow.windowNumber(at: CGPoint(x: frame.midX, y: frame.midY), belowWindowWithWindowNumber: 0)
+        guard let window = NSApp.window(withWindowNumber: number), window.isVisible else { return nil }
+        highlights.removeAll { $0.highlight == nil }
+        let inWindow = highlights.compactMap(\.highlight).filter { $0.window === window }
+        return (inWindow, CGRect(x: frame.minX, y: top - frame.maxY, width: frame.width, height: frame.height))
     }
 }

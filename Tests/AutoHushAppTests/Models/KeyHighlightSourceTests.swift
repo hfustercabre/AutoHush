@@ -108,6 +108,34 @@ struct KeyHighlightSourceTests {
         #expect(keyboard.control(around: CGRect(x: 400, y: 210, width: 10, height: 10)) == nil)
     }
 
+    @Test("without Accessibility, the keyboard's focus that VoiceOver moves brings the highlight, as the keys', but not the focus a key's own arrival brings a moment later, taken once; it goes out with the focus, and when VoiceOver moved and nothing put it there lately (D-1)")
+    func followsFocus() {
+        let keyboard = KeyHighlight()
+        let first = control(keyboard, 0)
+        let second = control(keyboard, 50)
+        let third = control(keyboard, 100)
+        keyboard.followFocus(to: third) // VoiceOver's keys moved the focus there
+        #expect(keyboard.highlighted == third && keyboard.light(third).byKeys)
+        keyboard.highlight(first)
+        keyboard.highlight(second)
+        keyboard.followFocus(to: first) // the first arrival's focus, late
+        #expect(keyboard.highlighted == second)
+        keyboard.followFocus(to: second) // the second's: on it already
+        keyboard.followFocus(to: first) // VoiceOver went back there: its echo was taken
+        #expect(keyboard.highlighted == first)
+        keyboard.focusGone() // to no control: it goes out with the focus
+        #expect(keyboard.highlighted == nil)
+
+        keyboard.highlight(second)
+        keyboard.followFocus(to: second) // the keys' own echo
+        keyboard.focusGone() // isn't the focus's light
+        #expect(keyboard.highlighted == second)
+        keyboard.voiceOverMoved() // put there just now
+        #expect(keyboard.highlighted == second)
+        keyboard.voiceOverMoved(now: .now + .seconds(1)) // VoiceOver went on, onto what the focus can't reach
+        #expect(keyboard.highlighted == nil)
+    }
+
     @Test("a dimmed control that explains itself takes the keys' highlight, shows it only to the keys, keeps it as it dims, and isn't pressed")
     func explains() {
         let keyboard = KeyHighlight()
