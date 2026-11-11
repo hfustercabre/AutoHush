@@ -111,12 +111,15 @@ struct PlayerCheckHelperTests {
         let waiting = try PlayerCheckHelper.standIn(#"""
             trap 'kill $! 2>/dev/null; echo "  put back"; exit 143' TERM
             echo "Press Test"
-            sleep 30 &
+            sleep 300 &
             wait
             """#, in: scratch.appending(path: "waiting"))
         let stopped = HelperReport()
         let stopping = try waiting.check(URL(filePath: "/Applications/Player.app"), taps: true) { stopped.lines.append($0) }
         await TestWait.until { stopped.lines == ["Press Test"] }
+        // The stand-in waits far longer than any stall of this thread on a
+        // loaded runner: Stop must end it, not the wait running out (CI,
+        // 2026-11-11: 30 s ran out twice before Stop came).
         stopping.stop()
         #expect(await stopping.waitForEnd() == .stopped)
         #expect(stopped.lines == ["Press Test", "  put back"])
