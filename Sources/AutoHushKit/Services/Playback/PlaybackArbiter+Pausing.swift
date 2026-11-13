@@ -73,6 +73,7 @@ extension PlaybackArbiter {
     private func pauseMusicIfNeeded() async {
         guard autoPauseEnabled, !isAsleep else { return }
         let checked = clock()
+        pauseBegan = volumeLeveler?.lowerings ?? 0
         guard playsLocally else {
             // A player paused here closes its output a few seconds later,
             // maybe before the app that paused it counts as playing.
@@ -159,7 +160,7 @@ extension PlaybackArbiter {
             if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
             return
         }
-        levelLowered = false // paused again: the next resume may lower it
+        volumeLeveler?.musicPaused(since: pauseBegan) // the next resume may lower the volume
         playerState = .paused
         pausedAt = clock()
         hearingDuringPause = nil
@@ -194,7 +195,7 @@ extension PlaybackArbiter {
             return true
         }
         pauseFailure = nil
-        levelLowered = false // paused again: the next resume may lower it
+        volumeLeveler?.musicPaused(since: pauseBegan) // the next resume may lower the volume
         playerState = .paused
         logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted, because these apps play: \(self.playingApps, privacy: .public)")
         forgetEarlierPause()
@@ -240,7 +241,7 @@ extension PlaybackArbiter {
             return false
         }
         pauseFailure = nil
-        levelLowered = false // paused again: the next resume may lower it
+        volumeLeveler?.musicPaused(since: pauseBegan) // the next resume may lower the volume
         logger.info("[arbiter] \(self.player.name, privacy: .public) stopped as another app started — it comes back once the apps stop (playing now: \(self.playingApps, privacy: .public))")
         forgetEarlierPause()
         // Things may have changed while the player answered.

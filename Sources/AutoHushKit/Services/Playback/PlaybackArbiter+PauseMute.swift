@@ -133,6 +133,7 @@ extension PlaybackArbiter {
     /// pause from then on, ended as any. `true` once it's handled; one that
     /// can't be muted plays on, its pause failed (`failure`).
     func muteInsteadOfPause(_ why: String, failure: MusicPlayerError) async -> Bool {
+        let began = volumeLeveler?.lowerings ?? 0
         // A mute lifted just before is lifted first, so it can't lift this one.
         await muteLift?.value
         // Muted already, kept through the pause: only a relaunched process to mute.
@@ -158,7 +159,7 @@ extension PlaybackArbiter {
             pausedByUs = true
             pauseFailure = nil // muted: an earlier failed pause is over
             mute.begin()
-            levelLowered = false // paused again: the next resume may lower it
+            volumeLeveler?.musicPaused(since: began) // the next resume may lower the volume
             playerState = .playing
             pausedAt = clock()
             logger.info("[arbiter] \(self.player.name, privacy: .public) \(why, privacy: .public) — muted until the apps stop")

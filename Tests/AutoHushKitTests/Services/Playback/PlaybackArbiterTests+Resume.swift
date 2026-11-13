@@ -359,6 +359,59 @@ extension PlaybackArbiterTests {
         #expect(run.log == Self.levelingCycle && run.plays == 2)
     }
 
+    @Test("two monitorings sharing the leveler (a player held paused, and the chosen one) lower the volume once for the same quiet, however much later the second resumes; once either pauses again, the next resume lowers it again")
+    func twoMonitoringsLowerOnce() async {
+        let held = MockMusicPlayer()
+        let chosen = MockMusicPlayer()
+        let leveler = RecordingVolumeLeveler()
+        let heldArbiter = makeLevelingArbiter(held, leveler: leveler)
+        let chosenArbiter = makeLevelingArbiter(chosen, leveler: leveler)
+        await heldArbiter.sourceChanged("org.example.viewer", playing: true)
+        await chosenArbiter.sourceChanged("org.example.viewer", playing: true)
+        await chosenArbiter.sourceChanged("org.example.viewer", playing: false) // resumed, lowered 6 dB
+        await TestWait.until { await chosen.playCallCount == 1 }
+        await chosenArbiter.waitUntilIdle()
+        await heldArbiter.sourceChanged("org.example.viewer", playing: false) // a slow one, resuming later
+        await TestWait.until { await held.playCallCount == 1 }
+        await heldArbiter.waitUntilIdle()
+        #expect(leveler.log == ["lower -6.0"])
+        await chosenArbiter.sourceChanged("org.example.viewer", playing: true) // paused again
+        await chosenArbiter.sourceChanged("org.example.viewer", playing: false)
+        await TestWait.until { await chosen.playCallCount == 2 }
+        await chosenArbiter.waitUntilIdle()
+        #expect(leveler.log == ["lower -6.0", "lower -6.0"])
+        await heldArbiter.shutdown()
+        await chosenArbiter.shutdown()
+    }
+
+    @Test("a pause still pressed as the apps stop, while the held player resumes and lowers the volume, resumes without lowering it again: the same quiet")
+    func slowPauseDoesNotLowerTwice() async {
+        let held = MockMusicPlayer()
+        let chosen = MockMusicPlayer()
+        let leveler = RecordingVolumeLeveler()
+        let heldArbiter = makeLevelingArbiter(held, leveler: leveler)
+        let chosenArbiter = makeLevelingArbiter(chosen, leveler: leveler)
+        await heldArbiter.sourceChanged("org.example.viewer", playing: true)
+        await TestWait.until { await held.state == .paused }
+        let press = Gate()
+        await chosen.setBeforePause { await press.wait() }
+        let starting = Task { await chosenArbiter.sourceChanged("org.example.viewer", playing: true) } // its press held
+        await TestWait.until { await press.waiting == 1 }
+        await heldArbiter.sourceChanged("org.example.viewer", playing: false) // resumed, lowered 6 dB
+        await TestWait.until { await held.playCallCount == 1 }
+        await heldArbiter.waitUntilIdle()
+        let stopping = Task { await chosenArbiter.sourceChanged("org.example.viewer", playing: false) }
+        await TestWait.until { await chosenArbiter.activeSources.isEmpty }
+        await press.open() // paused at last, every app stopped: resumed at once
+        await starting.value
+        await stopping.value
+        await TestWait.until { await chosen.playCallCount == 1 }
+        await chosenArbiter.waitUntilIdle()
+        #expect(leveler.log == ["lower -6.0"])
+        await heldArbiter.shutdown()
+        await chosenArbiter.shutdown()
+    }
+
     @Test("with Level the volume on, a pause that fails keeps the Mac's volume lowered: the music plays on at it, as it was")
     func failedPauseKeepsLevel() async {
         let player = MockMusicPlayer()
@@ -409,6 +462,14 @@ extension PlaybackArbiterTests {
         case .playsWhileSaidPaused: #expect(await player.commandLog.last == "mute")
         }
         #expect(leveler.log == ["lower -6.0"])
+        // Said paused, it's resumed once the apps stop: a pause of its own, so lowered again.
+        // Muted in place of a failed pause, it plays on: only unmuted, nothing lowered.
+        guard way == .playsWhileSaidPaused else { return }
+        await player.setPlaysAnyway(false)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await TestWait.until { await player.playCallCount == 2 }
+        await arbiter.waitUntilIdle()
+        #expect(leveler.log == ["lower -6.0", "lower -6.0"])
     }
 
     @Test("turning Level the volume off leaves the Mac's lowered volume as it is")

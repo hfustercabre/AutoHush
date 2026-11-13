@@ -45,6 +45,43 @@ extension PlaybackArbiterTests {
         #expect(mute.unmuteCount == 1)
     }
 
+    @Test("with Level the volume on, a pause that fails, muted instead and paused for real at a later look, lowers the volume again as it resumes: a pause of its own")
+    func failedPauseMutedThenPausedLevels() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler(), leveler = RecordingVolumeLeveler()
+        var configuration = AppConfiguration.testing
+        configuration.levelsMusic = true
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: scheduler,
+                                      fadeSleep: { _ in }, clock: { clock.now },
+                                      onStatusUpdate: statuses(playback: { published.set($0) }),
+                                      volumeLeveler: leveler, resumeOffset: { -6 },
+                                      hearsPlayer: { await hearing.answer(since: $0) }, playerMute: mute)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.sourceChanged("org.example.viewer", playing: false) // resumed, lowered 6 dB
+        await TestWait.until { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        await player.setFailPause(StubError.failed)
+        await arbiter.sourceChanged("org.example.viewer", playing: true) // the pause fails: muted
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 1)
+        await player.setFailPause(nil)
+        // Its pause pressed again at a later look (less often each time it failed), and taken.
+        for _ in 1...8 where await player.state != .paused {
+            await nextLook(scheduler, arbiter, clock: clock)
+        }
+        #expect(await player.state == .paused)
+        hearing.now = .silent
+        for _ in 1...4 where published.state != .pausedByMonitor {
+            await nextLook(scheduler, arbiter, clock: clock) // silent since: paused, the mute kept
+        }
+        #expect(published.state == .pausedByMonitor)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await TestWait.until { await player.playCallCount == 2 }
+        await arbiter.waitUntilIdle()
+        #expect(leveler.log == ["lower -6.0", "lower -6.0"])
+        await arbiter.shutdown()
+    }
+
     @Test("muted, a pause pressed that doesn't take (still heard: the ad goes on) leaves it muted, pressed again every 2 seconds")
     func mutedPauseNotTaken() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()

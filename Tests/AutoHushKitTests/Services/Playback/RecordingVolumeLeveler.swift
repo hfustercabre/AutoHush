@@ -1,19 +1,29 @@
 import Foundation
+import AutoHushTestSupport
 @testable import AutoHushKit
 
-/// Records what the arbiter asks of the volume leveler: its lowerings, each
-/// taking effect, as the real one's on an output with a volume control.
-/// There is nothing else to ask: nothing puts the volume back.
+/// The real leveler over an output in memory, its lowerings recorded as
+/// they take effect ("lower -6.0"): once per pause, a lowering asked for
+/// again before the next pause left out, as on the Mac. Nothing puts it back.
 final class RecordingVolumeLeveler: ResumeLeveling, @unchecked Sendable {
-    // Read and written only under `lock`.
-    private let lock = NSLock()
-    private var _log: [String] = []
-    var log: [String] { lock.withLock { _log } }
+    private let volume = MockSystemVolume([0: -10], lowest: -200)
+    private let leveler: SystemVolumeLeveler
 
-    func lower(by decibels: Float) -> Bool {
-        lock.withLock {
-            _log.append("lower \(decibels)")
-            return true
+    init() {
+        leveler = SystemVolumeLeveler(volume: volume, defaults: MemoryDefaults())
+    }
+
+    /// Each lowering that took effect, by how much.
+    var log: [String] {
+        var before: Float = -10
+        return volume.sets.map { set in
+            let now = set[0] ?? before
+            defer { before = now }
+            return "lower \(now - before)"
         }
     }
+
+    var lowerings: Int { leveler.lowerings }
+    func lower(by decibels: Float) { leveler.lower(by: decibels) }
+    func musicPaused(since lowerings: Int) { leveler.musicPaused(since: lowerings) }
 }

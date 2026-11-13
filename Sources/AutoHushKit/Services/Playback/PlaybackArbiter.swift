@@ -35,13 +35,14 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// apps' (`AudioMonitor.setMusicPaused`).
     let onPausedByUsChange: @Sendable (Bool) -> Void
     /// Lowers the Mac's volume as the music resumes after quieter apps, by
-    /// `resumeOffset` (Settings → Behavior, `levelsMusic`).
+    /// `resumeOffset` (Settings → Behavior, `levelsMusic`), once per pause:
+    /// told of each pause, it takes a try again, or another monitoring's
+    /// resume for the same quiet, as done. Nothing ever raises it back.
     let volumeLeveler: any ResumeLeveling?
     let resumeOffset: @Sendable () async -> Float?
-    /// The Mac's volume was lowered for this pause's resume (Level the
-    /// volume): a try again doesn't lower it twice. Over once the music
-    /// pauses again. Nothing ever raises it back (`ResumeLeveling`).
-    var levelLowered = false
+    /// The leveler's `lowerings` as the pause under way began: a lowering
+    /// since, by another monitoring, was for the quiet this pause ends in.
+    var pauseBegan = 0
     var publishedPausedByUs: Bool?
     /// The last pause failed, while other apps play: the music plays on.
     /// Over once they stop, a pause works, or the player stops playing.

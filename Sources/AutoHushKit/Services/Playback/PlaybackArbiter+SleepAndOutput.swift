@@ -36,7 +36,6 @@ extension PlaybackArbiter {
             logger.error("[arbiter] pausing \(self.player.name, privacy: .public) as the output went away failed: \(error)")
             return
         }
-        levelLowered = false // paused again: the next resume may lower it
         playerState = .paused
         latestStart = nil // no app's doing, to be taken over and resumed
         logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) paused at once, and stays paused")

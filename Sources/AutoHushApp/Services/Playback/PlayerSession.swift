@@ -184,8 +184,8 @@ final class PlayerSession {
     /// when their program doesn't say (a Safari web app). Each reads macOS
     /// through readers of its own, from `readers`; tests stand in for them.
     /// All share `volumeLeveler`, the app's one: a pause held as another
-    /// player is chosen and the new one's, resuming for the same quiet
-    /// moment, lower the Mac's volume once.
+    /// player is chosen and the new one's, resuming for the same quiet, lower
+    /// the Mac's volume once (`ResumeLeveling`: once per pause).
     static func pipelines(
         hostedApp: @escaping @Sendable (pid_t) -> AudioSource?,
         volumeLeveler: any ResumeLeveling? = nil,

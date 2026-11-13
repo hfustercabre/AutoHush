@@ -10,56 +10,69 @@ import Foundation
 /// when the music's monitoring started over while it played).
 package protocol ResumeLeveling: AnyObject, Sendable {
     /// Just before the music resumes: lowers the volume by `decibels`
-    /// (below 0), nothing playing yet, so it isn't heard. Whether it's
-    /// lowered for the music (also when another monitoring lowered it for
-    /// the same quiet just before); `false`: no volume control, or nothing
-    /// to lower.
-    @discardableResult
-    func lower(by decibels: Float) -> Bool
+    /// (below 0), nothing playing yet, so it isn't heard, unless it was
+    /// lowered already since the music last paused (a try again, or another
+    /// monitoring resuming for the same quiet). Nothing happens with no
+    /// volume control, or for 0 dB.
+    func lower(by decibels: Float)
+    /// How many times it has lowered the volume: read as a pause begins,
+    /// for `musicPaused(since:)` as it ends.
+    var lowerings: Int { get }
+    /// The music paused (or was muted in its place), by any monitoring: its
+    /// next resume may lower the volume again, unless the volume was lowered
+    /// since the pause began (`lowerings` then), by another monitoring's
+    /// resume for the quiet the pause was slow to see.
+    func musicPaused(since lowerings: Int)
 }
 
 /// `ResumeLeveling` through the output's volume (`SystemVolumeControlling`).
 /// Nothing happens on an output with no volume control. One for the whole
-/// app: two monitorings resuming for the same quiet moment (a player held
-/// paused, and the chosen one) lower it once (`sameQuiet`).
+/// app, so it lowers once per pause of the music: two monitorings resuming
+/// for the same quiet (a player held paused, and the chosen one) lower it
+/// once, however long either takes to get there (a 2 s window let a slow
+/// player lower it twice).
 package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
     /// Where older versions kept the volume they lowered, to put it
     /// back at the next launch; removed at launch (`forgetLeft`), unused.
     package static let leftKey = "levelLoweredVolume"
-    /// A lowering this soon after the last is for the same quiet moment,
-    /// asked by another monitoring: taken as done, not lowered twice.
-    static let sameQuiet: TimeInterval = 2
 
     private let volume: any SystemVolumeControlling
     private let defaults: UserDefaults
-    private let now: @Sendable () -> Date
-    /// When it last lowered it (`sameQuiet`).
-    private var loweredAt: Date?
+    /// Lowered since the music last paused (`musicPaused`): a lowering asked
+    /// for meanwhile is taken as done.
+    private var lowered = false
+    private var count = 0
     /// One lowering at a time: two monitorings never read and set it at once.
     private let lock = NSLock()
     private let logger = AutoHushLogger(category: "VolumeLeveler")
 
-    package init(volume: any SystemVolumeControlling = CoreAudioSystemVolume(), defaults: UserDefaults = .standard,
-                 now: @escaping @Sendable () -> Date = Date.init) {
+    package init(volume: any SystemVolumeControlling = CoreAudioSystemVolume(), defaults: UserDefaults = .standard) {
         self.volume = volume
         self.defaults = defaults
-        self.now = now
     }
 
-    @discardableResult
-    package func lower(by decibels: Float) -> Bool {
+    package func lower(by decibels: Float) {
         lock.withLock {
-            guard decibels < 0 else { return false }
-            if let loweredAt, now().timeIntervalSince(loweredAt) < Self.sameQuiet { return true } // lowered for this quiet already
+            guard decibels < 0, !lowered else { return } // nothing to lower, or lowered for this pause already
             guard let device = volume.defaultOutput(), let current = volume.volume(of: device) else {
                 logger.info("[level] the output has no volume control: the music resumes as it was")
-                return false
+                return
             }
             let target = current.decibels.mapValues { max(current.lowest, $0 + decibels) }
             volume.setDecibels(target, of: device)
-            loweredAt = now()
+            lowered = true
+            count += 1
             logger.notice("[level] the Mac’s volume lowered \(String(format: "%.1f", decibels), privacy: .public) dB for the music, and left so")
-            return true
+        }
+    }
+
+    package var lowerings: Int {
+        lock.withLock { count }
+    }
+
+    package func musicPaused(since lowerings: Int) {
+        lock.withLock {
+            if count == lowerings { lowered = false } // not lowered while it paused
         }
     }
 

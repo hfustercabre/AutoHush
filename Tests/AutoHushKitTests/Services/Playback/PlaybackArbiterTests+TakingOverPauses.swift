@@ -430,7 +430,7 @@ extension PlaybackArbiterTests {
         #expect(run.plays == 1)
     }
 
-    @Test("with Level the volume on, a pause another app makes as it starts, taken over, leaves the Mac's volume lowered for the music")
+    @Test("with Level the volume on, a pause another app makes as it starts, taken over, leaves the Mac's volume lowered for the music, and its resume lowers it again: a pause of its own")
     func takenOverPauseKeepsLevel() async {
         let player = MockMusicPlayer()
         let clock = ManualClock()
@@ -455,6 +455,10 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.pausedByUs)
         #expect(await player.pauseCallCount == 1) // only Viewer's pause was AutoHush's
         #expect(leveler.log == ["lower -6.0"])
+        await arbiter.sourceChanged("com.example.movies", playing: false)
+        await TestWait.until { await player.playCallCount == 2 }
+        await arbiter.waitUntilIdle()
+        #expect(leveler.log == ["lower -6.0", "lower -6.0"])
     }
 
     @Test("a pause taken over after an earlier pause the user ended isn't judged by that pause's sound: the user playing the music while the app plays makes it theirs, not muted")
