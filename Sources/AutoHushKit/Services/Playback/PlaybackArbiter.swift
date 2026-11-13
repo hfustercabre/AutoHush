@@ -38,15 +38,10 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// `resumeOffset` (Settings → Behavior, `levelsMusic`).
     let volumeLeveler: any ResumeLeveling?
     let resumeOffset: @Sendable () async -> Float?
-    /// The token of the volume this arbiter lowered for its music
-    /// (`ResumeLeveling.lower`), until it's put back: as the music pauses
-    /// again, or the arbiter shuts down. The leveler is the app's one, so
-    /// another player's lowering is never put back from here.
-    var levelLowered: UUID?
-    /// The resume under way, or waiting to try again, lowered the volume
-    /// (`levelLowered`): once it ends without the music playing, it's put
-    /// back (`putBackResumeLevel`).
-    var resumeLowered = false
+    /// The Mac's volume was lowered for this pause's resume (Level the
+    /// volume): a try again doesn't lower it twice. Over once the music
+    /// pauses again. Nothing ever raises it back (`ResumeLeveling`).
+    var levelLowered = false
     var publishedPausedByUs: Bool?
     /// The last pause failed, while other apps play: the music plays on.
     /// Over once they stop, a pause works, or the player stops playing.
@@ -304,10 +299,6 @@ actor PlaybackArbiter: PlaybackArbiting {
         // Nor muted: a mute, unlike a pause, can't be undone by the user.
         if heldByMute, let muting = player as? any MutingMusicPlayer { await muting.releaseMute() }
         heldByMute = false
-        // Nor the Mac's volume lowered, unless another monitoring lowered it.
-        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
-        levelLowered = nil
-        resumeLowered = false
     }
 
     /// Whether `change` is newer than the latest sleep or wake applied

@@ -102,8 +102,8 @@ extension PlaybackArbiterTests {
         #expect(await player.commandLog.contains("forgetPause"))
     }
 
-    @Test("music playing with the Mac's volume lowered (Level the volume) gets it back as the output goes away")
-    func disconnectPutsBackLevel() async {
+    @Test("music playing with the Mac's volume lowered (Level the volume) leaves it lowered as the output goes away: nothing raises it")
+    func disconnectKeepsLevel() async {
         let player = MockMusicPlayer(state: .playing)
         let leveler = RecordingVolumeLeveler()
         var configuration = AppConfiguration.testing
@@ -116,7 +116,7 @@ extension PlaybackArbiterTests {
         await TestWait.until { await player.playCallCount == 1 }
         await arbiter.waitUntilIdle()
         await arbiter.handleOutputDisconnected()
-        #expect(leveler.log == ["lower -6.0", "restore now"])
+        #expect(leveler.log == ["lower -6.0"])
     }
 
     @Test("music playing with the Mac's volume lowered (Level the volume) keeps it lowered when its pause fails as the output goes away")

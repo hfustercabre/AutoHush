@@ -158,10 +158,7 @@ extension PlaybackArbiter {
             pausedByUs = true
             pauseFailure = nil // muted: an earlier failed pause is over
             mute.begin()
-            // Quiet now, as once paused: the Mac's volume lowered for the
-            // music is put back (the user, 2026-10-30: a mute counts as paused).
-            if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
-            levelLowered = nil
+            levelLowered = false // paused again: the next resume may lower it
             playerState = .playing
             pausedAt = clock()
             logger.info("[arbiter] \(self.player.name, privacy: .public) \(why, privacy: .public) — muted until the apps stop")

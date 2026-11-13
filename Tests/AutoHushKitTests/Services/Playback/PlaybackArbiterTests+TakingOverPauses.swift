@@ -343,7 +343,7 @@ extension PlaybackArbiterTests {
         #expect(await player.commandLog.isEmpty)
     }
 
-    @Test("with Level the volume on, a resume that never takes puts the Mac's volume back as it gives up, not while it retries")
+    @Test("with Level the volume on, a resume that never takes lowers the Mac's volume once, not at each try again, and leaves it as it gives up")
     func levelingGivesUpWithResume() async {
         let player = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
@@ -354,12 +354,12 @@ extension PlaybackArbiterTests {
         await arbiter.sourceChanged("org.example.viewer", playing: false)
         for attempt in 1...PlaybackArbiter.resumeRetries {
             await TestWait.until { scheduler.scheduledDelays.count == attempt }
-            #expect(!leveler.log.contains("restore now")) // tried again: still lowered
+            #expect(leveler.log == ["lower -6.0"]) // tried again: lowered once
             await scheduler.completeNext()
         }
-        await TestWait.until { leveler.log.last == "restore now" }
+        await TestWait.until { await player.playCallCount == PlaybackArbiter.resumeRetries + 1 }
         await arbiter.waitUntilIdle()
-        #expect(leveler.log == Array(repeating: "lower -6.0", count: PlaybackArbiter.resumeRetries + 1) + ["restore now"])
+        #expect(leveler.log == ["lower -6.0"])
         #expect(await player.playCallCount == PlaybackArbiter.resumeRetries + 1)
     }
 
@@ -422,23 +422,16 @@ extension PlaybackArbiterTests {
         return result
     }
 
-    @Test("with Level the volume on, a failed resume that doesn't bring the music back at its retry puts the lowered volume back at once",
-          arguments: BeforeRetry.allCases.filter { $0 != .playerPlays })
-    func levelingPutBackWithoutMusic(_ before: BeforeRetry) async {
+    @Test("with Level the volume on, a failed resume leaves the lowered volume as it is, whatever happens before its retry",
+          arguments: BeforeRetry.allCases)
+    func levelingLeftAfterFailedResume(_ before: BeforeRetry) async {
         let run = await levelingAfterFailedResume(before)
-        #expect(run.log == ["lower -6.0", "restore now"])
-        #expect(run.plays == 1)
-    }
-
-    @Test("with Level the volume on, a failed resume whose music plays after all at its retry keeps the volume lowered for it")
-    func levelingKeptForMusicPlaying() async {
-        let run = await levelingAfterFailedResume(.playerPlays)
         #expect(run.log == ["lower -6.0"])
         #expect(run.plays == 1)
     }
 
-    @Test("with Level the volume on, a pause another app makes as it starts, taken over, puts back the Mac's volume lowered for the music")
-    func takenOverPausePutsBackLevel() async {
+    @Test("with Level the volume on, a pause another app makes as it starts, taken over, leaves the Mac's volume lowered for the music")
+    func takenOverPauseKeepsLevel() async {
         let player = MockMusicPlayer()
         let clock = ManualClock()
         let leveler = RecordingVolumeLeveler()
@@ -461,7 +454,7 @@ extension PlaybackArbiterTests {
         await arbiter.sourceChanged("com.example.movies", playing: true, heardSince: heard)
         #expect(await arbiter.pausedByUs)
         #expect(await player.pauseCallCount == 1) // only Viewer's pause was AutoHush's
-        #expect(leveler.log == ["lower -6.0", "restore now"])
+        #expect(leveler.log == ["lower -6.0"])
     }
 
     @Test("a pause taken over after an earlier pause the user ended isn't judged by that pause's sound: the user playing the music while the app plays makes it theirs, not muted")

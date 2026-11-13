@@ -7,11 +7,6 @@ extension PlaybackArbiter {
     /// music it paused needn't wait for the monitor's stop.
     func setConfiguration(_ configuration: AppConfiguration) async {
         self.configuration = configuration
-        if !configuration.levelsMusic {
-            volumeLeveler?.restoreNow() // whoever lowered it: the setting is off for all
-            levelLowered = nil
-            resumeLowered = false
-        }
         await fader.setDurations(fadeOut: configuration.fadeOutDuration, fadeIn: configuration.fadeInDuration)
         for sourceID in activeSources.sorted() where !configuration.isMediaSource(sourceID) {
             await handleSourceChange(sourceID: sourceID, isPlaying: false)

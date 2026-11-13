@@ -67,8 +67,8 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
     }
 
-    @Test("Resume playback turned off while a resume tries again puts the Mac's lowered volume back, and the music stays paused")
-    func resumeOffPutsBackLevel() async {
+    @Test("Resume playback turned off while a resume tries again leaves the Mac's lowered volume as it is, and the music stays paused")
+    func resumeOffKeepsLevel() async {
         let player = MockMusicPlayer()
         let scheduler = ManualDebounceScheduler()
         let leveler = RecordingVolumeLeveler()
@@ -84,9 +84,8 @@ extension PlaybackArbiterTests {
         await arbiter.setConfiguration(configuration)
         await player.setFailPlay(nil)
         await scheduler.completeNext()
-        await TestWait.until { leveler.log.count == 2 }
         await arbiter.waitUntilIdle()
-        #expect(leveler.log == ["lower -6.0", "restore now"])
+        #expect(leveler.log == ["lower -6.0"])
         #expect(await player.playCallCount == 1) // only the failed try
     }
 }

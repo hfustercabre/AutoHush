@@ -115,8 +115,8 @@ extension PlaybackArbiterTests {
         #expect(await player.state == .playing)
     }
 
-    @Test("with Level the volume on, a resume tried again that finds an app playing, Auto-Pause on again, puts the volume back")
-    func retryFindingAppPutsLevelBack() async {
+    @Test("with Level the volume on, a resume tried again that finds an app playing, Auto-Pause on again, leaves the lowered volume as it is")
+    func retryFindingAppKeepsLevel() async {
         let player = MockMusicPlayer()
         let leveler = RecordingVolumeLeveler()
         let scheduler = ManualDebounceScheduler()
@@ -129,7 +129,7 @@ extension PlaybackArbiterTests {
 
         await arbiter.setAutoPauseEnabled(true) // Viewer still plays: a pause waits for it to be measured again
         await scheduler.completeNext() // the retry, which finds Viewer playing
-        await TestWait.until { leveler.log.count == 2 }
-        #expect(leveler.log == ["lower -6.0", "restore now"])
+        await arbiter.waitUntilIdle()
+        #expect(leveler.log == ["lower -6.0"])
     }
 }

@@ -5,7 +5,6 @@ extension PlaybackArbiter {
     /// Calls off the pending resume: a source started, Auto-Pause went off,
     /// the Mac sleeps, resumes are held, or the arbiter shuts down.
     func cancelPendingResume() {
-        if pendingResumeID != nil { putBackResumeLevel() } // it won't bring the music back
         forgetPendingResume()
     }
 
@@ -16,16 +15,6 @@ extension PlaybackArbiter {
         pendingResumeTask = nil
         pendingResumeWait = nil
         pendingResumeID = nil
-    }
-
-    /// The resume that lowered the Mac's volume (Level the volume) ended
-    /// without the music playing: the volume is put back at once, not left
-    /// lowered for music that doesn't play.
-    func putBackResumeLevel() {
-        guard resumeLowered else { return }
-        resumeLowered = false
-        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
-        levelLowered = nil
     }
 
     /// Resumes the music in a task of its own: after `delay`, or right away
@@ -48,17 +37,14 @@ extension PlaybackArbiter {
         guard pendingResumeID == id, !isShutDown, !isAsleep else { return }
         // With auto-pause off, music we paused comes back even while others play.
         guard activeSources.isEmpty || !autoPauseEnabled else {
-            putBackResumeLevel()
             return
         }
         guard pausedByUs else {
-            putBackResumeLevel()
             publishPlaybackState()
             return
         }
         guard !resumesHeld else {
             logger.info("[arbiter] \(self.player.name, privacy: .public) stays paused until Add an App’s check ends")
-            putBackResumeLevel()
             publishPlaybackState()
             return
         }
@@ -86,7 +72,6 @@ extension PlaybackArbiter {
     /// Our pause, kept instead of resumed (or as the output went away),
     /// becomes the user's.
     func keepPaused() async {
-        putBackResumeLevel()
         // Muted while it plays on (its pause didn't take, or it started again
         // by itself): paused for real before the mute is lifted, as it's to
         // stay paused. Refused, it stays muted, still AutoHush's pause, as
@@ -164,7 +149,6 @@ extension PlaybackArbiter {
         if currentState == .unknown {
             logger.info("[arbiter] \(self.player.name, privacy: .public) didn’t answer — the resume is given up")
             pausedByUs = false
-            putBackResumeLevel()
             resumeFailure = .playerNotResponding
             publishPlaybackState()
             return
@@ -181,20 +165,16 @@ extension PlaybackArbiter {
                 logger.info("[arbiter] resume skipped — \(self.player.name, privacy: .public) is \(currentState.rawValue, privacy: .public) (user interaction detected)")
             }
             pausedByUs = false
-            // Playing (an earlier try's play went through, or the user's), it
-            // plays at the volume lowered for it, put back at its next pause.
-            if currentState == .playing { resumeLowered = false } else { putBackResumeLevel() }
             publishPlaybackState()
             return
         }
 
         // After quieter apps, the Mac's volume lowered to their level first,
-        // while nothing plays (Settings → Behavior). A try again finds it
-        // lowered already, by the try before.
-        if configuration.levelsMusic, let volumeLeveler, let offset = await resumeOffset() {
+        // while nothing plays (Settings → Behavior), and left so. A try
+        // again finds it lowered already, by the try before.
+        if !levelLowered, configuration.levelsMusic, let volumeLeveler, let offset = await resumeOffset() {
             guard !isShutDown, pendingResumeID == id else { return }
-            if let token = volumeLeveler.lower(by: offset) { levelLowered = token }
-            if levelLowered != nil { resumeLowered = true }
+            levelLowered = volumeLeveler.lower(by: offset)
         }
 
         // Forget the pending resume without cancelling it: this may be running
@@ -211,7 +191,6 @@ extension PlaybackArbiter {
         do {
             try await fader.playAndFadeIn()
             playerState = .playing
-            resumeLowered = false // the music plays at the volume lowered for it
             logger.info("[arbiter] \(self.player.name, privacy: .public) resumed, because \(self.autoPauseEnabled ? "no other app plays" : "Auto-Pause is off", privacy: .public)")
             confirmResumeLater()
         } catch {
@@ -222,7 +201,6 @@ extension PlaybackArbiter {
                 pausedByUs = true
                 scheduleResume(after: Self.resumeRetryDelay, retriesLeft: retriesLeft - 1)
             } else {
-                putBackResumeLevel() // given up
                 // Its tries done, with nothing playing to pause it again: the menu says so.
                 if retriesLeft == 0, !isShutDown, !isAsleep, activeSources.isEmpty || !autoPauseEnabled {
                     resumeFailure = error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed)

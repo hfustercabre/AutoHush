@@ -18,14 +18,6 @@ struct PlayerSessionPipelinesTests {
                                       learnedAssertions: learned, resumesHeld: resumesHeld)
     }
 
-    /// Pipelines sharing `leveler`, reading stand-ins for macOS, with Auto-Pause on.
-    private static func pipelines(sharing leveler: CountingLeveler) -> (any SessionMonitoring, any SessionMonitoring) {
-        let make = PlayerSession.pipelines(hostedApp: { _ in nil }, volumeLeveler: leveler, readers: { .standIns() })
-        let settings = MonitoringSettings(autoPause: true, ignored: [], timings: .defaults, detection: .audioLevels)
-        // A pause held for the player chosen before, and the new one's.
-        return (make(MockMusicPlayer(), setup(settings), { _ in }), make(MockMusicPlayer(), setup(settings), { _ in }))
-    }
-
     @Test("the session's monitorings are pipelines made with its setup: Auto-Pause, held resumes, ignored apps, detection, learned signals, hosted apps")
     func madeForSession() async {
         // As the app makes them, reading macOS; never started.
@@ -71,19 +63,5 @@ struct PlayerSessionPipelinesTests {
         await TestWait.until { await player.playCallCount > 0 || updates.playback.count > told }
         #expect(await player.playCallCount == 0)
         await monitoring.stopAndRestoreVolume()
-    }
-
-    @Test("Level the volume turned off reaches the app's one volume leveler once from each of the session's monitorings")
-    func levelingOffReachesSharedLeveler() async {
-        let leveler = CountingLeveler()
-        let (held, current) = Self.pipelines(sharing: leveler)
-        var off = AppConfiguration.testTicksOnly
-        off.levelsMusic = false
-        held.setConfiguration(off)
-        current.setConfiguration(off)
-        await TestWait.until { leveler.restores == 2 }
-        await held.stopAndRestoreVolume()
-        await current.stopAndRestoreVolume()
-        #expect(leveler.restores == 2) // one from each, no more
     }
 }

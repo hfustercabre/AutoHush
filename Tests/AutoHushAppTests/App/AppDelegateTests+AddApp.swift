@@ -496,36 +496,20 @@ extension AppDelegateTests {
     }
 
     @MainActor
-    @Test("the Mac's volume lowered for the music (Level the volume) is put back as AutoHush quits, and at the next launch after a crash")
-    func loweredVolumePutBack() {
+    @Test("the Mac's volume lowered for the music (Level the volume) stays as it is as AutoHush quits and at the next launch; an older version's record of it is forgotten")
+    func loweredVolumeLeft() {
         let scratch = Scratch()
         let (sut, _) = makeSUT(scratch)
         sut.volumeLeveler.lower(by: -6)
         #expect(scratch.volume.decibels == [0: -16])
         sut.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
-        #expect(scratch.volume.decibels == [0: -10])
+        #expect(scratch.volume.decibels == [0: -16])
 
-        sut.volumeLeveler.lower(by: -6)
-        let (next, _) = makeSUT(scratch) // AutoHush crashed: the next launch
+        scratch.defaults.set(Data("{}".utf8), forKey: SystemVolumeLeveler.leftKey) // an older version's
+        let (next, _) = makeSUT(scratch)
         next.putBackWhatWasLeft()
-        #expect(scratch.volume.decibels == [0: -10])
-    }
-
-    @MainActor
-    @Test("a copy opened while another lowers the Mac's volume leaves it lowered until that copy quits: only then is what's left put back")
-    func leftVolumeWaitsForOlderCopy() async {
-        let scratch = Scratch()
-        let (older, _) = makeSUT(scratch)
-        older.volumeLeveler.lower(by: -6) // still leveling as the next copy opens
-        let running = Locked<Set<pid_t>>([101]), atQuit = Locked<[[UInt32: Float]?]>([]) // by channel
-        let volume = scratch.volume
-        let others = OtherInstances(list: { running.value.sorted() },
-                                    send: { pid, _ in atQuit.append(volume.decibels); running.withLock { _ = $0.remove(pid) } },
-                                    isRunning: { running.value.contains($0) })
-        let (next, _) = makeSUT(scratch, otherInstances: others)
-        await next.launchAfterOtherCopies()
-        #expect(atQuit.value == [[0: -16]]) // still the older copy's as it was asked to quit
-        #expect(scratch.volume.decibels == [0: -10]) // it quit without putting it back (crashed): put back then
+        #expect(scratch.volume.decibels == [0: -16])
+        #expect(scratch.defaults.data(forKey: SystemVolumeLeveler.leftKey) == nil)
     }
 
     /// Now Playing shown in the menu bar for a press while the user hid it,

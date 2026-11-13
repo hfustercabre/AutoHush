@@ -9,239 +9,54 @@ import AutoHushTestSupport
 final class SystemVolumeLevelerTests {
     private let defaults: UserDefaults = MemoryDefaults()
 
-    /// A leveler of `volume`, with this test's preferences: its glide back
-    /// up steps at once, unless `sleep` waits.
-    private func leveler(_ volume: any SystemVolumeControlling, sleep: @escaping @Sendable (TimeInterval) -> Void = { _ in },
-                         now: @escaping @Sendable () -> Date = Date.init) -> SystemVolumeLeveler {
-        SystemVolumeLeveler(volume: volume, defaults: defaults, sleep: sleep, now: now)
+    private func leveler(_ volume: any SystemVolumeControlling, clock: ManualClock = ManualClock()) -> SystemVolumeLeveler {
+        SystemVolumeLeveler(volume: volume, defaults: defaults, now: { clock.now })
     }
 
-    /// What it lowered is kept for the next launch.
-    private var isKept: Bool { defaults.data(forKey: SystemVolumeLeveler.leftKey) != nil }
-
-    @Test("lowers each channel by as much, never below the lowest, and puts it back over the fade-out in steps")
-    func lowersAndRestores() async throws {
+    @Test("lowers each channel by as much, never below the lowest, keeps nothing and never raises it: each lowering lowers again from where the volume is")
+    func lowersAndLeaves() {
         let volume = MockSystemVolume([1: -12, 2: -14], lowest: -20)
-        let leveler = leveler(volume)
-        let token = try #require(leveler.lower(by: -6))
-        #expect(volume.decibels == [1: -18, 2: -20]) // the balance kept, -20 the lowest
-        #expect(leveler.lower(by: -3) == nil) // already lowered: once only
-        #expect(volume.decibels == [1: -18, 2: -20])
-
-        leveler.restore(over: 0.2, lowered: token)
-        await TestWait.until { !self.isKept } // back: nothing kept
-        #expect(volume.decibels == [1: -12, 2: -14])
-        #expect(volume.sets.count == 1 + 4) // lowered, then 4 steps of 50 ms
-        #expect(volume.sets[1] == [1: -16.5, 2: -18.5])
+        let clock = ManualClock()
+        let leveler = leveler(volume, clock: clock)
+        #expect(leveler.lower(by: -4))
+        #expect(volume.decibels == [1: -16, 2: -18]) // the balance kept
+        #expect(defaults.data(forKey: SystemVolumeLeveler.leftKey) == nil) // nothing kept to put back
+        clock.advance(by: 60)
+        #expect(leveler.lower(by: -4)) // the next resume's: from where it is now
+        #expect(volume.decibels == [1: -20, 2: -20]) // -20 the lowest
+        #expect(volume.sets.count == 2) // only lowered, never raised
     }
 
-    @Test("the user's own change wins: a volume changed meanwhile is left as it is, at once or over the fade-out")
-    func userChangeWins() throws {
+    @Test("two monitorings resuming for the same quiet moment lower it once: a second lowering within 2 s is taken as done")
+    func sameQuietOnce() {
         let volume = MockSystemVolume([0: -10])
-        let leveler = leveler(volume)
-        let token = try #require(leveler.lower(by: -8))
-        volume.decibels = [0: -25] // the volume keys
-        leveler.restoreNow(lowered: token)
-        #expect(volume.decibels == [0: -25] && !isKept)
-
-        volume.decibels = [0: -10]
-        let again = try #require(leveler.lower(by: -8))
-        volume.decibels = [0: -14] // the volume keys, before the music pauses again
-        leveler.restore(over: 0.2, lowered: again)
-        #expect(volume.decibels == [0: -14] && !isKept) // no glide: nothing more set
-        #expect(volume.sets == [[0: -18], [0: -18]])
-    }
-
-    @Test("the glide back up stops once the user changes the volume during it, and leaves it as they set it")
-    func glideYieldsToTheUser() async throws {
-        let volume = MockSystemVolume([0: -10])
-        let steps = Locked(0)
-        let leveler = leveler(volume, sleep: { _ in
-            // The volume keys, after the glide's first step.
-            if steps.withLock({ $0 += 1; return $0 }) == 1 { volume.decibels = [0: -30] }
-        })
-        let token = try #require(leveler.lower(by: -8))
-        leveler.restore(over: 0.2, lowered: token) // 4 steps: -16, -14, -12, -10
-        await TestWait.until { !self.isKept }
-        #expect(volume.decibels == [0: -30])
-        #expect(volume.sets == [[0: -18], [0: -16]])
-    }
-
-    @Test("a glide whose output is unplugged midway stops and forgets it; the next resume lowers the output there then")
-    func glideOutputUnplugged() async throws {
-        let volume = MockSystemVolume([0: -10])
-        let steps = Locked(0)
-        let leveler = leveler(volume, sleep: { _ in
-            if steps.withLock({ $0 += 1; return $0 }) == 1 { volume.isPlugged = false } // headphones out
-        })
-        let token = try #require(leveler.lower(by: -8))
-        leveler.restore(over: 0.2, lowered: token)
-        await TestWait.until { !self.isKept }
-        #expect(volume.sets == [[0: -18], [0: -16]])
-
-        volume.isPlugged = true
-        #expect(leveler.lower(by: -6) != nil) // not left gliding
+        let clock = ManualClock()
+        let leveler = leveler(volume, clock: clock)
+        #expect(leveler.lower(by: -6))
+        clock.advance(by: 1)
+        #expect(leveler.lower(by: -6)) // the held player's, for the same quiet: done already
+        #expect(volume.decibels == [0: -16] && volume.sets.count == 1)
+        clock.advance(by: 2)
+        #expect(leveler.lower(by: -6)) // a later quiet's
         #expect(volume.decibels == [0: -22])
     }
 
-    @Test("an output with no volume control is left alone, and so is a restore with nothing lowered")
+    @Test("an output with no volume control is left alone, and so is a lowering by nothing")
     func noControl() {
         let volume = MockSystemVolume(nil)
-        let leveler = leveler(volume)
-        #expect(leveler.lower(by: -8) == nil)
-        leveler.restoreNow()
+        #expect(!leveler(volume).lower(by: -8))
         #expect(volume.sets.isEmpty)
+        let controlled = MockSystemVolume([0: -10])
+        #expect(!leveler(controlled).lower(by: 0))
+        #expect(controlled.sets.isEmpty)
     }
 
-    @Test("one leveler for every monitoring: only the lowering's own token puts it back, once")
-    func onlyItsOwnToken() throws {
-        let volume = MockSystemVolume([0: -10])
-        let leveler = leveler(volume)
-        let token = try #require(leveler.lower(by: -8))
-        let another = UUID() // a monitoring that lowered nothing now
-        leveler.restore(over: 0.2, lowered: another)
-        leveler.restoreNow(lowered: another)
-        #expect(volume.decibels == [0: -18] && isKept)
-        leveler.restoreNow(lowered: token)
-        #expect(volume.decibels == [0: -10] && !isKept)
-        leveler.restoreNow(lowered: token) // put back already: nothing more
-        #expect(volume.sets.count == 2)
-    }
-
-    @Test("a put-back for all (a quit, the setting off) puts back whatever is lowered")
-    func putBackForAll() throws {
-        let volume = MockSystemVolume([0: -10])
-        let leveler = leveler(volume)
-        _ = try #require(leveler.lower(by: -8))
-        leveler.restoreNow()
-        #expect(volume.decibels == [0: -10] && !isKept)
-    }
-
-    @Test("what it lowered is kept until it's put back: after a quit or a crash, the next launch puts it back, unless the user changed it since")
-    func putBackAtLaunch() {
-        let volume = MockSystemVolume([0: -10])
-        func launch() -> SystemVolumeLeveler { leveler(volume) }
-        launch().lower(by: -8) // AutoHush quits or crashes with the music lowered
-        #expect(volume.decibels == [0: -18])
-        launch().restoreIfLeft()
-        #expect(volume.decibels == [0: -10])
-        launch().restoreIfLeft() // nothing left: nothing changes
-        #expect(volume.sets.count == 2)
-
-        launch().lower(by: -8)
-        volume.decibels = [0: -30] // the volume keys, before the next launch
-        launch().restoreIfLeft()
-        #expect(volume.decibels == [0: -30])
-        #expect(!isKept) // forgotten
-    }
-
-    @Test("at launch, a volume lowered within the hour is put back")
-    func recentPutBackAtLaunch() {
-        let volume = MockSystemVolume([0: -10])
-        let start = Date(timeIntervalSince1970: 1_000_000)
-        leveler(volume, now: { start }).lower(by: -8)
-        leveler(volume, now: { start + SystemVolumeLeveler.maxAge - 60 }).restoreIfLeft()
-        #expect(volume.decibels == [0: -10])
-    }
-
-    @Test("at launch, a volume lowered longer than an hour ago is the user's, and forgotten")
-    func olderForgottenAtLaunch() {
-        let volume = MockSystemVolume([0: -10])
-        let start = Date(timeIntervalSince1970: 1_000_000)
-        leveler(volume, now: { start }).lower(by: -8)
-        leveler(volume, now: { start + SystemVolumeLeveler.maxAge + 60 }).restoreIfLeft()
-        #expect(volume.decibels == [0: -18] && !isKept)
-    }
-
-    @Test("at launch, a volume kept before it was dated is put back")
-    func undatedPutBackAtLaunch() throws {
-        let volume = MockSystemVolume([0: -18]) // lowered by an AutoHush of before
-        // As the leveler kept it before 2026-10-18: no token, no date.
-        struct Undated: Codable {
-            let uid: String
-            let original: [AudioObjectPropertyElement: Float]
-            let lowered: [AudioObjectPropertyElement: Float]
-        }
-        let undated = try JSONEncoder().encode(Undated(uid: "Speakers", original: [0: -10], lowered: [0: -18]))
-        defaults.set(undated, forKey: SystemVolumeLeveler.leftKey)
-        leveler(volume).restoreIfLeft()
-        #expect(volume.decibels == [0: -10] && !isKept)
-    }
-
-    @Test("nothing waits for the glide back up: a put-back at once, or a resume lowering again, stops it where it is")
-    func glideStops() throws {
-        let volume = MockSystemVolume([0: -10])
-        // Each step of the glide waits here, until the test lets it go on.
-        let stepped = DispatchSemaphore(value: 0), goOn = DispatchSemaphore(value: 0)
-        let timedOut = Locked(false)
-        let leveler = leveler(volume, sleep: { _ in
-            stepped.signal()
-            if goOn.wait(timeout: TestWait.dispatchDeadline) == .timedOut { timedOut.value = true }
-        })
-        let token = try #require(leveler.lower(by: -8))
-        leveler.restore(over: 0.2, lowered: token) // 4 steps: -16, -14, -12, -10
-        #expect(stepped.wait(timeout: TestWait.dispatchDeadline) == .success)
-        #expect(volume.decibels == [0: -16])
-
-        // The music resumes again: from the volume it was going back to.
-        let again = try #require(leveler.lower(by: -6))
-        #expect(volume.decibels == [0: -16])
-        goOn.signal() // the old glide wakes, stopped
-
-        // The next one, after it on its queue: it set nothing more meanwhile.
-        leveler.restore(over: 0.2, lowered: again)
-        #expect(stepped.wait(timeout: TestWait.dispatchDeadline) == .success)
-        #expect(volume.sets == [[0: -18], [0: -16], [0: -10], [0: -16], [0: -14.5]])
-
-        // Settings or a stop: at once, while the glide waits.
-        leveler.restoreNow()
-        #expect(volume.decibels == [0: -10] && !isKept)
-        goOn.signal()
-        #expect(!timedOut.value)
-    }
-
-    @Test("a put-back at once during the glide back up leaves a volume the user changed since its last step as they set it")
-    func putBackDuringGlideYieldsToTheUser() throws {
-        let volume = MockSystemVolume([0: -10])
-        let stepped = DispatchSemaphore(value: 0), goOn = DispatchSemaphore(value: 0)
-        let leveler = leveler(volume, sleep: { _ in
-            stepped.signal()
-            _ = goOn.wait(timeout: TestWait.dispatchDeadline)
-        })
-        let token = try #require(leveler.lower(by: -8))
-        leveler.restore(over: 0.2, lowered: token) // 4 steps: -16, -14, -12, -10
-        #expect(stepped.wait(timeout: TestWait.dispatchDeadline) == .success)
-        volume.decibels = [0: -30] // the volume keys, between two steps
-
-        leveler.restoreNow(lowered: token) // the music resumes, or its monitoring stops
-        #expect(volume.decibels == [0: -30] && !isKept)
-        goOn.signal()
-        #expect(volume.sets == [[0: -18], [0: -16]])
-    }
-
-    @Test("with sound moved to another output meanwhile, the output it lowered is put back at once, found by its UID; the other is left alone")
-    func putsBackTheOutputItLoweredAtOnce() throws {
-        let outputs = TwoOutputs()
-        let leveler = leveler(outputs)
-        let token = try #require(leveler.lower(by: -6))
-        #expect(outputs.decibels == [42: [0: -16], 43: [0: -20]])
-        outputs.current = 43 // headphones plugged in
-        leveler.restoreNow(lowered: token)
-        #expect(outputs.decibels == [42: [0: -10], 43: [0: -20]])
-        #expect(outputs.sets.map(\.device) == [42, 42])
-    }
-
-    @Test("with sound moved to another output meanwhile, the output it lowered is put back over the fade-out; the other is left alone")
-    func putsBackTheOutputItLoweredOverTheFadeOut() async throws {
-        let outputs = TwoOutputs()
-        outputs.current = 43 // headphones plugged in
-        let leveler = leveler(outputs)
-        let token = try #require(leveler.lower(by: -6))
-        #expect(outputs.decibels[43] == [0: -26])
-        outputs.current = 42 // unplugged
-        leveler.restore(over: 0.2, lowered: token)
-        await TestWait.until { !self.isKept }
-        #expect(outputs.decibels == [42: [0: -10], 43: [0: -20]])
-        #expect(outputs.sets.map(\.device) == [43, 43, 43, 43, 43])
+    @Test("at launch, what an older version kept to put the volume back is forgotten, and the volume left as it is")
+    func forgetsOlderRecord() {
+        let volume = MockSystemVolume([0: -16])
+        defaults.set(Data("{}".utf8), forKey: SystemVolumeLeveler.leftKey)
+        leveler(volume).forgetLeft()
+        #expect(defaults.data(forKey: SystemVolumeLeveler.leftKey) == nil)
+        #expect(volume.sets.isEmpty)
     }
 }

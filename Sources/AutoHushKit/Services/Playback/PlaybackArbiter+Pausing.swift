@@ -159,11 +159,7 @@ extension PlaybackArbiter {
             if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
             return
         }
-        // The Mac's volume lowered for the music is put back once it's
-        // paused (or muted in its place): a pause called off, or failed and
-        // not muted, keeps it, the music playing.
-        if let levelLowered { volumeLeveler?.restore(over: configuration.fadeOutDuration, lowered: levelLowered) }
-        levelLowered = nil
+        levelLowered = false // paused again: the next resume may lower it
         playerState = .paused
         pausedAt = clock()
         hearingDuringPause = nil
@@ -198,9 +194,7 @@ extension PlaybackArbiter {
             return true
         }
         pauseFailure = nil
-        // Muted: quiet, as once paused, so the lowered volume goes back.
-        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
-        levelLowered = nil
+        levelLowered = false // paused again: the next resume may lower it
         playerState = .paused
         logger.info("[arbiter] \(self.player.name, privacy: .public) is \(state.rawValue, privacy: .public) but can be heard — muted, because these apps play: \(self.playingApps, privacy: .public)")
         forgetEarlierPause()
@@ -246,9 +240,7 @@ extension PlaybackArbiter {
             return false
         }
         pauseFailure = nil
-        // Paused: the Mac's volume lowered for the music is put back.
-        if let levelLowered { volumeLeveler?.restoreNow(lowered: levelLowered) }
-        levelLowered = nil
+        levelLowered = false // paused again: the next resume may lower it
         logger.info("[arbiter] \(self.player.name, privacy: .public) stopped as another app started — it comes back once the apps stop (playing now: \(self.playingApps, privacy: .public))")
         forgetEarlierPause()
         // Things may have changed while the player answered.

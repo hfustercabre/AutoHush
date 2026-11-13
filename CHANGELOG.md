@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Level the volume** lowers the Mac's volume as your player resumes and
+  leaves it there: AutoHush never raises it again, so it no longer goes
+  back up by itself later.
+
 ## [1.4.0] — 2026-11-11
 
 ### Changed

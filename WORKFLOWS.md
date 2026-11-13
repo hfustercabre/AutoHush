@@ -176,7 +176,7 @@ flowchart TD
   RETRY["No answer: tried twice<br/>more, a second apart"]
   CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
   STAY["Stays paused: you<br/>play it when ready"]
-  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most, 2 dB at least, by<br/>default), back up once your<br/>player is paused or muted<br/>again, unless you changed it<br/>(no resume after all: at once;<br/>after a crash: at the next<br/>launch, within the hour)"]
+  LVL["Level the volume on, the apps<br/>quieter: the Mac’s volume<br/>lowered to match (10 dB at<br/>most, 2 dB at least, by<br/>default), once per pause,<br/>and never raised again"]
   FI(["Played and faded in<br/>over 2 s, to your volume"])
 
   S --> F
@@ -799,8 +799,8 @@ flowchart TD
   CHK["Add an App’s check couldn’t<br/>finish: Show Log… (the<br/>check’s own log), Check Again"]
   DEL["The chosen web app deleted:<br/>no player chosen; the window<br/>to choose another opens"]
   FAILS["Reopen AutoHush, the<br/>player’s Reopen or Unmute<br/>didn’t work: an alert says so"]
-  QUIT["Quitting, within a second:<br/>fades stopped, volume back,<br/>mutes lifted, switches off,<br/>Now Playing put back, the<br/>Mac’s output unmuted,<br/>pauses handed over"]
-  NEXT(["The next launch: a press<br/>cut short put right, the Mac’s<br/>output unmuted, its volume<br/>put back if lowered within<br/>the hour, a pause handed<br/>over taken over"])
+  QUIT["Quitting, within a second:<br/>fades stopped, the player’s<br/>volume back, mutes lifted,<br/>switches off,<br/>Now Playing put back, the<br/>Mac’s output unmuted,<br/>pauses handed over"]
+  NEXT(["The next launch: a press<br/>cut short put right, the Mac’s<br/>output unmuted, a pause handed<br/>over taken over"])
 
   R -.-> AUD --> AUDF
   R -.-> PF

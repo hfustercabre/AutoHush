@@ -70,12 +70,13 @@ extension AppDelegate {
 
     /// At launch, what AutoHush changed for a moment and didn't put back,
     /// should it have quit or crashed meanwhile: Now Playing shown for a
-    /// press while the user hid it, the Mac's output muted for a check, its
-    /// volume lowered for the music (Level the volume).
+    /// press while the user hid it, the Mac's output muted for a check. An
+    /// older version's record of a volume lowered for the music is
+    /// forgotten: the volume stays as it is (Level the volume never raises it).
     func putBackWhatWasLeft() {
         NowPlayingSetting.restoreIfLeft(defaults: nowPlayingDefaults, setting: nowPlayingSetting)
         addApp.putBackWhatWasLeft()
-        volumeLeveler.restoreIfLeft()
+        volumeLeveler.forgetLeft()
     }
 
     /// Follows the Focus filter macOS reports now, which catches a Focus's
@@ -132,8 +133,6 @@ extension AppDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         NowPlayingSetting.restoreIfLeft(defaults: nowPlayingDefaults, setting: nowPlayingSetting)
         addApp.quit()
-        // Even when the player's stop outlasted the quit's wait.
-        volumeLeveler.restoreNow()
         // Its `log stream` would otherwise outlive AutoHush, until
         // mediaremoted next writes.
         CheckedPlayer.sharedReports.stop()
