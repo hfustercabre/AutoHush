@@ -59,7 +59,7 @@ final class WindowKeys {
     /// Handles `key` with `focus` on what has the keyboard; `false` leaves
     /// it to the window: Return while a main button can be pressed, a
     /// text field's keys but ↓, Tab and Shift-Tab, and Return, Space, ← and → while a control
-    /// has the focus and nothing is lit.
+    /// has the focus and nothing is lit, and Delete there with nothing lit to remove.
     @discardableResult func handle(_ key: HighlightKey, focus: Focus = .none) -> Bool {
         switch focus {
         case .textField:
@@ -107,7 +107,9 @@ final class WindowKeys {
                 return !mainButtonEnabled
             }
         case .delete:
-            return highlight.delete()
+            // Nothing lit to remove: nothing happens, without AppKit's beep,
+            // unless a control with the focus takes it (K3-4 of 11-11).
+            return highlight.delete() || focus == .none
         }
         return true
     }

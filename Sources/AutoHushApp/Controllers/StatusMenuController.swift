@@ -72,6 +72,8 @@ final class StatusMenuController: NSObject {
     /// `voiceOverOn` as the menu's views read it (`VoiceOverSetting`): the
     /// one set now, a test's set after they were made too.
     var viewsVoiceOver: VoiceOverSetting { VoiceOverSetting { [weak self] in self?.voiceOverOn() ?? false } }
+    /// Says something to VoiceOver, at high priority (tests listen).
+    var announce: @MainActor (String) -> Void = { postStepAnnouncement($0) }
     /// The waits of the fold's fade and the side windows' timing (tests
     /// shorten them).
     var pause: @Sendable (TimeInterval) async -> Void = { try? await Task.sleep(for: .seconds($0)) }
@@ -311,6 +313,9 @@ final class StatusMenuController: NSObject {
         let snoozeChanged = model.status.snooze != status.snooze
         model.status = status
         if snoozeChanged { followSnoozeClock() }
+        // After the card's Try Again, VoiceOver hears how it went, as every
+        // other announcement (K3-5 of 11-11).
+        if let outcome = model.retryOutcome() { announce(outcome) }
     }
 
     private func renderIcon() {
@@ -341,7 +346,6 @@ final class StatusMenuController: NSObject {
         pointerSection = nil
         model.isAntiDotMode = settings.state.detection.isAntiDot
         model.isOptionHeld = Self.optionAlone(NSEvent.modifierFlags)
-        model.announcesRetryOutcome = false
-        model.announcesResumeOutcome = false
+        model.pendingRetry = nil
     }
 }

@@ -203,6 +203,23 @@ struct WindowKeysTests {
         #expect(log.calls == ["drop focus", "search", "drop focus"])
     }
 
+    @Test("Delete with nothing lit to remove does nothing, without a beep; a focused control gets it (K3-4 of 11-11)")
+    func deleteWithNothingToRemove() {
+        let log = CallLog()
+        let (keys, tiles, _) = makeKeys(log: log)
+        #expect(keys.handle(.delete)) // nothing lit: taken, so AppKit doesn't beep
+        keys.handle(.down)
+        #expect(keys.highlight.highlighted == tiles[0])
+        #expect(keys.handle(.delete)) // a tile that can't be removed
+        keys.highlight.clear()
+        #expect(!keys.handle(.delete, focus: .control)) // the focused control's (a removable tile's own key)
+        let removable = UUID()
+        keys.highlight.register(removable, .init(frame: CGRect(x: 0, y: 200, width: 120, height: 44), delete: { log.calls.append("remove") }))
+        keys.highlight.highlight(removable)
+        #expect(keys.handle(.delete, focus: .control))
+        #expect(log.calls == ["drop focus", "remove"])
+    }
+
     @Test("a search that doesn't show leaves the highlight where it is")
     func noSearchShown() {
         let log = CallLog()

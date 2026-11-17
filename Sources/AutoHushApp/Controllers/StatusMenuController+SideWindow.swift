@@ -104,7 +104,16 @@ extension StatusMenuController {
         let pause = pause
         Task { [weak side] in
             await pause(0.05) // SwiftUI focuses the field in its next update
-            side?.sendEvent(event)
+            // A focus SwiftUI dropped (a busy main thread, another window key
+            // for a moment) is given through AppKit, as the other searches do,
+            // so the key isn't lost (B-2 of 11-11); a few updates at most.
+            for _ in 0..<5 {
+                guard let side, side.isVisible, !(side.firstResponder is NSTextView) else { break }
+                side.makeFirstResponder(side.contentView?.firstEditableTextField)
+                await pause(0.05)
+            }
+            guard let side, side.isVisible else { return } // closed meanwhile: typed nowhere
+            side.sendEvent(event)
         }
         return true
     }

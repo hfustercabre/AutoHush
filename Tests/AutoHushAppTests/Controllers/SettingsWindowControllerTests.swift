@@ -89,6 +89,27 @@ final class SettingsWindowControllerTests {
         #expect(model.fineTuningFocus == nil)
     }
 
+    @Test("Fine-Tuning opened at its lowest card scrolls down to it, then forgets the request (B-6 of 11-11)")
+    func fineTuningScrollsToCard() async throws {
+        let model = makeModel()
+        let sut = makeController(model)
+        defer { sut.close() }
+        model.fineTuningFocus = .detection // a Behavior row's (`showFineTuning`)
+        sut.show(page: .fineTuning)
+        await TestWait.until { model.fineTuningFocus == nil }
+        // Its first row made by then, in the page's scroll view, and shown.
+        let window = try #require(sut.window)
+        let anchor = try #require(ScrollAnchor.view(for: AnyHashable(SettingsCard.detection), where: { $0.window === window }))
+        let scroll = try #require(anchor.enclosingScrollView)
+        let document = try #require(scroll.documentView)
+        await TestWait.until {
+            scroll.contentView.documentVisibleRect.intersects(anchor.convert(anchor.bounds, to: document))
+        }
+        let visible = scroll.contentView.documentVisibleRect
+        let fromTop = document.isFlipped ? visible.minY : document.frame.height - visible.maxY
+        #expect(fromTop > 0) // moved from the page's top
+    }
+
     @Test("a page shown by a key's press, or VoiceOver's, lights its first control, where VoiceOver's cursor goes; once, and not for a page shown otherwise (N8)")
     func shownPageTakesHighlight() async throws {
         let model = makeModel()
@@ -283,7 +304,7 @@ final class SettingsWindowControllerTests {
         #expect(sut.handleKey(48, flags: .shift, windowNumber: window.windowNumber)) // Shift-Tab: back
         #expect(sut.keys.page.highlighted == first)
     }
-    @Test("on Sound Sources, Delete removes the selected apps, as Remove does; with none selected, or on another page, it isn't taken")
+    @Test("on Sound Sources, Delete removes the selected apps, as Remove does; with none selected, or on another page, it does nothing, without a beep (K3-4 of 11-11)")
     func deleteRemovesSelected() async throws {
         let preferences = Preferences(store: InMemoryPreferenceStore())
         let arc = AudioSource(id: "com.example.arc", name: "Arc")
@@ -295,11 +316,12 @@ final class SettingsWindowControllerTests {
         sut.show(page: .behavior)
         let window = try #require(sut.window)
         model.appList.click(on: arc.id, command: false, shift: false)
-        #expect(!sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // another page
+        #expect(sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // another page: taken, nothing removed
+        #expect(model.appList.selectedApps.count == 1)
         sut.show(page: .soundSources)
         #expect(sut.handleKey(51, flags: [], windowNumber: window.windowNumber))
         #expect(model.appList.selectedApps.isEmpty && preferences.seenApps.isEmpty)
-        #expect(!sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // none selected
+        #expect(sut.handleKey(51, flags: [], windowNumber: window.windowNumber)) // none selected: taken, no beep
     }
 
     @Test("in Sound Sources' search, ↓ leaves it for the first app under it (N4), Tab for the stop after it, Shift-Tab, with Back and Forward dimmed, for the sidebar's last stop, from which Tab comes back into it (K3, R1), and Escape closes the search, from a row or the field")

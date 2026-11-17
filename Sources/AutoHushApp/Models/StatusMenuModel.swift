@@ -64,13 +64,9 @@ final class StatusMenuModel {
     var isSideCappedByScreen = false
     /// An update check asked from the menu runs: its Updates button says so.
     var isCheckingForUpdates = false
-    /// Try Again was clicked: VoiceOver hears the card's line once the start is
-    /// over, as it shows how it went.
-    @ObservationIgnored var announcesRetryOutcome = false
-    /// Try Again on "Couldn't resume" was clicked: VoiceOver hears the card's
-    /// line once the resume is over (played, or given up again), not the
-    /// line shown while it tries.
-    @ObservationIgnored var announcesResumeOutcome = false
+    /// Try Again was clicked in the card, and how it went isn't in yet
+    /// (`retryOutcome`); `nil` once it is, or as the menu opens.
+    @ObservationIgnored var pendingRetry: PendingRetry?
     @ObservationIgnored var perform: @MainActor (StatusMenuCommand) -> Void = { _ in }
     /// The clock the snooze bar's time left is read by: set as the menu
     /// opens and each time the minutes left change
@@ -133,4 +129,38 @@ final class StatusMenuModel {
 
     /// The time left, beside the heading while a snooze runs.
     var snoozeTimeLeft: String? { status.snooze?.timeLeft(at: now) }
+}
+
+// The card's Try Again, and VoiceOver hearing how it went.
+extension StatusMenuModel {
+    /// What Try Again tries again: the start, or the resume ("Couldn't resume").
+    enum RetryKind { case start, resume }
+
+    /// A Try Again whose result VoiceOver waits for: `begun` once the status
+    /// shows it trying (the start under way, "Couldn't resume" gone).
+    struct PendingRetry: Equatable {
+        let kind: RetryKind
+        var begun = false
+    }
+
+    /// The card's line to announce once the Try Again's own result is in
+    /// (the start over; the resume played, or given up again), the wait
+    /// then over; `nil` until then. Read each time the status changes: by
+    /// the result, not by the line, which can come back the same (the same
+    /// failure) or change for another reason first (K3-5 of 11-11).
+    func retryOutcome() -> String? {
+        guard var pending = pendingRetry else { return nil }
+        let trying = switch pending.kind {
+        case .start: status.health == .starting
+        case .resume: !status.showsResumeFailure && status.playback != .musicPlaying
+        }
+        if trying {
+            pending.begun = true
+            pendingRetry = pending
+            return nil
+        }
+        guard pending.begun else { return nil } // the status from before the click
+        pendingRetry = nil
+        return status.statusLine
+    }
 }

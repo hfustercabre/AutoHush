@@ -239,8 +239,24 @@ final class KeyHighlight {
         orderOnArrival = nil
         hovered.removeAll { $0 == id }
         if highlighted == id { point(at: innermostHovered()) }
-        lights[id] = nil
+        // Its `Light` stays, out: a view shown again without being drawn
+        // anew (a kept window reopened) still observes it, and registers
+        // the same id (K3-2 of 11-11). Dropped only with the highlight.
+        if let light = lights[id] {
+            light.isOn = false
+            light.byKeys = false
+        }
+        // Kept within bounds: views shown anew come with new ids, so the
+        // lights of controls gone for good are let go now and then (R3).
+        if lights.count > controls.count + Self.keptLights {
+            lights = lights.filter { controls[$0.key] != nil || $0.key == highlighted }
+        }
     }
+
+    /// How many lights of controls no longer shown are kept (`remove`).
+    static let keptLights = 200
+    /// The lights held now, shown or not (tests).
+    var lightCount: Int { lights.count }
 
     /// The keyboard's focus came onto a control (`true`) or left it.
     func focus(_ id: UUID, _ isFocused: Bool) {

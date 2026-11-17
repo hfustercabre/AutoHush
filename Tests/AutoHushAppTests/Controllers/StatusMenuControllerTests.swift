@@ -310,6 +310,36 @@ struct StatusMenuControllerTests {
         #expect(session.state.health == nil) // no player chosen
         sut.perform(.retry)
         #expect(session.state.health == .starting)
-        #expect(sut.model.announcesRetryOutcome)
+        #expect(sut.model.pendingRetry == .init(kind: .start))
+    }
+
+    @Test("after Try Again on “Couldn’t resume”, VoiceOver hears its own result once, even the same line again; not the line from before it began, nor a later change (K3-5 of 11-11)")
+    func retryResumeOutcome() {
+        let sut = makeController()
+        defer { sut.remove() }
+        let said = CallLog()
+        sut.announce = { said.calls.append($0) }
+        var failed = readyStatus()
+        failed.playback = .musicIdle
+        failed.resumeError = ControlError(MusicPlayerError.playerNotResponding, player: "Jukebox")
+        #expect(failed.showsResumeFailure)
+        sut.status = failed
+        sut.open(showsPanel: false)
+        defer { sut.close() }
+        sut.perform(.retryResume)
+        var unrelated = failed // another app's sound changes the line, before the resume is tried
+        unrelated.setActiveSources([chrome])
+        sut.status = unrelated
+        #expect(said.calls.isEmpty)
+        var trying = unrelated
+        trying.resumeError = nil
+        trying.playback = .pausedByMonitor
+        sut.status = trying
+        #expect(said.calls.isEmpty)
+        sut.status = unrelated // given up again
+        #expect(said.calls == [unrelated.statusLine])
+        sut.status = trying
+        sut.status = failed
+        #expect(said.calls.count == 1) // once
     }
 }

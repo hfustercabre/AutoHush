@@ -5,6 +5,13 @@ import Foundation
 package protocol PlaybackArbiterDebounceScheduling: Sendable {
     /// A task that finishes after `delay` seconds.
     func scheduleDebounce(after delay: TimeInterval) -> Task<Void, Never>
+    /// For tests only: a restart watch's look got past its wait, on its way
+    /// to the arbiter (T-4 of 11-11).
+    func lookPassedWait()
+}
+
+extension PlaybackArbiterDebounceScheduling {
+    package func lookPassedWait() {}
 }
 
 /// Waits with `Task.sleep`.

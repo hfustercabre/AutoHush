@@ -381,6 +381,43 @@ extension StatusMenuControllerTests {
         await TestWait.until { sut.model.playerSearch == "a" } // typed once
     }
 
+    @Test("a key that gives the players' search the keyboard reaches its field even when SwiftUI dropped the field's focus, given through AppKit, so a dead key or an input method composes there (B-2 of 11-11)")
+    func searchKeyAfterDroppedFocus() async throws {
+        let sut = makeController()
+        defer { sut.remove() }
+        var status = readyStatus()
+        status.playerOptions = (1...PlayerOption.searchThreshold).map {
+            PlayerOption(bundleID: "com.example.player\($0)", name: "Player \($0)", appURL: URL(fileURLWithPath: "/Applications/Player \($0).app"))
+        }
+        status.chosenPlayerID = status.playerOptions[0].bundleID
+        sut.status = status
+        // SwiftUI's focus never arrives: the field is left without it at the first update.
+        let dropped = Locked(false)
+        sut.pause = { _ in
+            await MainActor.run {
+                if !dropped.value, let side = sut.sidePanel {
+                    dropped.value = true
+                    side.makeFirstResponder(nil)
+                }
+            }
+        }
+        sut.open() // on screen
+        sut.perform(.openSide(.players))
+        let side = try #require(sut.sidePanel)
+        let key = try #require(NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                                                windowNumber: side.windowNumber, context: nil, characters: "a",
+                                                charactersIgnoringModifiers: "a", isARepeat: false, keyCode: 0))
+        let reached = Locked(false)
+        let fieldKey = side.onFieldKey
+        side.onFieldKey = { event in // the field's own keys: it has the focus as the key comes
+            if event.characters == "a" { reached.value = true }
+            return fieldKey?(event) ?? false
+        }
+        sut.searchTakesKeyboard(replaying: key)
+        await TestWait.until { sut.model.playerSearch == "a" } // typed once
+        #expect(reached.value) // in the field, not only the panel's own typing
+    }
+
     @Test("the menu reads AntiDot mode live from the settings, so the players follow its switch in the menu at once")
     func antiDotModeLive() {
         let settingsModel = SettingsModel.forTests(actions: actions, updates: updates, settings: settings)

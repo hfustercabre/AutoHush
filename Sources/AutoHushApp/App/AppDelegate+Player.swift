@@ -169,11 +169,12 @@ extension AppDelegate {
 
     /// Watches the Applications folders, and the folder the chosen player's
     /// app is in when it's one inside them. A folder that can't be watched
-    /// yet (no ~/Applications) is tried again at the next check.
+    /// yet (no ~/Applications) is tried again at the next check, and so is
+    /// one deleted or renamed since its watch began (K2-3 of 11-11).
     private func watchFolders(holding appURL: URL?) {
         var paths = Set(ApplicationFolders.all.map(\.path))
         if let appURL { paths.insert(appURL.deletingLastPathComponent().path) }
-        for path in folderWatches.keys where !paths.contains(path) {
+        for (path, watch) in folderWatches where !paths.contains(path) || (watch as? any FolderWatching)?.isGone == true {
             folderWatches[path] = nil
         }
         for path in paths where folderWatches[path] == nil {

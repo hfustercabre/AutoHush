@@ -8,6 +8,12 @@ extension AppDelegate {
     /// After an update, so that the installed one opens; a pause AutoHush is
     /// holding is handed over (see `applicationShouldTerminate`).
     func quitFromRunLoop() {
+        Self.terminateFromRunLoop()
+    }
+
+    /// `quitFromRunLoop`'s quit, for what can't reach the delegate (Reopen
+    /// AutoHush's default, `terminateToReopen`).
+    static func terminateFromRunLoop() {
         RunLoop.main.perform { MainActor.assumeIsolated { NSApp.terminate(nil) } }
     }
 

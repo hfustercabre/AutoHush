@@ -43,10 +43,10 @@ extension StatusMenuController {
         case .pointerEntered(let section):
             pointerEntered(section)
         case .retry:
-            model.announcesRetryOutcome = true
+            model.pendingRetry = .init(kind: .start)
             session.retry() // the card shows how it goes
         case .retryResume:
-            model.announcesResumeOutcome = true
+            model.pendingRetry = .init(kind: .resume)
             session.retryResume() // the card shows how it goes
         case .updates where status.updateOffer == nil:
             // The menu stays open, its button saying "Checking…", until the

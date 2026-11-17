@@ -46,7 +46,7 @@ struct ScrollDriver: NSViewRepresentable {
 
     /// Scrolls to the anchor `id`, if it's made and in this scroll view.
     @MainActor private static func scroll(_ scroll: NSScrollView, to id: AnyHashable, room: CGFloat) -> Bool {
-        guard let anchor = ScrollAnchor.view(for: id), anchor.enclosingScrollView === scroll,
+        guard let anchor = ScrollAnchor.view(for: id, where: { $0.enclosingScrollView === scroll }),
               let document = scroll.documentView else { return false }
         let frame = anchor.convert(anchor.bounds, to: document)
         let visible = scroll.contentView.bounds.height

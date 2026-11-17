@@ -48,6 +48,45 @@ struct HostedWindowKeysTests {
         #expect(log.calls.isEmpty && sut.isOpen) // not to Cancel
     }
 
+    @Test("closed and shown again, the window still leaves Return to its main button (K3-1 of 11-11)")
+    func returnAfterReopening() async throws {
+        let settings = SettingsModel.forTests(actions: FakeAppActions(log: CallLog()), updates: FakeUpdateCommands())
+        settings.state.status.playerOptions = [
+            PlayerOption(bundleID: "com.example.player", name: "Player", appURL: URL(fileURLWithPath: "/Applications/Player.app")),
+        ]
+        let sut = keysAlone(PlayerChooserWindowController(model: settings, tallestPage: 600))
+        defer { sut.close() }
+        sut.show()
+        let keys = try #require(sut.keys)
+        await TestWait.until { keys.highlight.rows.count > 1 }
+        try #require(sut.window).makeFirstResponder(nil)
+        #expect(try key(sut, 125)) // ↓: the first tile
+        #expect(try key(sut, 49, " ")) // picked: Continue on
+        await TestWait.until { keys.mainButtonEnabled }
+        // Kept, as the app keeps it. (SwiftUI didn't take Continue out on
+        // close here, so this doesn't fail without the fix: a guard only.)
+        sut.close()
+        sut.show()
+        await TestWait.until { keys.mainButtonEnabled }
+        #expect(try !key(sut, 36, "\r")) // Continue's again
+    }
+
+    @Test("in the welcome window, every tile registers with the keys, those far below the view too, so End and Page Down reach them (K3-3 of 11-11)")
+    func everyTileReached() async throws {
+        let model = SettingsModel.forTests(actions: FakeAppActions(log: CallLog()), updates: FakeUpdateCommands())
+        let count = 40
+        model.state.status.playerOptions = (0..<count).map {
+            PlayerOption(bundleID: "com.example.player\($0)", name: "Player \($0)", appURL: URL(fileURLWithPath: "/Applications/P\($0).app"))
+        }
+        let sut = keysAlone(PlayerChooserWindowController(model: model, tallestPage: 600))
+        defer { sut.close() }
+        sut.show()
+        let keys = try #require(sut.keys)
+        // Its tiles and the two add tiles, all made, with the window's buttons.
+        await TestWait.until { keys.highlight.controls.count > count + 2 }
+        #expect(keys.highlight.controls.count > count + 2)
+    }
+
     @Test("Space presses the lit control: Cancel closes the warning, the check not started")
     func spacePressesTheLit() async throws {
         let log = CallLog()

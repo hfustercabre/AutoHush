@@ -52,12 +52,18 @@ struct MenuRowButtonStyleTests {
         let first = try #require(ids.first), second = try #require(ids.last)
 
         // The pointer on the first row: the highlight on it, and it lit.
-        await TestWait.until { keys.highlighted == first && Self.isTinted(hosting, row: first, of: keys) }
+        // Something else moving the pointer meanwhile (a live check in the
+        // same VM) leaves nothing to check: no verdict then, rather than a
+        // failure (T-7 of 11-11; a window moved back under it isn't hovered).
+        let moved = { NSEvent.mouseLocation != pointer }
+        await TestWait.until { moved() || keys.highlighted == first && Self.isTinted(hosting, row: first, of: keys) }
+        guard !moved() else { return }
         // ↓: the second lights up; the first, still under the pointer, goes dark.
         keys.move(1)
         #expect(keys.highlighted == second)
-        await TestWait.until { Self.isTinted(hosting, row: second, of: keys) }
+        await TestWait.until { moved() || Self.isTinted(hosting, row: second, of: keys) }
         let firstLit = Self.isTinted(hosting, row: first, of: keys)
+        guard !moved() else { return }
         #expect(!firstLit)
     }
 

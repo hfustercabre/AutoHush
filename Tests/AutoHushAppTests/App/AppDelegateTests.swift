@@ -107,9 +107,18 @@ struct AppDelegateTests {
             return URL(fileURLWithPath: "\(folder)/\(bundleID).app")
         }
 
-        func watch(_: URL, onChange: @escaping @MainActor () -> Void) -> AnyObject? {
+        /// The watches started, by folder, each able to say its folder went away.
+        private(set) var watches: [String: [StandInWatch]] = [:]
+
+        func watch(_ folder: URL, onChange: @escaping @MainActor () -> Void) -> AnyObject? {
             onFolderChange = onChange
-            return NSObject()
+            let watch = StandInWatch()
+            watches[folder.path, default: []].append(watch)
+            return watch
+        }
+
+        final class StandInWatch: FolderWatching {
+            var isGone = false
         }
 
         func changeFolder() {

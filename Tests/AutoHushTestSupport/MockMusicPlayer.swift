@@ -169,8 +169,19 @@ package actor MockMusicPlayer: MusicPlayer {
     /// `pauseCallCount` too.
     package var uncoveredPauses = 0
 
+    /// Its backups pause it where its own way is refused: `pauseUncovered`
+    /// takes even with `failPauseWith` set.
+    package var backupsPause = false
+    package func setBackupsPause(_ on: Bool) { backupsPause = on }
+
     package func pauseUncovered() async throws {
         uncoveredPauses += 1
+        if backupsPause {
+            pauseCallCount += 1
+            commandLog.append("pause")
+            state = .paused
+            return
+        }
         try await pause()
     }
 

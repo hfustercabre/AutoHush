@@ -69,6 +69,29 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
     }
 
+    @Test("a pause fading out as the output goes away, refused, is tried once more uncovered (every backup) before its mute is lifted; taken, it's paused and said so (K1-1 of 11-11, R2)",
+          arguments: [false, true])
+    func refusedDisconnectDuringFadeOutTriesUncovered(backupsPause: Bool) async {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setVolumeLevel(60)
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        await player.setBackupsPause(backupsPause)
+        let steps = FadeSteps(holdingAt: 2), mute = FakeMute()
+        var configuration = AppConfiguration.testing
+        configuration.pausesOnOutputDisconnect = true
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in await steps.step() }, playerMute: mute)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true) // its pause runs on its own
+        await TestWait.until { await steps.count == 2 }
+        await arbiter.handleOutputDisconnected()
+        await steps.letGo(2)
+        await arbiter.waitUntilIdle()
+        #expect(await player.uncoveredPauses == 1) // tried with every backup
+        #expect(mute.unmuteCount == mute.muteCount) // no mute left standing
+        #expect(await arbiter.pausedByUs == false)
+        #expect(await arbiter.playerState == (backupsPause ? .paused : .playing)) // shown as it is
+    }
+
     @Test("music coming back up after a fade-out called off (the app stopped within it) is paused at once as the output goes away, not faded in on the next one")
     func disconnectDuringComeback() async {
         let player = MockMusicPlayer(state: .playing)

@@ -34,10 +34,18 @@ struct MainButton: View {
         .keyboardShortcut(cancels ? .cancelAction : takesReturn ? .defaultAction : nil)
         .fixedSize(horizontal: inStep, vertical: inStep)
         .padding(.top, inStep ? 2 : 0)
-        .onChange(of: isEnabled, initial: true) { if takesReturn { windowKeys?.mainButton(id, isEnabled: isEnabled) } }
+        .onChange(of: isEnabled, initial: true) { tellWindowKeys() }
+        // Shown again (a kept window reopened), as `onDisappear` took it
+        // out: `initial` doesn't run again (K3-1 of 11-11).
+        .onAppear { tellWindowKeys() }
         .onDisappear { windowKeys?.mainButton(id, isEnabled: nil) }
     }
 
     /// Return presses it (`.defaultAction`).
     private var takesReturn: Bool { !secondary && !cancels }
+
+    /// Its window's keys learn it's there, and whether it can be pressed.
+    private func tellWindowKeys() {
+        if takesReturn { windowKeys?.mainButton(id, isEnabled: isEnabled) }
+    }
 }

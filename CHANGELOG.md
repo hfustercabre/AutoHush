@@ -17,6 +17,19 @@ This project follows [Semantic Versioning](https://semver.org/).
   Diagnostics even while your player isn't running.
 - **Long player names** cut short in the menu and Settings show the whole
   name when you point at them.
+- **A pause your player refuses** no longer leaves the music playing at a
+  partly faded volume, and when your headphones go away during a fade,
+  AutoHush tries all of the player's ways to pause it.
+- **Reopen AutoHush** (after allowing Audio Recording) puts the volume back
+  and lets your player go before quitting, as any quit does.
+- **Players installed** in an Applications folder that was deleted and made
+  again are noticed at once.
+- **The first key typed** into the players' search always reaches its
+  field, so accents and other input methods work there on a busy Mac.
+- **Keyboard:** Return keeps working in a window shown again; End and Page
+  Down reach every player tile, however many; Delete with nothing to
+  remove no longer beeps; VoiceOver reads Try Again's result reliably; and
+  Logs' time column follows a change of time zone.
 
 ## [1.4.1] — 2026-11-13
 

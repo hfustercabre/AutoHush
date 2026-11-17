@@ -161,11 +161,16 @@ final class SettingsWindowController: PlacedWindowController {
         toolbarKeys.updateFrames()
         defer { toolbarKeys.refresh() }
         if keys.handle(key, controlHasFocus: press.focus == .control) { return true }
+        guard key == .delete else { return false }
         // Delete removes the apps selected in Sound Sources, as their Remove
         // does (macOS's lists' key; the workflow audit, 2026-10-22).
-        guard key == .delete, navigation.page == .soundSources, !model.appList.selectedApps.isEmpty else { return false }
-        model.appList.removeSelected()
-        return true
+        if navigation.page == .soundSources, !model.appList.selectedApps.isEmpty {
+            model.appList.removeSelected()
+            return true
+        }
+        // Nothing to remove: nothing happens, without AppKit's beep, unless
+        // a control with the focus takes it (K3-4 of 11-11, as the menu).
+        return press.focus != .control
     }
 
     /// A key while a field takes what's typed (Sound Sources' search):

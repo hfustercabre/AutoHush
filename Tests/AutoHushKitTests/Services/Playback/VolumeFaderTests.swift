@@ -287,6 +287,27 @@ struct VolumeFaderTests {
         #expect(await gate.steps == 5) // set back at once, not faded back up
     }
 
+    @Test("a pause at once mid fade-in that's refused (no fade-out, or the output gone) leaves the player at the user's volume, not the partly faded one (K1-4 of 11-11)",
+          arguments: [true, false])
+    func refusedInstantPauseDuringFadeIn(outputGone: Bool) async throws {
+        let player = MockMusicPlayer(state: .paused, volumeCurve: .cubic)
+        await player.setVolumeLevel(70)
+        let gate = FaderStepGate()
+        let fader = makeFader(player, fadeOut: outputGone ? 2 : 0, fadeIn: 3, gate: gate)
+        let refused = Locked(false)
+        await gate.at(step: 6) {
+            await player.setFailPause(StubError.failed)
+            do {
+                if outputGone { try await fader.pauseNow() } else { _ = try await fader.fadeOutAndPause() }
+            } catch { refused.value = true }
+        }
+
+        try await fader.playAndFadeIn()
+
+        #expect(refused.value)
+        #expect(await player.volumeLevel == 70) // plays on at the user's volume
+    }
+
     @Test("a fade-out that interrupts a fade-in restores the user's volume, not the partly faded one")
     func interruptedFadeIn() async throws {
         let player = MockMusicPlayer(state: .paused)

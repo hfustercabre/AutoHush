@@ -5,6 +5,7 @@ package final class ManualDebounceScheduler: PlaybackArbiterDebounceScheduling, 
     package init() {}
     private var pendingTasks: [Task<Void, Never>] = []
     private var recordedDelays: [TimeInterval] = []
+    private var passedLooks = 0
     private let lock = NSLock()
     /// Never stepped: a debounce's task sleeps until it's cancelled.
     private let held = ManualSleep()
@@ -35,6 +36,15 @@ package final class ManualDebounceScheduler: PlaybackArbiterDebounceScheduling, 
     /// test that mustn't let go of the actor it runs on meanwhile.
     package func releaseNext() {
         lock.withLock { pendingTasks.isEmpty ? nil : pendingTasks.removeFirst() }?.cancel()
+    }
+
+    /// How many restart watches' looks got past their wait (`lookPassedWait`).
+    package var looksPastWait: Int {
+        lock.withLock { passedLooks }
+    }
+
+    package func lookPassedWait() {
+        lock.withLock { passedLooks += 1 }
     }
 
     package var scheduledDelays: [TimeInterval] {

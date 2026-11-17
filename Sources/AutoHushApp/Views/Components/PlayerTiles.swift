@@ -145,9 +145,12 @@ struct PlayerTiles: View {
 
     /// A group's tiles, then why the dimmed one the keys are on is dimmed
     /// (A13a): under the group, as one under a tile would break its row.
+    /// Every tile made, not only those near the view as a lazy grid makes
+    /// them: the keys reach only the ones made (End, Page Down; K3-3 of
+    /// 11-11), and there are a few dozen at most.
     private func grid(_ options: [PlayerOption], adds: Adds?) -> some View {
         HighlightReasonCaption {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: Self.columns), spacing: Self.rowSpacing) {
+            TileColumns(columns: Self.columns, spacing: 8, rowSpacing: Self.rowSpacing) {
                 ForEach(options) { tile($0) }
                 if let adds { addTile(adds) }
             }
@@ -284,6 +287,47 @@ struct PlayerTiles: View {
         }
         .buttonStyle(ChipButtonStyle(cornerRadius: 10))
         .accessibilityLabel(Text(verbatim: adds == .app ? PlayerOption.addAppTitle : PlayerOption.addWebAppTitle))
+    }
+}
+
+/// Tiles in `columns` columns as wide as each other, row by row, each row
+/// as tall as its tallest, as a grid of flexible columns lays them out.
+private struct TileColumns: Layout {
+    let columns: Int
+    let spacing: CGFloat
+    let rowSpacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? CGFloat(columns) * (subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0)
+            + CGFloat(columns - 1) * spacing
+        let heights = rowHeights(subviews, columnWidth: columnWidth(width))
+        return CGSize(width: width, height: heights.reduce(0, +) + CGFloat(max(heights.count - 1, 0)) * rowSpacing)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let width = columnWidth(bounds.width)
+        let heights = rowHeights(subviews, columnWidth: width)
+        var top = bounds.minY
+        for (row, height) in heights.enumerated() {
+            for column in 0..<columns {
+                let index = row * columns + column
+                guard subviews.indices.contains(index) else { break }
+                let center = CGPoint(x: bounds.minX + CGFloat(column) * (width + spacing) + width / 2, y: top + height / 2)
+                subviews[index].place(at: center, anchor: .center, proposal: ProposedViewSize(width: width, height: height))
+            }
+            top += height + rowSpacing
+        }
+    }
+
+    private func columnWidth(_ width: CGFloat) -> CGFloat {
+        max(0, (width - CGFloat(columns - 1) * spacing) / CGFloat(columns))
+    }
+
+    private func rowHeights(_ subviews: Subviews, columnWidth: CGFloat) -> [CGFloat] {
+        stride(from: 0, to: subviews.count, by: columns).map { start in
+            subviews[start..<min(start + columns, subviews.count)]
+                .map { $0.sizeThatFits(ProposedViewSize(width: columnWidth, height: nil)).height }.max() ?? 0
+        }
     }
 }
 

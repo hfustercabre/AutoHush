@@ -37,7 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// How Reopen AutoHush opens it again once it has quit, then quits it
     /// (`reopenAutoHush`). Tests replace them.
     var openAfterExit: @MainActor (URL) throws -> Void = { _ = try RelaunchWaiter.openAfterExit($0) }
-    var terminateToReopen: @MainActor () -> Void = { NSApp.terminate(nil) }
+    /// From the run loop: a permission button's Reopen runs inside a
+    /// main-actor task, where quitting couldn't restore the volume or let
+    /// the player go first (K2-1 of 11-11).
+    var terminateToReopen: @MainActor () -> Void = { AppDelegate.terminateFromRunLoop() }
     /// The Settings window's content, which reads what it shows from its owners.
     private(set) var settingsModel: SettingsModel!
     var settingsWindowController: SettingsWindowController?

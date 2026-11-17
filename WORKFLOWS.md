@@ -373,6 +373,8 @@ stateDiagram-v2
   Held --> Resumed : the apps stop
   Ours --> Handed : AutoHush quits
   Handed --> Ours : reopened within a minute
+  Held --> Handed : AutoHush quits
+  Handed --> Held : reopened within a minute (another player chosen)
   Handed --> Yours : later
   Ours --> Yours : you play or quit it, the Mac sleeps
   Held --> Yours : you play or quit it, the Mac sleeps

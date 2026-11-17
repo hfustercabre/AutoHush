@@ -5,8 +5,11 @@ import Foundation
 /// doesn't announce these. It waits for the file system to report a change,
 /// with no polling, and stops when released.
 @MainActor
-final class FolderWatch {
+final class FolderWatch: FolderWatching {
     private let source: any DispatchSourceFileSystemObject
+    /// The folder itself was deleted or renamed: the watch follows the old
+    /// one, so it's to be opened again on the path (K2-3 of 11-11).
+    private(set) var isGone = false
 
     /// `nil` when the folder can't be opened, e.g. it doesn't exist.
     init?(folder: URL, onChange: @escaping @MainActor () -> Void) {
@@ -15,7 +18,12 @@ final class FolderWatch {
         source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: descriptor, eventMask: [.write, .delete, .rename], queue: .main
         )
-        source.setEventHandler { MainActor.assumeIsolated { onChange() } }
+        source.setEventHandler { [weak self, source] in
+            MainActor.assumeIsolated {
+                if !source.data.isDisjoint(with: [.delete, .rename]) { self?.isGone = true }
+                onChange()
+            }
+        }
         source.setCancelHandler { close(descriptor) }
         source.resume()
     }
@@ -23,6 +31,12 @@ final class FolderWatch {
     deinit {
         source.cancel()
     }
+}
+
+/// A folder's watch that can tell its folder went away (`FolderWatch`).
+@MainActor
+protocol FolderWatching: AnyObject {
+    var isGone: Bool { get }
 }
 
 extension FolderWatch {

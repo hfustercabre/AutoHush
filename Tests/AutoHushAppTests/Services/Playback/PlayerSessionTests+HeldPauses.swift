@@ -38,7 +38,7 @@ extension PlayerSessionTests {
 
     @MainActor
     @Test("a player held paused, chosen again just as the start for the one chosen before ends its access check, takes its pause back: that start gives up")
-    func takenBackDuringOtherStart() async {
+    func takenBackDuringOtherStart() async throws {
         let bench = Bench()
         let session = await bench.holdingFirst()
         let checking = ManualSleep(), checked = Locked(false)
@@ -47,9 +47,12 @@ extension PlayerSessionTests {
         await TestWait.until { checking.durations.count == 1 }
         checking.timeIsUp()
         // Its check ends, and its start waits for the main actor, held here
-        // until the first is chosen again.
-        while !checked.value { usleep(1_000) }
-        usleep(100_000)
+        // until the first is chosen again (through the synchronous `choose`,
+        // so no sleep is needed for the order). Bounded: a hook that never
+        // ends fails here instead of hanging the run (T-3 of 11-11).
+        let deadline = TestWait.deadline
+        while !checked.value, Date() < deadline { usleep(1_000) }
+        try #require(checked.value)
         session.choose(bench.first)
         await session.waitUntilIdle()
         await TestWait.until { session.state.health == .ready }

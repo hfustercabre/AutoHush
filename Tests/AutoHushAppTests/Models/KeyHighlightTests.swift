@@ -603,4 +603,31 @@ struct KeyHighlightTests {
         #expect(!keyboard.scroll(1))
         #expect(log.calls == ["scroll 1", "scroll -1", "scroll 1"])
     }
+
+    @Test("a control gone and shown again keeps the Light its view still observes: the keys light it, out until then (K3-2 of 11-11)")
+    func lightKeptThroughRemoval() {
+        let keyboard = KeyHighlight()
+        let row = control(keyboard, 0, 0)
+        let light = keyboard.light(row) // what its view read as it was drawn
+        keyboard.move(1)
+        #expect(light.isOn && light.byKeys)
+        keyboard.remove(row) // its window closed
+        #expect(keyboard.highlighted == nil && !light.isOn && !light.byKeys)
+        // Shown again, its body not drawn anew: the same id registers.
+        keyboard.register(row, .init(frame: CGRect(x: 0, y: 0, width: 44, height: 22)))
+        keyboard.move(1)
+        #expect(keyboard.light(row) === light)
+        #expect(light.isOn && light.byKeys)
+    }
+
+    @Test("the lights kept for controls gone stay within bounds as views come and go with new ids (the diff review's R3)")
+    func keptLightsBounded() {
+        let keyboard = KeyHighlight()
+        for index in 0..<(KeyHighlight.keptLights * 2) {
+            let row = control(keyboard, 0, CGFloat(index))
+            _ = keyboard.light(row)
+            keyboard.remove(row)
+        }
+        #expect(keyboard.lightCount <= KeyHighlight.keptLights + 1)
+    }
 }

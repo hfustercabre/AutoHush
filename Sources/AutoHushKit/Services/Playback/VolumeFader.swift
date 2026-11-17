@@ -87,7 +87,14 @@ package actor VolumeFader {
             if fadingOut == fade { fadingOut = nil }
             if cutShort == fade { cutShort = nil } // it pauses at once anyway
             guard !isAbandoned else { return false }
-            try await presses.press(to: .paused)
+            do {
+                try await presses.press(to: .paused)
+            } catch {
+                // Refused: the volume a fade-in under way had reached goes
+                // back to the user's, as after a fade-out's (K1-4 of 11-11).
+                await restoreUserVolume()
+                throw error
+            }
             await restoreUserVolume() // e.g. paused at once in the middle of a fade-in
             return true
         }
@@ -149,7 +156,14 @@ package actor VolumeFader {
     /// after the pause, as after a fade-out.
     func pauseNow() async throws {
         let fade = startFade()
-        try await uncoveredPresses.press(to: .paused)
+        do {
+            try await uncoveredPresses.press(to: .paused)
+        } catch {
+            // Refused, it plays on: at the user's volume, not where a fade-in
+            // under way had got to (K1-4 of 11-11).
+            if latestFade == fade { await restoreUserVolume() }
+            throw error
+        }
         await sleep(Self.restoreDelay)
         if latestFade == fade { await restoreUserVolume() }
     }

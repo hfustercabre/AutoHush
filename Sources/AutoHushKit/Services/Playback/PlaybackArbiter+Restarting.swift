@@ -22,8 +22,9 @@ extension PlaybackArbiter {
             }
         }
         let wait = debounceScheduler.scheduleDebounce(after: delay)
-        let task = Task { [weak self] in
+        let task = Task { [weak self, debounceScheduler] in
             _ = await wait.value
+            debounceScheduler.lookPassedWait() // tests only
             await self?.lookForRestart(after: wait)
         }
         restartWatch = (task, wait)

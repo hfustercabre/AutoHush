@@ -86,7 +86,8 @@ final class SettingsKeys {
 
     /// Handles `key`; `false` leaves it to the window: Return, Space, ←
     /// and → while a control has the keyboard's focus (`controlHasFocus`)
-    /// and nothing is highlighted.
+    /// and nothing is highlighted, and Delete with nothing lit to remove
+    /// (Sound Sources' selection is the window's).
     @discardableResult func handle(_ key: HighlightKey, controlHasFocus: Bool = false) -> Bool {
         if controlHasFocus, !isLit, [.returnKey, .space, .left, .right].contains(key) { return false }
         switch key {

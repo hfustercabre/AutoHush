@@ -102,18 +102,7 @@ struct StatusCardView: View {
         .padding(.top, 4)
         .padding(.bottom, 2)
         .frame(width: menuContentWidth)
-        // After Try Again, VoiceOver hears how it went, once the start (or
-        // the resume: played, or given up again) is over.
-        .onChange(of: status.statusLine) { _, line in
-            if model.announcesRetryOutcome, status.health != .starting {
-                model.announcesRetryOutcome = false
-                AccessibilityNotification.Announcement(line).post()
-            }
-            if model.announcesResumeOutcome, status.showsResumeFailure || status.playback == .musicPlaying {
-                model.announcesResumeOutcome = false
-                AccessibilityNotification.Announcement(line).post()
-            }
-        }
+        // After Try Again, VoiceOver hears how it went: `StatusMenuModel.retryOutcome`.
     }
 
     /// The status line, in orange when something needs the user; with an

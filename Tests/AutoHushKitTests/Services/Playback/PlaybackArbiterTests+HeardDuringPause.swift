@@ -161,26 +161,30 @@ extension PlaybackArbiterTests {
     }
 
     @Test("a look whose wait ended just as a newer watch replaced it gives way: one look, the newer watch the one pending")
-    func replacedLookGivesWay() async {
+    func replacedLookGivesWay() async throws {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
         let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
         let arbiter = await pausedForAnotherApp(player, clock: clock, hearing: hearing, mute: mute, published: published, scheduler: scheduler)
         #expect(scheduler.scheduledDelays.last == PlaybackArbiter.restartWatchDelay)
         let asked = hearing.timesAsked, scheduled = scheduler.scheduledDelays.count
         hearing.now = .measuring(remaining: 0.3)
-        let released = Locked(false)
+        let released = Locked(false), passed = Locked(false)
         hearing.beforeAnswer = {
             guard !released.value else { return }
             released.value = true
             // The first look's wait ends as the player is heard. Measured on
-            // the arbiter, held there (no await): that look's task gets past
-            // its wait meanwhile, and reaches the arbiter only after the
-            // newer watch replaced it.
+            // the arbiter, held there (no await) until that look's task got
+            // past its wait: it reaches the arbiter only after the newer
+            // watch replaced it (T-4 of 11-11: no longer a 300 ms sleep).
+            let before = scheduler.looksPastWait
             scheduler.releaseNext()
-            usleep(300_000)
+            let deadline = TestWait.deadline
+            while scheduler.looksPastWait == before, Date() < deadline { usleep(1_000) }
+            passed.value = scheduler.looksPastWait > before
         }
         await arbiter.handlePlayerHeard() // measured too briefly: watched again
         await arbiter.waitUntilIdle()
+        try #require(passed.value)
         #expect(hearing.timesAsked == asked + 1) // the first look gave way
         #expect(scheduler.scheduledDelays.count == scheduled + 1)
         #expect(scheduler.scheduledDelays.last == 0.3)

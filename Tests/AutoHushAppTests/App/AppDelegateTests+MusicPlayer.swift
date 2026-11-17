@@ -625,6 +625,21 @@ extension AppDelegateTests {
     }
 
     @MainActor
+    @Test("a watched folder deleted or renamed is watched anew at the next check, so the one made again is followed (K2-3 of 11-11)")
+    func goneFolderWatchedAgain() throws {
+        let scratch = Scratch()
+        let (sut, _) = makeSUT(scratch)
+        let path = try #require(ApplicationFolders.all.first?.path)
+        let first = try #require(scratch.watches[path]?.last)
+        first.isGone = true // the folder itself went away
+        sut.refreshPlayerOptions()
+        #expect(scratch.watches[path]?.count == 2) // a new watch on the path
+        #expect(sut.watchedFolders.contains(path))
+        sut.refreshPlayerOptions()
+        #expect(scratch.watches[path]?.count == 2) // a live one is kept
+    }
+
+    @MainActor
     @Test("with no player chosen, no folder is watched")
     func noWatchWithoutPlayer() {
         let (sut, _) = makeSUT(chosenPlayer: nil)

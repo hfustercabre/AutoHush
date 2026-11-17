@@ -150,8 +150,16 @@ extension PlaybackArbiter {
             if isAsleep || sleptDuringPause || outputGoneDuringPause {
                 // Asleep (or slept meanwhile), or the output gone: no pause held, so no mute either
                 // (what's shown changed with them).
+                let outputGone = outputGoneDuringPause
                 outputGoneDuringPause = false
                 mute.end()
+                // The output gone: its pause tried once more uncovered (every
+                // backup) before the tap is lifted, as one playing is paused then
+                // (`handleOutputDisconnected`'s `pauseNow`; K1-1 of 11-11).
+                if outputGone, await pauseForReal(uncovered: true) == nil {
+                    playerState = .paused
+                    logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) paused by another way, and stays paused")
+                }
                 await playerMute.unmute()
                 return true
             }

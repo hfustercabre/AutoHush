@@ -46,6 +46,21 @@ struct FolderWatchTests {
         withExtendedLifetime(watch) {}
     }
 
+    @Test("the watched folder itself renamed (or deleted) is reported, and the watch says it's gone; a change inside it doesn't (K2-3 of 11-11)")
+    func folderGone() async throws {
+        let scratch = Scratch()
+        let watch = try #require(FolderWatch(folder: scratch.folder) { scratch.changes += 1 })
+        try FileManager.default.createDirectory(at: scratch.folder.appending(path: "Player.app"), withIntermediateDirectories: false)
+        await scratch.waitForChange(after: 0)
+        #expect(!watch.isGone)
+        let count = scratch.changes
+        let renamed = scratch.elsewhere.appending(path: "Moved")
+        try FileManager.default.moveItem(at: scratch.folder, to: renamed)
+        defer { try? FileManager.default.moveItem(at: renamed, to: scratch.folder) }
+        await scratch.waitForChange(after: count)
+        #expect(watch.isGone)
+    }
+
     @Test("a released watch reports nothing")
     func stopsWhenReleased() async throws {
         let scratch = Scratch()
