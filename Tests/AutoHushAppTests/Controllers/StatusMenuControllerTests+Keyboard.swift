@@ -349,16 +349,21 @@ extension StatusMenuControllerTests {
         status.chosenPlayerID = status.playerOptions[0].bundleID
         sut.status = status
         // The key is sent again once the search has the focus, which SwiftUI gives it in its next update.
-        // Another suite's window can take the key from this process's windows meanwhile, and SwiftUI drops
-        // a focus asked for then: the side window is made key and the focus asked for again, as a next key would.
+        // Under load (another suite's window taking the key for a moment), SwiftUI can drop that focus with
+        // the side window key all along, and asking it again does nothing while its focus state still says
+        // true (B-1 of 11-11): after a second without it, the side window is made key and the field the
+        // first responder through AppKit, as the app's other searches do.
         sut.pause = { _ in
+            let asked = ContinuousClock.now
             await TestWait.until {
                 await MainActor.run {
-                    if let side = sut.sidePanel, !side.isKeyWindow {
-                        side.makeKey()
-                        sut.model.searchFocus += 1
+                    guard let side = sut.sidePanel else { return false }
+                    if side.firstResponder is NSTextView { return true }
+                    if ContinuousClock.now - asked > .seconds(1) {
+                        if !side.isKeyWindow { side.makeKey() }
+                        side.makeFirstResponder(side.contentView?.firstEditableTextField)
                     }
-                    return sut.sidePanel?.firstResponder is NSTextView
+                    return side.firstResponder is NSTextView
                 }
             }
         }
