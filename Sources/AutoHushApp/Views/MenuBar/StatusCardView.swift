@@ -30,6 +30,7 @@ struct StatusCardView: View {
                     Text(verbatim: status.cardTitle)
                         .font(.appHeadline)
                         .lineLimit(1)
+                        .truncationHelp(status.cardTitle, font: .appHeadline)
                     // What's happening. When the player couldn't be controlled,
                     // an info symbol ends it, and a click on it tells why.
                     if status.controlError != nil || status.showsResumeFailure {

@@ -5,6 +5,19 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **A player kept muted** because it refused its pause now stays muted
+  while the Mac sleeps, instead of waking up playing out loud.
+- **Add a Web App** closes the Safari tab it opened when it fails, so
+  trying again no longer leaves one tab behind each time.
+- **Auto-Pause turned off** now shows in the menu bar icon and in
+  Diagnostics even while your player isn't running.
+- **Long player names** cut short in the menu and Settings show the whole
+  name when you point at them.
+
 ## [1.4.1] — 2026-11-13
 
 ### Fixed

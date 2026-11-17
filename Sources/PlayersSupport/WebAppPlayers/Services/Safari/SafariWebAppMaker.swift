@@ -19,7 +19,8 @@ import AutoHushKit
 /// used, and nothing is opened in Safari. Cancelling stops it (Safari's
 /// dialog is cancelled too) and takes away what it left: the tab it
 /// opened, and a web app Safari made all the same (Add was clicked just
-/// before), quit and moved to the Trash (the user, 2026-10-22).
+/// before), quit and moved to the Trash (the user, 2026-10-22). A failed
+/// add takes away its tab too.
 package final class SafariWebAppMaker: WebAppMaking {
     /// Once Safari's dialog closes, how long the new web app may take to
     /// appear (as long as after AutoHush's own Add before); none by then,
@@ -88,11 +89,10 @@ package final class SafariWebAppMaker: WebAppMaking {
         try Task.checkCancellation()
         guard await safari.open(url) else { throw WebAppMakingError.browserFailed("Safari couldn't open \(url.absoluteString)") }
         guard let tab = await safari.waitForPage() else {
-            if Task.isCancelled {
-                // Cancelled while the page loaded: the tab opened for it goes too.
-                await takeAway(url, since: before, tab: nil, waitsForApp: false)
-                throw CancellationError()
-            }
+            // Cancelled or failed while the page loaded: the tab opened for it
+            // goes too, so a try again doesn't leave another (K4-3 of 11-11).
+            await takeAway(url, since: before, tab: nil, waitsForApp: false)
+            if Task.isCancelled { throw CancellationError() }
             throw WebAppMakingError.browserFailed("the page didn't load in Safari")
         }
         // The tab to close once added, or cancelled: the one opened, or, once
@@ -108,6 +108,11 @@ package final class SafariWebAppMaker: WebAppMaking {
         } catch is CancellationError {
             await takeAway(url, since: before, tab: addedTab, waitsForApp: addClicked)
             throw CancellationError()
+        } catch {
+            // Failed (Add to Dock not available): its tab goes; a web app an
+            // earlier Add makes late is still taken at the next try.
+            await takeAway(url, since: before, tab: addedTab, waitsForApp: false)
+            throw error
         }
     }
 

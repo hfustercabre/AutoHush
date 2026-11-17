@@ -304,11 +304,13 @@ struct AppStatus: Equatable {
     /// The icon shows the update badge while an update waits: from when it's
     /// found until it's installed, as long as the menu offers it.
     var iconShowsUpdate: Bool { updateOffer != nil }
-    /// While Auto-Pause is off, the icon is dimmed: VoiceOver says the
-    /// status line, which says so ("AutoHush: Auto-Pause is off"). The
+    /// While Auto-Pause is off, the icon is dimmed: VoiceOver says so
+    /// ("AutoHush: Auto-Pause is off"), the player closed too. The
     /// update badge adds that an update is available.
     var iconAccessibilityLabel: String {
-        let label = isReady && autoPause != .on ? StatePresentation.iconLabel(statusLine) : presentation.label
+        // Ready, the status line (Auto-Pause's, unless a reopen or a given-up
+        // resume says more); the player closed, Auto-Pause's line.
+        let label = dimsIcon ? StatePresentation.iconLabel(isReady ? statusLine : autoPauseLine ?? statusLine) : presentation.label
         guard iconShowsUpdate else { return label }
         return Self.withUpdate(label)
     }
@@ -320,22 +322,33 @@ struct AppStatus: Equatable {
                comment: "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Jukebox isn’t running” or “Updates”")
     }
 
-    /// The menu bar icon is dimmed, and slashed, while auto-pause is off.
-    var dimsIcon: Bool { isReady && autoPause != .on }
+    /// The menu bar icon is dimmed, and slashed, while auto-pause is off and
+    /// nothing needs the user: the player closed too (K2-4 of 11-11, the
+    /// user, 2026-11-17), so it shows at a glance.
+    var dimsIcon: Bool { autoPause != .on && (isReady || playerIsClosed) }
 
     /// The line under the card's title: what's happening. Needing reopening
     /// and a given-up resume say so whatever Auto-Pause is: Reopen and Try
     /// Again stay under the line.
     var statusLine: String {
         guard isReady, !playerNeedsReopen, !showsResumeFailure else { return presentation.line }
+        return autoPauseLine ?? presentation.line
+    }
+
+    private var playerIsClosed: Bool {
+        if case .playerClosed = health { true } else { false }
+    }
+
+    /// "Auto-Pause is off" (until when, snoozed); `nil` while it's on.
+    var autoPauseLine: String? {
         switch autoPause {
         case .off:
-            return String(localized: "Auto-Pause is off", comment: "Status line at the top of the menu")
+            String(localized: "Auto-Pause is off", comment: "Status line at the top of the menu")
         case .snoozed(let until):
-            return String(localized: "Auto-Pause is off \(until)",
-                          comment: "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”")
+            String(localized: "Auto-Pause is off \(until)",
+                   comment: "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”")
         case .on:
-            return presentation.line
+            nil
         }
     }
 

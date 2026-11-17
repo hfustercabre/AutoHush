@@ -71,9 +71,12 @@ struct MenuPlayerListView: View {
                 } content: {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 6) {
-                            Text(verbatim: removes ? PlayerOption.removeTitle(row.option.name) : row.option.name)
+                            let name = removes ? PlayerOption.removeTitle(row.option.name) : row.option.name
+                            Text(verbatim: name)
                                 .lineLimit(1)
                                 .truncationMode(.tail)
+                                // The row's reason, when it has one, keeps the help tag.
+                                .truncationHelp(name, when: row.help == nil || removes)
                             if row.option.isUntested, !removes { HeadingBadge(text: PlayerOption.untestedBadge) }
                         }
                         // Why it's dimmed, in its subtitle's place while the keys are on it.

@@ -129,6 +129,12 @@ struct DiagnosticsReportTests {
         unknownState.autoPause = .off
         #expect(DiagnosticsReport.snapshot(activeAudio: [], status: unknownState, facts: facts()).overview.detail
                     == "Auto-Pause is off")
+        // Off with the player closed: Auto-Pause's line leads, not the player's (K2-2 of 11-11).
+        var closed = workingStatus()
+        closed.autoPause = .off
+        closed.setHealth(.playerClosed("Jukebox isn’t running"))
+        let off = DiagnosticsReport.snapshot(activeAudio: [], status: closed, facts: facts()).overview
+        #expect(off.kind == .off && off.title == "Auto-Pause is off")
     }
 
     @Test("the music player's part says whether its words were read, and its last error in words and in English")

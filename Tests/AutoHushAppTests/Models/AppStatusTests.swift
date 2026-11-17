@@ -338,13 +338,18 @@ struct AppStatusTests {
         #expect(AppStatus.AutoPause.nextChange(snoozedUntil: TestDates.date(2, 15, 30), now: TestDates.date(2, 15), calendar: calendar) == TestDates.date(2, 15, 30))
     }
 
-    @Test("health problems take precedence over auto-pause")
+    @Test("health problems take the status line over auto-pause; with the player closed, Auto-Pause off still dims the icon and is said (K2-4 of 11-11)")
     func healthBeatsAutoPause() {
         var status = AppStatus()
         status.autoPause = .off
         status.setHealth(.playerClosed("Jukebox isn’t running"))
         #expect(status.statusLine == "Jukebox isn’t running")
-        #expect(!status.dimsIcon)
+        #expect(status.dimsIcon && status.iconAccessibilityLabel == "AutoHush: Auto-Pause is off")
+        status.autoPause = .on
+        #expect(!status.dimsIcon && status.iconAccessibilityLabel == "AutoHush: Jukebox isn’t running")
+        status.autoPause = .off
+        status.setHealth(.failed("Jukebox didn’t answer"))
+        #expect(!status.dimsIcon) // something needs the user: its own icon
     }
 
     @Test("a closed player clears sources and needs nothing: it starts on by itself once it opens, so no Try Again, and the icon is as with no music")

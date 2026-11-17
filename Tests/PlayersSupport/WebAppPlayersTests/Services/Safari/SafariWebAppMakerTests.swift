@@ -402,7 +402,7 @@ struct SafariWebAppMakerTests {
         #expect(setup.safari.log.value == ["trusted"])
     }
 
-    @Test("Safari not opening the address, not loading the page, or without its Add to Dock, is an error, each its own")
+    @Test("Safari not opening the address, not loading the page, or without its Add to Dock, is an error, each its own; the tab it opened is closed, so a try again leaves none (K4-3 of 11-11)")
     func safariFails() async {
         let notOpening = Setup()
         notOpening.safari.opens = false
@@ -411,14 +411,17 @@ struct SafariWebAppMakerTests {
         }
         let notLoading = Setup()
         notLoading.safari.loads = false
+        notLoading.safari.pages.withLock { $0 = [URL(string: "https://play.qobuz.com/")!] }
         await #expect(throws: WebAppMakingError.browserFailed("the page didn't load in Safari")) { try await notLoading.make("play.qobuz.com") }
-        #expect(notLoading.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait"])
+        #expect(notLoading.safari.log.value.prefix(3) == ["trusted", "open https://play.qobuz.com", "wait"])
+        #expect(notLoading.safari.log.value.last == "close tab 1")
         let noAddToDock = Setup()
         noAddToDock.safari.addsToDock = false
         await #expect(throws: WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")) {
             try await noAddToDock.make("play.qobuz.com")
         }
         #expect(noAddToDock.steps.value.suffix(2) == [.adding, .dialog(frame: nil)])
+        #expect(noAddToDock.safari.log.value.last == "close tab 1")
     }
 
     @Test("Safari's dialog closed without adding: back to Add to Dock, whose next click opens it again")

@@ -46,7 +46,9 @@ extension PlaybackArbiter {
     ///
     /// The other apps' sound stops as the Mac falls asleep, which isn't them
     /// ending: a pause AutoHush holds is forgotten, so the music stays paused
-    /// after waking, as media players keep it after a sleep. While asleep
+    /// after waking, as media players keep it after a sleep; but a mute kept
+    /// in place of a kept pause whose real pause is refused again stays
+    /// (K1-2 of 11-11), not looked at until the Mac wakes. While asleep
     /// nothing is paused or resumed (a web page can't be pressed then); once
     /// awake, apps playing pause the music as usual.
     ///
@@ -69,12 +71,21 @@ extension PlaybackArbiter {
             if pausedByUs {
                 // Muted in place of the pause: paused for real first, so it
                 // wakes paused, as any pause held then (the user, 2026-10-25);
-                // refused, it plays on, its pause failed.
-                let refused = mutedInstead ? await pauseForReal(uncovered: true) : nil
-                pausedByUs = false
-                if let refused {
+                // refused, it plays on, its pause failed. A mute kept in place
+                // of a kept pause stays, as when its real pause was refused
+                // before (`keepPaused`): lifted, the music would wake out loud
+                // (K1-2 of 11-11, the user, 2026-11-17); looked at again on waking.
+                // Kept too when an app started meanwhile (muted again, D1;
+                // R1, the user, 2026-11-17).
+                let kept = muteStillStands && mute.outlastsApps, muted = mute.generation
+                let refused = mutedInstead ? await pauseForReal(uncovered: !kept) : nil
+                if refused != nil, kept, mutedInstead, mute.generation == muted {
+                    logger.info("[arbiter] the Mac sleeps: \(self.player.name, privacy: .public) refused its pause, it stays muted")
+                } else if let refused {
+                    pausedByUs = false
                     if !activeSources.isEmpty { pauseFailure = refused }
                 } else {
+                    pausedByUs = false
                     forgotPauseInSleep = true
                     logger.info("[arbiter] the Mac sleeps: \(self.player.name, privacy: .public) stays paused")
                 }
@@ -82,6 +93,8 @@ extension PlaybackArbiter {
         } else {
             logger.info("[arbiter] the Mac is awake")
             await tellForgottenPause()
+            // A kept mute, not looked at while asleep: looked at again.
+            if pausedByUs, pauseLookedAt, restartWatch == nil, tapsAllowed() { watchRestart(after: nextLookDelay) }
             if autoPauseEnabled, !activeSources.isEmpty { startPause() }
         }
         publishPlaybackState()

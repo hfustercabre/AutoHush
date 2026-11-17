@@ -256,6 +256,42 @@ extension PlaybackArbiterTests {
         #expect(await player.uncoveredPauses == 0)
     }
 
+    @Test("muted, its pause kept (Resume playback off) and its real pause refused: the Mac sleeping and waking keeps it muted, AutoHush's pause, its pause tried again covered, also while another app plays (K1-2 of 11-11, R1)",
+          arguments: [false, true])
+    func keptMuteStaysThroughSleep(appPlays: Bool) async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), mutedInstead = Locked<[Bool]>([])
+        var configuration = AppConfiguration.testing
+        configuration.resumesPlayback = false
+        let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published,
+                                               configuration: configuration, mutedInstead: mutedInstead, scheduler: scheduler)
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        await arbiter.sourceChanged("org.example.viewer", playing: false) // its resume keeps the pause instead
+        await arbiter.waitUntilIdle()
+        if appPlays { // a video starts: muted still, for it too
+            await arbiter.sourceChanged("org.example.viewer", playing: true)
+            await arbiter.waitUntilIdle()
+        }
+        let pauses = await player.pauseCallCount
+        await arbiter.setAsleep(true)
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == pauses + 1) // tried again as the Mac sleeps
+        // Not looked at while asleep: a watch that ends meanwhile presses nothing.
+        for _ in scheduler.scheduledDelays { await scheduler.completeNext() }
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == pauses + 1)
+        let watches = scheduler.scheduledDelays.count
+        await arbiter.setAsleep(false)
+        await arbiter.waitUntilIdle()
+        #expect(scheduler.scheduledDelays.count > watches) // looked at again once awake (and, an app playing, its pause)
+        #expect(mute.unmuteCount == 0) // never heard out loud
+        #expect(await arbiter.pausedByUs)
+        #expect(published.state == .pausedByMonitor) // the menu says Muted, with Unmute
+        #expect(mutedInstead.value.last == true)
+        #expect(await player.uncoveredPauses == 0)
+        #expect(await player.playCallCount == 0)
+    }
+
     @Test("muted, its pause kept (Resume playback off) and its real pause refused: a report that it still plays changes nothing; the user's pause, or it quitting, ends the mute, theirs, and their play is heard (K1-2)",
           arguments: [PlayerState.paused, .notRunning])
     func keptMuteEndsWithUsersPause(_ stopped: PlayerState) async {

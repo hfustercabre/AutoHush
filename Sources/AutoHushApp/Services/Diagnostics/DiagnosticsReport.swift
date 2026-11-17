@@ -65,7 +65,8 @@ enum DiagnosticsReport {
                          detail: status.statusLine)
         }
         if status.autoPause != .on {
-            return .init(kind: .off, title: status.statusLine,
+            // Auto-Pause's own line leads, the player closed too (K2-2 of 11-11).
+            return .init(kind: .off, title: status.autoPauseLine ?? status.statusLine,
                          detail: String(localized: "Turn Auto-Pause back on in the menu or in Settings.",
                                         comment: "Diagnostics, while auto-pause is off"))
         }

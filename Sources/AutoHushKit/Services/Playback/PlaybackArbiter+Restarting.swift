@@ -44,7 +44,8 @@ extension PlaybackArbiter {
     }
 
     private func lookAtPause() async {
-        guard !isShutDown, pausedByUs, pauseLookedAt else { return }
+        // Not while asleep (a kept mute outlasts it): looked at on waking.
+        guard !isShutDown, !isAsleep, pausedByUs, pauseLookedAt else { return }
         if mutedInstead {
             await lookWhileMuted()
         } else if await handleRestart(reported: false) == false {

@@ -223,6 +223,7 @@ struct PlayerTiles: View {
                 VStack(alignment: .leading, spacing: 1) {
                     // A long name takes two lines where the tile is narrow (T1, the user, 2026-10-18).
                     Text(verbatim: option.name).font(.appCallout).lineLimit(2).minimumScaleFactor(0.85)
+                        .truncationHelp(option.name, font: .appCallout)
                         .accessibilityLabel(Text(verbatim: option.spokenName(among: options)))
                     note(option, isSelected: isSelected)
                 }
