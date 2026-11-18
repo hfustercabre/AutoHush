@@ -132,28 +132,34 @@ final class SettingsKeys {
                 page.press()
             }
             return true
-        case .right:
-            if side == .sidebar, sidebar.highlighted != nil {
-                if sidebar.highlightedStandsForShown, !sidebar.highlightedIsShown {
-                    // A lit row whose page isn't shown (lit by Tab, or by the
-                    // pointer resting on it): its page shows, as Return shows
-                    // it, and its first control lights up once it's drawn
-                    // (R3 of the K1 review, 2026-11-10: → went into the page
-                    // shown, another row's; F3, the user, 2026-11-10: the
-                    // pointer's row too, what's lit being what the keys act on).
-                    showsFirstOfNextPage()
-                    sidebar.press()
+        case .left, .right:
+            let step = key == .right ? 1 : -1
+            // The page lies on the sidebar's far side: to its right, or to its
+            // left in Arabic and Hebrew, where the sidebar is on the right
+            // (the arrows are spatial; the diff review's F1, 2026-11-18).
+            let towardPage = (key == .right) != page.readsRightToLeft()
+            if towardPage {
+                if side == .sidebar, sidebar.highlighted != nil {
+                    if sidebar.highlightedStandsForShown, !sidebar.highlightedIsShown {
+                        // A lit row whose page isn't shown (lit by Tab, or by the
+                        // pointer resting on it): its page shows, as Return shows
+                        // it, and its first control lights up once it's drawn
+                        // (R3 of the K1 review, 2026-11-10: → went into the page
+                        // shown, another row's; F3, the user, 2026-11-10: the
+                        // pointer's row too, what's lit being what the keys act on).
+                        showsFirstOfNextPage()
+                        sidebar.press()
+                    } else {
+                        page.move(1)
+                    }
                 } else {
-                    page.move(1)
+                    // Along a row of several (tiles); else it changes nothing.
+                    _ = page.adjust(step) || page.moveInRow(step)
                 }
-            } else {
-                // Along a row of several (tiles); else it changes nothing.
-                _ = page.adjust(1) || page.moveInRow(1)
+                return true
             }
-            return true
-        case .left:
             if side == .sidebar { return true }
-            if page.adjust(-1) || page.moveInRow(-1) { return true }
+            if page.adjust(step) || page.moveInRow(step) { return true }
             sidebar.highlightCurrent() // back to the sidebar, on the page shown
             return true
         }

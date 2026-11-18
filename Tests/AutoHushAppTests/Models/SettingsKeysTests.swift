@@ -111,6 +111,23 @@ struct SettingsKeysTests {
         #expect(keys.page.highlighted == controls[0])
     }
 
+    @Test("in Arabic and Hebrew the sidebar is on the right: → goes to it, ← back into the page, as the arrows are spatial (the diff review's F1, 2026-11-18)")
+    func sidesRightToLeft() {
+        let log = CallLog()
+        let (keys, rows, controls) = makeKeys(log: log)
+        keys.page.readsRightToLeft = { true }
+        keys.sidebar.readsRightToLeft = { true }
+        keys.handle(.down)
+        #expect(keys.handle(.right)) // a switch row: → goes to the sidebar, on its right
+        #expect(keys.side == .sidebar)
+        #expect(keys.sidebar.highlighted == rows[0])
+        #expect(keys.handle(.right)) // nothing further right
+        #expect(keys.side == .sidebar)
+        #expect(keys.handle(.left)) // back into the page, on its left
+        #expect(keys.side == .page)
+        #expect(keys.page.highlighted == controls[0])
+    }
+
     @Test("End and Home jump through the page; in the sidebar, they show the last and first page at once, as ↑ and ↓ do")
     func jumps() {
         let log = CallLog()

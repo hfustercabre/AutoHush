@@ -13,7 +13,11 @@ extension PlaybackArbiter {
     /// didn't take), and a state that changed.
     func watchRestart(after delay: TimeInterval) {
         if let restartWatch {
-            restartWatch.task.cancel()
+            // Its wait ends at once, so the called-off watch is over now, not
+            // when its time would have come; its look then gives way, a newer
+            // watch in its place (B-4 of 11-11: cancelling its task did
+            // nothing, the wait it awaits running on).
+            restartWatch.wait.cancel()
             let id = UUID()
             calledOffWatches[id] = restartWatch
             Task { [weak self] in

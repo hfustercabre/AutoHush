@@ -84,10 +84,21 @@ extension PlaybackArbiterTests {
         await reportsPlaying(player, arbiter, clock: clock) // heard: muted, watched afresh
         #expect(mute.muteCount == 1)
         let asked = hearing.timesAsked, looked = mute.relaunchLookCount
-        await scheduler.completeNext() // the look from before, called off
+        await scheduler.completeNext() // the look from before: called off, its wait ended already (B-4)
         await arbiter.waitUntilIdle()
         #expect(hearing.timesAsked == asked)
         #expect(mute.relaunchLookCount == looked) // nor a look while muted
+        await TestWait.until { await arbiter.calledOffWatches.isEmpty }
+    }
+
+    @Test("a watch replaced by a newer one is over at once, its wait ended with it, not when its time would have come (B-4 of 11-11)")
+    func replacedWatchEndsAtOnce() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let hearing = Hearing(.heard), scheduler = ManualDebounceScheduler()
+        let arbiter = await pausedForAnotherApp(player, clock: clock, hearing: hearing, mute: mute, published: published, scheduler: scheduler)
+        await reportsPlaying(player, arbiter, clock: clock) // heard: muted, watched afresh, the earlier watch called off
+        #expect(await arbiter.restartWatch != nil)
+        // Nothing released: the called-off one ends by itself.
         await TestWait.until { await arbiter.calledOffWatches.isEmpty }
     }
 

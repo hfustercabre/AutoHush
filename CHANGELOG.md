@@ -9,6 +9,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **In Arabic and Hebrew,** AutoHush's menu and windows now read right to
+  left, as macOS's own apps do; before, only the windows' title bars did.
 - **A player kept muted** because it refused its pause now stays muted
   while the Mac sleeps, instead of waking up playing out loud.
 - **Add a Web App** closes the Safari tab it opened when it fails, so

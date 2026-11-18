@@ -568,15 +568,18 @@ AutoHush is translated into 37 languages besides English. DEVELOPMENT.md's
 
 ## Right to left
 
-In Arabic, AutoHush reads right to left, and every screen mirrors.
+In Arabic and Hebrew, AutoHush reads right to left, and every screen
+mirrors, as macOS's own apps do. macOS mirrors only a window's title bar by
+itself for views made in code, so AutoHush registers AppKit's right-to-left
+direction (`AppleTextDirection`) at launch when it runs in either language
+(`RightToLeftLayout`), as a default: a value set by hand wins.
 
 - **Leading and trailing,** never left and right, in layouts and alignments.
 - **Directional symbols** use their "forward" and "backward" forms
   (`chevron.forward`), which mirror. A rotated symbol keeps the same angle:
   SwiftUI mirrors the rotation too.
-- **Check it** by starting the app with `-AppleLanguages "(ar)"
-  -AppleTextDirection YES`, which runs it in Arabic, right to left, as
-  Xcode's right-to-left option does.
+- **Check it** by starting the app with `-AppleLanguages "(ar)"` (or
+  `"(he)"`), which runs it in that language, right to left.
 
 ## Accessibility
 

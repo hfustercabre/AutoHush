@@ -19,6 +19,8 @@ package enum AutoHushApplication {
         // user, 2026-10-25). Before the app starts, when AppKit reads them.
         NSWindow.allowsAutomaticWindowTabbing = false
         UserDefaults.standard.register(defaults: ["NSFullScreenMenuItemEverywhere": false])
+        // Right to left in Arabic and Hebrew, as macOS's apps are.
+        RightToLeftLayout.register()
         let app = NSApplication.shared
         let delegate = AppDelegate()
         app.setActivationPolicy(.accessory)
