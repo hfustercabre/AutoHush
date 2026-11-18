@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import AutoHushKit
 
 /// Settings' Back and Forward as stops of the page's highlight (R2, the
 /// user, 2026-11-10: reach every control): Tab and Shift-Tab reach them,
@@ -184,7 +185,25 @@ final class SettingsToolbarKeys {
             if view is NSSegmentedControl || String(describing: type(of: view)).contains("SegmentedControl") { return view }
             return view.subviews.lazy.compactMap(segments).first
         }
-        guard let bar = toolbar(frame), let arrows = segments(bar), !arrows.isHidden, arrows.bounds.width > 0 else { return nil }
+        guard let bar = toolbar(frame) else {
+            // AppKit's toolbar classes are private (DEVELOPMENT.md lists
+            // them): said once, should a macOS release rename them (R-1 of
+            // 11-11). Only for the toolbar's own view missing from a key
+            // window not in full screen (where the toolbar lives elsewhere);
+            // its group's control, SwiftUI's, may come in a later layout
+            // pass, so its absence says nothing (the diff reviews' F1, D3).
+            if window.toolbar != nil, window.isKeyWindow, !window.styleMask.contains(.fullScreen), !missingArrowsLogged {
+                missingArrowsLogged = true
+                logger.error("Settings’ toolbar wasn’t found: Tab skips Back and Forward")
+            }
+            return nil
+        }
+        guard let arrows = segments(bar) else { return nil }
+        guard !arrows.isHidden, arrows.bounds.width > 0 else { return nil }
         return arrows.convert(arrows.bounds, to: nil)
     }
+
+    private static let logger = AutoHushLogger(category: "SettingsKeys")
+    /// The arrows' absence is logged once a launch.
+    private static var missingArrowsLogged = false
 }

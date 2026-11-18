@@ -21,6 +21,46 @@ struct CheckedPlayerTests {
                       processIdentifier: { running ? 4242 : nil }, pressSleep: { _ in }, audioRecordingAllowed: { true })
     }
 
+    @Test("the panel's row is kept only once the app's signs show its press took; a press they show refused keeps none (K4-1 of 11-11)",
+          arguments: [true, false])
+    func panelRowKeptOnceJudged(took: Bool) async throws {
+        let store = MemorySetupStore()
+        let kept = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: app,
+                               ways: [.menu(menuName: "Play")], backups: [.panel(rememberedRow: nil)])
+        store.save(kept)
+        let panel = FakePanel([PanelRow(text: "Song, Artist – Album", playing: true)])
+        let way = PanelWay(setup: kept, remembered: nil, store: store, panel: panel, processIdentifier: { 4242 },
+                           shown: { _ in PanelWay.Shown(titles: ["Song – Artist"], otherApps: ["Finder"], holdsNowPlaying: false) })
+        let sign = MockMusicPlayer(state: took ? .paused : .playing) // what the app's own signs say after the press
+        let jukebox = player(ways: [way], signs: [sign])
+        if took {
+            try await jukebox.pause()
+        } else {
+            await #expect(throws: MusicPlayerError.self) { try await jukebox.pause() }
+        }
+        #expect(panel.pressed.first == "Song, Artist – Album")
+        #expect(store.setups().first?.backups == [.panel(rememberedRow: took ? "Song, Artist – Album" : nil)])
+    }
+
+    @Test("a press whose check got no answer (the app's signs gone unknown) judged nothing: a row the holder rule chose, maybe another app's, isn't kept (the second diff review's D1)")
+    func unansweredCheckKeepsNoHolderRow() async throws {
+        let store = MemorySetupStore()
+        let kept = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: app,
+                               ways: [.menu(menuName: "Play")], backups: [.panel(rememberedRow: nil)])
+        store.save(kept)
+        let panel = FakePanel([PanelRow(text: "Other Song, Someone – Else", playing: true)])
+        let way = PanelWay(setup: kept, remembered: nil, store: store, panel: panel, processIdentifier: { 4242 },
+                           shown: { _ in PanelWay.Shown(titles: [], otherApps: ["Finder"], holdsNowPlaying: true) })
+        let sign = MockMusicPlayer(state: .playing)
+        // Known as the press begins (so it's checked), unknown after.
+        await sign.setBeforeStateAnswer { [sign] in
+            if await sign.stateQueryCount >= 2 { await sign.setState(.unknown) }
+        }
+        try await player(ways: [way], signs: [sign]).pause()
+        #expect(panel.pressed == ["Other Song, Someone – Else"]) // the holder rule's row, pressed
+        #expect(store.setups().first?.backups == [.panel(rememberedRow: nil)]) // but not kept
+    }
+
     @Test("a setup keeps its ways the surest first, the panel last whatever the order found; and is kept as found")
     func setups() throws {
         let found = setup([.panel(rememberedRow: nil), .script(script), .page(.webKit)])

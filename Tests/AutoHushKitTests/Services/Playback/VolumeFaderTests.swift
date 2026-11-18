@@ -103,7 +103,12 @@ struct VolumeFaderTests {
         let fader = makeFader(player)
 
         await #expect(throws: StubError.self) { try await fader.fadeOutAndPause() }
+        #expect((await player.volumeLevel ?? 60) < 60) // still down: the mute isn't made yet (K1-3 of 11-11)
+        await fader.restoreAfterRefusal()
         #expect(await player.volumeLevel == 60) // not left faded down, playing near-silent
+        await player.setVolumeLevel(55)
+        await fader.restoreAfterRefusal() // once only
+        #expect(await player.volumeLevel == 55)
         // The user turns it down: the next fade-out comes back to that, not to 60.
         await player.setVolumeLevel(40)
         await player.setFailPause(nil)

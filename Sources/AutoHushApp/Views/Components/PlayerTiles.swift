@@ -204,6 +204,10 @@ struct PlayerTiles: View {
                     .help(option.antiDotModeReason)
                     .accessibilityHint(Text(verbatim: option.antiDotModeReason))
                     .highlightReason(option.antiDotModeReason)
+            } else if !option.isClickable {
+                // Not installed: a cut name's help tag from outside the
+                // disabled button, where it shows.
+                button.cutTextHelp()
             } else {
                 button
             }

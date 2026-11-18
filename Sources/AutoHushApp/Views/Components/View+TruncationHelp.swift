@@ -38,7 +38,27 @@ private struct TruncationHelp: ViewModifier {
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { fullHeight = $0 }
             }
             .help(isCut ? Text(verbatim: full) : Text(verbatim: ""))
+            // For a disabled control around it, whose help tags don't show
+            // from inside (`cutTextHelp`).
+            .preference(key: CutTextKey.self, value: isCut ? full : nil)
     }
 
     private var isCut: Bool { fullHeight > shownHeight + 0.5 }
+}
+
+/// The whole text of a name cut short inside a view (`truncationHelp`).
+private struct CutTextKey: PreferenceKey {
+    static let defaultValue: String? = nil
+    static func reduce(value: inout String?, nextValue: () -> String?) { value = value ?? nextValue() }
+}
+
+extension View {
+    /// A disabled control (a tile not installed) shows the whole name cut
+    /// short inside it as a help tag from outside, where SwiftUI shows help
+    /// tags (R5 of 2026-11-17's diff review).
+    func cutTextHelp() -> some View {
+        overlayPreferenceValue(CutTextKey.self) { cut in
+            if let cut { Color.clear.contentShape(Rectangle()).help(Text(verbatim: cut)) }
+        }
+    }
 }

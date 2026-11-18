@@ -53,6 +53,9 @@ actor PanelWay: MusicPlayer {
     /// by the player's other signs.
     nonisolated var checksItsPresses: Bool { rowIsStale }
     private var remembered: String?
+    /// The row its last press pressed, and whether its song, name or memory
+    /// told it, until that press is judged.
+    private var pending: (row: String, told: Bool)?
     private let store: any PlayerSetupStore
     private let panel: any NowPlayingPanel
     private let processIdentifier: @Sendable () -> pid_t?
@@ -134,17 +137,24 @@ actor PanelWay: MusicPlayer {
         let before = await heard()
         guard before != .unknown else { throw MusicPlayerError.playerCommandFailed(.hearingUnavailable) }
         guard (before == .playing) == pausing else { return }
-        try await PressCheck(name: name, isToggle: true, press: { [self] _ in try await pressRow(pid: pid, pausing: pausing) },
-                             state: heard, sleep: sleep).press(to: pausing ? .paused : .playing)
+        do {
+            try await PressCheck(name: name, isToggle: true, press: { [self] _ in try await pressRow(pid: pid, pausing: pausing) },
+                                 state: heard, sleep: sleep).press(to: pausing ? .paused : .playing)
+        } catch {
+            pressJudged(false)
+            throw error
+        }
+        pressJudged(true) // checked here, by its sound
     }
 
-    /// Presses its row's Play/Pause, and keeps the row in its setup.
+    /// Presses its row's Play/Pause; the row is kept in its setup only once
+    /// the press is judged (`pressJudged`).
     private func pressRow(pid: pid_t, pausing: Bool) async throws {
         let (name, remembered, panel, shown, playerBar, asToggle) = (name, remembered, panel, shown, playerBar, rowIsStale)
-        let (pressed, hidden): (String?, Bool) = await queue.run {
+        let (pressed, hidden, told): (String?, Bool, Bool) = await queue.run {
             // Read before the panel opens (Now Playing is asked of a fresh process).
             var now = shown(pid)
-            var chosen: String?, declined = false
+            var chosen: String?, declined = false, chosenTold = false
             /// Its row (`PanelRows.row`); `told`: only one its song, its name
             /// or memory tells (its player bar is still to be read).
             func pick(_ rows: [PanelRow], told: Bool) -> PanelRow? {
@@ -152,12 +162,14 @@ actor PanelWay: MusicPlayer {
                                               remembered: remembered, holdsNowPlaying: pausing && now.holdsNowPlaying, asToggle: asToggle)
                 else { return nil }
                 // Remembered without its times (`withoutTimes`), as the row is compared.
-                guard !told || remembered.map({ PanelRows.withoutTimes(row.text) == PanelRows.withoutTimes($0) }) == true
-                        || !PanelRows.appRows([row], appName: name, otherApps: now.otherApps, texts: now.texts).isEmpty else {
+                let isTold = remembered.map({ PanelRows.withoutTimes(row.text) == PanelRows.withoutTimes($0) }) == true
+                    || !PanelRows.appRows([row], appName: name, otherApps: now.otherApps, texts: now.texts).isEmpty
+                guard !told || isTold else {
                     declined = true
                     return nil
                 }
                 chosen = row.text
+                chosenTold = isTold
                 return row
             }
             var opened = panel.pressRow { pick($0, told: playerBar != nil) }
@@ -170,12 +182,23 @@ actor PanelWay: MusicPlayer {
             }
             // Not opened: hidden in the menu bar, which the user can change.
             // A row chosen counts only once its press took.
-            return (opened == true ? chosen : nil, opened == nil && !panel.isInMenuBar())
+            return (opened == true ? chosen : nil, opened == nil && !panel.isInMenuBar(), chosenTold)
         }
         guard let pressed else { throw MusicPlayerError.playerCommandFailed(hidden ? .nowPlayingHidden : .pressFailed) }
-        // Kept without its times, which change as it plays (`withoutTimes`).
-        let kept = PanelRows.withoutTimes(pressed)
-        guard kept != self.remembered else { return }
+        // Kept only once the press is known to have taken (`pressJudged`):
+        // a row chosen by the holder rule may be another app's, and kept, it
+        // would win later presses (K4-1 of 11-11).
+        pending = (PanelRows.withoutTimes(pressed), told)
+    }
+
+    /// Its last press taken (`took`) or not, as its caller judged it: the
+    /// row it pressed is kept then, or forgotten. `nil`: nothing could judge
+    /// it (no sure sign): kept only if its song, its name or memory told it,
+    /// never a row the holder rule chose (the diff review's F2).
+    func pressJudged(_ took: Bool?) {
+        guard let (kept, told) = pending else { return }
+        pending = nil
+        guard took ?? told, kept != remembered else { return }
         self.remembered = kept
         // Only its row changes, in the setup kept now (checked again since, it
         // may have other ways), and only while it's kept: a setup the user

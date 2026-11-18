@@ -74,10 +74,9 @@ import WebAppPlayers
             trialProblem = why
             return false
         }
-        if pausing {
-            let players = [learned?.element, page?.withControls == true ? page?.toggle?.element : nil, barToggle].compactMap { $0 }
-            pressedPlayersPause = players.contains { CFEqual($0, button.element) }
-        }
+        // One rule with what a press learns from: a button found afresh in
+        // the player bar counts too (K4-2 of 11-11).
+        if pausing { pressedPlayersPause = isPlayersButton(button.element) }
         return true
     }
 

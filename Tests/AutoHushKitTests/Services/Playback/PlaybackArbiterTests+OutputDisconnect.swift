@@ -92,6 +92,24 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.playerState == (backupsPause ? .paused : .playing)) // shown as it is
     }
 
+    @Test("a fade-out's pause refused leaves the volume down while the mute in its place is made, then sets it back behind the mute, or, unmutable, as it plays on: no blip at full volume (K1-3 of 11-11)",
+          arguments: [true, false])
+    func refusedFadeOutRestoresBehindMute(mutes: Bool) async {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setVolumeLevel(60)
+        await player.setFailPause(MusicPlayerError.playerCommandFailed(.pressFailed))
+        let mute = FakeMute(works: mutes), atMute = Locked<Int?>(nil)
+        mute.whileMuting = { atMute.value = await player.volumeLevel ?? 60 }
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in }, playerMute: mute)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 1)
+        #expect((atMute.value ?? 60) < 60) // still down while the mute was made
+        #expect(await player.volumeLevel == 60) // then set back
+        #expect(await arbiter.pausedByUs == mutes)
+    }
+
     @Test("music coming back up after a fade-out called off (the app stopped within it) is paused at once as the output goes away, not faded in on the next one")
     func disconnectDuringComeback() async {
         let player = MockMusicPlayer(state: .playing)

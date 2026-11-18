@@ -24,8 +24,11 @@ struct PanelWayTests {
         kept.stateNotification = "checked again since"
         store.save(kept)
         let panel = FakePanel(rows)
-        try await way(panel, store: store).pause()
+        let pressing = way(panel, store: store)
+        try await pressing.pause()
         #expect(panel.pressed == ["Song, Artist – Album"])
+        #expect(store.setups().first?.ways == kept.ways) // not kept until its press is judged (K4-1 of 11-11)
+        await pressing.pressJudged(true)
         let saved = try #require(store.setups().first)
         #expect(saved.ways == [.menu(menuName: "Play"), .panel(rememberedRow: "Song, Artist – Album")])
         #expect(saved.stateNotification == "checked again since") // only its row changed
@@ -42,9 +45,39 @@ struct PanelWayTests {
         let store = MemorySetupStore()
         store.save(PlayerSetup(bundleID: setup.bundleID, name: "Jukebox", appURL: setup.appURL, ways: [.menu(menuName: "Play")],
                                backups: [.panel(rememberedRow: nil)]))
-        try await way(FakePanel(rows), store: store).pause()
+        let pressing = way(FakePanel(rows), store: store)
+        try await pressing.pause()
+        await pressing.pressJudged(true)
         let saved = try #require(store.setups().first)
         #expect(saved.ways == [.menu(menuName: "Play")] && saved.backups == [.panel(rememberedRow: "Song, Artist – Album")])
+    }
+
+    @Test("a press judged not to have taken keeps nothing: the row it chose (another app's, by the holder rule) never wins later presses (K4-1 of 11-11)")
+    func refusedPressKeepsNoRow() async throws {
+        let store = MemorySetupStore()
+        store.save(PlayerSetup(bundleID: setup.bundleID, name: "Jukebox", appURL: setup.appURL, ways: [.menu(menuName: "Play")],
+                               backups: [.panel(rememberedRow: nil)]))
+        let pressing = way(FakePanel(rows), store: store)
+        try await pressing.pause()
+        await pressing.pressJudged(false)
+        await pressing.pressJudged(true) // judged once: nothing pending any more
+        #expect(store.setups().first?.backups == [.panel(rememberedRow: nil)])
+    }
+
+    @Test("a press nothing could judge keeps a row its song told, never one the holder rule chose, which may be another app's (the diff review's F2)",
+          arguments: [true, false])
+    func unjudgedPressKeepsOnlyToldRow(songTells: Bool) async throws {
+        let store = MemorySetupStore()
+        store.save(PlayerSetup(bundleID: setup.bundleID, name: "Jukebox", appURL: setup.appURL, ways: [.menu(menuName: "Play")],
+                               backups: [.panel(rememberedRow: nil)]))
+        let panel = FakePanel([PanelRow(text: "Song, Artist – Album", playing: true)])
+        let pressing = PanelWay(setup: setup, remembered: nil, store: store, panel: panel, processIdentifier: { 4242 },
+                                shown: { _ in PanelWay.Shown(titles: songTells ? ["Song – Artist"] : [], otherApps: ["Finder"],
+                                                             holdsNowPlaying: true) })
+        try await pressing.pause()
+        #expect(panel.pressed == ["Song, Artist – Album"]) // pressed either way
+        await pressing.pressJudged(nil)
+        #expect(store.setups().first?.backups == [.panel(rememberedRow: songTells ? "Song, Artist – Album" : nil)])
     }
 
     @Test("a setup no longer kept isn't added back, nor one without the panel any more")

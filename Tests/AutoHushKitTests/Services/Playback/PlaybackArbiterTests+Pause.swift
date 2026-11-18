@@ -216,6 +216,20 @@ extension PlaybackArbiterTests {
         #expect(await player.pauseCallCount == 1)
         #expect(failures.value.isEmpty)
         #expect(mute.muteCount == 0)
+        #expect(await player.volumeLevel == 60) // its volume set back, no mute to wait for (K1-3 of 11-11)
+    }
+
+    @Test("a web app whose controls are still learned, its pause refused after the fade-out, plays on at its volume, not faded down (K1-3 of 11-11)")
+    func stillLearningKeepsVolume() async {
+        let player = MockMusicPlayer(failPauseWith: MusicPlayerError.stillLearning)
+        await player.setVolumeLevel(60)
+        let mute = FakeMute()
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in }, playerMute: mute)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 0)
+        #expect(await player.volumeLevel == 60)
     }
 
     @Test("Try Again after a failed pause pauses once more while the app plays; nothing to try once none plays or nothing failed")

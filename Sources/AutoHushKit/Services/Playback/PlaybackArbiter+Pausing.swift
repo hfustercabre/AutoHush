@@ -131,15 +131,22 @@ extension PlaybackArbiter {
             paused = try await fader.fadeOutAndPause()
         } catch MusicPlayerError.stillLearning {
             isFadingOut = false
+            await fader.restoreAfterRefusal()
             logger.info("[arbiter] \(self.player.name, privacy: .public)’s controls aren’t learned yet — not pausing")
             return
         } catch {
             isFadingOut = false
             logger.error("[arbiter] pausing \(self.player.name, privacy: .public) failed: \(error)")
             // Unless every app stopped meanwhile: then there's nothing to say.
-            guard !activeSources.isEmpty, autoPauseEnabled, !isAsleep, !isShutDown else { return }
+            guard !activeSources.isEmpty, autoPauseEnabled, !isAsleep, !isShutDown else {
+                await fader.restoreAfterRefusal()
+                return
+            }
             // The user's rule (2026-10-24): "If pauses didn't work, you should mute it".
             _ = await muteInsteadOfPause("refused to pause", failure: error as? MusicPlayerError ?? .playerCommandFailed(.pressFailed))
+            // Its volume set back only now, behind the mute (or, unmutable,
+            // as it plays on): no blip at full volume before it (K1-3 of 11-11).
+            await fader.restoreAfterRefusal()
             return
         }
         isFadingOut = false

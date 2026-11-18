@@ -13,7 +13,8 @@ import Foundation
 /// (or with a zero fade time) it simply pauses or plays.
 ///
 /// The user's volume is remembered when a fade starts and set back right after
-/// pausing, so the player is never left silent. A fade-in that is interrupted
+/// pausing, so the player is never left silent; after a fade-out whose pause
+/// is refused, only once its caller calls `restoreAfterRefusal()`. A fade-in that is interrupted
 /// by a new fade-out keeps that remembered volume, rather than the partly
 /// faded one.
 package actor VolumeFader {
@@ -56,6 +57,9 @@ package actor VolumeFader {
     /// which pauses where it got to.
     private var fadingOut: Int?
     private var cutShort: Int?
+    /// The fade-out whose pause was refused, its volume left down until
+    /// `restoreAfterRefusal`.
+    private var refusedFade: Int?
 
     init(
         player: any MusicPlayer,
@@ -80,6 +84,9 @@ package actor VolumeFader {
     /// Fades the music out, then pauses it. Returns `false` when `cancel()`
     /// stopped the fade first: the music then fades back up and keeps playing;
     /// or when `abandon()` came before its pause was pressed: it plays on.
+    /// Thrown after its ramp (the pause refused), the volume stays down: the
+    /// caller must call `restoreAfterRefusal()` once it has muted the player
+    /// or found it can't (K1-3 of 11-11).
     func fadeOutAndPause() async throws -> Bool {
         let fade = startFade()
         fadingOut = fade
@@ -140,14 +147,27 @@ package actor VolumeFader {
         do {
             try await presses.press(to: .paused)
         } catch {
-            try? await player.setVolume(target)
-            userVolume = nil
+            // Refused: the volume stays down until the mute standing in for
+            // the pause is made, so the music isn't heard at full volume
+            // over the other app meanwhile; the caller sets it back then
+            // (`restoreAfterRefusal`; K1-3 of 11-11).
+            refusedFade = fade
             throw error
         }
         await sleep(Self.restoreDelay)
         // Unless a newer fade took over the volume meanwhile.
         if latestFade == fade { await restoreUserVolume() }
         return true
+    }
+
+    /// Sets the user's volume back after a fade-out whose pause was refused
+    /// (`fadeOutAndPause` threw), once its caller made the mute in place of
+    /// the pause, or found none could be: unless a newer fade took the
+    /// volume over meanwhile. Nothing after any other fade-out.
+    func restoreAfterRefusal() async {
+        guard let refused = refusedFade else { return }
+        refusedFade = nil
+        if latestFade == refused { await restoreUserVolume() }
     }
 
     /// Pauses at once, without a fade, stopping one under way: the output

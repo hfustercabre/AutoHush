@@ -16,9 +16,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Auto-Pause turned off** now shows in the menu bar icon and in
   Diagnostics even while your player isn't running.
 - **Long player names** cut short in the menu and Settings show the whole
-  name when you point at them.
-- **A pause your player refuses** no longer leaves the music playing at a
-  partly faded volume, and when your headphones go away during a fade,
+  name when you point at them, also on a player that isn't installed.
+- **An app added with Add an App** and paused through the Now Playing panel
+  only remembers its row once a press there worked, so a press on another
+  app's row isn't repeated later.
+- **A pause your player refuses** no longer brings the music back at full
+  volume for a moment before AutoHush mutes it, nor leaves it playing at a
+  partly faded volume; and when your headphones go away during a fade,
   AutoHush tries all of the player's ways to pause it.
 - **Reopen AutoHush** (after allowing Audio Recording) puts the volume back
   and lets your player go before quitting, as any quit does.

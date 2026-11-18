@@ -594,8 +594,8 @@ In Arabic, AutoHush reads right to left, and every screen mirrors.
     line. While an update waits, it adds ", update available".
   - A name cut short ("…", or a tile's two lines) has the whole name as its
     help tag, only while it's cut (`truncationHelp`): the card's title, the
-    players' rows and tiles; a row's reason, when it has one, keeps the
-    help tag.
+    players' rows and tiles, a dimmed tile too (`cutTextHelp`, from outside
+    its disabled button); a row's reason, when it has one, keeps the help tag.
   - A short "Allow…" (`PermissionButton`, the welcome window) says its
     long words to VoiceOver, which name the permission ("Allow Audio
     Recording Access…"), as Add an App's, the menu card's and Diagnostics'
