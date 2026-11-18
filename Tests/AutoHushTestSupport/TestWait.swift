@@ -22,16 +22,18 @@ package enum TestWait {
 
     /// Polls `condition` on the caller's actor until it holds. Once `limit`
     /// has passed, the test fails at the caller's line, so a wait checks its
-    /// condition even when nothing after it does.
+    /// condition even when nothing after it does; `otherwise`, read only
+    /// then, says what the state was (T-9 of 11-11).
     package static func until(
         isolation: isolated any Actor? = #isolation,
         sourceLocation: SourceLocation = #_sourceLocation,
+        otherwise state: () async -> String? = { nil },
         _ condition: () async -> Bool
     ) async {
         let deadline = ContinuousClock.now + limit
         while !(await condition()) {
             guard ContinuousClock.now < deadline else {
-                timedOut(at: sourceLocation)
+                timedOut(at: sourceLocation, state: await state())
                 return
             }
             try? await Task.sleep(for: .milliseconds(5))
@@ -47,9 +49,9 @@ package enum TestWait {
 
     /// A wait's condition didn't hold in time (`limit`, or `deadline` for a
     /// wait that polls from a queue or a lock): the test fails at the
-    /// caller's line.
-    package static func timedOut(at sourceLocation: SourceLocation) {
-        Issue.record("Waited \(limit) and the condition never held", sourceLocation: sourceLocation)
+    /// caller's line; `state`, when given, follows the text.
+    package static func timedOut(at sourceLocation: SourceLocation, state: String? = nil) {
+        Issue.record("Waited \(limit) and the condition never held\(state.map { ": \($0)" } ?? "")", sourceLocation: sourceLocation)
     }
 }
 

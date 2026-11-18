@@ -23,6 +23,23 @@ struct LaunchAtLoginControllerTests {
         #expect(controller.needsApproval == needsApproval)
     }
 
+    @MainActor
+    @Test("both are told by one read of the system (K2-5 of 11-11)",
+          arguments: [(SMAppService.Status.enabled, true, false), (.notRegistered, false, false),
+                      (.requiresApproval, false, true), (.notFound, false, false)])
+    func oneRead(status: SMAppService.Status, isEnabled: Bool, needsApproval: Bool) {
+        var reads = 0
+        let controller = LaunchAtLoginController(
+            statusProvider: { reads += 1; return status },
+            registerAction: { },
+            unregisterAction: { },
+            openSettingsAction: { }
+        )
+        let state = controller.state
+        #expect(reads == 1)
+        #expect(state.isEnabled == isEnabled && state.needsApproval == needsApproval)
+    }
+
     // MARK: - setEnabled
 
     @MainActor

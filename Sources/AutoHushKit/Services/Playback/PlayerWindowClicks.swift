@@ -31,7 +31,9 @@ package final class PlayerWindowClicks: @unchecked Sendable {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
-                    guard let location = event.cgEvent?.location else { return }
+                    // The player not running has no window to click in: the
+                    // windows go unlisted (K1-5 of 11-11).
+                    guard NSRunningApplication.running(bundleID) != nil, let location = event.cgEvent?.location else { return }
                     let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
                     self?.take(at: location, windows: windows, date: Date())
                 }

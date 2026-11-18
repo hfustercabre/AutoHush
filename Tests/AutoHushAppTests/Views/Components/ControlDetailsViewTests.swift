@@ -18,8 +18,16 @@ struct ControlDetailsViewTests {
                                            done: {}), width: 440)
         #expect(on.width == 440 && on.height > 0)
         #expect(off.height > on.height) // "Use backup controls is off"
-        // The key, which no check tries: drawn with its note.
-        #expect(PlayerControls.choosing().backups.contains { $0.kind == .mediaKey && $0.found == nil })
+        // The key, which no check tries, drawn with its note: taller than
+        // another control not tried, which has none (T-10 of 11-11).
+        let notTried = { (kind: WayOrder.Kind) in
+            drawn(ControlDetailsView(player: "Jukebox",
+                                     controls: PlayerControls(main: .init(kind: .script, result: nil),
+                                                              backups: [.init(kind: kind, result: nil)],
+                                                              switches: BackupSwitches()),
+                                     done: {}), width: 440)
+        }
+        #expect(notTried(.mediaKey).height > notTried(.menu).height)
         #expect(BackupText.keyNote("Jukebox") == "Only while Jukebox is Now Playing")
     }
 

@@ -263,9 +263,7 @@ class HostedWindowController: NSWindowController {
     /// The window's search takes the keyboard, the caret after its text, for
     /// what's typed (`WindowKeys.focusSearch`); `false` when none shows.
     func focusSearch() -> Bool {
-        guard let window, let field = window.contentView?.firstEditableTextField, window.makeFirstResponder(field) else { return false }
-        field.currentEditor()?.selectedRange = NSRange(location: (field.stringValue as NSString).length, length: 0)
-        return true
+        window?.focusFirstEditableTextField(in: window?.contentView) ?? false
     }
 
     /// Brings it in front of other apps' windows, on the desktop the user is

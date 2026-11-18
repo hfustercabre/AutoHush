@@ -186,9 +186,11 @@ struct AppStatus: Equatable {
     /// Only the player's sound tells how it is (`PlayerOption.needsAudioLevels`).
     var playerNeedsLevels: Bool { chosenPlayer?.needsAudioLevels ?? false }
 
-    /// Leaving `.ready` clears the active sources: nothing is monitored then.
-    /// They join the stopped ones, as when they stop (another player chosen,
-    /// the player quit), so Recently Played lists them.
+    /// Leaving `.ready` clears the active sources: they join the stopped
+    /// ones, as when they stop (another player chosen, the player quit), so
+    /// Recently Played lists them. With the player closed its monitoring
+    /// still lists the apps playing (`listenUntilPlayerOpens`):
+    /// `AppDelegate.showSession` sets them again right after.
     mutating func setHealth(_ health: AppHealthState, now: Date = Date()) {
         self.health = health
         if health != .ready { setActiveSources([], now: now) }

@@ -48,10 +48,8 @@ final class LogsWindowController: PlacedWindowController, NSWindowDelegate {
         keys.dropFocus = { [weak self] in _ = self?.window?.makeFirstResponder(nil) }
         // Its search is one of Tab's stops, as a guiding window's (K3).
         keys.focusSearch = { [weak self] in
-            guard let window = self?.window, let field = window.contentView?.firstEditableTextField,
-                  window.makeFirstResponder(field) else { return false }
-            field.currentEditor()?.selectedRange = NSRange(location: (field.stringValue as NSString).length, length: 0)
-            return true
+            guard let window = self?.window else { return false }
+            return window.focusFirstEditableTextField(in: window.contentView)
         }
         // Zoom follows the keys' highlight (A3).
         keys.highlight.place { [weak self] in self?.window?.contentView }

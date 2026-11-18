@@ -173,7 +173,12 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
         guard wayOrder != nil else { return own }
         let backups = PolledStateObserver(read: { [self] in await self.stateWhileDenied() }, sleep: pollSleep, onChange: onChange)
         let observer = BackedUpStateObserver(own: own, backups: backups, denied: { [ownWayDeniedNow] in ownWayDeniedNow.withLock { $0 } })
-        stateObservers.withLock { $0.append(WeakStateObserver(observer: observer)) }
+        // Those let go of are dropped here too, not only on a permission
+        // change (K4-5 of 11-11).
+        stateObservers.withLock { observers in
+            observers.removeAll { $0.observer == nil }
+            observers.append(WeakStateObserver(observer: observer))
+        }
         return observer
     }
 

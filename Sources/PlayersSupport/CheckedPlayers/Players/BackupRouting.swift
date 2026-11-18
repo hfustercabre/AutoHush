@@ -235,11 +235,22 @@ extension BackupRouting {
         guard let wayOrder, let pid = processIdentifier() else { throw MusicPlayerError.playerNotRunning }
         routing.pressCalls += 1
         let main = mainIndex
-        let state: CheckResult.WindowState? = !alone && wayOrder.dependsOnWindow(for: .paused, main: main) ? await windowState(pid) : nil
-        let order = alone ? [main] : wayOrder.order(in: state ?? .visible, for: .paused, main: main)
-        let quiet = order.filter { ![.panel, .mediaKey].contains(wayOrder.ways[$0].kind) }
-        let key = order.filter { wayOrder.ways[$0].kind == .mediaKey }
-        let panel = order.filter { wayOrder.ways[$0].kind == .panel && (panelWhileMuted || $0 == main) }
+        let panelWhileMuted = panelWhileMuted
+        // The ways a retry walks in a window state, its panel only as its switch allows.
+        func walk(in state: CheckResult.WindowState) -> (quiet: [Int], key: [Int], panel: [Int]) {
+            let order = alone ? [main] : wayOrder.order(in: state, for: .paused, main: main)
+            return (order.filter { ![.panel, .mediaKey].contains(wayOrder.ways[$0].kind) },
+                    order.filter { wayOrder.ways[$0].kind == .mediaKey },
+                    order.filter { wayOrder.ways[$0].kind == .panel && (panelWhileMuted || $0 == main) })
+        }
+        // Its window looked at only when that walk changes with it, not when
+        // only a way it won't press does (a panel kept off while muted: K4-4 of 11-11).
+        let seen = walk(in: .visible)
+        let same = alone || CheckResult.WindowState.allCases.allSatisfy {
+            let other = walk(in: $0)
+            return other.quiet == seen.quiet && other.key == seen.key && other.panel == seen.panel
+        }
+        let (quiet, key, panel) = same ? seen : walk(in: await windowState(pid))
         // The quiet ways again, once each was tried; the key and the panel once.
         var startedOver = (quiet + key + panel).allSatisfy(routing.mutedTried.contains)
         if startedOver { routing.mutedTried.subtract(quiet) }

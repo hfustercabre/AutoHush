@@ -306,7 +306,7 @@ final class SettingsModel {
     // MARK: - Launch at login
 
     func refreshLaunchAtLogin() {
-        let enabled = launchAtLoginController.isEnabled, needsApproval = launchAtLoginController.needsApproval
+        let (enabled, needsApproval) = launchAtLoginController.state
         // Changed meanwhile (System Settings → Login Items): an error from
         // before no longer stands (the workflow audit, 2026-10-22).
         if launchAtLoginEnabled != enabled || launchAtLoginNeedsApproval != needsApproval { launchAtLoginError = nil }

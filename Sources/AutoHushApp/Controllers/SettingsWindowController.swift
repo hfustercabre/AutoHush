@@ -202,9 +202,7 @@ final class SettingsWindowController: PlacedWindowController {
     /// The page's search (Sound Sources', while open) takes the keyboard, the
     /// caret after its text; `false` when none shows.
     func focusPageSearch() -> Bool {
-        guard let window, let field = pageView?.firstEditableTextField, window.makeFirstResponder(field) else { return false }
-        field.currentEditor()?.selectedRange = NSRange(location: (field.stringValue as NSString).length, length: 0)
-        return true
+        window?.focusFirstEditableTextField(in: pageView) ?? false
     }
 
     @available(*, unavailable)

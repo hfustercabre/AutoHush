@@ -378,7 +378,9 @@ extension StatusMenuControllerTests {
         sut.searchTakesKeyboard(replaying: key)
         #expect(side.isKeyWindow)
         #expect(sut.model.searchFocus == focus + 1)
-        await TestWait.until { sut.model.playerSearch == "a" } // typed once
+        await TestWait.until(otherwise: { "search \"\(sut.model.playerSearch)\", first responder \(String(describing: sut.sidePanel?.firstResponder))" }) {
+            sut.model.playerSearch == "a"
+        } // typed once
     }
 
     @Test("a key that gives the players' search the keyboard reaches its field even when SwiftUI dropped the field's focus, given through AppKit, so a dead key or an input method composes there (B-2 of 11-11)")

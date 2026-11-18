@@ -64,6 +64,14 @@ Applications folders are watched instead). Each window says what it
 needs; the watch refreshes only what the open ones need, and stops when
 none is open.
 
+**Keys' highlight** (`KeyHighlight`, each control `Highlightable`): the
+control the arrow keys, Tab and the pointer light, as in macOS's own menus,
+whatever the keyboard navigation setting: in the menu and its side window,
+Settings' sidebar and page (`SettingsKeys`), the guiding windows and the
+logs (`WindowKeys`). Space presses it, and Return where no main button
+takes Return; it follows VoiceOver's cursor. _Avoid_: focus (that's
+macOS's keyboard focus, which the highlight goes on from).
+
 **User settings** (`UserSettings`): the user's own settings and what
 follows from them: Auto-Pause and its snooze, the apps ignored and the
 apps seen, the timings, the detection method, the order of Settings' list
@@ -128,6 +136,15 @@ play); one that can't be muted plays on, and its pause failed.
 standing for its pause after a restart. It's lifted at the resume; once the
 player is paused under it, it's kept until the player plays again, so a
 restart by itself is never heard.
+
+**Kept mute** (`MuteState.outlastsApps`, `keptMuteStands`): the mute in
+place of a pause that's kept rather than resumed (Resume playback off, Stay
+paused after calls, the output gone with Pause on disconnect) while the
+player refuses its real pause. It stays with no app playing, the Mac's sleep
+included, shown on the chosen player's card as Muted with Unmute, its pause
+still tried, until the player pauses, the user pauses or quits it, AntiDot
+mode pauses it, or Unmute is pressed: then it's the user's, unmuted. A held
+player's, with nothing to show it, ends once no app plays.
 
 **Quiet listen** (`quietProcesses`, `quietListenInterval`): an app silent
 for 10 seconds has its tap released, so it's quiet and no longer counts as

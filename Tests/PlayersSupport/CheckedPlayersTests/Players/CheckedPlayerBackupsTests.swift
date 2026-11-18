@@ -36,16 +36,29 @@ struct CheckedPlayerBackupsTests {
                          window: CheckResult.WindowState = .visible, looks: Locked<Int> = Locked(0),
                          allowed: @escaping @Sendable (WayOrder.Kind) -> Bool = { _ in true },
                          audioRecording: Bool = true, usesBackups: Bool = true, panelWhileMuted: Bool = true,
+                         panelFailing: [CheckResult.WindowState] = [],
                          clock: Locked<Date> = Locked(Date(timeIntervalSince1970: 0))) -> CheckedPlayer {
         let setup = PlayerSetup(bundleID: "com.example.jukebox", name: "Jukebox", appURL: app, ways: [Self.way(chosenKind)],
                                 backups: backups.map { Self.way($0.1) },
-                                wayResults: [Self.result(chosenKind, failing: failing)] + backups.map { Self.result($0.1) },
+                                wayResults: [Self.result(chosenKind, failing: failing)]
+                                    + backups.map { Self.result($0.1, failing: $0.1 == .panel ? panelFailing : []) },
                                 usesBackups: usesBackups, panelWhileMuted: panelWhileMuted)
         let kept = backups.map { CheckedPlayer.Backup(player: $0.0, kind: WayOrder.Kind($0.1)) } + (key.map { [.init(player: $0, kind: .mediaKey)] } ?? [])
         return CheckedPlayer(setup: setup, parts: .init(ways: [chosen], signs: signs, backupSigns: backupSigns, backups: kept),
                              reports: nil, processIdentifier: { 4242 }, pressSleep: { _ in }, audioRecordingAllowed: { audioRecording },
                              windowState: { _ in looks.withLock { $0 += 1 }; return window }, backupAllowed: { kind, _ in allowed(kind) },
                              now: { clock.value })
+    }
+
+    @Test("while it's muted, its window is looked at only when the ways its retry presses change with it: a panel that failed minimized but is kept off while muted changes nothing; kept on, it does (K4-4 of 11-11)",
+          arguments: [false, true])
+    func mutedLooksOnlyWhenWalkDiffers(panelWhileMuted: Bool) async throws {
+        let page = await MockMusicPlayer.failing(), menu = MockMusicPlayer(), panel = MockMusicPlayer()
+        let looks = Locked(0)
+        let muted = jukebox(page, backups: [(menu, .menu), (panel, .panel)], looks: looks,
+                            panelWhileMuted: panelWhileMuted, panelFailing: [.minimized])
+        _ = try? await muted.pauseQuietly() // one press a retry: its page, refused
+        #expect(looks.value == (panelWhileMuted ? 1 : 0))
     }
 
     @Test("a pause goes to the first way that worked in the window's state, and to it alone: refused, it's left to AutoHush's mute")

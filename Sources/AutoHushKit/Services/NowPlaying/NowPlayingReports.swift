@@ -16,6 +16,9 @@ import OSLog
 /// A stream that keeps ending by itself soon after it starts isn't started
 /// again for a while (`shortRunsLimit`, `shortRunsRest`): each start reads
 /// the past again.
+///
+/// `@unchecked Sendable`: its mutable state is read and written only under
+/// `lock` once it's made, from callers' threads, `queue` and the stream's.
 package final class NowPlayingReports: @unchecked Sendable {
     /// One app mediaremoted keeps for Now Playing: "<its bundle ID> (<its
     /// pid>) <its name>", or a web app's media process
