@@ -40,7 +40,7 @@ struct SearchField: View {
     /// Whether `key` is the arrow back out of the field (`onBackWhileEmpty`):
     /// ←, or → right to left, the step back along the line
     /// (`RightToLeftLayout.arrowStep`; F6 of 1.4.2's review).
-    static func goesBack(_ key: KeyEquivalent, in layoutDirection: LayoutDirection) -> Bool {
+    nonisolated static func goesBack(_ key: KeyEquivalent, in layoutDirection: LayoutDirection) -> Bool {
         guard key == .leftArrow || key == .rightArrow else { return false }
         return RightToLeftLayout.arrowStep(key == .rightArrow ? 1 : -1, in: layoutDirection) == -1
     }
