@@ -146,12 +146,8 @@ final class StatusMenuController: NSObject {
     /// click, already do. Checked live (macOS 27.2): the key then reaches
     /// AutoHush with no window, AutoHush not the active app.
     private func watchMenuBarKeys() {
-        menuBarKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            let keyCode = event.keyCode, flags = event.modifierFlags, hasWindow = event.window != nil
-            let opened = MainActor.assumeIsolated {
-                self?.menuBarKey(keyCode, flags: flags, hasWindow: hasWindow, appIsActive: NSApp.isActive) == true
-            }
-            return opened ? nil : event
+        menuBarKeyMonitor = KeyDownMonitor.install { [weak self] key in
+            self?.menuBarKey(key.keyCode, flags: key.flags, hasWindow: key.hasWindow, appIsActive: NSApp.isActive) == true
         }
     }
 

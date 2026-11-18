@@ -70,12 +70,8 @@ final class LogsWindowController: PlacedWindowController, NSWindowDelegate {
             keys.highlight.clear() // nothing lit as it opens
         }
         if keyMonitor == nil {
-            keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-                let keyCode = event.keyCode, flags = event.modifierFlags, windowNumber = event.windowNumber
-                let handled = MainActor.assumeIsolated {
-                    self?.handleKey(keyCode, flags: flags, windowNumber: windowNumber) == true
-                }
-                return handled ? nil : event
+            keyMonitor = KeyDownMonitor.install { [weak self] key in
+                self?.handleKey(key.keyCode, flags: key.flags, windowNumber: key.windowNumber) == true
             }
         }
         placeOnce()

@@ -238,7 +238,8 @@ Sources/
                          IgnoredText, AccessibilityText, BackupText (backup controls), and the update choices' (AutomaticUpdates+Text)
     Utilities/           small helpers: AppVersion, ProjectInfo, AppIcon, InfoAlert, IgnoreAppsPicker
                          (the panel that picks apps to ignore, for Settings and the menu), ScrollKeys
-                         (a scroll view moved by the keys: the logs' entries, an update's notes), …
+                         (a scroll view moved by the keys: the logs' entries, an update's notes),
+                         KeyDownMonitor (the keys taken before the focused control), …
   AutoHushKit/           the engine, by kind of code too
     Models/              values and settings: AutoPauseSetting (the setting and snoozes), PlaybackState,
                          DetectionMethod, DetectionMode, ActiveAudioReport (what Diagnostics shows),

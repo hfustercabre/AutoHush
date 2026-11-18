@@ -227,13 +227,8 @@ class HostedWindowController: NSWindowController {
     /// Before the focused control, as Settings' keys are, until it closes.
     private func watchKeys() {
         guard keys != nil, keyMonitor == nil, let window else { return }
-        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            let keyCode = event.keyCode, flags = event.modifierFlags, characters = event.characters
-            let windowNumber = event.windowNumber
-            let handled = MainActor.assumeIsolated {
-                self?.handleKey(keyCode, flags: flags, characters: characters, windowNumber: windowNumber) == true
-            }
-            return handled ? nil : event
+        keyMonitor = KeyDownMonitor.install { [weak self] key in
+            self?.handleKey(key.keyCode, flags: key.flags, characters: key.characters, windowNumber: key.windowNumber) == true
         }
         keyCloseObserver = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window,
                                                                   queue: .main) { [weak self] _ in

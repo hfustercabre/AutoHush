@@ -12,12 +12,8 @@ final class ReleaseNotesKeys {
 
     /// Watches the keys for `notes` until `stop()`.
     init(_ notes: NSScrollView) {
-        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak notes] event in
-            let keyCode = event.keyCode, flags = event.modifierFlags, windowNumber = event.windowNumber
-            let handled = MainActor.assumeIsolated {
-                notes.map { Self.handle(keyCode, flags: flags, windowNumber: windowNumber, in: $0) } ?? false
-            }
-            return handled ? nil : event
+        monitor = KeyDownMonitor.install { [weak notes] key in
+            notes.map { Self.handle(key.keyCode, flags: key.flags, windowNumber: key.windowNumber, in: $0) } ?? false
         }
     }
 
