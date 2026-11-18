@@ -100,28 +100,32 @@ package final class SafariWebAppMaker: WebAppMaking {
         }
         // The tab to close once added, or cancelled: the one opened, or, once
         // the site asked something first, the page it then showed in it
-        // (answering loads another page). Never a tab the user moves to later.
+        // (answering loads another page). Never the tab in front before the
+        // add, gone back to meanwhile (W-3 of 1.4.2's review); a tab of the
+        // site the user goes to otherwise can't be told from it.
         var addedTab = tab
         // Add clicked in Safari's dialog: a web app may come even once cancelled.
         var addClicked = false
         do {
             try Task.checkCancellation()
             onStep(.opened)
-            return try await add(url, since: before, tab: &addedTab, addClicked: &addClicked, onStep: onStep, confirmAdd: confirmAdd)
+            return try await add(url, since: before, tab: &addedTab, sparing: usersTab, addClicked: &addClicked,
+                                 onStep: onStep, confirmAdd: confirmAdd)
         } catch is CancellationError {
-            await takeAway(url, since: before, tab: addedTab, waitsForApp: addClicked)
+            await takeAway(url, since: before, tab: addedTab, sparing: usersTab, waitsForApp: addClicked)
             throw CancellationError()
         } catch {
             // Failed (Add to Dock not available): its tab goes; a web app an
             // earlier Add makes late is still taken at the next try.
-            await takeAway(url, since: before, tab: addedTab, waitsForApp: false)
+            await takeAway(url, since: before, tab: addedTab, sparing: usersTab, waitsForApp: false)
             throw error
         }
     }
 
     /// From the page loaded in Safari: Add to Dock, once the site itself
     /// shows and the user clicked, until a new web app comes.
-    private func add(_ url: URL, since before: Set<String>, tab addedTab: inout SafariTab, addClicked: inout Bool,
+    private func add(_ url: URL, since before: Set<String>, tab addedTab: inout SafariTab, sparing usersTab: SafariTab?,
+                     addClicked: inout Bool,
                      onStep: @escaping @Sendable (WebAppMakingStep) -> Void,
                      confirmAdd: @escaping @Sendable () async -> Bool) async throws -> MadeWebApp {
         let site = url.host() ?? url.absoluteString
@@ -138,13 +142,13 @@ package final class SafariWebAppMaker: WebAppMaking {
                 try Task.checkCancellation()
                 continue
             }
-            if asking != nil, let shown = await safari.frontTab() { addedTab = shown }
+            if asking != nil, let shown = await safari.frontTab(), shown.page != usersTab?.page { addedTab = shown }
             asking = nil
             onStep(.readyToAdd(site: site))
             guard await confirmAdd() else { throw CancellationError() }
             try Task.checkCancellation()
             // Added after all, later than AutoHush waited for it.
-            if let made = await newWebApp(of: url, since: before, tab: addedTab, onStep: onStep) { return made }
+            if let made = await newWebApp(of: url, since: before, tab: addedTab, sparing: usersTab, onStep: onStep) { return made }
             // The user may have gone elsewhere since.
             if let shown = await safari.frontPageURL(), !WebAddress.isSameSite(shown, as: url) { continue }
             onStep(.adding)
@@ -162,7 +166,7 @@ package final class SafariWebAppMaker: WebAppMaking {
             // Added, the new web app comes; closed with Cancel, none does.
             let deadline = clock().addingTimeInterval(Self.appearTimeout)
             while clock() < deadline {
-                if let made = await newWebApp(of: url, since: before, tab: addedTab, onStep: onStep) { return made }
+                if let made = await newWebApp(of: url, since: before, tab: addedTab, sparing: usersTab, onStep: onStep) { return made }
                 await sleep(Self.pollInterval)
                 try Task.checkCancellation()
             }
@@ -178,13 +182,14 @@ package final class SafariWebAppMaker: WebAppMaking {
     /// and moved to the Trash: never one of another site, made meanwhile
     /// (`isOfSite`).
     /// Off the cancelled task, so its waits aren't cut short.
-    private func takeAway(_ url: URL, since before: Set<String>, tab: SafariTab?, sparing usersTab: SafariTab? = nil,
+    private func takeAway(_ url: URL, since before: Set<String>, tab: SafariTab?, sparing usersTab: SafariTab?,
                           waitsForApp: Bool) async {
         let (safari, webApps, sameSite, isSealed, discard, sleep, clock, logger)
             = (safari, webApps, sameSite, isSealed, discard, sleep, clock, logger)
         await Task.detached {
             if let tab {
-                await safari.closeTab(tab)
+                // Never the user's own (Safari may have left it in front, P-4).
+                if tab.page != usersTab?.page { await safari.closeTab(tab) }
             } else if let shown = await safari.frontPageURL(), WebAddress.isSameSite(shown, as: url),
                       let front = await safari.frontTab(), front.page != usersTab?.page {
                 await safari.closeTab(front)
@@ -233,12 +238,12 @@ package final class SafariWebAppMaker: WebAppMaking {
     /// before. Then it's registered (Launch Services learns of it only
     /// later, and opening it by its bundle ID needs it) and AutoHush's
     /// Safari tab closed.
-    private func newWebApp(of url: URL, since before: Set<String>, tab: SafariTab,
+    private func newWebApp(of url: URL, since before: Set<String>, tab: SafariTab, sparing usersTab: SafariTab?,
                            onStep: @Sendable (WebAppMakingStep) -> Void) async -> MadeWebApp? {
         let new = webApps().first { !before.contains($0.bundleID) && Self.isOfSite($0, url, unread: true, sameSite: sameSite) }
         guard let app = new, isSealed(app.url) else { return nil }
         LSRegisterURL(app.url as CFURL, true)
-        await safari.closeTab(tab)
+        if tab.page != usersTab?.page { await safari.closeTab(tab) }
         logger.notice("Added a web app in Safari")
         let made = MadeWebApp(bundleID: app.bundleID, name: app.name, url: app.url, alreadyThere: false)
         onStep(.made(made))

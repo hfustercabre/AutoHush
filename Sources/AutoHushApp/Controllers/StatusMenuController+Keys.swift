@@ -80,24 +80,29 @@ extension StatusMenuController {
             perform(.chooseHighlighted)
         case .returnKey, .space:
             keyboard.press()
-        case .right:
-            if !inSide, keyboard.highlightedOpensSide {
-                // Into the side window, on its first row, as into a submenu
-                // (once opened: opening clears its highlight).
-                keyboard.press()
-                model.sideKeyboard.highlightFirstWhenReady()
-            } else if inSide, keyboard.highlighted == nil {
-                keyboard.move(1) // one the pointer opened: its first row
-            } else {
-                _ = keyboard.adjust(1) || keyboard.moveInRow(1)
-            }
         case .delete: // nothing in the menu is removed with it
             return false
-        case .left:
-            if inSide {
+        case .right, .left:
+            // The way a submenu opens: → left to right, ← right to left,
+            // as macOS's own menus in Arabic and Hebrew (measured in the
+            // VM, 2026-11-18; W-1 of 1.4.2's review). A slider's step and a
+            // row's next control go the way the arrow points.
+            let arrow = key == .right ? 1 : -1
+            if (key == .right) != model.keyboard.readsRightToLeft() {
+                if !inSide, keyboard.highlightedOpensSide {
+                    // Into the side window, on its first row, as into a submenu
+                    // (once opened: opening clears its highlight).
+                    keyboard.press()
+                    model.sideKeyboard.highlightFirstWhenReady()
+                } else if inSide, keyboard.highlighted == nil {
+                    keyboard.move(1) // one the pointer opened: its first row
+                } else {
+                    _ = keyboard.adjust(arrow) || keyboard.moveInRow(arrow)
+                }
+            } else if inSide {
                 closeSide()
             } else {
-                _ = keyboard.adjust(-1) || keyboard.moveInRow(-1)
+                _ = keyboard.adjust(arrow) || keyboard.moveInRow(arrow)
             }
         }
         return true

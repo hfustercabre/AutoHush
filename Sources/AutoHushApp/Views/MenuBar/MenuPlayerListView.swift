@@ -26,7 +26,7 @@ struct MenuPlayerListView: View {
                             onClick: { model.perform(.typeInSearch) },
                             onSubmit: { model.perform(.chooseHighlighted) },
                             onMove: { model.perform(.moveHighlight($0)) },
-                            onLeftWhileEmpty: { model.perform(.closeSide) })
+                            onBackWhileEmpty: { model.perform(.closeSide) })
             }
             if let note = list.noMatchNote {
                 Text(verbatim: note).captionStyle()

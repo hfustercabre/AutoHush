@@ -30,8 +30,11 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     func waitForPage() async -> SafariTab? {
         log.append("wait")
         while holdsPage, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
-        return loads && !Task.isCancelled ? SafariTab(page: 1) : nil
+        return loads && !Task.isCancelled ? SafariTab(page: loadedPage) : nil
     }
+    /// The page `waitForPage` finds loaded: the tab it opened (1), or the
+    /// user's own (0), when Safari left that one in front.
+    var loadedPage = 1
     /// The front page's address at each look, the last one staying; none:
     /// it can't be read.
     let pages = Locked<[URL]>([])

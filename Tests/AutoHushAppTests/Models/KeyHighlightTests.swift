@@ -630,4 +630,23 @@ struct KeyHighlightTests {
         }
         #expect(keyboard.lightCount <= KeyHighlight.keptLights + 1)
     }
+
+    @Test("past the bound, a window just closed keeps its controls' lights, to show again; the oldest gone ones are let go (C-1 of 1.4.2's review)")
+    func closedWindowKeepsItsLightsPastTheBound() {
+        let keyboard = KeyHighlight()
+        let stale = (0..<KeyHighlight.keptLights).map { index in
+            let row = control(keyboard, 0, CGFloat(index))
+            _ = keyboard.light(row)
+            return row
+        }
+        stale.forEach(keyboard.remove)
+        let row = control(keyboard, 0, 1000)
+        let light = keyboard.light(row)
+        keyboard.move(1)
+        keyboard.remove(row) // its window closed
+        keyboard.register(row, .init(frame: CGRect(x: 0, y: 1000, width: 44, height: 22))) // shown again
+        keyboard.move(1)
+        #expect(keyboard.light(row) === light && light.isOn)
+        #expect(keyboard.lightCount <= KeyHighlight.keptLights + 1)
+    }
 }

@@ -113,6 +113,14 @@ extension StatusMenuController {
                 await pause(0.05)
             }
             guard let side, side.isVisible else { return } // closed meanwhile: typed nowhere
+            // The key goes after what's typed, never in place of it: a field
+            // focused selects all its text (C-2 of 1.4.2's review).
+            if let editor = side.firstResponder as? NSTextView {
+                let length = (editor.string as NSString).length
+                if length > 0, editor.selectedRange() == NSRange(location: 0, length: length) {
+                    editor.setSelectedRange(NSRange(location: length, length: 0))
+                }
+            }
             side.sendEvent(event)
         }
         return true

@@ -11,6 +11,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **In Arabic and Hebrew,** AutoHush's menu and windows now read right to
   left, as macOS's own apps do; before, only the windows' title bars did.
+  The arrow keys follow: a slider and a row of choices step the way the
+  arrow points, and ← opens the menu's side windows, as in macOS's menus.
 - **A player kept muted** because it refused its pause now stays muted
   while the Mac sleeps, instead of waking up playing out loud.
 - **Add a Web App** closes the Safari tab it opened when it fails, so
@@ -30,13 +32,15 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Reopen AutoHush** (after allowing Audio Recording) puts the volume back
   and lets your player go before quitting, as any quit does.
 - **Players installed** in an Applications folder that was deleted and made
-  again are noticed at once.
-- **The first key typed** into the players' search always reaches its
-  field, so accents and other input methods work there on a busy Mac.
-- **Keyboard:** Return keeps working in a window shown again; End and Page
-  Down reach every player tile, however many; Delete with nothing to
-  remove no longer beeps; VoiceOver reads Try Again's result reliably; and
-  Logs' time column follows a change of time zone.
+  again are noticed again.
+- **The first key typed** into the players' search reaches its field, after
+  what's typed there, so accents and other input methods work there on a
+  busy Mac.
+- **Keyboard:** Return and the highlight keep working in a window shown
+  again; the highlight starts following VoiceOver later if it couldn't at
+  first; End and Page Down reach every player tile, however many; Delete
+  with nothing to remove no longer beeps; VoiceOver reads Try Again's
+  result reliably; and Logs' time column follows a change of time zone.
 
 ## [1.4.1] — 2026-11-13
 

@@ -184,6 +184,26 @@ extension StatusMenuControllerTests {
         #expect(presses.calls == ["adjust 1", "adjust -1"])
     }
 
+    @Test("right to left (Arabic, Hebrew), ← opens a side window from its row and → closes it, as macOS's own menus do there; a slider still steps the way the arrow points (W-1 of 1.4.2's review)")
+    func arrowsOpenAndCloseSideRightToLeft() {
+        let (sut, presses, _, _) = menuWithRows()
+        defer { sut.remove() }
+        sut.model.keyboard.readsRightToLeft = { true }
+        #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓: the slider
+        #expect(sut.handleKey(MenuPanelTests.key(124))) // →
+        #expect(sut.handleKey(MenuPanelTests.key(123))) // ←
+        #expect(presses.calls == ["adjust 1", "adjust -1"]) // its own row turns them its way (`arrowStep`)
+        #expect(sut.handleKey(MenuPanelTests.key(125))) // ↓: the side window's row
+        #expect(sut.handleKey(MenuPanelTests.key(124))) // →: nothing to open that way
+        #expect(sut.model.openSide == nil)
+        #expect(sut.handleKey(MenuPanelTests.key(123))) // ←: opens it
+        #expect(sut.model.openSide == .ignoredApps)
+        #expect(sut.handleKey(MenuPanelTests.key(123))) // ←: on into it, not closed
+        #expect(sut.model.openSide == .ignoredApps)
+        #expect(sut.handleKey(MenuPanelTests.key(124))) // →: closes it
+        #expect(sut.model.openSide == nil)
+    }
+
     @Test("in the menu, → opens a side window from its row, on its first row once they've come; ↓ goes on from it, Space presses, and ← closes it")
     func arrowsOpenAndCloseSide() async {
         let (sut, presses, _, sideRow) = menuWithRows()
@@ -383,7 +403,7 @@ extension StatusMenuControllerTests {
         } // typed once
     }
 
-    @Test("a key that gives the players' search the keyboard reaches its field even when SwiftUI dropped the field's focus, given through AppKit, so a dead key or an input method composes there (B-2 of 11-11)")
+    @Test("a key that gives the players' search the keyboard reaches its field even when SwiftUI dropped the field's focus, given through AppKit, so a dead key or an input method composes there (B-2 of 11-11), after what's typed there, not in place of it (C-2 of 1.4.2's review)")
     func searchKeyAfterDroppedFocus() async throws {
         let sut = makeController()
         defer { sut.remove() }
@@ -405,6 +425,7 @@ extension StatusMenuControllerTests {
         }
         sut.open() // on screen
         sut.perform(.openSide(.players))
+        sut.model.playerSearch = "sp" // typed before the menu took the keyboard back
         let side = try #require(sut.sidePanel)
         let key = try #require(NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
                                                 windowNumber: side.windowNumber, context: nil, characters: "a",
@@ -416,7 +437,8 @@ extension StatusMenuControllerTests {
             return fieldKey?(event) ?? false
         }
         sut.searchTakesKeyboard(replaying: key)
-        await TestWait.until { sut.model.playerSearch == "a" } // typed once
+        await TestWait.until(otherwise: { "search \"\(sut.model.playerSearch)\"" }) { sut.model.playerSearch != "sp" }
+        #expect(sut.model.playerSearch == "spa") // typed once, after what was there
         #expect(reached.value) // in the field, not only the panel's own typing
     }
 

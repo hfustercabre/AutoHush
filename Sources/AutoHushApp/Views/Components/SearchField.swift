@@ -29,11 +29,13 @@ struct SearchField: View {
     var onSubmit: (() -> Void)?
     /// ↑ and ↓ in it, for a list under it whose selection they move (-1, 1).
     var onMove: ((Int) -> Void)?
-    /// ← in it while it's empty (with text, it moves the caret): the menu's
-    /// side window closes, as ← closes it from its rows (with VoiceOver on,
-    /// the field has the keyboard from the start; 2026-11-06).
-    var onLeftWhileEmpty: (() -> Void)?
+    /// ← in it while it's empty (with text, it moves the caret), → right to
+    /// left: the menu's side window closes, as that arrow closes it from its
+    /// rows (with VoiceOver on, the field has the keyboard from the start;
+    /// 2026-11-06; mirrored, W-1 of 1.4.2's review).
+    var onBackWhileEmpty: (() -> Void)?
     @FocusState private var isFocused: Bool
+    @Environment(\.layoutDirection) private var layoutDirection
 
     /// How long typing pauses before VoiceOver hears the results: not over
     /// each key's echo.
@@ -61,9 +63,10 @@ struct SearchField: View {
             .onSubmit { onSubmit?() }
             .onKeyPress(.upArrow) { move(-1) }
             .onKeyPress(.downArrow) { move(1) }
-            .onKeyPress(.leftArrow) {
-                guard text.isEmpty, let onLeftWhileEmpty else { return .ignored }
-                onLeftWhileEmpty()
+            .onKeyPress(keys: [.leftArrow, .rightArrow]) { press in
+                let back: KeyEquivalent = layoutDirection == .rightToLeft ? .rightArrow : .leftArrow
+                guard press.key == back, text.isEmpty, let onBackWhileEmpty else { return .ignored }
+                onBackWhileEmpty()
                 return .handled
             }
             if let onClose {

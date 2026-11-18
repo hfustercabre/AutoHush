@@ -434,6 +434,33 @@ struct SafariWebAppMakerTests {
         #expect(!setup.safari.log.value.contains { $0.hasPrefix("close tab") })
     }
 
+    @Test("a site that asks first, answered by going to the user's own tab of the site, then Add to Dock not available: only the tab this add opened is asked to close (left open while not in front), never the user's (W-3 of 1.4.2's review)")
+    func failedAddSparesUsersTabGoneTo() async {
+        let setup = Setup()
+        setup.safari.pages.withLock {
+            $0 = [URL(string: "https://consent.qobuz.com/m?continue=https://play.qobuz.com")!,
+                  URL(string: "https://play.qobuz.com/discover")!]
+        }
+        setup.safari.addsToDock = false
+        setup.safari.frontTabPage.withLock { $0 = 0 } // the user went to their own tab of the site
+        await #expect(throws: WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")) {
+            try await setup.make("play.qobuz.com")
+        }
+        #expect(setup.safari.log.value.filter { $0.hasPrefix("close tab") } == ["close tab 1"])
+    }
+
+    @Test("a failed add whose loaded page is the user's own tab (Safari left it in front) closes no tab (P-4 of 1.4.2's review)")
+    func failedAddSparesUsersLoadedTab() async {
+        let setup = Setup()
+        setup.safari.pages.withLock { $0 = [URL(string: "https://play.qobuz.com/")!] }
+        setup.safari.loadedPage = 0
+        setup.safari.addsToDock = false
+        await #expect(throws: WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")) {
+            try await setup.make("play.qobuz.com")
+        }
+        #expect(!setup.safari.log.value.contains { $0.hasPrefix("close tab") })
+    }
+
     @Test("Safari's dialog closed without adding: back to Add to Dock, whose next click opens it again")
     func closedWithoutAdding() async throws {
         let setup = Setup()

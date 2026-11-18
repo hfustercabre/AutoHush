@@ -109,6 +109,8 @@ final class KeyHighlight {
     /// Each control's own "highlighted", so a move redraws the two controls
     /// it concerns, not every one (the full check, 2026-10-18).
     @ObservationIgnored private var lights: [UUID: Light] = [:]
+    /// The controls removed whose `Light` is kept, oldest first (`remove`).
+    @ObservationIgnored private var removedLights: [UUID] = []
     /// The order (`rows`) as it was when the keys came onto a control that
     /// shows a reason (`Control.explains`): the next move from it goes by
     /// that order, as the reason's caption, shown under it only while the
@@ -247,9 +249,21 @@ final class KeyHighlight {
             light.byKeys = false
         }
         // Kept within bounds: views shown anew come with new ids, so the
-        // lights of controls gone for good are let go now and then (R3).
-        if lights.count > controls.count + Self.keptLights {
-            lights = lights.filter { controls[$0.key] != nil || $0.key == highlighted }
+        // lights of controls gone for good are let go (R3), the oldest
+        // first: a window just closed keeps its own, to be shown again
+        // (C-1 of 1.4.2's review: all of them were let go at once).
+        guard lights[id] != nil else { return }
+        removedLights.removeAll { $0 == id }
+        removedLights.append(id)
+        while removedLights.count > Self.keptLights {
+            let oldest = removedLights.removeFirst()
+            if controls[oldest] == nil, oldest != highlighted { lights[oldest] = nil }
+        }
+        // A light made for a view drawn after it left (none of the above):
+        // let go too, now and then, never one of those just kept.
+        if lights.count > controls.count + 2 * Self.keptLights {
+            let kept = Set(removedLights)
+            lights = lights.filter { controls[$0.key] != nil || $0.key == highlighted || kept.contains($0.key) }
         }
     }
 

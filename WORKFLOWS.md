@@ -416,6 +416,7 @@ flowchart TD
   WEL{"The welcome<br/>window open?"}
   BYW["This window closes; the welcome<br/>window closes too when nothing is<br/>missing (the learning window follows),<br/>else it comes forward to ask"]
   STOP["Cancel, or closing the<br/>window: nothing is added;<br/>the tab it opened closes,<br/>and a web app made all the<br/>same goes to the Trash"]
+  FAIL["Safari fails (the page<br/>doesn’t load, no Add to Dock):<br/>the window says why; the tab<br/>it opened closes when in front,<br/>a tab of the site you had<br/>open stays"]
 
   ST --> ADDR
   SUG --> ADDR
@@ -434,9 +435,12 @@ flowchart TD
   WEL -->|"no"| LRN
   WEL -->|"yes"| BYW
   BTN -.->|"before Add"| STOP
+  OPEN -.->|"fails"| FAIL
+  DLG -.->|"fails"| FAIL
+  FAIL --> ADDR
 
   class LRN,BYW ref
-  class ERR,AGAIN,STOP warn
+  class ERR,AGAIN,STOP,FAIL warn
   classDef ref fill:#f1e7fc,stroke:#8a3fd1,stroke-width:1.5px,stroke-dasharray: 5 3,color:#1d1b22
   classDef warn fill:#fff3e2,stroke:#c47812,stroke-width:1.5px,color:#1d1b22
 ```
