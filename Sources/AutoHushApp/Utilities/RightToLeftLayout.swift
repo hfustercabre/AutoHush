@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// AutoHush in Arabic or Hebrew lays itself out right to left, as macOS's
 /// own apps do. macOS mirrors only a window's title bar by itself: an app
@@ -29,5 +30,14 @@ enum RightToLeftLayout {
     static func register(preferred: [String] = Bundle.main.preferredLocalizations) {
         let values = defaults(preferred: preferred)
         if !values.isEmpty { UserDefaults.standard.register(defaults: values) }
+    }
+
+    /// The step for an arrow (→ 1, ← -1) on a control laid out along a line,
+    /// a slider or a row of chips, so it moves the way the arrow points, as
+    /// macOS's own do: right to left, where a slider's minimum and a row's
+    /// first chip are on the right, → steps back (measured on `NSSlider` and
+    /// `NSSegmentedControl`, 2026-11-18; the user: "Follow how MacOS manages it").
+    static func arrowStep(_ arrow: Int, in layoutDirection: LayoutDirection) -> Int {
+        layoutDirection == .rightToLeft ? -arrow : arrow
     }
 }

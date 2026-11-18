@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import AutoHushApp
 
@@ -17,5 +18,11 @@ struct RightToLeftLayoutTests {
         let values = RightToLeftLayout.defaults(preferred: preferred)
         #expect((values[RightToLeftLayout.key] as? Bool) == (registered ? true : nil))
         #expect(values.count == (registered ? 1 : 0))
+    }
+
+    @Test("← and → on a slider or a row of chips step the way they point, as macOS's own do: left to right, → goes up the values (or to the next chip); right to left (Arabic, Hebrew), where the minimum or the first chip is on the right, → goes back",
+          arguments: [(LayoutDirection.leftToRight, 1, 1), (.leftToRight, -1, -1), (.rightToLeft, 1, -1), (.rightToLeft, -1, 1)])
+    func arrows(_ layout: LayoutDirection, _ arrow: Int, _ step: Int) {
+        #expect(RightToLeftLayout.arrowStep(arrow, in: layout) == step)
     }
 }

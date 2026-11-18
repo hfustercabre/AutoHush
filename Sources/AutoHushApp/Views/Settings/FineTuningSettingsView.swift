@@ -17,6 +17,7 @@ import AutoHushKit
 struct FineTuningSettingsView: View {
     let model: SettingsModel
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+    @Environment(\.layoutDirection) private var layoutDirection
 
     var body: some View {
         SettingsPageScroll {
@@ -93,8 +94,10 @@ struct FineTuningSettingsView: View {
                     )
                 }
                 .background(anchor(.detection))
-                // ← and → choose, while the arrow keys' highlight is on it.
-                .highlightableRow(adjust: { step in
+                // ← and → choose, while the arrow keys' highlight is on it: the
+                // chip on that side, the first on the right in Arabic and Hebrew.
+                .highlightableRow(adjust: { arrow in
+                    let step = RightToLeftLayout.arrowStep(arrow, in: layoutDirection)
                     if let method = DetectionMethod.antiDotWays.stepping(from: model.detectionMethod, by: step) {
                         model.setDetectionMethod(method)
                     }

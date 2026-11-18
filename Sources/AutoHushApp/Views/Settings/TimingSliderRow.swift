@@ -17,6 +17,7 @@ struct TimingSliderRow: View {
     /// VoiceOver's cursor on the row's control brings the highlight (K5-1).
     @AccessibilityFocusState private var controlHasVoiceOverCursor: Bool
     @Environment(KeyHighlight.self) private var keyboard: KeyHighlight?
+    @Environment(\.layoutDirection) private var layoutDirection
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -52,7 +53,8 @@ struct TimingSliderRow: View {
         // Highlighted by the arrow keys (← and →
         // move it) and the pointer, and tinted while its slider has the
         // keyboard's focus (F5).
-        .highlightableRow(isFocused: sliderFocused, adjust: step, isCurrent: isCurrent, voiceOverTarget: $controlHasVoiceOverCursor)
+        .highlightableRow(isFocused: sliderFocused, adjust: { step(RightToLeftLayout.arrowStep($0, in: layoutDirection)) },
+                          isCurrent: isCurrent, voiceOverTarget: $controlHasVoiceOverCursor)
     }
 
     /// One step of the slider up (1) or down (-1), kept in its range.

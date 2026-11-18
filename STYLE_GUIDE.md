@@ -575,6 +575,10 @@ direction (`AppleTextDirection`) at launch when it runs in either language
 (`RightToLeftLayout`), as a default: a value set by hand wins.
 
 - **Leading and trailing,** never left and right, in layouts and alignments.
+- **A slider's and a row of chips' arrows stay spatial:** ← and → move the
+  way they point, as macOS's own sliders and segmented controls do: right to
+  left, where a slider's minimum and a row's first chip are on the right, →
+  steps back.
 - **Directional symbols** use their "forward" and "backward" forms
   (`chevron.forward`), which mirror. A rotated symbol keeps the same angle:
   SwiftUI mirrors the rotation too.
