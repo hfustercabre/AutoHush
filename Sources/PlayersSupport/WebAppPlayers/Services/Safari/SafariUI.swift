@@ -52,9 +52,9 @@ package struct SafariUI: SafariDriving {
             let tab = await Self.queue.run { () -> SafariTab? in
                 guard let app = Self.safariElement(), Self.pageLoaded(in: app),
                       let item = Self.addToDockItem(in: app), item.value(kAXEnabledAttribute) as? Bool == true,
-                      let page = Self.frontPage(in: app)
+                      let id = Self.frontTabID(in: app)
                 else { return nil }
-                return SafariTab(page: page)
+                return SafariTab(id: id)
             }
             if let tab { return tab }
             try? await Task.sleep(for: .milliseconds(300))
@@ -64,8 +64,8 @@ package struct SafariUI: SafariDriving {
 
     package func frontTab() async -> SafariTab? {
         await Self.queue.run {
-            guard let app = Self.safariElement(), let page = Self.frontPage(in: app) else { return nil }
-            return SafariTab(page: page)
+            guard let app = Self.safariElement(), let id = Self.frontTabID(in: app) else { return nil }
+            return SafariTab(id: id)
         }
     }
 
@@ -144,7 +144,7 @@ package struct SafariUI: SafariDriving {
 
     package func closeTab(_ tab: SafariTab) async {
         let closed = await Self.queue.run { () -> Bool? in
-            guard let app = Self.safariElement(), let front = Self.frontPage(in: app), AnyHashable(front) == tab.page else {
+            guard let app = Self.safariElement(), Self.frontTabID(in: app) == tab.id else {
                 return nil
             }
             // Safari disables Close Tab for a window's only tab (measured on
@@ -193,6 +193,31 @@ package struct SafariUI: SafariDriving {
     private static func frontPage(in app: AXUIElement) -> AXUIElement? {
         guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) else { return nil }
         return first(in: window, depth: 8) { $0.string(kAXRoleAttribute) == "AXWebArea" }
+    }
+
+    /// The front window's tab, as long as it lives: the window and its
+    /// selected tab button, which a page loading in it keeps, while its page
+    /// becomes another element (measured on macOS 27 and on 14.4's Safari
+    /// 17.4, 2026-11-18). The buttons sit next to the window's top (depth 2);
+    /// its page isn't walked. A window of one tab shows no button: there the
+    /// page counts too, so another tab left alone in that window later is
+    /// never taken for it (the diff review's R1); a load in it then leaves
+    /// it open, never closes the wrong one.
+    private static func frontTabID(in app: AXUIElement) -> AnyHashable? {
+        guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) else { return nil }
+        let button = first(in: window, depth: 6, skipping: "AXWebArea") {
+            $0.string(kAXSubroleAttribute) == "AXTabButton" && ($0.value(kAXValueAttribute) as? NSNumber)?.boolValue == true
+        }
+        let page = button == nil ? frontPage(in: app).map { AnyHashable($0) } : nil
+        return AnyHashable(TabIdentity(window: AnyHashable(window), button: button.map { AnyHashable($0) }, page: page))
+    }
+
+    /// A tab, as `frontTabID` tells it.
+    private struct TabIdentity: Hashable {
+        let window: AnyHashable
+        let button: AnyHashable?
+        /// Only without a button.
+        let page: AnyHashable?
     }
 
     /// File → Add to Dock…, by either name Safari gives it.
@@ -244,11 +269,13 @@ package struct SafariUI: SafariDriving {
         return nil
     }
 
-    private static func first(in element: AXUIElement, depth: Int, where matches: (AXUIElement) -> Bool) -> AXUIElement? {
+    private static func first(in element: AXUIElement, depth: Int, skipping skippedRole: String? = nil,
+                              where matches: (AXUIElement) -> Bool) -> AXUIElement? {
         if matches(element) { return element }
         guard depth > 0 else { return nil }
+        if let skippedRole, element.string(kAXRoleAttribute) == skippedRole { return nil }
         for child in element.children(timeout: timeout) {
-            if let found = first(in: child, depth: depth - 1, where: matches) { return found }
+            if let found = first(in: child, depth: depth - 1, skipping: skippedRole, where: matches) { return found }
         }
         return nil
     }

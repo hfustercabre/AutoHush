@@ -315,7 +315,7 @@ final class StatusMenuController: NSObject {
         if snoozeChanged { followSnoozeClock() }
         // After the card's Try Again, VoiceOver hears how it went, as every
         // other announcement (K3-5 of 11-11).
-        if let outcome = model.retryOutcome() { announce(outcome) }
+        if let outcome = model.takeRetryOutcome() { announce(outcome) }
     }
 
     private func renderIcon() {

@@ -102,7 +102,7 @@ struct StatusCardView: View {
         .padding(.top, 4)
         .padding(.bottom, 2)
         .frame(width: menuContentWidth)
-        // After Try Again, VoiceOver hears how it went: `StatusMenuModel.retryOutcome`.
+        // After Try Again, VoiceOver hears how it went: `StatusMenuModel.takeRetryOutcome`.
     }
 
     /// The status line, in orange when something needs the user; with an

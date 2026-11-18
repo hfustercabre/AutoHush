@@ -5,6 +5,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Add a Web App** never closes a tab of yours of the same site, also one
+  you went to while the site asked you something first.
+
 ## [1.4.2] — 2026-11-18
 
 ### Fixed

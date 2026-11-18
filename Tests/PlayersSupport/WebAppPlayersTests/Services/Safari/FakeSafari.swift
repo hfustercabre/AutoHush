@@ -30,18 +30,19 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     func waitForPage() async -> SafariTab? {
         log.append("wait")
         while holdsPage, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
-        return loads && !Task.isCancelled ? SafariTab(page: loadedPage) : nil
+        return loads && !Task.isCancelled ? SafariTab(id: loadedPage) : nil
     }
-    /// The page `waitForPage` finds loaded: the tab it opened (1), or the
+    /// The tab `waitForPage` finds loaded: the one it opened (1), or the
     /// user's own (0), when Safari left that one in front.
     var loadedPage = 1
     /// The front page's address at each look, the last one staying; none:
     /// it can't be read.
     let pages = Locked<[URL]>([])
-    /// The tab in front once the site shows after asking something: the same
-    /// one, unless the test says the page changed (`frontTabPage`).
+    /// The tab in front once opened: the one opened (1), unless the test
+    /// says the user went to another (`frontTabPage`; 0 is the user's tab in
+    /// front before). A page loading in a tab keeps it the same tab.
     let frontTabPage = Locked<Int>(1)
-    func frontTab() async -> SafariTab? { log.append("front tab"); return SafariTab(page: opened.value ? frontTabPage.value : 0) }
+    func frontTab() async -> SafariTab? { log.append("front tab"); return SafariTab(id: opened.value ? frontTabPage.value : 0) }
 
     func frontPageURL() async -> URL? {
         log.append("page")
@@ -73,5 +74,10 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     }
     /// Where its dialog says it shows.
     static let dialogFrame = CGRect(x: 600, y: 300, width: 480, height: 280)
-    func closeTab(_ tab: SafariTab) async { log.append("close tab \(tab.page)") }
+    /// As Safari's: only the tab in front (the diff review's R3); another is
+    /// left open.
+    func closeTab(_ tab: SafariTab) async {
+        let front = AnyHashable(opened.value ? frontTabPage.value : 0)
+        log.append(tab.id == front ? "close tab \(tab.id)" : "left tab \(tab.id)")
+    }
 }

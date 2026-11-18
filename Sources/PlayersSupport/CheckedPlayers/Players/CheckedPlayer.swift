@@ -228,29 +228,8 @@ package actor CheckedPlayer: AddedAppPlayer {
             let signs = !parts.signs.isEmpty || reports != nil || routes && !parts.backupSigns.isEmpty
             checkable = signs ? await sureState() != .unknown : false
         }
-        let panel = way as? PanelWay
-        // Judged by its signs only through `PressCheck` (or by itself).
-        let judged = way.checksItsPresses || checkable == true
-        do {
-            if way.checksItsPresses || checkable != true {
-                if target == .playing { try await way.play() } else { try await way.pause() }
-            } else {
-                try await PressCheck(name: "\(name) (\(type(of: way)))",
-                                     press: { target in if target == .playing { try await way.play() } else { try await way.pause() } },
-                                     state: { [self] in await self.sureState() }, sleep: pressSleep).press(to: target)
-            }
-        } catch {
-            await panel?.pressJudged(false)
-            throw error
-        }
-        // The panel's row kept only now, its press judged (K4-1 of 11-11);
-        // not judged, only a row its song, name or memory told. A check whose
-        // signs never answered (`PressCheck` lets that pass) judged nothing
-        // (the second diff review's D1).
-        guard let panel else { return }
-        var answered = judged && way.checksItsPresses
-        if judged, !answered { answered = await sureState() != .unknown }
-        await panel.pressJudged(answered ? true : nil)
+        try await JudgedPress.press(way, to: target, throughCheck: !way.checksItsPresses && checkable == true, name: name,
+                                    state: { [self] in await self.sureState() }, sleep: pressSleep)
     }
 
     package func volume() async -> Int? { await parts.volume?.volume() }

@@ -11,8 +11,7 @@ package protocol SafariDriving: Sendable {
     /// The address of the page in Safari's front window; `nil` when it
     /// can't be read.
     func frontPageURL() async -> URL?
-    /// The tab showing the page in Safari's front window now; `nil` when
-    /// there's none.
+    /// The tab in Safari's front window now; `nil` when there's none.
     func frontTab() async -> SafariTab?
     /// Chooses File → Add to Dock, makes sure the dialog has `url` (the page
     /// may have moved), and waits while the user names the web app and
@@ -21,7 +20,6 @@ package protocol SafariDriving: Sendable {
     /// once it shows (from the main screen's top left corner).
     func addToDock(_ url: URL, dialogShown: @escaping @Sendable (CGRect) -> Void) async -> AddToDockResult
     /// Closes `tab` (its window, when it's the window's only tab), if it's
-    /// still the one in front showing the same page: never a tab the user
-    /// moved to since.
+    /// still the one in front: never a tab the user moved to since.
     func closeTab(_ tab: SafariTab) async
 }

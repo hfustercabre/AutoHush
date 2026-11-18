@@ -305,26 +305,8 @@ package actor BackedUpPlayer<Inner: MusicPlayer>: MusicPlayer, TapsAllowingPlaye
     /// One that checks its own presses (a web app's page, the key) as it
     /// is; any other by its own player's state (`PressCheck`).
     func press(_ way: any MusicPlayer, to target: PlayerState, checkable: inout Bool?) async throws {
-        let panel = way as? PanelWay
-        do {
-            if way.checksItsPresses {
-                if target == .playing { try await way.play() } else { try await way.pause() }
-            } else {
-                try await PressCheck(name: "\(name) (\(type(of: way)))",
-                                     press: { target in if target == .playing { try await way.play() } else { try await way.pause() } },
-                                     state: { [self] in await self.stateNow() }, sleep: pressSleep).press(to: target)
-            }
-        } catch {
-            await panel?.pressJudged(false)
-            throw error
-        }
-        // The panel's row kept only now, its press judged (K4-1 of 11-11);
-        // by a check whose state never answered (`PressCheck` lets that
-        // pass), not judged: only a row its song, name or memory told (D1).
-        guard let panel else { return }
-        var answered = way.checksItsPresses
-        if !answered { answered = await stateNow() != .unknown }
-        await panel.pressJudged(answered ? true : nil)
+        try await JudgedPress.press(way, to: target, throughCheck: !way.checksItsPresses, name: name,
+                                    state: { [self] in await self.stateNow() }, sleep: pressSleep)
     }
 }
 

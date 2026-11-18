@@ -65,7 +65,7 @@ final class StatusMenuModel {
     /// An update check asked from the menu runs: its Updates button says so.
     var isCheckingForUpdates = false
     /// Try Again was clicked in the card, and how it went isn't in yet
-    /// (`retryOutcome`); `nil` once it is, or as the menu opens.
+    /// (`takeRetryOutcome`); `nil` once it is, or as the menu opens.
     @ObservationIgnored var pendingRetry: PendingRetry?
     @ObservationIgnored var perform: @MainActor (StatusMenuCommand) -> Void = { _ in }
     /// The clock the snooze bar's time left is read by: set as the menu
@@ -143,12 +143,12 @@ extension StatusMenuModel {
         var begun = false
     }
 
-    /// The card's line to announce once the Try Again's own result is in
+    /// Takes the card's line to announce once the Try Again's own result is in
     /// (the start over; the resume played, or given up again), the wait
     /// then over; `nil` until then. Read each time the status changes: by
     /// the result, not by the line, which can come back the same (the same
     /// failure) or change for another reason first (K3-5 of 11-11).
-    func retryOutcome() -> String? {
+    func takeRetryOutcome() -> String? {
         guard var pending = pendingRetry else { return nil }
         let trying = switch pending.kind {
         case .start: status.health == .starting

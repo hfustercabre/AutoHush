@@ -98,18 +98,19 @@ package final class SafariWebAppMaker: WebAppMaking {
             if Task.isCancelled { throw CancellationError() }
             throw WebAppMakingError.browserFailed("the page didn't load in Safari")
         }
-        // The tab to close once added, or cancelled: the one opened, or, once
-        // the site asked something first, the page it then showed in it
-        // (answering loads another page). Never the tab in front before the
-        // add, gone back to meanwhile (W-3 of 1.4.2's review); a tab of the
-        // site the user goes to otherwise can't be told from it.
-        var addedTab = tab
+        // The tab to close once added, or cancelled: the one opened, also
+        // once a site that asked something first shows in it (a page loading
+        // keeps the tab the same). Never a tab of the user's, gone to
+        // meanwhile (W-3 and F2 of 1.4.2's review). A site that answers in
+        // another tab (a sign-in window) leaves both open: closing one AutoHush
+        // can't tell from the user's is worse (the diff review's R2).
+        let addedTab = tab
         // Add clicked in Safari's dialog: a web app may come even once cancelled.
         var addClicked = false
         do {
             try Task.checkCancellation()
             onStep(.opened)
-            return try await add(url, since: before, tab: &addedTab, sparing: usersTab, addClicked: &addClicked,
+            return try await add(url, since: before, tab: addedTab, sparing: usersTab, addClicked: &addClicked,
                                  onStep: onStep, confirmAdd: confirmAdd)
         } catch is CancellationError {
             await takeAway(url, since: before, tab: addedTab, sparing: usersTab, waitsForApp: addClicked)
@@ -124,7 +125,7 @@ package final class SafariWebAppMaker: WebAppMaking {
 
     /// From the page loaded in Safari: Add to Dock, once the site itself
     /// shows and the user clicked, until a new web app comes.
-    private func add(_ url: URL, since before: Set<String>, tab addedTab: inout SafariTab, sparing usersTab: SafariTab?,
+    private func add(_ url: URL, since before: Set<String>, tab addedTab: SafariTab, sparing usersTab: SafariTab?,
                      addClicked: inout Bool,
                      onStep: @escaping @Sendable (WebAppMakingStep) -> Void,
                      confirmAdd: @escaping @Sendable () async -> Bool) async throws -> MadeWebApp {
@@ -142,7 +143,6 @@ package final class SafariWebAppMaker: WebAppMaking {
                 try Task.checkCancellation()
                 continue
             }
-            if asking != nil, let shown = await safari.frontTab(), shown.page != usersTab?.page { addedTab = shown }
             asking = nil
             onStep(.readyToAdd(site: site))
             guard await confirmAdd() else { throw CancellationError() }
@@ -189,9 +189,9 @@ package final class SafariWebAppMaker: WebAppMaking {
         await Task.detached {
             if let tab {
                 // Never the user's own (Safari may have left it in front, P-4).
-                if tab.page != usersTab?.page { await safari.closeTab(tab) }
+                if tab != usersTab { await safari.closeTab(tab) }
             } else if let shown = await safari.frontPageURL(), WebAddress.isSameSite(shown, as: url),
-                      let front = await safari.frontTab(), front.page != usersTab?.page {
+                      let front = await safari.frontTab(), front != usersTab {
                 await safari.closeTab(front)
             }
             guard waitsForApp else { return }
@@ -243,7 +243,7 @@ package final class SafariWebAppMaker: WebAppMaking {
         let new = webApps().first { !before.contains($0.bundleID) && Self.isOfSite($0, url, unread: true, sameSite: sameSite) }
         guard let app = new, isSealed(app.url) else { return nil }
         LSRegisterURL(app.url as CFURL, true)
-        if tab.page != usersTab?.page { await safari.closeTab(tab) }
+        if tab != usersTab { await safari.closeTab(tab) }
         logger.notice("Added a web app in Safari")
         let made = MadeWebApp(bundleID: app.bundleID, name: app.name, url: app.url, alreadyThere: false)
         onStep(.made(made))

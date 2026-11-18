@@ -37,6 +37,14 @@ struct SearchField: View {
     @FocusState private var isFocused: Bool
     @Environment(\.layoutDirection) private var layoutDirection
 
+    /// Whether `key` is the arrow back out of the field (`onBackWhileEmpty`):
+    /// ←, or → right to left, the step back along the line
+    /// (`RightToLeftLayout.arrowStep`; F6 of 1.4.2's review).
+    static func goesBack(_ key: KeyEquivalent, in layoutDirection: LayoutDirection) -> Bool {
+        guard key == .leftArrow || key == .rightArrow else { return false }
+        return RightToLeftLayout.arrowStep(key == .rightArrow ? 1 : -1, in: layoutDirection) == -1
+    }
+
     /// How long typing pauses before VoiceOver hears the results: not over
     /// each key's echo.
     static let resultsDelay = Duration.milliseconds(500)
@@ -64,8 +72,7 @@ struct SearchField: View {
             .onKeyPress(.upArrow) { move(-1) }
             .onKeyPress(.downArrow) { move(1) }
             .onKeyPress(keys: [.leftArrow, .rightArrow]) { press in
-                let back: KeyEquivalent = layoutDirection == .rightToLeft ? .rightArrow : .leftArrow
-                guard press.key == back, text.isEmpty, let onBackWhileEmpty else { return .ignored }
+                guard Self.goesBack(press.key, in: layoutDirection), text.isEmpty, let onBackWhileEmpty else { return .ignored }
                 onBackWhileEmpty()
                 return .handled
             }
