@@ -87,11 +87,14 @@ package final class SafariWebAppMaker: WebAppMaking {
 
         let before = Set(webApps().map(\.bundleID))
         try Task.checkCancellation()
+        // The tab in front before: never closed for this add, though it may
+        // show the same site (the user's own; the diff review's R6).
+        let usersTab = await safari.frontTab()
         guard await safari.open(url) else { throw WebAppMakingError.browserFailed("Safari couldn't open \(url.absoluteString)") }
         guard let tab = await safari.waitForPage() else {
             // Cancelled or failed while the page loaded: the tab opened for it
             // goes too, so a try again doesn't leave another (K4-3 of 11-11).
-            await takeAway(url, since: before, tab: nil, waitsForApp: false)
+            await takeAway(url, since: before, tab: nil, sparing: usersTab, waitsForApp: false)
             if Task.isCancelled { throw CancellationError() }
             throw WebAppMakingError.browserFailed("the page didn't load in Safari")
         }
@@ -175,14 +178,15 @@ package final class SafariWebAppMaker: WebAppMaking {
     /// and moved to the Trash: never one of another site, made meanwhile
     /// (`isOfSite`).
     /// Off the cancelled task, so its waits aren't cut short.
-    private func takeAway(_ url: URL, since before: Set<String>, tab: SafariTab?, waitsForApp: Bool) async {
+    private func takeAway(_ url: URL, since before: Set<String>, tab: SafariTab?, sparing usersTab: SafariTab? = nil,
+                          waitsForApp: Bool) async {
         let (safari, webApps, sameSite, isSealed, discard, sleep, clock, logger)
             = (safari, webApps, sameSite, isSealed, discard, sleep, clock, logger)
         await Task.detached {
             if let tab {
                 await safari.closeTab(tab)
             } else if let shown = await safari.frontPageURL(), WebAddress.isSameSite(shown, as: url),
-                      let front = await safari.frontTab() {
+                      let front = await safari.frontTab(), front.page != usersTab?.page {
                 await safari.closeTab(front)
             }
             guard waitsForApp else { return }

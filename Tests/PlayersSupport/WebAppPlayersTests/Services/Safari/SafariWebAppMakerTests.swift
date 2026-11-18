@@ -171,7 +171,7 @@ struct SafariWebAppMakerTests {
         let made = try await setup.make("play.qobuz.com")
         #expect(made == MadeWebApp(bundleID: Self.made.bundleID, name: "Qobuz", url: Self.made.url, alreadyThere: false))
         #expect(setup.checked.value == [URL(string: "https://play.qobuz.com")!])
-        #expect(setup.safari.log.value == ["trusted", "open https://play.qobuz.com", "wait", "page", "click Add to Dock", "page",
+        #expect(setup.safari.log.value == ["trusted", "front tab", "open https://play.qobuz.com", "wait", "page", "click Add to Dock", "page",
                                            "add https://play.qobuz.com", "close tab 1"])
         // Where Safari's dialog shows, then that it's gone: the window moves off it meanwhile.
         #expect(setup.steps.value == [.checked, .opened, .readyToAdd(site: "play.qobuz.com"), .adding,
@@ -413,7 +413,7 @@ struct SafariWebAppMakerTests {
         notLoading.safari.loads = false
         notLoading.safari.pages.withLock { $0 = [URL(string: "https://play.qobuz.com/")!] }
         await #expect(throws: WebAppMakingError.browserFailed("the page didn't load in Safari")) { try await notLoading.make("play.qobuz.com") }
-        #expect(notLoading.safari.log.value.prefix(3) == ["trusted", "open https://play.qobuz.com", "wait"])
+        #expect(notLoading.safari.log.value.prefix(4) == ["trusted", "front tab", "open https://play.qobuz.com", "wait"])
         #expect(notLoading.safari.log.value.last == "close tab 1")
         let noAddToDock = Setup()
         noAddToDock.safari.addsToDock = false
@@ -422,6 +422,16 @@ struct SafariWebAppMakerTests {
         }
         #expect(noAddToDock.steps.value.suffix(2) == [.adding, .dialog(frame: nil)])
         #expect(noAddToDock.safari.log.value.last == "close tab 1")
+    }
+
+    @Test("a page that doesn't load, with the user's own tab of the site still in front, leaves that tab open: only a tab this add opened is closed (the diff review's R6)")
+    func failedLoadSparesUsersTab() async {
+        let setup = Setup()
+        setup.safari.loads = false
+        setup.safari.pages.withLock { $0 = [URL(string: "https://play.qobuz.com/")!] }
+        setup.safari.frontTabPage.withLock { $0 = 0 } // the user's tab, still in front
+        await #expect(throws: WebAppMakingError.browserFailed("the page didn't load in Safari")) { try await setup.make("play.qobuz.com") }
+        #expect(!setup.safari.log.value.contains { $0.hasPrefix("close tab") })
     }
 
     @Test("Safari's dialog closed without adding: back to Add to Dock, whose next click opens it again")

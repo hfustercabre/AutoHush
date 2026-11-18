@@ -105,7 +105,7 @@ final class VoiceOverCursorTests {
         #expect(cursor.takesLateReport())
     }
 
-    @Test("a refused notification isn't asked for again at each highlight, only once the trust has changed (B-5 of 11-11)")
+    @Test("a refused notification isn't asked for again at each highlight, only once the trust has changed (B-5 of 11-11) or half a minute later (R4)")
     func refusedOnce() {
         let cursor = makeCursor()
         voiceOver = false // no look started meanwhile
@@ -115,12 +115,17 @@ final class VoiceOverCursorTests {
         #expect(!cursor.watches() && !cursor.takesLateReport())
         cursor.follow(highlight)
         #expect(listened == 1)
+        now += VoiceOverCursor.retryAfter // a refusal at launch isn't for good
+        cursor.follow(highlight)
+        #expect(listened == 2)
+        cursor.follow(highlight)
+        #expect(listened == 2) // refused again: not before another half minute
         trusted = false
         #expect(!cursor.watches())
         trusted = true
         listens = NSObject()
         #expect(cursor.watches())
-        #expect(listened == 2)
-        #expect(cursor.watches() && listened == 2) // listening: once
+        #expect(listened == 3)
+        #expect(cursor.watches() && listened == 3) // listening: once
     }
 }

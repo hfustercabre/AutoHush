@@ -18,7 +18,9 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     var onClosed: (@Sendable () -> Void)?
 
     func isTrusted(prompt: Bool) async -> Bool { log.append("trusted"); return trusted }
-    func open(_ url: URL) async -> Bool { log.append("open \(url.absoluteString)"); return opens }
+    func open(_ url: URL) async -> Bool { log.append("open \(url.absoluteString)"); opened.value = true; return opens }
+    /// Opened yet: before, the tab in front is the user's own, page 0.
+    let opened = Locked(false)
     /// The dialog stays open until the task is cancelled.
     var holdsDialog = false
 
@@ -36,7 +38,7 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     /// The tab in front once the site shows after asking something: the same
     /// one, unless the test says the page changed (`frontTabPage`).
     let frontTabPage = Locked<Int>(1)
-    func frontTab() async -> SafariTab? { log.append("front tab"); return SafariTab(page: frontTabPage.value) }
+    func frontTab() async -> SafariTab? { log.append("front tab"); return SafariTab(page: opened.value ? frontTabPage.value : 0) }
 
     func frontPageURL() async -> URL? {
         log.append("page")

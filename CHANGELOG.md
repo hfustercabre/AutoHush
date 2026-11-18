@@ -12,7 +12,8 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **A player kept muted** because it refused its pause now stays muted
   while the Mac sleeps, instead of waking up playing out loud.
 - **Add a Web App** closes the Safari tab it opened when it fails, so
-  trying again no longer leaves one tab behind each time.
+  trying again no longer leaves one tab behind each time; a tab of the
+  same site you had open stays.
 - **Auto-Pause turned off** now shows in the menu bar icon and in
   Diagnostics even while your player isn't running.
 - **Long player names** cut short in the menu and Settings show the whole

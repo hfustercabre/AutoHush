@@ -40,10 +40,13 @@ final class VoiceOverCursor {
 
     private let system: System
     private var observer: AnyObject?
-    /// Accessibility allowed but its notification refused: not asked again
-    /// at each highlight placed, only once the trust has changed (B-5 of
-    /// 11-11: every highlight in the tests made an observer again).
-    private var refused = false
+    /// When Accessibility was allowed but its notification refused: not
+    /// asked again at each highlight placed (B-5 of 11-11: every highlight
+    /// in the tests made an observer again), but once the trust has
+    /// changed, or `retryAfter` later (a refusal at launch isn't for good:
+    /// the diff review's R4).
+    private var refusedAt: ContinuousClock.Instant?
+    static let retryAfter: Duration = .seconds(30)
     private var highlights: [Weak] = []
     /// When the focus last moved with VoiceOver on.
     private var lastFocus: ContinuousClock.Instant?
@@ -108,16 +111,18 @@ final class VoiceOverCursor {
     }
 
     /// Listens once Accessibility is allowed; a refusal is remembered until
-    /// the trust is seen to change.
+    /// the trust is seen to change, or for `retryAfter`.
     private func startIfAllowed() {
         guard observer == nil else { return }
         guard system.isTrusted() else {
-            refused = false
+            refusedAt = nil
             return
         }
-        guard !refused else { return }
+        if let refusedAt, system.now() - refusedAt < Self.retryAfter { return }
         observer = system.listen()
-        refused = observer == nil
+        refusedAt = observer == nil ? system.now() : nil
+        // Listening now (a retry that took): the look its refusal needed stops.
+        if observer != nil, look != nil { looksWhileNeeded() }
     }
 
     /// Accessibility's "focused element changed" for this process, on the
