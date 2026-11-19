@@ -32,4 +32,14 @@ package struct SafariTab: @unchecked Sendable {
         if let page, let otherPage = other.page, page == otherPage { return true }
         return false
     }
+
+    /// Whether `other` may be this tab, read again, though `isSame` can't
+    /// tell: this one was read without a button (alone in its window) and
+    /// `other` is in that window. Once another tab joins it, it shows a
+    /// button, and a page it loaded meanwhile (a link followed, a redirect) is
+    /// another element (C-5 of 1.4.4's review).
+    func mayBe(_ other: SafariTab?) -> Bool {
+        guard let other else { return false }
+        return isSame(as: other) || (button == nil && other.window == window)
+    }
 }

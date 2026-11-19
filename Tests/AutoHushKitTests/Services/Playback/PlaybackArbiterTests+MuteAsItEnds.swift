@@ -256,43 +256,6 @@ extension PlaybackArbiterTests {
         #expect(await player.uncoveredPauses == 0)
     }
 
-    /// What has a muted player paused for real before its mute is lifted.
-    enum RealPauseFor: CaseIterable, Sendable {
-        case outputGone, pauseKept, macSleeps, antiDotOn
-    }
-
-    @Test("muted, a real pause that goes through without taking (the player plays on, no error) counts as refused: kept muted when the pause is kept or the output goes away; unmuted, Couldn't pause, as the Mac sleeps or AntiDot mode turns on (engine-2)",
-          arguments: RealPauseFor.allCases)
-    func ignoredRealPauseCountsAsRefused(_ cause: RealPauseFor) async {
-        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
-        let scheduler = ManualDebounceScheduler()
-        var configuration = AppConfiguration.testing
-        configuration.pausesOnOutputDisconnect = cause == .outputGone
-        configuration.resumesPlayback = cause != .pauseKept
-        let arbiter = await mutedForAnotherApp(player, clock: clock, mute: mute, published: published,
-                                               configuration: configuration, scheduler: scheduler, fadeSleep: { _ in })
-        await player.setIgnoredPresses(1000) // each pause goes through, none takes
-        switch cause {
-        case .outputGone: await arbiter.handleOutputDisconnected()
-        case .pauseKept: await arbiter.sourceChanged("org.example.viewer", playing: false) // its resume keeps the pause instead
-        case .macSleeps: await arbiter.setAsleep(true)
-        case .antiDotOn: await arbiter.setTapsAllowed(false)
-        }
-        await arbiter.waitUntilIdle()
-        #expect(await player.state == .playing)
-        switch cause {
-        case .outputGone, .pauseKept:
-            #expect(mute.unmuteCount == 0) // not heard: it plays on behind the mute
-            #expect(await arbiter.pausedByUs)
-            #expect(published.state == .pausedByMonitor) // the menu says Muted, with Unmute (K1-2)
-        case .macSleeps, .antiDotOn:
-            await TestWait.until { mute.unmuteCount == 1 }
-            #expect(await arbiter.pausedByUs == false)
-            #expect(await arbiter.pauseFailure == .playerCommandFailed(.pressIgnored))
-        }
-        #expect(await player.playCallCount == 0)
-    }
-
     @Test("muted, its pause kept (Resume playback off) and its real pause refused: the Mac sleeping and waking keeps it muted, AutoHush's pause, its pause tried again covered, also while another app plays (K1-2 of 11-11, R1)",
           arguments: [false, true])
     func keptMuteStaysThroughSleep(appPlays: Bool) async {

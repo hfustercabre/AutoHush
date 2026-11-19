@@ -44,6 +44,15 @@ final class Changes: Sendable {
     func foundOn(_ attribute: String) {
         state.withLock { if !$0.switches.contains(attribute) { $0.keptOn.insert(attribute) } }
     }
+    /// Notes a switch this tool set on, as it read just before: its own (off
+    /// at the end) only if it was off; one on already, and not turned on by
+    /// this tool, found on and left on (C-6 of 1.4.4's review: VoiceOver's).
+    func noteSetOn(_ attribute: String, wasOn: Bool) {
+        state.withLock { state in
+            guard !state.switches.contains(attribute) else { return }
+            if wasOn { state.keptOn.insert(attribute) } else { state.switches.append(attribute) }
+        }
+    }
     func wasFoundOn(_ attribute: String) -> Bool { state.withLock { $0.keptOn.contains(attribute) } }
     /// The app to bring back to the front, while another was brought forward.
     var frontToRestore: URL? {

@@ -23,4 +23,14 @@ struct SafariTabTests {
         #expect(!Self.tab(button: nil, page: nil).isSame(as: Self.tab(button: nil, page: nil)))
         #expect(!Self.tab(button: 1, page: 10).isSame(as: nil))
     }
+
+    @Test("a tab read without a button (alone in its window) may be any tab of that window read later, never one of another window; a tab read with its button only the same tab (C-5 of 1.4.4's review)")
+    func mayBe() {
+        #expect(Self.tab(button: nil, page: 10).mayBe(Self.tab(button: 2, page: 20)))
+        #expect(Self.tab(button: nil, page: 10).mayBe(Self.tab(button: 1, page: 10)))
+        #expect(!Self.tab(window: 0, button: nil, page: 10).mayBe(Self.tab(window: 1, button: 2, page: 20)))
+        #expect(Self.tab(button: 1, page: 10).mayBe(Self.tab(button: 1, page: 11)))
+        #expect(!Self.tab(button: 1, page: 10).mayBe(Self.tab(button: 2, page: 20)))
+        #expect(!Self.tab(button: nil, page: 10).mayBe(nil))
+    }
 }

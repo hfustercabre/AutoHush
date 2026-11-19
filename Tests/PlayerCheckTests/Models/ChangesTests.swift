@@ -31,6 +31,22 @@ struct ChangesTests {
         #expect(changes.wasFoundOn("AXEnhancedUserInterface"))
     }
 
+    @Test("a page switch set on is the tool's own only if it was off: one on already (VoiceOver's) is left on at the end (C-6 of 1.4.4's review)")
+    func pageSwitchOnAlready() {
+        let changes = Changes()
+        changes.noteSetOn("AXEnhancedUserInterface", wasOn: true)
+        #expect(changes.switchesOn.isEmpty)
+        #expect(changes.wasFoundOn("AXEnhancedUserInterface"))
+
+        changes.noteSetOn("AXManualAccessibility", wasOn: false)
+        #expect(changes.switchesOn == ["AXManualAccessibility"])
+        // Set on again by a later drag, so it reads on: still this tool's own
+        // (playercheck-1), turned off at the end.
+        changes.noteSetOn("AXManualAccessibility", wasOn: true)
+        #expect(changes.switchesOn == ["AXManualAccessibility"])
+        #expect(!changes.wasFoundOn("AXManualAccessibility"))
+    }
+
     @Test("switches noted from many threads at once are all kept, each once")
     func atOnce() async {
         let changes = Changes()

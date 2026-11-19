@@ -46,10 +46,14 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     /// The user's tab is alone in its window before the add opens its own
     /// there: read without a tab button until then (as Safari shows it).
     var usersTabAlone = false
+    /// Once the add opened its tab, the user's tab shows another page (a link
+    /// followed, a redirect): page 100, another element (C-5 of 1.4.4's review).
+    var usersPageReplaced = false
     /// Tab `number` as Safari reads it now: one window, a button and a page
     /// each.
     private func tab(_ number: Int) -> SafariTab {
-        SafariTab(window: 0, button: number == 0 && usersTabAlone && !opened.value ? nil : number, page: number)
+        SafariTab(window: 0, button: number == 0 && usersTabAlone && !opened.value ? nil : number,
+                  page: number == 0 && usersPageReplaced && opened.value ? 100 : number)
     }
 
     func frontPageURL() async -> URL? {

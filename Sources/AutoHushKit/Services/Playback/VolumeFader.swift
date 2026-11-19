@@ -236,14 +236,6 @@ package actor VolumeFader {
         if latestFade == fade { await restoreUserVolume() }
     }
 
-    /// Pauses at once, without a fade or a volume to set back, checked to
-    /// have taken (`PressCheck`): a player muted in place of the pause,
-    /// paused for real before its mute is lifted. `uncovered`: no mute will
-    /// stand in for it (`pauseUncovered`).
-    func pressPause(uncovered: Bool) async throws {
-        try await (uncovered ? uncoveredPresses : presses).press(to: .paused)
-    }
-
     /// Plays from near silence, then fades the music in to the user's volume.
     func playAndFadeIn() async throws {
         let fade = startFade()

@@ -507,6 +507,27 @@ struct SafariWebAppMakerTests {
         #expect(setup.safari.log.value.filter { $0.hasPrefix("close tab") || $0.hasPrefix("left tab") } == ["close tab 1"])
     }
 
+    @Test("the user's tab of the site, alone in its window before the add, its page replaced (a link followed) while the add's page loads: cancelled or not loaded, no tab is closed, the add's left open too, as the two can't be told apart (C-5 of 1.4.4's review)",
+          arguments: [0, 1], [false, true])
+    func usersTabAloneReplacedPageSpared(front: Int, cancelled: Bool) async {
+        let setup = Setup()
+        setup.safari.usersTabAlone = true
+        setup.safari.usersPageReplaced = true
+        setup.safari.pages.withLock { $0 = [URL(string: "https://play.qobuz.com/")!] }
+        setup.safari.frontTabPage.withLock { $0 = front } // 0: the user went back to their tab
+        if cancelled {
+            setup.safari.holdsPage = true
+            let task = Task { try await setup.make("play.qobuz.com") }
+            await TestWait.until { setup.safari.log.value.contains("wait") }
+            task.cancel()
+            await #expect(throws: CancellationError.self) { try await task.value }
+        } else {
+            setup.safari.loads = false
+            await #expect(throws: WebAppMakingError.browserFailed("the page didn't load in Safari")) { try await setup.make("play.qobuz.com") }
+        }
+        #expect(!setup.safari.log.value.contains { $0.hasPrefix("close tab") })
+    }
+
     @Test("Safari's dialog closed without adding: back to Add to Dock, whose next click opens it again")
     func closedWithoutAdding() async throws {
         let setup = Setup()

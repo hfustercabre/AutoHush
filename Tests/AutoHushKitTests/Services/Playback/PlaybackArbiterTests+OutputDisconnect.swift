@@ -92,26 +92,6 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.playerState == (backupsPause ? .paused : .playing)) // shown as it is
     }
 
-    @Test("a pause fading out as the output goes away, its real pause going through without taking (the player plays on), stays shown as playing once its mute is lifted (engine-2)")
-    func ignoredDisconnectDuringFadeOutPlaysOn() async {
-        let player = MockMusicPlayer(state: .playing)
-        await player.setVolumeLevel(60)
-        await player.setIgnoredPresses(1000) // each pause goes through, none takes
-        let steps = FadeSteps(holdingAt: 2), mute = FakeMute()
-        var configuration = AppConfiguration.testing
-        configuration.pausesOnOutputDisconnect = true
-        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
-                                      fadeSleep: { _ in await steps.step() }, playerMute: mute)
-        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true) // its pause runs on its own
-        await TestWait.until { await steps.count == 2 }
-        await arbiter.handleOutputDisconnected()
-        await steps.letGo(2)
-        await arbiter.waitUntilIdle()
-        #expect(await player.uncoveredPauses >= 1) // tried with every backup
-        #expect(mute.unmuteCount == mute.muteCount) // no mute left standing
-        #expect(await arbiter.playerState == .playing) // not said paused: it plays on
-    }
-
     @Test("a pause fading out as the output goes away, refused after the last app stopped, is tried once more uncovered (every backup): taken, it's paused; refused, it plays on at the user's volume (diff-kit-1)",
           arguments: [false, true])
     func refusedDisconnectAfterAppsStopTriesUncovered(backupsPause: Bool) async {
@@ -137,6 +117,28 @@ extension PlaybackArbiterTests {
         #expect(await arbiter.pausedByUs == false) // the user's: nothing resumes it
         #expect(await player.playCallCount == 0)
         #expect(await player.volumeLevel == 60)
+    }
+
+    @Test("that retry going through without taking (the player plays on, no error) is shown as playing, not paused (R3 of 1.4.4's fixes' diff review)")
+    func ignoredRetryAfterAppsStopShownPlaying() async {
+        let player = MockMusicPlayer(state: .playing)
+        await player.setVolumeLevel(60)
+        await player.setIgnoredPresses(1000) // each pause goes through, none takes
+        let steps = FadeSteps(holdingAt: 2), mute = FakeMute()
+        var configuration = AppConfiguration.testing
+        configuration.pausesOnOutputDisconnect = true
+        let arbiter = PlaybackArbiter(player: player, configuration: configuration, debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in await steps.step() }, playerMute: mute)
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
+        await TestWait.until { await steps.count == 2 }
+        await arbiter.handleOutputDisconnected()
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false)
+        await steps.letGo(2)
+        await arbiter.waitUntilIdle()
+        #expect(await player.uncoveredPauses == 1) // the retry
+        #expect(await player.state == .playing)
+        #expect(await arbiter.playerState == .playing) // shown as it is
+        #expect(await arbiter.pausedByUs == false)
     }
 
     @Test("a fade-out called off (the app stopped), its music not coming back up yet as the output goes away, is paused at once, not faded in on the next one (diff-kit-2)")

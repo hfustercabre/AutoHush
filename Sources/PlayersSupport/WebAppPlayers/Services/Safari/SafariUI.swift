@@ -275,12 +275,17 @@ package struct SafariUI: SafariDriving {
     /// Whether `front` is still the tab in front: its window focused, its
     /// button (when it has one) still selected, or a window read without a
     /// tab bar still without one (a tab the user opened with ⌘T meanwhile
-    /// would go with Close Window: D2 of the diff review). A few reads, so
-    /// the press follows them at once.
+    /// would go with Close Window: D2 of the diff review). The tab bar's walk
+    /// first, the focused window read last, so the press follows it at once
+    /// (C-4 of 1.4.4's review).
     private static func stillInFront(_ front: FrontTab, in app: AXUIElement) -> Bool {
-        guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout), CFEqual(window, front.window) else { return false }
-        guard let button = front.button else { return tabBar(in: window).bar == front.bar }
-        return (button.value(kAXValueAttribute) as? NSNumber)?.boolValue == true
+        if let button = front.button {
+            guard (button.value(kAXValueAttribute) as? NSNumber)?.boolValue == true else { return false }
+        } else {
+            guard tabBar(in: front.window).bar == front.bar else { return false }
+        }
+        guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) else { return false }
+        return CFEqual(window, front.window)
     }
 
     /// A window's tab bar, as read: Safari puts its tab buttons right in a

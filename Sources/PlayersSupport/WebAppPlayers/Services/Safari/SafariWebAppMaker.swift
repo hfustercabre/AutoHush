@@ -194,7 +194,10 @@ package final class SafariWebAppMaker: WebAppMaking {
                 // Never the user's own (Safari may have left it in front, P-4).
                 if !tab.isSame(as: usersTab) { await safari.closeTab(tab) }
             } else if let shown = await safari.frontPageURL(), WebAddress.isSameSite(shown, as: url),
-                      let front = await safari.frontTab(), !front.isSame(as: usersTab) {
+                      // Nor one that may be it: the user's, read alone in its
+                      // window, can't be told from this add's tab opened there
+                      // once its page changed; both left open (C-5 of 1.4.4's review).
+                      let front = await safari.frontTab(), usersTab?.mayBe(front) != true {
                 await safari.closeTab(front)
             }
             guard waitsForApp else { return }

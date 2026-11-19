@@ -141,11 +141,18 @@ extension PlaybackArbiter {
             guard !activeSources.isEmpty, autoPauseEnabled, !isAsleep, !isShutDown else {
                 // The output gone during the fade-out, no app left to mute it
                 // for: its pause tried once more uncovered (every backup), as
-                // one playing is paused then (`pauseNow`; diff-kit-1 of 11-19).
+                // one playing is paused then (diff-kit-1 of 11-19). Unchecked,
+                // so shown as it reads afterwards: one that went through
+                // without taking plays on (R3 of 1.4.4's fixes' review).
                 if outputGoneDuringPause, autoPauseEnabled, !isAsleep, !isShutDown,
                    await pauseForReal(uncovered: true) == nil {
-                    playerState = .paused
-                    logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) paused by another way, and stays paused")
+                    if await player.playerState() == .playing {
+                        playerState = .playing
+                        logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public)’s pause by another way didn’t take, and it plays on")
+                    } else {
+                        playerState = .paused
+                        logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) paused by another way, and stays paused")
+                    }
                 }
                 await fader.restoreAfterRefusal()
                 return

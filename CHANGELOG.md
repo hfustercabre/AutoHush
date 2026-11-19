@@ -11,21 +11,22 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 - **Add a Web App** never closes a Safari window of yours, also when Safari
   is slow to answer or you switch tabs just as it finishes; cancelled, it
-  leaves no Safari dialog open, and a busy Safari no longer cuts naming the
-  web app short.
-- **Headphones unplugged during a pause:** the music stays paused or muted,
-  also with a player that ignores a pause, or when the other app stops at
-  the same moment.
+  stops waiting for Safari at once, and a busy Safari no longer cuts naming
+  the web app short.
+- **Headphones unplugged during a pause:** the music stays paused, also
+  when the other app stops at the same moment.
 - **The music no longer stays quiet** when another app starts just as a
   pause was called off.
 - **Level the volume** no longer lowers the Mac's volume while another app
   still plays (Auto-Pause turned off, say).
 - **AntiDot mode** unmutes a web app muted during an ad as you turn it on.
-- **A pause AutoHush holds** is kept while a player's permission is away,
-  and resumed once it's back.
-- **Add an App's check** turns off the page switch it turned on for an app
-  on another desktop, and Check Again no longer asks to reopen an app that
-  doesn't need it.
+- **A pause AutoHush holds** is taken back, and resumed, once a player's
+  lost permission is given back.
+- **Add an App's check** puts back the page switch of an app on another
+  desktop as it was, plays documents as AutoHush does, and Check Again no
+  longer asks to reopen an app that doesn't need it or checks the app
+  chosen before.
+- **The menu bar icon** is no longer taken for hidden on a second display.
 - **Diagnostics** shows a player's version after it updates itself.
 - **Keyboard:** the highlight follows the focus better in Settings and the
   menu, and input methods without modes and Logs' search compose as they

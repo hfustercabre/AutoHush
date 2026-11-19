@@ -34,14 +34,20 @@ import AutoHushKit
 }
 
 /// Turns the page's switch on, as a press of Player Check's own turns it
-/// (noted, to be put back at the end), giving its page up to 4 s to show;
-/// or off.
+/// (noted, to be put back at the end; one read on already is left on, C-6 of
+/// 1.4.4's review), giving its page up to 4 s to show; or off.
 @MainActor func setPageSwitch(_ attribute: String, on: Bool, pid: pid_t) {
     guard on else {
         _ = setSwitch(attribute, false, pid: pid)
         return
     }
-    if setSwitch(attribute, true, pid: pid) { changes.noteOn(attribute) }
+    // Read only for the browsers' switch: Electron's reads back on once its
+    // fuller mode started, also after this tool turned it off again, so it
+    // would be taken for one found on and left on (R1 of 1.4.4's fixes'
+    // review; `turnOn` trusts the read-back only there, for the same reason).
+    let wasOn = attribute == enhancedUserInterface
+        && AXUIElement.application(switchTarget(pid), timeout: 1).value(attribute) as? Bool == true
+    if setSwitch(attribute, true, pid: pid) { changes.noteSetOn(attribute, wasOn: wasOn) }
     _ = waitForPage(pid, seconds: 4)
 }
 
