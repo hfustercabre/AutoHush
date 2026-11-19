@@ -5,6 +5,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Add a Web App** never closes a Safari window of yours, also when Safari
+  is slow to answer or you switch tabs just as it finishes.
+
 ## [1.4.3] — 2026-11-19
 
 ### Fixed

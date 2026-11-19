@@ -288,7 +288,9 @@ Sources/
                          its own dictionary allows, documents too), MenuPlayerProfile.found with
                          PlayPauseWords.found (any app's menu and words); and CheckedPlayers: PlayerSetup (the
                          way the user chose, and its backups, kept), CheckedPlayer (pressing by it, and
-                         checking its presses), WayOrder (which way first, by its window's state), MediaKeyWay
+                         checking its presses), JudgedPress (a way's press, then its Now Playing panel
+                         row judged by it: CheckedPlayer's and BackedUpPlayer's), WayOrder (which way
+                         first, by its window's state), MediaKeyWay
                          (the keyboard's Play/Pause key as a backup), BackupRouting (pressing by that order,
                          an added app's and a built-in player's), BackedUpPlayer and BuiltInBackups (a
                          built-in player or a Safari web app with its backups, and the ways measured for it),

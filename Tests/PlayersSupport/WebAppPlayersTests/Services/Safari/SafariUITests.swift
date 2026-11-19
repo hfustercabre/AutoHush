@@ -9,4 +9,10 @@ struct SafariUITests {
     func closingPress(_ closeTabEnabled: Bool?, _ otherTabs: Bool, _ press: SafariUI.ClosingPress?) {
         #expect(SafariUI.closingPress(closeTabEnabled: closeTabEnabled, otherTabs: otherTabs) == press)
     }
+
+    @Test("a window may hold other tabs with two or more tab buttons, and when its tab bar couldn't be read; not without a tab bar or with one button (Compact's only tab) (I2 of 1.4.3's diff review)",
+          arguments: [(SafariUI.TabBar.absent, false), (.tabs(1), false), (.tabs(2), true), (.tabs(9), true), (.unreadable, true)])
+    func mayHoldOtherTabs(_ bar: SafariUI.TabBar, _ others: Bool) {
+        #expect(bar.mayHoldOtherTabs == others)
+    }
 }

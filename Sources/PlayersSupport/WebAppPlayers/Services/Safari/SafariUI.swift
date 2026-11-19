@@ -144,19 +144,25 @@ package struct SafariUI: SafariDriving {
 
     package func closeTab(_ tab: SafariTab) async {
         let closed = await Self.queue.run { () -> TabClosing in
-            guard let app = Self.safariElement(), let front = Self.frontTab(in: app), tab.isSame(as: front) else {
+            guard let app = Self.safariElement(), let front = Self.readFront(in: app), tab.isSame(as: front.tab) else {
                 return .notInFront
             }
             let closeTab = Self.menuItem("CloseTab", in: app)
-            let otherTabs = app.element(kAXFocusedWindowAttribute, timeout: Self.timeout).map { Self.tabButtonCount(in: $0) > 1 } ?? false
             guard let press = Self.closingPress(closeTabEnabled: closeTab?.value(kAXEnabledAttribute) as? Bool,
-                                                otherTabs: otherTabs) else { return .withheld }
+                                                otherTabs: front.bar.mayHoldOtherTabs) else {
+                return front.bar == .unreadable ? .unreadable : .withheld
+            }
             guard let item = press == .closeTab ? closeTab : Self.menuItem("CloseWindow", in: app) else { return .failed }
+            // Read again right before the press, which acts on whatever is
+            // in front then: the user may have gone to another window or tab
+            // meanwhile (L1 of 1.4.3's diff review).
+            guard Self.stillInFront(front, in: app) else { return .notInFront }
             return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success ? .closed : .failed
         }
         switch closed {
         case .notInFront: logger.notice("The tab Add a Web App opened isn’t in front any more: left open")
         case .withheld: logger.notice("Safari’s Close Tab is off in a window of several tabs: the tab Add a Web App opened was left open")
+        case .unreadable: logger.notice("Safari’s tab bar couldn’t be read: the window of the tab Add a Web App opened was left open")
         case .failed: logger.error("Safari’s Close Tab wasn’t found or didn’t take: the tab Add a Web App opened was left open")
         case .closed: break
         }
@@ -199,20 +205,111 @@ package struct SafariUI: SafariDriving {
     /// The front window's tab (`SafariTab`): the window, its selected tab
     /// button and its page. A page loading in the tab keeps the window and
     /// the button, its page becoming another element (measured on macOS 27
-    /// and on 14.4's Safari 17.4, 2026-11-18). The buttons sit next to the
-    /// window's top (depth 2); its page isn't walked for them. A window of
+    /// and on 14.4's Safari 17.4, 2026-11-18). The button is read from the
+    /// window's tab bar (`tabBar`); its page isn't walked for it. A window of
     /// one tab shows no button (Separate tab layout; Compact shows one): its
     /// page tells it (the diff review's R1), and still does once a second tab
     /// adds the tab bar (C-1 of 1.4.3's review; both measured on macOS 27,
     /// 2026-11-19).
-    private static func frontTab(in app: AXUIElement) -> SafariTab? {
-        guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) else { return nil }
-        let button = first(in: window, depth: 6, skipping: "AXWebArea") {
-            $0.string(kAXSubroleAttribute) == "AXTabButton" && ($0.value(kAXValueAttribute) as? NSNumber)?.boolValue == true
-        }
-        return SafariTab(window: AnyHashable(window), button: button.map { AnyHashable($0) },
-                         page: frontPage(in: app).map { AnyHashable($0) })
+    private static func frontTab(in app: AXUIElement) -> SafariTab? { readFront(in: app)?.tab }
+
+    /// The front window's tab as read, with what `closeTab` needs of it.
+    private struct FrontTab {
+        let tab: SafariTab
+        let window: AXUIElement
+        let button: AXUIElement?
+        let bar: TabBar
     }
+
+    private static func readFront(in app: AXUIElement) -> FrontTab? {
+        guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) else { return nil }
+        let (bar, buttons) = tabBar(in: window)
+        let button = buttons.first { ($0.value(kAXValueAttribute) as? NSNumber)?.boolValue == true }
+        let tab = SafariTab(window: AnyHashable(window), button: button.map { AnyHashable($0) },
+                            page: frontPage(in: app).map { AnyHashable($0) })
+        return FrontTab(tab: tab, window: window, button: button, bar: bar)
+    }
+
+    /// Whether `front` is still the tab in front: its window focused, its
+    /// button (when it has one) still selected, or a window read without a
+    /// tab bar still without one (a tab the user opened with ⌘T meanwhile
+    /// would go with Close Window: D2 of the diff review). A few reads, so
+    /// the press follows them at once.
+    private static func stillInFront(_ front: FrontTab, in app: AXUIElement) -> Bool {
+        guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout), CFEqual(window, front.window) else { return false }
+        guard let button = front.button else { return tabBar(in: window).bar == front.bar }
+        return (button.value(kAXValueAttribute) as? NSNumber)?.boolValue == true
+    }
+
+    /// A window's tab bar, as read: Safari puts its tab buttons right in a
+    /// group, the buttons 2 to 5 levels under the window, so the group 1 to
+    /// 4 (measured 2026-11-19: on macOS 27 an AXOpaqueProviderGroup, buttons
+    /// at 2 in the Separate layout, 4 in Compact, a level more in full
+    /// screen; on 14.4's Safari 17.4 an AXGroup, buttons at 2). Only the
+    /// first such group's buttons count, never another selected tab button
+    /// elsewhere in the window (C-4 of 1.4.3's review).
+    enum TabBar: Equatable {
+        /// None: a window of one tab, in Safari's Separate tab layout.
+        case absent
+        /// A read on the way failed (Safari busy): unknown.
+        case unreadable
+        /// Its tab buttons, as many.
+        case tabs(Int)
+
+        /// Whether the window may hold tabs besides the one in front: also
+        /// when that's unknown (I2 of 1.4.3's diff review), so its window is
+        /// never closed for it.
+        var mayHoldOtherTabs: Bool {
+            switch self {
+            case .absent: false
+            case .unreadable: true
+            case .tabs(let count): count > 1
+            }
+        }
+    }
+
+    private static func tabBar(in window: AXUIElement) -> (bar: TabBar, buttons: [AXUIElement]) {
+        // A read Safari didn't answer makes it unreadable, whichever it was:
+        // a role, a subrole or children (D3 of the diff review).
+        var failed = false
+        func search(_ element: AXUIElement, _ depth: Int) throws(AXReadFailed) -> [AXUIElement]? {
+            let role = try element.readString(kAXRoleAttribute)
+            guard role != "AXWebArea" else { return nil }
+            let isCandidate = role.map(tabBarRoles.contains) ?? false
+            // At the last level only a candidate's children are read (D1).
+            guard depth > 0 || isCandidate else { return nil }
+            let children = try element.readChildren(timeout: timeout)
+            if isCandidate {
+                var buttons: [AXUIElement] = []
+                for child in children {
+                    if try child.readString(kAXSubroleAttribute) == "AXTabButton" { buttons.append(child) }
+                }
+                if !buttons.isEmpty { return buttons }
+            }
+            guard depth > 0 else { return nil }
+            for child in children {
+                do {
+                    if let found = try search(child, depth - 1) { return found }
+                } catch {
+                    failed = true
+                }
+            }
+            return nil
+        }
+        do {
+            if let buttons = try search(window, tabBarDepth) { return (.tabs(buttons.count), buttons) }
+        } catch {
+            failed = true
+        }
+        return (failed ? .unreadable : .absent, [])
+    }
+
+    /// How deep under the window the tab bar's group is looked for: one
+    /// level more than measured (4, Compact in full screen).
+    private static let tabBarDepth = 5
+
+    /// The roles of the group holding the tab buttons, as measured.
+    private static let tabBarRoles: Set<String> = ["AXOpaqueProviderGroup", "AXGroup"]
 
     /// What closes the tab in front: Close Tab, or Close Window when Safari
     /// disables Close Tab for a window's only tab (measured on macOS 27, in
@@ -227,17 +324,8 @@ package struct SafariUI: SafariDriving {
         return otherTabs ? nil : .closeWindow
     }
 
-    /// The window's tab buttons, next to its top (its page isn't walked).
-    private static func tabButtonCount(in window: AXUIElement) -> Int {
-        func count(_ element: AXUIElement, _ depth: Int) -> Int {
-            let own = element.string(kAXSubroleAttribute) == "AXTabButton" ? 1 : 0
-            guard depth > 0, element.string(kAXRoleAttribute) != "AXWebArea" else { return own }
-            return own + element.children(timeout: timeout).reduce(0) { $0 + count($1, depth - 1) }
-        }
-        return count(window, 6)
-    }
 
-    private enum TabClosing { case notInFront, withheld, failed, closed }
+    private enum TabClosing { case notInFront, withheld, unreadable, failed, closed }
 
     /// File → Add to Dock…, by either name Safari gives it.
     private static func addToDockItem(in app: AXUIElement) -> AXUIElement? {

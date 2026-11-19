@@ -10,6 +10,9 @@ import ApplicationServices
 /// walk that must not hang on a busy app reads with `element(_:timeout:)`,
 /// `elements(_:timeout:)` or `children(timeout:)`, which set it on each
 /// element they return.
+/// A read of another app's interface it didn't answer (busy, gone).
+package struct AXReadFailed: Error {}
+
 extension AXUIElement {
     /// The app running as `pid`, whose reads wait at most `timeout` seconds.
     package static func application(_ pid: pid_t, timeout: Float) -> AXUIElement {
@@ -55,6 +58,29 @@ extension AXUIElement {
 
     /// Its children, each one's reads waiting at most `timeout` seconds.
     package func children(timeout: Float) -> [AXUIElement] { elements(kAXChildrenAttribute, timeout: timeout) }
+
+    /// Its children as `children(timeout:)`, but throwing when the app
+    /// didn't answer (busy, gone), told apart from an element without any.
+    package func readChildren(timeout: Float) throws(AXReadFailed) -> [AXUIElement] {
+        AXUIElement.elements(in: try read(kAXChildrenAttribute)).map { $0.waiting(timeout) }
+    }
+
+    /// The attribute's string as `string(_:)`, but throwing when the app
+    /// didn't answer, told apart from none (`nil`).
+    package func readString(_ attribute: String) throws(AXReadFailed) -> String? {
+        try read(attribute) as? String
+    }
+
+    /// The attribute's value; `nil` when it has none, thrown when the app
+    /// didn't answer.
+    private func read(_ attribute: String) throws(AXReadFailed) -> CFTypeRef? {
+        var value: CFTypeRef?
+        switch AXUIElementCopyAttributeValue(self, attribute as CFString, &value) {
+        case .success: return value
+        case .noValue, .attributeUnsupported: return nil
+        default: throw AXReadFailed()
+        }
+    }
 
     package func string(_ attribute: String) -> String? { value(attribute) as? String }
 
