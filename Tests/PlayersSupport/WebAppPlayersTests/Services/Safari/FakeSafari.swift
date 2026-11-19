@@ -30,7 +30,7 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     func waitForPage() async -> SafariTab? {
         log.append("wait")
         while holdsPage, !Task.isCancelled { try? await Task.sleep(for: .milliseconds(5)) }
-        return loads && !Task.isCancelled ? SafariTab(id: loadedPage) : nil
+        return loads && !Task.isCancelled ? tab(loadedPage) : nil
     }
     /// The tab `waitForPage` finds loaded: the one it opened (1), or the
     /// user's own (0), when Safari left that one in front.
@@ -42,7 +42,15 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     /// says the user went to another (`frontTabPage`; 0 is the user's tab in
     /// front before). A page loading in a tab keeps it the same tab.
     let frontTabPage = Locked<Int>(1)
-    func frontTab() async -> SafariTab? { log.append("front tab"); return SafariTab(id: opened.value ? frontTabPage.value : 0) }
+    func frontTab() async -> SafariTab? { log.append("front tab"); return tab(opened.value ? frontTabPage.value : 0) }
+    /// The user's tab is alone in its window before the add opens its own
+    /// there: read without a tab button until then (as Safari shows it).
+    var usersTabAlone = false
+    /// Tab `number` as Safari reads it now: one window, a button and a page
+    /// each.
+    private func tab(_ number: Int) -> SafariTab {
+        SafariTab(window: 0, button: number == 0 && usersTabAlone && !opened.value ? nil : number, page: number)
+    }
 
     func frontPageURL() async -> URL? {
         log.append("page")
@@ -77,7 +85,8 @@ final class FakeSafari: SafariDriving, @unchecked Sendable {
     /// As Safari's: only the tab in front (the diff review's R3); another is
     /// left open.
     func closeTab(_ tab: SafariTab) async {
-        let front = AnyHashable(opened.value ? frontTabPage.value : 0)
-        log.append(tab.id == front ? "close tab \(tab.id)" : "left tab \(tab.id)")
+        let front = self.tab(opened.value ? frontTabPage.value : 0)
+        let number = tab.page?.base as? Int ?? -1
+        log.append(tab.isSame(as: front) ? "close tab \(number)" : "left tab \(number)")
     }
 }

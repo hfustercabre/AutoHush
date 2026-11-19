@@ -168,7 +168,7 @@ While it adds and learns, the window stays above other apps, in the top-right co
 - Safari makes the web app from the page it shows, so if the site asks something first on another of its addresses (YouTube's cookie page on consent.youtube.com, in Europe, or a sign-in page), an **Answer the site in Safari** step waits until you've answered and the site itself shows. Answer anything else it asks (a cookie banner) before clicking Add to Dock.
 - If a Safari extension asks for access to the site while it opens, answer it first: Safari can't add the site while it waits.
 - A website that already has a web app isn't added again.
-- **Cancel**, or closing the window, stops it before anything is added (Safari's dialog is cancelled too); once added, the Safari tab AutoHush opened is closed (its window, when it's the only tab there).
+- **Cancel**, or closing the window, stops it before anything is added (Safari's dialog is cancelled too); once added, the Safari tab AutoHush opened is closed (its window, when it's the only tab there; that window may stay open if its page changed, as when the site asks something first).
 - Adding it this way needs the **Accessibility** permission, as controlling it does.
 
 Web apps can't be scripted and have no playback menu, so AutoHush presses the site's own Play/Pause button, and the site stays in step. Sites differ, and their buttons are named in the site's language, so AutoHush learns the button with you:

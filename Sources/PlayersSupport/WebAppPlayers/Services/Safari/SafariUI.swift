@@ -52,9 +52,9 @@ package struct SafariUI: SafariDriving {
             let tab = await Self.queue.run { () -> SafariTab? in
                 guard let app = Self.safariElement(), Self.pageLoaded(in: app),
                       let item = Self.addToDockItem(in: app), item.value(kAXEnabledAttribute) as? Bool == true,
-                      let id = Self.frontTabID(in: app)
+                      let tab = Self.frontTab(in: app)
                 else { return nil }
-                return SafariTab(id: id)
+                return tab
             }
             if let tab { return tab }
             try? await Task.sleep(for: .milliseconds(300))
@@ -64,8 +64,8 @@ package struct SafariUI: SafariDriving {
 
     package func frontTab() async -> SafariTab? {
         await Self.queue.run {
-            guard let app = Self.safariElement(), let id = Self.frontTabID(in: app) else { return nil }
-            return SafariTab(id: id)
+            guard let app = Self.safariElement() else { return nil }
+            return Self.frontTab(in: app)
         }
     }
 
@@ -143,21 +143,22 @@ package struct SafariUI: SafariDriving {
     }
 
     package func closeTab(_ tab: SafariTab) async {
-        let closed = await Self.queue.run { () -> Bool? in
-            guard let app = Self.safariElement(), Self.frontTabID(in: app) == tab.id else {
-                return nil
+        let closed = await Self.queue.run { () -> TabClosing in
+            guard let app = Self.safariElement(), let front = Self.frontTab(in: app), tab.isSame(as: front) else {
+                return .notInFront
             }
-            // Safari disables Close Tab for a window's only tab (measured on
-            // macOS 27): its window is closed instead.
             let closeTab = Self.menuItem("CloseTab", in: app)
-            let isOnlyTab = closeTab?.value(kAXEnabledAttribute) as? Bool == false
-            guard let item = isOnlyTab ? Self.menuItem("CloseWindow", in: app) : closeTab else { return false }
-            return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success
+            let otherTabs = app.element(kAXFocusedWindowAttribute, timeout: Self.timeout).map { Self.tabButtonCount(in: $0) > 1 } ?? false
+            guard let press = Self.closingPress(closeTabEnabled: closeTab?.value(kAXEnabledAttribute) as? Bool,
+                                                otherTabs: otherTabs) else { return .withheld }
+            guard let item = press == .closeTab ? closeTab : Self.menuItem("CloseWindow", in: app) else { return .failed }
+            return AXUIElementPerformAction(item, kAXPressAction as CFString) == .success ? .closed : .failed
         }
         switch closed {
-        case nil: logger.notice("The tab Add a Web App opened isn’t in front any more: left open")
-        case false?: logger.error("Safari’s Close Tab wasn’t found or didn’t take: the tab Add a Web App opened was left open")
-        case true?: break
+        case .notInFront: logger.notice("The tab Add a Web App opened isn’t in front any more: left open")
+        case .withheld: logger.notice("Safari’s Close Tab is off in a window of several tabs: the tab Add a Web App opened was left open")
+        case .failed: logger.error("Safari’s Close Tab wasn’t found or didn’t take: the tab Add a Web App opened was left open")
+        case .closed: break
         }
     }
 
@@ -195,30 +196,48 @@ package struct SafariUI: SafariDriving {
         return first(in: window, depth: 8) { $0.string(kAXRoleAttribute) == "AXWebArea" }
     }
 
-    /// The front window's tab, as long as it lives: the window and its
-    /// selected tab button, which a page loading in it keeps, while its page
-    /// becomes another element (measured on macOS 27 and on 14.4's Safari
-    /// 17.4, 2026-11-18). The buttons sit next to the window's top (depth 2);
-    /// its page isn't walked. A window of one tab shows no button: there the
-    /// page counts too, so another tab left alone in that window later is
-    /// never taken for it (the diff review's R1); a load in it then leaves
-    /// it open, never closes the wrong one.
-    private static func frontTabID(in app: AXUIElement) -> AnyHashable? {
+    /// The front window's tab (`SafariTab`): the window, its selected tab
+    /// button and its page. A page loading in the tab keeps the window and
+    /// the button, its page becoming another element (measured on macOS 27
+    /// and on 14.4's Safari 17.4, 2026-11-18). The buttons sit next to the
+    /// window's top (depth 2); its page isn't walked for them. A window of
+    /// one tab shows no button (Separate tab layout; Compact shows one): its
+    /// page tells it (the diff review's R1), and still does once a second tab
+    /// adds the tab bar (C-1 of 1.4.3's review; both measured on macOS 27,
+    /// 2026-11-19).
+    private static func frontTab(in app: AXUIElement) -> SafariTab? {
         guard let window = app.element(kAXFocusedWindowAttribute, timeout: timeout) else { return nil }
         let button = first(in: window, depth: 6, skipping: "AXWebArea") {
             $0.string(kAXSubroleAttribute) == "AXTabButton" && ($0.value(kAXValueAttribute) as? NSNumber)?.boolValue == true
         }
-        let page = button == nil ? frontPage(in: app).map { AnyHashable($0) } : nil
-        return AnyHashable(TabIdentity(window: AnyHashable(window), button: button.map { AnyHashable($0) }, page: page))
+        return SafariTab(window: AnyHashable(window), button: button.map { AnyHashable($0) },
+                         page: frontPage(in: app).map { AnyHashable($0) })
     }
 
-    /// A tab, as `frontTabID` tells it.
-    private struct TabIdentity: Hashable {
-        let window: AnyHashable
-        let button: AnyHashable?
-        /// Only without a button.
-        let page: AnyHashable?
+    /// What closes the tab in front: Close Tab, or Close Window when Safari
+    /// disables Close Tab for a window's only tab (measured on macOS 27, in
+    /// both tab layouts: Compact shows that tab's button, Separate none).
+    /// Close Tab disabled in a window of several tabs (not that case: a
+    /// pinned tab, say) closes nothing, never the window with the user's
+    /// other tabs (C-3 of 1.4.3's review).
+    enum ClosingPress: Equatable { case closeTab, closeWindow }
+
+    static func closingPress(closeTabEnabled: Bool?, otherTabs: Bool) -> ClosingPress? {
+        guard closeTabEnabled == false else { return .closeTab }
+        return otherTabs ? nil : .closeWindow
     }
+
+    /// The window's tab buttons, next to its top (its page isn't walked).
+    private static func tabButtonCount(in window: AXUIElement) -> Int {
+        func count(_ element: AXUIElement, _ depth: Int) -> Int {
+            let own = element.string(kAXSubroleAttribute) == "AXTabButton" ? 1 : 0
+            guard depth > 0, element.string(kAXRoleAttribute) != "AXWebArea" else { return own }
+            return own + element.children(timeout: timeout).reduce(0) { $0 + count($1, depth - 1) }
+        }
+        return count(window, 6)
+    }
+
+    private enum TabClosing { case notInFront, withheld, failed, closed }
 
     /// File → Add to Dock…, by either name Safari gives it.
     private static func addToDockItem(in app: AXUIElement) -> AXUIElement? {

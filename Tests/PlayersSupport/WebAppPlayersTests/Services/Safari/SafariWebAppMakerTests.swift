@@ -475,6 +475,38 @@ struct SafariWebAppMakerTests {
         #expect(setup.safari.log.value.filter { $0.hasPrefix("close tab") || $0.hasPrefix("left tab") } == ["left tab 1"])
     }
 
+    @Test("the user's tab of the site, alone in its window before the add (no tab bar until the add's tab opens there), is still the user's: a page that doesn't load, or a failed add Safari left on that tab, closes no tab (C-1 of 1.4.3's review)",
+          arguments: [true, false])
+    func usersTabAloneSpared(_ loads: Bool) async {
+        let setup = Setup()
+        setup.safari.usersTabAlone = true
+        setup.safari.pages.withLock { $0 = [URL(string: "https://play.qobuz.com/")!] }
+        setup.safari.frontTabPage.withLock { $0 = 0 } // the user went back to their tab
+        if loads {
+            setup.safari.loadedPage = 0
+            setup.safari.addsToDock = false
+            await #expect(throws: WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")) {
+                try await setup.make("play.qobuz.com")
+            }
+        } else {
+            setup.safari.loads = false
+            await #expect(throws: WebAppMakingError.browserFailed("the page didn't load in Safari")) { try await setup.make("play.qobuz.com") }
+        }
+        #expect(!setup.safari.log.value.contains { $0.hasPrefix("close tab") })
+    }
+
+    @Test("with the user's tab alone in its window before the add, a failed add still closes the tab it opened, in front (C-1 of 1.4.3's review: the user's tab read without a button never matches another by its window alone)")
+    func usersTabAloneAddsTabClosed() async {
+        let setup = Setup()
+        setup.safari.usersTabAlone = true
+        setup.safari.pages.withLock { $0 = [URL(string: "https://play.qobuz.com/")!] }
+        setup.safari.addsToDock = false
+        await #expect(throws: WebAppMakingError.browserFailed("Safari's Add to Dock wasn't available")) {
+            try await setup.make("play.qobuz.com")
+        }
+        #expect(setup.safari.log.value.filter { $0.hasPrefix("close tab") || $0.hasPrefix("left tab") } == ["close tab 1"])
+    }
+
     @Test("Safari's dialog closed without adding: back to Add to Dock, whose next click opens it again")
     func closedWithoutAdding() async throws {
         let setup = Setup()

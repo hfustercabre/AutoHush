@@ -100,8 +100,11 @@ package final class SafariWebAppMaker: WebAppMaking {
         }
         // The tab to close once added, or cancelled: the one opened, also
         // once a site that asked something first shows in it (a page loading
-        // keeps the tab the same). Never a tab of the user's, gone to
-        // meanwhile (W-3 and F2 of 1.4.2's review). A site that answers in
+        // keeps the tab the same, `SafariTab`; alone in its window it has no
+        // tab button in Safari's Separate tab layout, so there it's left
+        // open, never the wrong one closed: P-2 of 1.4.3's review, the
+        // user's call). Never a tab of the user's,
+        // gone to meanwhile (W-3 and F2 of 1.4.2's review). A site that answers in
         // another tab (a sign-in window) leaves both open: closing one AutoHush
         // can't tell from the user's is worse (the diff review's R2).
         let addedTab = tab
@@ -189,9 +192,9 @@ package final class SafariWebAppMaker: WebAppMaking {
         await Task.detached {
             if let tab {
                 // Never the user's own (Safari may have left it in front, P-4).
-                if tab != usersTab { await safari.closeTab(tab) }
+                if !tab.isSame(as: usersTab) { await safari.closeTab(tab) }
             } else if let shown = await safari.frontPageURL(), WebAddress.isSameSite(shown, as: url),
-                      let front = await safari.frontTab(), front != usersTab {
+                      let front = await safari.frontTab(), !front.isSame(as: usersTab) {
                 await safari.closeTab(front)
             }
             guard waitsForApp else { return }
@@ -243,7 +246,7 @@ package final class SafariWebAppMaker: WebAppMaking {
         let new = webApps().first { !before.contains($0.bundleID) && Self.isOfSite($0, url, unread: true, sameSite: sameSite) }
         guard let app = new, isSealed(app.url) else { return nil }
         LSRegisterURL(app.url as CFURL, true)
-        if tab != usersTab { await safari.closeTab(tab) }
+        if !tab.isSame(as: usersTab) { await safari.closeTab(tab) }
         logger.notice("Added a web app in Safari")
         let made = MadeWebApp(bundleID: app.bundleID, name: app.name, url: app.url, alreadyThere: false)
         onStep(.made(made))

@@ -410,12 +410,12 @@ flowchart TD
   DLG["Safari’s own Add to Dock<br/>window: name the web app,<br/>click Add"]
   OUT{"Added?"}
   AGAIN["Cancelled there: the step<br/>says so, Add to Dock<br/>opens it again"]
-  MADE["The new web app appears<br/>(within 20 s); the Safari tab<br/>AutoHush opened is closed"]
+  MADE["The new web app appears<br/>(within 20 s); the Safari tab<br/>AutoHush opened is closed<br/>(a window of its own may stay<br/>if its page changed)"]
   CHO["Chosen as the media<br/>player, and opened"]
   LRN["Learning its controls,<br/>in the same window"]
   WEL{"The welcome<br/>window open?"}
   BYW["This window closes; the welcome<br/>window closes too when nothing is<br/>missing (the learning window follows),<br/>else it comes forward to ask"]
-  STOP["Cancel, or closing the<br/>window: nothing is added;<br/>the tab it opened closes,<br/>and a web app made all the<br/>same goes to the Trash"]
+  STOP["Cancel, or closing the<br/>window: nothing is added;<br/>the tab it opened closes,<br/>and a web app made all the<br/>same goes to the Trash<br/>(a window of its own may stay<br/>if its page changed)"]
   FAIL["Safari fails (the page<br/>doesn’t load, no Add to Dock):<br/>the window says why; the tab<br/>it opened closes when in front,<br/>a tab of the site you had<br/>open stays"]
 
   ST --> ADDR
