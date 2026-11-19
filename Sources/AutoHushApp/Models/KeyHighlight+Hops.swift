@@ -42,16 +42,24 @@ extension KeyHighlight {
     /// Once the controls that came in the same update have registered (the
     /// next turn of the run loop) and been placed: a frame that comes later
     /// tries again (`update(_:frame:)`), so it never lights one at random.
+    /// It waits for one the arrows stop on: the controls only Tab stops on
+    /// can be there all along (Settings' Back and Forward), and `move`
+    /// lights none of them (diff-app-2, 2026-11-19).
     func firstWhenReady() {
-        guard wantsFirst, !controls.isEmpty else { return }
+        guard wantsFirst, hasArrowStop else { return }
         RunLoop.main.perform { [weak self] in
             MainActor.assumeIsolated {
-                guard let self, self.wantsFirst, !self.controls.isEmpty,
+                guard let self, self.wantsFirst, self.hasArrowStop,
                       !self.controls.values.contains(where: { $0.frame == .zero }) else { return }
                 self.wantsFirst = false
                 if self.highlighted == nil { self.move(1) }
             }
         }
+    }
+
+    /// A control the arrows can light has come (`move`, `rows`).
+    private var hasArrowStop: Bool {
+        controls.values.contains { !$0.tabOnly && ($0.isEnabled || $0.explains) }
     }
 
     /// The highlight on the first control of `group` that takes it (a

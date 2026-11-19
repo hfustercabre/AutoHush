@@ -109,7 +109,8 @@ them. One older than a minute is ignored.
 
 **Take over, take back**: a monitoring that starts treats a pause as its
 own. It takes over a pause from the hand-over, and takes back a held pause
-when its player is chosen again.
+when its player is chosen again (or checked again, or started again once a
+permission taken away is back).
 
 **Heard, silent** (`PlayerHearing`): what the player's own sound says,
 measured through a tap on it: heard lately, or measured long enough with

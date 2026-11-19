@@ -111,6 +111,23 @@ struct SettingsKeysTests {
         #expect(keys.page.highlighted == controls[0])
     }
 
+    @Test("Return, Space or → on the shown page's row goes into the page on its first control, not on from the control a click gave the focus (app-models-5)")
+    func intoThePageFromItsFirst() {
+        let log = CallLog()
+        let (keys, rows, controls) = makeKeys(log: log)
+        let third = UUID()
+        keys.page.register(third, .init(frame: CGRect(x: 0, y: 120, width: 400, height: 40), press: {}))
+        for key in [HighlightKey.returnKey, .space, .right] {
+            keys.page.focus(controls[1], true) // a click gave the slider the focus
+            keys.sidebar.hover(rows[0], true) // the pointer rests on the shown page's row
+            #expect(keys.handle(key, controlHasFocus: true))
+            #expect(keys.page.highlighted == controls[0], "\(key)")
+            keys.sidebar.hover(rows[0], false)
+            keys.clear()
+        }
+        #expect(log.calls.isEmpty)
+    }
+
     @Test("in Arabic and Hebrew the sidebar is on the right: → goes to it, ← back into the page, as the arrows are spatial (the diff review's F1, 2026-11-18)")
     func sidesRightToLeft() {
         let log = CallLog()

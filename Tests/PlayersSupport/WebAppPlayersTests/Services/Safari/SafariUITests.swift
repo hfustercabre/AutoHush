@@ -15,4 +15,15 @@ struct SafariUITests {
     func mayHoldOtherTabs(_ bar: SafariUI.TabBar, _ others: Bool) {
         #expect(bar.mayHoldOtherTabs == others)
     }
+
+    @Test("the open dialog counts as closed only after three misses in a row with Safari answering; a look Safari didn't answer, or one finding it, never closes it (checked-webapps-5)",
+          arguments: [([SafariUI.DialogLook.absent, .absent, .absent], true), ([.absent], false), ([.absent, .absent], false),
+                      ([.absent, .absent, .shown, .absent, .absent], false), ([.unreadable, .unreadable, .unreadable, .unreadable], false),
+                      ([.absent, .unreadable, .absent, .unreadable, .absent], true)])
+    func dialogWatch(_ looks: [SafariUI.DialogLook], _ closed: Bool) {
+        var watch = SafariUI.DialogWatch()
+        let closes = looks.map { watch.closes(after: $0) }
+        #expect(closes.last == closed)
+        #expect(!closes.dropLast().contains(true))
+    }
 }

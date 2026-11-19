@@ -256,6 +256,26 @@ struct AddAppModelTests {
         #expect(unopened.stage == .choosing && failing.opened.count == 1 && unopened.canContinueWithApp)
     }
 
+    @Test("an app's opening called off by Check Again… on another app: its late answer about the launch option asks no Reopen for the other (app-models-2)")
+    func calledOffOpeningAsksNoReopen() async {
+        let world = World()
+        world.traits.needsLaunchOption = true
+        world.runsWithOption = false // running without it
+        let held = ManualSleep()
+        world.heldLaunchOptionRead = held
+        let model = await AddAppModel.opened(on: world)
+        model.continueWithApp()
+        await TestWait.until { held.sleeping == 1 }
+        world.traits.needsLaunchOption = false // the next app needs none
+        model.startOver(onAppAt: URL(filePath: "/Applications/Picked.app"))
+        held.timeIsUp()
+        await TestWait.until { world.launchOptionAnswers == 1 }
+        await TestWait.until { if case .waitingToPlay = model.stage { true } else { false } }
+        for _ in 0..<5 { await Task.yield() }
+        #expect(model.chosen?.bundleID == "com.example.picked")
+        #expect(!model.needsReopen)
+    }
+
     @Test("permissions are watched until all are allowed; then it waits for the app to play, and it's ready once it plays")
     func permissionsThenPlaying() async {
         let world = World()

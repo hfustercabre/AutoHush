@@ -388,7 +388,7 @@ stateDiagram-v2
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-AutoHush only ever resumes a pause it holds, and it keeps holding one across a check, a change of player and a quit. A pause still under way as you choose another player or quit isn’t made: the player plays on, played again if its pause just took. A **held pause** is a player you left while AutoHush had it paused: its own monitoring runs on to end the pause. Muted, and refusing its pause, it’s unmuted and yours once no app plays (until then it stays muted, not heard over them): only the chosen player’s card shows a kept mute. A **hand-over** is written as AutoHush quits (an update, another copy, a quick reopen) and read once by the next one.
+AutoHush only ever resumes a pause it holds, and it keeps holding one across a check, a change of player and a quit. A pause still under way as you choose another player or quit isn’t made: the player plays on, played again if its pause just took. A **held pause** is a player you left while AutoHush had it paused: its own monitoring runs on to end the pause. Muted, and refusing its pause, it’s unmuted and yours once no app plays (until then it stays muted, not heard over them): only the chosen player’s card shows a kept mute. Chosen again, or checked again and used, it’s taken back. A permission taken away while AutoHush holds a pause keeps it the same way, taken back once it’s given back. A **hand-over** is written as AutoHush quits (an update, another copy, a quick reopen) and read once by the next one.
 
 ## Safari web apps: adding one
 

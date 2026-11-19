@@ -172,8 +172,10 @@ extension PlaybackArbiter {
         // After quieter apps, the Mac's volume lowered to their level first,
         // while nothing plays (Settings → Behavior), and left so. A try
         // again, or another monitoring resuming for the same quiet, finds
-        // it lowered already since the pause (`ResumeLeveling`).
-        if configuration.levelsMusic, let volumeLeveler, let offset = await resumeOffset() {
+        // it lowered already since the pause (`ResumeLeveling`). Not while
+        // an app still plays (Auto-Pause off): it would drop with it
+        // (engine-4 of 11-19, the user, 2026-11-19).
+        if configuration.levelsMusic, activeSources.isEmpty, let volumeLeveler, let offset = await resumeOffset() {
             guard !isShutDown, pendingResumeID == id else { return }
             volumeLeveler.lower(by: offset)
         }

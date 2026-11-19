@@ -107,7 +107,9 @@ extension PlayerSession {
     /// announce a permission taken away while monitoring runs, and the player
     /// then only reads as unknown, so nothing would be paused, silently. A
     /// missing permission starts over as at launch: the menu asks for it, and
-    /// monitoring starts again by itself once it's given back.
+    /// monitoring starts again by itself once it's given back, taking back a
+    /// pause AutoHush held (`holdPause`), however long that took (the user,
+    /// 2026-11-19: "No limit").
     func checkAccess() {
         guard state.health == .ready, let player, accessCheck == nil else { return }
         let generation = startGeneration
@@ -120,6 +122,7 @@ extension PlayerSession {
                 switch error as? MusicPlayerError {
                 case .automationPermissionDenied?, .accessibilityPermissionDenied?:
                     self.logger.error("Lost control of \(player.name, privacy: .public): \(error)")
+                    self.holdPause(for: player.bundleID)
                     self.requestStart()
                 default:
                     break // the player quit or didn't answer: monitoring follows those

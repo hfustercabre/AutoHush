@@ -69,12 +69,12 @@ extension StatusMenuController {
         case .up, .down:
             keyboard.move(key == .down ? 1 : -1)
             // One highlight at a time: the keyboard's focus, if a click gave it, goes, once moved on from.
-            panel?.makeFirstResponder(nil)
+            dropFocus(inSide: inSide)
         case .tab, .backTab:
             tab(key == .tab ? 1 : -1, in: keyboard)
-            panel?.makeFirstResponder(nil)
+            dropFocus(inSide: inSide)
         case .pageUp, .pageDown, .home, .end:
-            panel?.makeFirstResponder(nil)
+            dropFocus(inSide: inSide)
             if let jump = key.jump { keyboard.jump(jump) }
         case .returnKey where model.isChoosingPlayer:
             perform(.chooseHighlighted)
@@ -106,6 +106,17 @@ extension StatusMenuController {
             }
         }
         return true
+    }
+
+    /// The keyboard's focus lets go: the menu's, and, with the keys in the
+    /// side window, the side window's too, which VoiceOver's cursor or a
+    /// click can give a row (app-controllers-3, 2026-11-19: Space pressed
+    /// that row, not the one lit). Not the players' search's: the field
+    /// takes its own keys first (`MenuPanel.onFieldKey`).
+    private func dropFocus(inSide: Bool) {
+        panel?.makeFirstResponder(nil)
+        guard inSide, let side = sidePanel, !(side.firstResponder is NSTextView) else { return }
+        side.makeFirstResponder(nil)
     }
 
     /// Tab (1) or Shift-Tab (-1) in `keyboard`'s window: the next control,
@@ -161,6 +172,13 @@ extension StatusMenuController {
     static var typesThroughInputMethod: Bool {
         guard let source = TISCopyCurrentKeyboardInputSource()?.takeRetainedValue(),
               let type = TISGetInputSourceProperty(source, kTISPropertyInputSourceType) else { return false }
-        return Unmanaged<CFString>.fromOpaque(type).takeUnretainedValue() == kTISTypeKeyboardInputMode
+        return isInputMethod(Unmanaged<CFString>.fromOpaque(type).takeUnretainedValue())
+    }
+
+    /// Whether an input source of `type` (`kTISPropertyInputSourceType`) is
+    /// an input method: one of its modes as macOS selects it (Japanese's
+    /// Hiragana), or one that has no modes (app-controllers-1, 2026-11-19).
+    static func isInputMethod(_ type: CFString) -> Bool {
+        type == kTISTypeKeyboardInputMode || type == kTISTypeKeyboardInputMethodWithoutModes
     }
 }

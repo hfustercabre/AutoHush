@@ -34,7 +34,9 @@ struct ScrollDriver: NSViewRepresentable {
         let room = headingRoom, done = onScrolled
         // Once the form has laid out its rows.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            guard let scroll = view.enclosingScrollView else { return }
+            // Not in its scroll view yet: the request is done all the same, so
+            // it isn't left set, the card's rows standing for it (app-views-2).
+            guard let scroll = view.enclosingScrollView else { return done() }
             if Self.scroll(scroll, to: target, room: room) { return done() }
             Self.setOrigin(Self.end(of: scroll), of: scroll, animated: false)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {

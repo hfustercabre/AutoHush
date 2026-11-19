@@ -12,6 +12,9 @@ import AutoHushKit
 /// page kept for later goes stale out of sight (an Electron player's took
 /// no presses after minutes on another desktop).
 @MainActor func turnOn(_ attribute: String, pid: pid_t, pageReadable: Bool) -> Bool {
+    // Turned on by this tool already (a window brought back from another
+    // desktop, `revealPage`): set on again, and still turned off at the end.
+    if changes.switchesOn.contains(attribute) { return setSwitch(attribute, true, pid: pid) }
     if attribute == enhancedUserInterface, AXUIElement.application(switchTarget(pid), timeout: 1).value(attribute) as? Bool == true {
         say("  \(switchName(attribute)) (\(attribute)) is on already: VoiceOver or another tool turned it on, so it's left on")
         changes.foundOn(attribute)

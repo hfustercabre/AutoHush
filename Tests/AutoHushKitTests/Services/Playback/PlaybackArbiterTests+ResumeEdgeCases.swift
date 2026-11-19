@@ -115,7 +115,7 @@ extension PlaybackArbiterTests {
         #expect(await player.state == .playing)
     }
 
-    @Test("with Level the volume on, a resume tried again that finds an app playing, Auto-Pause on again, leaves the lowered volume as it is")
+    @Test("with Level the volume on, a resume with Auto-Pause off while an app plays, and its try again once Auto-Pause is on again, leave the Mac's volume as it is (engine-4)")
     func retryFindingAppKeepsLevel() async {
         let player = MockMusicPlayer()
         let leveler = RecordingVolumeLeveler()
@@ -123,13 +123,52 @@ extension PlaybackArbiterTests {
         let arbiter = makeLevelingArbiter(player, leveler: leveler, scheduler: scheduler)
         await arbiter.sourceChanged("org.example.viewer", playing: true)
         await player.setFailPlay(MusicPlayerError.playerCommandFailed(.pressIgnored))
-        await arbiter.setAutoPauseEnabled(false) // the resume lowers the volume, fails, and waits to try again
+        await arbiter.setAutoPauseEnabled(false) // the resume fails, and waits to try again
         await TestWait.until { scheduler.scheduledDelays == [PlaybackArbiter.resumeRetryDelay] }
-        #expect(leveler.log == ["lower -6.0"])
+        #expect(leveler.log.isEmpty) // Viewer still plays: lowered, it would be heard
 
         await arbiter.setAutoPauseEnabled(true) // Viewer still plays: a pause waits for it to be measured again
         await scheduler.completeNext() // the retry, which finds Viewer playing
         await arbiter.waitUntilIdle()
-        #expect(leveler.log == ["lower -6.0"])
+        #expect(leveler.log.isEmpty)
+    }
+
+    /// How the music comes back while another app still plays.
+    enum ResumeOverApp: CaseIterable, Sendable {
+        case autoPauseOff, resumesReleased, tryAgain
+    }
+
+    @Test("with Level the volume on, a resume while another app still plays (Auto-Pause turned off, resumes released with it off, Try Again with it off) leaves the Mac's volume as it is: lowered, that app would drop too (engine-4, the user, 2026-11-19)",
+          arguments: ResumeOverApp.allCases)
+    func resumeOverPlayingAppKeepsLevel(_ way: ResumeOverApp) async {
+        let player = MockMusicPlayer()
+        let leveler = RecordingVolumeLeveler()
+        let scheduler = ManualDebounceScheduler()
+        let arbiter = makeLevelingArbiter(player, leveler: leveler, scheduler: scheduler)
+        if way == .resumesReleased { await arbiter.holdResumes(true) }
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        await arbiter.waitUntilIdle()
+        #expect(await player.state == .paused)
+        if way == .tryAgain { await player.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1) }
+        await arbiter.setAutoPauseEnabled(false) // Viewer still plays
+        switch way {
+        case .autoPauseOff:
+            break
+        case .resumesReleased:
+            await arbiter.waitUntilIdle()
+            #expect(await player.playCallCount == 0) // held until Add an App's check ends
+            await arbiter.holdResumes(false)
+        case .tryAgain:
+            for attempt in 1...PlaybackArbiter.resumeRetries {
+                await TestWait.until { scheduler.scheduledDelays.count == attempt }
+                await scheduler.completeNext()
+            }
+            await TestWait.until { await arbiter.resumeFailure == .playerNotResponding } // given up
+            await arbiter.retryResume()
+        }
+        await TestWait.until { await player.playCallCount == 1 }
+        await arbiter.waitUntilIdle()
+        #expect(await player.state == .playing)
+        #expect(leveler.log.isEmpty)
     }
 }

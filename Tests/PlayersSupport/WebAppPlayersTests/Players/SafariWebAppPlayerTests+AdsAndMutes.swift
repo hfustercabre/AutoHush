@@ -193,6 +193,21 @@ extension SafariWebAppPlayerTests {
         #expect(setup.muter.log.isEmpty && learning.muter.log.isEmpty)
     }
 
+    @Test("AntiDot mode lifts a mute already made in place of a pause, without playing")
+    func antiDotLiftsMute() async {
+        let setup = Setup(recipe: Self.learned)
+        setup.showPage("Play")
+        setup.page.sound = true
+        setup.probe.audible = true
+        #expect(await setup.player.muteIfPlayingAnyway())
+        #expect(setup.muter.muted == [4242])
+
+        setup.player.allowTaps(false)
+        await TestWait.until { setup.muter.muted.isEmpty }
+        #expect(setup.muter.muted.isEmpty)
+        #expect(setup.page.presses.isEmpty)
+    }
+
     @Test("stopping monitoring lifts a mute without playing")
     @MainActor
     func stopUnmutes() async throws {

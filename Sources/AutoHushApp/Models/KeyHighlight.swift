@@ -367,13 +367,15 @@ final class KeyHighlight {
     /// control inside another and the one around it in no set order). Not
     /// a dimmed one, which would hold the highlight unseen, the focus's
     /// tint hidden and its keys taken for nothing (app-models-2, the bug
-    /// hunt, 2026-11-10), unless it explains itself (the pointer then has
-    /// its help tag); nor a list that's one stop (`Control.scroll`, the
-    /// logs' entries), whose ring shows only the keys' and which has
-    /// nothing to press (R2 of the keyboard fixes' review, 2026-11-10).
+    /// hunt, 2026-11-10), even one that explains itself: it shows the
+    /// highlight only to the keys (`shows`), the pointer has its help tag
+    /// (app-models-1, 2026-11-19); nor a list that's one stop
+    /// (`Control.scroll`, the logs' entries), whose ring shows only the
+    /// keys' and which has nothing to press (R2 of the keyboard fixes'
+    /// review, 2026-11-10).
     private func innermostHovered(excluding excluded: UUID? = nil) -> UUID? {
         let hovered = hovered.filter { id in
-            id != excluded && controls[id].map { ($0.isEnabled || $0.explains) && $0.scroll == nil } != false
+            id != excluded && controls[id].map { $0.isEnabled && $0.scroll == nil } != false
         }
         guard var best = hovered.last else { return nil }
         for id in hovered.reversed() where id != best && isInside(id, best) { best = id }

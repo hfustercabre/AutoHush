@@ -15,6 +15,7 @@ final class VoiceOverCursorTests {
     var window: NSWindow?
     var listens: AnyObject? = NSObject()
     var listened = 0
+    var stoppedListening = 0
     var now = ContinuousClock.now
     /// Cocoa's screen coordinates go up from the bottom of a screen this tall.
     let screenTop: CGFloat = 1000
@@ -35,6 +36,7 @@ final class VoiceOverCursorTests {
                 listened += 1
                 return listens
             },
+            stopListening: { [weak self] _ in self?.stoppedListening += 1 },
             now: { [weak self] in self?.now ?? .now }))
     }
 
@@ -127,5 +129,19 @@ final class VoiceOverCursorTests {
         #expect(cursor.watches())
         #expect(listened == 3)
         #expect(cursor.watches() && listened == 3) // listening: once
+    }
+
+    @Test("Accessibility taken away while it listens: it listens afresh once it's given back, not through the observer made before (app-services-3)")
+    func listensAgainAfterRegrant() {
+        let cursor = makeCursor()
+        voiceOver = false // no look started meanwhile
+        #expect(cursor.watches() && listened == 1)
+        trusted = false
+        #expect(!cursor.watches())
+        #expect(stoppedListening == 1)
+        #expect(!cursor.watches() && stoppedListening == 1) // once
+        trusted = true
+        #expect(cursor.watches())
+        #expect(listened == 2)
     }
 }

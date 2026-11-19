@@ -39,8 +39,11 @@ final class Changes: Sendable {
         }
     }
     /// A switch that was (or may have been) on before this tool turned it
-    /// on: a stop sets it back on, not off.
-    func foundOn(_ attribute: String) { state.withLock { _ = $0.keptOn.insert(attribute) } }
+    /// on: a stop sets it back on, not off. Not one this tool turned on
+    /// already, which was off (playercheck-1 of 2026-11-19's bug hunt).
+    func foundOn(_ attribute: String) {
+        state.withLock { if !$0.switches.contains(attribute) { $0.keptOn.insert(attribute) } }
+    }
     func wasFoundOn(_ attribute: String) -> Bool { state.withLock { $0.keptOn.contains(attribute) } }
     /// The app to bring back to the front, while another was brought forward.
     var frontToRestore: URL? {

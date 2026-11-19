@@ -55,6 +55,12 @@ final class World {
     /// Holds the permission reads until the test ends them (as macOS's
     /// prompt for Automation holds them until it's answered).
     var heldPermissionRead: ManualSleep?
+    /// Holds the helper's answer to whether the app runs with its launch
+    /// option until the test ends it; how many it gave, and for which apps
+    /// checks started.
+    var heldLaunchOptionRead: ManualSleep?
+    var launchOptionAnswers = 0
+    var checkedApps: [String] = []
     var exists = true
     var run = FakeCheckRun()
     var runs = 0
@@ -124,7 +130,11 @@ extension World: AppReading {
 
 /// The check's helper.
 extension World: CheckHelping {
-    func runsWithLaunchOption(_ app: CheckableApp) async -> Bool? { runsWithOption }
+    func runsWithLaunchOption(_ app: CheckableApp) async -> Bool? {
+        if let held = heldLaunchOptionRead { await held.sleep(.zero) }
+        launchOptionAnswers += 1
+        return runsWithOption
+    }
 
     func reopenWithLaunchOption(_ app: CheckableApp) async -> Bool {
         reopened += 1
@@ -133,6 +143,7 @@ extension World: CheckHelping {
 
     func startCheck(_ app: CheckableApp, taps: Bool, onLine: @escaping @MainActor @Sendable (String) -> Void) -> any CheckRunning? {
         guard startsCheck else { return nil }
+        checkedApps.append(app.bundleID)
         self.taps.append(taps)
         runs += 1
         report = onLine

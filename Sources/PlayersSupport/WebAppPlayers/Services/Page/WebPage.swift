@@ -6,8 +6,11 @@ import Foundation
 package protocol WebPage: Sendable {
     /// Whether AutoHush may use Accessibility; `prompt` shows macOS's request.
     func isTrusted(prompt: Bool) -> Bool
-    /// The buttons on the pages in the app's windows, on any Space; `nil`
-    /// while it has no window.
+    /// The buttons on the pages in the app's windows on the current Space,
+    /// else (none there) on any Space; `nil` while it has no window. A
+    /// window on another Space while one is here isn't read (each look
+    /// would take the slower search of every Space): a button found there
+    /// earlier is still read by its handle.
     func buttons(pid: pid_t) -> [PageButton]?
     /// Whether the app has a window, on any Space (minimized ones too).
     func hasWindow(pid: pid_t) -> Bool

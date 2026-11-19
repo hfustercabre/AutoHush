@@ -318,6 +318,18 @@ struct KeyHighlightTests {
         #expect(keyboard.highlighted == first)
     }
 
+    @Test("lighting the first control once they've come waits past the controls only Tab stops on (Settings' Back and Forward, there all along) for one the arrows stop on (diff-app-2)")
+    func firstWhenReadyPastTabOnly() async throws {
+        let keyboard = KeyHighlight()
+        keyboard.register(UUID(), .init(frame: CGRect(x: 0, y: -40, width: 30, height: 22), press: {}, tabOnly: true))
+        keyboard.highlightFirstWhenReady()
+        try await Task.sleep(for: .milliseconds(100)) // turns of the run loop before the page's rows come
+        #expect(keyboard.highlighted == nil)
+        let row = control(keyboard, 0, 0)
+        await TestWait.until { keyboard.highlighted != nil }
+        #expect(keyboard.highlighted == row)
+    }
+
     @Test("the pointer moves the highlight onto a control and takes it away as it leaves, never scrolling")
     func pointer() {
         let keyboard = KeyHighlight()

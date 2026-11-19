@@ -85,11 +85,25 @@ func scriptControls(of scripting: Scripting?) -> (pause: ScriptCommand, play: Sc
 /// The documents a test's pause paused, by name: its play plays them again.
 @MainActor var pausedDocuments: [String] = []
 
+/// The documents a command goes to, by name, as `ScriptedAppPlayer` picks
+/// them: a pause to each one playing (then in `paused`, kept until the next
+/// pause that finds one), a play to those in `paused` still open, else to
+/// the only one open; never the front one of several, which AutoHush never
+/// plays (playercheck-2 of 2026-11-19's bug hunt).
+func scriptTargets(pauses: Bool, among documents: [(name: String, playing: Bool)], paused: inout [String]) -> [String] {
+    if pauses {
+        let playing = documents.filter(\.playing).map(\.name)
+        if !playing.isEmpty { paused = playing }
+        return playing
+    }
+    if paused.isEmpty, documents.count == 1 { return [documents[0].name] }
+    return paused.filter { name in documents.contains { $0.name == name } }
+}
+
 /// Sends the app one of its AppleScript commands (`scriptControls`), as an
 /// Apple event; false (and why) when it fails. To its documents as AutoHush
 /// sends it (`ScriptedAppPlayer`), when its commands act on one and its
-/// state is theirs: a pause to each playing one, a play to those a test
-/// paused, else the front one.
+/// state is theirs (`scriptTargets`).
 @MainActor func sendScript(_ command: ScriptCommand) -> Bool {
     func failed(_ error: NSError) -> Bool {
         noteScriptError(error.code)
@@ -105,19 +119,11 @@ func scriptControls(of scripting: Scripting?) -> (pause: ScriptCommand, play: Sc
     case .failure(let error): return failed(error)
     case .success(let found): documents = found
     }
-    var targets: [NSAppleEventDescriptor]
-    if command.pauses {
-        let playing = documents.filter(\.playing).map(\.name)
-        pausedDocuments = playing
-        targets = playing.map { ScriptedAppPlayer.documentSpecifier(documentClass, named: $0) }
-    } else {
-        let paused = pausedDocuments.filter { name in documents.contains { $0.name == name } }
-        targets = paused.map { ScriptedAppPlayer.documentSpecifier(documentClass, named: $0) }
-        if targets.isEmpty, !documents.isEmpty { targets = [ScriptedAppPlayer.documentSpecifier(documentClass, index: 1)] }
-        pausedDocuments = []
-    }
+    let targets = scriptTargets(pauses: command.pauses, among: documents, paused: &pausedDocuments)
+        .map { ScriptedAppPlayer.documentSpecifier(documentClass, named: $0) }
     guard !targets.isEmpty else {
-        say("    \(command.name): no document \(command.pauses ? "playing" : "open")")
+        say("    \(command.name): " + (command.pauses ? "no document playing"
+            : documents.isEmpty ? "no document open" : "no document paused by the check is open"))
         return false
     }
     for target in targets {

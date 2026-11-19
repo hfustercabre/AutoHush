@@ -305,10 +305,13 @@ extension PlaybackArbiter {
     /// lifted (the Mac asleep, AntiDot mode on, the pause kept): `nil` once
     /// paused, the error when it refused. `uncovered`: the mute goes even
     /// when it's refused (asleep, AntiDot mode), so nothing stands in for it
-    /// (`pauseUncovered`); a kept pause stays muted.
+    /// (`pauseUncovered`); a kept pause stays muted. Checked to have taken,
+    /// as a fade-out's pause is: one that goes through but leaves it playing
+    /// is refused too, or its mute would be lifted on music playing (engine-2
+    /// of 11-19).
     func pauseForReal(uncovered: Bool) async -> MusicPlayerError? {
         do {
-            if uncovered { try await player.pauseUncovered() } else { try await player.pause() }
+            try await fader.pressPause(uncovered: uncovered)
             return nil
         } catch {
             logger.info("[arbiter] \(self.player.name, privacy: .public) refused its pause before its mute is lifted: \(error)")

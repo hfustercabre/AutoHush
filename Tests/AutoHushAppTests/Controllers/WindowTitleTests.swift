@@ -344,7 +344,7 @@ final class WindowTitleTests {
         #expect(log.handlers.isEmpty)
     }
 
-    @Test("in the logs window, Page Up and Page Down scroll the entries a page, Home and End to the oldest and newest; other keys and windows are left alone")
+    @Test("in the logs window, Page Up and Page Down scroll the entries a page, Home and End to the oldest and newest; other keys and windows are left alone, and the keys while an input method composes")
     func logsWindowPagingKeys() async throws {
         let log = LogsModelTests.FakeLog()
         // A second apart, from a minute on: the window shows this launch's,
@@ -397,6 +397,15 @@ final class WindowTitleTests {
         #expect(!press(0)) // a letter: the search's
         #expect(!logs.scrollEntries(keyCode: 115, flags: [], windowNumber: window.windowNumber + 1)) // another window's
         #expect(!logs.scrollEntries(keyCode: 115, flags: .command, windowNumber: window.windowNumber)) // ⌘Home: not its
+        // While an input method composes in the search, its keys are its own (app-controllers-2).
+        let editor = ComposingEditor(frame: NSRect(x: 0, y: 0, width: 100, height: 20))
+        window.contentView?.addSubview(editor)
+        defer { editor.removeFromSuperview() }
+        #expect(window.makeFirstResponder(editor))
+        #expect(!press(115)) // Home: the input method's
+        #expect(abs(fromTop() - end) <= 1) // still at the newest
+        editor.composing = false
+        #expect(press(115)) // done composing: the entries' again
     }
 
     /// The logs window's entries' scroll view: its tallest.

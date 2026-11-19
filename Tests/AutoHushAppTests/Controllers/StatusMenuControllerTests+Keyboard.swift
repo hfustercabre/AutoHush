@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import Testing
 @testable import AutoHushApp
 import AutoHushKit
@@ -287,6 +288,13 @@ extension StatusMenuControllerTests {
         #expect(!StatusMenuController.composes(try Self.keyDown("\u{F701}", code: 125), inputMethod: true))
     }
 
+    @Test("an input method counts as one whether macOS selects it by one of its modes (Japanese's Hiragana) or it has none (app-controllers-1); a keyboard layout doesn't")
+    func inputMethodKinds() {
+        #expect(StatusMenuController.isInputMethod(kTISTypeKeyboardInputMode))
+        #expect(StatusMenuController.isInputMethod(kTISTypeKeyboardInputMethodWithoutModes))
+        #expect(!StatusMenuController.isInputMethod(kTISTypeKeyboardLayout))
+    }
+
     @Test("one key mapping for the menu and Settings: plain arrows, Page Up and Down, Home and End, Return or Enter, Space, Tab and Shift-Tab; others, or with ⌘ ⌥ ⌃ ⇧, are the window's")
     func highlightKeys() {
         #expect(HighlightKey(keyCode: 125, modifiers: []) == .down)
@@ -543,6 +551,25 @@ extension StatusMenuControllerTests {
         #expect(sut.model.keyboard.highlighted == nil)
     }
 
+    @Test("keys that move the side window's highlight let go of the keyboard's focus there (a row VoiceOver or a click gave it), so Space presses what's lit, one indicator at a time (app-controllers-3)")
+    func sideKeysDropTheSideFocus() async throws {
+        let sut = menuIgnoringAnApp()
+        defer { sut.remove() }
+        sut.close()
+        sut.open() // on screen
+        sut.perform(.openSide(.ignoredApps))
+        let side = try #require(sut.sidePanel)
+        await TestWait.until { !sut.model.sideKeyboard.rows.isEmpty } // its rows, as they register
+        let focused = FocusTaker(frame: NSRect(x: 0, y: 0, width: 20, height: 20))
+        side.contentView?.addSubview(focused)
+        defer { focused.removeFromSuperview() }
+        for code: UInt16 in [125, 48, 119] { // ↓, Tab, End
+            #expect(side.makeFirstResponder(focused))
+            #expect(sut.handleKey(MenuPanelTests.key(code)))
+            #expect(side.firstResponder !== focused, "key \(code)")
+        }
+    }
+
     @Test("Option counts as held only alone (with Shift too), not with VoiceOver's Control-Option nor with Command (F2)")
     func optionAlone() {
         #expect(StatusMenuController.optionAlone(.option))
@@ -614,4 +641,9 @@ extension StatusMenuControllerTests {
             log.calls.removeAll()
         }
     }
+}
+
+/// A control that takes the keyboard's focus, as a row VoiceOver's cursor or a click gave it.
+private final class FocusTaker: NSView {
+    override var acceptsFirstResponder: Bool { true }
 }

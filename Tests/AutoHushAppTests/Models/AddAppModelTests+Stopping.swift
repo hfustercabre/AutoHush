@@ -99,6 +99,35 @@ extension AddAppModelTests {
         #expect(model.appQuit)
     }
 
+    @Test("Start, Stop and another app's Start while the last check still puts things back: only that app is checked, once the last check ends (app-models-3)")
+    func otherAppStartedWhileLastCheckEnds() async {
+        let world = World()
+        let model = await AddAppModel.ready(on: world)
+        let first = world.run
+        first.endsWhenStopped = false
+        model.startCheck()
+        await TestWait.until { world.panel == ["shown"] }
+        model.windowClosed()
+        world.run = FakeCheckRun()
+        model.reset()
+        await model.loadApps()
+        model.continueWithApp()
+        await TestWait.until { model.stage == .ready }
+        model.startCheck() // waits for the last check
+        await Task.yield()
+        model.stopCheck()
+        model.changeApp()
+        model.choose(world.apps[1])
+        await TestWait.until { model.stage == .ready }
+        model.startCheck() // waits too
+        await Task.yield()
+        first.finish(.stopped)
+        await TestWait.until { world.runs == 2 }
+        for _ in 0..<5 { await Task.yield() }
+        #expect(world.checkedApps == [world.apps[0].bundleID, world.apps[1].bundleID])
+        world.run.finish(.stopped)
+    }
+
     @Test("Start and Stop again while the last check still puts things back leave one watch, which closing the window ends")
     func stopTwiceWhileLastCheckEnds() async {
         let world = World()

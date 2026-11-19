@@ -37,6 +37,21 @@ extension PlayerSessionTests {
     }
 
     @MainActor
+    @Test("a permission taken away while AutoHush holds the pause: the start once it's back takes the pause over (app-services-1)")
+    func pauseKeptThroughLostPermission() async {
+        let bench = Bench()
+        let session = await bench.started()
+        bench.monitorings.made[0].send(.playback(.pausedByMonitor))
+        await bench.first.setFailVerify(MusicPlayerError.accessibilityPermissionDenied)
+        session.checkAccess()
+        await TestWait.until { session.state.health == .needsPermission(.accessibility(player: "First")) }
+        #expect(bench.monitorings.made[0].isStopped) // a real pause stays as it is
+        await bench.first.setFailVerify(nil) // given back: the next try starts
+        await TestWait.until { session.state.health == .ready && bench.monitorings.made.count == 2 }
+        #expect(bench.monitorings.made[1].starts.map(\.takingOverPause) == [true])
+    }
+
+    @MainActor
     @Test("a player held paused, chosen again just as the start for the one chosen before ends its access check, takes its pause back: that start gives up")
     func takenBackDuringOtherStart() async throws {
         let bench = Bench()

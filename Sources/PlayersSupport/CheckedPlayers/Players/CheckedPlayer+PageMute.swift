@@ -5,12 +5,10 @@ import WebAppPlayers
 extension CheckedPlayer {
     /// Not in AntiDot mode, which taps no sound: then it isn't listened to,
     /// its page can't mute it in place of a pause, and a mute under way is
-    /// lifted.
+    /// lifted (by the page's own `allowTaps`).
     package nonisolated func allowTaps(_ allowed: Bool) {
         tapsAllowed.withLock { $0 = allowed }
         parts.page?.allowTaps(allowed)
-        guard !allowed, let page = parts.page else { return }
-        Task { await page.releaseMute() }
     }
 
     /// Its page's mute, standing for a pause.

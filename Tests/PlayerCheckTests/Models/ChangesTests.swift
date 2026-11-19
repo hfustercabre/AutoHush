@@ -19,6 +19,18 @@ struct ChangesTests {
         #expect(changes.switchesOn.isEmpty)
     }
 
+    @Test("a switch this tool turned on isn't found on: it goes back off at the end; one found on first is set back on (playercheck-1)")
+    func oursNotFoundOn() {
+        let changes = Changes()
+        changes.noteOn("AXManualAccessibility")
+        changes.foundOn("AXManualAccessibility")
+        #expect(!changes.wasFoundOn("AXManualAccessibility"))
+
+        changes.foundOn("AXEnhancedUserInterface")
+        changes.noteOn("AXEnhancedUserInterface")
+        #expect(changes.wasFoundOn("AXEnhancedUserInterface"))
+    }
+
     @Test("switches noted from many threads at once are all kept, each once")
     func atOnce() async {
         let changes = Changes()

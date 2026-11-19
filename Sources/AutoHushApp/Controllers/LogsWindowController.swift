@@ -102,10 +102,13 @@ final class LogsWindowController: PlacedWindowController, NSWindowDelegate {
     /// Page Up and Page Down scroll the entries a page, Home and End to the
     /// oldest and the newest, wherever the keyboard is, the search
     /// included, where they do nothing (KB7, the a11y audit, 2026-11-06:
-    /// older entries could be read only with the mouse). `false` leaves the
-    /// key to the window.
+    /// older entries could be read only with the mouse); not while an input
+    /// method composes there, whose keys are its own, as `WindowKeyPress`
+    /// leaves them (app-controllers-2, 2026-11-19: Page Down for its next
+    /// candidates). `false` leaves the key to the window.
     func scrollEntries(keyCode: UInt16, flags: NSEvent.ModifierFlags, windowNumber: Int) -> Bool {
         guard let window, windowNumber == window.windowNumber, window.attachedSheet == nil,
+              (window.firstResponder as? NSTextView)?.hasMarkedText() != true,
               let key = HighlightKey(keyCode: keyCode, modifiers: flags), key.jump != nil else { return false }
         return Self.scrollEntries(in: window, key)
     }

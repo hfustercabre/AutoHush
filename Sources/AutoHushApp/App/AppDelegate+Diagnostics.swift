@@ -45,9 +45,7 @@ extension AppDelegate {
         case nil: nil
         }
         return DiagnosticsFacts(
-            playerVersion: status.chosenPlayer?.appURL.flatMap {
-                Bundle(url: $0)?.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-            },
+            playerVersion: status.chosenPlayer?.appURL.flatMap(DiagnosticsFacts.version(ofAppAt:)),
             playerCanFade: settingsModel.playerCanFade,
             playerPermission: permission,
             playerPermissionAccess: access,

@@ -40,3 +40,14 @@ struct DiagnosticsFacts: Equatable {
     var processor: String
     var now = Date()
 }
+
+extension DiagnosticsFacts {
+    /// The version of the app at `url`, as its Info.plist says now: read
+    /// from the disk each time, since `Bundle(url:)` keeps what it read
+    /// first, so a player that updated itself in place would still show its
+    /// old version (app-controllers-4, the 2026-11-19 bug hunt).
+    static func version(ofAppAt url: URL) -> String? {
+        let info = NSDictionary(contentsOf: url.appending(path: "Contents/Info.plist"))
+        return info?["CFBundleShortVersionString"] as? String
+    }
+}

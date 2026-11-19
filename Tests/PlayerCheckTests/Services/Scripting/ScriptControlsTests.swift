@@ -48,4 +48,24 @@ struct ScriptControlsTests {
         scripting.properties = ["pPlS": "player state"]
         #expect(volumeProperty(of: scripting) == nil)
     }
+
+    @Test("to documents as AutoHush sends it: a pause to each one playing (then in hand), a play to those still open, kept for a play again; else only to the one open, never the front one of several (playercheck-2)")
+    func documentTargets() {
+        let both = [(name: "A", playing: false), (name: "B", playing: true)]
+        var paused: [String] = []
+        #expect(scriptTargets(pauses: true, among: both, paused: &paused) == ["B"])
+        #expect(paused == ["B"])
+        let stopped = [(name: "A", playing: false), (name: "B", playing: false)]
+        #expect(scriptTargets(pauses: false, among: stopped, paused: &paused) == ["B"])
+        // The play didn't take: pressed once more, it still goes to B.
+        #expect(scriptTargets(pauses: false, among: stopped, paused: &paused) == ["B"])
+        // A pause with nothing playing keeps those in hand.
+        #expect(scriptTargets(pauses: true, among: stopped, paused: &paused).isEmpty)
+        #expect(paused == ["B"])
+
+        var none: [String] = []
+        #expect(scriptTargets(pauses: false, among: stopped, paused: &none).isEmpty)
+        #expect(scriptTargets(pauses: false, among: [(name: "A", playing: false)], paused: &none) == ["A"])
+        #expect(scriptTargets(pauses: false, among: [], paused: &none).isEmpty)
+    }
 }

@@ -139,6 +139,14 @@ extension PlaybackArbiter {
             logger.error("[arbiter] pausing \(self.player.name, privacy: .public) failed: \(error)")
             // Unless every app stopped meanwhile: then there's nothing to say.
             guard !activeSources.isEmpty, autoPauseEnabled, !isAsleep, !isShutDown else {
+                // The output gone during the fade-out, no app left to mute it
+                // for: its pause tried once more uncovered (every backup), as
+                // one playing is paused then (`pauseNow`; diff-kit-1 of 11-19).
+                if outputGoneDuringPause, autoPauseEnabled, !isAsleep, !isShutDown,
+                   await pauseForReal(uncovered: true) == nil {
+                    playerState = .paused
+                    logger.info("[arbiter] the output went away: \(self.player.name, privacy: .public) paused by another way, and stays paused")
+                }
                 await fader.restoreAfterRefusal()
                 return
             }
@@ -165,6 +173,9 @@ extension PlaybackArbiter {
             logger.info("[arbiter] pause called off during the fade-out (playing now: \(self.playingApps, privacy: .public))")
             // Another app may have started while the music came back up.
             if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
+            // Stopped before it was back up, and no pause faded it since:
+            // the user's volume again (R1 of 11-19's diff review).
+            await fader.restoreIfLeftDown()
             return
         }
         volumeLeveler?.musicPaused(since: pauseBegan) // the next resume may lower the volume

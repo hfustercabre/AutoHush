@@ -66,6 +66,19 @@ struct KeyHighlightSourceTests {
         #expect(keyboard.highlighted == card)
     }
 
+    @Test("the pointer on a dimmed control that explains itself leaves the highlight off it too: its help tag says why, and the focus's tint and keys stay (app-models-1)")
+    func pointerOnDimmedThatExplains() {
+        let keyboard = KeyHighlight()
+        let card = UUID(), dimmed = UUID()
+        keyboard.register(card, .init(frame: CGRect(x: 0, y: 0, width: 300, height: 100)))
+        keyboard.register(dimmed, .init(frame: CGRect(x: 10, y: 50, width: 80, height: 22), isEnabled: false, explains: true))
+        keyboard.hover(dimmed, true) // alone under the pointer
+        #expect(keyboard.highlighted == nil && !keyboard.hidesFocus)
+        keyboard.hover(card, true)
+        keyboard.hover(dimmed, true) // inside the card, came onto last
+        #expect(keyboard.highlighted == card)
+    }
+
     @Test("VoiceOver's cursor moved by its own keys brings the highlight, as the keys' but no arrival (its cursor is there already); not onto a dimmed control without a reason; Settings' other side lets go (K5)")
     func followsVoiceOver() {
         let sidebar = KeyHighlight(), page = KeyHighlight()
@@ -165,10 +178,10 @@ struct KeyHighlightSourceTests {
         keyboard.move(1) // past the one that says nothing, round to the first
         #expect(keyboard.highlighted == first)
         keyboard.hover(dimmed, true) // the pointer has its help tag instead
-        #expect(!keyboard.shows(dimmed, isEnabled: false))
+        #expect(!keyboard.shows(dimmed, isEnabled: false) && keyboard.highlighted == nil)
 
         let enabled = control(keyboard, 150, explains: true)
-        keyboard.move(1) // from the dimmed one, on down
+        keyboard.move(-1) // from nothing, up: the last row
         #expect(keyboard.highlighted == enabled)
         keyboard.update(enabled, isEnabled: false) // dimmed under the keys: it says why
         #expect(keyboard.highlighted == enabled)

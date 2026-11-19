@@ -25,7 +25,9 @@ extension WebAppControl {
 
     /// Another window's button saying the music plays, while the one known
     /// says it doesn't and the web app can be heard: the user plays it in a
-    /// second window. Looked for every `otherWindowsInterval` at most.
+    /// second window. Looked for every `otherWindowsInterval` at most, in
+    /// the windows `WebPage.buttons` reads (not another Space's while one is
+    /// on this Space).
     private func playingElsewhere(_ recipe: PlayPauseRecipe, pid: pid_t, now: Date) -> PageButton? {
         if let checked = otherWindowsCheckedAt, now.timeIntervalSince(checked) < Self.otherWindowsInterval { return nil }
         otherWindowsCheckedAt = now

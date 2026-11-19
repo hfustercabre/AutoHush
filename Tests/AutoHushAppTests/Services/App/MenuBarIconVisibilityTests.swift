@@ -41,6 +41,20 @@ struct MenuBarIconVisibilityTests {
                                                leftOfNotch: nil, rightOfNotch: nil))
     }
 
+    @Test("its window off every screen (above a second screen's top, its menu bar hidden): measured against the screen it's over, not the first (app-services-4)")
+    func offEveryScreen() {
+        let second = screen.offsetBy(dx: 1512, dy: 0)
+        let slid = icon(at: 1512 + 1200).offsetBy(dx: 0, dy: 33)
+        #expect(MenuBarIconVisibility.screenIndex(for: slid, among: [screen, second]) == 1)
+        #expect(!MenuBarIconVisibility.isHidden(icon: slid, isVisible: true, screen: second, leftOfNotch: nil, rightOfNotch: nil))
+        // Over none, the first.
+        #expect(MenuBarIconVisibility.screenIndex(for: icon(at: 5000), among: [screen, second]) == 0)
+        #expect(MenuBarIconVisibility.screenIndex(for: slid, among: []) == nil)
+        // One screen above the other: the one whose top it's above.
+        let below = screen.offsetBy(dx: 0, dy: -982)
+        #expect(MenuBarIconVisibility.screenIndex(for: icon(at: 1200).offsetBy(dx: 0, dy: 33), among: [below, screen]) == 1)
+    }
+
     @Test("a screen to the right of the main one: the notch is measured from its own left edge")
     func secondScreen() {
         let second = screen.offsetBy(dx: 1512, dy: 0)

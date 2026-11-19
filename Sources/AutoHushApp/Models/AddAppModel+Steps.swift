@@ -195,7 +195,10 @@ extension AddAppModel {
                     return
                 }
             } else if traits.needsLaunchOption {
-                self.needsReopen = await self.helper?.runsWithLaunchOption(app) == false
+                let runsWithout = await self.helper?.runsWithLaunchOption(app) == false
+                // Called off meanwhile (another app chosen): the answer was about this one.
+                guard !Task.isCancelled else { return }
+                self.needsReopen = runsWithout
             }
             guard !Task.isCancelled else { return }
             self.stage = .allowing

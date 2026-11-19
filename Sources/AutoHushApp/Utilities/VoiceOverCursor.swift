@@ -27,7 +27,8 @@ final class VoiceOverCursor {
     /// (who it is, and its frame in Cocoa's screen coordinates); this app's
     /// visible window at a point on screen; the top of the first screen,
     /// which Cocoa's coordinates go up from; and Accessibility's focus
-    /// notification started (its observer, `nil` if refused); the clock.
+    /// notification started (its observer, `nil` if refused) and stopped;
+    /// the clock.
     struct System {
         var isTrusted: @MainActor () -> Bool = { AXIsProcessTrusted() }
         var isVoiceOverOn: @MainActor () -> Bool = { NSWorkspace.shared.isVoiceOverEnabled }
@@ -35,6 +36,7 @@ final class VoiceOverCursor {
         var windowAt: @MainActor (CGPoint) -> NSWindow? = VoiceOverCursor.visibleWindow(at:)
         var screenTop: @MainActor () -> CGFloat? = { NSScreen.screens.first?.frame.maxY }
         var listen: @MainActor () -> AnyObject? = VoiceOverCursor.listenToFocus
+        var stopListening: @MainActor (AnyObject) -> Void = VoiceOverCursor.stopListening(_:)
         var now: @MainActor () -> ContinuousClock.Instant = { .now }
     }
 
@@ -111,13 +113,20 @@ final class VoiceOverCursor {
     }
 
     /// Listens once Accessibility is allowed; a refusal is remembered until
-    /// the trust is seen to change, or for `retryAfter`.
+    /// the trust is seen to change, or for `retryAfter`. Accessibility taken
+    /// away, it stops listening, so it listens afresh once it's back: an
+    /// observer made before isn't known to tell anything then
+    /// (app-services-3, the 2026-11-19 bug hunt).
     private func startIfAllowed() {
-        guard observer == nil else { return }
         guard system.isTrusted() else {
             refusedAt = nil
+            if let observer {
+                system.stopListening(observer)
+                self.observer = nil
+            }
             return
         }
+        guard observer == nil else { return }
         if let refusedAt, system.now() - refusedAt < Self.retryAfter { return }
         observer = system.listen()
         refusedAt = observer == nil ? system.now() : nil
@@ -139,6 +148,13 @@ final class VoiceOverCursor {
         else { return nil }
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created), .commonModes)
         return created
+    }
+
+    /// Stops `listenToFocus`'s notification: its run loop source goes.
+    private static func stopListening(_ observer: AnyObject) {
+        guard CFGetTypeID(observer) == AXObserverGetTypeID() else { return }
+        let observer = unsafeDowncast(observer, to: AXObserver.self)
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .commonModes)
     }
 
     /// The focused element, read in this process (no message to itself).

@@ -16,6 +16,9 @@ package struct SafariUI: SafariDriving {
     /// A heavy page can keep Safari from showing the dialog for several
     /// seconds (a first try on Deezer gave up after 5).
     static let dialogTimeout: TimeInterval = 15
+    /// How long a dialog that may still come after a cancel is looked for
+    /// (`cancelLateDialog`).
+    static let lateDialogWait: TimeInterval = 1
     /// While the dialog is open, how often it's looked at: still there, or
     /// closed by the user.
     static let dialogCheckInterval: TimeInterval = 0.3
@@ -101,7 +104,9 @@ package struct SafariUI: SafariDriving {
         // typed if the page moved.
         let deadline = Date().addingTimeInterval(Self.dialogTimeout)
         var shows = false
-        while !shows, Date() < deadline {
+        // Cancelled meanwhile, it stops looking (a sleep then returns at
+        // once): a dialog shown by then is cancelled below.
+        while !shows, Date() < deadline, !Task.isCancelled {
             shows = await Self.queue.run { () -> Bool in
                 guard let app = Self.safariElement(), Self.find("AddToDockFormAddButton", in: app) != nil else { return false }
                 if let field = Self.find("AddToDockFormURLTextField", in: app) {
@@ -113,6 +118,14 @@ package struct SafariUI: SafariDriving {
                 return true
             }
             if !shows { try? await Task.sleep(for: .milliseconds(200)) }
+        }
+        guard shows || !Task.isCancelled else {
+            // Its menu item was pressed: a dialog that still comes soon after
+            // is this one's, cancelled rather than left open unwatched (R4 of
+            // 11-19's diff review).
+            let cancelled = await Self.cancelLateDialog()
+            logger.notice("Add to Dock cancelled before Safari’s dialog came\(cancelled ? "; it came then, and was cancelled" : "", privacy: .public)")
+            return .cancelled
         }
         guard shows else {
             logger.error("Add to Dock: Safari’s dialog didn’t come within \(Int(Self.dialogTimeout), privacy: .public) s")
@@ -126,12 +139,15 @@ package struct SafariUI: SafariDriving {
             dialogShown(frame)
         }
         // The user names the web app and clicks Add (or Cancel) there.
+        var watch = DialogWatch()
         while !Task.isCancelled {
-            let open = await Self.queue.run { () -> Bool in
-                guard let app = Self.safariElement() else { return false }
-                return Self.find("AddToDockFormAddButton", in: app) != nil
+            let look = await Self.queue.run { () -> DialogLook in
+                guard let app = Self.safariElement() else { return .absent }
+                if Self.find("AddToDockFormAddButton", in: app) != nil { return .shown }
+                // Not found: only a miss if Safari answers at all.
+                return (try? app.readChildren(timeout: Self.timeout)) == nil ? .unreadable : .absent
             }
-            guard open else { return .closed }
+            guard !watch.closes(after: look) else { return .closed }
             try? await Task.sleep(for: .seconds(Self.dialogCheckInterval))
         }
         await Self.queue.run {
@@ -140,6 +156,32 @@ package struct SafariUI: SafariDriving {
         }
         logger.notice("Add to Dock cancelled")
         return .cancelled
+    }
+
+    /// After a cancel before the dialog came: looks for it for
+    /// `lateDialogWait`, without the cancelled task's sleeps (which return
+    /// at once), and presses its Cancel if one shows. Any Add to Dock
+    /// dialog then is this one's, whatever address it shows (the page may
+    /// have moved): no other add can have opened one that soon.
+    /// Whether it did.
+    private static func cancelLateDialog() async -> Bool {
+        let looks = Int(lateDialogWait / 0.2)
+        for look in 0..<looks {
+            let cancelled = await queue.run { () -> Bool in
+                guard let app = safariElement(), let cancel = find("AddToDockFormCancelButton", in: app) else { return false }
+                return AXUIElementPerformAction(cancel, kAXPressAction as CFString) == .success
+            }
+            if cancelled { return true }
+            if look < looks - 1 { await wait(seconds: 0.2) }
+        }
+        return false
+    }
+
+    /// A wait a cancelled task can't cut short.
+    private static func wait(seconds: TimeInterval) async {
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            DispatchQueue.global().asyncAfter(deadline: .now() + seconds) { done.resume() }
+        }
     }
 
     package func closeTab(_ tab: SafariTab) async {
@@ -326,6 +368,27 @@ package struct SafariUI: SafariDriving {
 
 
     private enum TabClosing { case notInFront, withheld, unreadable, failed, closed }
+
+    /// One look at the open dialog: there, not found, or Safari didn't answer.
+    enum DialogLook: Equatable { case shown, absent, unreadable }
+
+    /// Whether the dialog closed, from the looks at it: only once Safari
+    /// answered without it `missesToClose` times, no look finding it in
+    /// between. A look Safari didn't answer (busy) counts for nothing
+    /// (checked-webapps-5 of 2026-11-19's bug hunt), nor does a single miss.
+    struct DialogWatch {
+        static let missesToClose = 3
+        private var misses = 0
+
+        mutating func closes(after look: DialogLook) -> Bool {
+            switch look {
+            case .shown: misses = 0
+            case .unreadable: break
+            case .absent: misses += 1
+            }
+            return misses >= Self.missesToClose
+        }
+    }
 
     /// File → Add to Dock…, by either name Safari gives it.
     private static func addToDockItem(in app: AXUIElement) -> AXUIElement? {

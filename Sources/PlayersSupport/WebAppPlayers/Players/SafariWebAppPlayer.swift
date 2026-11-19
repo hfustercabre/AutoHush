@@ -144,8 +144,16 @@ package actor SafariWebAppPlayer: LearningMusicPlayer, MutingMusicPlayer, Fadele
         return await queue.run { control.restartLearning() }
     }
 
+    /// Not in AntiDot mode, which taps no sound: no new mute in place of a
+    /// pause, and a mute under way (an ad) is lifted.
     package nonisolated func allowTaps(_ allowed: Bool) {
         tapsAllowed.withLock { $0 = allowed }
+        guard !allowed else { return }
+        Task { [tapsAllowed] in
+            // Allowed again meanwhile: a mute made since stays (R6 of 11-19's diff review).
+            guard !tapsAllowed.withLock({ $0 }) else { return }
+            await self.releaseMute()
+        }
     }
 
     /// Whether its page's words are current now (`WebPage.wordsAreCurrent`):

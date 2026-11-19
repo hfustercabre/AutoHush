@@ -184,7 +184,7 @@ struct HostedWindowKeysTests {
 
 /// A field's editor while an input method composes in it (marked text), as
 /// `hasMarkedText` tells, with no input method or field needed.
-private final class ComposingEditor: NSTextView {
+final class ComposingEditor: NSTextView {
     var composing = true
     override func hasMarkedText() -> Bool { composing }
 }

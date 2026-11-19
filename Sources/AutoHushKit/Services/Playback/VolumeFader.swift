@@ -57,6 +57,14 @@ package actor VolumeFader {
     /// which pauses where it got to.
     private var fadingOut: Int?
     private var cutShort: Int?
+    /// A fade-out `cancel()` called off that `stopComeback()` reached before
+    /// its comeback started: it doesn't come back up (engine-3 of 11-19).
+    private var staysDown: Int?
+    /// A fade-out called off whose music didn't come back up (it stayed
+    /// down, or its comeback was stopped): set back by
+    /// `restoreIfLeftDown()` unless a newer fade took the volume over
+    /// (R1 of 11-19's diff review).
+    private var leftDown: Int?
     /// The fade-out whose pause was refused, its volume left down until
     /// `restoreAfterRefusal`.
     private var refusedFade: Int?
@@ -119,6 +127,13 @@ package actor VolumeFader {
         if isCutShort { cutShort = nil }
         guard faded || isCutShort else {
             guard !isAbandoned else { return false } // `abandon()` set the volume back
+            // An app started before it came back up: the next fade-out
+            // starts from where it got to.
+            if staysDown == fade {
+                staysDown = nil
+                leftDown = fade
+                return false
+            }
             // Cancelled: bring the music back up from wherever the fade got to.
             // It comes back from before the volume is read, so an app that
             // starts meanwhile stops it (`stopComeback()`) there already.
@@ -127,9 +142,14 @@ package actor VolumeFader {
             comingBack = comeback
             defer { if comingBack == comeback { comingBack = nil } }
             let reached = level(of: await player.volume() ?? 0, floor: bottom)
-            guard generation == comeback else { return false }
+            guard generation == comeback else {
+                leftDown = fade // stopped while the volume was read
+                return false
+            }
             if await ramp(from: reached, to: top, fullTime: fadeIn, fade: comeback) {
                 userVolume = nil
+            } else {
+                leftDown = fade // stopped on its way up
             }
             return false
         }
@@ -192,15 +212,36 @@ package actor VolumeFader {
     /// without fading further (the output went away, and the rest would
     /// play on the next one); one still reading the volume pauses without
     /// fading at all. Nothing while none is. `false` when the
-    /// fade-out was called off and the music is coming back up instead: no
-    /// pause comes of it, so it's the caller's to pause.
+    /// fade-out was called off, the music coming back up instead or about
+    /// to (diff-kit-2 of 11-19): no pause comes of it, so it's the caller's
+    /// to pause.
     @discardableResult
     func cutFadeOutShort() -> Bool {
         guard comingBack == nil else { return false }
-        guard let fadingOut, fadingOut == generation else { return true }
+        guard let fadingOut else { return true }
+        // Cut short already, it pauses; called off, it won't.
+        guard fadingOut == generation else { return cutShort == fadingOut }
         cutShort = fadingOut
         generation += 1
         return true
+    }
+
+    /// Sets the user's volume back after a fade-out called off that didn't
+    /// come back up (`fadeOutAndPause` returned `false` with an app started
+    /// meanwhile), once the pause meant to follow it is over: unless that
+    /// pause, or any newer fade, took the volume over. Nothing otherwise.
+    func restoreIfLeftDown() async {
+        guard let fade = leftDown else { return }
+        leftDown = nil
+        if latestFade == fade { await restoreUserVolume() }
+    }
+
+    /// Pauses at once, without a fade or a volume to set back, checked to
+    /// have taken (`PressCheck`): a player muted in place of the pause,
+    /// paused for real before its mute is lifted. `uncovered`: no mute will
+    /// stand in for it (`pauseUncovered`).
+    func pressPause(uncovered: Bool) async throws {
+        try await (uncovered ? uncoveredPresses : presses).press(to: .paused)
     }
 
     /// Plays from near silence, then fades the music in to the user's volume.
@@ -242,12 +283,18 @@ package actor VolumeFader {
     /// there, it would stay partly faded.
     func cancel() {
         if let comingBack, comingBack == generation { return }
+        staysDown = nil // called off again: it comes back up after all
         generation += 1
     }
 
     /// Stops a cancelled fade-out from coming back up, so a new fade-out can
-    /// start from where it is. Does nothing otherwise.
+    /// start from where it is, also one called off that hasn't started
+    /// coming back yet. Does nothing otherwise.
     func stopComeback() {
+        if comingBack == nil, let fadingOut, fadingOut != generation, cutShort != fadingOut {
+            staysDown = fadingOut
+            return
+        }
         guard comingBack != nil else { return }
         comingBack = nil
         generation += 1
@@ -263,6 +310,7 @@ package actor VolumeFader {
 
     /// Starts a new fade, stopping the one in progress; returns its generation.
     private func startFade() -> Int {
+        leftDown = nil // the new fade owns the volume
         generation += 1
         latestFade = generation
         return generation

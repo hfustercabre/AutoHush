@@ -122,7 +122,9 @@ final class SettingsKeys {
         case .returnKey, .space:
             if side == .sidebar, sidebar.highlighted != nil {
                 if sidebar.highlightedIsShown {
-                    page.move(1) // into the page: its first control
+                    // Into the page: its first control, not on from one a click
+                    // gave the focus (`move` goes on from it; app-models-5).
+                    page.jump(.first)
                 } else {
                     sidebar.press() // the foot's link, or the page of a row Tab stopped on
                 }
@@ -150,7 +152,7 @@ final class SettingsKeys {
                         showsFirstOfNextPage()
                         sidebar.press()
                     } else {
-                        page.move(1)
+                        page.jump(.first) // its first control, as Return
                     }
                 } else {
                     // Along a row of several (tiles); else it changes nothing.

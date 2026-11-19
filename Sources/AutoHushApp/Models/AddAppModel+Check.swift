@@ -45,7 +45,8 @@ extension AddAppModel {
         stage = .checking
         Task { [weak self] in
             if let ending = self?.endingRun { _ = await ending.waitForEnd() }
-            guard let self, self.stage == .checking, self.windowIsOpen, self.run == nil else { return }
+            // Stopped and started again meanwhile, on another app: that Start checks it.
+            guard let self, self.stage == .checking, self.windowIsOpen, self.run == nil, self.chosen == app else { return }
             guard let run = self.helper?.startCheck(app, taps: !self.antiDot, onLine: { [weak self] line in self?.progress.add(line) }) else {
                 self.stage = .failed
                 self.failureReason = .other
