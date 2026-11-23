@@ -5,6 +5,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Level the volume** never turns the Mac's volume up: on headphones that
+  report their volume wrongly (Sony WF-1000XM6, for one) it raised it
+  instead of lowering it.
+
 ## [1.4.4] — 2026-11-19
 
 ### Fixed

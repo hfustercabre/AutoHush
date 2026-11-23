@@ -58,11 +58,31 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
                 logger.info("[level] the output has no volume control: the music resumes as it was")
                 return
             }
-            let target = current.decibels.mapValues { max(current.lowest, $0 + decibels) }
-            volume.setDecibels(target, of: device)
+            // Each control lowered on the output's own scale, and only ever
+            // lowered: a target the output translates to more than it has
+            // now is left out, whatever it reports (the user, 2026-11-23:
+            // "it should never increase the volume, just decrease it").
+            var targets: [AudioObjectPropertyElement: Float] = [:]
+            var translates = false
+            for (element, now) in current.scalars {
+                guard let level = volume.decibels(forScalar: now, element: element, of: device),
+                      let target = volume.scalar(forDecibels: max(current.lowest, level + decibels), element: element, of: device)
+                else { continue }
+                translates = true
+                if target < now { targets[element] = max(0, target) }
+            }
+            guard !targets.isEmpty else {
+                logger.info(translates
+                    ? "[level] the output’s volume can’t be lowered from where it is: the music resumes as it was"
+                    : "[level] the output doesn’t translate its volume to decibels: the music resumes as it was")
+                return
+            }
+            volume.setScalars(targets, of: device)
             lowered = true
             count += 1
-            logger.notice("[level] the Mac’s volume lowered \(String(format: "%.1f", decibels), privacy: .public) dB for the music, and left so")
+            let before = current.scalars.values.max() ?? 0
+            let after = current.scalars.merging(targets) { $1 }.values.max() ?? 0
+            logger.notice("[level] the Mac’s volume lowered \(String(format: "%.1f", decibels), privacy: .public) dB for the music (\(Int((before * 100).rounded()), privacy: .public) % → \(Int((after * 100).rounded()), privacy: .public) %), and left so")
         }
     }
 

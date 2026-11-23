@@ -63,6 +63,25 @@ final class SystemVolumeLevelerTests {
         #expect(controlled.decibels == [0: -13])
     }
 
+    @Test("an output whose own scale would put the volume up (it reports its level wrongly) is never raised: left as it is, not counted as lowered (the user, 2026-11-23)")
+    func neverRaises() {
+        let volume = MockSystemVolume([0: -25.6], lowest: -40) // 36 %
+        volume.translatesToScalar = { _ in 0.78 } // as 0 dB lowered 8.7 dB came out
+        let leveler = leveler(volume)
+        leveler.lower(by: -8.7)
+        #expect(volume.sets.isEmpty)
+        #expect(volume.decibels == [0: -25.6])
+        #expect(leveler.lowerings == 0)
+    }
+
+    @Test("lowered on the output's own scale: 36 % (-25.6 dB of -40) lowered 8.7 dB is about 14 %, never more than it was")
+    func lowersOnItsOwnScale() {
+        let volume = MockSystemVolume([1: -25.6, 2: -25.6], lowest: -40)
+        leveler(volume).lower(by: -8.7)
+        #expect(volume.decibels == [1: -34.3, 2: -34.3])
+        #expect(volume.sets.count == 1)
+    }
+
     @Test("at launch, what an older version kept to put the volume back is forgotten, and the volume left as it is")
     func forgetsOlderRecord() {
         let volume = MockSystemVolume([0: -16])
