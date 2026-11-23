@@ -89,9 +89,13 @@ package final class MockSystemVolume: SystemVolumeControlling, @unchecked Sendab
         }
     }
 
+    /// Replaces its dB reading (one outside its range, say).
+    package var decibelsReadAs: (@Sendable (Float) -> Float)?
+
     package func decibels(of element: AudioObjectPropertyElement, of device: AudioObjectID) -> Float? {
         guard device == 42, readsDecibels else { return nil }
-        return lock.withLock { _scalars?[element] }.map { lowest * (1 - $0) }
+        let reading = decibelsReadAs
+        return lock.withLock { _scalars?[element] }.map { reading?($0) ?? lowest * (1 - $0) }
     }
 
     @discardableResult

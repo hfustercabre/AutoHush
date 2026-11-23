@@ -11,11 +11,13 @@ import Foundation
 package protocol ResumeLeveling: AnyObject, Sendable {
     /// Just before the music resumes: lowers the volume by `decibels`
     /// (below 0), nothing playing yet, so it isn't heard, unless it was
-    /// lowered already since the music last paused (a try again, or another
-    /// monitoring resuming for the same quiet). Nothing happens with no
-    /// volume control, or for 0 dB.
+    /// lowered already since the music last paused, or tried on an output
+    /// whose volume then went up or too far and was put back (a try again,
+    /// or another monitoring resuming for the same quiet). Nothing happens
+    /// with no volume control, or for 0 dB.
     func lower(by decibels: Float)
-    /// How many times it has lowered the volume: read as a pause begins,
+    /// How many times it has lowered the volume, or tried and put it back
+    /// (above): read as a pause begins,
     /// for `musicPaused(since:)` as it ends.
     var lowerings: Int { get }
     /// The music paused (or was muted in its place), by any monitoring: its
@@ -38,8 +40,8 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
 
     private let volume: any SystemVolumeControlling
     private let defaults: UserDefaults
-    /// Lowered since the music last paused (`musicPaused`): a lowering asked
-    /// for meanwhile is taken as done.
+    /// Lowered (or tried and put back) since the music last paused
+    /// (`musicPaused`): a lowering asked for meanwhile is taken as done.
     private var lowered = false
     private var count = 0
     /// One lowering at a time: two monitorings never read and set it at once.
@@ -117,7 +119,9 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
                                  scalars: [AudioObjectPropertyElement: Float]) {
         var targets: [AudioObjectPropertyElement: Float] = [:]
         for element in scalars.keys {
-            guard let level = volume.decibels(of: element, of: device) else {
+            // A reading outside its own range isn't one (C-3 of 1.4.6's review).
+            guard let level = volume.decibels(of: element, of: device),
+                  level >= current.lowest - 0.5, level <= max(current.lowest, current.highest) + 0.5 else {
                 logger.info("[level] the output has no decibels to lower its volume by: the music resumes as it was")
                 return
             }
@@ -131,19 +135,35 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
             logger.info("[level] the output didn’t take the lowered volume: the music resumes as it was")
             return
         }
-        // Read back: never higher, and no further down than that many dB
-        // could take an amplitude (`10^(dB/20)`, a little room for its
-        // steps), so a reading that's too low can't take it past "Lower by
-        // at most" (F1 of the fallback's review).
+        // Read back: never higher, and down no more than twice that many dB
+        // would be on a scale straight across its range (both routing
+        // devices measured are about straight: one's -6 dB of 96 took 50 %
+        // to 41.7 %, the other's of 64 took 50 % to 40.6 %),
+        // so a reading that's too low can't take it far past "Lower by at
+        // most" (F1 of the fallback's review, C-1 of 1.4.6's).
         let after = (volume.volume(of: device)?.scalars ?? [:]).filter { scalars[$0.key] != nil }
-        let floor = Float(pow(10, Double(decibels) / 20))
+        let span = max(1, max(current.lowest, current.highest) - current.lowest)
+        // Never more than half its scale, whatever its range says (a range
+        // that's broken or narrow; L1 of 1.4.6's fixes' review).
+        let room = min(0.5, 2 * -decibels / span + Self.scaleTolerance)
         let raised = scalars.contains { element, before in (after[element] ?? before) > before + 0.001 }
-        let tooFar = scalars.contains { element, before in (after[element] ?? before) < before * floor - Self.scaleTolerance }
+        let tooFar = scalars.contains { element, before in (after[element] ?? before) < before - room }
         let lowered = scalars.contains { element, before in (after[element] ?? before) < before - 0.001 }
         guard !raised, !tooFar, lowered else {
-            let putBack = volume.setScalars(scalars, of: device)
+            volume.setScalars(scalars, of: device)
+            // Read back too (C-4 of 1.4.6's review).
+            // A control that can't be read again isn't known to be back (L3).
+            let now = volume.volume(of: device)?.scalars ?? [:]
+            let putBack = scalars.allSatisfy { element, before in now[element].map { abs($0 - before) <= 0.001 } ?? false }
             let what = raised ? "went up" : tooFar ? "went down too far" : "didn’t go down"
             logger.info("[level] the output’s volume \(what, privacy: .public) when lowered by its decibels: \(putBack ? "put back" : "couldn’t be put back", privacy: .public), the music resumes as it was")
+            // Not tried again for this pause (another resume for the same
+            // quiet may come once the music plays): its dB reading isn't
+            // to be trusted (C-2 of 1.4.6's review).
+            if raised || tooFar {
+                self.lowered = true
+                count += 1
+            }
             return
         }
         self.lowered = true

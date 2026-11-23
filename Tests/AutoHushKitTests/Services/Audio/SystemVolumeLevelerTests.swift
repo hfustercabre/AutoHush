@@ -138,26 +138,64 @@ final class SystemVolumeLevelerTests {
         #expect(volume.decibels == [0: -46] && leveler.lowerings == 1)
     }
 
-    @Test("lowered through a dB reading that turns out wrong (its volume went up), the volume is put back and not counted: never raised")
+    @Test("lowered through a dB reading that turns out wrong (its volume went up), the volume is put back, and not tried again for that pause: never raised (C-2 of 1.4.6's review)")
     func decibelsThatRaiseArePutBack() {
         let volume = MockSystemVolume([0: -25.6], lowest: -40) // 36 %
         volume.translates = false
         volume.decibelsSetTo = { _ in 0.78 } // as the Sony's 0 dB reading did
         let leveler = leveler(volume)
         leveler.lower(by: -8.7)
-        #expect(volume.decibels == [0: -25.6] && leveler.lowerings == 0)
+        #expect(volume.decibels == [0: -25.6])
+        let sets = volume.sets.count
+        leveler.lower(by: -8.7) // a resume tried again, or another monitoring's for the same quiet
+        #expect(volume.sets.count == sets && volume.decibels == [0: -25.6])
     }
 
-    @Test("lowered through its decibels, a volume that didn't go down, or fell further than that many dB could take it (a reading too low), is put back and not counted; a refused dB set isn't counted either")
+    @Test("a dB reading outside the output's own range isn't one, above or below it: nothing set (C-3 of 1.4.6's review)",
+          arguments: [Float(12), -120])
+    func decibelsOutsideRange(reading: Float) {
+        let volume = MockSystemVolume([0: -40], lowest: -96)
+        volume.translates = false
+        volume.decibelsReadAs = { _ in reading }
+        let leveler = leveler(volume)
+        leveler.lower(by: -6)
+        #expect(volume.sets.isEmpty && leveler.lowerings == 0)
+    }
+
+    @Test("a try put back for going up isn't made again that pause, and is at the next (L4 of 1.4.6's fixes' review)")
+    func putBackTryAgainAtNextPause() {
+        let volume = MockSystemVolume([0: -25.6], lowest: -40)
+        volume.translates = false
+        volume.decibelsSetTo = { _ in 0.78 }
+        let leveler = leveler(volume)
+        leveler.lower(by: -8.7)
+        #expect(leveler.lowerings == 1)
+        let sets = volume.sets.count
+        leveler.musicPaused(since: leveler.lowerings) // the next pause
+        volume.decibelsSetTo = nil // read right now
+        leveler.lower(by: -8.7)
+        #expect(volume.sets.count > sets && volume.decibels == [0: -34.3])
+    }
+
+    @Test("an output with gain above 0 dB and no translation is lowered through its dB reading, its range's top counted in the bound")
+    func decibelsWithGain() {
+        let volume = MockSystemVolume([0: -40], lowest: -96, highest: 12)
+        volume.translates = false
+        leveler(volume).lower(by: -6)
+        #expect(volume.decibels == [0: -46])
+    }
+
+    @Test("lowered through its decibels, a volume that didn't go down, or went further down than its range allows (a reading too low), is put back; one too far isn't tried again that pause, one unchanged or refused may be")
     func decibelsReadBackChecks() {
-        for (setTo, refused) in [(Float(1) - 40 / 96, false), (Float(0.05), false), (Float(0.4), true)] {
+        // Unchanged; 5 % for -6 dB (past twice 6 dB straight across 96); refused.
+        for (setTo, refused, tries) in [(Float(1) - 40 / 96, false, 0), (Float(0.05), false, 1), (Float(0.4), true, 0)] {
             let volume = MockSystemVolume([0: -40], lowest: -96) // 58 %
             volume.translates = false
-            volume.decibelsSetTo = { _ in setTo } // unchanged; 5 % for -6 dB; or refused
+            volume.decibelsSetTo = { _ in setTo }
             volume.takesDecibelSets = !refused
             let leveler = leveler(volume)
             leveler.lower(by: -6)
-            #expect(volume.decibels == [0: -40] && leveler.lowerings == 0)
+            #expect(volume.decibels == [0: -40] && leveler.lowerings == tries)
         }
     }
 
