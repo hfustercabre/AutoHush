@@ -18,11 +18,24 @@ package final class MockSystemVolume: SystemVolumeControlling, @unchecked Sendab
     private var _scalars: [AudioObjectPropertyElement: Float]?
     private var _sets: [[AudioObjectPropertyElement: Float]] = []
     package let lowest: Float
-    package var translatesToScalar: (@Sendable (Float) -> Float)?
+    /// The top of its dB range: above 0 for an output with gain.
+    package let highest: Float
+    package var translatesToScalar: (@Sendable (Float) -> Float)? {
+        get { lock.withLock { _translates } }
+        set { lock.withLock { _translates = newValue } }
+    }
+    private var _translates: (@Sendable (Float) -> Float)?
 
-    package init(_ decibels: [AudioObjectPropertyElement: Float]?, lowest: Float = -60) {
+    package init(_ decibels: [AudioObjectPropertyElement: Float]?, lowest: Float = -60, highest: Float = 0) {
         self.lowest = lowest
+        self.highest = highest
         _scalars = decibels.map { $0.mapValues { 1 - $0 / lowest } }
+    }
+
+    /// The volume on the keys' scale, as set or read (a broken value too).
+    package var scalars: [AudioObjectPropertyElement: Float]? {
+        get { lock.withLock { _scalars } }
+        set { lock.withLock { _scalars = newValue } }
     }
 
     /// The volume in dB, to 0.01 dB.
@@ -42,11 +55,7 @@ package final class MockSystemVolume: SystemVolumeControlling, @unchecked Sendab
 
     package func volume(of device: AudioObjectID) -> SystemVolume? {
         guard device == 42 else { return nil }
-        return lock.withLock { _scalars }.map { SystemVolume(scalars: $0, lowest: lowest) }
-    }
-
-    package func decibels(forScalar scalar: Float, element: AudioObjectPropertyElement, of device: AudioObjectID) -> Float? {
-        device == 42 ? lowest * (1 - scalar) : nil
+        return lock.withLock { _scalars }.map { SystemVolume(scalars: $0, lowest: lowest, highest: highest) }
     }
 
     package func scalar(forDecibels decibels: Float, element: AudioObjectPropertyElement, of device: AudioObjectID) -> Float? {
@@ -54,10 +63,17 @@ package final class MockSystemVolume: SystemVolumeControlling, @unchecked Sendab
         return translatesToScalar?(decibels) ?? 1 - decibels / lowest
     }
 
-    package func setScalars(_ scalars: [AudioObjectPropertyElement: Float], of device: AudioObjectID) {
+    /// Whether it takes a volume set (`false`: refused, as a device can).
+    package var takesSets = true
+
+    @discardableResult
+    package func setScalars(_ scalars: [AudioObjectPropertyElement: Float], of device: AudioObjectID) -> Bool {
         lock.withLock {
-            _scalars = scalars
+            guard takesSets else { return false }
+            // Only those given, as Core Audio sets them (S-3 of 1.4.5's review).
+            _scalars = (_scalars ?? [:]).merging(scalars) { $1 }
             _sets.append(scalars)
+            return true
         }
     }
 }

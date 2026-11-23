@@ -82,6 +82,65 @@ final class SystemVolumeLevelerTests {
         #expect(volume.sets.count == 1)
     }
 
+    @Test("lowered on the output's dB-to-volume translation, found again there: a MacBook Pro's speakers (a curve; their volume-to-dB line disagrees) at 60 % lowered 3.3 dB land at about 52 %, not 30 % (C-1 of 1.4.5's review)")
+    func lowersOnItsVolumeCurve() throws {
+        let volume = MockSystemVolume(nil, lowest: -63.5)
+        volume.scalars = [0: 0.6]
+        volume.translatesToScalar = { decibels in let x = (decibels + 63.5) / 63.5; return x * x } // as measured, 2026-11-23
+        leveler(volume).lower(by: -3.3)
+        let after = try #require(volume.scalars?[0])
+        #expect(abs(after - 0.522) < 0.005)
+    }
+
+    @Test("a scale on which the volume isn't found again (it doesn't hold) lowers nothing, so a wrong scale can't take it further down either")
+    func untrustedScaleLowersNothing() {
+        let volume = MockSystemVolume([0: -20], lowest: -40) // 50 %
+        volume.translatesToScalar = { _ in 0.2 } // every level is 20 %
+        let leveler = leveler(volume)
+        leveler.lower(by: -6)
+        #expect(volume.sets.isEmpty && leveler.lowerings == 0)
+    }
+
+    @Test("a volume that's no number between 0 and 1 (a broken driver's) is left out, with no crash; the other channel is lowered (X-1 of 1.4.5's review)")
+    func brokenValueLeftOut() throws {
+        let volume = MockSystemVolume(nil, lowest: -40)
+        volume.scalars = [1: .nan, 2: 0.5]
+        leveler(volume).lower(by: -4)
+        #expect(volume.sets.count == 1 && volume.sets[0].keys.sorted() == [2])
+        #expect(try abs(#require(volume.scalars?[2]) - 0.4) < 0.001)
+    }
+
+    @Test("a volume at the bottom of a curve that doesn't reach 0 (its lowest level is 1 %) isn't raised to it: nothing set, not counted (R2 of 1.4.5's fixes' review)")
+    func bottomNeverRaised() {
+        let volume = MockSystemVolume(nil, lowest: -40)
+        volume.scalars = [0: 0]
+        volume.translatesToScalar = { max(0.01, 1 + $0 / 40) }
+        let leveler = leveler(volume)
+        leveler.lower(by: -6)
+        #expect(volume.sets.isEmpty && leveler.lowerings == 0)
+    }
+
+    @Test("an output with gain above 0 dB, at 100 %, is found at its top and lowered from there (R3 of 1.4.5's fixes' review)")
+    func gainAboveZero() throws {
+        let volume = MockSystemVolume(nil, lowest: -48, highest: 12)
+        volume.scalars = [0: 1]
+        volume.translatesToScalar = { ($0 + 48) / 60 }
+        leveler(volume).lower(by: -6)
+        #expect(try abs(#require(volume.scalars?[0]) - 0.9) < 0.001)
+    }
+
+    @Test("a lowering the output refuses isn't counted: the next resume of the pause may lower it (C-5 of 1.4.5's review)")
+    func refusedNotCounted() {
+        let volume = MockSystemVolume([0: -10])
+        volume.takesSets = false
+        let leveler = leveler(volume)
+        leveler.lower(by: -6)
+        #expect(leveler.lowerings == 0)
+        volume.takesSets = true
+        leveler.lower(by: -6)
+        #expect(volume.decibels == [0: -16] && leveler.lowerings == 1)
+    }
+
     @Test("at launch, what an older version kept to put the volume back is forgotten, and the volume left as it is")
     func forgetsOlderRecord() {
         let volume = MockSystemVolume([0: -16])

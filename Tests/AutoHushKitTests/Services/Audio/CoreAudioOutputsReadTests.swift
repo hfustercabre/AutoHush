@@ -21,7 +21,7 @@ struct CoreAudioOutputsReadTests {
         #expect(outputs.device(withUID: "AutoHush.NoSuchOutput.\(UUID().uuidString)") == nil)
     }
 
-    @Test("the output's volume, read on the volume keys' scale, goes to decibels and back as it was (its own translation; read only)",
+    @Test("the output's volume, read on the volume keys' scale, is found again on its own dB-to-volume translation (read only)",
           .enabled(if: CoreAudioSystemVolume().defaultOutput().flatMap { CoreAudioSystemVolume().volume(of: $0) } != nil,
                    "no output with a volume control here"))
     func volumeTranslatesBack() throws {
@@ -30,10 +30,8 @@ struct CoreAudioOutputsReadTests {
         let current = try #require(volume.volume(of: device))
         for (element, scalar) in current.scalars {
             #expect((0...1).contains(scalar))
-            let decibels = try #require(volume.decibels(forScalar: scalar, element: element, of: device))
-            #expect(decibels <= 0 && decibels >= current.lowest - 0.01)
-            let back = try #require(volume.scalar(forDecibels: decibels, element: element, of: device))
-            #expect(abs(back - scalar) < 0.01)
+            let decibels = try #require(volume.decibels(at: scalar, element: element, of: device, in: current))
+            #expect(decibels >= current.lowest - 0.01 && decibels <= current.highest + 0.01)
         }
     }
 
