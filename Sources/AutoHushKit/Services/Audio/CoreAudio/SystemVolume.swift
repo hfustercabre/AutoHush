@@ -23,6 +23,14 @@ package protocol SystemVolumeControlling: OutputDevices {
     /// partly taken counts as made: R1 of 1.4.5's fixes' review).
     @discardableResult
     func setScalars(_ scalars: [AudioObjectPropertyElement: Float], of device: AudioObjectID) -> Bool
+    /// The output's own dB reading of a control, and setting one in dB:
+    /// only for an output with no translation (audio routing apps' virtual
+    /// devices, two measured 2026-11-23: a dB reading, no translation), and
+    /// checked on the keys' scale after (a dB reading can be wrong, as the
+    /// Sony's).
+    func decibels(of element: AudioObjectPropertyElement, of device: AudioObjectID) -> Float?
+    @discardableResult
+    func setDecibels(_ decibels: [AudioObjectPropertyElement: Float], of device: AudioObjectID) -> Bool
 }
 
 package struct SystemVolume: Equatable, Sendable {
@@ -84,6 +92,21 @@ package struct CoreAudioSystemVolume: SystemVolumeControlling {
     package func scalar(forDecibels decibels: Float, element: AudioObjectPropertyElement, of device: AudioObjectID) -> Float? {
         CoreAudioProperty.value(kAudioDevicePropertyVolumeDecibelsToScalar, of: device, scope: kAudioDevicePropertyScopeOutput,
                                 element: element, initial: Float32(decibels)).flatMap { $0.isFinite ? $0 : nil }
+    }
+
+    package func decibels(of element: AudioObjectPropertyElement, of device: AudioObjectID) -> Float? {
+        CoreAudioProperty.value(kAudioDevicePropertyVolumeDecibels, of: device, scope: kAudioDevicePropertyScopeOutput,
+                                element: element, initial: Float32(0)).flatMap { $0.isFinite ? $0 : nil }
+    }
+
+    @discardableResult
+    package func setDecibels(_ decibels: [AudioObjectPropertyElement: Float], of device: AudioObjectID) -> Bool {
+        var tookAny = false
+        for (element, value) in decibels {
+            tookAny = CoreAudioProperty.set(kAudioDevicePropertyVolumeDecibels, of: device, scope: kAudioDevicePropertyScopeOutput,
+                                            element: element, to: Float32(value)) || tookAny
+        }
+        return tookAny
     }
 
     @discardableResult

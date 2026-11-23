@@ -72,6 +72,12 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
                 logger.info("[level] the output’s volume reads as no volume: the music resumes as it was")
                 return
             }
+            // No translation at all (a routing app's virtual device): through its
+            // own dB reading instead, checked after (`lowerByDecibels`).
+            if scalars.keys.allSatisfy({ volume.scalar(forDecibels: current.lowest, element: $0, of: device) == nil }) {
+                lowerByDecibels(decibels, device: device, current: current, scalars: scalars)
+                return
+            }
             var targets: [AudioObjectPropertyElement: Float] = [:]
             for (element, now) in scalars {
                 guard let level = volume.decibels(at: now, element: element, of: device, in: current, tolerance: Self.scaleTolerance),
@@ -99,6 +105,50 @@ package final class SystemVolumeLeveler: ResumeLeveling, @unchecked Sendable {
             let after = scalars.merging(targets) { $1 }.values.max() ?? 0
             logger.notice("[level] the Mac’s volume lowered \(String(format: "%.1f", decibels), privacy: .public) dB for the music (\(Self.percent(before), privacy: .public) % → \(Self.percent(after), privacy: .public) %), and left so")
         }
+    }
+
+    /// For an output with no translation between its volume and decibels:
+    /// each control set `decibels` lower through its own dB reading, then
+    /// read back on the keys' scale. Any that went up puts every one back
+    /// as it was (nothing plays yet, so nothing is heard): a dB reading can
+    /// be wrong, and the volume is never raised (the user, 2026-11-23).
+    /// Under `lock`.
+    private func lowerByDecibels(_ decibels: Float, device: AudioObjectID, current: SystemVolume,
+                                 scalars: [AudioObjectPropertyElement: Float]) {
+        var targets: [AudioObjectPropertyElement: Float] = [:]
+        for element in scalars.keys {
+            guard let level = volume.decibels(of: element, of: device) else {
+                logger.info("[level] the output has no decibels to lower its volume by: the music resumes as it was")
+                return
+            }
+            if level > current.lowest { targets[element] = max(current.lowest, level + decibels) }
+        }
+        guard !targets.isEmpty else {
+            logger.info("[level] the output’s volume can’t be lowered from where it is: the music resumes as it was")
+            return
+        }
+        guard volume.setDecibels(targets, of: device) else {
+            logger.info("[level] the output didn’t take the lowered volume: the music resumes as it was")
+            return
+        }
+        // Read back: never higher, and no further down than that many dB
+        // could take an amplitude (`10^(dB/20)`, a little room for its
+        // steps), so a reading that's too low can't take it past "Lower by
+        // at most" (F1 of the fallback's review).
+        let after = (volume.volume(of: device)?.scalars ?? [:]).filter { scalars[$0.key] != nil }
+        let floor = Float(pow(10, Double(decibels) / 20))
+        let raised = scalars.contains { element, before in (after[element] ?? before) > before + 0.001 }
+        let tooFar = scalars.contains { element, before in (after[element] ?? before) < before * floor - Self.scaleTolerance }
+        let lowered = scalars.contains { element, before in (after[element] ?? before) < before - 0.001 }
+        guard !raised, !tooFar, lowered else {
+            let putBack = volume.setScalars(scalars, of: device)
+            let what = raised ? "went up" : tooFar ? "went down too far" : "didn’t go down"
+            logger.info("[level] the output’s volume \(what, privacy: .public) when lowered by its decibels: \(putBack ? "put back" : "couldn’t be put back", privacy: .public), the music resumes as it was")
+            return
+        }
+        self.lowered = true
+        count += 1
+        logger.notice("[level] the Mac’s volume lowered \(String(format: "%.1f", decibels), privacy: .public) dB for the music, by its decibels (\(Self.percent(scalars.values.max() ?? 0), privacy: .public) % → \(Self.percent(after.values.max() ?? 0), privacy: .public) %), and left so")
     }
 
     /// How far a volume taken to decibels and back may land from where it

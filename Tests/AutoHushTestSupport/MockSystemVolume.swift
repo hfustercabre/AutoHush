@@ -59,12 +59,24 @@ package final class MockSystemVolume: SystemVolumeControlling, @unchecked Sendab
     }
 
     package func scalar(forDecibels decibels: Float, element: AudioObjectPropertyElement, of device: AudioObjectID) -> Float? {
-        guard device == 42 else { return nil }
+        guard device == 42, translates else { return nil }
         return translatesToScalar?(decibels) ?? 1 - decibels / lowest
     }
 
     /// Whether it takes a volume set (`false`: refused, as a device can).
     package var takesSets = true
+    /// No translation between its volume and dB (Background Music's
+    /// device); its dB reading then, by its linear mapping, unless
+    /// `decibelsSetTo` says what a dB set does to its volume.
+    package var translates = true
+    package var readsDecibels = true
+    /// Whether it takes a volume set in dB (`false`: refused).
+    package var takesDecibelSets = true
+    package var decibelsSetTo: (@Sendable (Float) -> Float)? {
+        get { lock.withLock { _decibelsSetTo } }
+        set { lock.withLock { _decibelsSetTo = newValue } }
+    }
+    private var _decibelsSetTo: (@Sendable (Float) -> Float)?
 
     @discardableResult
     package func setScalars(_ scalars: [AudioObjectPropertyElement: Float], of device: AudioObjectID) -> Bool {
@@ -75,5 +87,20 @@ package final class MockSystemVolume: SystemVolumeControlling, @unchecked Sendab
             _sets.append(scalars)
             return true
         }
+    }
+
+    package func decibels(of element: AudioObjectPropertyElement, of device: AudioObjectID) -> Float? {
+        guard device == 42, readsDecibels else { return nil }
+        return lock.withLock { _scalars?[element] }.map { lowest * (1 - $0) }
+    }
+
+    @discardableResult
+    package func setDecibels(_ decibels: [AudioObjectPropertyElement: Float], of device: AudioObjectID) -> Bool {
+        guard takesDecibelSets else { return false }
+        let scalars = lock.withLock { () -> [AudioObjectPropertyElement: Float] in
+            let map = _decibelsSetTo
+            return decibels.mapValues { map?($0) ?? 1 - $0 / lowest }
+        }
+        return setScalars(scalars, of: device)
     }
 }

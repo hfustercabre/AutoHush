@@ -129,6 +129,48 @@ final class SystemVolumeLevelerTests {
         #expect(try abs(#require(volume.scalars?[0]) - 0.9) < 0.001)
     }
 
+    @Test("an output with no translation but a dB reading (Background Music's device) is lowered through its decibels, checked on its volume after")
+    func lowersByDecibelsWithoutTranslation() {
+        let volume = MockSystemVolume([0: -40], lowest: -96) // 58 %
+        volume.translates = false
+        let leveler = leveler(volume)
+        leveler.lower(by: -6)
+        #expect(volume.decibels == [0: -46] && leveler.lowerings == 1)
+    }
+
+    @Test("lowered through a dB reading that turns out wrong (its volume went up), the volume is put back and not counted: never raised")
+    func decibelsThatRaiseArePutBack() {
+        let volume = MockSystemVolume([0: -25.6], lowest: -40) // 36 %
+        volume.translates = false
+        volume.decibelsSetTo = { _ in 0.78 } // as the Sony's 0 dB reading did
+        let leveler = leveler(volume)
+        leveler.lower(by: -8.7)
+        #expect(volume.decibels == [0: -25.6] && leveler.lowerings == 0)
+    }
+
+    @Test("lowered through its decibels, a volume that didn't go down, or fell further than that many dB could take it (a reading too low), is put back and not counted; a refused dB set isn't counted either")
+    func decibelsReadBackChecks() {
+        for (setTo, refused) in [(Float(1) - 40 / 96, false), (Float(0.05), false), (Float(0.4), true)] {
+            let volume = MockSystemVolume([0: -40], lowest: -96) // 58 %
+            volume.translates = false
+            volume.decibelsSetTo = { _ in setTo } // unchanged; 5 % for -6 dB; or refused
+            volume.takesDecibelSets = !refused
+            let leveler = leveler(volume)
+            leveler.lower(by: -6)
+            #expect(volume.decibels == [0: -40] && leveler.lowerings == 0)
+        }
+    }
+
+    @Test("an output with neither a translation nor a dB reading is left alone")
+    func noTranslationNoDecibels() {
+        let volume = MockSystemVolume([0: -10], lowest: -64)
+        volume.translates = false
+        volume.readsDecibels = false
+        let leveler = leveler(volume)
+        leveler.lower(by: -6)
+        #expect(volume.sets.isEmpty && leveler.lowerings == 0)
+    }
+
     @Test("a lowering the output refuses isn't counted: the next resume of the pause may lower it (C-5 of 1.4.5's review)")
     func refusedNotCounted() {
         let volume = MockSystemVolume([0: -10])

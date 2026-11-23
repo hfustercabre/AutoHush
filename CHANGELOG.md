@@ -5,6 +5,13 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Level the volume** lowers the volume again on outputs that report only
+  decibels, such as Background Music's and BlackHole's.
+
 ## [1.4.5] — 2026-11-23
 
 ### Fixed
