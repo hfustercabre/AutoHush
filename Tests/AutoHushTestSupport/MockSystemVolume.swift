@@ -65,7 +65,7 @@ package final class MockSystemVolume: SystemVolumeControlling, @unchecked Sendab
 
     /// Whether it takes a volume set (`false`: refused, as a device can).
     package var takesSets = true
-    /// No translation between its volume and dB (Background Music's
+    /// No translation between its volume and dB (a routing app's virtual
     /// device); its dB reading then, by its linear mapping, unless
     /// `decibelsSetTo` says what a dB set does to its volume.
     package var translates = true

@@ -129,7 +129,7 @@ final class SystemVolumeLevelerTests {
         #expect(try abs(#require(volume.scalars?[0]) - 0.9) < 0.001)
     }
 
-    @Test("an output with no translation but a dB reading (Background Music's device) is lowered through its decibels, checked on its volume after")
+    @Test("an output with no translation but a dB reading (a routing app's virtual device) is lowered through its decibels, checked on its volume after")
     func lowersByDecibelsWithoutTranslation() {
         let volume = MockSystemVolume([0: -40], lowest: -96) // 58 %
         volume.translates = false
