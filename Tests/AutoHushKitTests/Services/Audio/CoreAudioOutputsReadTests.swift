@@ -21,17 +21,26 @@ struct CoreAudioOutputsReadTests {
         #expect(outputs.device(withUID: "AutoHush.NoSuchOutput.\(UUID().uuidString)") == nil)
     }
 
-    @Test("the output's volume, read on the volume keys' scale, is found again on its own dB-to-volume translation (read only)",
-          .enabled(if: CoreAudioSystemVolume().defaultOutput().flatMap { CoreAudioSystemVolume().volume(of: $0) } != nil,
-                   "no output with a volume control here"))
+    /// Every output with a volume control, not only the default one: the
+    /// VMs play through a loopback with none, but list their own sound
+    /// device beside it (2026-11-24).
+    private static var outputsWithVolume: [AudioObjectID] {
+        let volume = CoreAudioSystemVolume()
+        return CoreAudioProperty.objectIDs(kAudioHardwarePropertyDevices, of: CoreAudioProperty.systemObject)
+            .filter { volume.volume(of: $0) != nil }
+    }
+
+    @Test("each output's volume, read on the volume keys' scale, is found again on its own dB-to-volume translation (read only)",
+          .enabled(if: !outputsWithVolume.isEmpty, "no output with a volume control here"))
     func volumeTranslatesBack() throws {
         let volume = CoreAudioSystemVolume()
-        let device = try #require(volume.defaultOutput())
-        let current = try #require(volume.volume(of: device))
-        for (element, scalar) in current.scalars {
-            #expect((0...1).contains(scalar))
-            let decibels = try #require(volume.decibels(at: scalar, element: element, of: device, in: current))
-            #expect(decibels >= current.lowest - 0.01 && decibels <= current.highest + 0.01)
+        for device in Self.outputsWithVolume {
+            let current = try #require(volume.volume(of: device))
+            for (element, scalar) in current.scalars {
+                #expect((0...1).contains(scalar))
+                let decibels = try #require(volume.decibels(at: scalar, element: element, of: device, in: current))
+                #expect(decibels >= current.lowest - 0.01 && decibels <= current.highest + 0.01)
+            }
         }
     }
 
