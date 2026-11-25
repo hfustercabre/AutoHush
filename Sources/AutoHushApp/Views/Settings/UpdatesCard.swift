@@ -15,7 +15,7 @@ struct UpdatesCard: View {
 
     var body: some View {
         Card(Text(verbatim: UpdateOffer.updatesTitle)) {
-            SwitchRow(Text("Check for updates automatically", comment: "Settings → About: switch for the daily update check"), isOn: Binding(
+            SwitchRow(Text("Check for updates automatically", tableName: "Settings", comment: "Settings → About: switch for the daily update check"), isOn: Binding(
                 get: { model.checksForUpdatesAutomatically },
                 set: { model.updates.setChecksAutomatically($0) }
             ))
@@ -82,7 +82,7 @@ struct UpdatesCard: View {
                 if model.notificationsOff {
                     Text(verbatim: Self.notificationsOffNote).captionStyle()
                     Button { model.actions?.openNotificationSettings() } label: {
-                        Text("Open Notifications Settings…", comment: "Settings → About: button that opens System Settings → Notifications")
+                        Text("Open Notifications Settings…", tableName: "Settings", comment: "Settings → About: button that opens System Settings → Notifications")
                     }
                         .buttonStyle(.chip)
                 }
@@ -90,9 +90,9 @@ struct UpdatesCard: View {
             // Checks by hand use it too: never greyed out (R5, the user's pick, 2026-10-29).
             CardDivider()
             SwitchRow(Text("Get release candidates",
-                           comment: "Settings → About: switch for update checks that also find release candidates, the versions published to test before a release"),
+                           tableName: "Settings", comment: "Settings → About: switch for update checks that also find release candidates, the versions published to test before a release"),
                       subtitle: Text("Try the next version before its release. It may have bugs.",
-                                     comment: "Settings → About, under “Get release candidates”"),
+                                     tableName: "Settings", comment: "Settings → About, under “Get release candidates”"),
                       isOn: Binding(
                           get: { model.getsReleaseCandidates },
                           set: { model.updates.setGetsReleaseCandidates($0) }
@@ -104,7 +104,7 @@ struct UpdatesCard: View {
                 RowTitle(Text(verbatim: row.title), subtitle: row.subtitle.map { Text(verbatim: $0) })
                 Spacer(minLength: 8)
                 Button { model.updates.checkFromUser() } label: {
-                    Text("Check Now", comment: "Settings → About: checks for an update now")
+                    Text("Check Now", tableName: "Settings", comment: "Settings → About: checks for an update now")
                 }
                     .buttonStyle(.chip)
                     .accessibilityFocused($checkNowHasVoiceOverCursor)
@@ -121,11 +121,11 @@ extension UpdatesCard {
     /// Under the update choices while notifications are off.
     /// The update pop-up's row title, and its VoiceOver label.
     private static var updateFoundTitle: String {
-        String(localized: "When an update is found", comment: "Settings → About: lead-in to what happens when an update is found")
+        String(localized: "When an update is found", table: "Settings", comment: "Settings → About: lead-in to what happens when an update is found")
     }
 
     private static var notificationsOffNote: String {
         String(localized: "Notifications are off for AutoHush: its menu bar icon shows when an update is found.",
-               comment: "Settings → About, under the update choices, while notifications are off for AutoHush")
+               table: "Settings", comment: "Settings → About, under the update choices, while notifications are off for AutoHush")
     }
 }

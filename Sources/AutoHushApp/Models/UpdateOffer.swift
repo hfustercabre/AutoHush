@@ -22,12 +22,12 @@ extension UpdateOffer {
     /// AutoHush's updates: the menu's button, the heading over them in
     /// Settings → About, and a Diagnostics row.
     static var updatesTitle: String {
-        String(localized: "Updates", comment: "Menu toolbar button, Settings → About's heading over the update settings, and a Diagnostics row: AutoHush's updates")
+        String(localized: "Updates", table: "Updates", comment: "Menu toolbar button, Settings → About's heading over the update settings, and a Diagnostics row: AutoHush's updates")
     }
 
     /// While a check runs: Settings' update status, and the menu's Updates
     /// button.
     static var checkingTitle: String {
-        String(localized: "Checking…", comment: "While an update check runs: the update status in Settings, and the menu's Updates button (keep it short there)")
+        String(localized: "Checking…", table: "Updates", comment: "While an update check runs: the update status in Settings, and the menu's Updates button (keep it short there)")
     }
 }

@@ -135,7 +135,7 @@ final class SettingsModel {
     var releaseCandidateNote: String? {
         guard !getsReleaseCandidates, let version = updates.currentVersion, version.isReleaseCandidate else { return nil }
         return String(localized: "You’re on \(version.description), a release candidate: AutoHush offers the latest release instead.",
-                      comment: "Settings → About, under “Get release candidates” while it's off and a release candidate runs; %@ is its version, e.g. “1.2.7 RC 1”")
+                      table: "Settings", comment: "Settings → About, under “Get release candidates” while it's off and a release candidate runs; %@ is its version, e.g. “1.2.7 RC 1”")
     }
     /// Why AutoHush can't install updates itself, shown under the choice;
     /// nil when it can. Then only "Notify me" is possible. Read once, at launch.
@@ -229,7 +229,7 @@ final class SettingsModel {
     /// is up to date.", "Checking…"), or this version before any check.
     var updateTitle: String {
         updateStatus ?? currentVersion.map {
-            String(localized: "AutoHush \($0)", comment: "Settings, beside Check Now before any check; %@ is the version")
+            String(localized: "AutoHush \($0)", table: "Settings", comment: "Settings, beside Check Now before any check; %@ is the version")
         } ?? "AutoHush"
     }
 
@@ -245,7 +245,7 @@ final class SettingsModel {
         if let candidate = updates.availableUpdate?.version, candidate.isReleaseCandidate {
             let release = AppVersion(components: candidate.components).description
             let test = String(localized: "A test version of \(release)",
-                              comment: "Settings → About, under “AutoHush 1.2.7 RC 1 is available”, before “Last checked…”; %@ is the version it's a release candidate of, e.g. “1.2.7”")
+                              table: "Settings", comment: "Settings → About, under “AutoHush 1.2.7 RC 1 is available”, before “Last checked…”; %@ is the version it's a release candidate of, e.g. “1.2.7”")
             return (updateTitle, [test, checked].compactMap { $0 }.joined(separator: " · "))
         }
         return (updateTitle, checked)
@@ -257,7 +257,7 @@ final class SettingsModel {
         let formatter = RelativeDateTimeFormatter()
         formatter.dateTimeStyle = .named
         let when = formatter.localizedString(for: lastUpdateCheck, relativeTo: now)
-        return String(localized: "Last checked \(when)", comment: "Settings, beside Check Now; %@ is e.g. “2 hours ago”")
+        return String(localized: "Last checked \(when)", table: "Settings", comment: "Settings, beside Check Now; %@ is e.g. “2 hours ago”")
     }
 
     /// AntiDot mode: no visual signs of AutoHush working — it never
@@ -320,7 +320,7 @@ final class SettingsModel {
             launchAtLoginError = nil
         case .failure(let error):
             launchAtLoginError = String(localized: "Couldn’t change the login item: \(error.localizedDescription)",
-                                        comment: "Settings, under Launch at login; %@ is the error macOS reported")
+                                        table: "Settings", comment: "Settings, under Launch at login; %@ is the error macOS reported")
         }
         refreshLaunchAtLogin()
     }

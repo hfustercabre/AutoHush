@@ -32,7 +32,7 @@ extension UpdateController {
     private func runCheck() async {
         guard let currentVersion else {
             let unknown = String(localized: "AutoHush’s version is unknown.",
-                                 comment: "Update status in Settings, and the alert after a check asked for from the menu or Settings")
+                                 table: "Updates", comment: "Update status in Settings, and the alert after a check asked for from the menu or Settings")
             logger.error("Can’t check for updates: AutoHush’s version is unknown")
             showStatus(unknown)
             if resultWanted { await presentFailure(unknown) }
@@ -79,9 +79,9 @@ extension UpdateController {
                 showStatus(availableStatus(release))
             case .upToDate:
                 showStatus(String(localized: "AutoHush \(currentVersion.description) is up to date.",
-                                  comment: "Update status in Settings; %@ is a version number"))
+                                  table: "Updates", comment: "Update status in Settings; %@ is a version number"))
             case .noReleases:
-                showStatus(String(localized: "No releases have been published yet.", comment: "Update status in Settings"))
+                showStatus(String(localized: "No releases have been published yet.", table: "Updates", comment: "Update status in Settings"))
             }
             if resultWanted {
                 await beforePresenting()
@@ -89,7 +89,7 @@ extension UpdateController {
             }
         } catch {
             logger.error("Update check failed: \(error)")
-            showStatus(String(localized: "Couldn’t check for updates.", comment: "Update status in Settings"))
+            showStatus(String(localized: "Couldn’t check for updates.", table: "Updates", comment: "Update status in Settings"))
             if resultWanted { await presentFailure(error.localizedDescription) }
         }
     }
@@ -97,7 +97,7 @@ extension UpdateController {
     /// Says why a check asked for couldn't tell, in an alert.
     private func presentFailure(_ reason: String) async {
         await beforePresenting()
-        let title = String(localized: "Couldn’t Check for Updates", comment: "Alert title")
+        let title = String(localized: "Couldn’t Check for Updates", table: "Updates", comment: "Alert title")
         showAlert { InfoAlert.show(title, reason, run: self.runAlert) }
     }
 }

@@ -63,5 +63,8 @@ or later (GPL-3.0-or-later).
 - **How it looks and reads:** [STYLE_GUIDE.md](STYLE_GUIDE.md).
 - **What it does, step by step:** [WORKFLOWS.md](WORKFLOWS.md), flowcharts
   GitHub draws from their Mermaid source.
-- **Text people read:** written as `String(localized:)` with a comment for
-  translators (DEVELOPMENT.md → [Translations](DEVELOPMENT.md#translations)).
+- **Text people read:** written as `String(localized:table:)`, in its area's
+  table (none for words several areas share, such as buttons: those are in
+  `Localizable`), with a comment for translators; then build and commit the
+  catalogs it updates, since CI checks they're synced (DEVELOPMENT.md →
+  [Translations](DEVELOPMENT.md#translations)).

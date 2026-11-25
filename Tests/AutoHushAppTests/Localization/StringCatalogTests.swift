@@ -1,17 +1,17 @@
 import Foundation
 import Testing
 
-/// The String Catalogs in Resources/Localization/, AutoHush's text in every language.
-/// `Scripts/build-app.sh` adds the strings the code uses to
-/// Localizable.xcstrings and compiles every catalog into the app.
+/// The String Catalogs in Resources/Localization/, AutoHush's text in every
+/// language: a table per area. `Scripts/build-app.sh` adds the strings the
+/// code uses to the table each one names and compiles every catalog into the app.
 @Suite("String catalogs")
 struct StringCatalogTests {
     private static let resources = PackagePaths.root.appending(path: "Resources")
     private static let catalogs = PackagePaths.catalogs
 
-    @Test("every translation keeps its text's placeholders", arguments: ["Localizable", "InfoPlist", "AppShortcuts"])
+    @Test("every translation keeps its text's placeholders", arguments: StringCatalog.tables)
     func placeholders(table: String) throws {
-        let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "\(table).xcstrings"))
+        let catalog = try StringCatalog(table: table)
         for (key, entry) in catalog.strings {
             let localizations = entry.localizations ?? [:]
             // The key is the English text, unless English has a text of its own.
@@ -27,9 +27,9 @@ struct StringCatalogTests {
         }
     }
 
-    @Test("apostrophes are curly, in English and every translation, as macOS writes them", arguments: ["Localizable", "InfoPlist", "AppShortcuts"])
+    @Test("apostrophes are curly, in English and every translation, as macOS writes them", arguments: StringCatalog.tables)
     func curlyApostrophes(table: String) throws {
-        let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "\(table).xcstrings"))
+        let catalog = try StringCatalog(table: table)
         for (key, entry) in catalog.strings {
             #expect(!key.contains("'"), "“\(key)”")
             for (language, localization) in entry.localizations ?? [:] {
@@ -42,10 +42,47 @@ struct StringCatalogTests {
 
     @Test("macOS's recording indicator is the purple dot in every English text (F2a, 2026-11-02)")
     func purpleDot() throws {
-        let catalog = try StringCatalog(contentsOf: Self.catalogs.appending(path: "Localizable.xcstrings"))
-        for key in catalog.strings.keys {
+        for key in try StringCatalog.app().keys {
             #expect(!key.localizedCaseInsensitiveContains("recording indicator"), "“\(key)”")
         }
+    }
+
+    @Test("a text is in one of the app's tables only, so each lookup finds its own translation (2026-11-25)")
+    func oneTablePerText() throws {
+        var seen: [String: String] = [:]
+        for table in StringCatalog.appTables {
+            for key in try StringCatalog(table: table).strings.keys {
+                #expect(seen[key] == nil, "“\(key)” is in \(seen[key] ?? "") and \(table)")
+                seen[key] = table
+            }
+        }
+        #expect(StringCatalog.appTables.contains("Localizable"))
+    }
+
+    /// The tables the app's code names (`table:`, `tableName:`).
+    private static func namedTables() throws -> Set<String> {
+        let sources = PackagePaths.root.appending(path: "Sources")
+        let files = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil)?
+            .compactMap { $0 as? URL }.filter { $0.pathExtension == "swift" } ?? []
+        let name = try NSRegularExpression(pattern: #"\b(?:table|tableName): "([^"]+)""#)
+        var found: Set<String> = []
+        for file in files {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            for match in name.matches(in: text, range: NSRange(text.startIndex..., in: text)) {
+                found.insert(String(text[Range(match.range(at: 1), in: text)!]))
+            }
+        }
+        return found
+    }
+
+    @Test("every table the code names has its catalog, and every catalog of the app's is named (2026-11-25)")
+    func namedTablesExist() throws {
+        let named = try Self.namedTables()
+        #expect(!named.isEmpty)
+        #expect(named.subtracting(StringCatalog.appTables).isEmpty, "no catalog for \(named.subtracting(StringCatalog.appTables).sorted())")
+        // Localizable is the default: the code needs no name for it.
+        #expect(Set(StringCatalog.appTables).subtracting(named).subtracting(["Localizable"]).isEmpty,
+                "named nowhere: \(Set(StringCatalog.appTables).subtracting(named).sorted())")
     }
 
     @Test("Info.plist's texts are in the InfoPlist catalog, word for word")

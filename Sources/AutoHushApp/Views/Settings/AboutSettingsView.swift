@@ -65,9 +65,9 @@ struct AboutSettingsView: View {
                 // it opens the README on GitHub, and a fourth chip doesn't fit
                 // the narrowest window.
                 link(Text(verbatim: ButtonText.help), symbol: "questionmark.circle", to: ProjectInfo.helpPage)
-                link(Text("What’s New", comment: "Settings → About: opens the release notes on GitHub"),
+                link(Text("What’s New", tableName: "Settings", comment: "Settings → About: opens the release notes on GitHub"),
                      symbol: "sparkles", to: ProjectInfo.whatsNewPage(for: model.currentVersion.flatMap(AppVersion.init)))
-                link(Text("Report an Issue", comment: "Settings → About: opens a new issue on GitHub"),
+                link(Text("Report an Issue", tableName: "Settings", comment: "Settings → About: opens a new issue on GitHub"),
                      symbol: "ladybug", to: ProjectInfo.newIssuePage)
                 Spacer(minLength: 0)
             }
@@ -142,7 +142,7 @@ struct AboutSettingsView: View {
     /// The README's tagline (the user, 2026-10-31).
     private var tagline: some View {
         Text("Whatever’s playing steps aside when something else needs your ears.",
-             comment: "Settings → About, centered under the app's icon, name and version: what AutoHush does, as the README's tagline says it: the media player's playback (music, podcasts, videos) pauses while another app plays sound")
+             tableName: "Settings", comment: "Settings → About, centered under the app's icon, name and version: what AutoHush does, as the README's tagline says it: the media player's playback (music, podcasts, videos) pauses while another app plays sound")
             .foregroundStyle(.appSecondary)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
@@ -159,7 +159,7 @@ struct AboutSettingsView: View {
         // letter by letter, says where it opens instead (D-10, 2026-11-07).
         .help(url.absoluteString)
         .accessibilityHint(Text("Opens in your browser",
-                                comment: "VoiceOver hint of the Help, What’s New and Report an Issue buttons in Settings → About: each opens a page of AutoHush’s project on GitHub in the web browser"))
+                                tableName: "Settings", comment: "VoiceOver hint of the Help, What’s New and Report an Issue buttons in Settings → About: each opens a page of AutoHush’s project on GitHub in the web browser"))
     }
 
     /// The copyright line from Info.plist, in the app's language.

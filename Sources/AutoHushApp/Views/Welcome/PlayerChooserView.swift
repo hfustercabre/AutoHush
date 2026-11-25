@@ -58,7 +58,7 @@ struct PlayerChooserView: View {
     private var playersPageContent: some View {
         WindowPage(icon: NSApplication.shared.applicationIconImage,
                    description: Text("AutoHush pauses it while other apps play audio, then resumes it. Change it anytime from AutoHush’s menu bar icon.",
-                                     comment: "Welcome window, at its top beside AutoHush's icon, under the title “Choose Your Media Player”: “it” is the media player chosen below; AutoHush's icon in the menu bar opens its menu, where the player can be changed"),
+                                     tableName: "Players", comment: "Welcome window, at its top beside AutoHush's icon, under the title “Choose Your Media Player”: “it” is the media player chosen below; AutoHush's icon in the menu bar opens its menu, where the player can be changed"),
                    width: Self.width, alignment: .center, spacing: 16) {
             players
         } bar: {

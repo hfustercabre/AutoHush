@@ -6,13 +6,13 @@ import AutoHushKit
 extension AutoPauseSnooze {
     /// Over the menu's durations.
     static var heading: String {
-        String(localized: "Turn off for", comment: "Menu: above the buttons that turn auto-pause off for a while")
+        String(localized: "Turn off for", table: "Menu", comment: "Menu: above the buttons that turn auto-pause off for a while")
     }
 
     /// Over them while one runs, which is selected.
     static var runningHeading: String {
         String(localized: "Turned off for",
-               comment: "Menu: above the buttons that turn auto-pause off for a while, while it's turned off for one of them (that one is selected); the time left shows beside it")
+               table: "Menu", comment: "Menu: above the buttons that turn auto-pause off for a while, while it's turned off for one of them (that one is selected); the time left shows beside it")
     }
 
     /// The duration on its button in the menu, e.g. "15 min" or "1 hr", in
@@ -52,8 +52,8 @@ extension AutoPauseSnooze {
         style.timeZone = calendar.timeZone
         let time = date.formatted(style)
         if calendar.isDate(date, inSameDayAs: now) {
-            return String(localized: "until \(time)", comment: "When auto-pause turns back on today; %@ is a time")
+            return String(localized: "until \(time)", table: "Menu", comment: "When auto-pause turns back on today; %@ is a time")
         }
-        return String(localized: "until tomorrow \(time)", comment: "When auto-pause turns back on; %@ is a time")
+        return String(localized: "until tomorrow \(time)", table: "Menu", comment: "When auto-pause turns back on; %@ is a time")
     }
 }

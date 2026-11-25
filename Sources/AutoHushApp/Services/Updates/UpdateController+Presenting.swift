@@ -26,9 +26,9 @@ extension UpdateController {
         let version = release.version.description
         return downloads.isKept(release)
             ? String(localized: "Version \(version) is downloaded and ready to install.",
-                     comment: "Update status in Settings; %@ is a version number")
+                     table: "Updates", comment: "Update status in Settings; %@ is a version number")
             : String(localized: "Version \(version) is available.",
-                     comment: "Update status in Settings; %@ is a version number")
+                     table: "Updates", comment: "Update status in Settings; %@ is a version number")
     }
 
     func present(_ result: UpdateCheckResult) {
@@ -38,15 +38,15 @@ extension UpdateController {
             presentAvailable(release, running: current)
         case .upToDate:
             InfoAlert.show(
-                String(localized: "AutoHush Is Up to Date", comment: "Alert title"),
+                String(localized: "AutoHush Is Up to Date", table: "Updates", comment: "Alert title"),
                 String(localized: "You have the latest version, \(current.description).",
-                       comment: "Alert text; %@ is the installed version"),
+                       table: "Updates", comment: "Alert text; %@ is the installed version"),
                 run: runAlert
             )
         case .noReleases:
             InfoAlert.show(
-                String(localized: "No Releases Yet", comment: "Alert title"),
-                String(localized: "No AutoHush release has been published on GitHub yet.", comment: "Alert text"),
+                String(localized: "No Releases Yet", table: "Updates", comment: "Alert title"),
+                String(localized: "No AutoHush release has been published on GitHub yet.", table: "Updates", comment: "Alert text"),
                 run: runAlert
             )
         }
@@ -120,9 +120,9 @@ extension UpdateController {
     /// page to install it by hand.
     func presentInstallError(_ reason: String, release: AppRelease) {
         let alert = NSAlert()
-        alert.messageText = String(localized: "Couldn’t Install the Update", comment: "Alert title")
+        alert.messageText = String(localized: "Couldn’t Install the Update", table: "Updates", comment: "Alert title")
         alert.informativeText = reason
-        alert.addButton(withTitle: String(localized: "Open Release Page", comment: "Update alert button"))
+        alert.addButton(withTitle: String(localized: "Open Release Page", table: "Updates", comment: "Update alert button"))
         alert.addButton(withTitle: LaterText.title)
             .keyEquivalent = "\u{1b}" // Escape; Return opens the page
         if runAlert(alert) == .alertFirstButtonReturn {

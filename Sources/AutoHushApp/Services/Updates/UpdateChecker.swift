@@ -12,7 +12,7 @@ enum UpdateCheckError: LocalizedError, LoggableError, Equatable {
     /// (`logDescription`).
     var errorDescription: String? {
         String(localized: "GitHub didn’t answer. Try again later.",
-               comment: "Message of the alert “Couldn’t Check for Updates”, after a check asked for from the menu or Settings: GitHub refused the request or its answer couldn't be read")
+               table: "Updates", comment: "Message of the alert “Couldn’t Check for Updates”, after a check asked for from the menu or Settings: GitHub refused the request or its answer couldn't be read")
     }
 
     var logDescription: String {

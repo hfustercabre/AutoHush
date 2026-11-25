@@ -81,11 +81,11 @@ enum ControlErrorFix: Equatable {
         case .retryResume, .retryPause, .retryStart: TryAgainText.title
         case .checkForUpdates:
             String(localized: "Check for Updates",
-                   comment: "Button in the alert that says why AutoHush can't control a supported media player (its Play/Pause wasn't found in its menus): checks for a newer AutoHush, which may know the player's new menus")
+                   table: "Players", comment: "Button in the alert that says why AutoHush can't control a supported media player (its Play/Pause wasn't found in its menus): checks for a newer AutoHush, which may know the player's new menus")
         case .learnAgain: LearnText.learnAgainButton
         case .checkAgain:
             String(localized: "Check Again…",
-                   comment: "Button in the alert that says why AutoHush couldn't pause or control an app added with Add an App: opens the Add an App window on that app, to check it again. Also in Settings → Fine-Tuning, on the card of an app added before backup controls were kept")
+                   table: "Players", comment: "Button in the alert that says why AutoHush couldn't pause or control an app added with Add an App: opens the Add an App window on that app, to check it again. Also in Settings → Fine-Tuning, on the card of an app added before backup controls were kept")
         case .turnOffAntiDot: AddAppText.turnOffAntiDot
         case .allowAudioRecording: Permission.systemAudioRecording.grantTitle
         case .reopenAutoHush: PermissionText.reopen

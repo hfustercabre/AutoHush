@@ -12,7 +12,7 @@ enum AntiDotText {
     /// mode (its row's and tile's help and VoiceOver hint).
     static func onlyMuted(_ player: String) -> String {
         String(localized: "AutoHush can only mute \(player), and muting needs Audio Recording, which AntiDot mode doesn’t use.",
-               comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the alert after the menu's card while AntiDot mode is on; Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; and the help tag and VoiceOver hint of its row and tile where media players are offered, dimmed while AntiDot mode is on; %@ is the player")
+               table: "Settings", comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the alert after the menu's card while AntiDot mode is on; Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; and the help tag and VoiceOver hint of its row and tile where media players are offered, dimmed while AntiDot mode is on; %@ is the player")
     }
 
     /// An app added with Add an App whose Now Playing row doesn't show
@@ -20,7 +20,7 @@ enum AntiDotText {
     /// alert out of AntiDot mode only (in it, `notHeardInAntiDotMode`).
     static func onlyHeard(_ player: String) -> String {
         String(localized: "AutoHush needs Audio Recording to hear whether \(player) is playing.",
-               comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the alert after the menu's card while AntiDot mode is off; Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; and the help tag and VoiceOver hint of its row and tile where media players are offered, dimmed while AntiDot mode is on; %@ is the player")
+               table: "Settings", comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the alert after the menu's card while AntiDot mode is off; Settings → Behavior, under the AntiDot mode switch, dimmed while it's the player; and the help tag and VoiceOver hint of its row and tile where media players are offered, dimmed while AntiDot mode is on; %@ is the player")
     }
 
     /// An app added with Add an App that can only be muted, while AntiDot
@@ -29,7 +29,7 @@ enum AntiDotText {
     /// `onlyMuted` blamed AntiDot mode, which was off).
     static func muteNeedsRecording(_ player: String) -> String {
         String(localized: "AutoHush can only mute \(player), and muting needs Audio Recording.",
-               comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the alert after the menu's card, while AntiDot mode is off and Audio Recording isn't allowed; %@ is the player")
+               table: "Settings", comment: "Why the media player (added with Add an App, muted instead of paused) couldn't be controlled, in the alert after the menu's card, while AntiDot mode is off and Audio Recording isn't allowed; %@ is the player")
     }
 
     /// An app added with Add an App that only its sound tells about, while
@@ -38,7 +38,7 @@ enum AntiDotText {
     /// mode is what keeps it from being heard).
     static func notHeardInAntiDotMode(_ player: String) -> String {
         String(localized: "AutoHush needs Audio Recording to hear whether \(player) is playing, which AntiDot mode doesn’t use.",
-               comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the alert after the menu's card, while AntiDot mode is on; %@ is the player")
+               table: "Settings", comment: "Why the media player (added with Add an App, whose Now Playing row doesn't show its state, so only its sound tells) couldn't be paused or played, in the alert after the menu's card, while AntiDot mode is on; %@ is the player")
     }
 
     /// Under a setting that needs sound measured, dimmed: Level the volume
@@ -46,13 +46,13 @@ enum AntiDotText {
     /// (Fine-Tuning's Detection).
     static var featureOff: String {
         String(localized: "Off in AntiDot mode",
-               comment: "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): Settings → Behavior, and Fine-Tuning's volume limits; and under Fine-Tuning's dimmed silence threshold")
+               table: "Settings", comment: "Under the dimmed Level the volume switch while AntiDot mode is on (it measures no sound): Settings → Behavior, and Fine-Tuning's volume limits; and under Fine-Tuning's dimmed silence threshold")
     }
 
     /// Audio Recording, which it doesn't use: Diagnostics' row, the welcome
     /// window and the Add an App window.
     static var notNeeded: String {
         String(localized: "Not needed in AntiDot mode",
-               comment: "Audio Recording while AntiDot mode is on, which doesn't use it: its row in Diagnostics, and the note under “Audio Recording” in the welcome window and the Add an App window")
+               table: "Settings", comment: "Audio Recording while AntiDot mode is on, which doesn't use it: its row in Diagnostics, and the note under “Audio Recording” in the welcome window and the Add an App window")
     }
 }

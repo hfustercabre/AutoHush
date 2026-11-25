@@ -254,7 +254,7 @@ final class SettingsWindowController: PlacedWindowController {
     }
 
     static var forwardTitle: String {
-        String(localized: "Forward", comment: "Settings: the toolbar's arrow and the View menu's item (⌘]) that show the page left by Back again; macOS's own word")
+        String(localized: "Forward", table: "Settings", comment: "Settings: the toolbar's arrow and the View menu's item (⌘]) that show the page left by Back again; macOS's own word")
     }
 }
 

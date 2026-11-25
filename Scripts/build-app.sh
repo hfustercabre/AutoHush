@@ -163,17 +163,19 @@ else
     note "warning: appintentsmetadataprocessor not found (it comes with Xcode); Shortcuts won't offer the app's actions"
 fi
 
-# Text people read lives in String Catalogs (Resources/Localization/). As Xcode
-# does, each build adds the strings the code uses to Localizable.xcstrings and
-# marks those it no longer uses as stale; then each translated language is
-# compiled into its .lproj folder. macOS shows the first of the user's
-# languages that AutoHush has, or else English (CFBundleDevelopmentRegion).
+# Text people read lives in String Catalogs (Resources/Localization/), a table
+# per area (Scripts/lib/common.sh). As Xcode does, each build adds the strings
+# the code uses to the table each one names (String(localized:table:),
+# Text(_:tableName:); none: Localizable) and marks those it no longer uses as
+# stale; then each translated language is compiled into its .lproj folder.
+# macOS shows the first of the user's languages that AutoHush has, or else
+# English (CFBundleDevelopmentRegion).
 # xcstringstool comes with Xcode.
 if xcrun --find xcstringstool >/dev/null 2>&1; then
-    step "Updating the string catalog"
+    step "Updating the string catalogs"
     # The compiler listed each source file's strings while building. A file
     # without its own list (one sharing its name with another module's file)
-    # would make its strings look unused, so the catalog is then left alone.
+    # would make its strings look unused, so the catalogs are then left alone.
     STRINGSDATA=()
     UNLISTED=()
     while IFS= read -r source; do
@@ -190,11 +192,20 @@ if xcrun --find xcstringstool >/dev/null 2>&1; then
     else
         UNLISTED+=("the Shortcuts actions' summaries")
     fi
+    CATALOGS=()
+    while IFS= read -r catalog; do
+        CATALOGS+=("$catalog")
+    done < <(app_string_catalogs)
     if [[ ${#UNLISTED[@]} -eq 0 ]]; then
-        xcrun xcstringstool sync "$STRING_CATALOG" "${STRINGSDATA[@]}"
-        note "$(xcrun xcstringstool print "$STRING_CATALOG" | grep -c .) strings in ${STRING_CATALOG#"$PROJECT_DIR/"}"
+        # All of them at once: each string goes to the catalog of its table.
+        xcrun xcstringstool sync "${CATALOGS[@]}" "${STRINGSDATA[@]}"
+        COUNTS=""
+        for catalog in "${CATALOGS[@]}"; do
+            COUNTS+="${COUNTS:+, }$(basename "$catalog" .xcstrings) $(jq '.strings | length' "$catalog")"
+        done
+        note "strings by table: $COUNTS"
     else
-        note "warning: no string list for ${UNLISTED[*]}; ${STRING_CATALOG#"$PROJECT_DIR/"} was not updated"
+        note "warning: no string list for ${UNLISTED[*]}; the string catalogs in ${LOCALIZATION_DIR#"$PROJECT_DIR/"} were not updated"
     fi
 
     step "Compiling the translations"

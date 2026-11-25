@@ -85,36 +85,36 @@ struct BehaviorSettingsView: View {
     private var fadeLengths: String {
         model.fadeInUnused
             ? String(localized: "\(value(.fadeOut)) out",
-                     comment: "Settings → Behavior, Fades' row to Fine-Tuning while Resume playback is off: the fade-out's length; %@ is it, e.g. “1 s”")
+                     table: "Settings", comment: "Settings → Behavior, Fades' row to Fine-Tuning while Resume playback is off: the fade-out's length; %@ is it, e.g. “1 s”")
             : String(localized: "\(value(.fadeOut)) out, \(value(.fadeIn)) in",
-                     comment: "Settings → Behavior, Fades' row to Fine-Tuning: the fade lengths; the first %@ is the fade-out's (e.g. “1 s”), the second the fade-in's")
+                     table: "Settings", comment: "Settings → Behavior, Fades' row to Fine-Tuning: the fade lengths; the first %@ is the fade-out's (e.g. “1 s”), the second the fade-in's")
     }
 
     private var volumeLimits: String {
         String(localized: "\(value(.levelingMaxCut)) at most",
-               comment: "Settings → Behavior, Volume's row to Fine-Tuning: the most Level the volume lowers the Mac's volume; %@ is it, e.g. “10 dB”")
+               table: "Settings", comment: "Settings → Behavior, Volume's row to Fine-Tuning: the most Level the volume lowers the Mac's volume; %@ is it, e.g. “10 dB”")
     }
 
     static var fadeLengthsRowTitle: String {
-        String(localized: "Fade lengths", comment: "Settings → Behavior, Fades' last row: opens Fine-Tuning at the fade lengths, which it shows after it")
+        String(localized: "Fade lengths", table: "Settings", comment: "Settings → Behavior, Fades' last row: opens Fine-Tuning at the fade lengths, which it shows after it")
     }
 
     static var volumeLimitsRowTitle: String {
-        String(localized: "Volume limits", comment: "Settings → Behavior, Volume's last row: opens Fine-Tuning at Level the volume's limits, the most it lowers the volume after it")
+        String(localized: "Volume limits", table: "Settings", comment: "Settings → Behavior, Volume's last row: opens Fine-Tuning at Level the volume's limits, the most it lowers the volume after it")
     }
 
     /// Over the microphone and an output going away pausing your player.
     static var pausingTitle: Text {
-        Text("Pausing", comment: "Settings → Behavior: heading over what else pauses your player (the microphone, an output going away)")
+        Text("Pausing", tableName: "Settings", comment: "Settings → Behavior: heading over what else pauses your player (the microphone, an output going away)")
     }
 
     /// Over Resume playback and staying paused after calls.
     static var resumingTitle: Text {
-        Text("Resuming", comment: "Settings → Behavior: heading over whether your player resumes once other apps go quiet, and staying paused after calls")
+        Text("Resuming", tableName: "Settings", comment: "Settings → Behavior: heading over whether your player resumes once other apps go quiet, and staying paused after calls")
     }
 
     /// Over Level the volume.
     static var volumeTitle: Text {
-        Text("Volume", comment: "Settings → Behavior: heading over Level the volume")
+        Text("Volume", tableName: "Settings", comment: "Settings → Behavior: heading over Level the volume")
     }
 }

@@ -15,10 +15,10 @@ enum UpdateInstallUnavailability: Equatable, Sendable {
         switch self {
         case .notSignedWithCertificate:
             return String(localized: "This copy of AutoHush can’t update itself, because it isn’t signed with AutoHush’s certificate.",
-                          comment: "Settings, under the update choices (development builds)")
+                          table: "Updates", comment: "Settings, under the update choices (development builds)")
         case .readOnlyLocation:
             return String(localized: "AutoHush can’t update itself, because it can’t write to the folder it’s in.",
-                          comment: "Settings, under the update choices")
+                          table: "Updates", comment: "Settings, under the update choices")
         }
     }
 }
@@ -49,23 +49,23 @@ enum UpdateInstallError: LocalizedError, LoggableError, Equatable {
         case .unavailable(let reason):
             return reason.explanation
         case .noDiskImage:
-            return String(localized: "This release has no disk image to install from.", comment: "Update install error")
+            return String(localized: "This release has no disk image to install from.", table: "Updates", comment: "Update install error")
         case .badResponse(let status):
             return String(localized: "GitHub answered with HTTP status \(status).",
-                          comment: "Update install error, as the download failed; %lld is an HTTP status code")
+                          table: "Updates", comment: "Update install error, as the download failed; %lld is an HTTP status code")
         case .damaged:
-            return String(localized: "The download is damaged.", comment: "Update install error")
+            return String(localized: "The download is damaged.", table: "Updates", comment: "Update install error")
         case .notGenuine:
             return String(localized: "The download isn’t signed by AutoHush’s developer, so it wasn’t installed.",
-                          comment: "Update install error")
+                          table: "Updates", comment: "Update install error")
         case .wrongVersion:
-            return String(localized: "The download doesn’t contain the version GitHub announced.", comment: "Update install error")
+            return String(localized: "The download doesn’t contain the version GitHub announced.", table: "Updates", comment: "Update install error")
         case .needsNewerMacOS(let minimum):
             return String(localized: "This version needs macOS \(minimum) or later, so it wasn’t installed.",
-                          comment: "Update install error; %@ is a macOS version, e.g. “15.0”")
+                          table: "Updates", comment: "Update install error; %@ is a macOS version, e.g. “15.0”")
         case .notReplaced(let reason, _):
             return String(localized: "AutoHush couldn’t replace itself: \(reason)",
-                          comment: "Update install error; %@ is the reason macOS gave")
+                          table: "Updates", comment: "Update install error; %@ is the reason macOS gave")
         }
     }
 

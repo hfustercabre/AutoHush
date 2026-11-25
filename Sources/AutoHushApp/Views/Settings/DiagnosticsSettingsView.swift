@@ -43,7 +43,7 @@ struct DiagnosticsSettingsView: View {
     private func overview(_ overview: DiagnosticsSnapshot.Overview) -> some View {
         // At the top, not beside the buttons at its foot: there it left them
         // too little room in several languages.
-        Card(note: Text("Updated as it happens.", comment: "Settings → Diagnostics, at the top of the page: what it shows is kept up to date")) {
+        Card(note: Text("Updated as it happens.", tableName: "Settings", comment: "Settings → Diagnostics, at the top of the page: what it shows is kept up to date")) {
             HStack(spacing: 12) {
                 Group {
                     switch overview.kind {
@@ -216,11 +216,11 @@ struct DiagnosticsSettingsView: View {
         BottomBar {
             Spacer()
             Button { model.actions?.showLogs() } label: {
-                Text("Show Logs…", comment: "Settings → Diagnostics: button at its foot that opens the window with AutoHush's logs")
+                Text("Show Logs…", tableName: "Settings", comment: "Settings → Diagnostics: button at its foot that opens the window with AutoHush's logs")
             }
             .buttonStyle(.chip)
             // "Copied" for a moment after a click, as the logs window's Copy Logs.
-            CopyButton(title: Text("Copy Report", comment: "Settings → Diagnostics: puts the report on the clipboard")) {
+            CopyButton(title: Text("Copy Report", tableName: "Settings", comment: "Settings → Diagnostics: puts the report on the clipboard")) {
                 model.diagnostics?.text
             }
             .disabled(model.diagnostics == nil)

@@ -42,6 +42,6 @@ struct LogRow: View {
     }
 
     private static var problem: String {
-        String(localized: "Problem", comment: "VoiceOver, the logs window: before an entry that logged an error")
+        String(localized: "Problem", table: "Logs", comment: "VoiceOver, the logs window: before an entry that logged an error")
     }
 }

@@ -14,7 +14,7 @@ final class AddAppWindowController: HostedWindowController, NSWindowDelegate {
         let close = LaterAction(), floats = LaterHandler<Bool>()
         let hosting = Self.sizedToFit(AddAppView(model: model, close: close.call, floats: floats.call).windowKeys(keys))
         super.init(content: hosting,
-                   title: String(localized: "Add an App", comment: "Title of the window that checks how AutoHush can pause and play an app, then adds it, in its title bar"),
+                   title: String(localized: "Add an App", table: "AddApp", comment: "Title of the window that checks how AutoHush can pause and play an app, then adds it, in its title bar"),
                    keys: keys)
         window?.delegate = self
         // While it waits for the app to play, it stays above the app the user

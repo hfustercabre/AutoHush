@@ -23,8 +23,8 @@ final class PlayerChooserWindowController: HostedWindowController, PlayerChooser
     static func title(asksPermissions: Bool) -> String {
         asksPermissions
             ? String(localized: "Allow AutoHush to Work",
-                     comment: "Welcome window: the title (in its title bar) of the page that asks for the permissions AutoHush needs")
-            : String(localized: "Choose Your Media Player", comment: "Welcome window: its title, in its title bar")
+                     table: "Players", comment: "Welcome window: the title (in its title bar) of the page that asks for the permissions AutoHush needs")
+            : String(localized: "Choose Your Media Player", table: "Players", comment: "Welcome window: its title, in its title bar")
     }
 
     @available(*, unavailable)

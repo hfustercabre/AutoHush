@@ -24,7 +24,7 @@ struct UpdatePrompt: Equatable {
         let new = release.version.description
         let current = running.description
         let later = Button(title: LaterText.title, choice: .later)
-        let openPage = Button(title: String(localized: "Open Release Page", comment: "Update alert button"),
+        let openPage = Button(title: String(localized: "Open Release Page", table: "Updates", comment: "Update alert button"),
                               choice: .openReleasePage)
         // A release candidate says so, and the latest release offered back
         // from one (Get release candidates turned off) says why (WA6, R1, the
@@ -33,23 +33,23 @@ struct UpdatePrompt: Equatable {
         let offer = Offer(current: current, isBack: release.version < running,
                           isCandidate: release.version.isReleaseCandidate)
         guard canInstall else {
-            title = String(localized: "AutoHush \(new) Is Available", comment: "Alert title; %@ is the new version number")
+            title = String(localized: "AutoHush \(new) Is Available", table: "Updates", comment: "Alert title; %@ is the new version number")
             message = isHomebrewInstall ? offer.withHomebrew : offer.byHand
             buttons = [openPage, later]
             return
         }
         if isDownloaded {
             title = String(localized: "AutoHush \(new) Is Ready to Install",
-                           comment: "Update popup title; %@ is the new version, already downloaded")
+                           table: "Updates", comment: "Update popup title; %@ is the new version, already downloaded")
             buttons = [
-                Button(title: String(localized: "Install and Relaunch", comment: "Update alert button"), choice: .install),
+                Button(title: String(localized: "Install and Relaunch", table: "Updates", comment: "Update alert button"), choice: .install),
                 later, openPage,
             ]
         } else {
-            title = String(localized: "AutoHush \(new) Is Available", comment: "Alert title; %@ is the new version number")
+            title = String(localized: "AutoHush \(new) Is Available", table: "Updates", comment: "Alert title; %@ is the new version number")
             buttons = [
                 Button(title: String(localized: "Download and Install",
-                                     comment: "Update popup button: downloads the update, installs it and restarts"),
+                                     table: "Updates", comment: "Update popup button: downloads the update, installs it and restarts"),
                        choice: .install),
                 later, openPage,
             ]
@@ -69,14 +69,14 @@ struct UpdatePrompt: Equatable {
         func installing() -> String {
             if isBack {
                 return String(localized: "You have version \(current), and Get release candidates is off. Installing this release restarts AutoHush.",
-                              comment: "Update popup, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version")
+                              table: "Updates", comment: "Update popup, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version")
             }
             if isCandidate {
                 return String(localized: "You have version \(current). Installing this release candidate restarts AutoHush.",
-                              comment: "Update popup for a release candidate, a test version of the next release, available or downloaded (the title names it); %@ is the installed version")
+                              table: "Updates", comment: "Update popup for a release candidate, a test version of the next release, available or downloaded (the title names it); %@ is the installed version")
             }
             return String(localized: "You have version \(current). Installing it restarts AutoHush.",
-                          comment: "Update popup, the new version available or downloaded (the title names it); %@ is the installed version")
+                          table: "Updates", comment: "Update popup, the new version available or downloaded (the title names it); %@ is the installed version")
         }
 
         /// Where this copy can't update itself (not in a folder it can
@@ -84,14 +84,14 @@ struct UpdatePrompt: Equatable {
         var byHand: String {
             if isBack {
                 return String(localized: "You have version \(current), and Get release candidates is off. Download this release from GitHub and replace AutoHush in Applications.",
-                              comment: "Update alert where AutoHush can't update itself, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. Applications is the Applications folder")
+                              table: "Updates", comment: "Update alert where AutoHush can't update itself, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. Applications is the Applications folder")
             }
             if isCandidate {
                 return String(localized: "You have version \(current). Download this release candidate from GitHub and replace AutoHush in Applications.",
-                              comment: "Update alert where AutoHush can't update itself, offering a release candidate, a test version of the next release (the title names it); %@ is the installed version. Applications is the Applications folder")
+                              table: "Updates", comment: "Update alert where AutoHush can't update itself, offering a release candidate, a test version of the next release (the title names it); %@ is the installed version. Applications is the Applications folder")
             }
             return String(localized: "You have version \(current). Download the new one from GitHub and replace AutoHush in Applications.",
-                          comment: "Update alert where AutoHush can't update itself (the title names the new version); %@ is the installed version. Applications is the Applications folder")
+                          table: "Updates", comment: "Update alert where AutoHush can't update itself (the title names the new version); %@ is the installed version. Applications is the Applications folder")
         }
 
         /// Installed with Homebrew, whose tap never has a release candidate:
@@ -100,15 +100,15 @@ struct UpdatePrompt: Equatable {
         var withHomebrew: String {
             if isBack {
                 return String(localized: "You have version \(current), and Get release candidates is off. Go back with Homebrew:",
-                              comment: "Update alert for a copy installed with Homebrew, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. The Homebrew command follows.")
+                              table: "Updates", comment: "Update alert for a copy installed with Homebrew, offering the latest release, older than the release candidate running, after Get release candidates (a setting) was turned off; %@ is the installed version. The Homebrew command follows.")
                     + "\n\nbrew reinstall --cask autohush"
             }
             if isCandidate {
                 return String(localized: "You have version \(current). Homebrew has no release candidates: download this one from GitHub and replace AutoHush in Applications.",
-                              comment: "Update alert for a copy installed with Homebrew, offering a release candidate, a test version of the next release, which Homebrew doesn't have; %@ is the installed version. Applications is the Applications folder")
+                              table: "Updates", comment: "Update alert for a copy installed with Homebrew, offering a release candidate, a test version of the next release, which Homebrew doesn't have; %@ is the installed version. Applications is the Applications folder")
             }
             return String(localized: "You have version \(current). Update with Homebrew:",
-                          comment: "Update alert; %@ is the installed version. The Homebrew command follows.")
+                          table: "Updates", comment: "Update alert; %@ is the installed version. The Homebrew command follows.")
                 + "\n\nbrew upgrade --cask autohush"
         }
     }

@@ -12,16 +12,16 @@ enum StepState: Equatable {
         switch self {
         case .done:
             String(localized: "Completed",
-                   comment: "VoiceOver, after a step of a checklist (adding a web app, learning its controls): the step is done")
+                   table: "WebApps", comment: "VoiceOver, after a step of a checklist (adding a web app, learning its controls): the step is done")
         case .current:
             String(localized: "In progress",
-                   comment: "VoiceOver, after a step of a checklist (adding a web app, learning its controls): the step to do now")
+                   table: "WebApps", comment: "VoiceOver, after a step of a checklist (adding a web app, learning its controls): the step to do now")
         case .todo:
             String(localized: "To do",
-                   comment: "VoiceOver, after a step of a checklist (adding a web app, learning its controls): a step still to come")
+                   table: "WebApps", comment: "VoiceOver, after a step of a checklist (adding a web app, learning its controls): a step still to come")
         case .failed:
             String(localized: "Failed",
-                   comment: "VoiceOver, after a step of a checklist (learning a web app's controls): AutoHush tried the step and couldn't do it")
+                   table: "WebApps", comment: "VoiceOver, after a step of a checklist (learning a web app's controls): AutoHush tried the step and couldn't do it")
         }
     }
 }

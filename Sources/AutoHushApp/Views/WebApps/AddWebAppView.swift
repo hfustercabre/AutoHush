@@ -41,7 +41,7 @@ struct AddWebAppView: View {
     var body: some View {
         WindowPage(icon: AppIcon.safari,
                    description: Text("Paste a website that plays music, podcasts or videos. AutoHush adds it to your Dock as an app and learns its controls.",
-                                     comment: "Add a Web App window, at its top beside Safari's icon"),
+                                     tableName: "WebApps", comment: "Add a Web App window, at its top beside Safari's icon"),
                    width: Self.width) {
             NoteLabel(PlayerOption.webAppsWarning)
                 .padding(.top, 8)
@@ -63,7 +63,7 @@ struct AddWebAppView: View {
                 }
                 if model.phase == .entering {
                     Text("\(sites.name) has its own site in some countries, and you can sign in only on your account’s.",
-                         comment: "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Jukebox")
+                         tableName: "WebApps", comment: "Add a Web App window, under the address and the country row of a service with its own site in some countries; %@ is the service, e.g. Jukebox")
                         .captionStyle()
                 }
             } else {
@@ -108,7 +108,7 @@ struct AddWebAppView: View {
 
     /// Over the card of steps, here and in the learning window.
     static var stepsHeading: Text {
-        Text("Steps", comment: "Add a Web App and learning windows: the heading over the steps of adding a web app and learning its controls")
+        Text("Steps", tableName: "WebApps", comment: "Add a Web App and learning windows: the heading over the steps of adding a web app and learning its controls")
     }
 
     /// Accessibility, which adding needs, is missing while an address is typed.
@@ -121,7 +121,7 @@ struct AddWebAppView: View {
     /// Why adding waits, over the address; VoiceOver announces it too.
     private static var accessibilityNeeded: String {
         String(localized: "AutoHush needs Accessibility access to add it with Safari. Continue unlocks once it’s allowed.",
-               comment: "Add a Web App window, while the Accessibility permission is missing")
+               table: "WebApps", comment: "Add a Web App window, while the Accessibility permission is missing")
     }
 
     private var addressField: some View {
@@ -184,7 +184,7 @@ struct AddWebAppView: View {
 
     /// Over the address's card, and its field's name for VoiceOver.
     private static var addressTitle: Text {
-        Text("Address", comment: "Add a Web App window: the heading over the field for the website's address")
+        Text("Address", tableName: "WebApps", comment: "Add a Web App window: the heading over the field for the website's address")
     }
 
     private static var countryLabel: Text {
@@ -192,11 +192,11 @@ struct AddWebAppView: View {
     }
 
     private static var otherCountries: String {
-        String(localized: "Other Countries", comment: "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries: every country without a site of its own")
+        String(localized: "Other Countries", table: "WebApps", comment: "Add a Web App window, last in the pop-up of countries under the address of a service with its own site in some countries: every country without a site of its own")
     }
 
     private static var countryTitle: String {
-        String(localized: "Your account’s country", comment: "Add a Web App window: the row under the address of a service with its own site in some countries, before the pop-up of countries; the site changes with the country")
+        String(localized: "Your account’s country", table: "WebApps", comment: "Add a Web App window: the row under the address of a service with its own site in some countries, before the pop-up of countries; the site changes with the country")
     }
 
 

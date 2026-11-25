@@ -21,7 +21,7 @@ extension StatePresentation {
     static var starting: StatePresentation {
         StatePresentation(
             icon: .starting,
-            label: String(localized: "AutoHush: starting", comment: "VoiceOver label of the menu bar icon"),
+            label: String(localized: "AutoHush: starting", table: "Menu", comment: "VoiceOver label of the menu bar icon"),
             line: String(localized: "Starting…", comment: "Diagnostics: AutoHush is starting; also the status line at the top of the menu while it starts")
         )
     }
@@ -32,14 +32,14 @@ extension StatePresentation {
     static func muted(playing: [String], microphone: Bool = false, onlyMutes: Bool) -> StatePresentation {
         StatePresentation(
             icon: .pausedForApp,
-            label: String(localized: "AutoHush: your player is muted", comment: "VoiceOver label of the menu bar icon, while the media player (one that can only be muted, or one muted in place of a pause that didn't take) is muted for another app"),
+            label: String(localized: "AutoHush: your player is muted", table: "Menu", comment: "VoiceOver label of the menu bar icon, while the media player (one that can only be muted, or one muted in place of a pause that didn't take) is muted for another app"),
             line: String(localized: "Muted — \(PlaybackState.describePlaying(playing, microphone: microphone))",
-                         comment: "At the top of the menu and in Settings → General's status line, under the media player (an app added with Add an App that can only be muted, or a player muted in place of a pause that didn't take); %@ says which apps play, e.g. “Safari is playing”"),
+                         table: "Menu", comment: "At the top of the menu and in Settings → General's status line, under the media player (an app added with Add an App that can only be muted, or a player muted in place of a pause that didn't take); %@ says which apps play, e.g. “Safari is playing”"),
             help: onlyMutes
                 ? String(localized: "It can’t be paused, so it’s muted until the other apps stop.",
-                         comment: "Help tag and VoiceOver hint of the menu's status line “Muted — Safari is playing”, for a media player that can only be muted (an app added with Add an App)")
+                         table: "Menu", comment: "Help tag and VoiceOver hint of the menu's status line “Muted — Safari is playing”, for a media player that can only be muted (an app added with Add an App)")
                 : String(localized: "It played on after its pause, so it’s muted until the other apps stop.",
-                         comment: "Help tag and VoiceOver hint of the menu's status line “Muted — Safari is playing”, for a media player muted because it kept playing after AutoHush paused it")
+                         table: "Menu", comment: "Help tag and VoiceOver hint of the menu's status line “Muted — Safari is playing”, for a media player muted because it kept playing after AutoHush paused it")
         )
     }
 
@@ -48,11 +48,11 @@ extension StatePresentation {
     static var heldForCheck: StatePresentation {
         StatePresentation(
             icon: .pausedForApp,
-            label: String(localized: "AutoHush: playback paused", comment: "VoiceOver label of the menu bar icon"),
+            label: String(localized: "AutoHush: playback paused", table: "Menu", comment: "VoiceOver label of the menu bar icon"),
             line: String(localized: "Paused while a check runs",
-                         comment: "At the top of the menu, under the media player: AutoHush keeps it paused until Add an App’s check of another app ends"),
+                         table: "Menu", comment: "At the top of the menu, under the media player: AutoHush keeps it paused until Add an App’s check of another app ends"),
             help: String(localized: "Kept paused until Add an App’s check ends.",
-                         comment: "Help tag and VoiceOver hint of the menu's status line “Paused while a check runs”: AutoHush keeps the media player paused while Add an App checks another app")
+                         table: "Menu", comment: "Help tag and VoiceOver hint of the menu's status line “Paused while a check runs”: AutoHush keeps the media player paused while Add an App checks another app")
         )
     }
 
@@ -73,7 +73,7 @@ extension StatePresentation {
     /// is off.
     static func iconLabel(_ line: String) -> String {
         String(localized: "AutoHush: \(line)",
-               comment: "VoiceOver label of the menu bar icon while something needs the user, the media player is closed or Auto-Pause is off; %@ is the menu's status line, e.g. “Jukebox isn’t running”, “Choose a media player” or “Auto-Pause is off until 15:30”")
+               table: "Menu", comment: "VoiceOver label of the menu bar icon while something needs the user, the media player is closed or Auto-Pause is off; %@ is the menu's status line, e.g. “Jukebox isn’t running”, “Choose a media player” or “Auto-Pause is off until 15:30”")
     }
 }
 
@@ -88,64 +88,64 @@ extension PlaybackState {
         case .musicPlaying:
             return StatePresentation(
                 icon: .playing,
-                label: String(localized: "AutoHush: your player is playing", comment: "VoiceOver label of the menu bar icon"),
+                label: String(localized: "AutoHush: your player is playing", table: "Menu", comment: "VoiceOver label of the menu bar icon"),
                 line: Self.playingLine
             )
         case .pausedByMonitor:
             return StatePresentation(
                 icon: .pausedForApp,
-                label: String(localized: "AutoHush: playback paused", comment: "VoiceOver label of the menu bar icon"),
+                label: String(localized: "AutoHush: playback paused", table: "Menu", comment: "VoiceOver label of the menu bar icon"),
                 line: String(localized: "Paused — \(Self.describePlaying(playing, microphone: microphone))",
-                             comment: "At the top of the menu, under the media player; %@ says which apps play, e.g. “Safari is playing”")
+                             table: "Menu", comment: "At the top of the menu, under the media player; %@ says which apps play, e.g. “Safari is playing”")
             )
         case .musicIdle:
             return StatePresentation(
                 icon: .noMusic,
-                label: String(localized: "AutoHush: nothing is playing", comment: "VoiceOver label of the menu bar icon"),
+                label: String(localized: "AutoHush: nothing is playing", table: "Menu", comment: "VoiceOver label of the menu bar icon"),
                 line: Self.notPlayingLine
             )
         case .playingSilently:
             return StatePresentation(
                 icon: .noMusic,
                 label: String(localized: "AutoHush: your player is playing silently",
-                              comment: "VoiceOver label of the menu bar icon: the media player says it plays, but nothing of it is heard (a muted trailer), so AutoHush doesn't pause it"),
+                              table: "Menu", comment: "VoiceOver label of the menu bar icon: the media player says it plays, but nothing of it is heard (a muted trailer), so AutoHush doesn't pause it"),
                 line: Self.playingSilentlyLine,
                 help: String(localized: "Nothing of it is heard, so AutoHush doesn’t pause it.",
-                             comment: "Help tag and VoiceOver hint of the menu's status line “Playing silently”: the media player says it plays, but nothing of it is heard (a muted trailer)")
+                             table: "Menu", comment: "Help tag and VoiceOver hint of the menu's status line “Playing silently”: the media player says it plays, but nothing of it is heard (a muted trailer)")
             )
         case .playingElsewhere:
             return StatePresentation(
                 icon: .elsewhere,
                 label: String(localized: "AutoHush: your player is playing on another device",
-                              comment: "VoiceOver label of the menu bar icon"),
+                              table: "Menu", comment: "VoiceOver label of the menu bar icon"),
                 line: Self.playingElsewhereLine,
                 help: String(localized: "AutoHush pauses only what plays on this Mac.",
-                             comment: "Help tag and VoiceOver hint of the menu's status line “Playing on another device”: the media player plays on a speaker or another device")
+                             table: "Menu", comment: "Help tag and VoiceOver hint of the menu's status line “Playing on another device”: the media player plays on a speaker or another device")
             )
         case .pauseFailed:
             return .needingAttention(String(localized: "Couldn’t pause — \(Self.describePlaying(playing, microphone: microphone))",
-                                            comment: "At the top of the menu, under the media player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”"))
+                                            table: "Menu", comment: "At the top of the menu, under the media player, when it refused to pause or failed to; %@ says which apps play, e.g. “Safari is playing”"))
         }
     }
 
     /// The player's state in its words, the same at the top of the menu,
     /// in Settings → General's status line and in Diagnostics.
     static var playingLine: String {
-        String(localized: "Playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
+        String(localized: "Playing", table: "Menu", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it's playing; and under an app that plays now in the Add an App window's list")
     }
 
     static var notPlayingLine: String {
-        String(localized: "Not playing", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: nothing plays")
+        String(localized: "Not playing", table: "Menu", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: nothing plays")
     }
 
     static var playingSilentlyLine: String {
         String(localized: "Playing silently",
-               comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it")
+               table: "Menu", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player: it says it plays, but nothing of it is heard (a muted trailer or preview), so AutoHush doesn't pause it")
     }
 
     static var playingElsewhereLine: String {
         String(localized: "Playing on another device",
-               comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player, e.g. on a speaker or a phone it streams to")
+               table: "Menu", comment: "At the top of the menu, in Settings → General's status line and in Diagnostics, under the media player, e.g. on a speaker or a phone it streams to")
     }
 
     /// "Safari is playing", "Safari and FaceTime are playing", "Safari and 2 other apps are playing";
@@ -154,18 +154,18 @@ extension PlaybackState {
     static func describePlaying(_ names: [String], microphone: Bool = false) -> String {
         switch names.count {
         case 0:
-            return String(localized: "another app is playing", comment: "Completes “Paused — %@”")
+            return String(localized: "another app is playing", table: "Menu", comment: "Completes “Paused — %@”")
         case 1 where microphone:
             return String(localized: "\(names[0]) is using the microphone",
-                          comment: "Completes “Paused — %@”, when an app with its microphone on (a call) paused your player before playing any sound (Settings → Behavior → Pause for the microphone); %@ is the app")
+                          table: "Menu", comment: "Completes “Paused — %@”, when an app with its microphone on (a call) paused your player before playing any sound (Settings → Behavior → Pause for the microphone); %@ is the app")
         case 1:
-            return String(localized: "\(names[0]) is playing", comment: "Completes “Paused — %@”; %@ is an app")
+            return String(localized: "\(names[0]) is playing", table: "Menu", comment: "Completes “Paused — %@”; %@ is an app")
         case 2:
             return String(localized: "\(names[0]) and \(names[1]) are playing",
-                          comment: "Completes “Paused — %@”; two apps")
+                          table: "Menu", comment: "Completes “Paused — %@”; two apps")
         default:
             return String(localized: "\(names[0]) and \(names.count - 1) other apps are playing",
-                          comment: "Completes “Paused — %@”; an app, then how many others (2 or more)")
+                          table: "Menu", comment: "Completes “Paused — %@”; an app, then how many others (2 or more)")
         }
     }
 }

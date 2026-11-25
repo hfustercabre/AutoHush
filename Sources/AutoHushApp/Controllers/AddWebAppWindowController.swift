@@ -16,7 +16,7 @@ final class AddWebAppWindowController: HostedWindowController, AddWebAppPresenti
         let hosting = Self.sizedToFit(AddWebAppView(model: model, settings: settings, close: close.call).windowKeys(keys))
         // Floating: Safari, then the web app, come in front meanwhile.
         super.init(content: hosting,
-                   title: String(localized: "Add a Web App", comment: "Title of the window that makes a website a Safari web app, in its title bar"),
+                   title: String(localized: "Add a Web App", table: "WebApps", comment: "Title of the window that makes a website a Safari web app, in its title bar"),
                    floatsInCorner: true, keys: keys)
         window?.delegate = self
         close.action = { [weak self] in self?.close() }

@@ -22,38 +22,38 @@ enum SettingsPage: CaseIterable, Hashable {
         let pages: [SettingsPage]
 
         static var everydayTitle: String {
-            String(localized: "Everyday", comment: "Settings' sidebar: the name over the pages most people use (General, Media Player, Sound Sources, Behavior)")
+            String(localized: "Everyday", table: "Settings", comment: "Settings' sidebar: the name over the pages most people use (General, Media Player, Sound Sources, Behavior)")
         }
 
         static var everydayNote: String {
-            String(localized: "What most people change", comment: "Settings' sidebar, under “Everyday”: what its pages are for")
+            String(localized: "What most people change", table: "Settings", comment: "Settings' sidebar, under “Everyday”: what its pages are for")
         }
 
         static var advancedTitle: String {
-            String(localized: "Advanced", comment: "Settings' sidebar: the name over Fine-Tuning and Diagnostics, for people who want to adjust more or look closer")
+            String(localized: "Advanced", table: "Settings", comment: "Settings' sidebar: the name over Fine-Tuning and Diagnostics, for people who want to adjust more or look closer")
         }
 
         static var advancedNote: String {
-            String(localized: "Fine-tuning and checks", comment: "Settings' sidebar, under “Advanced”: what its pages are for (Fine-Tuning's settings, Diagnostics' checks)")
+            String(localized: "Fine-tuning and checks", table: "Settings", comment: "Settings' sidebar, under “Advanced”: what its pages are for (Fine-Tuning's settings, Diagnostics' checks)")
         }
     }
 
     var title: String {
         switch self {
         case .general:
-            String(localized: "General", comment: "Settings: a page in the sidebar")
+            String(localized: "General", table: "Settings", comment: "Settings: a page in the sidebar")
         case .mediaPlayer:
             PlayerOption.mediaPlayerHeading
         case .soundSources:
-            String(localized: "Sound Sources", comment: "Settings: a page in the sidebar: the apps heard playing sound, each switched to pause your player or be ignored (keep it short, about 16 characters)")
+            String(localized: "Sound Sources", table: "Settings", comment: "Settings: a page in the sidebar: the apps heard playing sound, each switched to pause your player or be ignored (keep it short, about 16 characters)")
         case .behavior:
-            String(localized: "Behavior", comment: "Settings: a page in the sidebar: the switches for when your player pauses and resumes, the fades, the volume and AntiDot mode (keep it short, about 16 characters)")
+            String(localized: "Behavior", table: "Settings", comment: "Settings: a page in the sidebar: the switches for when your player pauses and resumes, the fades, the volume and AntiDot mode (keep it short, about 16 characters)")
         case .fineTuning:
-            String(localized: "Fine-Tuning", comment: "Settings: a page in the sidebar, under Advanced: the timings, fade lengths, volume limits and detection that Behavior's switches use (keep it short, about 16 characters)")
+            String(localized: "Fine-Tuning", table: "Settings", comment: "Settings: a page in the sidebar, under Advanced: the timings, fade lengths, volume limits and detection that Behavior's switches use (keep it short, about 16 characters)")
         case .diagnostics:
-            String(localized: "Diagnostics", comment: "Settings: a page in the sidebar: what AutoHush sees right now")
+            String(localized: "Diagnostics", table: "Settings", comment: "Settings: a page in the sidebar: what AutoHush sees right now")
         case .about:
-            String(localized: "About", comment: "Menu: button at the bottom; shows About AutoHush")
+            String(localized: "About", table: "Settings", comment: "Menu: button at the bottom; shows About AutoHush")
         }
     }
 

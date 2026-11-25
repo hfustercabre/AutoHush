@@ -37,7 +37,7 @@ struct AppStatus: Equatable {
         var settingsNote: String? {
             guard case .snoozed(let until) = self else { return nil }
             return String(localized: "Turned off \(until).",
-                          comment: "Settings → General, under the Auto-Pause switch; %@ says until when, e.g. “until 15:30”")
+                          table: "Menu", comment: "Settings → General, under the Auto-Pause switch; %@ says until when, e.g. “until 15:30”")
         }
     }
 
@@ -129,15 +129,15 @@ struct AppStatus: Equatable {
         }
         if showsResumeFailure, let resumeError {
             return (String(localized: "Couldn’t Resume \(playerName)",
-                           comment: "Title of the alert that says why AutoHush couldn't resume the media player (it didn't answer, or its play failed); %@ is the player"),
+                           table: "Menu", comment: "Title of the alert that says why AutoHush couldn't resume the media player (it didn't answer, or its play failed); %@ is the player"),
                     message(resumeError))
         }
         guard let controlError else { return nil }
         let title = alertSituation == .pauseFailed
             ? String(localized: "Couldn’t Pause \(playerName)",
-                     comment: "Title of the alert that says why the media player refused to pause or failed to; %@ is the player")
+                     table: "Menu", comment: "Title of the alert that says why the media player refused to pause or failed to; %@ is the player")
             : String(localized: "Can’t Control \(playerName)",
-                     comment: "Title of the alert that says why the media player can't be controlled; %@ is the player")
+                     table: "Menu", comment: "Title of the alert that says why the media player can't be controlled; %@ is the player")
         return (title, message(controlError))
     }
 
@@ -257,34 +257,34 @@ struct AppStatus: Equatable {
     /// The status line once a resume was given up.
     static func resumeFailedLine(_ player: String) -> String {
         String(localized: "Couldn’t resume — \(player) didn’t answer",
-               comment: "Status line at the top of the menu (orange, with an info button and Try Again under it) and on Settings → General's player card: AutoHush tried to resume the media player once the other apps stopped, and it didn't answer (or its play failed); %@ is the player")
+               table: "Menu", comment: "Status line at the top of the menu (orange, with an info button and Try Again under it) and on Settings → General's player card: AutoHush tried to resume the media player once the other apps stopped, and it didn't answer (or its play failed); %@ is the player")
     }
 
     /// The status line while the chosen player's controls aren't learned
     /// (`controlsNotLearned`).
     static var controlsNotLearnedLine: String {
         String(localized: "Controls not learned",
-               comment: "Status line at the top of the menu (orange, with “Learn Controls…” under it) and on Settings → General's player card: AutoHush hasn't learned the chosen web app's controls (its Play/Pause button), so it can't pause it; the line goes under the web app's name")
+               table: "Menu", comment: "Status line at the top of the menu (orange, with “Learn Controls…” under it) and on Settings → General's player card: AutoHush hasn't learned the chosen web app's controls (its Play/Pause button), so it can't pause it; the line goes under the web app's name")
     }
 
     /// The status line while the player needs reopening.
     static func needsReopenLine(_ player: String) -> String {
         String(localized: "\(player) needs reopening",
-               comment: "Status line: the media player (an app added through a check) was opened without an option it needs, so AutoHush can pause it only while its window can be seen; a button under it reopens it; %@ is the player")
+               table: "Menu", comment: "Status line: the media player (an app added through a check) was opened without an option it needs, so AutoHush can pause it only while its window can be seen; a button under it reopens it; %@ is the player")
     }
 
     /// The chip under `needsReopenLine` in the menu's card and on Settings →
     /// General's player card: the line names the player, so it doesn't.
     static var reopenPlayerTitle: String {
         String(localized: "Reopen",
-               comment: "Button in the menu's card and on Settings → General's player card, under the status line that says the media player needs reopening (“Jukebox needs reopening”): quits it (an app added with Add an App) and opens it again with the option it needs")
+               table: "Menu", comment: "Button in the menu's card and on Settings → General's player card, under the status line that says the media player needs reopening (“Jukebox needs reopening”): quits it (an app added with Add an App) and opens it again with the option it needs")
     }
 
     /// The chip under the status line in the menu's card and on Settings →
     /// General's player card while the player is muted (`offersUnmute`).
     static var unmuteTitle: String {
         String(localized: "Unmute",
-               comment: "Button in the menu's card and on Settings → General's player card, under the status line, while the media player (one that can only be muted) is muted for another app: it's heard again until the other apps stop")
+               table: "Menu", comment: "Button in the menu's card and on Settings → General's player card, under the status line, while the media player (one that can only be muted) is muted for another app: it's heard again until the other apps stop")
     }
 
     /// The card's title at the top of the menu: the chosen player, or
@@ -321,7 +321,7 @@ struct AppStatus: Equatable {
     /// icon's and the menu's Updates button while an update waits.
     static func withUpdate(_ label: String) -> String {
         String(localized: "\(label), update available",
-               comment: "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Jukebox isn’t running” or “Updates”")
+               table: "Menu", comment: "VoiceOver label of the menu bar icon, and of the menu's Updates button, while an update waits; %@ is its usual label, e.g. “AutoHush: Jukebox isn’t running” or “Updates”")
     }
 
     /// The menu bar icon is dimmed, and slashed, while auto-pause is off and
@@ -345,10 +345,10 @@ struct AppStatus: Equatable {
     var autoPauseLine: String? {
         switch autoPause {
         case .off:
-            String(localized: "Auto-Pause is off", comment: "Status line at the top of the menu")
+            String(localized: "Auto-Pause is off", table: "Menu", comment: "Status line at the top of the menu")
         case .snoozed(let until):
             String(localized: "Auto-Pause is off \(until)",
-                   comment: "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”")
+                   table: "Menu", comment: "Status line at the top of the menu; %@ says until when, e.g. “until 15:30”")
         case .on:
             nil
         }

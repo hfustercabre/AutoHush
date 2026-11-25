@@ -26,13 +26,13 @@ extension AppHealthState {
     /// Waiting for the user to choose a player. Every Mac has some installed:
     /// macOS itself comes with supported ones.
     static var waitingForPlayer: AppHealthState {
-        .needsPlayer(String(localized: "Choose a media player", comment: "Status line: no media player chosen yet"))
+        .needsPlayer(String(localized: "Choose a media player", table: "Menu", comment: "Status line: no media player chosen yet"))
     }
 
     /// The chosen media player is no longer installed.
     static func playerNotInstalled(_ playerName: String) -> AppHealthState {
         .degraded(String(localized: "\(playerName) isn’t installed",
-                         comment: "Status line; %@ is the media player"))
+                         table: "Menu", comment: "Status line; %@ is the media player"))
     }
 
     /// The health shown when the startup check against the media player fails.
@@ -44,10 +44,10 @@ extension AppHealthState {
             self = .needsPermission(.accessibility(player: playerName))
         case .playerNotRunning:
             self = .playerClosed(String(localized: "\(playerName) isn’t running",
-                                    comment: "Status line; %@ is the media player"))
+                                    table: "Menu", comment: "Status line; %@ is the media player"))
         case .playerNotResponding:
             self = .retrying(String(localized: "\(playerName) isn’t responding",
-                                    comment: "Status line; %@ is the media player"))
+                                    table: "Menu", comment: "Status line; %@ is the media player"))
         case .playerCommandFailed, .stillLearning: // stillLearning: never at startup, learning happens while it runs
             self = .retrying(Self.cantControl(playerName))
         case nil:
@@ -59,6 +59,6 @@ extension AppHealthState {
     /// shows why under it (`AppStatus.controlError`).
     static func cantControl(_ playerName: String) -> String {
         String(localized: "Can’t control \(playerName) right now",
-               comment: "Status line when the media player couldn't be controlled; an info symbol after it opens an alert that says why; %@ is the media player")
+               table: "Menu", comment: "Status line when the media player couldn't be controlled; an info symbol after it opens an alert that says why; %@ is the media player")
     }
 }

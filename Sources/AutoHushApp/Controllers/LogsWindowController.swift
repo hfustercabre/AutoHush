@@ -60,7 +60,7 @@ final class LogsWindowController: PlacedWindowController, NSWindowDelegate {
 
     static var title: String {
         String(localized: "AutoHush Logs",
-               comment: "Title of the window that shows what AutoHush logged (opened from Settings → Diagnostics), and the name of the file its Save… writes")
+               table: "Logs", comment: "Title of the window that shows what AutoHush logged (opened from Settings → Diagnostics), and the name of the file its Save… writes")
     }
 
     func show() {

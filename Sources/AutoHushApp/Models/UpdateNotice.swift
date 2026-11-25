@@ -54,16 +54,16 @@ enum UpdateNotice: Equatable, Sendable {
         switch self {
         case .available:
             return String(localized: "AutoHush \(version) is available",
-                          comment: "Notification title; %@ is the new version")
+                          table: "Updates", comment: "Notification title; %@ is the new version")
         case .downloaded:
             return String(localized: "AutoHush \(version) is ready to install",
-                          comment: "Notification title; %@ is the new version, already downloaded")
+                          table: "Updates", comment: "Notification title; %@ is the new version, already downloaded")
         case .installed:
             return String(localized: "AutoHush was updated to \(version)",
-                          comment: "Notification title after an update; %@ is the version now running")
+                          table: "Updates", comment: "Notification title after an update; %@ is the version now running")
         case .installFailed:
             return String(localized: "Couldn’t update AutoHush to \(version)",
-                          comment: "Notification title; %@ is the version that failed to install")
+                          table: "Updates", comment: "Notification title; %@ is the version that failed to install")
         }
     }
 
@@ -71,15 +71,15 @@ enum UpdateNotice: Equatable, Sendable {
         switch self {
         case .available(_, let running):
             return String(localized: "You’re running \(running.description). Click to see what’s new and install it.",
-                          comment: "Notification text; %@ is the installed version")
+                          table: "Updates", comment: "Notification text; %@ is the installed version")
         case .downloaded:
             return String(localized: "It’s downloaded. Click to see what’s new and install it.",
-                          comment: "Notification text for a downloaded update")
+                          table: "Updates", comment: "Notification text for a downloaded update")
         case .installed:
-            return String(localized: "Click to see what’s new.", comment: "Notification text after an update")
+            return String(localized: "Click to see what’s new.", table: "Updates", comment: "Notification text after an update")
         case .installFailed:
             return String(localized: "Click to try again, or to download it yourself.",
-                          comment: "Notification text after an update failed to install")
+                          table: "Updates", comment: "Notification text after an update failed to install")
         }
     }
 }

@@ -12,18 +12,18 @@ enum StepButton: Equatable, Sendable {
         switch self {
         case .itsPlaying:
             String(localized: "It’s Playing",
-                   comment: "Button under the step “Play something in %@” while AutoHush learns a web app's controls: what the user chose plays now, not an ad")
+                   table: "WebApps", comment: "Button under the step “Play something in %@” while AutoHush learns a web app's controls: what the user chose plays now, not an ad")
         case .itsPaused:
             String(localized: "It’s Paused",
-                   comment: "Button under the step “Pause it yourself” while AutoHush learns a web app's controls: the user has paused it")
+                   table: "WebApps", comment: "Button under the step “Pause it yourself” while AutoHush learns a web app's controls: the user has paused it")
         case .tryAgain:
             TryAgainText.title
         case .pauseManually:
             String(localized: "Pause It Yourself",
-                   comment: "Button under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself: the user pauses it instead (a step “Pause it yourself” follows)")
+                   table: "WebApps", comment: "Button under the step “Let AutoHush pause it” once AutoHush couldn't pause the web app itself: the user pauses it instead (a step “Pause it yourself” follows)")
         case .addToDock:
             String(localized: "Add to Dock",
-                   comment: "Add a Web App window, under the step “Add it to the Dock”: adds the website shown in Safari as a web app (Safari's own menu item is called “Add to Dock…”)")
+                   table: "WebApps", comment: "Add a Web App window, under the step “Add it to the Dock”: adds the website shown in Safari as a web app (Safari's own menu item is called “Add to Dock…”)")
         }
     }
 }

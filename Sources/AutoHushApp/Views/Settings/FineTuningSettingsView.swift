@@ -141,14 +141,14 @@ struct FineTuningSettingsView: View {
     }
 
     static var timingTitle: Text {
-        Text("Timing", comment: "Settings → Fine-Tuning: heading over how long another app must play before your player pauses, and be quiet before it resumes")
+        Text("Timing", tableName: "Settings", comment: "Settings → Fine-Tuning: heading over how long another app must play before your player pauses, and be quiet before it resumes")
     }
 
     static var fadeLengthsTitle: Text {
-        Text("Fade Lengths", comment: "Settings → Fine-Tuning: heading over how long playback fades out and back in")
+        Text("Fade Lengths", tableName: "Settings", comment: "Settings → Fine-Tuning: heading over how long playback fades out and back in")
     }
 
     static var volumeLimitsTitle: Text {
-        Text("Volume Limits", comment: "Settings → Fine-Tuning: heading over Level the volume's limits (how much it lowers the Mac's volume at most, and from how much quieter on)")
+        Text("Volume Limits", tableName: "Settings", comment: "Settings → Fine-Tuning: heading over Level the volume's limits (how much it lowers the Mac's volume at most, and from how much quieter on)")
     }
 }

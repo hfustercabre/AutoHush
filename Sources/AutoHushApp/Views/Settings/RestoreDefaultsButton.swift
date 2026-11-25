@@ -54,10 +54,10 @@ struct RestoreDefaultsButton: View {
     /// The button's name for VoiceOver: with the card's title.
     private var accessibilityName: Text {
         guard let cardTitle else { return Self.title }
-        return Text("Restore Defaults, \(cardTitle)", comment: "VoiceOver: the Restore Defaults button under a Settings card, named with the card it sets back; %@ is the card's title, e.g. Pausing")
+        return Text("Restore Defaults, \(cardTitle)", tableName: "Settings", comment: "VoiceOver: the Restore Defaults button under a Settings card, named with the card it sets back; %@ is the card's title, e.g. Pausing")
     }
 
     static var restoredAnnouncement: String {
-        String(localized: "Restored", comment: "VoiceOver, after Restore Defaults under a Settings card: the card's settings are back to their defaults")
+        String(localized: "Restored", table: "Settings", comment: "VoiceOver, after Restore Defaults under a Settings card: the card's settings are back to their defaults")
     }
 }

@@ -12,8 +12,8 @@ struct PlayingAppsView: View {
 
     private var title: Text {
         switch kind {
-        case .playingNow: Text("Playing Now", comment: "Menu: heading of the apps playing sound right now")
-        case .recentlyPlayed: Text("Recently Played", comment: "Menu: heading of the apps that played sound in the last 30 minutes, under Playing Now")
+        case .playingNow: Text("Playing Now", tableName: "Menu", comment: "Menu: heading of the apps playing sound right now")
+        case .recentlyPlayed: Text("Recently Played", tableName: "Menu", comment: "Menu: heading of the apps that played sound in the last 30 minutes, under Playing Now")
         }
     }
 

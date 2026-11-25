@@ -115,13 +115,13 @@ struct PlayerOption: Equatable, Identifiable {
     func spokenName(among options: [PlayerOption]) -> String {
         if kind == .checkedApp, let browserName {
             return String(localized: "\(name), \(browserName) web app",
-                          comment: "VoiceOver, where media players are offered: an app added with Add an App that's a web app made by Chrome or another Chromium browser (its icon carries the browser's); the first %@ is its name, the second the browser, e.g. Google Chrome")
+                          table: "Players", comment: "VoiceOver, where media players are offered: an app added with Add an App that's a web app made by Chrome or another Chromium browser (its icon carries the browser's); the first %@ is its name, the second the browser, e.g. Google Chrome")
         }
         guard kind == .safariWebApp,
               options.contains(where: { $0.kind != .safariWebApp && $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame })
         else { return name }
         return String(localized: "\(name), Safari web app",
-                      comment: "VoiceOver, where media players are offered: a Safari web app whose name is also an app's, told apart from it; %@ is its name")
+                      table: "Players", comment: "VoiceOver, where media players are offered: a Safari web app whose name is also an app's, told apart from it; %@ is its name")
     }
 
     /// A download arrow in a circle, about as big as an app icon's artwork,

@@ -9,47 +9,47 @@ import CheckedPlayers
 enum BackupText {
     static var uses: String {
         String(localized: "Use backup controls",
-               comment: "Switch in Settings → Fine-Tuning (the player's card) and Add an App's last step, and a row in Settings → Diagnostics: when the player's main control fails, AutoHush tries its other ways to pause and play it (its menu, its page, the keyboard's Play/Pause key, the menu bar's Now Playing panel)")
+               table: "Settings", comment: "Switch in Settings → Fine-Tuning (the player's card) and Add an App's last step, and a row in Settings → Diagnostics: when the player's main control fails, AutoHush tries its other ways to pause and play it (its menu, its page, the keyboard's Play/Pause key, the menu bar's Now Playing panel)")
     }
     static var usesSubtitle: String {
         String(localized: "Tries another one when one fails",
-               comment: "Under the switch “Use backup controls”: AutoHush tries another of the player's controls when one fails to pause or play it")
+               table: "Settings", comment: "Under the switch “Use backup controls”: AutoHush tries another of the player's controls when one fails to pause or play it")
     }
     static var panelWhileMuted: String {
         String(localized: "Use the Now Playing panel while muted",
-               comment: "Switch under “Use backup controls”, and a row in Settings → Diagnostics: while AutoHush mutes the player because it didn't pause, it may also press its row in the menu bar's Now Playing panel, once")
+               table: "Settings", comment: "Switch under “Use backup controls”, and a row in Settings → Diagnostics: while AutoHush mutes the player because it didn't pause, it may also press its row in the menu bar's Now Playing panel, once")
     }
     static var panelSubtitle: String {
         String(localized: "Opens on screen for a moment",
-               comment: "Under the switch “Use the Now Playing panel while muted”: the Now Playing panel shows on screen briefly when it's pressed")
+               table: "Settings", comment: "Under the switch “Use the Now Playing panel while muted”: the Now Playing panel shows on screen briefly when it's pressed")
     }
     static var off: String {
         String(localized: "Use backup controls is off",
-               comment: "Settings → Fine-Tuning, the player's card: note under the dimmed “Use the Now Playing panel while muted” while the switch above it is off")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card: note under the dimmed “Use the Now Playing panel while muted” while the switch above it is off")
     }
     static func checkAgain(_ app: String) -> String {
         String(localized: "Check \(app) again to use backup controls.",
-               comment: "Settings → Fine-Tuning, the player's card: note for an app added with Add an App before backup controls were kept; a check gives it some. %@ is the app's name")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card: note for an app added with Add an App before backup controls were kept; a check gives it some. %@ is the app's name")
     }
     static var details: String {
         String(localized: "Details…",
-               comment: "Button in Settings → Fine-Tuning, the player's card: opens the list of the player's main control and backup controls, and how each works")
+               table: "Settings", comment: "Button in Settings → Fine-Tuning, the player's card: opens the list of the player's main control and backup controls, and how each works")
     }
     static var mainControl: String {
         String(localized: "Main Control",
-               comment: "Heading in the controls' Details sheet: the way AutoHush pauses and plays the player first")
+               table: "Settings", comment: "Heading in the controls' Details sheet: the way AutoHush pauses and plays the player first")
     }
     static var backupControls: String {
         String(localized: "Backup Controls",
-               comment: "Heading in the controls' Details sheet: the player's other ways to pause and play it, tried when the main one fails")
+               table: "Settings", comment: "Heading in the controls' Details sheet: the player's other ways to pause and play it, tried when the main one fails")
     }
     static var key: String {
         String(localized: "The Play/Pause key",
-               comment: "A backup control: the keyboard's Play/Pause key (the controls' Details sheet, Settings → Diagnostics under “Controlled by”)")
+               table: "Settings", comment: "A backup control: the keyboard's Play/Pause key (the controls' Details sheet, Settings → Diagnostics under “Controlled by”)")
     }
     static func keyNote(_ app: String) -> String {
         String(localized: "Only while \(app) is Now Playing",
-               comment: "The controls' Details sheet, under “The Play/Pause key”: AutoHush presses it only while macOS counts the player as Now Playing. %@ is the player's name")
+               table: "Settings", comment: "The controls' Details sheet, under “The Play/Pause key”: AutoHush presses it only while macOS counts the player as Now Playing. %@ is the player's name")
     }
 
     // MARK: - Settings → Fine-Tuning's card, and Media Player's row to it
@@ -58,7 +58,7 @@ enum BackupText {
     /// one, or its one control, read only.
     static var mainControlRow: String {
         String(localized: "Main control",
-               comment: "Settings → Fine-Tuning, the player's card: title of its first row, beside a pop-up of the controls AutoHush can pause and play the player by first (or beside its only one)")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card: title of its first row, beside a pop-up of the controls AutoHush can pause and play the player by first (or beside its only one)")
     }
     /// An item of the pop-up: a control, with how its check found it in
     /// words (VO7b, the a11y audit's VO7, the user's pick, 2026-11-06: the
@@ -67,12 +67,12 @@ enum BackupText {
         // A key of its own: "%@ (%@)" also serves Diagnostics' texts, which a
         // language may word apart (the 2026-11-06 full check's B-9).
         String(localized: "fineTuning.controlFound", defaultValue: "\(control) (\(result))",
-               comment: "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, a control and how the check found it. %1$@ is the control (AppleScript, Its playback menu…), %2$@ is “works”, “works in some states”, “didn’t work” or “not tried”")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, a control and how the check found it. %1$@ is the control (AppleScript, Its playback menu…), %2$@ is “works”, “works in some states”, “didn’t work” or “not tried”")
     }
     /// The same for the control AutoHush recommends.
     static func recommended(_ control: String, _ result: String) -> String {
         String(localized: "\(control) (Recommended, \(result))",
-               comment: "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, the control AutoHush recommends (the player's own, or the one chosen in Add an App) and how the check found it. %1$@ is the control (AppleScript, Its playback menu…), %2$@ is “works”, “works in some states”, “didn’t work” or “not tried”")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card: an item of the “Main control” pop-up, the control AutoHush recommends (the player's own, or the one chosen in Add an App) and how the check found it. %1$@ is the control (AppleScript, Its playback menu…), %2$@ is “works”, “works in some states”, “didn’t work” or “not tried”")
     }
     /// How a check found a control, in the pop-up's items (VO7b).
     static func result(_ mark: CheckResult.Mark) -> String {
@@ -85,25 +85,25 @@ enum BackupText {
     }
     static var works: String {
         String(localized: "works",
-               comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up (“AppleScript (Recommended, works)”): the check found it pauses and plays the player in every window state. Lowercase, as a part of a list")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up (“AppleScript (Recommended, works)”): the check found it pauses and plays the player in every window state. Lowercase, as a part of a list")
     }
     static var worksInSomeStates: String {
         String(localized: "works in some states",
-               comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up (“Its page’s Play/Pause (works in some states)”): the check found it pauses and plays the player in some window states only (not with its window minimized or hidden, say). Lowercase, as a part of a list")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up (“Its page’s Play/Pause (works in some states)”): the check found it pauses and plays the player in some window states only (not with its window minimized or hidden, say). Lowercase, as a part of a list")
     }
     static var didNotWork: String {
         String(localized: "didn’t work",
-               comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up: the check tried it and it didn't pause and play the player. Lowercase, as a part of a list")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up: the check tried it and it didn't pause and play the player. Lowercase, as a part of a list")
     }
     static var notTried: String {
         String(localized: "not tried",
-               comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up: no check tried it (a built-in player's own control, or one kept from before checks tried it). Lowercase, as a part of a list")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card, in brackets after a control in the “Main control” pop-up: no check tried it (a built-in player's own control, or one kept from before checks tried it). Lowercase, as a part of a list")
     }
     /// An item of the pop-up, dimmed: a control that can be the main one
     /// once AutoHush has learned it (a built-in player's page, 2026-11-05).
     static func notLearnedYet(_ control: String) -> String {
         String(localized: "\(control) (not learned yet)",
-               comment: "Settings → Fine-Tuning, the player's card: a dimmed item of the “Main control” pop-up, a control that can't be chosen until AutoHush has learned its Play/Pause button (it learns it the first time it pauses the player another way). %@ is the control (Its page’s Play/Pause)")
+               table: "Settings", comment: "Settings → Fine-Tuning, the player's card: a dimmed item of the “Main control” pop-up, a control that can't be chosen until AutoHush has learned its Play/Pause button (it learns it the first time it pauses the player another way). %@ is the control (Its page’s Play/Pause)")
     }
     /// A pop-up item's title: the control's name and, in brackets, how its
     /// check found it ("AppleScript (Recommended, works)", "Its playback
@@ -121,11 +121,11 @@ enum BackupText {
     static var controls: String { LearnText.controlsTitle }
     static var backupsOn: String {
         String(localized: "backups on",
-               comment: "Settings → Media Player, the “Controls” row's value after the main control's name (“AppleScript · backups on”): the switch “Use backup controls” is on. Lowercase, as a part of a list")
+               table: "Settings", comment: "Settings → Media Player, the “Controls” row's value after the main control's name (“AppleScript · backups on”): the switch “Use backup controls” is on. Lowercase, as a part of a list")
     }
     static var backupsOff: String {
         String(localized: "backups off",
-               comment: "Settings → Media Player, the “Controls” row's value after the main control's name (“AppleScript · backups off”): the switch “Use backup controls” is off. Lowercase, as a part of a list")
+               table: "Settings", comment: "Settings → Media Player, the “Controls” row's value after the main control's name (“AppleScript · backups off”): the switch “Use backup controls” is off. Lowercase, as a part of a list")
     }
     /// The menu, under its "Allow … Access…" row while backups stand in:
     /// also how else that ends, another main control (W-4, the release
@@ -133,15 +133,15 @@ enum BackupText {
     static var standingIn: String {
         let page = SettingsPage.fineTuning.title
         return String(localized: "Its backup controls are used until then, or until you choose another main control in \(page).",
-                      comment: "The menu, under “Allow <player> Automation Access…” (or Accessibility): the player's own way to be controlled isn't allowed, so AutoHush pauses and plays it by its other ways (backup controls) until it's allowed, or until the user picks another “Main control” (the pop-up in Settings → Fine-Tuning's player card). %@ is that Settings page, “Fine-Tuning”")
+                      table: "Settings", comment: "The menu, under “Allow <player> Automation Access…” (or Accessibility): the player's own way to be controlled isn't allowed, so AutoHush pauses and plays it by its other ways (backup controls) until it's allowed, or until the user picks another “Main control” (the pop-up in Settings → Fine-Tuning's player card). %@ is that Settings page, “Fine-Tuning”")
     }
     static var panelOn: String {
         String(localized: "panel while muted on",
-               comment: "Settings → Media Player, the “Controls” row's value, last (“AppleScript · backups on · panel while muted on”): the switch “Use the Now Playing panel while muted” is on. Lowercase, as a part of a list")
+               table: "Settings", comment: "Settings → Media Player, the “Controls” row's value, last (“AppleScript · backups on · panel while muted on”): the switch “Use the Now Playing panel while muted” is on. Lowercase, as a part of a list")
     }
     static var panelOff: String {
         String(localized: "panel while muted off",
-               comment: "Settings → Media Player, the “Controls” row's value, last (“AppleScript · backups on · panel while muted off”): the switch “Use the Now Playing panel while muted” is off. Lowercase, as a part of a list")
+               table: "Settings", comment: "Settings → Media Player, the “Controls” row's value, last (“AppleScript · backups on · panel while muted off”): the switch “Use the Now Playing panel while muted” is off. Lowercase, as a part of a list")
     }
 
     /// Media Player's Controls row's value (F5, the user's pick,
@@ -161,26 +161,26 @@ enum BackupText {
 
     static func backup(_ control: String) -> String {
         String(localized: "\(control) (backup)",
-               comment: "Settings → Diagnostics, under “Controlled by”: one of the player's backup controls. %@ is the control (Its playback menu…)")
+               table: "Settings", comment: "Settings → Diagnostics, under “Controlled by”: one of the player's backup controls. %@ is the control (Its playback menu…)")
     }
     static func marked(_ control: String, _ mark: String) -> String {
         String(localized: "diagnostics.controlMarked", defaultValue: "\(control) (\(mark))",
-               comment: "Settings → Diagnostics, under “Controlled by”: the player's main control, and when it was last used. %1$@ is the control (AppleScript…), %2$@ is “paused last”, “played last” or “paused and played last”")
+               table: "Settings", comment: "Settings → Diagnostics, under “Controlled by”: the player's main control, and when it was last used. %1$@ is the control (AppleScript…), %2$@ is “paused last”, “played last” or “paused and played last”")
     }
     static func backupMarked(_ control: String, _ mark: String) -> String {
         String(localized: "\(control) (backup, \(mark))",
-               comment: "Settings → Diagnostics, under “Controlled by”: a backup control, and when it was last used. %1$@ is the control (Its playback menu…), %2$@ is “paused last”, “played last” or “paused and played last”")
+               table: "Settings", comment: "Settings → Diagnostics, under “Controlled by”: a backup control, and when it was last used. %1$@ is the control (Its playback menu…), %2$@ is “paused last”, “played last” or “paused and played last”")
     }
     static var pausedLast: String {
         String(localized: "paused last",
-               comment: "Settings → Diagnostics, under “Controlled by”, in brackets after a control: it paused the player last")
+               table: "Settings", comment: "Settings → Diagnostics, under “Controlled by”, in brackets after a control: it paused the player last")
     }
     static var playedLast: String {
         String(localized: "played last",
-               comment: "Settings → Diagnostics, under “Controlled by”, in brackets after a control: it played the player last")
+               table: "Settings", comment: "Settings → Diagnostics, under “Controlled by”, in brackets after a control: it played the player last")
     }
     static var pausedAndPlayedLast: String {
         String(localized: "paused and played last",
-               comment: "Settings → Diagnostics, under “Controlled by”, in brackets after a control: it paused and played the player last")
+               table: "Settings", comment: "Settings → Diagnostics, under “Controlled by”, in brackets after a control: it paused and played the player last")
     }
 }

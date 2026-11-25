@@ -17,7 +17,7 @@ extension AddWebAppView {
                            remaining: TimeInterval? = nil, note: LearningNote? = nil,
                            pauseMode: LearningPauseMode = .automatic, locked: Bool = false)
         -> (adding: [ChecklistStep], learning: [ChecklistStep]) {
-        let check = ChecklistStep(title: String(localized: "Check the address", comment: "Add a Web App window: a step"),
+        let check = ChecklistStep(title: String(localized: "Check the address", table: "WebApps", comment: "Add a Web App window: a step"),
                                   state: phase == .checking ? .current : .done)
         let opened = ChecklistStep(title: openStep, state: .done)
         let answered = siteAsked ? [ChecklistStep(title: answerStep, state: .done)] : []
@@ -31,38 +31,38 @@ extension AddWebAppView {
         case .learning(let name, true):
             return ([check,
                      ChecklistStep(title: String(localized: "Already in your Dock as “\(name)”",
-                                                 comment: "Add a Web App window: a step, when the website already has a web app; %@ is its name"),
+                                                 table: "WebApps", comment: "Add a Web App window: a step, when the website already has a web app; %@ is its name"),
                                    state: .done)],
                     learnSteps(name))
         case .learning(let name, false):
             return ([check, opened] + answered
                         + [ChecklistStep(title: String(localized: "Add it to the Dock as “\(name)”",
-                                                       comment: "Add a Web App window: a step done; %@ is the web app's name"),
+                                                       table: "WebApps", comment: "Add a Web App window: a step done; %@ is the web app's name"),
                                          state: .done)],
                     learnSteps(name))
         case .siteAsks(let shown, let site):
             return ([check, opened,
                     ChecklistStep(title: answerStep,
                                   notes: [String(localized: "\(shown) asks something before showing \(site) (cookies, signing in…). AutoHush goes on once it shows.",
-                                                 comment: "Add a Web App window, under the step “Answer the site in Safari”; the first %@ is the site Safari shows instead (e.g. consent.example.com), the second the one typed (e.g. music.example.com)")],
+                                                 table: "WebApps", comment: "Add a Web App window, under the step “Answer the site in Safari”; the first %@ is the site Safari shows instead (e.g. consent.example.com), the second the one typed (e.g. music.example.com)")],
                                   state: .current),
                     ChecklistStep(title: addStep, state: .todo), learnLater], [])
         case .readyToAdd(let site):
             return ([check, opened] + answered
                 + [ChecklistStep(title: addStep,
                                  notes: [String(localized: "Once \(site) shows in Safari (answer anything it asks first), click Add to Dock.",
-                                                comment: "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.example.com")],
+                                                table: "WebApps", comment: "Add a Web App window, under the step “Add it to the Dock”, above the Add to Dock button; %@ is the website, e.g. music.example.com")],
                                  state: .current, button: .addToDock,
                                  warning: closedWithoutAdding
                                     ? String(localized: "Safari’s window was closed without adding it. Click Add to Dock to open it again.",
-                                             comment: "Add a Web App window, under the step “Add it to the Dock”, after the user closed Safari's Add to Dock window with Cancel; “Add to Dock” is the button under it")
+                                             table: "WebApps", comment: "Add a Web App window, under the step “Add it to the Dock”, after the user closed Safari's Add to Dock window with Cancel; “Add to Dock” is the button under it")
                                     : nil),
                    learnLater], [])
         case .adding:
             return ([check, opened] + answered
                 + [ChecklistStep(title: addStep,
                                  notes: [String(localized: "In Safari’s Add to Dock window, change the name if you like, then click Add.",
-                                                comment: "Add a Web App window, under the step “Add it to the Dock”, while Safari's own Add to Dock window is open: the user may rename the web app there, then clicks its Add button")],
+                                                table: "WebApps", comment: "Add a Web App window, under the step “Add it to the Dock”, while Safari's own Add to Dock window is open: the user may rename the web app there, then clicks its Add button")],
                                  state: .current),
                    learnLater], [])
         case .entering, .checking, .opening:
@@ -77,26 +77,26 @@ extension AddWebAppView {
     /// holds it up until it's answered.
     private static var extensionTip: String {
         String(localized: "If a Safari extension asks for access to the site, answer it first.",
-               comment: "Add a Web App window, under the step “Open it in Safari” while it's under way")
+               table: "WebApps", comment: "Add a Web App window, under the step “Open it in Safari” while it's under way")
     }
 
     private static var openStep: String {
-        String(localized: "Open it in Safari", comment: "Add a Web App window: a step")
+        String(localized: "Open it in Safari", table: "WebApps", comment: "Add a Web App window: a step")
     }
 
     /// Only when Safari shows another site first, asking something.
     private static var answerStep: String {
         String(localized: "Answer the site in Safari",
-               comment: "Add a Web App window: a step shown only when the website asks something first on another of its sites (a cookie page, signing in)")
+               table: "WebApps", comment: "Add a Web App window: a step shown only when the website asks something first on another of its sites (a cookie page, signing in)")
     }
 
     private static var addStep: String {
-        String(localized: "Add it to the Dock", comment: "Add a Web App window: a step, before it's done")
+        String(localized: "Add it to the Dock", table: "WebApps", comment: "Add a Web App window: a step, before it's done")
     }
 
     /// The learning steps, before the web app is made.
     private static var learnStepTitle: String {
-        String(localized: "Learn its controls", comment: "Add a Web App window: the last step, to come, until the web app is added: AutoHush then learns which of its buttons plays and pauses it (the learning steps replace this one)")
+        String(localized: "Learn its controls", table: "WebApps", comment: "Add a Web App window: the last step, to come, until the web app is added: AutoHush then learns which of its buttons plays and pauses it (the learning steps replace this one)")
     }
 
     /// Learning, once the web app is made: the learning window's two steps

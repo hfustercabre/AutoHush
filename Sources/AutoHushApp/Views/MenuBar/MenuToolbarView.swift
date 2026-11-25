@@ -20,7 +20,7 @@ struct MenuToolbarView: View {
                 // Dimmed while the update installs, as its row above.
                 .disabled(model.status.updateOffer?.state == .installing)
             button(Text(verbatim: SettingsPage.about.title), symbol: "info.circle") { .showAbout }
-            button(Text("Quit", comment: "Menu: button at the bottom; quits AutoHush"), symbol: "power") { .quit }
+            button(Text("Quit", tableName: "Menu", comment: "Menu: button at the bottom; quits AutoHush"), symbol: "power") { .quit }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 2)
@@ -29,7 +29,7 @@ struct MenuToolbarView: View {
 
     /// The button that opens Settings.
     static var settingsTitle: String {
-        String(localized: "Settings", comment: "The menu: the button at the bottom that opens Settings")
+        String(localized: "Settings", table: "Menu", comment: "The menu: the button at the bottom that opens Settings")
     }
 
     /// The first button: Settings, or, while Option is held, Diagnostics,

@@ -31,7 +31,7 @@ final class LearningWindowController: HostedWindowController, LearningWindowPres
     static func title(_ name: String?) -> String {
         guard let name else { return "AutoHush" }
         return String(localized: "Learn \(name)’s Controls",
-                      comment: "Title of the window that asks to play and pause a web app once, in its title bar; %@ is its name")
+                      table: "WebApps", comment: "Title of the window that asks to play and pause a web app once, in its title bar; %@ is its name")
     }
 
     @available(*, unavailable)

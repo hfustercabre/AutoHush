@@ -33,7 +33,7 @@ extension BehaviorSettingsView {
         model.isAntiDotMode
             ? model.detectionMethod.title
             : String(localized: "Silence below \(value(.silenceThreshold))",
-                     comment: "Settings → Behavior, Modes' row to Fine-Tuning's Detection, while AntiDot mode is off: quieter output counts as silence; %@ is the threshold, e.g. “-60 dB”")
+                     table: "Settings", comment: "Settings → Behavior, Modes' row to Fine-Tuning's Detection, while AntiDot mode is off: quieter output counts as silence; %@ is the threshold, e.g. “-60 dB”")
     }
 
     @ViewBuilder private var audioButtons: some View {
@@ -52,6 +52,6 @@ extension BehaviorSettingsView {
         model.permissions.audio == .needsReopen
             ? PermissionText.settingsReopenNote
             : String(localized: "Without Audio Recording, a silent app with its sound open keeps your player paused. Audio is never recorded.",
-                     comment: "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed; AutoHush only measures how loud apps play, and never records their audio")
+                     table: "Settings", comment: "Settings → Behavior, under AntiDot mode, while Audio Recording isn't allowed; AutoHush only measures how loud apps play, and never records their audio")
     }
 }

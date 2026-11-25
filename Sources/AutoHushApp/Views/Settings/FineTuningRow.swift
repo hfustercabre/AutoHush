@@ -25,6 +25,6 @@ struct FineTuningRow: View {
         .highlightableRow(press: { model.showFineTuning(card, byKeyboard: true) })
         .accessibilityLabel(Text(verbatim: title))
         .accessibilityValue(Text(verbatim: value ?? ""))
-        .accessibilityHint(Text("Shows it in Fine-Tuning", comment: "VoiceOver hint of a row at the foot of a Settings → Behavior card, or of Settings → Media Player's “Controls” row, which opens the Fine-Tuning page at its settings"))
+        .accessibilityHint(Text("Shows it in Fine-Tuning", tableName: "Settings", comment: "VoiceOver hint of a row at the foot of a Settings → Behavior card, or of Settings → Media Player's “Controls” row, which opens the Fine-Tuning page at its settings"))
     }
 }

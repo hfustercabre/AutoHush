@@ -120,7 +120,7 @@ extension AppDelegate {
     static func reopenAlert(_ name: String) -> NSAlert {
         let alert = PlayerAlerts.confirm(
             title: String(localized: "Reopen \(name)?",
-                          comment: "Alert title when a media player added through a check was chosen while opened without an option it needs; %@ is the player"),
+                          table: "Players", comment: "Alert title when a media player added through a check was chosen while opened without an option it needs; %@ is the player"),
             message: ReopenText.alertMessage(name),
             button: ReopenText.title(name)
         )

@@ -43,11 +43,11 @@ enum DiagnosticsReport {
 
     /// Said when no app has its sound on.
     static var noAudio: String {
-        String(localized: "No other app is playing sound right now.", comment: "Diagnostics")
+        String(localized: "No other app is playing sound right now.", table: "Logs", comment: "Diagnostics")
     }
 
     static var appsTitle: String {
-        String(localized: "Apps with Sound", comment: "Settings → Diagnostics: heading of the apps that have their sound on")
+        String(localized: "Apps with Sound", table: "Logs", comment: "Settings → Diagnostics: heading of the apps that have their sound on")
     }
 
     // MARK: - How AutoHush is doing
@@ -61,17 +61,17 @@ enum DiagnosticsReport {
         }
         if status.needsAttention {
             return .init(kind: .attention,
-                         title: String(localized: "Needs your attention", comment: "Diagnostics: something keeps AutoHush from working"),
+                         title: String(localized: "Needs your attention", table: "Logs", comment: "Diagnostics: something keeps AutoHush from working"),
                          detail: status.statusLine)
         }
         if status.autoPause != .on {
             // Auto-Pause's own line leads, the player closed too (K2-2 of 11-11).
             return .init(kind: .off, title: status.autoPauseLine ?? status.statusLine,
                          detail: String(localized: "Turn Auto-Pause back on in the menu or in Settings.",
-                                        comment: "Diagnostics, while auto-pause is off"))
+                                        table: "Logs", comment: "Diagnostics, while auto-pause is off"))
         }
         return .init(kind: .working,
-                     title: String(localized: "Working normally", comment: "Diagnostics: AutoHush is working"),
+                     title: String(localized: "Working normally", table: "Logs", comment: "Diagnostics: AutoHush is working"),
                      detail: "\(status.cardTitle) · \(status.statusLine)")
     }
 
@@ -90,13 +90,13 @@ enum DiagnosticsReport {
     /// One app's line, e.g. "Google Chrome (com.google.Chrome) — playing (-23 dBFS)".
     static func line(for entry: ActiveAudioReport.Entry) -> String {
         let app = entry.name.map {
-            String(localized: "\($0) (\(entry.id))", comment: "Diagnostics: an app's name, then its bundle ID")
+            String(localized: "\($0) (\(entry.id))", table: "Logs", comment: "Diagnostics: an app's name, then its bundle ID")
         } ?? entry.id
         let state = describe(entry.state, isIgnored: entry.isIgnored)
         guard let evidence = entry.evidence.map(describe) else {
-            return String(localized: "\(app) — \(state)", comment: "Diagnostics: an app, then how AutoHush judges it")
+            return String(localized: "\(app) — \(state)", table: "Logs", comment: "Diagnostics: an app, then how AutoHush judges it")
         }
         return String(localized: "\(app) — \(state) (\(evidence))",
-                      comment: "Diagnostics: an app, how AutoHush judges it, and what that rests on")
+                      table: "Logs", comment: "Diagnostics: an app, how AutoHush judges it, and what that rests on")
     }
 }

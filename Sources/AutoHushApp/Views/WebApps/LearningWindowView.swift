@@ -21,7 +21,7 @@ struct LearningWindowView: View {
         // A guiding window's width, as Add a Web App's.
         WindowPage(icon: player?.icon(size: 56),
                    description: Text(String(localized: "Web apps have no controls AutoHush can use, so it learns \(name)’s Play and Pause buttons.",
-                                            comment: "The learning window, at its top beside the web app's icon; %@ is the web app")),
+                                            table: "WebApps", comment: "The learning window, at its top beside the web app's icon; %@ is the web app")),
                    width: AddWebAppView.width) {
             NoteLabel(PlayerOption.webAppsWarning)
                 .padding(.top, 8)
@@ -44,7 +44,7 @@ struct LearningWindowView: View {
                 if model.learning != .relearning {
                     CardDivider()
                     Text("Until it has learned, AutoHush presses nothing on the page.",
-                         comment: "The learning window, under the steps: until AutoHush has learned a web app's Play/Pause button, it presses none of the page's buttons (it pauses the web app once with the keyboard's Play/Pause key)")
+                         tableName: "WebApps", comment: "The learning window, under the steps: until AutoHush has learned a web app's Play/Pause button, it presses none of the page's buttons (it pauses the web app once with the keyboard's Play/Pause key)")
                         .captionStyle()
                 }
             }

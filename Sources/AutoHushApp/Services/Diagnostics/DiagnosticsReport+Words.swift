@@ -6,12 +6,12 @@ import CheckedPlayers
 extension DiagnosticsReport {
     static var on: String { String(localized: "On", comment: "A setting that is on: in Diagnostics, and the choice that turns Auto-Pause on in Shortcuts (it reads “Turn Auto-Pause On”) and in the Focus filter") }
     static var off: String { String(localized: "Off", comment: "A setting that is off: in Diagnostics, and the choice that turns Auto-Pause off in Shortcuts (it reads “Turn Auto-Pause Off”) and in the Focus filter") }
-    static var yes: String { String(localized: "Yes", comment: "Diagnostics: yes") }
-    static var no: String { String(localized: "No", comment: "Diagnostics: no") }
+    static var yes: String { String(localized: "Yes", table: "Logs", comment: "Diagnostics: yes") }
+    static var no: String { String(localized: "No", table: "Logs", comment: "Diagnostics: no") }
     static var allowed: String { PermissionText.allowed }
-    static var notAllowed: String { String(localized: "Not allowed", comment: "Diagnostics: a permission that isn't granted") }
-    static var notAsked: String { String(localized: "Not asked yet", comment: "Diagnostics: a permission macOS hasn't asked about") }
-    static var unknown: String { String(localized: "Unknown", comment: "Diagnostics: something AutoHush can't tell") }
+    static var notAllowed: String { String(localized: "Not allowed", table: "Logs", comment: "Diagnostics: a permission that isn't granted") }
+    static var notAsked: String { String(localized: "Not asked yet", table: "Logs", comment: "Diagnostics: a permission macOS hasn't asked about") }
+    static var unknown: String { String(localized: "Unknown", table: "Logs", comment: "Diagnostics: something AutoHush can't tell") }
 
     /// "playing, ignored" as a row's subtitle: "Playing, ignored".
     static func sentenceCase(_ text: String) -> String {
@@ -24,12 +24,12 @@ extension DiagnosticsReport {
         switch playback {
         case .musicPlaying:     return PlaybackState.playingLine
         case .pausedByMonitor where mutes:
-            return String(localized: "Muted by AutoHush", comment: "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted, or a player muted in place of a pause that didn't take)")
-        case .pausedByMonitor:  return String(localized: "Paused by AutoHush", comment: "Diagnostics: the media player's state")
+            return String(localized: "Muted by AutoHush", table: "Logs", comment: "Diagnostics: the media player's state while AutoHush mutes it for another app (an app added with Add an App that can only be muted, or a player muted in place of a pause that didn't take)")
+        case .pausedByMonitor:  return String(localized: "Paused by AutoHush", table: "Logs", comment: "Diagnostics: the media player's state")
         case .musicIdle:        return PlaybackState.notPlayingLine
         case .playingElsewhere: return PlaybackState.playingElsewhereLine
         case .playingSilently:  return PlaybackState.playingSilentlyLine
-        case .pauseFailed:      return String(localized: "Playing: couldn’t pause it", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
+        case .pauseFailed:      return String(localized: "Playing: couldn’t pause it", table: "Logs", comment: "Diagnostics: the media player's state when it refused to pause or failed to, while another app plays")
         case .unknown:          return unknown
         }
     }
@@ -49,12 +49,12 @@ extension DiagnosticsReport {
     /// How AutoHush tells that apps play, right now.
     static func describe(_ detection: DetectionMode) -> String {
         switch detection {
-        case .audioLevel:      return String(localized: "Audio levels", comment: "Diagnostics: a way to detect playing apps")
+        case .audioLevel:      return String(localized: "Audio levels", table: "Logs", comment: "Diagnostics: a way to detect playing apps")
         case .pending:
-            return String(localized: "Audio levels (starting)", comment: "Diagnostics: audio levels, before the first is measured")
+            return String(localized: "Audio levels (starting)", table: "Logs", comment: "Diagnostics: audio levels, before the first is measured")
         case .unavailable:
             return String(localized: "Any app with sound on (no Audio Recording access)",
-                          comment: "Diagnostics: the detection used while the audio recording permission is missing, which is AntiDot mode's “Any app with sound on” (any app whose sound output is on counts as playing)")
+                          table: "Logs", comment: "Diagnostics: the detection used while the audio recording permission is missing, which is AntiDot mode's “Any app with sound on” (any app whose sound output is on counts as playing)")
         case .playbackSignals: return DetectionMethod.playbackSignals.title
         case .disabled:        return DetectionMethod.openStreams.title
         }
@@ -64,17 +64,17 @@ extension DiagnosticsReport {
     static func describe(_ state: ActiveAudioReport.Entry.State, isIgnored: Bool) -> String {
         switch (state, isIgnored) {
         case (.playing, false):
-            return String(localized: "playing", comment: "Diagnostics: how AutoHush judges an app")
+            return String(localized: "playing", table: "Logs", comment: "Diagnostics: how AutoHush judges an app")
         case (.playing, true):
-            return String(localized: "playing, ignored", comment: "Diagnostics: how AutoHush judges an app")
+            return String(localized: "playing, ignored", table: "Logs", comment: "Diagnostics: how AutoHush judges an app")
         case (.starting, false):
-            return String(localized: "starting", comment: "Diagnostics: an app audible too briefly to count yet")
+            return String(localized: "starting", table: "Logs", comment: "Diagnostics: an app audible too briefly to count yet")
         case (.starting, true):
-            return String(localized: "starting, ignored", comment: "Diagnostics: an app audible too briefly to count yet")
+            return String(localized: "starting, ignored", table: "Logs", comment: "Diagnostics: an app audible too briefly to count yet")
         case (.silent, false):
-            return String(localized: "output open, silent", comment: "Diagnostics: how AutoHush judges an app")
+            return String(localized: "output open, silent", table: "Logs", comment: "Diagnostics: how AutoHush judges an app")
         case (.silent, true):
-            return String(localized: "output open, silent, ignored", comment: "Diagnostics: how AutoHush judges an app")
+            return String(localized: "output open, silent, ignored", table: "Logs", comment: "Diagnostics: how AutoHush judges an app")
         }
     }
 
@@ -83,15 +83,15 @@ extension DiagnosticsReport {
         switch evidence {
         case .announcing:
             return String(localized: "tells macOS it’s playing",
-                          comment: "Diagnostics: why an app counts as playing, in AntiDot mode or while levels aren't measured")
+                          table: "Logs", comment: "Diagnostics: why an app counts as playing, in AntiDot mode or while levels aren't measured")
         case .notAnnouncing:
             return String(localized: "not telling macOS it’s playing",
-                          comment: "Diagnostics: why an app counts as paused, in AntiDot mode or while levels aren't measured")
+                          table: "Logs", comment: "Diagnostics: why an app counts as paused, in AntiDot mode or while levels aren't measured")
         case .level(let peak) where peak > 0:
             return String(localized: "\(Int((20 * log10(peak)).rounded())) dBFS",
-                          comment: "Diagnostics: an app's loudest level, in decibels")
+                          table: "Logs", comment: "Diagnostics: an app's loudest level, in decibels")
         case .level:
-            return String(localized: "silence", comment: "Diagnostics: the level of an app that makes no sound")
+            return String(localized: "silence", table: "Logs", comment: "Diagnostics: the level of an app that makes no sound")
         }
     }
 }

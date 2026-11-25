@@ -13,18 +13,18 @@ struct GeneralSettingsView: View {
     /// Under Keep icon next to system icons while the menu bar icon is hidden.
     private static var hiddenIconNote: String {
         String(localized: "The notch or other icons are hiding AutoHush’s icon in the menu bar.",
-               comment: "Settings → General, under Keep icon next to system icons, while AutoHush's menu bar icon is hidden: behind the notch, behind other apps' icons, or off the screen")
+               table: "Settings", comment: "Settings → General, under Keep icon next to system icons, while AutoHush's menu bar icon is hidden: behind the notch, behind other apps' icons, or off the screen")
     }
 
     private static var approvalNote: String {
         String(localized: "macOS is waiting for you to allow AutoHush in Login Items.",
-               comment: "Settings → General, under Launch at login, while macOS waits for the user's approval in Login Items")
+               table: "Settings", comment: "Settings → General, under Launch at login, while macOS waits for the user's approval in Login Items")
     }
 
     var body: some View {
         SettingsPageScroll {
             playerCard
-            Card(Text("Startup and Menu Bar", comment: "Settings → General: heading over the last section, with Launch at login and Keep icon next to system icons")) {
+            Card(Text("Startup and Menu Bar", tableName: "Settings", comment: "Settings → General: heading over the last section, with Launch at login and Keep icon next to system icons")) {
                 SwitchRow(Text(verbatim: AutoHushText.launchAtLogin), isOn: Binding(
                     get: { model.launchAtLoginEnabled },
                     set: { model.setLaunchAtLogin($0) }
@@ -32,14 +32,14 @@ struct GeneralSettingsView: View {
                 if let note = model.launchAtLoginError ?? (model.launchAtLoginNeedsApproval ? Self.approvalNote : nil) {
                     NoteLabel(note)
                     Button { model.openLoginItemsSettings() } label: {
-                        Text("Open Login Items Settings…", comment: "Settings → General: button that opens System Settings → Login Items")
+                        Text("Open Login Items Settings…", tableName: "Settings", comment: "Settings → General: button that opens System Settings → Login Items")
                     }
                         .buttonStyle(.chip)
                 }
                 CardDivider()
                 SwitchRow(Text(verbatim: MenuBarIconPlace.title),
                           subtitle: Text("Where the notch or other apps’ icons can’t hide it. Turned off, ⌘‑drag it where you like.",
-                                         comment: "Settings → General, under Keep icon next to system icons; ⌘-drag is how macOS moves menu bar icons"),
+                                         tableName: "Settings", comment: "Settings → General, under Keep icon next to system icons; ⌘-drag is how macOS moves menu bar icons"),
                           isOn: Binding(get: { model.keepsMenuBarIconNearSystemIcons },
                                         set: { model.setKeepsMenuBarIconNearSystemIcons($0) }))
             // Its way in when AutoHush is opened again (the user, 2026-10-26).
@@ -108,7 +108,7 @@ struct GeneralSettingsView: View {
             SwitchRow(
                 Text(verbatim: AutoPauseText.title),
                 subtitle: Text("Pauses your player while other apps play.",
-                               comment: "Settings → General, under the Auto-Pause switch: what it does"),
+                               tableName: "Settings", comment: "Settings → General, under the Auto-Pause switch: what it does"),
                 isOn: Binding(get: { model.isAutoPauseOn }, set: { model.settings.setAutoPause($0) })
             )
             if let note = model.autoPauseNote {
@@ -126,7 +126,7 @@ struct GeneralSettingsView: View {
             .highlightableRow(press: { model.showSoundSources(byKeyboard: true) })
             .accessibilityLabel(Text(verbatim: SettingsPage.soundSources.title))
             .accessibilityHint(Text("Opens the apps that pause your player",
-                                    comment: "VoiceOver hint of the Sound Sources row under the Auto-Pause switch in Settings → General: it opens the Sound Sources page, which lists the apps that pause the player"))
+                                    tableName: "Settings", comment: "VoiceOver hint of the Sound Sources row under the Auto-Pause switch in Settings → General: it opens the Sound Sources page, which lists the apps that pause the player"))
         }
     }
 }

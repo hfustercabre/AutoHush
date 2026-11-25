@@ -12,9 +12,9 @@ enum IgnoreAppsPicker {
     static func title(noneIgnored: Bool) -> String {
         noneIgnored
             ? String(localized: "Ignore an App…",
-                     comment: "Settings → Sound Sources' button, and the menu's row under the ignored apps, while no app is ignored yet: opens a panel to pick apps that never pause your player")
+                     table: "Settings", comment: "Settings → Sound Sources' button, and the menu's row under the ignored apps, while no app is ignored yet: opens a panel to pick apps that never pause your player")
             : String(localized: "Ignore Another App…",
-                     comment: "Settings → Sound Sources' button, and the menu's row under the ignored apps, once an app is ignored: opens a panel to pick more apps that never pause your player")
+                     table: "Settings", comment: "Settings → Sound Sources' button, and the menu's row under the ignored apps, once an app is ignored: opens a panel to pick more apps that never pause your player")
     }
 
     /// Asks for apps, then ignores each one (`ignore`) AutoHush can tell
@@ -24,8 +24,8 @@ enum IgnoreAppsPicker {
     static func run(player: PlayerOption?, ignore: (AudioSource) -> Void) {
         let panel = NSOpenPanel()
         panel.title = String(localized: "Choose Apps to Ignore",
-                             comment: "Title of the panel that picks one or more apps to ignore (Settings → Sound Sources' and the menu's Ignore Another App…)")
-        panel.prompt = String(localized: "Ignore", comment: "Button of the panel that picks one or more apps to ignore")
+                             table: "Settings", comment: "Title of the panel that picks one or more apps to ignore (Settings → Sound Sources' and the menu's Ignore Another App…)")
+        panel.prompt = String(localized: "Ignore", table: "Settings", comment: "Button of the panel that picks one or more apps to ignore")
         panel.allowedContentTypes = [.application]
         panel.allowsMultipleSelection = true
         panel.directoryURL = URL(fileURLWithPath: "/Applications")
@@ -51,9 +51,9 @@ enum IgnoreAppsPicker {
     /// counts once another player is chosen.
     static func playerIgnoredNote(_ player: String) -> (title: String, message: String) {
         (String(localized: "\(player) Is Your Media Player",
-                comment: "Settings → Sound Sources' or the menu's Ignore Another App…: title of the alert when the media player itself was among the apps chosen to ignore; %@ is the player"),
+                table: "Settings", comment: "Settings → Sound Sources' or the menu's Ignore Another App…: title of the alert when the media player itself was among the apps chosen to ignore; %@ is the player"),
          String(localized: "It doesn’t pause itself, so it’s ignored once you choose another player.",
-                comment: "Settings → Sound Sources' or the menu's Ignore Another App…: the alert when the media player was chosen to ignore (it's saved as ignored, which counts once another player is chosen)"))
+                table: "Settings", comment: "Settings → Sound Sources' or the menu's Ignore Another App…: the alert when the media player was chosen to ignore (it's saved as ignored, which counts once another player is chosen)"))
     }
 
     /// Ignores each app at `urls` AutoHush can tell apart; the others, which
@@ -76,15 +76,15 @@ enum IgnoreAppsPicker {
             return nil
         case 1:
             return (String(localized: "Couldn’t Ignore \(names[0])",
-                           comment: "Settings → Sound Sources' or the menu's Ignore Another App…: title of the alert when the chosen app can't be ignored; %@ is the app's name"),
+                           table: "Settings", comment: "Settings → Sound Sources' or the menu's Ignore Another App…: title of the alert when the chosen app can't be ignored; %@ is the app's name"),
                     String(localized: "\(names[0]) doesn’t identify itself as Mac apps do, so AutoHush can’t tell when it plays.",
-                           comment: "Settings → Sound Sources' or the menu's Ignore Another App…: the alert when the chosen app has no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is the app's name"))
+                           table: "Settings", comment: "Settings → Sound Sources' or the menu's Ignore Another App…: the alert when the chosen app has no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is the app's name"))
         default:
             let list = ListFormatter.localizedString(byJoining: names)
             return (String(localized: "Couldn’t Ignore \(names.count) Apps",
-                           comment: "Settings → Sound Sources' or the menu's Ignore Another App…: title of the alert when several of the chosen apps can't be ignored; %lld is how many (2 or more)"),
+                           table: "Settings", comment: "Settings → Sound Sources' or the menu's Ignore Another App…: title of the alert when several of the chosen apps can't be ignored; %lld is how many (2 or more)"),
                     String(localized: "\(list) don’t identify themselves as Mac apps do, so AutoHush can’t tell when they play.",
-                           comment: "Settings → Sound Sources' or the menu's Ignore Another App…: the alert when several chosen apps have no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is their names, already joined as a list (“A, B and C”)"))
+                           table: "Settings", comment: "Settings → Sound Sources' or the menu's Ignore Another App…: the alert when several chosen apps have no bundle identifier (the ID a Mac app has, which AutoHush tells apps' sound apart by); %@ is their names, already joined as a list (“A, B and C”)"))
         }
     }
 }

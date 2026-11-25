@@ -80,10 +80,10 @@ struct BottomBarFitTests {
     /// 24 pt icon, 8 pt, the text, 6 pt in.
     @MainActor static var tileLine: CGFloat { (settingsPage - 2 * 16 - 2 * 14 - 2 * 8) / 3 - (6 + 24 + 8 + 6) }
 
-    /// Every key's value per language, English as the key.
+    /// Every key's value per language, English as the key, from all of the app's tables.
     static let catalog: [String: [String: String]] = {
-        guard let catalog = try? StringCatalog(contentsOf: PackagePaths.catalogs.appending(path: "Localizable.xcstrings")) else { return [:] }
-        return catalog.strings.mapValues { ($0.localizations ?? [:]).compactMapValues { $0.stringUnit?.value } }
+        guard let strings = try? StringCatalog.app() else { return [:] }
+        return strings.mapValues { ($0.localizations ?? [:]).compactMapValues { $0.stringUnit?.value } }
     }()
 
     static var languages: [String] {

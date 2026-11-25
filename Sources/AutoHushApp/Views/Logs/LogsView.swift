@@ -77,7 +77,7 @@ struct LogsView: View {
                                   voiceOverTarget: $followHasVoiceOverCursor)
                 Spacer()
                 Button(action: save) {
-                    Text("Save…", comment: "The logs window: button that saves the entries shown to a text file")
+                    Text("Save…", tableName: "Logs", comment: "The logs window: button that saves the entries shown to a text file")
                 }
                 .buttonStyle(.chip)
                 .disabled(model.shown.isEmpty)
@@ -209,28 +209,28 @@ struct LogsView: View {
         let query = model.search.trimmingCharacters(in: .whitespaces)
         if !query.isEmpty {
             return String(localized: "No entries match “\(query)”.",
-                          comment: "The logs window, when the search finds nothing; %@ is what was typed")
+                          table: "Logs", comment: "The logs window, when the search finds nothing; %@ is what was typed")
         }
         if model.levels == .problems {
-            return String(localized: "No problems were logged.", comment: "The logs window, showing problems only, when there are none")
+            return String(localized: "No problems were logged.", table: "Logs", comment: "The logs window, showing problems only, when there are none")
         }
-        return String(localized: "Nothing was logged yet.", comment: "The logs window, while AutoHush has logged nothing in the time shown")
+        return String(localized: "Nothing was logged yet.", table: "Logs", comment: "The logs window, while AutoHush has logged nothing in the time shown")
     }
 
     private static var rangeLabel: String {
-        String(localized: "Time range", comment: "The logs window: VoiceOver's name of the pop-up that chooses how far back the logs go (This Launch, Last 24 Hours)")
+        String(localized: "Time range", table: "Logs", comment: "The logs window: VoiceOver's name of the pop-up that chooses how far back the logs go (This Launch, Last 24 Hours)")
     }
 
     private static var levelsLabel: String {
-        String(localized: "Levels", comment: "The logs window: VoiceOver's name of the pop-up that chooses which entries show (All Levels, Problems Only)")
+        String(localized: "Levels", table: "Logs", comment: "The logs window: VoiceOver's name of the pop-up that chooses which entries show (All Levels, Problems Only)")
     }
 
     private static var followTitle: String {
-        String(localized: "Follow new entries", comment: "The logs window: switch at its foot; on, the list scrolls to each new entry as AutoHush logs it")
+        String(localized: "Follow new entries", table: "Logs", comment: "The logs window: switch at its foot; on, the list scrolls to each new entry as AutoHush logs it")
     }
 
     private static var copyTitle: String {
-        String(localized: "Copy Logs", comment: "The logs window: button that puts the entries shown on the clipboard")
+        String(localized: "Copy Logs", table: "Logs", comment: "The logs window: button that puts the entries shown on the clipboard")
     }
 
     private func save() {
@@ -241,7 +241,7 @@ struct LogsView: View {
         do {
             try model.text.write(to: url, atomically: true, encoding: .utf8)
         } catch {
-            InfoAlert.show(String(localized: "Couldn’t Save the Logs", comment: "Alert title, when the logs window's Save… failed"),
+            InfoAlert.show(String(localized: "Couldn’t Save the Logs", table: "Logs", comment: "Alert title, when the logs window's Save… failed"),
                            error.localizedDescription)
         }
     }
@@ -251,9 +251,9 @@ extension LogsModel.Range {
     var title: String {
         switch self {
         case .thisLaunch:
-            String(localized: "This Launch", comment: "The logs window's time pop-up: the entries since AutoHush last opened (at most its last 24 hours)")
+            String(localized: "This Launch", table: "Logs", comment: "The logs window's time pop-up: the entries since AutoHush last opened (at most its last 24 hours)")
         case .last24Hours:
-            String(localized: "Last 24 Hours", comment: "The logs window's time pop-up: the entries of the last 24 hours, earlier launches included")
+            String(localized: "Last 24 Hours", table: "Logs", comment: "The logs window's time pop-up: the entries of the last 24 hours, earlier launches included")
         }
     }
 }
@@ -262,9 +262,9 @@ extension LogsModel.Levels {
     var title: String {
         switch self {
         case .all:
-            String(localized: "All Levels", comment: "The logs window's level pop-up: every entry")
+            String(localized: "All Levels", table: "Logs", comment: "The logs window's level pop-up: every entry")
         case .problems:
-            String(localized: "Problems Only", comment: "The logs window's level pop-up: only the entries that logged an error")
+            String(localized: "Problems Only", table: "Logs", comment: "The logs window's level pop-up: only the entries that logged an error")
         }
     }
 }

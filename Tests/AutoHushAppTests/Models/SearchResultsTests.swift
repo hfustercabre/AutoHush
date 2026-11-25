@@ -13,7 +13,7 @@ struct SearchResultsTests {
 
     @Test("the count has English plural forms: “1 result”, “2 results”")
     func pluralForms() throws {
-        let catalog = try StringCatalog(contentsOf: PackagePaths.catalogs.appending(path: "Localizable.xcstrings"))
+        let catalog = try StringCatalog(table: "Localizable")
         let forms = try #require(catalog.strings["%lld results"]?.localizations?["en"]?.variations?["plural"])
         #expect(forms["one"]?.stringUnit?.value == "%lld result")
         #expect(forms["other"]?.stringUnit?.value == "%lld results")

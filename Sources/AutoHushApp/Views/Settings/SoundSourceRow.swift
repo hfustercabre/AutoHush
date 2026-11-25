@@ -102,6 +102,6 @@ struct SoundSourceRow: View {
     }
 
     private static var removeFromListTitle: Text {
-        Text("Remove from List", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")
+        Text("Remove from List", tableName: "Settings", comment: "Settings → Sound Sources: item of an app's contextual menu that forgets it")
     }
 }

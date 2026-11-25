@@ -116,14 +116,14 @@ struct StatusCardView: View {
         // interpolation, each part keeping its color (`+` is deprecated from
         // the macOS 26 SDK on).
         return (withInfo
-                ? Text("\(line)\u{00A0}\(info)", comment: "The menu's status line (the first %@, already translated) and an info symbol after it (the second %@), joined by a no-break space so the symbol stays with the last word: keep it as it is")
+                ? Text("\(line)\u{00A0}\(info)", tableName: "Menu", comment: "The menu's status line (the first %@, already translated) and an info symbol after it (the second %@), joined by a no-break space so the symbol stays with the last word: keep it as it is")
                 : line)
             .font(.appSubheadline)
             .fixedSize(horizontal: false, vertical: true)
     }
 
     private static var whyLabel: String {
-        String(localized: "Why?", comment: "Tooltip and VoiceOver hint of the menu's status line when the media player couldn't be controlled: a click shows why")
+        String(localized: "Why?", table: "Menu", comment: "Tooltip and VoiceOver hint of the menu's status line when the media player couldn't be controlled: a click shows why")
     }
 
     /// Asks for the permission its line says is missing (or reopens

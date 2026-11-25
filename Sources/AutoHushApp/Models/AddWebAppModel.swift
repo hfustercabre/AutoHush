@@ -222,24 +222,24 @@ final class AddWebAppModel {
         case .notAWebAddress?:
             if let example = exampleAddress {
                 String(localized: "That isn’t a web address. Try one like \(example).",
-                       comment: "Add a Web App window, under the address field; %@ is a music website's address, e.g. music.example.com")
+                       table: "WebApps", comment: "Add a Web App window, under the address field; %@ is a music website's address, e.g. music.example.com")
             } else {
-                String(localized: "That isn’t a web address.", comment: "Add a Web App window, under the address field")
+                String(localized: "That isn’t a web address.", table: "WebApps", comment: "Add a Web App window, under the address field")
             }
         case .noAnswer(let host)?:
             String(localized: "\(host) doesn’t answer. Check the address and your connection.",
-                   comment: "Add a Web App window; %@ is the website, e.g. music.example.com")
+                   table: "WebApps", comment: "Add a Web App window; %@ is the website, e.g. music.example.com")
         case .pageNotFound(let host)?:
             String(localized: "\(host) says this page doesn’t exist. Check the address.",
-                   comment: "Add a Web App window; %@ is the website, e.g. music.example.com")
+                   table: "WebApps", comment: "Add a Web App window; %@ is the website, e.g. music.example.com")
         case .accessibilityDenied?:
             String(localized: "AutoHush needs Accessibility access to add it with Safari.",
-                   comment: "Add a Web App window, when the Accessibility permission is missing")
+                   table: "WebApps", comment: "Add a Web App window, when the Accessibility permission is missing")
         case .browserFailed?:
-            String(localized: "Safari didn’t add it. Try again.", comment: "Add a Web App window, when Safari didn't make the web app")
+            String(localized: "Safari didn’t add it. Try again.", table: "WebApps", comment: "Add a Web App window, when Safari didn't make the web app")
         case .notFound(let name)?:
             String(localized: "\(name) was added, but AutoHush can’t find it yet. Click Continue to try again.",
-                   comment: "Add a Web App window, when the web app was made but macOS doesn't list it yet; %@ is the web app's name; Continue is the window's button")
+                   table: "WebApps", comment: "Add a Web App window, when the web app was made but macOS doesn't list it yet; %@ is the web app's name; Continue is the window's button")
         case nil:
             nil
         }

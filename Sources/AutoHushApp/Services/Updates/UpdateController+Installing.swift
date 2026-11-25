@@ -14,7 +14,7 @@ extension UpdateController {
         let version = release.version.description
         logger.info("Downloading \(version, privacy: .public)")
         showStatus(String(localized: "Downloading version \(version)…",
-                          comment: "Update status in Settings; %@ is a version number"))
+                          table: "Updates", comment: "Update status in Settings; %@ is a version number"))
         do {
             try await downloads.store(release, at: now(), allowsConstrainedNetwork: false)
             logger.info("Downloaded \(version, privacy: .public), kept for 7 days")
@@ -27,7 +27,7 @@ extension UpdateController {
         } catch {
             logger.error("Downloading \(version, privacy: .public) failed: \(error)")
             showStatus(String(localized: "Couldn’t download version \(version).",
-                              comment: "Update status in Settings; %@ is a version number"))
+                              table: "Updates", comment: "Update status in Settings; %@ is a version number"))
         }
     }
 
@@ -42,7 +42,7 @@ extension UpdateController {
         let image = await downloads.image(for: release)
         logger.info("Installing \(version, privacy: .public) (\(userInitiated ? "asked for" : "automatic", privacy: .public), \(image == nil ? "downloading it" : "from the kept download", privacy: .public))")
         showStatus(String(localized: "Installing version \(version)…",
-                          comment: "Update status in Settings; %@ is a version number"))
+                          table: "Updates", comment: "Update status in Settings; %@ is a version number"))
         do {
             // Automatic installs, like automatic downloads, wait out Low Data Mode.
             let update = try await installer.prepare(release, image: image, allowsConstrainedNetwork: userInitiated)
@@ -65,7 +65,7 @@ extension UpdateController {
             tidy() // a setting changed meanwhile
             logger.error("Installing \(version, privacy: .public) failed: \(error)")
             showStatus(String(localized: "Couldn’t install version \(version).",
-                              comment: "Update status in Settings; %@ is a version number"))
+                              table: "Updates", comment: "Update status in Settings; %@ is a version number"))
             if userInitiated {
                 let reason = error.localizedDescription
                 showAlert { self.presentInstallError(reason, release: release) }

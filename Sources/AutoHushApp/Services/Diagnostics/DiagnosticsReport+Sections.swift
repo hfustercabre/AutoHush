@@ -27,7 +27,7 @@ extension DiagnosticsReport {
         let state = describe(status.playback, mutes: player.pausesByMuting || status.playerMutedInstead)
         var rows = [
             Row(label: playerLabel, value: name, mark: player.isInstalled ? nil : .problem, fix: player.isInstalled ? nil : .choosePlayer),
-            Row(label: String(localized: "State", comment: "Diagnostics: the media player's state"), value: state),
+            Row(label: String(localized: "State", table: "Logs", comment: "Diagnostics: the media player's state"), value: state),
             // Yes, Off (turned off in Settings → Behavior), or No (the player can't fade).
             Row(label: FadesText.title,
                 value: !facts.playerCanFade ? no : facts.timings.fadesEnabled ? yes : off),
@@ -40,38 +40,38 @@ extension DiagnosticsReport {
         } else if player.kind == .checkedApp, let ways = ways(player.bundleID), !ways.isEmpty {
             // An app that's only muted: so it says.
             rows.append(Row(label: String(localized: "Controlled by",
-                                          comment: "Diagnostics: how AutoHush pauses and plays the media player: its main control, then its backup controls, one a line, the first tried first (AppleScript, Its playback menu (backup)…), or “Muted instead of paused” for an app that’s only muted"),
+                                          table: "Logs", comment: "Diagnostics: how AutoHush pauses and plays the media player: its main control, then its backup controls, one a line, the first tried first (AppleScript, Its playback menu (backup)…), or “Muted instead of paused” for an app that’s only muted"),
                             value: ways.map(describe).joined(separator: "\n")))
         }
         if let learned = facts.playerLearned {
             rows.append(Row(label: String(localized: "Play/Pause button learned",
-                                          comment: "Diagnostics: whether AutoHush knows which button of the web app plays and pauses it"),
+                                          table: "Logs", comment: "Diagnostics: whether AutoHush knows which button of the web app plays and pauses it"),
                             value: learned ? yes : no, mark: learned ? .ok : .problem, fix: learned ? nil : .learnControls))
         }
         // Its No says what to do, unmarked: there's nothing to fix (T14c,
         // the user's pick, 2026-11-02).
         if let reaches = facts.reachesOtherSpaces {
             rows.append(Row(label: String(localized: "Reaches windows on other desktops",
-                                          comment: "Diagnostics: whether AutoHush can control the web app while its window is on another desktop"),
+                                          table: "Logs", comment: "Diagnostics: whether AutoHush can control the web app while its window is on another desktop"),
                             value: reaches ? yes : String(localized: "No: keep its window on this desktop",
-                                                          comment: "Diagnostics, the row “Reaches windows on other desktops”: AutoHush can't control the web app while its window is on another desktop, so keep it on the one in use"),
+                                                          table: "Logs", comment: "Diagnostics, the row “Reaches windows on other desktops”: AutoHush can't control the web app while its window is on another desktop, so keep it on the one in use"),
                             mark: reaches ? .ok : nil))
         }
         if let read = facts.playerWordsRead {
             rows.append(Row(label: String(localized: "Play/Pause words read",
-                                          comment: "Diagnostics: whether AutoHush could read, from the media player's app, its own words for Play and Pause, which tell its state apart"),
+                                          table: "Logs", comment: "Diagnostics: whether AutoHush could read, from the media player's app, its own words for Play and Pause, which tell its state apart"),
                             value: read ? yes : no, mark: read ? .ok : .problem))
         }
         if let error = status.controlError {
             // In the user's language, then as the log has it, for a bug report.
-            rows.append(Row(label: String(localized: "Last error", comment: "Diagnostics: why the media player couldn't be controlled, the last time it couldn't"),
+            rows.append(Row(label: String(localized: "Last error", table: "Logs", comment: "Diagnostics: why the media player couldn't be controlled, the last time it couldn't"),
                             value: [error.text, error.ownDetail].compactMap { $0 }.joined(separator: "\n"), mark: .problem))
         }
         return .init(kind: .player, title: title, summary: "\(player.name) · \(state)", rows: rows)
     }
 
     private static var playerLabel: String {
-        String(localized: "Player", comment: "Diagnostics: the media player's name and version")
+        String(localized: "Player", table: "Logs", comment: "Diagnostics: the media player's name and version")
     }
 
     /// Settings → Behavior's settings, card by card (the user, 2026-10-21): a
@@ -95,7 +95,7 @@ extension DiagnosticsReport {
         ]
         if facts.detectionMethod == .playbackSignals || unmeasured {
             rows.append(Row(label: String(localized: "Pause playback after, without video",
-                                          comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before your player pauses"),
+                                          table: "Logs", comment: "Diagnostics, AntiDot mode: how long an app showing no video must play before your player pauses"),
                             value: AppConfiguration(timings: timings).startConfirmationWithoutVideo.secondsText))
         }
         rows += [
@@ -121,9 +121,9 @@ extension DiagnosticsReport {
         }
         let summary = timings.resumesPlayback
             ? String(localized: "Pauses after \(pauseAfter), resumes after \(timings.stopGrace.secondsText)",
-                     comment: "Diagnostics: the summary beside the Behavior heading; the first %@ is how long another app must play before your player pauses, the second how long other apps must be quiet before it resumes, e.g. “Pauses after 0.5 s, resumes after 2 s”")
+                     table: "Logs", comment: "Diagnostics: the summary beside the Behavior heading; the first %@ is how long another app must play before your player pauses, the second how long other apps must be quiet before it resumes, e.g. “Pauses after 0.5 s, resumes after 2 s”")
             : String(localized: "Pauses after \(pauseAfter), never resumes",
-                     comment: "Diagnostics: the summary beside the Behavior heading while Resume playback is off; %@ is how long another app must play before your player pauses, e.g. “0.5 s”")
+                     table: "Logs", comment: "Diagnostics: the summary beside the Behavior heading while Resume playback is off; %@ is how long another app must play before your player pauses, e.g. “0.5 s”")
         return .init(kind: .behavior, title: SettingsPage.behavior.title, summary: summary, rows: rows)
     }
 
@@ -131,7 +131,7 @@ extension DiagnosticsReport {
         let method = describe(status.detection)
         let antiDot = facts.detectionMethod.isAntiDot
         var rows = [
-            Row(label: String(localized: "Detecting by", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
+            Row(label: String(localized: "Detecting by", table: "Logs", comment: "Diagnostics: how AutoHush tells that apps play"), value: method),
             Row(label: SettingsSwitch.antiDot.name, value: antiDot ? on : off),
         ]
         if !antiDot {
@@ -159,9 +159,9 @@ extension DiagnosticsReport {
         // One muted instead of paused needs only Audio Recording: its row above.
         let control: String? = switch facts.playerPermission {
         case .automation(let player)?:
-            String(localized: "Automation for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Automation for Jukebox”")
+            String(localized: "Automation for \(player)", table: "Logs", comment: "Diagnostics: the permission to control the media player, e.g. “Automation for Jukebox”")
         case .accessibility(let player)?:
-            String(localized: "Accessibility for \(player)", comment: "Diagnostics: the permission to control the media player, e.g. “Accessibility for Jukebox”")
+            String(localized: "Accessibility for \(player)", table: "Logs", comment: "Diagnostics: the permission to control the media player, e.g. “Accessibility for Jukebox”")
         case .systemAudioRecording?, nil:
             nil
         }
@@ -174,11 +174,11 @@ extension DiagnosticsReport {
             // A closed player's Automation can't be read.
             case .playerNotRunning?, .needsReopen?, nil:
                 rows.append(Row(label: label, value: String(localized: "Not checked yet",
-                                                            comment: "Diagnostics: a permission AutoHush hasn't needed yet"),
+                                                            table: "Logs", comment: "Diagnostics: a permission AutoHush hasn't needed yet"),
                                 mark: .neutral))
             }
         }
-        let notifications = String(localized: "Notifications", comment: "Diagnostics: the notifications permission")
+        let notifications = String(localized: "Notifications", table: "Logs", comment: "Diagnostics: the notifications permission")
         switch facts.notifications {
         case .allowed?: rows.append(Row(label: notifications, value: allowed, mark: .ok))
         case .off?: rows.append(Row(label: notifications, value: off, mark: .neutral))
@@ -187,8 +187,8 @@ extension DiagnosticsReport {
         case nil: rows.append(Row(label: notifications, value: unknown, mark: .neutral))
         }
         let summary = rows.contains { $0.mark == .problem }
-            ? String(localized: "Something’s missing", comment: "Diagnostics: a permission isn't granted")
-            : String(localized: "All allowed", comment: "Diagnostics: every permission AutoHush needs is granted")
+            ? String(localized: "Something’s missing", table: "Logs", comment: "Diagnostics: a permission isn't granted")
+            : String(localized: "All allowed", table: "Logs", comment: "Diagnostics: every permission AutoHush needs is granted")
         return .init(kind: .permissions, title: PermissionText.heading,
                      summary: summary, rows: rows)
     }
@@ -198,37 +198,37 @@ extension DiagnosticsReport {
         case .on: on
         case .off: off
         case .snoozed(let until):
-            String(localized: "Off \(until)", comment: "Diagnostics: auto-pause; %@ says until when, e.g. “until 15:30”")
+            String(localized: "Off \(until)", table: "Logs", comment: "Diagnostics: auto-pause; %@ says until when, e.g. “until 15:30”")
         }
         let ignored = status.ignoredApps.isEmpty
             ? NoneText.title
             : status.ignoredApps.map(\.name).formatted(.list(type: .and, width: .narrow))
         let updates = facts.checksForUpdates
             ? facts.automaticUpdates.title
-            : String(localized: "Automatic checks off", comment: "Diagnostics: updates aren't checked automatically")
+            : String(localized: "Automatic checks off", table: "Logs", comment: "Diagnostics: updates aren't checked automatically")
         let lastCheck = facts.lastUpdateCheck.map {
             let formatter = RelativeDateTimeFormatter()
             formatter.unitsStyle = .full
             return formatter.localizedString(for: $0, relativeTo: facts.now)
-        } ?? String(localized: "Never", comment: "Diagnostics: updates were never checked")
+        } ?? String(localized: "Never", table: "Logs", comment: "Diagnostics: updates were never checked")
         return .init(kind: .autoHush, title: "AutoHush",
                      summary: AutoHushText.version(facts.appVersion),
                      rows: [
-                        Row(label: String(localized: "Version", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
+                        Row(label: String(localized: "Version", table: "Logs", comment: "Diagnostics: AutoHush's version"), value: facts.appVersion),
                         Row(label: AutoPauseText.title, value: autoPause),
-                        Row(label: String(localized: "Ignored apps", comment: "Diagnostics: apps that never pause your player"), value: ignored),
+                        Row(label: String(localized: "Ignored apps", table: "Logs", comment: "Diagnostics: apps that never pause your player"), value: ignored),
                         Row(label: AutoHushText.launchAtLogin, value: facts.launchAtLogin ? on : off),
                         Row(label: MenuBarIconPlace.title, value: facts.keepsMenuBarIconNearSystemIcons ? on : off),
                         Row(label: UpdateOffer.updatesTitle, value: updates),
-                        Row(label: String(localized: "Last checked", comment: "Diagnostics: when updates were last checked"), value: lastCheck),
+                        Row(label: String(localized: "Last checked", table: "Logs", comment: "Diagnostics: when updates were last checked"), value: lastCheck),
                      ])
     }
 
     private static func mac(facts: DiagnosticsFacts) -> DiagnosticsSnapshot.Section {
-        .init(kind: .mac, title: String(localized: "This Mac", comment: "Settings → Diagnostics: heading"),
+        .init(kind: .mac, title: String(localized: "This Mac", table: "Logs", comment: "Settings → Diagnostics: heading"),
               summary: "macOS \(facts.macOS)", rows: [
                 Row(label: "macOS", value: facts.macOS),
-                Row(label: String(localized: "Processor", comment: "Diagnostics: the Mac's processor"), value: facts.processor),
+                Row(label: String(localized: "Processor", table: "Logs", comment: "Diagnostics: the Mac's processor"), value: facts.processor),
               ])
     }
 
@@ -251,7 +251,7 @@ extension DiagnosticsReport {
         let inUse = controls.backupsInUse
         let lines = [line(controls.main, backup: false)] + (inUse ? controls.backups.map { line($0, backup: true) } : [])
         var rows = [Row(label: String(localized: "Controlled by",
-                                      comment: "Diagnostics: how AutoHush pauses and plays the media player: its main control, then its backup controls, one a line, the first tried first (AppleScript, Its playback menu (backup)…), or “Muted instead of paused” for an app that’s only muted"),
+                                      table: "Logs", comment: "Diagnostics: how AutoHush pauses and plays the media player: its main control, then its backup controls, one a line, the first tried first (AppleScript, Its playback menu (backup)…), or “Muted instead of paused” for an app that’s only muted"),
                         value: lines.joined(separator: "\n"))]
         let available = !controls.needsCheckAgain && !controls.notLearned && !controls.backups.isEmpty
         rows.append(Row(label: BackupText.uses, value: !available ? no : controls.switches.usesBackups ? on : off))

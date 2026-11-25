@@ -24,7 +24,7 @@ struct LearningPermissionStep: View {
     /// Why the steps wait, under the permission.
     static func note(_ name: String) -> String {
         String(localized: "AutoHush needs it to see \(name)’s buttons. The steps below unlock once it’s allowed.",
-               comment: "The learning window, under the permission it needs first; %@ is the web app")
+               table: "WebApps", comment: "The learning window, under the permission it needs first; %@ is the web app")
     }
 
     /// The step: the permission to allow, why the steps wait under it.

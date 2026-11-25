@@ -30,7 +30,7 @@ struct SourceSwitchRow: View {
         }
         let subtitle = !isIgnored ? SourceText.interruptsLabel(mutes: mutes)
             : saysIgnoredShortly
-            ? String(localized: "Ignored", comment: "The menu's Ignored Apps side window: under each app that is ignored (the side window's title already says what that means)")
+            ? String(localized: "Ignored", table: "Menu", comment: "The menu's Ignored Apps side window: under each app that is ignored (the side window's title already says what that means)")
             : IgnoredText.label
         return Words(subtitle: subtitle, hint: subtitle, help: nil)
     }

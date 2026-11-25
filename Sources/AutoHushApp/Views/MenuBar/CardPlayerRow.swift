@@ -32,10 +32,10 @@ struct CardPlayerRow: View {
     }
 
     static var changeTitle: String {
-        String(localized: "Change Player", comment: "The menu: the last row of the card at the top, under the media player's name; opens every player beside the menu, to choose another")
+        String(localized: "Change Player", table: "Menu", comment: "The menu: the last row of the card at the top, under the media player's name; opens every player beside the menu, to choose another")
     }
 
     static var chooseTitle: String {
-        String(localized: "Choose Player", comment: "The menu: the last row of the card at the top while no media player is chosen; opens every player beside the menu. Also VoiceOver’s name for Settings → Diagnostics’ Choose… button")
+        String(localized: "Choose Player", table: "Menu", comment: "The menu: the last row of the card at the top while no media player is chosen; opens every player beside the menu. Also VoiceOver’s name for Settings → Diagnostics’ Choose… button")
     }
 }

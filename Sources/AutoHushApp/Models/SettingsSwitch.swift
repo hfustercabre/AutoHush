@@ -10,21 +10,21 @@ enum SettingsSwitch {
     var name: String {
         switch self {
         case .antiDot:
-            String(localized: "AntiDot mode", comment: "Settings → Behavior, and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator")
+            String(localized: "AntiDot mode", table: "Settings", comment: "Settings → Behavior, and Diagnostics: the switch for AntiDot mode, which hides the purple recording indicator")
         case .pausesOnDisconnect:
-            String(localized: "Pause on disconnect", comment: "Settings → Behavior (under “Pausing”), and Diagnostics: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range")
+            String(localized: "Pause on disconnect", table: "Settings", comment: "Settings → Behavior (under “Pausing”), and Diagnostics: the switch that pauses your player at once when the headphones (or another output) it plays through are unplugged or go out of range")
         case .resumesPlayback:
-            String(localized: "Resume playback", comment: "Settings → Behavior (under “Resuming”), and Diagnostics: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it")
+            String(localized: "Resume playback", table: "Settings", comment: "Settings → Behavior (under “Resuming”), and Diagnostics: the switch that resumes your player once the other apps go quiet; off, AutoHush only pauses it")
         case .fades:
-            String(localized: "Fade playback", comment: "Settings → Behavior: the switch that turns the fades on or off")
+            String(localized: "Fade playback", table: "Settings", comment: "Settings → Behavior: the switch that turns the fades on or off")
         case .levelsMusic:
-            String(localized: "Level the volume", comment: "Settings → Behavior, and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
+            String(localized: "Level the volume", table: "Settings", comment: "Settings → Behavior, and Diagnostics: the switch that lowers the Mac’s volume as your player resumes after quieter apps, to match them")
         case .pausesForMicrophone:
-            String(localized: "Pause for the microphone", comment: "Settings → Behavior, and Diagnostics: the switch that pauses your player as soon as an app turns on the microphone")
+            String(localized: "Pause for the microphone", table: "Settings", comment: "Settings → Behavior, and Diagnostics: the switch that pauses your player as soon as an app turns on the microphone")
         case .staysPausedAfterCalls:
-            String(localized: "Stay paused after calls", comment: "Settings → Behavior, and Diagnostics: the switch that keeps your player paused after a call")
+            String(localized: "Stay paused after calls", table: "Settings", comment: "Settings → Behavior, and Diagnostics: the switch that keeps your player paused after a call")
         case .pausesForVoiceOver:
-            String(localized: "Pause for VoiceOver", comment: "Settings → Fine-Tuning, and Diagnostics: the switch that lets VoiceOver (macOS’s screen reader) pause your player while it speaks, as any app heard does")
+            String(localized: "Pause for VoiceOver", table: "Settings", comment: "Settings → Fine-Tuning, and Diagnostics: the switch that lets VoiceOver (macOS’s screen reader) pause your player while it speaks, as any app heard does")
         }
     }
 
@@ -36,28 +36,28 @@ enum SettingsSwitch {
         switch self {
         case .antiDot:
             Text("Hides the purple dot. Detection is a little less precise.",
-                 comment: "Settings, under AntiDot mode; the purple dot is macOS's recording indicator, shown while AutoHush measures audio")
+                 tableName: "Settings", comment: "Settings, under AntiDot mode; the purple dot is macOS's recording indicator, shown while AutoHush measures audio")
         case .pausesOnDisconnect:
             Text("Headphones and other outputs: your player stays paused instead of moving to the speakers. Some players already do this themselves.",
-                 comment: "Settings → Behavior, under “Pause on disconnect”: when headphones or another output (Bluetooth or USB speakers) are unplugged or go out of range; AutoHush doesn’t resume it. Some media players already pause on their own when that happens")
+                 tableName: "Settings", comment: "Settings → Behavior, under “Pause on disconnect”: when headphones or another output (Bluetooth or USB speakers) are unplugged or go out of range; AutoHush doesn’t resume it. Some media players already pause on their own when that happens")
         case .resumesPlayback:
             Text("Once other apps go quiet. Turned off, your player stays paused until you play it.",
-                 comment: "Settings → Behavior, under “Resume playback”: when it resumes your player; turned off, AutoHush only pauses it")
+                 tableName: "Settings", comment: "Settings → Behavior, under “Resume playback”: when it resumes your player; turned off, AutoHush only pauses it")
         case .fades:
             Text("Out before pausing, and back in when resuming.",
-                 comment: "Settings → Behavior, under “Fade playback”")
+                 tableName: "Settings", comment: "Settings → Behavior, under “Fade playback”")
         case .levelsMusic:
             Text("After quieter apps, your player resumes with the Mac’s volume lowered to match. Calls don’t count.",
-                 comment: "Settings → Behavior, under “Level the volume”; a call is an app using the microphone")
+                 tableName: "Settings", comment: "Settings → Behavior, under “Level the volume”; a call is an app using the microphone")
         case .pausesForMicrophone:
             Text("An app turning on the microphone pauses your player, even before it plays.",
-                 comment: "Settings → Behavior, under “Pause for the microphone”: a call that starts silent pauses your player too")
+                 tableName: "Settings", comment: "Settings → Behavior, under “Pause for the microphone”: a call that starts silent pauses your player too")
         case .staysPausedAfterCalls:
             Text("Your player doesn’t resume after a call that came while it was paused.",
-                 comment: "Settings → Behavior, under “Stay paused after calls”; a call is an app using the microphone")
+                 tableName: "Settings", comment: "Settings → Behavior, under “Stay paused after calls”; a call is an app using the microphone")
         case .pausesForVoiceOver:
             Text("VoiceOver speaking pauses your player.",
-                 comment: "Settings → Fine-Tuning, under “Pause for VoiceOver”; VoiceOver is macOS’s screen reader")
+                 tableName: "Settings", comment: "Settings → Fine-Tuning, under “Pause for VoiceOver”; VoiceOver is macOS’s screen reader")
         }
     }
 
@@ -113,35 +113,35 @@ enum SettingsSwitch {
     /// is off: a note in Settings.
     static var resumeOffNote: String {
         String(localized: "Resume playback is off",
-               comment: "Under settings that only matter when your player resumes (Resume playback after, Fade in when resuming, Level the volume, Stay paused after calls), dimmed while the Resume playback switch (Settings → Behavior) is off: Settings → Behavior and Fine-Tuning")
+               table: "Settings", comment: "Under settings that only matter when your player resumes (Resume playback after, Fade in when resuming, Level the volume, Stay paused after calls), dimmed while the Resume playback switch (Settings → Behavior) is off: Settings → Behavior and Fine-Tuning")
     }
 
     /// Under what a switch turns on, dimmed while it's off, as
     /// `resumeOffNote` (the user's pick, the workflow audit, 2026-10-22).
     static var antiDotOffNote: String {
         String(localized: "AntiDot mode is off",
-               comment: "Settings → Fine-Tuning, Detection: under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch (Settings → Behavior) is off")
+               table: "Settings", comment: "Settings → Fine-Tuning, Detection: under AntiDot mode's ways of detecting, dimmed while the AntiDot mode switch (Settings → Behavior) is off")
     }
 
     static var fadesOffNote: String {
         String(localized: "Fade playback is off",
-               comment: "Settings → Fine-Tuning, under the fades' lengths, dimmed while the Fade playback switch (Settings → Behavior) is off")
+               table: "Settings", comment: "Settings → Fine-Tuning, under the fades' lengths, dimmed while the Fade playback switch (Settings → Behavior) is off")
     }
 
     static var levelingOffNote: String {
         String(localized: "Level the volume is off",
-               comment: "Settings → Fine-Tuning, under the volume's limits, dimmed while the Level the volume switch (Settings → Behavior) is off")
+               table: "Settings", comment: "Settings → Fine-Tuning, under the volume's limits, dimmed while the Level the volume switch (Settings → Behavior) is off")
     }
 
     /// Under the dimmed Fade playback, for a player AutoHush can't fade;
     /// Fine-Tuning's Fade Lengths too.
     static func cantFadeNote(_ player: String) -> String {
         String(localized: "\(player) pauses and resumes without fading: AutoHush can’t change its volume.",
-               comment: "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player")
+               table: "Settings", comment: "Settings → Behavior and Fine-Tuning, under the dimmed fade settings; %@ is the media player")
     }
 
     static var updateChecksOffNote: String {
         String(localized: "Automatic checks are off",
-               comment: "Settings → About, under what happens when an update is found, dimmed while the switch “Check for updates automatically” is off")
+               table: "Settings", comment: "Settings → About, under what happens when an update is found, dimmed while the switch “Check for updates automatically” is off")
     }
 }

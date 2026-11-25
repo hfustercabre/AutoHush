@@ -27,13 +27,13 @@ struct ControlError: Equatable {
             self.failure = failure
         case .automationPermissionDenied?, .accessibilityPermissionDenied?:
             text = String(localized: "AutoHush may no longer control \(player).",
-                          comment: "Why the media player couldn't be controlled: its permission was taken away; %@ is the player")
+                          table: "Players", comment: "Why the media player couldn't be controlled: its permission was taken away; %@ is the player")
         case .playerNotRunning?:
             text = String(localized: "\(player) isn’t running.",
-                          comment: "Why the media player couldn't be controlled: it quit; %@ is the player")
+                          table: "Players", comment: "Why the media player couldn't be controlled: it quit; %@ is the player")
         case .playerNotResponding?:
             text = String(localized: "\(player) isn’t responding.",
-                          comment: "Why the media player couldn't be controlled; %@ is the player")
+                          table: "Players", comment: "Why the media player couldn't be controlled; %@ is the player")
         case .stillLearning?, nil:
             text = error.localizedDescription
         }

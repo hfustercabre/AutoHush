@@ -10,19 +10,19 @@ enum SettingsTiming {
     var name: String {
         switch self {
         case .pauseAfter:
-            String(localized: "Pause playback after", comment: "Settings → Fine-Tuning, and Diagnostics: how long another app must play before your player pauses")
+            String(localized: "Pause playback after", table: "Settings", comment: "Settings → Fine-Tuning, and Diagnostics: how long another app must play before your player pauses")
         case .resumeAfter:
-            String(localized: "Resume playback after", comment: "Settings → Fine-Tuning, and Diagnostics: how long other apps must be quiet before your player resumes")
+            String(localized: "Resume playback after", table: "Settings", comment: "Settings → Fine-Tuning, and Diagnostics: how long other apps must be quiet before your player resumes")
         case .silenceThreshold:
-            String(localized: "Silence threshold", comment: "Settings → Fine-Tuning, and Diagnostics: the sound level below which an app counts as silent")
+            String(localized: "Silence threshold", table: "Settings", comment: "Settings → Fine-Tuning, and Diagnostics: the sound level below which an app counts as silent")
         case .fadeOut:
-            String(localized: "Fade out before pausing", comment: "Settings → Fine-Tuning, and Diagnostics: slider for how long playback fades out before it pauses")
+            String(localized: "Fade out before pausing", table: "Settings", comment: "Settings → Fine-Tuning, and Diagnostics: slider for how long playback fades out before it pauses")
         case .fadeIn:
-            String(localized: "Fade in when resuming", comment: "Settings → Fine-Tuning, and Diagnostics: slider for how long playback fades back in when it resumes")
+            String(localized: "Fade in when resuming", table: "Settings", comment: "Settings → Fine-Tuning, and Diagnostics: slider for how long playback fades back in when it resumes")
         case .levelingMaxCut:
-            String(localized: "Lower by at most", comment: "Settings → Fine-Tuning, and Diagnostics, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)")
+            String(localized: "Lower by at most", table: "Settings", comment: "Settings → Fine-Tuning, and Diagnostics, under Level the volume: slider for the most the Mac’s volume is lowered as your player resumes (in decibels)")
         case .levelingMinCut:
-            String(localized: "Only when quieter by", comment: "Settings → Fine-Tuning, and Diagnostics, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)")
+            String(localized: "Only when quieter by", table: "Settings", comment: "Settings → Fine-Tuning, and Diagnostics, under Level the volume: slider for how much quieter the other apps must have been than your player for the volume to be lowered (in decibels)")
         }
     }
 
@@ -34,25 +34,25 @@ enum SettingsTiming {
         switch self {
         case .pauseAfter:
             Text("How long another app must be audible, so short sounds don’t pause your player.",
-                 comment: "Settings → Fine-Tuning, under “Pause playback after”")
+                 tableName: "Settings", comment: "Settings → Fine-Tuning, under “Pause playback after”")
         case .resumeAfter:
             Text("How long another app must be silent. Bridges gaps between tracks and videos.",
-                 comment: "Settings → Fine-Tuning, under “Resume playback after”")
+                 tableName: "Settings", comment: "Settings → Fine-Tuning, under “Resume playback after”")
         case .silenceThreshold:
             Text("Quieter output counts as silence.",
-                 comment: "Settings → Fine-Tuning, under “Silence threshold”")
+                 tableName: "Settings", comment: "Settings → Fine-Tuning, under “Silence threshold”")
         case .fadeOut:
             Text("How long playback fades out before it pauses. 0 pauses it at once.",
-                 comment: "Settings → Fine-Tuning, under “Fade out before pausing”")
+                 tableName: "Settings", comment: "Settings → Fine-Tuning, under “Fade out before pausing”")
         case .fadeIn:
             Text("How long playback takes to fade back in once it resumes. 0 resumes at full volume.",
-                 comment: "Settings → Fine-Tuning, under “Fade in when resuming”")
+                 tableName: "Settings", comment: "Settings → Fine-Tuning, under “Fade in when resuming”")
         case .levelingMaxCut:
             Text("The most the Mac’s volume goes down as your player resumes.",
-                 comment: "Settings → Fine-Tuning, under “Lower by at most”")
+                 tableName: "Settings", comment: "Settings → Fine-Tuning, under “Lower by at most”")
         case .levelingMinCut:
             Text("Smaller differences leave the volume as it is.",
-                 comment: "Settings → Fine-Tuning, under “Only when quieter by”: when the other apps were less quieter than this, the Mac’s volume isn’t lowered")
+                 tableName: "Settings", comment: "Settings → Fine-Tuning, under “Only when quieter by”: when the other apps were less quieter than this, the Mac’s volume isn’t lowered")
         }
     }
 
@@ -97,6 +97,6 @@ enum SettingsTiming {
 
     /// A sound level, as "-60 dB": here, and in Diagnostics.
     static func decibels(_ value: Double) -> String {
-        String(localized: "\(Int(value)) dB", comment: "A sound level in decibels")
+        String(localized: "\(Int(value)) dB", table: "Settings", comment: "A sound level in decibels")
     }
 }

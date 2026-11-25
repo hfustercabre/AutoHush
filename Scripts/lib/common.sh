@@ -12,12 +12,19 @@ INFO_PLIST="$PROJECT_DIR/Resources/Info.plist"
 ENTITLEMENTS="$PROJECT_DIR/Resources/$APP_NAME.entitlements"
 # Icon Composer document; compiled into the app by Scripts/build-app.sh.
 APP_ICON="$PROJECT_DIR/Resources/$APP_NAME.icon"
-# String Catalogs: Localizable.xcstrings holds the app's text in every
-# language, InfoPlist.xcstrings the Info.plist texts, AppShortcuts.xcstrings
-# the App Shortcuts' phrases. Scripts/build-app.sh adds the strings the code
-# uses to the first and compiles all three into the app.
+# String Catalogs, each holding its texts in every language:
+# InfoPlist.xcstrings the Info.plist texts and AppShortcuts.xcstrings the App
+# Shortcuts' phrases (macOS reads them only by those names); every other one
+# is a table of the app's own text, one per area (Settings, Menu, AddApp…),
+# and Localizable.xcstrings the words several areas share. Scripts/build-app.sh
+# adds the strings the code uses to the table each one names and compiles
+# them all into the app.
 LOCALIZATION_DIR="$PROJECT_DIR/Resources/Localization"
-STRING_CATALOG="$LOCALIZATION_DIR/Localizable.xcstrings"
+# The app's own tables, one path a line.
+app_string_catalogs() {
+    find "$LOCALIZATION_DIR" -maxdepth 1 -name '*.xcstrings' \
+        ! -name InfoPlist.xcstrings ! -name AppShortcuts.xcstrings | sort
+}
 # Created by Scripts/create-signing-certificate.sh.
 SELF_SIGNED_IDENTITY="AutoHush Self-Signed"
 # GitHub repository whose releases installed copies update from.

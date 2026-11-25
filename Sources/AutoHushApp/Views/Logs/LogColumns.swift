@@ -57,18 +57,18 @@ struct LogColumns {
     }
 
     static var levelTitle: String {
-        String(localized: "Level", comment: "The logs window: title of the column that marks each entry's level (a problem, a notice, information)")
+        String(localized: "Level", table: "Logs", comment: "The logs window: title of the column that marks each entry's level (a problem, a notice, information)")
     }
 
     static var timeTitle: String {
-        String(localized: "Time", comment: "The logs window: title of the column with when each entry was logged (its date, time and offset from UTC)")
+        String(localized: "Time", table: "Logs", comment: "The logs window: title of the column with when each entry was logged (its date, time and offset from UTC)")
     }
 
     static var areaTitle: String {
-        String(localized: "Area", comment: "The logs window: title of the column with the part of AutoHush that logged each entry (Player, Detection, Updates…)")
+        String(localized: "Area", table: "Logs", comment: "The logs window: title of the column with the part of AutoHush that logged each entry (Player, Detection, Updates…)")
     }
 
     static var messageTitle: String {
-        String(localized: "Message", comment: "The logs window: title of the column with what each entry says")
+        String(localized: "Message", table: "Logs", comment: "The logs window: title of the column with what each entry says")
     }
 }

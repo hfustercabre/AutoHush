@@ -13,7 +13,7 @@ struct WelcomePermissionsView: View {
         let state = model.permissions
         WindowPage(icon: model.chosenPlayer?.icon(size: 56),
                    description: Text(String(localized: "AutoHush needs these to pause and resume \(name) for you.",
-                                            comment: "Welcome window, at the top of the page titled “Allow AutoHush to Work”, beside the media player's icon; %@ is the media player")),
+                                            table: "Permissions", comment: "Welcome window, at the top of the page titled “Allow AutoHush to Work”, beside the media player's icon; %@ is the media player")),
                    width: PlayerChooserView.width) {
             SectionHeading(Text(verbatim: PermissionText.heading))
                 .padding(.top, 8)
@@ -87,7 +87,7 @@ struct WelcomePermissionsView: View {
         }
         if new.allSatisfied, !old.allSatisfied {
             parts.append(String(localized: "Done is available",
-                                comment: "Welcome window, said by VoiceOver once every permission is allowed (or not needed): the Done button can be clicked now"))
+                                table: "Permissions", comment: "Welcome window, said by VoiceOver once every permission is allowed (or not needed): the Done button can be clicked now"))
         }
         return parts.isEmpty ? nil : parts.joined(separator: ". ")
     }
@@ -96,7 +96,7 @@ struct WelcomePermissionsView: View {
                                      @ViewBuilder trailing: () -> Trailing) -> some View {
         PermissionRow(symbol: symbol, title: title, note: note, isAllowed: access == .allowed) {
             if access == .notNeeded {
-                Text("Not needed", comment: "Welcome window: Audio Recording while AntiDot mode is on, which doesn't use it")
+                Text("Not needed", tableName: "Permissions", comment: "Welcome window: Audio Recording while AntiDot mode is on, which doesn't use it")
                     .font(.appCallout)
                     .foregroundStyle(.appSecondary)
             } else {

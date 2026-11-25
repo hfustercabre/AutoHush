@@ -40,19 +40,19 @@ struct MenuIgnoredAppsView: View {
         switch count {
         case 0:
             String(localized: "Apps you ignore don’t pause your player.",
-                   comment: "The menu, Ignored Apps, under “None” while no app is ignored: what ignoring an app does")
+                   table: "Menu", comment: "The menu, Ignored Apps, under “None” while no app is ignored: what ignoring an app does")
         case 1:
             String(localized: "It doesn’t pause your player.",
-                   comment: "The menu, Ignored Apps, under the name of the one app ignored")
+                   table: "Menu", comment: "The menu, Ignored Apps, under the name of the one app ignored")
         default:
             String(localized: "They don’t pause your player.",
-                   comment: "The menu, Ignored Apps, under the names of the ignored apps (two or more)")
+                   table: "Menu", comment: "The menu, Ignored Apps, under the names of the ignored apps (two or more)")
         }
     }
 
     /// The part's title, over its row and atop its side window.
     static var title: String {
-        String(localized: "Ignored Apps", comment: "The menu: heading over the apps that don’t pause your player")
+        String(localized: "Ignored Apps", table: "Menu", comment: "The menu: heading over the apps that don’t pause your player")
     }
 
     /// The apps' names in a few words: one or two named; from three on, the
@@ -64,7 +64,7 @@ struct MenuIgnoredAppsView: View {
         case 2: ListFormatter.localizedString(byJoining: names)
         default:
             String(localized: "\(names[0]), \(names[1]) and \(names.count - 2) more",
-                   comment: "The menu, Ignored Apps: the first two ignored apps' names, then how many others there are (1 or more)")
+                   table: "Menu", comment: "The menu, Ignored Apps: the first two ignored apps' names, then how many others there are (1 or more)")
         }
     }
 
