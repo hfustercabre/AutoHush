@@ -21,25 +21,32 @@ struct CoreAudioOutputsReadTests {
         #expect(outputs.device(withUID: "AutoHush.NoSuchOutput.\(UUID().uuidString)") == nil)
     }
 
-    /// Every output with a volume control, not only the default one: the
-    /// VMs play through a loopback with none, but list their own sound
-    /// device beside it (2026-11-24).
-    private static var outputsWithVolume: [AudioObjectID] {
+    /// Every output whose volume translates from decibels, not only the
+    /// default one: the VMs play through a loopback with none, but list
+    /// their own sound device beside it (2026-11-24). One with a volume but
+    /// no translation (a routing app's virtual device, as on GitHub's
+    /// runner, 2026-11-25) is lowered through its dB reading instead, so
+    /// it's left out, as Level the volume tells them apart.
+    private static var outputsThatTranslate: [AudioObjectID] {
         let volume = CoreAudioSystemVolume()
         return CoreAudioProperty.objectIDs(kAudioHardwarePropertyDevices, of: CoreAudioProperty.systemObject)
-            .filter { volume.volume(of: $0) != nil }
+            .filter { device in
+                guard let current = volume.volume(of: device) else { return false }
+                return current.scalars.keys.contains { volume.scalar(forDecibels: current.lowest, element: $0, of: device) != nil }
+            }
     }
 
     @Test("each output's volume, read on the volume keys' scale, is found again on its own dB-to-volume translation (read only)",
-          .enabled(if: !outputsWithVolume.isEmpty, "no output with a volume control here"))
+          .enabled(if: !outputsThatTranslate.isEmpty, "no output whose volume translates from decibels here"))
     func volumeTranslatesBack() throws {
-        let volume = CoreAudioSystemVolume()
-        for device in Self.outputsWithVolume {
+        let volume = CoreAudioSystemVolume(), outputs = CoreAudioOutputMute()
+        for device in Self.outputsThatTranslate {
             let current = try #require(volume.volume(of: device))
+            let name = outputs.uid(of: device) ?? "device \(device)"
             for (element, scalar) in current.scalars {
-                #expect((0...1).contains(scalar))
-                let decibels = try #require(volume.decibels(at: scalar, element: element, of: device, in: current))
-                #expect(decibels >= current.lowest - 0.01 && decibels <= current.highest + 0.01)
+                #expect((0...1).contains(scalar), "\(name)")
+                let decibels = try #require(volume.decibels(at: scalar, element: element, of: device, in: current), "\(name), element \(element)")
+                #expect(decibels >= current.lowest - 0.01 && decibels <= current.highest + 0.01, "\(name)")
             }
         }
     }
