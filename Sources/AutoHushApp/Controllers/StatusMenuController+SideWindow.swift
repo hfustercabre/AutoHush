@@ -95,24 +95,32 @@ extension StatusMenuController {
     /// into it once it has the focus. The menu's switches are drawn inactive
     /// meanwhile, as in any window that isn't key. `false` when the players'
     /// side window doesn't show.
+    ///
+    /// SwiftUI focuses the field (`searchFocus`); a focus it dropped is given
+    /// through AppKit, for Tab, Shift-Tab and a click as for a key (B-2 of
+    /// 11-11, diff-app-4: Tab into it showed no caret, nothing lit). Without
+    /// a key, that stops once the keys moved on (`searchStillAsks`). With
+    /// one, it goes on: the key needs the field, and typed into the menu
+    /// instead, it would ask again (`handleKey`), and again each time.
     @discardableResult func searchTakesKeyboard(replaying event: NSEvent? = nil) -> Bool {
         guard model.isChoosingPlayer, let side = sidePanel, side.isVisible else { return false }
         side.takesKey = true
         side.makeKey()
         model.searchFocus += 1
-        guard let event else { return true }
+        let request = model.searchFocus
         let pause = pause
-        Task { [weak side] in
-            await pause(0.05) // SwiftUI focuses the field in its next update
+        Task { [weak self, weak side] in
+            await pause(Self.searchFocusWait) // SwiftUI focuses the field in its next update
             // A focus SwiftUI dropped (a busy main thread, another window key
-            // for a moment) is given through AppKit, as the other searches do,
-            // so the key isn't lost (B-2 of 11-11); a few updates at most.
+            // for a moment) is given through AppKit, as the other searches do;
+            // a few updates at most.
             for _ in 0..<5 {
-                guard let side, side.isVisible, !(side.firstResponder is NSTextView) else { break }
+                guard let side, side.isVisible, !(side.firstResponder is NSTextView),
+                      event != nil || self?.searchStillAsks(request, in: side) == true else { break }
                 side.makeFirstResponder(side.contentView?.firstEditableTextField)
-                await pause(0.05)
+                await pause(Self.searchFocusWait)
             }
-            guard let side, side.isVisible else { return } // closed meanwhile: typed nowhere
+            guard let event, let side, side.isVisible else { return } // no key, or closed meanwhile: typed nowhere
             // The key goes after what's typed, never in place of it: a field
             // focused selects all its text (C-2 of 1.4.2's review).
             if let editor = side.firstResponder as? NSTextView {
@@ -124,6 +132,15 @@ extension StatusMenuController {
             side.sendEvent(event)
         }
         return true
+    }
+
+    /// The players' search still wants the focus `request` asked for
+    /// (`searchTakesKeyboard`): no later request, the players still shown,
+    /// no row lit and the side window still taking the keyboard, so a focus
+    /// given late never takes it back after Tab or an arrow out of the
+    /// search (diff-app-4: a lit row and a caret at once, K4).
+    private func searchStillAsks(_ request: Int, in side: MenuPanel) -> Bool {
+        model.searchFocus == request && model.isChoosingPlayer && model.sideKeyboard.highlighted == nil && side.takesKey
     }
 
     /// The players' search lets go of the keyboard (Tab out of it): the menu

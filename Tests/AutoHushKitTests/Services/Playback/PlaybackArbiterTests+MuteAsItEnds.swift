@@ -22,6 +22,56 @@ extension PlaybackArbiterTests {
         #expect(published.state == .musicPlaying)
     }
 
+    @Test("a player the user stops or quits while its mute is made is theirs: the mute is lifted, not held as AutoHush's pause, and their play is heard, not muted then paused (engine-5)",
+          arguments: [PlayerState.stopped, .notRunning])
+    func stoppedWhileMutingTheirs(_ stopped: PlayerState) async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler(), mutedInstead = Locked<[Bool]>([])
+        let arbiter = await pausedForAnotherApp(player, clock: clock, mute: mute, published: published,
+                                                mutedInstead: mutedInstead, scheduler: scheduler)
+        await player.setState(.playing) // its pause didn't take
+        // The user stops or quits it while its tap is made.
+        mute.whileMuting = {
+            await player.setState(stopped)
+            await arbiter.handlePlayerStateChange(stopped)
+        }
+        await firstLook(scheduler, arbiter, clock: clock)
+        #expect(mute.muteCount == 1)
+        #expect(mute.unmuteCount == 1)
+        #expect(await arbiter.pausedByUs == false)
+        #expect(await arbiter.leftToUser)
+        #expect(mutedInstead.value.isEmpty) // never said Muted
+        #expect(published.state == .musicIdle)
+
+        mute.whileMuting = nil
+        await player.setState(.playing) // their play
+        await arbiter.handlePlayerStateChange(.playing)
+        await nextLook(scheduler, arbiter, clock: clock)
+        #expect(await player.pauseCallCount == 1) // heard: not muted, then paused
+        #expect(mute.muteCount == 1)
+    }
+
+    @Test("the other app stops while the mute is made, the pause kept (Resume playback off): paused for real, then unmuted, never heard (an end of the pause that isn't the user's still holds it)")
+    func keptWhileMutingPausedForReal() async {
+        let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()
+        let scheduler = ManualDebounceScheduler()
+        var configuration = AppConfiguration.testing
+        configuration.resumesPlayback = false
+        let arbiter = await pausedForAnotherApp(player, clock: clock, mute: mute, published: published,
+                                                configuration: configuration, scheduler: scheduler)
+        await player.setState(.playing) // its pause didn't take
+        mute.whileMuting = {
+            await arbiter.sourceChanged("org.example.viewer", playing: false)
+            if let resume = await arbiter.pendingResumeTask { await resume.value }
+        }
+        await firstLook(scheduler, arbiter, clock: clock)
+        await TestWait.until { mute.unmuteCount == 1 }
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 2) // paused for real
+        #expect(await player.state == .paused)
+        #expect(await player.playCallCount == 0)
+    }
+
     @Test("a mute made just as Auto-Pause is turned off is lifted at once")
     func muteAsAutoPauseOffLifted() async {
         let player = MockMusicPlayer(), clock = ManualClock(), mute = FakeMute(), published = LastPublished()

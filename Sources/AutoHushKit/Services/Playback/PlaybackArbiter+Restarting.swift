@@ -141,13 +141,16 @@ extension PlaybackArbiter {
     /// until the pause is over; one that can't be muted plays on, its pause
     /// failed.
     func handleRestart(reported: Bool) async -> Bool {
-        guard pausedByUs, let pausedAt else { return false }
+        guard pausedByUs else { return false }
         // Muted in place of the pause, it plays on, silent, as expected.
         guard !mutedInstead else { return true }
         // Its pause is a mute of its own: heard through it, as any muted
         // player, and left to it (the user, 2026-10-25). One that only mutes,
-        // said to play, was unmuted (the menu's Unmute): the user's.
+        // said to play, was unmuted (the menu's Unmute): the user's. Asked
+        // before its time: a mute it made as it said it was paused has none
+        // (`forgetEarlierPause`; P1 of 11-27: taken for the user's, it stayed muted).
         if await pauseIsItsOwnMute() { return !(reported && player.pausesByMuting) }
+        guard let pausedAt else { return false }
         let hearing = await hearsPlayer(pausedAt.addingTimeInterval(Self.pauseTail))
         guard !isShutDown, pausedByUs, !mutedInstead else { return true }
         // Only a player that was silent can be played again (the user, 2026-10-24).

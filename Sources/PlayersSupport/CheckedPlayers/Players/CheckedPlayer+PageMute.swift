@@ -24,8 +24,9 @@ extension CheckedPlayer {
         return await page.muteIfPlayingAnyway()
     }
 
-    /// The Mac slept: AutoHush no longer holds the pause its page's mute
-    /// stands for, lifted once the page is paused for real, or silent.
+    /// AutoHush no longer holds the pause its page's mute stands for (kept,
+    /// or the Mac slept): lifted once the page is paused for real, or
+    /// silent, as it's read (`readMutedPage`).
     package func forgetPause() async {
         await parts.page?.forgetPause()
     }

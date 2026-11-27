@@ -70,7 +70,12 @@ extension PlaybackArbiter {
         pendingPauseID = nil
     }
 
-    private func pauseMusicIfNeeded() async {
+    /// `heardAlready`: a fade-out called off left the music down, and an
+    /// app started again: it was heard before that fade-out, and at that
+    /// low volume its sound would tell of the fade, not the player (it
+    /// reads silent), so it isn't measured again: it fades out from there
+    /// and pauses, never set back up over the app first (S2).
+    private func pauseMusicIfNeeded(heardAlready: Bool = false) async {
         guard autoPauseEnabled, !isAsleep else { return }
         let checked = clock()
         pauseBegan = volumeLeveler?.lowerings ?? 0
@@ -101,7 +106,7 @@ extension PlaybackArbiter {
         // Not heard (a muted trailer, a silent preview): nothing to pause.
         // Read from the levels the monitor measures, so nothing waits; asked
         // again every second while apps play, so it's paused once heard.
-        let hearing = await hearsPlayer(nil)
+        let hearing: PlayerHearing = if heardAlready { .heard } else { await hearsPlayer(nil) }
         if case .measuring(let remaining) = hearing {
             // Its tap was made with the other app's: not heard yet, but not
             // long enough to tell. A sound meanwhile tells at once.
@@ -179,9 +184,11 @@ extension PlaybackArbiter {
         guard paused else {
             logger.info("[arbiter] pause called off during the fade-out (playing now: \(self.playingApps, privacy: .public))")
             // Another app may have started while the music came back up.
-            if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded() }
-            // Stopped before it was back up, and no pause faded it since:
-            // the user's volume again (R1 of 11-19's diff review).
+            // Still down from the fade-out, it pauses from there (S2).
+            if !activeSources.isEmpty, !isShutDown { await pauseMusicIfNeeded(heardAlready: await fader.isLeftDown) }
+            // Stopped before it was back up, and no pause faded it since
+            // (the player found not playing, the apps gone or Auto-Pause off
+            // meanwhile): the user's volume again (R1 of 11-19's diff review).
             await fader.restoreIfLeftDown()
             return
         }
@@ -244,10 +251,8 @@ extension PlaybackArbiter {
             heardWhileQuietSince = nil
             guard await hearsPlayer(since.addingTimeInterval(Self.pauseTail)) == .heard,
                   !isShutDown, autoPauseEnabled, !isFadingOut, !activeSources.isEmpty else { return false }
-            let handled = await muteInsteadOfPause("is heard while it says it’s \(state.rawValue)",
-                                                   failure: .playerCommandFailed(.pressIgnored))
-            if pausedByUs, mutedInstead { mute.noteMutedWhileQuiet() }
-            return handled
+            return await muteInsteadOfPause("is heard while it says it’s \(state.rawValue)",
+                                            failure: .playerCommandFailed(.pressIgnored), whileQuiet: true)
         }
         guard await hearsPlayer(nil) == .heard, !isShutDown, autoPauseEnabled, !activeSources.isEmpty else { return false }
         heardWhileQuietSince = clock()

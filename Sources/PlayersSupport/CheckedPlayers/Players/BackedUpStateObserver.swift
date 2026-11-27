@@ -27,8 +27,13 @@ final class BackedUpStateObserver: PlayerStateObserving {
     }
 
     func stop() {
+        stop(handingOver: false)
+    }
+
+    /// Its own player's observer is told it hands over (`StoppingObserver`).
+    func stop(handingOver: Bool) {
         observing = false
-        own.stop()
+        own.stop(handingOver: handingOver)
         followDenial()
     }
 

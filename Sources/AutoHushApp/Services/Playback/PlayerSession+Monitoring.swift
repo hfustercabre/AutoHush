@@ -49,8 +49,9 @@ extension PlayerSession {
             preferences.playbackAssertions[id] = assertions
         case .pauseFailure(let error):
             state.controlError = error.map { ControlError($0, player: player?.name ?? "", antiDot: settings.detection.isAntiDot) }
-        case .mutedInstead(let muted):
+        case .mutedInstead(let muted, let whileQuiet):
             state.mutedInstead = muted
+            state.mutedWhileQuiet = whileQuiet
         case .resumeFailure(let error):
             state.resumeError = error.map { ControlError($0, player: player?.name ?? "", antiDot: settings.detection.isAntiDot) }
         }
@@ -99,6 +100,7 @@ extension PlayerSession {
         stopped.playback = .unknown
         stopped.detection = .pending
         stopped.mutedInstead = false
+        stopped.mutedWhileQuiet = false
         stopped.resumeError = nil
         state = stopped
     }

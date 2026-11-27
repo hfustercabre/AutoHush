@@ -17,8 +17,9 @@ package protocol MutingMusicPlayer: TapsAllowingPlayer {
     /// isn't possible or allowed.
     func muteIfPlayingAnyway() async -> Bool
     /// AutoHush no longer holds the pause a mute stands in for (the Mac
-    /// slept): the player is paused for real as soon as it can be, and the
-    /// mute lifted then, or once it's silent. It isn't played again.
+    /// slept, or the pause was kept): the player is paused for real as soon
+    /// as it can be, and the mute lifted then, or once it's silent. It isn't
+    /// played again.
     func forgetPause() async
     /// Lifts a mute `muteIfPlayingAnyway` left, without playing anything:
     /// once AutoHush no longer watches it (its monitoring stopped).

@@ -14,8 +14,10 @@ final class FakeMonitoring: SessionMonitoring {
     /// Whether `start` finds the pause it's asked to take over.
     private let findsPause: Bool
 
-    private(set) var starts: [(takingOverPause: Bool, asleep: Bool)] = []
+    private(set) var starts: [(takingOverPause: Bool, mutedBefore: TakenBackMute?, asleep: Bool)] = []
     private(set) var stops = 0
+    /// Stops that handed the pause over to the monitoring that took it back.
+    private(set) var handOverStops = 0
     private(set) var restoredStops = 0
     private(set) var autoPause: Bool?
     private(set) var ignored: Set<String>?
@@ -39,10 +41,15 @@ final class FakeMonitoring: SessionMonitoring {
         self.onUpdate = onUpdate
     }
 
-    var isStopped: Bool { stops + restoredStops > 0 }
+    var isStopped: Bool { stops + restoredStops + handOverStops > 0 }
 
-    func start(takingOverPause: Bool, asleep: Bool) async -> Bool {
-        starts.append((takingOverPause, asleep))
+    /// Runs inside `start`, before it answers, so a test can do something
+    /// while it starts (the user choosing another player).
+    var whileStarting: (@MainActor (FakeMonitoring) async -> Void)?
+
+    func start(takingOverPause: Bool, mutedBefore: TakenBackMute?, asleep: Bool) async -> Bool {
+        starts.append((takingOverPause, mutedBefore, asleep))
+        if let whileStarting { await whileStarting(self) }
         return takingOverPause && findsPause
     }
 
@@ -64,6 +71,7 @@ final class FakeMonitoring: SessionMonitoring {
     }
 
     func stop() { stops += 1 }
+    func stop(handingOver: Bool) { if handingOver { handOverStops += 1 } else { stops += 1 } }
     func stopAndRestoreVolume() async { restoredStops += 1 }
     func setAutoPauseEnabled(_ enabled: Bool) { autoPause = enabled }
     func setIgnoredSources(_ ids: Set<String>) { ignored = ids }

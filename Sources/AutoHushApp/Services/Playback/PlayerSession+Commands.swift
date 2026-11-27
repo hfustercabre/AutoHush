@@ -16,13 +16,15 @@ extension PlayerSession {
     /// The user chose `newPlayer`: a pause AutoHush holds on the player it
     /// leaves is still its own to end, so that player's monitoring runs on
     /// for it (`heldPauses`), and a player held paused that is chosen again
-    /// is taken back by its new monitoring. `nil`: no player is chosen any
-    /// more (it was deleted), and nothing runs.
+    /// is taken back by its new monitoring, the one that held it running on
+    /// until then (a mute standing for it is never lifted between them).
+    /// `nil`: no player is chosen any more (it was deleted), and nothing runs.
     func choose(_ newPlayer: any MusicPlayer?) {
         guard let newPlayer else {
             player = nil
             startGeneration += 1 // a start under way gives up
             cancelRetry()
+            heldPauses.endParked()
             tearDownMonitoring()
             setHealth(nil)
             return
@@ -31,7 +33,7 @@ extension PlayerSession {
         // the pause held for this one back (`takesBack`) for its own.
         startGeneration += 1
         let leaving = player
-        holdPause(for: newPlayer.bundleID)
+        holdPause(for: newPlayer)
         // Chosen again while its pause was held: it keeps what it turned on.
         leftPlayers[newPlayer.bundleID] = nil
         player = newPlayer
@@ -47,7 +49,7 @@ extension PlayerSession {
     /// is over (`HeldPauses.onEnded`). Chosen again meanwhile, it keeps them.
     /// The same player object (any player AutoHush has is an actor or a
     /// class); a value is the same by its app.
-    static func isSame(_ player: any MusicPlayer, _ other: any MusicPlayer?) -> Bool {
+    nonisolated static func isSame(_ player: any MusicPlayer, _ other: any MusicPlayer?) -> Bool {
         guard let other else { return false }
         guard type(of: player as Any) is AnyClass, type(of: other as Any) is AnyClass else {
             return player.bundleID == other.bundleID
@@ -56,8 +58,11 @@ extension PlayerSession {
     }
 
     func releaseLeft(_ leaving: any MusicPlayer) {
-        // The same app chosen again (checked again: a new player) releases its old one.
-        guard leaving.releasesOnQuit, !Self.isSame(leaving, player) else { return }
+        // The same app chosen again (checked again: a new player) releases
+        // its old one, once the old one's monitoring, parked, has handed
+        // its pause over (`HeldPauses.handOver`).
+        guard leaving.releasesOnQuit, !Self.isSame(leaving, player),
+              !heldPauses.releasesOnceParkedStops(leaving) else { return }
         if heldPauses.bundleIDs.contains(leaving.bundleID) {
             leftPlayers[leaving.bundleID] = leaving
             return
@@ -97,6 +102,7 @@ extension PlayerSession {
             logger.notice("\(player.name, privacy: .public) isn’t installed")
             startGeneration += 1 // a start under way gives up
             cancelRetry()        // and none is tried until it's back
+            heldPauses.endParked()
             tearDownMonitoring()
             setHealth(notInstalled)
         }
@@ -109,7 +115,9 @@ extension PlayerSession {
     /// missing permission starts over as at launch: the menu asks for it, and
     /// monitoring starts again by itself once it's given back, taking back a
     /// pause AutoHush held (`holdPause`), however long that took (the user,
-    /// 2026-11-19: "No limit").
+    /// 2026-11-19: "No limit"); a mute holding it is handed over only when
+    /// the permission is back by the start that follows at once, else
+    /// lifted, as before.
     func checkAccess() {
         guard state.health == .ready, let player, accessCheck == nil else { return }
         let generation = startGeneration
@@ -122,7 +130,7 @@ extension PlayerSession {
                 switch error as? MusicPlayerError {
                 case .automationPermissionDenied?, .accessibilityPermissionDenied?:
                     self.logger.error("Lost control of \(player.name, privacy: .public): \(error)")
-                    self.holdPause(for: player.bundleID)
+                    self.holdPause(for: player)
                     self.requestStart()
                 default:
                     break // the player quit or didn't answer: monitoring follows those

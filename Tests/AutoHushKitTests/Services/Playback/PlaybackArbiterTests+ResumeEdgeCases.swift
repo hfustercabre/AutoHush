@@ -171,4 +171,98 @@ extension PlaybackArbiterTests {
         #expect(await player.state == .playing)
         #expect(leveler.log.isEmpty)
     }
+
+    /// What a page muted for an ad says as the resume asks, over its own
+    /// mute (a script's sign, read before the page's), when nothing plays it.
+    enum SaysAtResume: String, CaseIterable, Sendable {
+        /// Playing: "plays already".
+        case playing
+        /// Stopped: the user's doing.
+        case stopped
+        /// No answer, its tries done: given up.
+        case unanswered
+    }
+
+    @Test("a page held paused by its own mute whose resume is skipped (it reads playing over that mute, or stopped) or given up: that mute is lifted, nothing played (N4 of 11-27)",
+          arguments: SaysAtResume.allCases)
+    func ownMuteLiftedWithoutResume(_ says: SaysAtResume) async {
+        let mock = MockMusicPlayer(state: .paused)
+        await mock.setPlaysAnyway(true)
+        let page = MockMutingMusicPlayer(mock), scheduler = ManualDebounceScheduler()
+        let arbiter = PlaybackArbiter(player: page, configuration: .testing, debounceScheduler: scheduler)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        #expect(await arbiter.heldByMute)
+        switch says {
+        case .playing: await mock.setState(.playing)
+        case .stopped: await mock.setState(.stopped)
+        case .unanswered: await mock.setUnansweredStateQueries(PlaybackArbiter.resumeRetries + 1)
+        }
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        if says == .unanswered {
+            for attempt in 1...PlaybackArbiter.resumeRetries {
+                await TestWait.until { scheduler.scheduledDelays.count == attempt }
+                await scheduler.completeNext()
+            }
+        }
+        await TestWait.until { await !arbiter.pausedByUs }
+        await arbiter.waitUntilIdle()
+        #expect(await page.releasedMutes == 1)
+        #expect(await mock.playCallCount == 0)
+    }
+
+    @Test("a page held paused by its own mute that reads stopped over it as the apps play (its script read first), or says so and doesn't answer, stays paused and muted: that's what its mute was made for, no sign of the user; once they stop, the resume's skip lifts the mute, nothing played. Quit, its mute is lifted at once (T1 of 11-27)",
+          arguments: [(PlayerState.stopped, PlayerState.stopped), (.stopped, .unknown), (.notRunning, .notRunning)])
+    func ownMuteReadStopped(reported: PlayerState, live: PlayerState) async {
+        let mock = MockMusicPlayer(state: .paused)
+        await mock.setPlaysAnyway(true)
+        let page = MockMutingMusicPlayer(mock)
+        let arbiter = PlaybackArbiter(player: page, configuration: .testing, debounceScheduler: ManualDebounceScheduler())
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        #expect(await arbiter.heldByMute)
+        await mock.setState(live)
+        await arbiter.handlePlayerStateChange(reported)
+        let quit = reported == .notRunning
+        #expect(await arbiter.pausedByUs == !quit)
+        #expect(await page.releasedMutes == (quit ? 1 : 0))
+        guard !quit else { return }
+
+        await mock.setState(.stopped)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await arbiter.waitUntilIdle()
+        #expect(await !arbiter.pausedByUs)
+        #expect(await page.releasedMutes == 1)
+        #expect(await mock.playCallCount == 0)
+    }
+
+    @Test("a page held paused by its own mute (an ad) isn't judged by an earlier pause's sound: read playing over its mute as the apps stop (the ad plays on), it plays already, its mute lifted and nothing played (a silence heard in the pause before took it for still paused)")
+    func ownMuteForgetsEarlierPause() async {
+        let mock = MockMusicPlayer()
+        let page = MockMutingMusicPlayer(mock), hearing = Hearing(.heard)
+        let arbiter = PlaybackArbiter(player: page, configuration: .testing, debounceScheduler: ManualDebounceScheduler(),
+                                      hearsPlayer: { await hearing.answer(since: $0) })
+        // Paused for Viewer; said to play during it, it isn't heard: still paused.
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        #expect(await mock.pauseCallCount == 1)
+        hearing.now = .silent
+        await mock.setState(.playing)
+        await arbiter.handlePlayerStateChange(.playing)
+        await mock.setState(.paused)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await arbiter.waitUntilIdle()
+        #expect(await mock.playCallCount == 1)
+
+        // Later, an ad: heard while its button says Play, muted for Viewer.
+        await mock.setState(.paused)
+        await mock.setPlaysAnyway(true)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        #expect(await arbiter.heldByMute)
+        // Read playing over its mute: the ad still plays as the resume reads
+        // it (an added app's page read then, the ad over, pauses it for real
+        // and it reads paused: played, CheckedPlayerPageMuteTests, U1 of 11-27).
+        await mock.setState(.playing)
+        await arbiter.sourceChanged("org.example.viewer", playing: false)
+        await arbiter.waitUntilIdle()
+        #expect(await page.releasedMutes == 1)
+        #expect(await mock.playCallCount == 1)
+    }
 }

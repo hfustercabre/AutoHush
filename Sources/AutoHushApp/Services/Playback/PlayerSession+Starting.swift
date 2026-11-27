@@ -38,11 +38,13 @@ extension PlayerSession {
         tearDownMonitoring()
         waitsForPlayerToOpen = false
         guard let player else {
+            heldPauses.endParked()
             setHealth(nil) // nothing to control yet
             return
         }
         // Where the player says, else where macOS knows it, as the players are listed.
         guard player.installedURL ?? locateApp(player.bundleID) != nil else {
+            heldPauses.endParked()
             setHealth(.playerNotInstalled(player.name))
             return
         }
@@ -51,6 +53,9 @@ extension PlayerSession {
             try await player.verifyControlAccess()
         } catch {
             guard generation == startGeneration else { return }
+            // No new monitoring now to take the pause back: what held it
+            // lets go, as before (a real pause is taken back later).
+            heldPauses.endParked()
             if retriesLeft > 0, Self.isTransientStartupError(error) {
                 logger.debug("\(player.name, privacy: .public) is not ready yet (\(error)) — retrying")
                 await retries.startupWait(.seconds(Self.startupRetryDelay))
@@ -89,9 +94,20 @@ extension PlayerSession {
         let monitoring = makeMonitoring(for: player, token: token)
         self.monitoring = monitoring
         // Both asked every time: each answers once.
-        let takesBack = heldPauses.takesBack(player.bundleID)
+        let takeBack = heldPauses.takesBack(player.bundleID)
         let takesOver = takesOverPause()
-        await monitoring.start(takingOverPause: takesOver || takesBack, asleep: isAsleep)
+        let mutedBefore: TakenBackMute? = if let takeBack { await mutedBefore(takeBack, for: player) } else { nil }
+        let tookOver = await monitoring.start(takingOverPause: takesOver || takeBack != nil, mutedBefore: mutedBefore,
+                                              asleep: isAsleep)
+        // The pause is held by the new monitoring now, or by none it could
+        // make: the one that held it lets go, handing it over only to one
+        // that runs on: still the chosen player's, or kept for its pause as
+        // another was chosen meanwhile (not stopped by a newer start, sleep
+        // or a quit).
+        if let takeBack {
+            let runsOn = self.monitoring === monitoring || heldPauses.keeps(monitoring)
+            heldPauses.handOver(takeBack, tookOver: tookOver && runsOn, to: player)
+        }
         guard generation == startGeneration else { return }
         failedStarts = 0
         loggedStartupProblem = nil
@@ -113,7 +129,7 @@ extension PlayerSession {
         monitoringToken = token
         let monitoring = makeMonitoring(for: player, token: token)
         self.monitoring = monitoring
-        await monitoring.start(takingOverPause: false, asleep: isAsleep)
+        await monitoring.start(takingOverPause: false, mutedBefore: nil, asleep: isAsleep)
     }
 
     /// Auto-Pause turned off (or off for a while) while the player isn't

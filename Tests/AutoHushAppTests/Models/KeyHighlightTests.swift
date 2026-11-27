@@ -160,7 +160,7 @@ struct KeyHighlightTests {
         #expect(keyboard.highlighted == first)
     }
 
-    @Test("Right to left (Arabic, Hebrew), Tab goes along a row from its right end; the arrows keep their sides, ↓ out of a field too")
+    @Test("Right to left (Arabic, Hebrew), Tab goes along a row from its right end; ← and → keep their sides")
     func stepsRightToLeft() {
         let keyboard = KeyHighlight()
         keyboard.readsRightToLeft = { true }
@@ -173,18 +173,45 @@ struct KeyHighlightTests {
         keyboard.step(-1)
         keyboard.step(-1)
         #expect(keyboard.highlighted == left)
-        // ← and → are the sides they point at, ↓ a row's left end, as left to right.
+        // ← and → are the sides they point at, as left to right (where ↓ lands: `arrowsLandOnReadingFirst`).
         #expect(keyboard.moveInRow(1))
         #expect(keyboard.highlighted == right)
         #expect(!keyboard.moveInRow(1))
+    }
+
+    @Test("where the arrows land in a row of several with none lined up (↓ ↑ from nothing, Home, End, Page Down and Up from nothing, ↓ from a row of one, out of a field, a side window's first row) is the row's first as it reads, as Tab's: its left end, right to left its right end (app-models-6); ← and → keep their sides",
+          arguments: [false, true])
+    func arrowsLandOnReadingFirst(rightToLeft: Bool) async {
+        let keyboard = KeyHighlight()
+        keyboard.readsRightToLeft = { rightToLeft }
+        let topLeft = control(keyboard, 0, 0), topRight = control(keyboard, 60, 0)
+        let middle = control(keyboard, 0, 50)
+        let bottomLeft = control(keyboard, 0, 100), bottomRight = control(keyboard, 60, 100)
+        let (top, bottom) = rightToLeft ? (topRight, bottomRight) : (topLeft, bottomLeft)
+        var seen: [UUID?] = []
+        for land in [{ keyboard.move(1) }, { keyboard.move(-1) }, { keyboard.jump(.first) }, { keyboard.jump(.last) },
+                     { keyboard.jump(.pageDown) }, { keyboard.jump(.pageUp) }, { keyboard.highlightFirst(below: 80) }] {
+            keyboard.clear()
+            land()
+            seen.append(keyboard.highlighted)
+        }
+        #expect(seen == [top, bottom, top, bottom, top, bottom, bottom])
         keyboard.clear()
         keyboard.move(1)
-        keyboard.move(1)
-        #expect(keyboard.highlighted == left)
-        // ↓ out of a field above the row: its left end, as ever.
+        keyboard.move(1) // a row of one
+        #expect(keyboard.highlighted == middle)
+        keyboard.move(1) // from it into a row of several
+        #expect(keyboard.highlighted == bottom)
+        keyboard.move(1) // round, from a row of several: the nearest, as before
+        #expect(keyboard.highlighted == top)
+        // ← and → go the way they point, from either end.
+        #expect(!keyboard.moveInRow(rightToLeft ? 1 : -1))
+        #expect(keyboard.moveInRow(rightToLeft ? -1 : 1))
+        #expect(keyboard.highlighted == (rightToLeft ? topLeft : topRight))
         keyboard.clear()
-        keyboard.highlightFirst(below: 40)
-        #expect(keyboard.highlighted == left)
+        keyboard.highlightFirstWhenReady() // a side window just opened by the arrow
+        await TestWait.until { keyboard.highlighted != nil }
+        #expect(keyboard.highlighted == top)
     }
 
     @Test("Home and End go to the first and last row, without wrapping further; from nothing, Page Down is the first row and Page Up the last")

@@ -25,10 +25,14 @@ extension WebAppControl {
     ///
     /// A pause AutoHush no longer holds (`.forgotten`) keeps it muted only
     /// while that can still end in a real pause: the mute is lifted once the
-    /// page is silent, and when a press fails.
+    /// page is silent, its button found or not (its window closed: U2 of
+    /// 11-27, that mute stayed for good), and when a press fails.
     func pauseOnceItCan(pid: pid_t) {
-        guard let recipe, case .found(let found) = lookup(recipe, pid: pid, now: clock()) else { return }
         let forgotten = muted?.reason == .forgotten
+        guard let recipe, case .found(let found) = lookup(recipe, pid: pid, now: clock()) else {
+            if forgotten, !page.isPlayingSound(pid: pid) { releaseMute() }
+            return
+        }
         guard found.isEnabled, recipe.state(of: found) == .playing else {
             if forgotten, !page.isPlayingSound(pid: pid) { releaseMute() }
             return

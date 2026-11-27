@@ -579,6 +579,9 @@ direction (`AppleTextDirection`) at launch when it runs in either language
   way they point, as macOS's own sliders and segmented controls do: right to
   left, where a slider's minimum and a row's first chip are on the right, →
   steps back.
+- **↑ and ↓ come into a row at its first control as it reads,** as Tab
+  does (on the right, right to left) when none in it lines up with where
+  the highlight was; Home, End and a side window's first row too.
 - **Into a side window and out of it, the arrows follow macOS's menus:**
   right to left, ← opens the menu's side window from its row (the way its
   chevron points) and → closes it, from an empty players' search too;

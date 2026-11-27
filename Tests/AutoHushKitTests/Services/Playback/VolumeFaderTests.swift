@@ -281,8 +281,9 @@ struct VolumeFaderTests {
         let history = await player.volumeHistory
         #expect(history == history.sorted(by: >)) // only ever down: the next fade-out starts from there
         #expect(await player.pauseCallCount == 0)
-        // The pause meant to follow it never faded (the apps stopped, or it
-        // was judged silent): the user's volume again (R1 of 11-19's diff review).
+        // The pause meant to follow it never faded (the apps stopped, or the
+        // player was found not playing): the user's volume again (R1 of
+        // 11-19's diff review).
         await fader.restoreIfLeftDown()
         #expect(await player.volumeLevel == 80)
     }

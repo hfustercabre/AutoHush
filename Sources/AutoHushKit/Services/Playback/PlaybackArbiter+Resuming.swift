@@ -150,6 +150,7 @@ extension PlaybackArbiter {
             logger.info("[arbiter] \(self.player.name, privacy: .public) didn’t answer — the resume is given up")
             pausedByUs = false
             resumeFailure = .playerNotResponding
+            await releaseHeldMute()
             publishPlaybackState()
             return
         }
@@ -165,6 +166,7 @@ extension PlaybackArbiter {
                 logger.info("[arbiter] resume skipped — \(self.player.name, privacy: .public) is \(currentState.rawValue, privacy: .public) (user interaction detected)")
             }
             pausedByUs = false
+            await releaseHeldMute()
             publishPlaybackState()
             return
         }

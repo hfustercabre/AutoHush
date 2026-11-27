@@ -46,6 +46,8 @@ extension PlaybackArbiter {
         private(set) var generation = 0
 
         var isInsteadOfPause: Bool { kind == .insteadOfPause }
+        /// Muted in place of the pause, while it said it doesn't play (`whileQuiet`).
+        var isInsteadWhileQuiet: Bool { isInsteadOfPause && whileQuiet }
 
         /// Muted in place of the pause, its looks starting afresh. Muted so
         /// again (an app started while it was kept), its kept pause stays
@@ -131,9 +133,17 @@ extension PlaybackArbiter {
 
     /// Mutes the player in place of a pause that doesn't take: AutoHush's
     /// pause from then on, ended as any. `true` once it's handled; one that
-    /// can't be muted plays on, its pause failed (`failure`).
-    func muteInsteadOfPause(_ why: String, failure: MusicPlayerError) async -> Bool {
+    /// can't be muted plays on, its pause failed (`failure`). A pause it
+    /// held that became the user's while its tap was made (they stopped,
+    /// quit or played it) stays theirs: the tap is lifted, not held again as
+    /// AutoHush's (engine-5). Other ends meanwhile (the apps stopped) hold
+    /// it again, for the resume that follows to end as it ends any mute
+    /// (a kept pause paused for real first).
+    /// `whileQuiet`: it says it doesn't play (`mutesHeardWhileQuiet`), noted
+    /// with the mute, so the app is told both at once (T3 of 11-27).
+    func muteInsteadOfPause(_ why: String, failure: MusicPlayerError, whileQuiet: Bool = false) async -> Bool {
         let began = volumeLeveler?.lowerings ?? 0
+        let held = pausedByUs // never the user's while held (`pausedByUs`)
         // A mute lifted just before is lifted first, so it can't lift this one.
         await muteLift?.value
         // Muted already, kept through the pause: only a relaunched process to mute.
@@ -163,9 +173,17 @@ extension PlaybackArbiter {
                 await playerMute.unmute()
                 return true
             }
+            // The user's meanwhile (stopped, quit or played): theirs, its tap
+            // lifted here, as their end of the pause found no mute to lift.
+            if held, !pausedByUs, leftToUser {
+                logger.info("[arbiter] \(self.player.name, privacy: .public) became the user’s while its mute was made: unmuted, theirs")
+                await playerMute.unmute()
+                return true
+            }
             // A call among the apps was noted as the music faded out.
             pausedByUs = true
             pauseFailure = nil // muted: an earlier failed pause is over
+            if whileQuiet { mute.noteMutedWhileQuiet() }
             mute.begin()
             volumeLeveler?.musicPaused(since: began) // the next resume may lower the volume
             playerState = .playing
@@ -369,6 +387,17 @@ extension PlaybackArbiter {
     func pauseIsItsOwnMute() async -> Bool {
         if player.pausesByMuting || heldByMute { return true }
         return await (player as? any MutingMusicPlayer)?.isMutedForPause() ?? false
+    }
+
+    /// AutoHush's pause, held by a mute of the player's own (`heldByMute`),
+    /// ends with nothing played (its resume skipped or given up, or the
+    /// player quit or, one that only mutes, unmuted): that mute is lifted, as
+    /// nothing else would lift it (N4 of 11-27: a page read playing over its
+    /// mute stayed muted). A play lifts it itself.
+    func releaseHeldMute() async {
+        guard heldByMute, let muting = player as? any MutingMusicPlayer else { return }
+        heldByMute = false
+        await muting.releaseMute()
     }
 
     /// Ends AutoHush's mute of the player (`MuteState.end`), saying whether

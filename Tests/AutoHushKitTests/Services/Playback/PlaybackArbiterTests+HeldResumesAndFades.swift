@@ -205,6 +205,55 @@ extension PlaybackArbiterTests {
         #expect(fadeOut.allSatisfy { Int($0.dropFirst("volume ".count)).map { $0 <= partway } ?? true })
     }
 
+    @Test("an app that starts before a called-off fade-out came back up pauses the music from there, though its sound at that low volume reads silent or not known yet: never set back up over the app first (S2)",
+          arguments: [PlayerHearing.silent, .measuring(remaining: 0.3)])
+    func restartWhileLeftDown(_ lowHearing: PlayerHearing) async {
+        let player = MockMusicPlayer()
+        await player.setVolumeLevel(60)
+        let steps = FadeSteps(holdingAt: 2), hearing = Hearing(.heard)
+        let arbiter = PlaybackArbiter(player: player, configuration: AppConfiguration(),
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in await steps.step() }, hearsPlayer: { await hearing.answer(since: $0) })
+
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
+        await TestWait.until { await steps.count == 2 } // the fade-out has begun, held
+        let calledOff = await player.volumeLevel ?? 0
+        let mark = await player.commandLog.count
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false) // called off
+        await arbiter.handleSourceChange(sourceID: "com.google.Chrome", isPlaying: true) // and another app starts before it comes back up
+        hearing.now = lowHearing // the music, that low, isn't heard
+        await steps.letGo(2)
+        await arbiter.waitForPause()
+
+        #expect(await player.pauseCallCount == 1)
+        // Faded out from where it was: never back up before the pause.
+        let fadeOut = await player.commandLog.dropFirst(mark).prefix { $0 != "pause" }
+        #expect(fadeOut.allSatisfy { Int($0.dropFirst("volume ".count)).map { $0 <= calledOff } ?? true })
+        #expect(await player.volumeLevel == 60) // set back while paused
+    }
+
+    @Test("an app that starts before a called-off fade-out came back up, the player paused by the user by then: nothing paused, and the user's volume set back, as no pause took it over (R1 of 11-19's diff review)")
+    func leftDownNotPausedRestored() async {
+        let player = MockMusicPlayer()
+        await player.setVolumeLevel(60)
+        let steps = FadeSteps(holdingAt: 2), hearing = Hearing(.heard)
+        let arbiter = PlaybackArbiter(player: player, configuration: AppConfiguration(),
+                                      debounceScheduler: ManualDebounceScheduler(),
+                                      fadeSleep: { _ in await steps.step() }, hearsPlayer: { await hearing.answer(since: $0) })
+
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: true)
+        await TestWait.until { await steps.count == 2 } // the fade-out has begun, held
+        await arbiter.handleSourceChange(sourceID: "org.example.viewer", isPlaying: false) // called off
+        await arbiter.handleSourceChange(sourceID: "com.google.Chrome", isPlaying: true) // and another app starts before it comes back up
+        await player.overrideState(.paused) // the user paused it meanwhile
+        hearing.now = .silent
+        await steps.letGo(2)
+        await arbiter.waitForPause()
+
+        #expect(await player.pauseCallCount == 0)
+        #expect(await player.volumeLevel == 60)
+    }
+
     @Test("music paused just as the other app stopped, or Auto-Pause went off, is still resumed", arguments: [false, true])
     func everyAppStopsWhilePausing(autoPauseGoesOff: Bool) async {
         let player = MockMusicPlayer()

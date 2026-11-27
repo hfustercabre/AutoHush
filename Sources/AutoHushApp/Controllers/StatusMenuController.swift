@@ -50,6 +50,9 @@ final class StatusMenuController: NSObject {
     /// How long the menu stays a plain window for VoiceOver as a side
     /// window closes (`makeKeyAgain`).
     static let plainWindowWait: TimeInterval = 1.5
+    /// How long the players' search waits for SwiftUI to focus its field,
+    /// each time, before giving the focus through AppKit (`searchTakesKeyboard`).
+    static let searchFocusWait: TimeInterval = 0.05
     private(set) var isMenuOpen = false
 
     /// The side window opening once the pointer rests on its row, and

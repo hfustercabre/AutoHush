@@ -5,7 +5,8 @@ extension PlaybackArbiter {
     /// Called whenever the player reports a new state. While other apps play,
     /// a report that it plays again during our pause is judged by its sound
     /// (`handleRestart`: the user's only after their input, else muted); one
-    /// that it stopped or quit ends our pause. Once no other app plays,
+    /// that it stopped or quit ends our pause, but for one held by a mute of
+    /// its own, which only quitting ends then. Once no other app plays,
     /// nothing is judged the user's: the resume decides. A mute kept in
     /// place of a pause kept, though, is ended by the user's own pause or
     /// play (`reportWhileKeptMuted`).
@@ -50,10 +51,18 @@ extension PlaybackArbiter {
                 publishPlaybackState()
                 return
             }
-            if pausedByUs {
+            // The user's, but one held by a mute of its own that reads
+            // stopped over it (a script read before its page), or is so
+            // reported with no answer: that's what its mute was made for
+            // (`muteIfPlayingAnyway`), no sign of the user. It stays paused,
+            // muted, as one heard through it does, and the resume's skip
+            // lifts the mute once the apps stop (T1 of 11-27: lifted at once,
+            // an ad was heard over the video). Quit, it's over now.
+            if pausedByUs, !(heldByMute && playerState == .stopped) {
                 logger.info("[arbiter] \(self.player.name, privacy: .public) is \(self.playerState.rawValue, privacy: .public): the user took it over, it won’t be resumed")
                 pausedByUs = false
                 leftToUser = true
+                await releaseHeldMute()
             }
         }
         publishPlaybackState()

@@ -47,7 +47,7 @@ struct PlayerSessionPipelinesTests {
             player, Self.setup(levels, learned: [site.id: AnnouncedAssertions(system: ["Earlier"])], resumesHeld: true),
             { updates.all.append($0) }
         )
-        await monitoring.start(takingOverPause: false, asleep: false)
+        await monitoring.start(takingOverPause: false, mutedBefore: nil, asleep: false)
         await TestWait.until { processes.isObserving }
         processes.triggerChange()
         await TestWait.until { updates.playback.last == .pausedByMonitor }

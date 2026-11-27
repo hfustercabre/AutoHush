@@ -172,7 +172,7 @@ flowchart TD
   RES{"Resume playback<br/>on?"}
   QL{"An app that went quiet<br/>plays again? (listened to<br/>0.5 s, not in AntiDot mode)"}
   CHK{"Still paused as<br/>AutoHush left it?"}
-  USER["Not resumed: you played,<br/>paused or quit it yourself,<br/>or it’s stopped"]
+  USER["Not resumed: you played,<br/>paused or quit it yourself,<br/>or it’s stopped (a mute of<br/>its own lifted)"]
   RETRY["No answer: tried twice<br/>more, a second apart"]
   CALL{"Stay paused after<br/>calls on, and a call<br/>came during the pause?"}
   STAY["Stays paused: you<br/>play it when ready"]
@@ -199,6 +199,7 @@ flowchart TD
   START -->|"a key or click in it<br/>within 3 s before"| THEIRS
   START -->|"by itself (an app counted<br/>only by its open sound, not<br/>measured yet: once it’s<br/>heard, 2.5 s later)"| HEARD
   FO -.->|"the app stops first"| BACK
+  BACK -.->|"an app starts before<br/>it’s back up: from there,<br/>not measured again"| FO
   FO -.->|"you pause it"| YOURS
   FO --> PC
   PC -->|"no"| MUTED
@@ -388,7 +389,7 @@ stateDiagram-v2
   classDef done fill:#e6f5eb,stroke:#2f8a50,stroke-width:1.5px,color:#1d1b22
 ```
 
-AutoHush only ever resumes a pause it holds, and it keeps holding one across a check, a change of player and a quit. A pause still under way as you choose another player or quit isn’t made: the player plays on, played again if its pause just took. A **held pause** is a player you left while AutoHush had it paused: its own monitoring runs on to end the pause. Muted, and refusing its pause, it’s unmuted and yours once no app plays (until then it stays muted, not heard over them): only the chosen player’s card shows a kept mute. Chosen again, or checked again and used, it’s taken back. A permission taken away while AutoHush holds a pause keeps it the same way, taken back once it’s given back. A **hand-over** is written as AutoHush quits (an update, another copy, a quick reopen) and read once by the next one.
+AutoHush only ever resumes a pause it holds, and it keeps holding one across a check, a change of player and a quit. A pause still under way as you choose another player or quit isn’t made: the player plays on, played again if its pause just took. A **held pause** is a player you left while AutoHush had it paused: its own monitoring runs on to end the pause. Muted, and refusing its pause, it’s unmuted and yours once no app plays (until then it stays muted, not heard over them): only the chosen player’s card shows a kept mute. Chosen again, or checked again and used, it’s taken back, a mute standing for it kept on until the new monitoring has it. A permission taken away while AutoHush holds a pause keeps it the same way, taken back once it’s given back (a mute standing for it is lifted meanwhile, unless the permission is back at once). A **hand-over** is written as AutoHush quits (an update, another copy, a quick reopen) and read once by the next one.
 
 ## Safari web apps: adding one
 

@@ -5,6 +5,21 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **A player paused by muting** stays quiet when you choose it again, use
+  Check Again, or give a permission back.
+- **A player you stop** while AutoHush mutes it stays stopped.
+- **The music pauses from its low volume** when another app starts just as
+  it was fading back in, instead of coming back up for a moment.
+- **A web page muted during an ad** resumes after the video, and its mute
+  is lifted when its resume is skipped.
+- **Tab into the players' search** always puts the caret in it.
+- **Right-to-left languages:** ↓ and Home start a row at its first control
+  in reading order, as Tab does.
+
 ## [1.4.6] — 2026-11-23
 
 ### Fixed

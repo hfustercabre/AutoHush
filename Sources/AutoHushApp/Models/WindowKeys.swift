@@ -69,7 +69,7 @@ final class WindowKeys {
             dropFocus()
             highlight.clear()
             switch key {
-            case .tab: highlight.stepIn(1) // Tab's first, which right to left is the row's other end
+            case .tab: highlight.stepIn(1) // Tab's first: right to left, the row's right end, as ↓'s
             case .backTab: highlight.stepIn(-1)
             default: highlight.jump(.first)
             }

@@ -236,6 +236,10 @@ package actor VolumeFader {
         if latestFade == fade { await restoreUserVolume() }
     }
 
+    /// A fade-out called off left the volume down, and no newer fade took
+    /// it over: what `restoreIfLeftDown()` would set back now.
+    var isLeftDown: Bool { leftDown != nil && leftDown == latestFade }
+
     /// Plays from near silence, then fades the music in to the user's volume.
     func playAndFadeIn() async throws {
         let fade = startFade()

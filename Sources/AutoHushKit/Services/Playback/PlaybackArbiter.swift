@@ -59,7 +59,13 @@ actor PlaybackArbiter: PlaybackArbiting {
     var publishedAudioLevelsNeeded: Bool?
     let logger = AutoHushLogger(category: "PlaybackArbiter")
 
-    var pausedByUs = false
+    /// AutoHush holds the player's pause (or its mute in place of one).
+    /// Held, it's never the user's (`leftToUser`), however it was taken: a
+    /// mute after a wake left their earlier start standing, so the player
+    /// starting again by itself played on over the apps.
+    var pausedByUs = false {
+        didSet { if pausedByUs { leftToUser = false } }
+    }
     /// The pause held is a mute (`muteIfPlayingAnyway`), lifted by `shutdown`.
     var heldByMute = false
     /// When the player was seen to stop playing here, as far as the arbiter
@@ -112,14 +118,18 @@ actor PlaybackArbiter: PlaybackArbiting {
     /// starting among them waits for their measure (K1-1, the user, 2026-11-02).
     let appsNotMeasuredYet: @Sendable () async -> Set<String>
     /// When AutoHush's pause, or its mute in place of one, took
-    /// (`handleRestart`); `nil` for a pause taken over, or held by the
-    /// player's own mute.
+    /// (`handleRestart`), a pause pressed as it was taken back included
+    /// (`takeOverPause`); `nil` for a pause it didn't press: taken over as
+    /// it was found, a starting app's, or a mute of the player's own
+    /// (`forgetEarlierPause`), which `handleRestart` leaves to it before
+    /// asking.
     var pausedAt: Date?
     /// What the player's sound said when last asked during AutoHush's pause
     /// (`watchRestart`): `nil` until then, or with nothing measured.
     var hearingDuringPause: PlayerHearing?
     /// The user played the player while other apps play (or AutoHush let
-    /// them have it): left alone until another app starts, or none plays.
+    /// them have it): left alone until another app starts, none plays, or
+    /// AutoHush holds its pause again (`pausedByUs`).
     var leftToUser = false
     /// Since when other apps play, without a gap: input to the player since
     /// then makes a start the user's (`playerStartedDuringApps`).
@@ -136,9 +146,14 @@ actor PlaybackArbiter: PlaybackArbiting {
     var lookUnderWay: Task<Void, Never>?
     /// AutoHush's mute of the player during its pause (`PlayerMuting`),
     /// lifted in one place (`endPauseMute`); the app is told whether it's
-    /// muted in place of the pause.
+    /// muted in place of the pause, and whether so while it said it
+    /// doesn't play (for a pause taken back: `TakenBackMute.byTap`).
     var mute = MuteState() {
-        didSet { if mutedInstead != oldValue.isInsteadOfPause { onStatusUpdate(.mutedInstead(mutedInstead)) } }
+        didSet {
+            if mutedInstead != oldValue.isInsteadOfPause || mute.isInsteadWhileQuiet != oldValue.isInsteadWhileQuiet {
+                onStatusUpdate(.mutedInstead(mutedInstead, whileQuiet: mute.isInsteadWhileQuiet))
+            }
+        }
     }
     /// Muted in place of the pause: it plays on, silent (`PauseMute.insteadOfPause`).
     var mutedInstead: Bool { mute.isInsteadOfPause }
@@ -289,7 +304,11 @@ actor PlaybackArbiter: PlaybackArbiting {
 
     /// Stops all future actions, including an already scheduled resume.
     /// Called as its monitoring stops: a new start replaces it, or AutoHush quits.
-    func shutdown() async {
+    /// `handingOver`: a new monitoring of the same player object has taken
+    /// its pause over (`takeOverPause`), so a mute of the player's own that
+    /// holds it is that one's now, and stays; its own tap's goes all the
+    /// same (the new one made its own).
+    func shutdown(handingOver: Bool = false) async {
         isShutDown = true
         cancelPendingPause()
         cancelPendingResume()
@@ -298,7 +317,7 @@ actor PlaybackArbiter: PlaybackArbiting {
         restartWatch = nil
         await liftPauseMute()
         // Nor muted: a mute, unlike a pause, can't be undone by the user.
-        if heldByMute, let muting = player as? any MutingMusicPlayer { await muting.releaseMute() }
+        if heldByMute, !handingOver, let muting = player as? any MutingMusicPlayer { await muting.releaseMute() }
         heldByMute = false
     }
 

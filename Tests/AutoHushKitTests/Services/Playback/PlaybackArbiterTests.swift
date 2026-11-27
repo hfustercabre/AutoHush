@@ -87,7 +87,7 @@ struct PlaybackArbiterTests {
             case .playback(let state): playback(state)
             case .pauseFailure(let failure): pauseFailure(failure)
             case .resumeFailure(let failure): resumeFailure(failure)
-            case .mutedInstead(let muted): mutedInstead(muted)
+            case .mutedInstead(let muted, _): mutedInstead(muted)
             case .activeSources, .detection, .learnedAssertions: break
             }
         }

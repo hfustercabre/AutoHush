@@ -21,7 +21,12 @@ extension CheckedPlayer {
 
     private func state(polled: Bool) async -> PlayerState {
         guard let pid = processIdentifier() else { return .notRunning }
-        let sure = await sureState(pid: pid, polled: polled)
+        var pageRead = false
+        var sure = await sureState(pid: pid, polled: polled, pageRead: &pageRead)
+        // Its page's read lifted its mute (paused for real, the ad over): its
+        // signs, read before that pause, are read again (U1 of 11-27: its
+        // script's "playing" skipped the resume, the music left paused).
+        if !pageRead, await readMutedPage() { sure = await sureState(pid: pid, polled: polled, pageRead: &pageRead) }
         if sure != .unknown { return sure }
         // Told by its level, which isn't listened to now: an open output
         // tells nothing (Qobuz keeps its own open while paused).
@@ -52,15 +57,28 @@ extension CheckedPlayer {
     /// presses are checked by this, and a script that only toggles asks it.
     func sureState() async -> PlayerState {
         guard let pid = processIdentifier() else { return .notRunning }
-        return await sureState(pid: pid, polled: false)
+        var pageRead = false
+        return await sureState(pid: pid, polled: false, pageRead: &pageRead)
+    }
+
+    /// Its page muted in place of a pause, though another sign told its
+    /// state first (its script's): read all the same, for its state only it
+    /// tells, as only a read of it pauses it for real once it can, lifting
+    /// the mute, or lifts one AutoHush no longer holds (`forgetPause`; T2 of
+    /// 11-27: its page never read, that mute stayed after the pause).
+    /// Whether that read lifted the mute.
+    private func readMutedPage() async -> Bool {
+        guard let page = parts.page, await page.isMutedForPause() else { return false }
+        _ = await page.playerState()
+        return await !page.isMutedForPause()
     }
 
     /// `polled`: read once a second, its sound isn't listened to (the user,
     /// 2026-10-16: else macOS's recording dot stays on all day): one told by
     /// its level goes by its keep-awake assertion then, and a report isn't
-    /// checked against its level.
-    private func sureState(pid: pid_t, polled: Bool) async -> PlayerState {
-        if let state = await signsSay(parts.signs, pid: pid, polled: polled) { return state }
+    /// checked against its level. `pageRead`: whether its page was read.
+    private func sureState(pid: pid_t, polled: Bool, pageRead: inout Bool) async -> PlayerState {
+        if let state = await signsSay(parts.signs, pid: pid, polled: polled, pageRead: &pageRead) { return state }
         // Its Now Playing row (and report) doesn't follow it: only its sound
         // tells, and between decisions its keep-awake assertion.
         if parts.hearing != nil {
@@ -72,18 +90,20 @@ extension CheckedPlayer {
         }
         if let reported = await reported(pid: pid, polled: polled) { return reported }
         guard routes else { return .unknown }
-        return await signsSay(parts.backupSigns, pid: pid, polled: polled, backups: true) ?? .unknown
+        return await signsSay(parts.backupSigns, pid: pid, polled: polled, backups: true, pageRead: &pageRead) ?? .unknown
     }
 
     /// The first of `signs` that tells its state; a backup's AppleScript is
     /// asked only once Automation for it is allowed, so macOS asks nothing.
+    /// `pageRead`: set once its page is read.
     private func signsSay(_ signs: [any MusicPlayer], pid: pid_t, polled: Bool, backups: Bool = false,
-                          besidesPage: Bool = false) async -> PlayerState? {
+                          besidesPage: Bool = false, pageRead: inout Bool) async -> PlayerState? {
         for sign in signs where !(besidesPage && sign is SafariWebAppPlayer) {
             if backups, sign is ScriptedAppPlayer, await !backupAllowed(.script, pid) { continue }
             let state: PlayerState
-            if polled, let page = sign as? SafariWebAppPlayer {
-                state = await page.polledPlayerState()
+            if let page = sign as? SafariWebAppPlayer {
+                pageRead = true
+                state = polled ? await page.polledPlayerState() : await page.playerState()
             } else {
                 state = await sign.playerState()
             }
@@ -100,9 +120,11 @@ extension CheckedPlayer {
     /// follow (a minimized Deezer's stay, 2026-11-03).
     func stateBesidesPage() async -> PlayerState {
         guard let pid = processIdentifier() else { return .notRunning }
-        if let state = await signsSay(parts.signs, pid: pid, polled: false, besidesPage: true) { return state }
+        var pageRead = false // never: its page asks this
+        if let state = await signsSay(parts.signs, pid: pid, polled: false, besidesPage: true, pageRead: &pageRead) { return state }
         if parts.hearing == nil, let reported = await reported(pid: pid, polled: false) { return reported }
-        if routes, let state = await signsSay(parts.backupSigns, pid: pid, polled: false, backups: true, besidesPage: true) { return state }
+        if routes, let state = await signsSay(parts.backupSigns, pid: pid, polled: false, backups: true, besidesPage: true,
+                                              pageRead: &pageRead) { return state }
         return await heardNow(pid).map { $0 ? .playing : .paused } ?? .unknown
     }
 

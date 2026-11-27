@@ -5,10 +5,12 @@ import AutoHushKit
 /// `MonitoringPipeline`; tests stand in for it.
 @MainActor
 protocol SessionMonitoring: HeldMonitoring {
-    /// Starts it, taking over a pause handed over when `takingOverPause`;
-    /// `true` when it took one over (see `MonitoringPipeline.start`).
+    /// Starts it, taking over a pause handed over when `takingOverPause`,
+    /// muted again as `mutedBefore` says when it's found playing (or heard
+    /// as it says it's paused: `PlaybackArbiter.takeOverPause`); `true`
+    /// when it took one over (see `MonitoringPipeline.start`).
     @discardableResult
-    func start(takingOverPause: Bool, asleep: Bool) async -> Bool
+    func start(takingOverPause: Bool, mutedBefore: TakenBackMute?, asleep: Bool) async -> Bool
     func setAsleep(_ asleep: Bool)
     func setConfiguration(_ configuration: AppConfiguration)
     func activeAudioReport() -> [ActiveAudioReport.Entry]
@@ -47,6 +49,10 @@ final class PlayerSession {
         /// The player is muted in place of AutoHush's pause (one that didn't
         /// take, a start by itself, or a refused one): the menu says Muted.
         var mutedInstead = false
+        /// Muted so as it was heard while it said it doesn't play
+        /// (`MonitoringStatusUpdate.mutedInstead`'s `whileQuiet`): taken
+        /// back, it's muted again whatever it says (`TakenBackMute.byTap`).
+        var mutedWhileQuiet = false
         /// Why the last resume was given up (no answer, or its play failed),
         /// while the menu says so with Try Again.
         var resumeError: ControlError?

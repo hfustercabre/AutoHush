@@ -200,11 +200,13 @@ package final class MonitoringPipeline {
     /// a pause handed over by the AutoHush before this one when asked to, then
     /// starts audio monitoring — unless `stop()` was called in the meantime.
     /// `true` when it took a pause over (`takingOverPause`, and the player is
-    /// paused). Started while the Mac sleeps (`asleep`), the arbiter knows it
-    /// before any app reaches it; a wake told meanwhile wins, though it may
-    /// reach the arbiter first (the changes are numbered).
+    /// paused, or muted again as `mutedBefore` says: see
+    /// `PlaybackArbiter.takeOverPause`). Started while the Mac sleeps
+    /// (`asleep`), the arbiter knows it before any app reaches it; a wake
+    /// told meanwhile wins, though it may reach the arbiter first (the
+    /// changes are numbered).
     @discardableResult
-    package func start(takingOverPause: Bool = false, asleep: Bool = false) async -> Bool {
+    package func start(takingOverPause: Bool = false, mutedBefore: TakenBackMute? = nil, asleep: Bool = false) async -> Bool {
         if asleep {
             sleepChanges += 1
             await arbiter.setAsleep(true, change: sleepChanges)
@@ -217,7 +219,7 @@ package final class MonitoringPipeline {
         let initialState = await arbiter.refreshPlaybackState()
         guard !isStopped else { return false }
         // Before monitoring starts, so the apps it finds see the pause as ours.
-        let tookOver = takingOverPause ? await arbiter.takeOverPause() : false
+        let tookOver = takingOverPause ? await arbiter.takeOverPause(mutedBefore: mutedBefore) : false
         guard !isStopped else { return tookOver }
         // A report meanwhile told the monitor already, and is newer.
         if playerReports.withLock({ $0 }) == reports { monitor.setPlayerPlaying(initialState == .playing) }
@@ -228,15 +230,23 @@ package final class MonitoringPipeline {
     }
 
     package func stop() {
+        stop(handingOver: false)
+    }
+
+    /// Stops; `handingOver`: the monitoring started for the same player
+    /// object in its place has taken its pause over, so a mute of the
+    /// player's own holding it is that one's now, and stays (its observer
+    /// and its arbiter lift only what's theirs: `PlaybackArbiter.shutdown`).
+    package func stop(handingOver: Bool) {
         guard !isStopped else { return }
-        playerObserver.stop()
+        playerObserver.stop(handingOver: handingOver)
         monitor.stop()
         outputDisconnects.stop()
         arbiterCommands.finish()
         statusUpdates.finish()
         forwarders.forEach { $0.cancel() }
         let arbiter = arbiter
-        shutdown = Task { await arbiter.shutdown() }
+        shutdown = Task { await arbiter.shutdown(handingOver: handingOver) }
     }
 
     /// Stops, and waits until a faded-down player has its volume back, and

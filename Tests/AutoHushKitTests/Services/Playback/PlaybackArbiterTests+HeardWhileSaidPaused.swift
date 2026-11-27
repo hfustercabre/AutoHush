@@ -29,6 +29,66 @@ extension PlaybackArbiterTests {
         #expect(await player.playCallCount == 0)
     }
 
+    @Test("muted while it says it's paused, the app is told so in one update, muted in place of the pause and while quiet: a choice between two updates kept it not quiet (T3 of 11-27)")
+    func quietMuteToldOnce() async {
+        let player = MockMusicPlayer(state: .paused), clock = ManualClock(), mute = FakeMute()
+        let scheduler = ManualDebounceScheduler(), hearing = Hearing(.heard), told = Locked<[[Bool]]>([])
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      clock: { clock.now },
+                                      onStatusUpdate: { if case .mutedInstead(let muted, let quiet) = $0 { told.append([muted, quiet]) } },
+                                      hearsPlayer: { await hearing.answer(since: $0) },
+                                      inputToPlayer: { _ in false }, playerMute: mute)
+        await arbiter.sourceChanged("org.example.viewer", playing: true)
+        clock.advance(by: PlaybackArbiter.silentRecheckInterval)
+        await scheduler.completeNext()
+        await arbiter.waitForPause()
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 1)
+        #expect(told.value == [[true, true]])
+    }
+
+    @Test("a player the user started as the apps play, then muted after a sleep while it said it's paused, is AutoHush's again: silent, and started again by itself while they play, it's paused (its earlier start was no longer the user's)")
+    func quietMuteAfterWakeNotTheUsers() async {
+        let player = MockMusicPlayer(state: .paused), clock = ManualClock(), mute = FakeMute()
+        let scheduler = ManualDebounceScheduler(), hearing = Hearing(.silent), input = Locked(false)
+        let arbiter = PlaybackArbiter(player: player, configuration: .testing, debounceScheduler: scheduler,
+                                      clock: { clock.now }, hearsPlayer: { await hearing.answer(since: $0) },
+                                      inputToPlayer: { _ in input.value }, playerMute: mute)
+        await arbiter.sourceChanged("org.example.viewer", playing: true) // paused and silent: nothing to do
+        input.value = true // the user plays it: theirs
+        await player.setState(.playing)
+        await arbiter.handlePlayerStateChange(.playing)
+        await arbiter.waitUntilIdle()
+        #expect(await player.pauseCallCount == 0)
+        input.value = false
+
+        // It says it's paused, but is heard; the Mac sleeps and wakes: muted.
+        clock.advance(by: 10)
+        await player.setState(.paused)
+        await arbiter.handlePlayerStateChange(.paused)
+        hearing.now = .heard
+        await arbiter.setAsleep(true)
+        await arbiter.setAsleep(false)
+        await arbiter.waitForPause()
+        clock.advance(by: PlaybackArbiter.silentRecheckInterval)
+        await scheduler.completeNext()
+        await arbiter.waitForPause()
+        await arbiter.waitUntilIdle()
+        #expect(mute.muteCount == 1)
+        hearing.now = .silent
+        await nextLook(scheduler, arbiter, clock: clock) // only unmuted: that pause is over
+        await TestWait.until { mute.unmuteCount == 1 }
+        #expect(await !arbiter.pausedByUs)
+
+        // It starts again by itself, the app still playing: paused.
+        clock.advance(by: 10)
+        hearing.now = .heard
+        await player.setState(.playing)
+        await arbiter.handlePlayerStateChange(.playing)
+        await arbiter.waitForPause()
+        #expect(await player.pauseCallCount == 1)
+    }
+
     @Test("heard just as it says it's paused (its pause's tail), then not, the player isn't muted")
     func heardTailWhileSayingPausedNotMuted() async {
         let player = MockMusicPlayer(state: .paused), clock = ManualClock(), mute = FakeMute()

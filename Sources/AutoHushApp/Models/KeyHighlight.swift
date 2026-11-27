@@ -169,7 +169,8 @@ final class KeyHighlight {
     /// Tells Zoom where the highlight is now, if Zoom is on (tests replace it).
     @ObservationIgnored var zoom: @MainActor (CGRect) -> Void = ZoomFocus.follow
     /// Whether the app is laid out right to left (Arabic, Hebrew): Tab goes
-    /// along a row that way (`tabOrder`); tests replace it.
+    /// along a row that way (`tabOrder`), and the arrows come into a row at
+    /// that end (`readingFirst`); tests replace it.
     @ObservationIgnored var readsRightToLeft: @MainActor () -> Bool = { NSApp?.userInterfaceLayoutDirection == .rightToLeft }
     /// The pointer moves it (`hover`). Off in tests that check the keys'
     /// highlight on screen, so the real pointer, resting wherever their

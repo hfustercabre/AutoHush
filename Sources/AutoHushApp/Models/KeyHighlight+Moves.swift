@@ -27,9 +27,10 @@ extension KeyHighlight {
     /// The highlight `step` rows on (1 down, -1 up), past the controls
     /// only Tab stops on (`Control.tabOnly`), wrapping at the ends:
     /// in a row of several (durations, tiles), the one nearest above or
-    /// under, else the row's first (the user, 2026-10-18: ← and → move
-    /// within a row); from nothing, the first row (down) or the last (up),
-    /// or on from the control with the keyboard's focus (`focused`, W9).
+    /// under, else the row's first as it reads (`readingFirst`; the user,
+    /// 2026-10-18: ← and → move within a row); from nothing, the first row
+    /// (down) or the last (up), or on from the control with the keyboard's
+    /// focus (`focused`, W9).
     func move(_ step: Int) {
         let all = keyRows
         let rows = arrowRows(all)
@@ -40,7 +41,7 @@ extension KeyHighlight {
         } else if let beside = arrowStop(beside: highlighted ?? focused, step, in: all, wraps: true) {
             next = beside // from a control only Tab stops on: the next the arrows do, that way
         } else {
-            next = (step > 0 ? rows[0] : rows[rows.count - 1])[0]
+            next = readingFirst(step > 0 ? rows[0] : rows[rows.count - 1])
         }
         highlight(next, in: all)
     }
@@ -109,10 +110,20 @@ extension KeyHighlight {
 
     /// A row as Tab goes along it, in reading order: left to right, or
     /// right to left where the language reads so (Arabic, Hebrew; the
-    /// user, 2026-11-09: "Yes, right to left"). The arrows keep `rows`'
-    /// own order: ← is always the control on the left.
+    /// user, 2026-11-09: "Yes, right to left"). ← and → keep `rows`' own
+    /// order: ← is always the control on the left, as in macOS 27's
+    /// mirrored layouts.
     private func tabOrder(_ row: [UUID]) -> [UUID] {
         readsRightToLeft() ? row.reversed() : row
+    }
+
+    /// A row's first control as it reads, Tab's first in it (`tabOrder`):
+    /// where ↓ ↑, Home, End and the others land in a row when none in it
+    /// lines up with where the highlight was, so they and Tab come into a
+    /// row at the same end (app-models-6, the user's pick, 2026-11-27:
+    /// "First in reading order"). `row` isn't empty.
+    private func readingFirst(_ row: [UUID]) -> UUID {
+        tabOrder(row)[0]
     }
 
     /// The order the keys move by: `rows`, or, from a control that shows
@@ -122,22 +133,25 @@ extension KeyHighlight {
         return rows
     }
 
-    /// The highlight on the first row whose top is at `y` or under it, in
-    /// reading order (or the first row, with none): ↓ out of a field that
-    /// takes no highlight itself (Settings → Sound Sources' search), into
-    /// the rows under it, not the ones beside it (N4, 2026-11-06).
+    /// The highlight on the first control as it reads (`readingFirst`) of
+    /// the first row whose top is at `y` or under it (or of the first row,
+    /// with none): ↓ out of a field that takes no highlight itself
+    /// (Settings → Sound Sources' search), into the rows under it, not the
+    /// ones beside it (N4, 2026-11-06).
     func highlightFirst(below y: CGFloat) {
         let all = rows
         let rows = arrowRows(all)
         guard let row = rows.first(where: { (controls[$0[0]]?.frame.minY ?? 0) >= y }) ?? rows.first else { return }
-        highlight(row[0], in: all)
+        highlight(readingFirst(row), in: all)
     }
 
     /// Where the highlight lands in `target` from `highlighted` in `row`:
-    /// from a row of several, the nearest above or under; else the first.
+    /// from a row of several, the nearest above or under; else the first
+    /// as it reads (`readingFirst`).
     private func entry(to target: [UUID], from row: [UUID], _ highlighted: UUID) -> UUID {
-        guard row.count > 1, let from = controls[highlighted]?.frame.midX else { return target[0] }
-        return target.min { abs((controls[$0]?.frame.midX ?? 0) - from) < abs((controls[$1]?.frame.midX ?? 0) - from) } ?? target[0]
+        guard row.count > 1, let from = controls[highlighted]?.frame.midX else { return readingFirst(target) }
+        return target.min { abs((controls[$0]?.frame.midX ?? 0) - from) < abs((controls[$1]?.frame.midX ?? 0) - from) }
+            ?? readingFirst(target)
     }
 
     /// Page Down (Up): the highlight about a page on (back) in its part
@@ -146,7 +160,8 @@ extension KeyHighlight {
     /// the next part (previous); at the end, it stays: no wrapping, as in
     /// macOS's lists. Home and End: the first row and the last. From
     /// nothing, Page Down and Home light the first row, Page Up and End the
-    /// last (A12, 2026-11-01: Apple's standard keys, fn with the arrows on a laptop).
+    /// last (A12, 2026-11-01: Apple's standard keys, fn with the arrows on a
+    /// laptop), each at its first control as it reads (`readingFirst`).
     func jump(_ jump: Jump) {
         let all = keyRows
         let rows = arrowRows(all)
@@ -159,7 +174,7 @@ extension KeyHighlight {
             return
         }
         guard pages, let highlighted, let row = rows.firstIndex(where: { $0.contains(highlighted) }) else {
-            return highlight((step > 0 ? rows[0] : rows[rows.count - 1])[0], in: all)
+            return highlight(readingFirst(step > 0 ? rows[0] : rows[rows.count - 1]), in: all)
         }
         let target = pageTarget(from: row, step: step, in: rows)
         guard target != row else { return }

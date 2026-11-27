@@ -551,6 +551,102 @@ extension StatusMenuControllerTests {
         #expect(sut.model.keyboard.highlighted == nil)
     }
 
+    /// The menu open on screen with the players' side window and its search,
+    /// its rows registered, and the waits of the search's AppKit focus held
+    /// until `release` (`searchFocusWait`; the other waits as ever). `waits`
+    /// counts them.
+    private func playersSearchHeld(until release: Locked<Bool>, waits: Locked<Int>) async throws
+        -> (sut: StatusMenuController, side: MenuPanel) {
+        let sut = makeController()
+        var status = readyStatus()
+        status.playerOptions = (1...PlayerOption.searchThreshold).map {
+            PlayerOption(bundleID: "com.example.player\($0)", name: "Player \($0)", appURL: URL(fileURLWithPath: "/Applications/Player \($0).app"))
+        }
+        status.chosenPlayerID = status.playerOptions[0].bundleID
+        sut.status = status
+        let focusWait = StatusMenuController.searchFocusWait
+        sut.pause = { seconds in
+            guard seconds == focusWait else {
+                try? await Task.sleep(for: .seconds(seconds))
+                return
+            }
+            waits.increment()
+            await TestWait.until { release.value }
+        }
+        sut.open() // on screen: its rows register themselves
+        sut.perform(.openSide(.players))
+        let side = try #require(sut.sidePanel)
+        #expect(side.isVisible && sut.model.players.showsSearch)
+        let keyboard = sut.model.sideKeyboard
+        await TestWait.until { keyboard.rows.count > 1 && !keyboard.controls.values.contains { $0.frame == .zero } }
+        return (sut, side)
+    }
+
+    /// Half a second without the side window's field getting the focus:
+    /// SwiftUI's update for the search's request (`searchFocus`) has come by
+    /// then (0.07 to 0.4 s in the VM, 2026-11-27; AppKit focuses the field at
+    /// once as the window first becomes key).
+    @discardableResult private func noFocusComes(_ side: MenuPanel) async -> Bool {
+        let since = ContinuousClock.now
+        while !(side.firstResponder is NSTextView), ContinuousClock.now - since < .milliseconds(500) {
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        return !(side.firstResponder is NSTextView)
+    }
+
+    @Test("Shift-Tab into the players' search gives its field the focus through AppKit when SwiftUI dropped it, as a typed key's does: the caret shows, no row lit (diff-app-4)")
+    func tabIntoSearchAfterDroppedFocus() async throws {
+        let dropped = Locked(false), waits = Locked(0)
+        let (sut, side) = try await playersSearchHeld(until: dropped, waits: waits)
+        defer { dropped.value = true; sut.remove() }
+        let keyboard = sut.model.sideKeyboard
+        #expect(sut.handleKey(MenuPanelTests.key(48))) // Tab: the first row
+        #expect(sut.handleKey(MenuPanelTests.key(48, flags: .shift))) // before the first: the search
+        #expect(keyboard.highlighted == nil)
+        // SwiftUI's focus dropped (B-1 of 11-11): taken away until its own request stops giving it back.
+        for _ in 0..<5 {
+            side.makeFirstResponder(nil)
+            if await noFocusComes(side) { break }
+        }
+        #expect(!(side.firstResponder is NSTextView))
+        // Under the whole suite's load another suite's window can take the key a moment later and the field
+        // lose its focus with it (seen 2026-11-27, every time): so the field becoming the first responder is
+        // what's watched (firstResponder is key-value observing compliant), not where the focus ends up.
+        let focused = Locked(false)
+        let watch = side.observe(\.firstResponder, options: [.new]) { _, change in
+            if let responder = change.newValue ?? nil, responder is NSTextView { focused.value = true }
+        }
+        defer { watch.invalidate() }
+        dropped.value = true
+        await TestWait.until(otherwise: { "first responder \(String(describing: side.firstResponder)), \(waits.value) waits" }) {
+            focused.value || side.firstResponder is NSTextView
+        }
+        #expect(keyboard.highlighted == nil)
+    }
+
+    @Test("the players' search's AppKit focus stops once the keys moved on: Tab out of the search before its turn leaves the field without the focus and the first row lit, nor does it wait again (diff-app-4)")
+    func searchFocusStopsAfterTabOut() async throws {
+        let released = Locked(false), waits = Locked(0)
+        let (sut, side) = try await playersSearchHeld(until: released, waits: waits)
+        defer { released.value = true; sut.remove() }
+        let keyboard = sut.model.sideKeyboard
+        #expect(sut.handleKey(MenuPanelTests.key(48))) // Tab: the first row
+        let first = keyboard.highlighted
+        #expect(sut.handleKey(MenuPanelTests.key(48, flags: .shift))) // the search: its AppKit focus waits
+        try? await Task.sleep(for: .milliseconds(500)) // SwiftUI's own focus has come (`noFocusComes`)
+        #expect(sut.handleKeyInSearch(MenuPanelTests.key(48))) // Tab out of it: the first row again
+        #expect(keyboard.highlighted == first && first != nil)
+        let before = waits.value
+        released.value = true
+        // Going on, it would give the field the focus back at once, then wait again.
+        let since = ContinuousClock.now
+        while waits.value == before, !(side.firstResponder is NSTextView), ContinuousClock.now - since < .milliseconds(500) {
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(!(side.firstResponder is NSTextView))
+        #expect(waits.value == before && keyboard.highlighted == first)
+    }
+
     @Test("keys that move the side window's highlight let go of the keyboard's focus there (a row VoiceOver or a click gave it), so Space presses what's lit, one indicator at a time (app-controllers-3)")
     func sideKeysDropTheSideFocus() async throws {
         let sut = menuIgnoringAnApp()

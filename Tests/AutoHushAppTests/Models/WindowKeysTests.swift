@@ -177,12 +177,12 @@ struct WindowKeysTests {
         #expect(log.calls == ["drop focus", "drop focus"]) // Return was the field's
         #expect(keys.handle(.backTab, focus: .textField)) // Shift-Tab: the last control
         #expect(keys.highlight.highlighted == button)
-        // Right to left, Tab's first is the row's right end; ↓'s stays.
+        // Right to left, Tab's first is the row's right end, and ↓'s (app-models-6).
         keys.highlight.readsRightToLeft = { true }
         #expect(keys.handle(.tab, focus: .textField))
         #expect(keys.highlight.highlighted == tiles[1])
         #expect(keys.handle(.down, focus: .textField))
-        #expect(keys.highlight.highlighted == tiles[0])
+        #expect(keys.highlight.highlighted == tiles[1])
     }
 
     @Test("a letter typed while something is lit goes to the search, the highlight let go (T1); not without one lit, a search or in a field")

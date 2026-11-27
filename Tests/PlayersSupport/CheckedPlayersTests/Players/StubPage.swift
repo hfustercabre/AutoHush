@@ -7,7 +7,8 @@ import PlayersTestSupport
 /// An added app's page in memory: its player bar's Play/Pause says "Play"
 /// (with filler buttons, as a loaded page has) while its sound is on, or
 /// follows `playing` when given ("Pause" while it plays); out of sight
-/// (`wordsCurrent` false), its word lags; a press runs `onPress`. One stand-in
+/// (`wordsCurrent` false), its word lags; a press runs `onPress`; its window
+/// closed (`windowOpen` false), it has no buttons and no sound. One stand-in
 /// for the module (the 2026-11-06 full check's T-12).
 final class StubPage: WebPage {
     static let place = ButtonPlace(path: ["AXGroup", "AXToolbar"], distanceFromBottom: 40)
@@ -31,6 +32,8 @@ final class StubPage: WebPage {
         set { current.value = newValue }
     }
     let onPress = Locked<(@Sendable () -> Void)?>(nil)
+    /// Whether its window is open.
+    let windowOpen = Locked(true)
 
     init(playing: Locked<Bool>? = nil, wordsCurrent: Bool = true) {
         self.playing = playing
@@ -51,10 +54,11 @@ final class StubPage: WebPage {
     func isTrusted(prompt: Bool) -> Bool { true }
     func buttons(pid: pid_t) -> [PageButton]? {
         read.increment()
+        guard windowOpen.value else { return nil }
         return [PageButton(handle: ButtonHandle(1), label: playing?.value == true ? "Pause" : "Play")]
             + (2..<14).map { PageButton(handle: ButtonHandle($0), label: "Item \($0)") }
     }
-    func hasWindow(pid: pid_t) -> Bool { true }
+    func hasWindow(pid: pid_t) -> Bool { windowOpen.value }
     func button(_ handle: ButtonHandle) -> PageButton? { buttons(pid: 0)?.first { $0.handle == handle } }
     func place(of handle: ButtonHandle) -> ButtonPlace? {
         handle == ButtonHandle(1) ? Self.place : ButtonPlace(path: ["AXGroup", "AXGroup:AXLandmarkMain"], distanceFromBottom: 600)
@@ -65,7 +69,7 @@ final class StubPage: WebPage {
         onPress.value?()
         return true
     }
-    func isPlayingSound(pid: pid_t) -> Bool { true }
+    func isPlayingSound(pid: pid_t) -> Bool { windowOpen.value }
     func wordsAreCurrent(pid: pid_t) -> Bool { wordsCurrent }
     func showPage(pid: pid_t) { shown.increment() }
     func release() {

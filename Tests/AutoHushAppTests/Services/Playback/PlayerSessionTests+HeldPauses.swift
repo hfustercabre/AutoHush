@@ -8,7 +8,7 @@ extension PlayerSessionTests {
     // MARK: - Held pauses and the hand-over
 
     @MainActor
-    @Test("choosing another player while AutoHush holds the music paused keeps that pause; chosen again, it's taken back")
+    @Test("choosing another player while AutoHush holds the music paused keeps that pause; chosen again, it's taken back, its monitoring running on until the new one's start is over")
     func heldPause() async {
         let bench = Bench()
         let session = await bench.holdingFirst()
@@ -17,10 +17,74 @@ extension PlayerSessionTests {
         #expect(session.isHoldingPause)
 
         session.choose(bench.first)
-        #expect(held.isStopped)
+        #expect(!held.isStopped && held.resumesHeld == [true]) // parked: its pause stays until the new one has it
         await TestWait.until { bench.monitorings.of(Players.first).count == 2 }
         await TestWait.until { session.state.health == .ready }
         #expect(bench.monitorings.of(Players.first)[1].starts.map(\.takingOverPause) == [true])
+        #expect(held.stops == 1 && held.handOverStops == 0) // the new one found no pause to take over
+    }
+
+    @MainActor
+    @Test("taken back, a pause held by AutoHush's tap is muted again by the new monitoring, and the one that held it hands it over once that took it")
+    func heldMuteTakenBack() async {
+        let bench = Bench()
+        bench.monitorings.findPauses = true
+        let session = await bench.started()
+        bench.monitorings.made[0].send(.playback(.pausedByMonitor))
+        bench.monitorings.made[0].send(.mutedInstead(true))
+        session.choose(bench.second)
+        await TestWait.until { session.state.health == .ready && !bench.monitorings.of(Players.second).isEmpty }
+        let held = bench.monitorings.of(Players.first)[0]
+        session.choose(bench.first)
+        await TestWait.until { bench.monitorings.of(Players.first).count == 2 && session.state.health == .ready }
+        let start = bench.monitorings.of(Players.first)[1].starts.first
+        #expect(start?.takingOverPause == true && start?.mutedBefore == .byTap(whileQuiet: false))
+        #expect(held.handOverStops == 1 && held.stops == 0)
+    }
+
+    /// The case R2 covers: resumes held (Add an App's check), the only time
+    /// a pause taken over is shown before the apps are counted
+    /// (`PlaybackArbiter.mapPlaybackState`), so a player chosen then keeps
+    /// the monitoring that took it (N3 of 11-27). Otherwise that one isn't
+    /// kept, and the pause is dropped, its mutes lifted (R5).
+    @MainActor
+    @Test("another player chosen, resumes held, as the monitoring taking a pause back has just taken it over: that one, kept for its pause, still has it handed over (R2 of 11-27)")
+    func otherChosenAsPauseTakenBack() async {
+        let bench = Bench()
+        bench.monitorings.findPauses = true
+        let session = await bench.holdingFirst()
+        let held = bench.monitorings.of(Players.first)[0]
+        session.holdResumes(true)
+        bench.monitorings.whileStarting = { [weak session, bench] monitoring in
+            guard monitoring.bundleID == Players.first else { return }
+            #expect(monitoring.setup?.resumesHeld == true)
+            monitoring.send(.playback(.pausedByMonitor)) // its pause taken over, shown with resumes held
+            session?.choose(bench.second)
+        }
+        session.choose(bench.first)
+        await TestWait.until { bench.monitorings.of(Players.second).count == 2 && session.state.health == .ready }
+        await session.waitUntilIdle()
+        let takenBack = bench.monitorings.of(Players.first)[1]
+        #expect(!takenBack.isStopped) // runs on to end its pause
+        #expect(held.handOverStops == 1 && held.stops == 0)
+    }
+
+    @MainActor
+    @Test("an app only ever muted, checked again while AutoHush holds its pause: muted again by the new one only while the one before still mutes it, not once the user played it (R6 of 11-27)",
+          arguments: [true, false])
+    func mutedAppCheckedAgain(stillMuted: Bool) async {
+        let bench = Bench()
+        let muted = MockMusicPlayer(bundleID: Players.first, name: "First", state: .paused, pausesByMuting: true)
+        let session = bench.makeSession(muted)
+        session.launch()
+        await TestWait.until { session.state.health == .ready }
+        bench.monitorings.made[0].send(.playback(.pausedByMonitor))
+        if !stillMuted { await muted.setState(.playing) } // its mute lifted as the user played it
+        session.choose(MockMusicPlayer(bundleID: Players.first, name: "First", pausesByMuting: true))
+        await TestWait.until { bench.monitorings.of(Players.first).count == 2 && session.state.health == .ready }
+        let start = bench.monitorings.of(Players.first)[1].starts.first
+        #expect(start?.takingOverPause == true)
+        #expect(start?.mutedBefore == (stillMuted ? .byPlayer : nil))
     }
 
     @MainActor

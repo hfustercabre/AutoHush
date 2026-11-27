@@ -31,7 +31,13 @@ package actor MockMutingMusicPlayer: MutingMusicPlayer {
     /// Whether its pause is a mute of its own now (`isMutedForPause`).
     package var mutedForPause = false
     package func setMutedForPause(_ muted: Bool) { mutedForPause = muted }
-    package func isMutedForPause() async -> Bool { mutedForPause }
+    /// Runs as it's asked whether its pause is its own mute, before it answers.
+    private var beforeMutedForPause: (@Sendable () async -> Void)?
+    package func setBeforeMutedForPause(_ hook: (@Sendable () async -> Void)?) { beforeMutedForPause = hook }
+    package func isMutedForPause() async -> Bool {
+        if let beforeMutedForPause { await beforeMutedForPause() }
+        return mutedForPause
+    }
     /// How many times a mute was lifted for good (`releaseMute`).
     package private(set) var releasedMutes = 0
     package func releaseMute() async { releasedMutes += 1 }

@@ -170,4 +170,13 @@ package enum MusicPlayerKind: Sendable {
 package protocol PlayerStateObserving: AnyObject {
     func start()
     func stop()
+    /// Stops; `handingOver`: the observer of a new monitoring of the same
+    /// player has taken its pause over, so what a stop undoes in the player
+    /// for that pause (a page's mute, `StoppingObserver`) is left to that
+    /// one. A plain `stop()` by default.
+    func stop(handingOver: Bool)
+}
+
+extension PlayerStateObserving {
+    package func stop(handingOver: Bool) { stop() }
 }
